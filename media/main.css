@@ -274,7 +274,7 @@ select:focus, input:focus {
   vertical-align: middle;
 }
 
-.board-dashboard .no-board-message span,
+.board-dashboard .no-access-message span,
 .board-dashboard .no-containers-message span {
   vertical-align: bottom;
   margin-right: 2px;

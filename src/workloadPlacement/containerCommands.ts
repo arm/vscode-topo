@@ -2,7 +2,7 @@
  * Represents a Docker container item from the output of the "docker ps" command.
  *
  * @property {string} ID - The unique identifier for the container.
- * @property {string} Name - The names assigned to the container.
+ * @property {string} Names - The names assigned to the container.
  * @property {string} Image - The Docker image used to create the container.
  * @property {string} State - The current state of the container (e.g., "running", "stopped").
  * @property {string} Status - A descriptive status string of the container.
@@ -22,6 +22,7 @@ export interface DockerPsItem {
 }
 
 export interface ContainerCommands {
+    isContainerRuntimeOn(): Promise<boolean>;
     getCurrentContext(): Promise<string>;
     useContext(contextName: string): Promise<void>;
     ensureContext(): Promise<void>;

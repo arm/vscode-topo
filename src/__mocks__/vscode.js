@@ -17,17 +17,21 @@ const Disposable = jest.fn(() => {
     return { dispose: jest.fn() };
 });
 Disposable.from = disposable => disposable;
-const EventEmitter = jest.fn(() => {
-    const callbacks = [];
-    return {
-        dispose: jest.fn(),
-        event: (callback, thisArg) => {
-            callbacks.push(thisArg ? callback.bind(thisArg) : callback);
-            return { dispose: jest.fn() };
-        },
-        fire: event => callbacks.forEach(callback => callback(event))
-    };
-});
+class EventEmitter {
+    constructor() {
+        this._callbacks = [];
+    }
+    dispose() {}
+    get event() {
+        return (callback, thisArg) => {
+            this._callbacks.push(thisArg ? callback.bind(thisArg) : callback);
+            return { dispose: () => {} };
+        };
+    }
+    fire(event) {
+        this._callbacks.forEach(cb => cb(event));
+    }
+}
 const RelativePattern = jest.fn();
 const ShellExecution = jest.fn((executablePath, executionArgs, options) => (
     { executablePath, executionArgs, options }

@@ -49,12 +49,13 @@ describe('ContainerTreeDataProvider', () => {
     ];
 
     beforeEach(() => {
+        const boardState = { isReachable: true, hasContainerRuntime: true };
         containersManagerMock = {
             getContainersData: jest.fn().mockResolvedValue(mockContainers),
             startAutoRefresh: jest.fn(),
             stopAutoRefresh: jest.fn(),
             onDataUpdate: jest.fn(),
-            isBoardAvailable: jest.fn().mockResolvedValue(true),
+            getBoardState: jest.fn().mockResolvedValue(boardState),
         };
         provider = new ContainerTreeDataProvider(containersManagerMock);
         jest.clearAllTimers();

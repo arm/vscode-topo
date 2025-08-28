@@ -5,6 +5,16 @@ import { Deferred } from '../util/deferred';
 import { ContainerCommands, DockerPsItem } from './containerCommands';
 
 /**
+ * Represents a Docker container item from the output of the "docker ps" command.
+ *
+ * @property {string} id - The unique identifier for the container.
+ * @property {string} name - The name assigned to the container.
+ * @property {string} image - The Docker image used to create the container.
+ * @property {string} state - The current state of the container (e.g., "running", "stopped").
+ * @property {string} status - A descriptive status string of the container.
+ * @property {string} labels - A string of key-value labels associated with the container.
+ * @property {string} runningFor - A description indicating how long the container has been running.
+ * @property {string} createdAt - The timestamp indicating when the container was created.
  * @property {string} runtime - The runtime of the container.
  * @property {string[]} ports - The ports exposed by the container.
  */
@@ -21,6 +31,11 @@ export interface ContainerItem {
   ports: string[];
 }
 
+export interface BoardState {
+    isReachable: boolean;
+    hasContainerRuntime: boolean;
+}
+
 export class ContainersManager {
     private containersDataDeferred: Deferred<ContainerItem[]> | undefined = undefined;
     private containersDataInitialised = false;
@@ -30,12 +45,17 @@ export class ContainersManager {
     private shouldAutoRefresh = false;
     private containersData: ContainerItem[] = [];
     private boardAvailabilityInitialised = false;
-    private _isBoardAvailable = false;
+    private isReachable = false;
+    private hasContainerRuntime = false;
 
     constructor(
         private readonly boardConnectionChecker: BoardConnectionChecker,
         private readonly containerCommands: ContainerCommands,
     ) {}
+
+    private get isBoardAvailable(): boolean {
+        return this.isReachable && this.hasContainerRuntime;
+    }
 
     public async activate(): Promise<void> {
         await this.containerCommands.ensureContext();
@@ -45,7 +65,10 @@ export class ContainersManager {
      * Checks if topo.local is reachable and updates isBoardAvailable accordingly.
      */
     private async checkBoardAvailability(): Promise<void> {
-        this._isBoardAvailable = await this.boardConnectionChecker.isBoardSshPortOpen();
+        const isBoardReachable = await this.boardConnectionChecker.isBoardSshPortOpen();
+        const isBoardContainerRuntimeOn = await this.containerCommands.isContainerRuntimeOn();
+        this.isReachable = isBoardReachable;
+        this.hasContainerRuntime = isBoardContainerRuntimeOn;
         this.boardAvailabilityInitialised = true;
     }
 
@@ -75,11 +98,14 @@ export class ContainersManager {
         return this.containersDataDeferred.promise;
     }
 
-    public async isBoardAvailable(): Promise<boolean> {
+    public async getBoardState(): Promise<BoardState> {
         if (!this.boardAvailabilityInitialised) {
             await this.checkBoardAvailability();
         }
-        return this._isBoardAvailable;
+        return {
+            isReachable: this.isReachable,
+            hasContainerRuntime: this.hasContainerRuntime
+        };
     }
 
     private async getContainersInfo(): Promise<ContainerItem[]> {
@@ -142,7 +168,7 @@ export class ContainersManager {
         const refresh = async () => {
             if (this.shouldAutoRefresh) {
                 await this.checkBoardAvailability();
-                if (this._isBoardAvailable) {
+                if (this.isBoardAvailable) {
                     await this.loadContainersData();
                 }
                 this._onDataUpdate.fire();
