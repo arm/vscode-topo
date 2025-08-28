@@ -5,6 +5,21 @@ import { ContainerCommands, DockerPsItem } from './containerCommands';
 
 export class DockerCommands implements ContainerCommands {
 
+    public async isContainerRuntimeOn(): Promise<boolean> {
+        try {
+            const { stdout, stderr } = await exec(`ssh ${BOARD_SSH_CONNECTION} 'docker info'`);
+            const err = stderr.trim();
+            if (err) {
+                throw new Error(err || 'Failed to get Docker info');
+            }
+            return stdout.includes('Server Version');
+        } catch (error: unknown) {
+            logger.error('Error checking Docker runtime status:');
+            logger.error(error);
+            return false;
+        }
+    }
+
     public async getCurrentContext(): Promise<string> {
         const { stdout, stderr } = await exec(`docker context show`);
         const err = stderr.trim();

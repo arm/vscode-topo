@@ -65,7 +65,7 @@ function handleMessage(event: MessageEvent) {
         boardDashboardRoot.render(
             <BoardDashboard
                 containersData={message.containersData}
-                isBoardAvailable={message.isBoardAvailable}
+                boardState={message.boardState}
                 messageHandler={vscode}
             />
         );

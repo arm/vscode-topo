@@ -26,12 +26,19 @@ export class ContainerTreeDataProvider implements vscode.TreeDataProvider<vscode
 
     async getChildren(element?: vscode.TreeItem): Promise<vscode.TreeItem[]> {
         if (!element) {
-            const isAvailable = await this.containersManager.isBoardAvailable();
-            if (!isAvailable) {
+            const boardState = await this.containersManager.getBoardState();
+            if (!boardState.isReachable) {
                 const noBoardItem = new vscode.TreeItem('No board found', vscode.TreeItemCollapsibleState.None);
                 noBoardItem.iconPath = new vscode.ThemeIcon('error');
                 noBoardItem.description = '';
                 noBoardItem.contextValue = 'noBoard';
+                return [noBoardItem];
+            }
+            if (!boardState.hasContainerRuntime) {
+                const noBoardItem = new vscode.TreeItem('No container runtime found', vscode.TreeItemCollapsibleState.None);
+                noBoardItem.iconPath = new vscode.ThemeIcon('error');
+                noBoardItem.description = '';
+                noBoardItem.contextValue = 'noContainerRuntime';
                 return [noBoardItem];
             }
             return [

@@ -1,6 +1,12 @@
 import { BOARD_HOSTNAME } from '../src/manifest';
 import { MessageHandler } from '../src/util/types';
-import type { ContainerItem } from '../src/workloadPlacement/containersManager';
+import type { BoardState, ContainerItem } from '../src/workloadPlacement/containersManager';
+
+export interface BoardDashboardProps {
+  containersData: ContainerItem[];
+  boardState: BoardState;
+  messageHandler: MessageHandler;
+}
 
 function splitContainersByRuntime(containers: ContainerItem[]) {
     const host: ContainerItem[] = [];
@@ -170,20 +176,21 @@ function ContainerTable({ containers, messageHandler, subsystem }: { containers:
     );
 }
 
-export interface BoardDashboardProps {
-  containersData: ContainerItem[];
-  isBoardAvailable: boolean;
-  messageHandler: MessageHandler;
-}
+export function BoardDashboard({ containersData, boardState, messageHandler }: BoardDashboardProps) {
 
-export function BoardDashboard({ containersData, isBoardAvailable, messageHandler }: BoardDashboardProps) {
-
-    if (!isBoardAvailable) {
+    let errorMessage: string | undefined = undefined;
+    if (!boardState.isReachable) {
+        errorMessage = 'No board found. Please ensure the board is running and accessible.';
+    }
+    if (!boardState.hasContainerRuntime) {
+        errorMessage = 'No container runtime found. Please ensure the container runtime of the board is installed and running.';
+    }
+    if (errorMessage) {
         return (
             <div className="board-dashboard">
-                <div className="no-board-message">
+                <div className="no-access-message">
                     <span className="codicon codicon-error" />
-                    <span>No board found. Please ensure the board is running and accessible.</span>
+                    <span>{errorMessage}</span>
                 </div>
             </div>
         );

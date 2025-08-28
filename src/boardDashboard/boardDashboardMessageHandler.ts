@@ -18,10 +18,10 @@ export class BoardDashboardMessageHandler {
         webview: vscode.Webview
     ): Promise<void> {
         const containersData = await this.containersManager.getContainersData();
-        const isBoardAvailable = await this.containersManager.isBoardAvailable();
+        const boardState = await this.containersManager.getBoardState();
         webview.postMessage({
             type: 'render-board-dashboard',
-            isBoardAvailable,
+            boardState,
             containersData
         });
     }
