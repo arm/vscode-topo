@@ -121,6 +121,28 @@ export class DockerCommands implements ContainerCommands {
         return inspectStdout.trim();
     }
 
+    public async containerStats(containerIds: string[], contextName = BOARD_DOCKER_CONTEXT): Promise<string> {
+        const ids = containerIds.join(' ');
+        let statsStdout = '';
+        try {
+            const result = await exec(
+                `docker --context ${contextName} stats ${ids} --no-stream --no-trunc --format '{{.ID}};{{.CPUPerc}};{{.MemUsage}}'`
+            );
+            statsStdout = result.stdout;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (err: any) {
+            if (typeof err !== 'object' || err === null || !Object.hasOwn(err, 'stderr')) {
+                throw err;
+            }
+            if (err.stderr.trim().split(/\r?\n/).some((l: string) => !l.startsWith('Error: No such object:'))) {
+                throw err;
+            }
+            statsStdout = err.stdout;
+            logger.error(err);
+        }
+        return statsStdout.trim();
+    }
+
     public async stopContainer(containerId: string, contextName = BOARD_DOCKER_CONTEXT): Promise<void> {
         try {
             const { stderr } = await exec(`docker --context ${contextName} stop ${containerId}`);

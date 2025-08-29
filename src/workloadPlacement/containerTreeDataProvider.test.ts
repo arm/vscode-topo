@@ -21,6 +21,8 @@ describe('ContainerTreeDataProvider', () => {
             runtime: manifest.BOARD_AMBIENT_RUNTIME,
             createdAt: '',
             ports: [],
+            cpuUsage: '0.0%',
+            memUsage: '0B / 1GiB',
         },
         {
             id: 'id2',
@@ -33,6 +35,8 @@ describe('ContainerTreeDataProvider', () => {
             runtime: manifest.BOARD_HOST_RUNTIME,
             createdAt: '',
             ports: [],
+            cpuUsage: '0.0%',
+            memUsage: '0B / 1GiB',
         },
         {
             id: 'id3',
@@ -45,6 +49,8 @@ describe('ContainerTreeDataProvider', () => {
             runtime: manifest.BOARD_AMBIENT_RUNTIME,
             createdAt: '',
             ports: [],
+            cpuUsage: '0.0%',
+            memUsage: '0B / 1GiB',
         }
     ];
 

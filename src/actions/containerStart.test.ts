@@ -45,6 +45,8 @@ describe('ContainerStart', () => {
             createdAt: '',
             subsystem: 'Host',
             ports: [],
+            cpuUsage: '0.0%',
+            memUsage: '0B / 1GiB',
         };
         const startContainerSpy = jest.fn(async () => undefined);
         const containersManager = {
@@ -75,6 +77,8 @@ describe('ContainerStart', () => {
             createdAt: '',
             subsystem: 'Host',
             ports: [],
+            cpuUsage: '0.0%',
+            memUsage: '0B / 1GiB',
         };
         const containerStart = new ContainerStart(context, containersManager);
         await containerStart.activate();

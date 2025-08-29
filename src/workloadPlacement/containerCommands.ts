@@ -36,5 +36,6 @@ export interface ContainerCommands {
     deleteContainer(containerId: string): Promise<void>;
     getContainers(): Promise<DockerPsItem[]>;
     inspectContainers(containerIds: string[]): Promise<string>;
+    containerStats(containerIds: string[]): Promise<string>;
     getAttachShellCommand(containerId: string): string;
 }

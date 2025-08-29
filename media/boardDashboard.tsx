@@ -58,13 +58,15 @@ function ContainerTable({ containers, messageHandler, subsystem }: { containers:
                     <th className="container-name">Name</th>
                     <th className="container-image">Image</th>
                     <th className="container-last-started">Last started</th>
+                    <th className="container-cpu-usage">CPU (%)</th>
+                    <th className="container-mem-usage">Memory Usage</th>
                     <th className="container-ports">Ports</th>
                     <th className="container-actions">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
-                    <td colSpan={6}><hr /></td>
+                    <td colSpan={8}><hr /></td>
                 </tr>
                 {containers.map(c => {
                     const isRunning = c.state === 'running';
@@ -76,6 +78,8 @@ function ContainerTable({ containers, messageHandler, subsystem }: { containers:
                             <td>{c.name}</td>
                             <td>{c.image}</td>
                             <td>{c.runningFor}</td>
+                            <td>{c.cpuUsage}</td>
+                            <td>{c.memUsage}</td>
                             <td>
                                 {c.ports.length > 0
                                     ? c.ports.map((port, idx) => (

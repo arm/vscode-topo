@@ -23,6 +23,8 @@ describe('ContainerTreeItem', () => {
             '',
             'io.containerd.runtime',
             ['8080:80'],
+            '2.5%',
+            '0B / 1GiB',
         );
         expect(item.label).toBe('nginx:latest');
         expect(item.description).toBe('my-container - 10m');
@@ -53,6 +55,8 @@ describe('ContainerTreeItem', () => {
             '',
             'io.containerd.runtime',
             [],
+            '2.5%',
+            '0B / 1GiB',
         );
         expect(item.iconPath).toBeInstanceOf(vscode.ThemeIcon);
         expect((item.iconPath as vscode.ThemeIcon).id).toBe('debug-breakpoint-log');
