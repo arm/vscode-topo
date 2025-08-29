@@ -17,6 +17,8 @@ import { ContainerCommands, DockerPsItem } from './containerCommands';
  * @property {string} createdAt - The timestamp indicating when the container was created.
  * @property {string} runtime - The runtime of the container.
  * @property {string[]} ports - The ports exposed by the container.
+ * @property {string} cpuUsage - The CPU usage of the container.
+ * @property {string} memUsage - The memory usage of the container.
  */
 export interface ContainerItem {
   id: string;
@@ -29,6 +31,8 @@ export interface ContainerItem {
   createdAt: string;
   runtime: string;
   ports: string[];
+  cpuUsage: string;
+  memUsage: string;
 }
 
 export interface BoardState {
@@ -115,15 +119,17 @@ export class ContainersManager {
             const inspectStdout = await this.containerCommands.inspectContainers(ids);
             const inspectLines = inspectStdout.trim().split(/\r?\n/);
             const parsedInspectLines = inspectLines.map(line => line.split(';'));
+            const statsOutput = await this.containerCommands.containerStats(ids);
+            const statsLines = statsOutput.trim().split(/\r?\n/);
+            const parsedStatsLines = statsLines.map(line => line.split(';'));
             const containersData = items.reduce<ContainerItem[]>((acc, item) => {
-                const foundLine = parsedInspectLines.find(line => line[0].slice(0, 12) === item.ID);
-                if (!foundLine) {
-                    return acc;
-                }
-                const portsJson = foundLine[1];
-                const runtime = foundLine[2];
-                const ports = this.parsePorts(portsJson);
-                acc.push(this.createContainerItem(item, runtime, ports));
+                const containerInspectLine = parsedInspectLines.find(inspectLine => inspectLine[0].slice(0, 12) === item.ID);
+                const containerStatsLine = parsedStatsLines.find(stat => stat[0].slice(0, 12) === item.ID);
+                const ports = containerInspectLine ? this.parsePorts(containerInspectLine[1]) : [];
+                const runtime = containerInspectLine ? containerInspectLine[2] : '';
+                const cpuUsage = containerStatsLine ? containerStatsLine[1] : '';
+                const memUsage = containerStatsLine ? containerStatsLine[2] : '';
+                acc.push(this.createContainerItem(item, runtime, ports, cpuUsage, memUsage));
                 return acc;
             }, []);
             return containersData;
@@ -198,7 +204,7 @@ export class ContainersManager {
         return this.containerCommands.deleteContainer(containerId);
     }
 
-    private createContainerItem(item: DockerPsItem, runtime: string, ports: string[]): ContainerItem {
+    private createContainerItem(item: DockerPsItem, runtime: string, ports: string[], cpuUsage: string, memUsage: string): ContainerItem {
         return {
             id: item.ID,
             name: item.Names,
@@ -210,6 +216,8 @@ export class ContainersManager {
             createdAt: item.CreatedAt,
             runtime,
             ports,
+            cpuUsage,
+            memUsage,
         };
     }
 }

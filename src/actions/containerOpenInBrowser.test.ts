@@ -20,7 +20,9 @@ describe('ContainerOpenInBrowser', () => {
         runningFor: '',
         createdAt: '',
         runtime: '',
-        ports: ['8080:80', '1234:1234']
+        ports: ['8080:80', '1234:1234'],
+        cpuUsage: '',
+        memUsage: '',
     };
 
     beforeEach(() => {

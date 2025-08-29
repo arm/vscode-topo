@@ -80,6 +80,8 @@ export class ContainerTreeDataProvider implements vscode.TreeDataProvider<vscode
             info.createdAt,
             info.runtime,
             info.ports,
+            info.cpuUsage,
+            info.memUsage,
         ));
         const sortedSubsystemTreeItems = subsystemTreeItems.sort((a, b) => {
             if (a.state === 'running' && b.state !== 'running') {

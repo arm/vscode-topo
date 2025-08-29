@@ -50,6 +50,8 @@ describe('attachVscode', () => {
             createdAt: '',
             subsystem: 'Host',
             ports: [],
+            cpuUsage: '0.0%',
+            memUsage: '0B / 1GiB',
         };
         registerCommandMock.mockReturnValue({ dispose: jest.fn() });
         await attachVscode.activate();

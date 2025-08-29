@@ -40,6 +40,8 @@ describe('ContainerStop', () => {
             createdAt: '',
             subsystem: 'Host',
             ports: [],
+            cpuUsage: '0.0%',
+            memUsage: '0B / 1GiB',
         };
         const stopContainerSpy = jest.fn(async () => undefined);
         const containersManager = {
@@ -70,6 +72,8 @@ describe('ContainerStop', () => {
             createdAt: '',
             subsystem: 'Host',
             ports: [],
+            cpuUsage: '0.0%',
+            memUsage: '0B / 1GiB',
         };
         const containerStop = new ContainerStop(context, containersManager);
         await containerStop.activate();

@@ -1,4 +1,4 @@
-import { ContainersManager } from './containersManager';
+import { ContainerItem, ContainersManager } from './containersManager';
 import * as manifest from '../manifest';
 import { exec } from '../util/exec';
 import { BOARD_DOCKER_CONTEXT, BOARD_SSH_CONNECTION } from '../manifest';
@@ -51,7 +51,6 @@ const defaultPsOutput = {
     stdout: mockContainers.map(c => JSON.stringify(c)).join('\n'),
     stderr: ''
 };
-
 const defaultInspectOutput = {
     stdout: [
         `${mockContainers[0].ID};${serializedWebServerPortInfo};${manifest.BOARD_HOST_RUNTIME}`,
@@ -59,8 +58,16 @@ const defaultInspectOutput = {
     ].join('\n'),
     stderr: ''
 };
+const defaultStatsOutput = {
+    stdout: [
+        `${mockContainers[0].ID};2.5%;50MiB / 1GiB`,
+        `${mockContainers[1].ID};0.0%;0B / 1GiB`
+    ].join('\n'),
+    stderr: ''
+};
 const defaultInfoOutput = 'Server Version: 8';
 const execMock = exec as unknown as jest.Mock;
+
 describe('ContainersManager', () => {
 
     beforeEach(async () => {
@@ -78,7 +85,9 @@ describe('ContainersManager', () => {
                     return defaultPsOutput;
                 case `docker --context ${BOARD_DOCKER_CONTEXT} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{.Id}};{{json .NetworkSettings.Ports}};{{.HostConfig.Runtime}}'`:
                     return defaultInspectOutput;
-                case `docker --host=ssh://${BOARD_SSH_CONNECTION} info`:
+                case `docker --context ${BOARD_DOCKER_CONTEXT} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{.ID}};{{.CPUPerc}};{{.MemUsage}}'`:
+                    return defaultStatsOutput;
+                case `ssh ${BOARD_SSH_CONNECTION} 'docker info'`:
                     return defaultInfoOutput;
                 default:
                     throw Error(`Unexpected command: ${command}`);
@@ -92,7 +101,7 @@ describe('ContainersManager', () => {
 
         const result = await manager.getContainersData();
 
-        const hostContainer = {
+        const hostContainer: ContainerItem = {
             id: mockContainers[0].ID,
             name: mockContainers[0].Names,
             image: mockContainers[0].Image,
@@ -102,9 +111,11 @@ describe('ContainersManager', () => {
             runningFor: mockContainers[0].RunningFor,
             createdAt: mockContainers[0].CreatedAt,
             runtime: manifest.BOARD_HOST_RUNTIME,
-            ports: ['8080:80']
+            ports: ['8080:80'],
+            cpuUsage: '2.5%',
+            memUsage: '50MiB / 1GiB',
         };
-        const ambientContainer = {
+        const ambientContainer: ContainerItem = {
             id: mockContainers[1].ID,
             name: mockContainers[1].Names,
             image: mockContainers[1].Image,
@@ -114,7 +125,9 @@ describe('ContainersManager', () => {
             runningFor: mockContainers[1].RunningFor,
             createdAt: mockContainers[1].CreatedAt,
             runtime: manifest.BOARD_AMBIENT_RUNTIME,
-            ports: []
+            ports: [],
+            cpuUsage: '0.0%',
+            memUsage: '0B / 1GiB',
         };
         const expectedContainers = [hostContainer, ambientContainer];
         expect(result).toStrictEqual(expectedContainers);
@@ -131,7 +144,9 @@ describe('ContainersManager', () => {
                     return defaultContextOutput;
                 case `docker --context ${BOARD_DOCKER_CONTEXT} ps -a --format "{{json .}}"`:
                     throw Error('ps error');
-                case `docker --host=ssh://${BOARD_SSH_CONNECTION} info`:
+                case `docker --context ${BOARD_DOCKER_CONTEXT} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{.ID}};{{.CPUPerc}};{{.MemUsage}}'`:
+                    return defaultStatsOutput;
+                case `ssh ${BOARD_SSH_CONNECTION} 'docker info'`:
                     return defaultInfoOutput;
                 default:
                     throw Error(`Unexpected command: ${command}`);
@@ -191,7 +206,9 @@ describe('ContainersManager', () => {
                     return defaultPsOutput;
                 case `docker --context ${BOARD_DOCKER_CONTEXT} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{.Id}};{{json .NetworkSettings.Ports}};{{.HostConfig.Runtime}}'`:
                     return defaultInspectOutput;
-                case `docker --host=ssh://${BOARD_SSH_CONNECTION} info`:
+                case `docker --context ${BOARD_DOCKER_CONTEXT} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{.ID}};{{.CPUPerc}};{{.MemUsage}}'`:
+                    return defaultStatsOutput;
+                case `ssh ${BOARD_SSH_CONNECTION} 'docker info'`:
                     return defaultInfoOutput;
                 default:
                     throw Error(`Unexpected command: ${command}`);
@@ -225,7 +242,9 @@ describe('ContainersManager', () => {
                     return defaultPsOutput;
                 case `docker --context ${BOARD_DOCKER_CONTEXT} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{.Id}};{{json .NetworkSettings.Ports}};{{.HostConfig.Runtime}}'`:
                     return defaultInspectOutput;
-                case `docker --host=ssh://${BOARD_SSH_CONNECTION} info`:
+                case `docker --context ${BOARD_DOCKER_CONTEXT} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{.ID}};{{.CPUPerc}};{{.MemUsage}}'`:
+                    return defaultStatsOutput;
+                case `ssh ${BOARD_SSH_CONNECTION} 'docker info'`:
                     return defaultInfoOutput;
                 default:
                     throw Error(`Unexpected command: ${command}`);
@@ -260,7 +279,9 @@ describe('ContainersManager', () => {
                     return defaultPsOutput;
                 case `docker --context ${BOARD_DOCKER_CONTEXT} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{.Id}};{{json .NetworkSettings.Ports}};{{.HostConfig.Runtime}}'`:
                     return defaultInspectOutput;
-                case `docker --host=ssh://${BOARD_SSH_CONNECTION} info`:
+                case `docker --context ${BOARD_DOCKER_CONTEXT} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{.ID}};{{.CPUPerc}};{{.MemUsage}}'`:
+                    return defaultStatsOutput;
+                case `ssh ${BOARD_SSH_CONNECTION} 'docker info'`:
                     return defaultInfoOutput;
                 default:
                     throw Error(`Unexpected command: ${command}`);
@@ -294,7 +315,9 @@ describe('ContainersManager', () => {
                     return defaultPsOutput;
                 case `docker --context ${BOARD_DOCKER_CONTEXT} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{.Id}};{{json .NetworkSettings.Ports}};{{.HostConfig.Runtime}}'`:
                     return defaultInspectOutput;
-                case `docker --host=ssh://${BOARD_SSH_CONNECTION} info`:
+                case `docker --context ${BOARD_DOCKER_CONTEXT} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{.ID}};{{.CPUPerc}};{{.MemUsage}}'`:
+                    return defaultStatsOutput;
+                case `ssh ${BOARD_SSH_CONNECTION} 'docker info'`:
                     return defaultInfoOutput;
                 default:
                     throw Error(`Unexpected command: ${command}`);
@@ -331,7 +354,9 @@ describe('ContainersManager', () => {
                     return defaultPsOutput;
                 case `docker --context ${BOARD_DOCKER_CONTEXT} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{.Id}};{{json .NetworkSettings.Ports}};{{.HostConfig.Runtime}}'`:
                     return defaultInspectOutput;
-                case `docker --host=ssh://${BOARD_SSH_CONNECTION} info`:
+                case `docker --context ${BOARD_DOCKER_CONTEXT} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{.ID}};{{.CPUPerc}};{{.MemUsage}}'`:
+                    return defaultStatsOutput;
+                case `ssh ${BOARD_SSH_CONNECTION} 'docker info'`:
                     return defaultInfoOutput;
                 default:
                     throw Error(`Unexpected command: ${command}`);
@@ -362,7 +387,9 @@ describe('ContainersManager', () => {
                     return defaultPsOutput;
                 case `docker --context ${BOARD_DOCKER_CONTEXT} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{.Id}};{{json .NetworkSettings.Ports}};{{.HostConfig.Runtime}}'`:
                     return defaultInspectOutput;
-                case `docker --host=ssh://${BOARD_SSH_CONNECTION} info`:
+                case `docker --context ${BOARD_DOCKER_CONTEXT} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{.ID}};{{.CPUPerc}};{{.MemUsage}}'`:
+                    return defaultStatsOutput;
+                case `ssh ${BOARD_SSH_CONNECTION} 'docker info'`:
                     return defaultInfoOutput;
                 default:
                     throw Error(`Unexpected command: ${command}`);
@@ -398,7 +425,9 @@ describe('ContainersManager', () => {
                     return defaultPsOutput;
                 case `docker --context ${BOARD_DOCKER_CONTEXT} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{.Id}};{{json .NetworkSettings.Ports}};{{.HostConfig.Runtime}}'`:
                     return defaultInspectOutput;
-                case `docker --host=ssh://${BOARD_SSH_CONNECTION} info`:
+                case `docker --context ${BOARD_DOCKER_CONTEXT} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{.ID}};{{.CPUPerc}};{{.MemUsage}}'`:
+                    return defaultStatsOutput;
+                case `ssh ${BOARD_SSH_CONNECTION} 'docker info'`:
                     return defaultInfoOutput;
                 default:
                     throw Error(`Unexpected command: ${command}`);

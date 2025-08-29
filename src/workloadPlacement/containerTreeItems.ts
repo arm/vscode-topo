@@ -28,6 +28,8 @@ export class ContainerTreeItem extends vscode.TreeItem implements ContainerItem 
     public readonly createdAt: string,
     public readonly runtime: string,
     public readonly ports: string[],
+    public readonly cpuUsage: string,
+    public readonly memUsage: string,
     ) {
         super(image, vscode.TreeItemCollapsibleState.None);
         this.description = `${name} - ${runningFor}`;
