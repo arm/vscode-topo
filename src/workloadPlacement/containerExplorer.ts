@@ -3,7 +3,7 @@ import { ContainerTreeDataProvider } from './containerTreeDataProvider';
 
 export class ContainerExplorer {
     constructor(
-    private readonly context: vscode.ExtensionContext,
+        private readonly context: vscode.ExtensionContext,
     private readonly containerTreeDataProvider: ContainerTreeDataProvider
     ) {}
 

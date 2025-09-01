@@ -8,7 +8,7 @@ export class BoardDashboardProvider {
     public static readonly openCommandType = `${PACKAGE_NAME}.openBoardDashboard`;
 
     constructor(
-    private readonly context: vscode.ExtensionContext,
+        private readonly context: vscode.ExtensionContext,
     private readonly messageHandler: BoardDashboardMessageHandler,
     private readonly ContainersManager: ContainersManager
     ) {}

@@ -10,7 +10,7 @@ export class ProjectInit {
     public static initProjectCommand = `${manifest.PACKAGE_NAME}.initProject`;
 
     constructor(
-    private readonly context: vscode.ExtensionContext,
+        private readonly context: vscode.ExtensionContext,
     private readonly topoCli: ProjectInitializerBinary,
     ) {}
 

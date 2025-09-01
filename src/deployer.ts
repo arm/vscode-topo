@@ -17,7 +17,7 @@ export class Deployer {
     public readonly onError = this.onErrorEmitter.event;
 
     constructor(
-    private readonly topoCli: Pick<TopoCli , 'generateMakefile'>,
+        private readonly topoCli: Pick<TopoCli , 'generateMakefile'>,
     ) {}
 
     public async start(composeFilePath: string): Promise<void> {

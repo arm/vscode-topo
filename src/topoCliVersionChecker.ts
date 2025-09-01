@@ -6,7 +6,7 @@ import * as fs from 'fs';
 export class TopoCliVersionChecker {
 
     constructor(
-    private readonly topoCli: Pick<TopoCli, 'getVersion'>,
+        private readonly topoCli: Pick<TopoCli, 'getVersion'>,
     private readonly extensionPath: string,
     ) {
     }
