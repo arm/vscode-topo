@@ -9,7 +9,7 @@ import * as vscode from 'vscode';
  */
 export class TopoCli {
     constructor(
-    private readonly extensionPath: string,
+        private readonly extensionPath: string,
     private readonly env: vscode.EnvironmentVariableCollection,
     ) {}
 

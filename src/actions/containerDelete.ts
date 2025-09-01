@@ -3,7 +3,7 @@ import { ContainerItem, ContainersManager } from '../workloadPlacement/container
 
 export class ContainerDelete {
     constructor(
-    private readonly context: vscode.ExtensionContext,
+        private readonly context: vscode.ExtensionContext,
     private readonly containersManager: Pick<ContainersManager, 'deleteContainer'>,
     ) {}
 

@@ -4,7 +4,7 @@ import { ContainerItem } from '../workloadPlacement/containersManager';
 
 export class ContainerOpenInBrowser {
     constructor(
-    private readonly context: vscode.ExtensionContext,
+        private readonly context: vscode.ExtensionContext,
     ) {}
 
     public async activate() {

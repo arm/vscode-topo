@@ -10,7 +10,7 @@ export class MakefileGenerator {
     public static generateMakefileCommand = `${manifest.PACKAGE_NAME}.generateMakefile`;
 
     constructor(
-    private readonly context: vscode.ExtensionContext,
+        private readonly context: vscode.ExtensionContext,
     private readonly topoCli: MakefileGeneratorBinary,
     ) {}
 

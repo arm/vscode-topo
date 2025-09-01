@@ -7,7 +7,7 @@ import { AttachShell } from '../actions/attachShell';
 
 export class BoardDashboardMessageHandler {
     constructor(
-    private readonly containersManager: ContainersManager,
+        private readonly containersManager: ContainersManager,
     private readonly containerOpenInBrowser: ContainerOpenInBrowser,
     private readonly attachVscode: AttachVscode,
     private readonly attachShell: AttachShell,
