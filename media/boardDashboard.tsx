@@ -185,9 +185,10 @@ export function BoardDashboard({ containersData, boardState, messageHandler }: B
     let errorMessage: string | undefined = undefined;
     if (!boardState.isReachable) {
         errorMessage = 'No board found. Please ensure the board is running and accessible.';
-    }
-    if (!boardState.hasContainerRuntime) {
-        errorMessage = 'No container runtime found. Please ensure the container runtime of the board is installed and running.';
+    } else {
+        if (!boardState.hasContainerRuntime) {
+            errorMessage = 'No container runtime found. Please ensure the container runtime of the board is installed and running.';
+        }
     }
     if (errorMessage) {
         return (
