@@ -1,6 +1,7 @@
 
 import net from 'net';
 import { BOARD_HOSTNAME } from '../manifest';
+import { logger } from './logger';
 
 export class BoardConnectionChecker {
 
@@ -40,7 +41,9 @@ export class BoardConnectionChecker {
             });
             clearTimeout(timeout);
             return response.status === 200;
-        } catch {
+        } catch (err) {
+            logger.error('Error checking board SSH port:');
+            logger.error(err);
             return false;
         }
     }

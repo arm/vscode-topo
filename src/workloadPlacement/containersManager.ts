@@ -41,16 +41,19 @@ export interface BoardState {
 }
 
 export class ContainersManager {
-    private containersDataDeferred: Deferred<ContainerItem[]> | undefined = undefined;
+    private containersDataDeferred: Deferred<void> | undefined = undefined;
+    private boardStateDeferred: Deferred<void> | undefined = undefined;
     private containersDataInitialised = false;
+    private boardStateInitialised = false;
     private readonly _onDataUpdate = new vscode.EventEmitter<void>();
     public readonly onDataUpdate = this._onDataUpdate.event;
     private refreshTimer: NodeJS.Timeout | undefined;
     private shouldAutoRefresh = false;
     private containersData: ContainerItem[] = [];
-    private boardAvailabilityInitialised = false;
-    private isReachable = false;
-    private hasContainerRuntime = false;
+    private boardState: BoardState = {
+        isReachable: false,
+        hasContainerRuntime: false,
+    };
 
     constructor(
         private readonly boardConnectionChecker: BoardConnectionChecker,
@@ -58,41 +61,40 @@ export class ContainersManager {
     ) {}
 
     private get isBoardAvailable(): boolean {
-        return this.isReachable && this.hasContainerRuntime;
+        return this.boardState.isReachable && this.boardState.hasContainerRuntime;
     }
 
     public async activate(): Promise<void> {
         await this.containerCommands.ensureContext();
         await this.startAutoRefresh();
     }
-    /**
-     * Checks if topo.local is reachable and updates isBoardAvailable accordingly.
-     */
-    private async checkBoardAvailability(): Promise<void> {
+
+    private async getBoardStateInfo(): Promise<BoardState> {
         const isBoardReachable = await this.boardConnectionChecker.isBoardSshPortOpen();
-        const isBoardContainerRuntimeOn = await this.containerCommands.isContainerRuntimeOn();
-        this.isReachable = isBoardReachable;
-        this.hasContainerRuntime = isBoardContainerRuntimeOn;
-        this.boardAvailabilityInitialised = true;
+        const isBoardContainerRuntimeOn = isBoardReachable ? await this.containerCommands.isContainerRuntimeOn() : false;
+        return {
+            isReachable: isBoardReachable,
+            hasContainerRuntime: isBoardContainerRuntimeOn
+        };
     }
 
     public async getContainersData(): Promise<ContainerItem[]> {
-        if (this.containersDataInitialised) {
-            return this.containersData;
+        if (!this.containersDataInitialised) {
+            await this.loadContainersData();
         }
-        return this.loadContainersData();
+        return this.containersData;
     }
 
-    private async loadContainersData(): Promise<ContainerItem[]> {
+    private async loadContainersData(): Promise<void> {
         if (this.containersDataDeferred) {
             return this.containersDataDeferred.promise;
         }
-        this.containersDataDeferred = new Deferred<ContainerItem[]>();
+        this.containersDataDeferred = new Deferred<void>();
         (async () => {
             try {
                 this.containersData = await this.getContainersInfo();
                 this.containersDataInitialised = true;
-                this.containersDataDeferred?.resolve(this.containersData);
+                this.containersDataDeferred?.resolve();
             } catch (err) {
                 this.containersDataDeferred?.reject(err);
             } finally {
@@ -103,13 +105,29 @@ export class ContainersManager {
     }
 
     public async getBoardState(): Promise<BoardState> {
-        if (!this.boardAvailabilityInitialised) {
-            await this.checkBoardAvailability();
+        if (!this.boardStateInitialised) {
+            await this.loadBoardState();
         }
-        return {
-            isReachable: this.isReachable,
-            hasContainerRuntime: this.hasContainerRuntime
-        };
+        return this.boardState;
+    }
+
+    private loadBoardState(): Promise<void> {
+        if (this.boardStateDeferred) {
+            return this.boardStateDeferred.promise;
+        }
+        this.boardStateDeferred = new Deferred<void>();
+        (async () => {
+            try {
+                this.boardState = await this.getBoardStateInfo();
+                this.boardStateInitialised = true;
+                this.boardStateDeferred?.resolve();
+            } catch (err) {
+                this.boardStateDeferred?.reject(err);
+            } finally {
+                this.boardStateDeferred = undefined;
+            }
+        })();
+        return this.boardStateDeferred.promise;
     }
 
     private async getContainersInfo(): Promise<ContainerItem[]> {
@@ -173,7 +191,7 @@ export class ContainersManager {
         this.shouldAutoRefresh = true;
         const refresh = async () => {
             if (this.shouldAutoRefresh) {
-                await this.checkBoardAvailability();
+                await this.loadBoardState();
                 if (this.isBoardAvailable) {
                     await this.loadContainersData();
                 }
