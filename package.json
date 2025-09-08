@@ -17,7 +17,7 @@
   ],
   "main": "./dist/extension.js",
   "topo-cli": {
-    "version": "0.0.0-20250804153026"
+    "version": "0.0.0-20250908105707"
   },
   "contributes": {
     "commands": [

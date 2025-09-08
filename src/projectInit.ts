@@ -1,6 +1,5 @@
 import * as manifest from './manifest';
 import * as vscode from 'vscode';
-import * as path from 'path';
 import { TopoCli } from './topoCli';
 
 type ProjectInitializerBinary = Pick<TopoCli, 'initProject'>;
@@ -28,24 +27,24 @@ export class ProjectInit {
             defaultUri: vscode.workspace.workspaceFolders
                 ? vscode.workspace.workspaceFolders[0].uri
                 : undefined,
-            openLabel: 'Select compose file folder'
+            openLabel: 'Select the project folder'
         });
 
         if (!folderUri || folderUri.length === 0) {
             return;
         }
 
-        const composeFilePath = path.join(folderUri[0].fsPath, manifest.BOARD_DEFAULT_COMPOSE_FILE);
+        const projectPath = folderUri[0].fsPath;
 
         const projectName = await vscode.window.showInputBox({
             prompt: 'Enter the project name',
-            placeHolder: 'my-project'
+            value: 'example-project'
         });
         if (!projectName) {
             return;
         }
         try {
-            await this.topoCli.initProject(composeFilePath, projectName);
+            await this.topoCli.initProject(projectPath, projectName);
             vscode.window.showInformationMessage(`Project "${projectName}" initialized successfully.`);
         } catch (err: unknown) {
             const errorMsg = err instanceof Error ? err.message : String(err);
