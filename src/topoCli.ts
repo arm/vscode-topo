@@ -178,9 +178,9 @@ export class TopoCli {
         };
     }
 
-    public initProject(composeFilePath: string, projectName: string): Promise<void> {
+    public initProject(projectPath: string, projectName: string): Promise<void> {
         return new Promise((resolve, reject) => {
-            const cmd = ['init-project', composeFilePath, projectName];
+            const cmd = ['init-project', projectPath, projectName];
             childProcess.execFile(
                 this.getBinaryPath(),
                 cmd,

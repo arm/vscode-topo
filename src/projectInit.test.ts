@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { ProjectInit } from './projectInit';
-import path from 'path';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -35,8 +34,8 @@ describe('ProjectInit', () => {
     it('calls topoCli.initProject with correct arguments', async () => {
         await projectInit.activate();
         await (vscode.commands.registerCommand as jest.Mock).mock.calls[0][1]();
-        const composeFilepath = path.join(selectedFolderPath, 'compose.topo.yaml');
-        expect(topoCli.initProject).toHaveBeenCalledWith(composeFilepath, 'my-project');
+        const projectPath = selectedFolderPath;
+        expect(topoCli.initProject).toHaveBeenCalledWith(projectPath, 'my-project');
         expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
             'Project "my-project" initialized successfully.'
         );
