@@ -34,7 +34,7 @@ describe('ContainerTreeItem', () => {
         expect(item.tooltip).toContain('label1=value1');
         expect(item.tooltip).toContain('10m');
         expect(item.subsystem).toBe('Ambient');
-        expect(item.contextValue).toBe('running Ambient');
+        expect(item.contextValue).toBe('service running Ambient');
         expect(item.ports).toEqual(['8080:80']);
 
         // Check iconPath for running status

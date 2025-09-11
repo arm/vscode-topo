@@ -35,7 +35,7 @@ export class ContainerTreeItem extends vscode.TreeItem implements ContainerItem 
         this.description = `${name} - ${runningFor}`;
         this.tooltip = `ID: ${id}\nImage: ${image}\nName: ${name}\nStatus: ${status}\nLabels: ${labels}\nUptime: ${runningFor}\n`;
         this.subsystem = runtime === BOARD_HOST_RUNTIME ? 'Host' : 'Ambient';
-        this.contextValue = `${state} ${this.subsystem}`;
+        this.contextValue = `service ${state} ${this.subsystem}`;
         this.iconPath = ContainerTreeItem.getIconForState(state);
     }
 
