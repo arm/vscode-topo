@@ -115,17 +115,17 @@ function ContainerTable({ containers, messageHandler, subsystem }: { containers:
                                         >
                                             <span className="codicon codicon-debug-stop" />
                                         </button>
+                                        <button
+                                            title="Delete container"
+                                            className="action-btn delete-btn"
+                                            onClick={() => {
+                                                messageHandler.postMessage({ type: 'delete-container', containerId: c.id });
+                                            }}
+                                        >
+                                            <span className="codicon codicon-trash vscode-codicon-trash" />
+                                        </button>
                                         { subsystem === 'Host' ? (
                                             <>
-                                                <button
-                                                    title="Delete container"
-                                                    className="action-btn delete-btn"
-                                                    onClick={() => {
-                                                        messageHandler.postMessage({ type: 'delete-container', containerId: c.id });
-                                                    }}
-                                                >
-                                                    <span className="codicon codicon-trash vscode-codicon-trash" />
-                                                </button>
                                                 <button
                                                     title="Attach VS Code"
                                                     className="action-btn vscode-attach-btn"
