@@ -193,6 +193,18 @@
           "when": "false"
         },
         {
+          "command": "containerExplorer.startContainer",
+          "when": "false"
+        },
+        {
+          "command": "containerExplorer.deleteContainer",
+          "when": "false"
+        },
+        {
+          "command": "containerExplorer.openSerial",
+          "when": "false"
+        },
+        {
           "command": "containerExplorer.attachVscode",
           "when": "false"
         },
