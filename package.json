@@ -220,32 +220,32 @@
       "view/item/context": [
         {
           "command": "containerExplorer.attachVscode",
-          "when": "view === containerExplorer && viewItem =~ /running/ && viewItem =~ /Host/",
+          "when": "view === containerExplorer && viewItem =~ /service/ && viewItem =~ /running/ && viewItem =~ /Host/",
           "group": "topo/attach@1"
         },
         {
           "command": "containerExplorer.attachShell",
-          "when": "view === containerExplorer && viewItem =~ /running/ && viewItem =~ /Host/",
+          "when": "view === containerExplorer && viewItem =~ /service/ && viewItem =~ /running/ && viewItem =~ /Host/",
           "group": "topo/attach@1"
         },
         {
           "command": "containerExplorer.openInBrowser",
-          "when": "view === containerExplorer && viewItem =~ /running/ && viewItem =~ /Host/",
+          "when": "view === containerExplorer && viewItem =~ /service/ && viewItem =~ /running/ && viewItem =~ /Host/",
           "group": "topo/attach@1"
         },
         {
           "command": "containerExplorer.startContainer",
-          "when": "view === containerExplorer && viewItem =~ /exited/",
+          "when": "view === containerExplorer && viewItem =~ /service/ && viewItem =~ /exited/",
           "group": "topo/manage@1"
         },
         {
           "command": "containerExplorer.stopContainer",
-          "when": "view === containerExplorer && viewItem =~ /running/",
+          "when": "view === containerExplorer && viewItem =~ /service/ && viewItem =~ /running/",
           "group": "topo/manage@1"
         },
         {
           "command": "containerExplorer.deleteContainer",
-          "when": "view === containerExplorer",
+          "when": "view === containerExplorer && viewItem =~ /service/",
           "group": "topo/manage@2"
         },
         {
