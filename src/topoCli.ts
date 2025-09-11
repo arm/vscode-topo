@@ -1,7 +1,6 @@
 import * as path from 'path';
 import * as childProcess from 'child_process';
 import { ConfigMetadata, ProjectDescription, TemplateDescription } from './util/types';
-import { logger } from './util/logger';
 import * as vscode from 'vscode';
 
 /**
@@ -99,83 +98,6 @@ export class TopoCli {
                 }
             });
         });
-    }
-
-    /** Runs the binary to deploy a solution. Supports cancellation. */
-    public deploy(composeFilepath: string): { promise: Promise<void>, cancel: () => void } {
-        const bin = this.getBinaryPath();
-        let child: childProcess.ChildProcess | undefined;
-        let canceled = false;
-
-        const killChild = () => {
-            if (child && child.pid && !child.killed) {
-                if (process.platform === 'win32') {
-                    // Kill process tree on Windows
-                    try {
-                        childProcess.execSync(`taskkill /PID ${child.pid} /T /F`);
-                    } catch {
-                        // ignore errors
-                    }
-                } else {
-                    // Kill the process group on Unix
-                    try {
-                        const childPid = child.pid;
-                        process.kill(-childPid, 'SIGTERM');
-                        setTimeout(() => {
-                            try {
-                                process.kill(-childPid, 'SIGKILL');
-                            } catch {
-                                // ignore errors
-                            }
-                        }, 2000);
-                    } catch {
-                        // ignore errors
-                    }
-                }
-            }
-        };
-
-        const promise = new Promise<void>((resolve, reject) => {
-            const cmd = ['deploy', composeFilepath];
-            // Set detached: true so child is in its own process group
-            child = childProcess.spawn(
-                bin,
-                cmd,
-                { cwd: path.dirname(composeFilepath), detached: true },
-            );
-
-            child.stdout?.on('data', (data: Buffer | string) => {
-                logger.show();
-                logger.info(data.toString());
-            });
-
-            child.stderr?.on('data', (data: Buffer | string) => {
-                logger.show();
-                logger.error(data.toString());
-            });
-
-            child.on('close', (code: number, _signal: string) => {
-                if (canceled) {
-                    resolve();
-                } else if (code === 0) {
-                    resolve();
-                } else {
-                    reject(new Error(`Deploy failed with exit code ${code}`));
-                }
-            });
-
-            child.on('error', (err: Error) => {
-                reject(err);
-            });
-        });
-
-        return {
-            promise,
-            cancel: () => {
-                canceled = true;
-                killChild();
-            }
-        };
     }
 
     public initProject(projectPath: string, projectName: string): Promise<void> {

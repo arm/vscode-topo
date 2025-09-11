@@ -3,16 +3,13 @@ import * as childProcess from 'child_process';
 import * as vscode from 'vscode';
 import { TopoCli } from './topoCli';
 import { ProjectDescription, TemplateDescription } from './util/types';
-import { logger } from './util/logger';
 
 jest.mock('child_process');
 jest.mock('fs');
 jest.mock('process');
-jest.mock('./util/logger');
 
 const execSyncMock = childProcess.execFileSync as jest.Mock;
 const execMock = childProcess.execFile as unknown as jest.Mock;
-const spawnMock = childProcess.spawn as unknown as jest.Mock;
 
 describe('TopoCli', () => {
     const ext = '/fake/ext';
@@ -99,107 +96,6 @@ describe('TopoCli', () => {
     it('removeService rejects promise on error', async () => {
         execMock.mockImplementation((_bin, _args, _options, cb) => cb(new Error('fail'), '', 'err')); 
         await expect(cs.removeService('c', 's')).rejects.toThrow('err');
-    });
-
-    it('deploy resolves promise on success', async () => {
-        const fakeChild = {
-            stdout: { on: jest.fn() },
-            stderr: { on: jest.fn() },
-            on: jest.fn((event, cb) => {
-                if (event === 'close') {
-                    cb(0);
-                }
-            }),
-        };
-        spawnMock.mockReturnValue(fakeChild);
-
-        const deployRet = cs.deploy('c');
-
-        await expect(deployRet.promise).resolves.toBeUndefined();
-        const expectedArgs = ['deploy', 'c'];
-        expect(childProcess.spawn).toHaveBeenCalledWith(
-            cs.getBinaryPath(),
-            expectedArgs,
-            {
-                cwd: path.dirname('c'),
-                detached: true,
-            }
-        );
-    });
-
-    it('deploy rejects promise on error', async () => {
-    // Simulate streaming child process with error
-        const fakeChild = {
-            stdout: { on: jest.fn() },
-            stderr: { on: jest.fn() },
-            on: jest.fn((event, cb) => {
-                if (event === 'close') {
-                    cb(1);
-                }
-            }),
-        };
-        spawnMock.mockReturnValue(fakeChild);
-
-        const deployRet = cs.deploy('c');
-
-        await expect(deployRet.promise).rejects.toThrow('Deploy failed with exit code 1');
-    });
-
-    it('deploy streams stdout and stderr to logger', async () => {
-        const fakeStdout = {
-            on: jest.fn((event: string, cb: (data: string) => void) => {
-                if (event === 'data') {
-                    cb('out-data');
-                }
-            }),
-        };
-        const fakeStderr = {
-            on: jest.fn((event: string, cb: (data: string) => void) => {
-                if (event === 'data') {
-                    cb('err-data');
-                }
-            }),
-        };
-        const fakeChild = {
-            stdout: fakeStdout,
-            stderr: fakeStderr,
-            on: jest.fn((event: string, cb: (code: number) => void) => {
-                if (event === 'close') {
-                    cb(0);
-                }
-            }),
-        };
-        spawnMock.mockReturnValue(fakeChild);
-
-        const deployRet = cs.deploy('c');
-
-        await expect(deployRet.promise).resolves.toBeUndefined();
-
-        expect(logger.show).toHaveBeenCalled();
-        expect(logger.info).toHaveBeenCalledWith('out-data');
-        expect(logger.error).toHaveBeenCalledWith('err-data');
-    });
-
-    it('deploy cancels and resolves when cancel is called', async () => {
-        let closeCallback: ((code: number) => void) | undefined;
-        const fakeChild = {
-            pid: 12345,
-            killed: false,
-            stdout: { on: jest.fn() },
-            stderr: { on: jest.fn() },
-            on: jest.fn((event: string, cb: (code: number) => void) => {
-                if (event === 'close') {
-                    closeCallback = cb;
-                }
-            }),
-        };
-        spawnMock.mockReturnValue(fakeChild);
-
-        const deployRet = cs.deploy('c');
-        deployRet.cancel();
-    //SIGKILL received by the child process
-    closeCallback!(1);
-    await expect(deployRet.promise).resolves.toBeUndefined();
     });
 
     it('initProject resolves promise on success', async () => {
