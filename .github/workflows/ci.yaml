@@ -24,7 +24,7 @@ on:
 jobs:
   build-and-verify:
     name: Build and verify
-    uses: arm-debug/vscode-workflows/.github/workflows/build-and-verify.yml@v5.0.0
+    uses: arm-debug/vscode-workflows/.github/workflows/build-and-verify.yml@v5.5.0
     secrets:
       EXTENSIONS_REPO_ACCESS_APP_ID: ${{ secrets.ML_REPO_ACCESS_APP_ID }}
       EXTENSIONS_REPO_ACCESS_PRIVATE_KEY: ${{ secrets.ML_REPO_ACCESS_PRIVATE_KEY }}
@@ -41,11 +41,11 @@ jobs:
       test-on-self-hosted-ubuntu-only: false
       is-platform-specific: true
       excluded-platforms: '["win32-arm64","darwin-x64"]'
-      release-type: ${{ inputs.release-type }}
+      release-type: ${{ inputs.release-type || 'None' }}
   release-and-publish:
     name: Release and publish
     needs: build-and-verify
-    uses: arm-debug/vscode-workflows/.github/workflows/release-and-publish.yml@v5.0.0
+    uses: arm-debug/vscode-workflows/.github/workflows/release-and-publish.yml@v5.5.0
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.release-type != 'None' && github.ref == 'refs/heads/main' }}
     secrets:
       OPEN_VSX_TOKEN: "UNUSED"
