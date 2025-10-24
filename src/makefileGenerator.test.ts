@@ -41,14 +41,14 @@ describe('MakefileGenerator', () => {
     it('calls topoCli.generateMakefile with correct arguments from palette', async () => {
         await makefileGenerator.activate();
         await (vscode.commands.registerCommand as jest.Mock).mock.calls[0][1]();
-        expect(topoCli.generateMakefile).toHaveBeenCalledWith(composeFilePath);
+        expect(topoCli.generateMakefile).toHaveBeenCalledWith(composeFilePath, manifest.BOARD_SSH_TARGET);
     });
 
     it('calls topoCli.generateMakefile with correct arguments from context menu', async () => {
         await makefileGenerator.activate();
         const fileUri = { fsPath: '/folder/compose.topo.yaml' } as vscode.Uri;
         await (vscode.commands.registerCommand as jest.Mock).mock.calls[1][1](fileUri);
-        expect(topoCli.generateMakefile).toHaveBeenCalledWith(fileUri.fsPath);
+        expect(topoCli.generateMakefile).toHaveBeenCalledWith(fileUri.fsPath, manifest.BOARD_SSH_TARGET);
     });
 
     it('shows error message if generateMakefile throws', async () => {

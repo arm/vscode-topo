@@ -21,11 +21,12 @@ import { BoardConnectionChecker } from './util/boardConnectionChecker';
 import { ContainerDelete } from './actions/containerDelete';
 import { OpenSerial } from './actions/openSerial';
 import { DockerCommands } from './workloadPlacement/dockerCommands';
+import * as manifest from './manifest';
 
 let topoCli: TopoCli;
 
 export async function activate(context: vscode.ExtensionContext) {
-    topoCli = new TopoCli(context.extensionPath, context.environmentVariableCollection);
+    topoCli = new TopoCli(context.extensionPath, context.environmentVariableCollection, manifest.BOARD_SSH_TARGET);
     const topoCliVersionChecker = new TopoCliVersionChecker(topoCli, context.extensionPath);
 
     if (!topoCliVersionChecker.checkTopoCliVersion()) {

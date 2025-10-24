@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { ProjectInit } from './projectInit';
+import * as manifest from './manifest';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -35,7 +36,7 @@ describe('ProjectInit', () => {
         await projectInit.activate();
         await (vscode.commands.registerCommand as jest.Mock).mock.calls[0][1]();
         const projectPath = selectedFolderPath;
-        expect(topoCli.initProject).toHaveBeenCalledWith(projectPath, 'my-project');
+        expect(topoCli.initProject).toHaveBeenCalledWith(projectPath, 'my-project', manifest.BOARD_SSH_TARGET);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
             'Project "my-project" initialized successfully.'
         );

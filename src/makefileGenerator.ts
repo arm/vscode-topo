@@ -47,7 +47,8 @@ export class MakefileGenerator {
             composeFilePath = path.join(folderUri[0].fsPath, manifest.BOARD_DEFAULT_COMPOSE_FILE);
         }
         try {
-            await this.topoCli.generateMakefile(composeFilePath);
+            const sshTarget = manifest.BOARD_SSH_TARGET;
+            await this.topoCli.generateMakefile(composeFilePath, sshTarget);
         } catch (err: unknown) {
             const errorMsg = err instanceof Error ? err.message : String(err);
             vscode.window.showErrorMessage(`Failed to generate Makefile: ${errorMsg}`);
