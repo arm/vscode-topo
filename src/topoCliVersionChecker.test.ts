@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { TopoCliVersionChecker } from './topoCliVersionChecker';
 import { TopoCli } from './topoCli';
 import * as fs from 'fs';
+import * as manifest from './manifest';
 
 jest.mock('fs', () => ({
     readFileSync: jest.fn(),
@@ -22,7 +23,7 @@ describe('TopoCliVersionChecker', () => {
     it('returns true if versions match', () => {
         (topoCli.getVersion as jest.Mock).mockReturnValue('1.2.3');
         (fs.readFileSync as jest.Mock).mockReturnValue(
-            JSON.stringify({ 'topo': { version: '1.2.3' } })
+            JSON.stringify({ [manifest.TOPO_CLI]: { version: '1.2.3' } })
         );
         const checker = new TopoCliVersionChecker(topoCli, extensionPath);
         const result = checker.checkTopoCliVersion();
@@ -32,7 +33,7 @@ describe('TopoCliVersionChecker', () => {
     it('shows error and returns false if version mismatches', () => {
         (topoCli.getVersion as jest.Mock).mockReturnValue('1.2.3');
         (fs.readFileSync as jest.Mock).mockReturnValue(
-            JSON.stringify({ 'topo': { version: '2.0.0' } })
+            JSON.stringify({ [manifest.TOPO_CLI]: { version: '2.0.0' } })
         );
         const checker = new TopoCliVersionChecker(topoCli, extensionPath);
         const showError = vscode.window.showErrorMessage as jest.Mock;

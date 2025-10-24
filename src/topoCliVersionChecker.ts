@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { TopoCli } from './topoCli';
 import path from 'path';
 import * as fs from 'fs';
+import * as manifest from './manifest';
 
 export class TopoCliVersionChecker {
 
@@ -28,7 +29,7 @@ export class TopoCliVersionChecker {
         const pkgPath = path.join(this.extensionPath, 'package.json');
         const text = fs.readFileSync(pkgPath, 'utf8');
         const pkg = JSON.parse(text);
-        return pkg['topo']?.version;
+        return pkg[manifest.TOPO_CLI]?.version;
     }
 
     private verifyVersion(): void {

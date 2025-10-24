@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import nodeOs from 'os';
 import yargs from 'yargs';
+import * as manifest from '../src/manifest';
 
 interface Asset {
     name: string;
@@ -156,7 +157,7 @@ if (!fs.existsSync(pkgPath)) {
 }
 const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
 
-const key = 'topo';
+const key = manifest.TOPO_CLI;
 const section = pkg[key];
 if (!section || typeof section.version !== 'string') {
     console.error(`✖ package.json must have a top-level "${key}" object with a string "version" property.`);
@@ -185,7 +186,7 @@ const assetMapping: Record<string, string> = {
     'win32-x64': 'topo-windows-amd64.exe',
 };
 const isWin = target.startsWith('win32');
-const destFilename = `resources/${key}${isWin ? '.exe' : ''}`;
+const destFilename = `resources/${isWin ? `${manifest.TOPO_CLI_WINDOWS}` : manifest.TOPO_CLI}`;
 const assetName = assetMapping[`${target}`];
 if (!assetName) {
     console.error(`✖ No asset found for ${target}`);

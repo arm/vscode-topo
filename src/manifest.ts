@@ -13,3 +13,5 @@ export const BOARD_DEFAULT_COMPOSE_FILE = 'compose.topo.yaml';
 export const BOARD_AMBIENT_RUNTIME = 'io.containerd.remoteproc.v1';
 export const BOARD_HOST_RUNTIME = 'runc';
 export const TOPO_TARGET_ENV_VAR = 'TOPO_TARGET';
+export const TOPO_CLI = 'topo';
+export const TOPO_CLI_WINDOWS = 'topo.exe';

@@ -3,6 +3,7 @@ import * as childProcess from 'child_process';
 import * as vscode from 'vscode';
 import { TopoCli } from './topoCli';
 import { ProjectDescription, TemplateDescription } from './util/types';
+import * as manifest from './manifest';
 
 jest.mock('child_process');
 jest.mock('fs');
@@ -33,14 +34,14 @@ describe('TopoCli', () => {
     });
 
     it('getBinaryPath builds correct path', () => {
-        expect(topoCli.getBinaryPath()).toBe(path.join(ext, 'resources', 'topo'));
+        expect(topoCli.getBinaryPath()).toBe(path.join(ext, 'resources', manifest.TOPO_CLI));
     });
 
     it('getVersion parses stdout from version', () => {
         execSyncMock.mockReturnValue('1.2.3\n');
         const v = topoCli.getVersion();
         expect(execSyncMock).toHaveBeenCalledWith(
-            path.join(ext, 'resources', 'topo'), ['version'], { encoding: 'utf8' }
+            path.join(ext, 'resources', manifest.TOPO_CLI), ['version'], { encoding: 'utf8' }
         );
         expect(v).toBe('1.2.3');
     });
@@ -143,7 +144,7 @@ describe('TopoCli', () => {
     });
 
     describe('getBinaryPath on Windows', () => {
-        const base = path.join(ext, 'resources', 'topo');
+        const topoCliPath = path.join(ext, 'resources', manifest.TOPO_CLI_WINDOWS);
         let origPlatform: string;
 
         beforeAll(() => {
@@ -155,7 +156,7 @@ describe('TopoCli', () => {
         });
 
         it('always returns the .exe variant on win32', () => {
-            expect(topoCli.getBinaryPath()).toBe(base + '.exe');
+            expect(topoCli.getBinaryPath()).toBe(topoCliPath);
         });
     });
 });

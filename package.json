@@ -145,25 +145,25 @@
           "command": "topo.showPreviewToSide",
           "alt": "topo.showPreview",
           "group": "navigation",
-          "when": "resourceFilename =~ /compose\\.topo(\\..*)?\\.yaml$/ && activeCustomEditorId != 'topo.composeEditor'"
+          "when": "resourceFilename =~ /compose(\\..*)?\\.yaml$/ && activeCustomEditorId != 'topo.composeEditor'"
         }
       ],
       "editor/title/context": [
         {
           "command": "topo.showPreview",
           "group": "1_open",
-          "when": "resourceFilename =~ /compose\\.topo(\\..*)?\\.yaml$/ && activeCustomEditorId != 'topo.composeEditor'"
+          "when": "resourceFilename =~ /compose(\\..*)?\\.yaml$/ && activeCustomEditorId != 'topo.composeEditor'"
         }
       ],
       "explorer/context": [
         {
           "command": "topo.showPreview",
           "group": "navigation@1",
-          "when": "resourceFilename =~ /compose\\.topo(\\..*)?\\.yaml$/ && activeCustomEditorId != 'topo.composeEditor'"
+          "when": "resourceFilename =~ /compose(\\..*)?\\.yaml$/ && activeCustomEditorId != 'topo.composeEditor'"
         },
         {
           "command": "topo.generateMakefile.context",
-          "when": "resourceFilename =~ /compose\\.topo(\\..*)?\\.yaml$/",
+          "when": "resourceFilename =~ /compose(\\..*)?\\.yaml$/",
           "group": "topo"
         }
       ],
