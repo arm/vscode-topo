@@ -44,11 +44,9 @@ export class TopoCli {
      */
     public getBinaryPath(): string {
         const binaryFolder = this.getBinaryFolder();
-        const base = path.join(binaryFolder, 'topo');
-        if (process.platform === 'win32') {
-            const exe = base + '.exe';
-            return exe;
-        }
+        const isWin = process.platform === 'win32';
+        const binaryName = isWin ? manifest.TOPO_CLI_WINDOWS : manifest.TOPO_CLI;
+        const base = path.join(binaryFolder, binaryName);
         return base;
     }
 
