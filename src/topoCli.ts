@@ -2,6 +2,7 @@ import * as path from 'path';
 import * as childProcess from 'child_process';
 import { ConfigMetadata, ProjectDescription, TemplateDescription } from './util/types';
 import * as vscode from 'vscode';
+import * as manifest from './manifest';
 
 /**
  * Encapsulates operations against the topo-cli binary.
@@ -9,12 +10,16 @@ import * as vscode from 'vscode';
 export class TopoCli {
     constructor(
         private readonly extensionPath: string,
-    private readonly env: vscode.EnvironmentVariableCollection,
+        private readonly env: vscode.EnvironmentVariableCollection,
+        private readonly defaultSshTarget?: string,
     ) {}
 
     public async activate(): Promise<void> {
         const sep = process.platform === 'win32' ? ';' : ':';
         this.env.prepend('PATH', this.getBinaryFolder() + sep);
+        if (this.defaultSshTarget) {
+            this.env.replace(manifest.TOPO_TARGET_ENV_VAR, this.defaultSshTarget);
+        }
     }
 
     public async deactivate(): Promise<void> {
@@ -25,13 +30,21 @@ export class TopoCli {
         return path.join(this.extensionPath, 'resources');
     }
 
+    private getProcessEnv(): NodeJS.ProcessEnv {
+        const env: NodeJS.ProcessEnv = { ...process.env };
+        if (this.defaultSshTarget) {
+            env[manifest.TOPO_TARGET_ENV_VAR] = this.defaultSshTarget;
+        }
+        return env;
+    }
+
     /**
      * Returns the file system path to the topo-cli binary.
      * On Windows, always appends the .exe extension.
      */
     public getBinaryPath(): string {
         const binaryFolder = this.getBinaryFolder();
-        const base = path.join(binaryFolder, 'topo-cli');
+        const base = path.join(binaryFolder, 'topo');
         if (process.platform === 'win32') {
             const exe = base + '.exe';
             return exe;
@@ -75,7 +88,7 @@ export class TopoCli {
         return new Promise((resolve, reject) => {
             serviceName = serviceName || templateId;
             const cmd = ['add-service', composeFilepath, templateId, serviceName];
-            childProcess.execFile(bin, cmd, { "cwd": "." }, (err, _stdout, stderr) => {
+            childProcess.execFile(bin, cmd, { cwd: "." }, (err, _stdout, stderr) => {
                 if (err) {
                     reject(new Error(stderr));
                 } else {
@@ -90,7 +103,7 @@ export class TopoCli {
         const bin = this.getBinaryPath();
         return new Promise((resolve, reject) => {
             const cmd = ['remove-service', composeFilepath, serviceName];
-            childProcess.execFile(bin, cmd, { "cwd": "." }, (err, _stdout, stderr) => {
+            childProcess.execFile(bin, cmd, { cwd: "." }, (err, _stdout, stderr) => {
                 if (err) {
                     reject(new Error(stderr));
                 } else {
@@ -100,13 +113,19 @@ export class TopoCli {
         });
     }
 
-    public initProject(projectPath: string, projectName: string): Promise<void> {
+    public initProject(projectPath: string, projectName: string, sshTarget?: string): Promise<void> {
         return new Promise((resolve, reject) => {
             const cmd = ['init-project', projectPath, projectName];
+            if (sshTarget) {
+                cmd.push('--target', sshTarget);
+            }
             childProcess.execFile(
                 this.getBinaryPath(),
                 cmd,
-                { "cwd": "." },
+                {
+                    cwd: ".",
+                    env: this.getProcessEnv(),
+                },
                 (error, _stdout, stderr) => {
                     if (error) {
                         reject(new Error(stderr || error.message));
@@ -119,14 +138,20 @@ export class TopoCli {
     }
 
     /** Runs the binary to generate a Makefile for a compose file. */
-    public generateMakefile(composeFilePath: string): Promise<void> {
+    public generateMakefile(composeFilePath: string, sshTarget?: string): Promise<void> {
         const bin = this.getBinaryPath();
         return new Promise((resolve, reject) => {
             const cmd = ['generate-makefile', composeFilePath];
+            if (sshTarget) {
+                cmd.push('--target', sshTarget);
+            }
             childProcess.execFile(
                 bin,
                 cmd,
-                { cwd: path.dirname(composeFilePath) },
+                {
+                    cwd: path.dirname(composeFilePath),
+                    env: this.getProcessEnv(),
+                },
                 (error, _stdout, stderr) => {
                     if (error) {
                         reject(new Error(stderr || error.message));

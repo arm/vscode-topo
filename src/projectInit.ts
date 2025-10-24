@@ -44,7 +44,8 @@ export class ProjectInit {
             return;
         }
         try {
-            await this.topoCli.initProject(projectPath, projectName);
+            const sshTarget = manifest.BOARD_SSH_TARGET;
+            await this.topoCli.initProject(projectPath, projectName, sshTarget);
             vscode.window.showInformationMessage(`Project "${projectName}" initialized successfully.`);
         } catch (err: unknown) {
             const errorMsg = err instanceof Error ? err.message : String(err);

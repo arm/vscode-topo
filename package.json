@@ -16,8 +16,8 @@
     "onView:topo.composeEditor"
   ],
   "main": "./dist/extension.js",
-  "topo-cli": {
-    "version": "0.0.0-20250911102810"
+  "topo": {
+    "version": "0.0.0-20251021093450"
   },
   "contributes": {
     "commands": [

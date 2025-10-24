@@ -156,7 +156,7 @@ if (!fs.existsSync(pkgPath)) {
 }
 const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
 
-const key = 'topo-cli';
+const key = 'topo';
 const section = pkg[key];
 if (!section || typeof section.version !== 'string') {
     console.error(`✖ package.json must have a top-level "${key}" object with a string "version" property.`);
@@ -179,13 +179,13 @@ const [ , owner, repo ] = m;
 
 // --- Determine asset name ---------------------------------------------------
 const assetMapping: Record<string, string> = {
-    'linux-x64': 'topo-cli-linux-amd64',
-    'linux-arm64': 'topo-cli-linux-arm64',
-    'darwin-arm64': 'topo-cli-darwin-arm64',
-    'win32-x64': 'topo-cli-windows-amd64.exe',
+    'linux-x64': 'topo-linux-amd64',
+    'linux-arm64': 'topo-linux-arm64',
+    'darwin-arm64': 'topo-darwin-arm64',
+    'win32-x64': 'topo-windows-amd64.exe',
 };
 const isWin = target.startsWith('win32');
-const destFilename = `resources/${key}${isWin?'.exe':''}`;
+const destFilename = `resources/${key}${isWin ? '.exe' : ''}`;
 const assetName = assetMapping[`${target}`];
 if (!assetName) {
     console.error(`✖ No asset found for ${target}`);
