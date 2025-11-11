@@ -8,7 +8,7 @@ export class TopoCliVersionChecker {
 
     constructor(
         private readonly topoCli: Pick<TopoCli, 'getVersion'>,
-    private readonly extensionPath: string,
+        private readonly extensionPath: string,
     ) {
     }
 
@@ -33,7 +33,7 @@ export class TopoCliVersionChecker {
     }
 
     private verifyVersion(): void {
-        const actual = this.topoCli.getVersion();
+        const actual = this.topoCli.getVersion().version;
         const expected = this.getExpectedVersion();
         if (!expected) {
             throw new Error('expected version not specified in package.json');

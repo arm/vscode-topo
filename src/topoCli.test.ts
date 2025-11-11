@@ -38,12 +38,15 @@ describe('TopoCli', () => {
     });
 
     it('getVersion parses stdout from version', () => {
-        execSyncMock.mockReturnValue('1.2.3\n');
+        execSyncMock.mockReturnValue('topo version 1.2.3 (commit: abcd)\n');
         const v = topoCli.getVersion();
         expect(execSyncMock).toHaveBeenCalledWith(
-            path.join(ext, 'resources', manifest.TOPO_CLI), ['version'], { encoding: 'utf8' }
+            path.join(ext, 'resources', manifest.TOPO_CLI), ['--version'], { encoding: 'utf8' }
         );
-        expect(v).toBe('1.2.3');
+        expect(v).toEqual({
+            version: '1.2.3',
+            commit: 'abcd',
+        });
     });
 
     it('listTemplates parses JSON output', () => {
