@@ -4,6 +4,11 @@ import { ConfigMetadata, ProjectDescription, TemplateDescription } from './util/
 import * as vscode from 'vscode';
 import * as manifest from './manifest';
 
+export interface TopoCliVersion {
+    version: string;
+    commit: string;
+}
+
 /**
  * Encapsulates operations against the topo-cli binary.
  */
@@ -51,10 +56,18 @@ export class TopoCli {
     }
 
     /** Returns the version string of the binary (via version). */
-    public getVersion(): string {
+    public getVersion(): TopoCliVersion {
         const bin = this.getBinaryPath();
-        const out = childProcess.execFileSync(bin, ['version'], { encoding: 'utf8' });
-        return out.trim();
+        const out = childProcess.execFileSync(bin, ['--version'], { encoding: 'utf8' });
+        const match = out.match(/topo version (?<version>\S+) \(commit: (?<commit>\S+)\)/i);
+        if (!match || !match.groups) {
+            throw new Error(`Failed to parse version output: ${out}`);
+        }
+        const versionInfo: TopoCliVersion = {
+            version: match.groups.version,
+            commit: match.groups.commit,
+        };
+        return versionInfo;
     }
 
     /** Lists templates (via list-templates). */

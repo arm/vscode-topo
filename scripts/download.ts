@@ -4,7 +4,9 @@ import fs from 'fs';
 import path from 'path';
 import nodeOs from 'os';
 import yargs from 'yargs';
+import extract from 'extract-zip';
 import * as manifest from '../src/manifest';
+import * as tar from 'tar';
 
 interface Asset {
     name: string;
@@ -36,7 +38,7 @@ const readFromUrl = async (url: string, token: string): Promise<Response> => {
 
     const match = url.match(GITHUB_REGEX);
     if (match) {
-    // Fetch from GitHub
+        // Fetch from GitHub
         const user = match[1];
         const repo = match[2];
         const tagName = match[3];
@@ -71,7 +73,6 @@ const readFromUrl = async (url: string, token: string): Promise<Response> => {
         });
 
         if (response.status === 302) {
-            // Redirect URLs now contain the auth key, redirect without the auth header
             const authenticatedUrl = response.headers.get('location')!;
             response = await fetch(authenticatedUrl, {
                 headers: {
@@ -85,7 +86,7 @@ const readFromUrl = async (url: string, token: string): Promise<Response> => {
             throw new Error(msg);
         }
     } else {
-    // Fetch from URL
+        // Fetch from URL
         response = await fetch(url);
         if (!response.ok) {
             const body = await response.text();
@@ -96,23 +97,82 @@ const readFromUrl = async (url: string, token: string): Promise<Response> => {
     return response;
 };
 
+const findFileInDir = (dir: string, filename: string): string | undefined => {
+    const entries = fs.readdirSync(dir, { recursive: true, withFileTypes: true });
+    for (const entry of entries) {
+        if (entry.isFile() && entry.name === filename) {
+            return path.join(entry.parentPath, entry.name);
+        }
+    }
+    return undefined;
+};
+
+const extractFileFromArchive = async (buffer: Buffer, destPath: string, filename: string, type: 'tar' | 'zip'): Promise<void> => {
+    const ext = type === 'tar' ? '.tar.gz' : '.zip';
+    const tmpArchive = `${destPath}${ext}`;
+    const tmpDir = fs.mkdtempSync(path.join(nodeOs.tmpdir(), 'topo-'));  
+    fs.writeFileSync(tmpArchive, buffer);
+    try {
+        fs.mkdirSync(tmpDir, { recursive: true });
+        if (type === 'tar') {
+            await tar.x({
+                file: tmpArchive,
+                cwd: tmpDir
+            });
+        } else if (type === 'zip') {
+            await extract(tmpArchive, {
+                dir: path.resolve(tmpDir)
+            });
+        }
+        const targetFilePath = findFileInDir(tmpDir, filename);
+        if (!targetFilePath) {
+            throw new Error(`Couldn't find "${filename}" in archive`);
+        }
+        fs.copyFileSync(targetFilePath, destPath);
+    } finally {
+        if (fs.existsSync(tmpArchive)) {
+            fs.unlinkSync(tmpArchive);
+        }
+        if (fs.existsSync(tmpDir)) {
+            try {
+                fs.rmSync(tmpDir, { recursive: true, force: true });
+            } catch (cleanupErr) {
+                console.warn(`Warning: Failed to remove temporary directory "${tmpDir}":`, cleanupErr);
+            }
+        }
+    }
+};
+
 /**
  * Download a file and get its contents.
  * A URL must be used as a path
  *
  * @param sourcePath - Path to the file (locally or http)
  * @param destPath - Path to the file to be saved
+ * @param filename - Filename inside the archive to extract
  * @param token - GitHub token for authentication
  */
-const downloadFile = async (sourcePath: string, destPath: string, token: string): Promise<void> => {
+const downloadFile = async (sourcePath: string, destPath: string, filename: string, token: string): Promise<void> => {
 
     if (!sourcePath.startsWith('http')) {
         throw new Error(`Invalid source path: ${sourcePath}. Must be a http URL.`);
     }
     const response = await readFromUrl(sourcePath, token);
-    const buffer = await response.arrayBuffer();
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
     fs.mkdirSync(path.dirname(destPath), { recursive: true });
-    fs.writeFileSync(destPath, Buffer.from(buffer), 'binary');
+
+    // Detect archive type by magic bytes
+    const isGzip = sourcePath.endsWith('.tar.gz');
+    const isZip = sourcePath.endsWith('.zip');
+    if (isGzip) {
+        await extractFileFromArchive(buffer, destPath, filename, 'tar');
+    } else if (isZip) {
+        await extractFileFromArchive(buffer, destPath, filename, 'zip');
+    } else {
+        throw new Error(`Unsupported archive format for "${sourcePath}"; expected .tar.gz or .zip`);
+    }
 };
 
 // --- Parse CLI args ---------------------------------------------------------
@@ -180,13 +240,14 @@ const [ , owner, repo ] = m;
 
 // --- Determine asset name ---------------------------------------------------
 const assetMapping: Record<string, string> = {
-    'linux-x64': 'topo-linux-amd64',
-    'linux-arm64': 'topo-linux-arm64',
-    'darwin-arm64': 'topo-darwin-arm64',
-    'win32-x64': 'topo-windows-amd64.exe',
+    'linux-x64': `topo_${version}_linux_amd64.tar.gz`,
+    'linux-arm64': `topo_${version}_linux_arm64.tar.gz`,
+    'darwin-arm64': `topo_${version}_darwin_arm64.tar.gz`,
+    'win32-x64': `topo_${version}_windows_amd64.zip`,
 };
 const isWin = target.startsWith('win32');
-const destFilename = `resources/${isWin ? `${manifest.TOPO_CLI_WINDOWS}` : manifest.TOPO_CLI}`;
+const topoFilename = isWin ? `${manifest.TOPO_CLI_WINDOWS}` : manifest.TOPO_CLI;
+const destFilename = `resources/${topoFilename}`;
 const assetName = assetMapping[`${target}`];
 if (!assetName) {
     console.error(`✖ No asset found for ${target}`);
@@ -201,7 +262,7 @@ console.log(`→ Downloading ${downloadUrl}`);
 // --- Perform download --------------------------------------------------------
 (async () => {
     try {
-        await downloadFile(downloadUrl, destFilename, githubToken);
+        await downloadFile(downloadUrl, destFilename, topoFilename, githubToken);
         fs.chmodSync(destFilename, '755');
     } catch (err: unknown) {
         const errorMsg = err instanceof Error ? err.message : err;
