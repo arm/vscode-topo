@@ -45,7 +45,7 @@ export class DockerCommands implements ContainerCommands {
     /**
      * Ensures the Docker context is set for the board.
      */
-    public async ensureContext(contextName = BOARD_DOCKER_CONTEXT): Promise<void> {
+    public async ensureContext(contextName: string): Promise<void> {
         try {
             const { stdout, stderr } = await exec(`docker context ls --format '{{.Name}}'`);
             const err = stderr.trim();
@@ -89,7 +89,7 @@ export class DockerCommands implements ContainerCommands {
         }
     }
 
-    public async getContainers(contextName = BOARD_DOCKER_CONTEXT): Promise<DockerPsItem[]> {
+    public async getContainers(contextName: string): Promise<DockerPsItem[]> {
         const { stdout } = await exec(`docker --context ${contextName} ps -a --format "{{json .}}"`);
         const lines = stdout.trim().split(/\r?\n/).filter(l => l);
         if (lines.length === 0) {
@@ -99,7 +99,7 @@ export class DockerCommands implements ContainerCommands {
         return items;
     }
 
-    public async inspectContainers(containerIds: string[], contextName = BOARD_DOCKER_CONTEXT): Promise<string> {
+    public async inspectContainers(containerIds: string[], contextName: string): Promise<string> {
         const ids = containerIds.join(' ');
         let inspectStdout = '';
         try {
@@ -121,7 +121,7 @@ export class DockerCommands implements ContainerCommands {
         return inspectStdout.trim();
     }
 
-    public async containerStats(containerIds: string[], contextName = BOARD_DOCKER_CONTEXT): Promise<string> {
+    public async containerStats(containerIds: string[], contextName: string): Promise<string> {
         const ids = containerIds.join(' ');
         let statsStdout = '';
         try {
@@ -143,7 +143,7 @@ export class DockerCommands implements ContainerCommands {
         return statsStdout.trim();
     }
 
-    public async stopContainer(containerId: string, contextName = BOARD_DOCKER_CONTEXT): Promise<void> {
+    public async stopContainer(containerId: string, contextName: string): Promise<void> {
         try {
             const { stderr } = await exec(`docker --context ${contextName} stop ${containerId}`);
             const err = stderr.trim();
@@ -155,7 +155,7 @@ export class DockerCommands implements ContainerCommands {
         }
     }
 
-    public async startContainer(containerId: string, contextName = BOARD_DOCKER_CONTEXT): Promise<void> {
+    public async startContainer(containerId: string, contextName: string): Promise<void> {
         try {
             const { stderr } = await exec(`docker --context ${contextName} start ${containerId}`);
             const err = stderr.trim();
@@ -167,7 +167,7 @@ export class DockerCommands implements ContainerCommands {
         }
     }
 
-    public async deleteContainer(containerId: string, contextName = BOARD_DOCKER_CONTEXT): Promise<void> {
+    public async deleteContainer(containerId: string, contextName: string): Promise<void> {
         try {
             const { stderr } = await exec(`docker --context ${contextName} rm -f ${containerId}`);
             const err = stderr.trim();

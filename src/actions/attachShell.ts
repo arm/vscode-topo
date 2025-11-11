@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { BOARD_HOSTNAME, BOARD_SSH_CONNECTION } from '../manifest';
 import { ContainerItem } from '../workloadPlacement/containersManager';
 import { ContainerCommands } from '../workloadPlacement/containerCommands';
+import * as manifest from '../manifest';
 
 export class AttachShell {
     constructor(
@@ -17,7 +18,7 @@ export class AttachShell {
 
     public async attachShell(item: ContainerItem) {
         const terminal = vscode.window.createTerminal({ name: `Shell: ${item.image}` });
-        terminal.sendText(this.containerCommands.getAttachShellCommand(item.id));
+        terminal.sendText(this.containerCommands.getAttachShellCommand(item.id, manifest.BOARD_DOCKER_CONTEXT));
         terminal.show();
     }
 

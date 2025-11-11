@@ -3,6 +3,7 @@ import { logger } from '../util/logger';
 import { BoardConnectionChecker } from '../util/boardConnectionChecker';
 import { Deferred } from '../util/deferred';
 import { ContainerCommands, DockerPsItem } from './containerCommands';
+import { BOARD_DOCKER_CONTEXT } from '../manifest';
 
 /**
  * Represents a Docker container item from the output of the "docker ps" command.
@@ -65,13 +66,13 @@ export class ContainersManager {
     }
 
     public async activate(): Promise<void> {
-        await this.containerCommands.ensureContext();
+        await this.containerCommands.ensureContext(BOARD_DOCKER_CONTEXT);
         await this.startAutoRefresh();
     }
 
     private async getBoardStateInfo(): Promise<BoardState> {
         const isBoardReachable = await this.boardConnectionChecker.isBoardSshPortOpen();
-        const isBoardContainerRuntimeOn = isBoardReachable ? await this.containerCommands.isContainerRuntimeOn() : false;
+        const isBoardContainerRuntimeOn = isBoardReachable ? await this.containerCommands.isContainerRuntimeOn(BOARD_DOCKER_CONTEXT) : false;
         return {
             isReachable: isBoardReachable,
             hasContainerRuntime: isBoardContainerRuntimeOn
@@ -132,12 +133,12 @@ export class ContainersManager {
 
     private async getContainersInfo(): Promise<ContainerItem[]> {
         try {
-            const items = await this.containerCommands.getContainers();
+            const items = await this.containerCommands.getContainers(BOARD_DOCKER_CONTEXT);
             const ids = items.map(item => item.ID);
-            const inspectStdout = await this.containerCommands.inspectContainers(ids);
+            const inspectStdout = await this.containerCommands.inspectContainers(ids, BOARD_DOCKER_CONTEXT);
             const inspectLines = inspectStdout.trim().split(/\r?\n/);
             const parsedInspectLines = inspectLines.map(line => line.split(';'));
-            const statsOutput = await this.containerCommands.containerStats(ids);
+            const statsOutput = await this.containerCommands.containerStats(ids, BOARD_DOCKER_CONTEXT);
             const statsLines = statsOutput.trim().split(/\r?\n/);
             const parsedStatsLines = statsLines.map(line => line.split(';'));
             const containersData = items.reduce<ContainerItem[]>((acc, item) => {
@@ -211,15 +212,15 @@ export class ContainersManager {
     }
 
     public async stopContainer(containerId: string): Promise<void> {
-        return this.containerCommands.stopContainer(containerId);
+        return this.containerCommands.stopContainer(containerId, BOARD_DOCKER_CONTEXT);
     }
 
     public async startContainer(containerId: string): Promise<void> {
-        return this.containerCommands.startContainer(containerId);
+        return this.containerCommands.startContainer(containerId, BOARD_DOCKER_CONTEXT);
     }
 
     public async deleteContainer(containerId: string): Promise<void> {
-        return this.containerCommands.deleteContainer(containerId);
+        return this.containerCommands.deleteContainer(containerId, BOARD_DOCKER_CONTEXT);
     }
 
     private createContainerItem(item: DockerPsItem, runtime: string, ports: string[], cpuUsage: string, memUsage: string): ContainerItem {

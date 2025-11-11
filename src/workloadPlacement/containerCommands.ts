@@ -22,20 +22,20 @@ export interface DockerPsItem {
 }
 
 export interface ContainerCommands {
-    isContainerRuntimeOn(): Promise<boolean>;
+    isContainerRuntimeOn(contextName: string): Promise<boolean>;
     getCurrentContext(): Promise<string>;
     useContext(contextName: string): Promise<void>;
-    ensureContext(): Promise<void>;
+    ensureContext(contextName: string): Promise<void>;
     executeWithContext<T>(
         operation: () => Thenable<T> | T,
         contextName: string,
         timeout: number
     ): Promise<T>;
-    startContainer(containerId: string): Promise<void>;
-    stopContainer(containerId: string): Promise<void>;
-    deleteContainer(containerId: string): Promise<void>;
-    getContainers(): Promise<DockerPsItem[]>;
-    inspectContainers(containerIds: string[]): Promise<string>;
-    containerStats(containerIds: string[]): Promise<string>;
-    getAttachShellCommand(containerId: string): string;
+    startContainer(containerId: string, contextName: string): Promise<void>;
+    stopContainer(containerId: string, contextName: string): Promise<void>;
+    deleteContainer(containerId: string, contextName: string): Promise<void>;
+    getContainers(contextName: string): Promise<DockerPsItem[]>;
+    inspectContainers(containerIds: string[], contextName: string): Promise<string>;
+    containerStats(containerIds: string[], contextName: string): Promise<string>;
+    getAttachShellCommand(containerId: string, contextName: string): string;
 }
