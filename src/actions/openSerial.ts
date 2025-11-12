@@ -1,22 +1,25 @@
 import * as vscode from 'vscode';
 import { SerialMonitorApiV2, SerialMonitorExtension } from '@eclipse-cdt-cloud/vscode-serial-monitor';
-import { ContainerGroupItem } from '../workloadPlacement/containerTreeItems';
+import { SubsystemTreeItem } from '../workloadPlacement/targetTreeDataProvider';
+import { PACKAGE_NAME } from '../manifest';
 
 const SERIAL_EXTENSION = 'eclipse-cdt.serial-monitor';
 const SERIAL_OPTIONS = { baudRate: 115200 };
 
 export class OpenSerial {
+
+    public static readonly openSerialCommandType = `${PACKAGE_NAME}.openSerial`;
     protected serialCache = new Map<string, string>();
 
     constructor(private readonly context: vscode.ExtensionContext) { }
 
     public activate() {
         this.context.subscriptions.push(
-            vscode.commands.registerCommand('containerExplorer.openSerial', this.openSerial.bind(this))
+            vscode.commands.registerCommand(OpenSerial.openSerialCommandType, this.openSerial.bind(this))
         );
     }
 
-    public async openSerial(item: ContainerGroupItem) {
+    public async openSerial(item: SubsystemTreeItem) {
         const api = await this.getSerialMonitor();
         if (!api) {
             return;

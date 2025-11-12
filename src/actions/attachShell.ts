@@ -5,6 +5,9 @@ import { ContainerCommands } from '../workloadPlacement/containerCommands';
 import * as manifest from '../manifest';
 
 export class AttachShell {
+
+    public static readonly attachShellCommandType = `${manifest.PACKAGE_NAME}.attachShell`;
+
     constructor(
         private readonly context: vscode.ExtensionContext,
         private readonly containerCommands: ContainerCommands,
@@ -12,7 +15,7 @@ export class AttachShell {
 
     public activate() {
         this.context.subscriptions.push(
-            vscode.commands.registerCommand('containerExplorer.attachShell', this.attachShell.bind(this))
+            vscode.commands.registerCommand(AttachShell.attachShellCommandType, this.attachShell.bind(this))
         );
     }
 

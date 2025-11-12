@@ -1,15 +1,19 @@
 import * as vscode from 'vscode';
 import { ContainerItem, ContainersManager } from '../workloadPlacement/containersManager';
+import * as manifest from '../manifest';
 
 export class ContainerStart {
+
+    public static readonly startContainerCommandType = `${manifest.PACKAGE_NAME}.startContainer`;
+
     constructor(
         private readonly context: vscode.ExtensionContext,
-    private readonly containersManager: Pick<ContainersManager, 'startContainer'>,
+        private readonly containersManager: Pick<ContainersManager, 'startContainer'>,
     ) {}
 
     public activate() {
         this.context.subscriptions.push(
-            vscode.commands.registerCommand('containerExplorer.startContainer', this.startContainer.bind(this))
+            vscode.commands.registerCommand(ContainerStart.startContainerCommandType, this.startContainer.bind(this))
         );
     }
 

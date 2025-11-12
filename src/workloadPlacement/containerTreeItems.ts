@@ -2,17 +2,7 @@ import * as vscode from 'vscode';
 import { BOARD_HOST_RUNTIME } from '../manifest';
 import { ContainerItem } from './containersManager';
 
-// Represents a group of containers (Host or Ambient)
-export class ContainerGroupItem extends vscode.TreeItem {
-    constructor(
-        public readonly group: 'Host' | 'Ambient'
-    ) {
-        super(group, vscode.TreeItemCollapsibleState.Collapsed);
-        this.contextValue = 'containerGroup';
-    }
-}
-
-// Represents an individual container
+/** Represents an individual container in the target tree view. */
 export class ContainerTreeItem extends vscode.TreeItem implements ContainerItem {
 
     public readonly subsystem: string;

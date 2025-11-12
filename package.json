@@ -63,32 +63,32 @@
         "category": "Arm Topo"
       },
       {
-        "command": "containerExplorer.attachVscode",
+        "command": "topo.attachVsCode",
         "title": "Attach VS Code",
         "category": "Arm Topo"
       },
       {
-        "command": "containerExplorer.attachShell",
+        "command": "topo.attachShell",
         "title": "Attach Shell",
         "category": "Arm Topo"
       },
       {
-        "command": "containerExplorer.openInBrowser",
+        "command": "topo.openInBrowser",
         "title": "Open in Browser",
         "category": "Arm Topo"
       },
       {
-        "command": "containerExplorer.startContainer",
+        "command": "topo.startContainer",
         "title": "Start",
         "category": "Arm Topo"
       },
       {
-        "command": "containerExplorer.stopContainer",
+        "command": "topo.stopContainer",
         "title": "Stop",
         "category": "Arm Topo"
       },
       {
-        "command": "containerExplorer.deleteContainer",
+        "command": "topo.deleteContainer",
         "title": "Delete",
         "category": "Arm Topo"
       },
@@ -98,7 +98,7 @@
         "category": "Arm Topo"
       },
       {
-        "command": "containerExplorer.openSerial",
+        "command": "topo.openSerial",
         "title": "Open UART",
         "icon": "$(console)",
         "category": "Arm Topo"
@@ -128,9 +128,10 @@
     "views": {
       "topo": [
         {
-          "id": "containerExplorer",
-          "icon": "$(symbol-folder)",
-          "name": "Board Services"
+          "id": "topo.target-manager",
+          "name": "Targets",
+          "visibility": "visible",
+          "icon": "$(chip)"
         }
       ]
     },
@@ -189,68 +190,68 @@
           "when": "false"
         },
         {
-          "command": "containerExplorer.stopContainer",
+          "command": "topo.stopContainer",
           "when": "false"
         },
         {
-          "command": "containerExplorer.startContainer",
+          "command": "topo.startContainer",
           "when": "false"
         },
         {
-          "command": "containerExplorer.deleteContainer",
+          "command": "topo.deleteContainer",
           "when": "false"
         },
         {
-          "command": "containerExplorer.openSerial",
+          "command": "topo.openSerial",
           "when": "false"
         },
         {
-          "command": "containerExplorer.attachVscode",
+          "command": "topo.attachVsCode",
           "when": "false"
         },
         {
-          "command": "containerExplorer.attachShell",
+          "command": "topo.attachShell",
           "when": "false"
         },
         {
-          "command": "containerExplorer.openInBrowser",
+          "command": "topo.openInBrowser",
           "when": "false"
         }
       ],
       "view/item/context": [
         {
-          "command": "containerExplorer.attachVscode",
-          "when": "view === containerExplorer && viewItem =~ /service/ && viewItem =~ /running/ && viewItem =~ /Host/",
+          "command": "topo.attachVsCode",
+          "when": "view === topo.target-manager && viewItem =~ /service/ && viewItem =~ /running/ && viewItem =~ /Host/",
           "group": "topo/attach@1"
         },
         {
-          "command": "containerExplorer.attachShell",
-          "when": "view === containerExplorer && viewItem =~ /service/ && viewItem =~ /running/ && viewItem =~ /Host/",
+          "command": "topo.attachShell",
+          "when": "view === topo.target-manager && viewItem =~ /service/ && viewItem =~ /running/ && viewItem =~ /Host/",
           "group": "topo/attach@1"
         },
         {
-          "command": "containerExplorer.openInBrowser",
-          "when": "view === containerExplorer && viewItem =~ /service/ && viewItem =~ /running/ && viewItem =~ /Host/",
+          "command": "topo.openInBrowser",
+          "when": "view === topo.target-manager && viewItem =~ /service/ && viewItem =~ /running/ && viewItem =~ /Host/",
           "group": "topo/attach@1"
         },
         {
-          "command": "containerExplorer.startContainer",
-          "when": "view === containerExplorer && viewItem =~ /service/ && viewItem =~ /exited/",
+          "command": "topo.startContainer",
+          "when": "view === topo.target-manager && viewItem =~ /service/ && viewItem =~ /exited/",
           "group": "topo/manage@1"
         },
         {
-          "command": "containerExplorer.stopContainer",
-          "when": "view === containerExplorer && viewItem =~ /service/ && viewItem =~ /running/",
+          "command": "topo.stopContainer",
+          "when": "view === topo.target-manager && viewItem =~ /service/ && viewItem =~ /running/",
           "group": "topo/manage@1"
         },
         {
-          "command": "containerExplorer.deleteContainer",
-          "when": "view === containerExplorer && viewItem =~ /service/",
+          "command": "topo.deleteContainer",
+          "when": "view === topo.target-manager && viewItem =~ /service/",
           "group": "topo/manage@2"
         },
         {
-          "command": "containerExplorer.openSerial",
-          "when": "view === containerExplorer && viewItem =~ /Subsystem/",
+          "command": "topo.openSerial",
+          "when": "view === topo.target-manager && viewItem =~ /Subsystem/",
           "group": "inline"
         }
       ]

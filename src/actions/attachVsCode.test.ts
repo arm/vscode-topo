@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { AttachVscode } from './attachVscode';
+import { AttachVsCode } from './attachVsCode';
 import { exec } from '../util/exec';
 import { BOARD_DOCKER_CONTEXT, BOARD_HOST_RUNTIME } from '../manifest';
 import { ContainerTreeItem } from '../workloadPlacement/containerTreeItems';
@@ -13,10 +13,10 @@ jest.mock('../util/exec', () => ({
 jest.mock('vscode');
 jest.mock('../util/logger');
 
-describe('attachVscode', () => {
+describe('attachVsCode', () => {
     let execMock: jest.Mock;
     let context: any;
-    let attachVscode: AttachVscode;
+    let attachVsCode: AttachVsCode;
     const registerCommandMock = vscode.commands.registerCommand as jest.Mock;
     const dockerCommands = new DockerCommands();
 
@@ -24,19 +24,19 @@ describe('attachVscode', () => {
         jest.clearAllMocks();
         execMock = exec as unknown as jest.Mock;
         context = { subscriptions: [] };
-        attachVscode = new AttachVscode(context, dockerCommands);
+        attachVsCode = new AttachVsCode(context, dockerCommands);
     });
 
     it('registers the command', async () => {
         const registerCommandMock = vscode.commands.registerCommand as jest.Mock;
         registerCommandMock.mockReturnValue({ dispose: jest.fn() });
 
-        await attachVscode.activate();
+        await attachVsCode.activate();
 
-        expect(registerCommandMock).toHaveBeenCalledWith('containerExplorer.attachVscode', expect.any(Function));
+        expect(registerCommandMock).toHaveBeenCalledWith(AttachVsCode.attachVsCodeCommandType, expect.any(Function));
     });
 
-    it('attachVscode command calls remote-containers.attachToRunningContainer with container id', async () => {
+    it('attachVsCode command calls remote-containers.attachToRunningContainer with container id', async () => {
         jest.useFakeTimers();
         const containerItem: ContainerTreeItem = {
             id: 'abc123',
@@ -54,7 +54,7 @@ describe('attachVscode', () => {
             memUsage: '0B / 1GiB',
         };
         registerCommandMock.mockReturnValue({ dispose: jest.fn() });
-        await attachVscode.activate();
+        await attachVsCode.activate();
         execMock.mockImplementation(async (command) => {
             if (command === 'docker context show') {
                 return { stdout: 'default\n', stderr: '' };
@@ -68,7 +68,7 @@ describe('attachVscode', () => {
             throw new Error(`Unknown command: ${command}`);
         });
         const registerCall = registerCommandMock.mock.calls.find(
-            ([cmd]: [string, unknown]) => cmd === 'containerExplorer.attachVscode'
+            ([cmd]: [string, unknown]) => cmd === AttachVsCode.attachVsCodeCommandType
         );
         const handler = registerCall[1];
 

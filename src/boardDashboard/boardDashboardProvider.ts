@@ -9,8 +9,8 @@ export class BoardDashboardProvider {
 
     constructor(
         private readonly context: vscode.ExtensionContext,
-    private readonly messageHandler: BoardDashboardMessageHandler,
-    private readonly ContainersManager: ContainersManager
+        private readonly messageHandler: BoardDashboardMessageHandler,
+        private readonly containersManager: ContainersManager
     ) {}
 
     public async activate() {
@@ -33,7 +33,7 @@ export class BoardDashboardProvider {
         );
         webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview);
 
-        const dataUpdateDisposable = this.ContainersManager.onDataUpdate(() => {
+        const dataUpdateDisposable = this.containersManager.onDataUpdate(() => {
             this.messageHandler.renderBoardDashboard(webviewPanel.webview);
         });
 
