@@ -1,15 +1,19 @@
 import * as vscode from 'vscode';
 import { BOARD_HOST_URL } from '../manifest';
 import { ContainerItem } from '../workloadPlacement/containersManager';
+import * as manifest from '../manifest';
 
 export class ContainerOpenInBrowser {
+
+    public static readonly openInBrowserCommandType = `${manifest.PACKAGE_NAME}.openInBrowser`;
+
     constructor(
         private readonly context: vscode.ExtensionContext,
     ) {}
 
     public async activate() {
         this.context.subscriptions.push(
-            vscode.commands.registerCommand("containerExplorer.openInBrowser", this.openContainerInBrowser.bind(this)),
+            vscode.commands.registerCommand(ContainerOpenInBrowser.openInBrowserCommandType, this.openContainerInBrowser.bind(this)),
         );
     }
 

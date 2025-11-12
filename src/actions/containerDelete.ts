@@ -1,15 +1,19 @@
 import * as vscode from 'vscode';
 import { ContainerItem, ContainersManager } from '../workloadPlacement/containersManager';
+import * as manifest from '../manifest';
 
 export class ContainerDelete {
+
+    public static readonly deleteContainerCommandType = `${manifest.PACKAGE_NAME}.deleteContainer`;
+
     constructor(
         private readonly context: vscode.ExtensionContext,
-    private readonly containersManager: Pick<ContainersManager, 'deleteContainer'>,
+        private readonly containersManager: Pick<ContainersManager, 'deleteContainer'>,
     ) {}
 
     public activate() {
         this.context.subscriptions.push(
-            vscode.commands.registerCommand('containerExplorer.deleteContainer', this.deleteContainer.bind(this))
+            vscode.commands.registerCommand(ContainerDelete.deleteContainerCommandType, this.deleteContainer.bind(this))
         );
     }
 

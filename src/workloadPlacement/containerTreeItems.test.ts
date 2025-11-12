@@ -1,11 +1,12 @@
 import * as vscode from 'vscode';
-import { ContainerGroupItem, ContainerTreeItem } from './containerTreeItems';
+import { ContainerTreeItem } from './containerTreeItems';
+import { SubsystemTreeItem } from './targetTreeDataProvider';
 
-describe('ContainerGroupItem', () => {
+describe('SubsystemTreeItem', () => {
     it('should set label and contextValue', () => {
-        const item = new ContainerGroupItem('Host');
+        const item = new SubsystemTreeItem('Host');
         expect(item.label).toBe('Host');
-        expect(item.contextValue).toBe('containerGroup');
+        expect(item.contextValue).toBe('Subsystem Host');
         expect(item.collapsibleState).toBe(vscode.TreeItemCollapsibleState.Collapsed);
     });
 });

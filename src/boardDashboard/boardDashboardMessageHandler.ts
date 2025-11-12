@@ -2,14 +2,14 @@ import * as vscode from 'vscode';
 import { logger } from '../util/logger';
 import { ContainersManager } from '../workloadPlacement/containersManager';
 import { ContainerOpenInBrowser } from '../actions/containerOpenInBrowser';
-import { AttachVscode } from '../actions/attachVscode';
+import { AttachVsCode } from '../actions/attachVsCode';
 import { AttachShell } from '../actions/attachShell';
 
 export class BoardDashboardMessageHandler {
     constructor(
         private readonly containersManager: ContainersManager,
     private readonly containerOpenInBrowser: ContainerOpenInBrowser,
-    private readonly attachVscode: AttachVscode,
+    private readonly attachVsCode: AttachVsCode,
     private readonly attachShell: AttachShell,
     ) {
     }
@@ -83,7 +83,7 @@ export class BoardDashboardMessageHandler {
                 if (!container) {
                     logger.warn(`Container with ID ${e.containerId} not found`);
                 } else {
-                    await this.attachVscode.attachVsCodeToContainer(container);
+                    await this.attachVsCode.attachVsCodeToContainer(container);
                 }
             } catch (err: unknown) {
                 logger.error(`Failed to attach VS Code to container: ${err instanceof Error ? err.message : "Unknown error"}`);

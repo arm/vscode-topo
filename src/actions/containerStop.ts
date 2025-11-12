@@ -1,16 +1,20 @@
 import * as vscode from 'vscode';
 import { ContainerItem, ContainersManager } from '../workloadPlacement/containersManager';
+import * as manifest from '../manifest';
 
 export class ContainerStop {
+
+    public static readonly stopContainerCommandType = `${manifest.PACKAGE_NAME}.stopContainer`;
+
     constructor(
         private readonly context: vscode.ExtensionContext,
-    private readonly containersManager: Pick<ContainersManager, 'stopContainer'>,
+        private readonly containersManager: Pick<ContainersManager, 'stopContainer'>,
     ) {}
 
     public async activate() {
 
         this.context.subscriptions.push(
-            vscode.commands.registerCommand('containerExplorer.stopContainer', this.stopContainer.bind(this)),
+            vscode.commands.registerCommand(ContainerStop.stopContainerCommandType, this.stopContainer.bind(this)),
         );
     }
 

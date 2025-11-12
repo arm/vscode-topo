@@ -1,8 +1,9 @@
 import * as vscode from 'vscode';
-import { ContainerGroupItem, ContainerTreeItem } from './containerTreeItems';
+import { ContainerTreeItem } from './containerTreeItems';
 import { ContainersManager } from './containersManager';
 import * as manifest from '../manifest';
 
+/** Represents a board */
 class BoardTreeItem extends vscode.TreeItem {
     constructor() {
         super('Board', vscode.TreeItemCollapsibleState.Expanded);
@@ -11,7 +12,18 @@ class BoardTreeItem extends vscode.TreeItem {
     }
 }
 
-export class ContainerTreeDataProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
+/** Represents a subsystem of the target (Host or Ambient) */
+export class SubsystemTreeItem extends vscode.TreeItem {
+    constructor(
+        public readonly group: 'Host' | 'Ambient'
+    ) {
+        super(group, vscode.TreeItemCollapsibleState.Collapsed);
+        this.iconPath = new vscode.ThemeIcon('multiple-windows');
+        this.contextValue = `Subsystem ${group}`;
+    }
+}
+
+export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
     private _onDidChangeTreeData = new vscode.EventEmitter<vscode.TreeItem | undefined>();
     readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
@@ -47,19 +59,15 @@ export class ContainerTreeDataProvider implements vscode.TreeDataProvider<vscode
         }
 
         if (element instanceof BoardTreeItem) {
-            const hostGroup = new ContainerGroupItem('Host');
-            hostGroup.iconPath = new vscode.ThemeIcon('multiple-windows');
-            hostGroup.contextValue = 'Subsystem Host';
-            const ambientGroup = new ContainerGroupItem('Ambient');
-            ambientGroup.iconPath = new vscode.ThemeIcon('multiple-windows');
-            ambientGroup.contextValue = 'Subsystem Ambient';
+            const hostSubsystem = new SubsystemTreeItem('Host');
+            const ambientSubsystem = new SubsystemTreeItem('Ambient');
             return [
-                hostGroup,
-                ambientGroup
+                hostSubsystem,
+                ambientSubsystem
             ];
         }
 
-        if (!(element instanceof ContainerGroupItem)) {
+        if (!(element instanceof SubsystemTreeItem)) {
             return [];
         }
 
