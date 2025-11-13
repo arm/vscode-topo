@@ -121,7 +121,7 @@
         {
           "id": "topo",
           "title": "Topo",
-          "icon": "$(chip)"
+          "icon": "media/device.svg"
         }
       ]
     },
@@ -131,7 +131,7 @@
           "id": "topo.target-manager",
           "name": "Targets",
           "visibility": "visible",
-          "icon": "$(chip)"
+          "icon": "media/device.svg"
         }
       ]
     },
