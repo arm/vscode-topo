@@ -1,13 +1,12 @@
 import { exec } from '../util/exec';
-import { BOARD_DOCKER_CONTEXT, BOARD_SSH_CONNECTION } from '../manifest';
 import { logger } from '../util/logger';
 import { ContainerCommands, DockerPsItem } from './containerCommands';
 
 export class DockerCommands implements ContainerCommands {
 
-    public async isContainerRuntimeOn(): Promise<boolean> {
+    public async isContainerRuntimeOn(boardSshConnection: string): Promise<boolean> {
         try {
-            const { stdout, stderr } = await exec(`ssh ${BOARD_SSH_CONNECTION} 'docker info'`);
+            const { stdout, stderr } = await exec(`ssh ${boardSshConnection} 'docker info'`);
             const err = stderr.trim();
             if (err) {
                 throw new Error(err || 'Failed to get Docker info');
@@ -45,7 +44,7 @@ export class DockerCommands implements ContainerCommands {
     /**
      * Ensures the Docker context is set for the board.
      */
-    public async ensureContext(contextName: string): Promise<void> {
+    public async ensureContext(contextName: string, boardSshConnection: string): Promise<void> {
         try {
             const { stdout, stderr } = await exec(`docker context ls --format '{{.Name}}'`);
             const err = stderr.trim();
@@ -56,7 +55,7 @@ export class DockerCommands implements ContainerCommands {
             if (contexts.includes(contextName)) {
                 return;
             }
-            const { stderr: stderr2 } = await exec(`docker context create ${contextName} --docker host=ssh://${BOARD_SSH_CONNECTION}`);
+            const { stderr: stderr2 } = await exec(`docker context create ${contextName} --docker host=ssh://${boardSshConnection}`);
             const err2 = stderr2.trim();
             if (err2) {
                 throw new Error(err2 || 'Failed to create Docker context');
@@ -179,8 +178,8 @@ export class DockerCommands implements ContainerCommands {
         }
     }
 
-    public getAttachShellCommand(containerId: string): string {
-        return `docker --context ${BOARD_DOCKER_CONTEXT} exec -it ${containerId} sh`;
+    public getAttachShellCommand(containerId: string, contextName: string): string {
+        return `docker --context ${contextName} exec -it ${containerId} sh`;
     }
 
 }

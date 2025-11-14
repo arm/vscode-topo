@@ -3,7 +3,7 @@ import { logger } from '../util/logger';
 import { BoardConnectionChecker } from '../util/boardConnectionChecker';
 import { Deferred } from '../util/deferred';
 import { ContainerCommands, DockerPsItem } from './containerCommands';
-import { BOARD_DOCKER_CONTEXT } from '../manifest';
+import { BOARD_DOCKER_CONTEXT, BOARD_SSH_CONNECTION } from '../manifest';
 
 /**
  * Represents a Docker container item from the output of the "docker ps" command.
@@ -66,13 +66,13 @@ export class ContainersManager {
     }
 
     public async activate(): Promise<void> {
-        await this.containerCommands.ensureContext(BOARD_DOCKER_CONTEXT);
+        await this.containerCommands.ensureContext(BOARD_DOCKER_CONTEXT, BOARD_SSH_CONNECTION);
         await this.startAutoRefresh();
     }
 
     private async getBoardStateInfo(): Promise<BoardState> {
         const isBoardReachable = await this.boardConnectionChecker.isBoardSshPortOpen();
-        const isBoardContainerRuntimeOn = isBoardReachable ? await this.containerCommands.isContainerRuntimeOn(BOARD_DOCKER_CONTEXT) : false;
+        const isBoardContainerRuntimeOn = isBoardReachable ? await this.containerCommands.isContainerRuntimeOn(BOARD_DOCKER_CONTEXT, BOARD_SSH_CONNECTION) : false;
         return {
             isReachable: isBoardReachable,
             hasContainerRuntime: isBoardContainerRuntimeOn
