@@ -22,6 +22,7 @@ import { ContainerDelete } from './actions/containerDelete';
 import { OpenSerial } from './actions/openSerial';
 import { DockerCommands } from './workloadPlacement/dockerCommands';
 import * as manifest from './manifest';
+import { OpenBoardDashboard } from './actions/openBoardDashboard';
 
 let topoCli: TopoCli;
 
@@ -52,6 +53,7 @@ export async function activate(context: vscode.ExtensionContext) {
     const containerStart = new ContainerStart(context, containersManager);
     const containerStop = new ContainerStop(context, containersManager);
     const containerDelete = new ContainerDelete(context, containersManager);
+    const openBoardDashboard = new OpenBoardDashboard(context, boardDashboardProvider);
     const openSerial = new OpenSerial(context);
 
     await topoCli.activate();
@@ -68,6 +70,7 @@ export async function activate(context: vscode.ExtensionContext) {
     await containerStart.activate();
     await containerStop.activate();
     await containerDelete.activate();
+    await openBoardDashboard.activate();
     await openSerial.activate();
 }
 

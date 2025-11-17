@@ -190,6 +190,10 @@
           "when": "false"
         },
         {
+          "command": "topo.openBoardDashboard",
+          "when": "false"
+        },
+        {
           "command": "topo.stopContainer",
           "when": "false"
         },
@@ -219,6 +223,10 @@
         }
       ],
       "view/item/context": [
+        {
+          "command": "topo.openBoardDashboard",
+          "when": "view === topo.target-manager && viewItem =~ /Board/"
+        },
         {
           "command": "topo.attachVsCode",
           "when": "view === topo.target-manager && viewItem =~ /service/ && viewItem =~ /running/ && viewItem =~ /Host/",
