@@ -9,6 +9,7 @@ class BoardTreeItem extends vscode.TreeItem {
         super('Board', vscode.TreeItemCollapsibleState.Expanded);
         this.description = manifest.BOARD_HOSTNAME;
         this.iconPath = new vscode.ThemeIcon('chip');
+        this.contextValue = 'Board';
     }
 }
 

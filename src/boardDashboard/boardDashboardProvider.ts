@@ -5,7 +5,6 @@ import { PACKAGE_NAME } from '../manifest';
 
 export class BoardDashboardProvider {
     public static readonly viewType = `${PACKAGE_NAME}.boardDashboard`;
-    public static readonly openCommandType = `${PACKAGE_NAME}.openBoardDashboard`;
 
     constructor(
         private readonly context: vscode.ExtensionContext,
@@ -13,15 +12,10 @@ export class BoardDashboardProvider {
         private readonly containersManager: ContainersManager
     ) {}
 
-    public async activate() {
-        this.context.subscriptions.push(
-            vscode.commands.registerCommand(BoardDashboardProvider.openCommandType, () => {
-                this.showDashboard();
-            })
-        );
+    public async activate(): Promise<void> {
     }
 
-    public showDashboard() {
+    public showDashboard(): void {
         const webviewPanel = vscode.window.createWebviewPanel(
             BoardDashboardProvider.viewType,
             'Board Dashboard',
