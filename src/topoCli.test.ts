@@ -104,27 +104,19 @@ describe('TopoCli', () => {
         await expect(topoCli.removeService('c', 's')).rejects.toThrow('err');
     });
 
-    it('initProject resolves promise on success', async () => {
+    it('init resolves promise on success', async () => {
         execMock.mockImplementation((_bin, _cargs, _options, cb) => {
             cb(null, '', '');
         });
-        await expect(topoCli.initProject('c', 'p')).resolves.toBeUndefined();
-        const expectedArgs = ['init-project', 'c', 'p'];
-        expect(execMock).toHaveBeenCalledWith(topoCli.getBinaryPath(), expectedArgs, { cwd: ".", env: {} }, expect.any(Function));
+        const workspacePath = '/fake/workspace';
+        await expect(topoCli.init(workspacePath)).resolves.toBeUndefined();
+        const expectedArgs = ['init'];
+        expect(execMock).toHaveBeenCalledWith(topoCli.getBinaryPath(), expectedArgs, { cwd: workspacePath, env: {} }, expect.any(Function));
     });
 
-    it('initProject uses the target argument if provided', async () => {
-        execMock.mockImplementation((_bin, _cargs, _options, cb) => {
-            cb(null, '', '');
-        });
-        await expect(topoCli.initProject('c', 'p', 't')).resolves.toBeUndefined();
-        const expectedArgs = ['init-project', 'c', 'p', '--target', 't'];
-        expect(execMock).toHaveBeenCalledWith(topoCli.getBinaryPath(), expectedArgs, { cwd: ".", env: {} }, expect.any(Function));
-    });
-
-    it('initProject rejects promise on error', async () => {
+    it('init rejects promise on error', async () => {
         execMock.mockImplementation((_bin, _args, _options, cb) => cb(new Error('fail'), '', 'err')); 
-        await expect(topoCli.initProject('c', 'p', 't')).rejects.toThrow('err');
+        await expect(topoCli.init('t')).rejects.toThrow('err');
     });
 
     it('generateMakefile resolves promise on success', async () => {
