@@ -108,10 +108,10 @@
       {
         "viewType": "topo.composeEditor",
         "displayName": "Compose Editor",
+        "priority": "option",
         "selector": [
           {
-            "filenamePattern": "compose.topo{,.*}.yaml",
-            "priority": "option"
+            "filenamePattern": "compose.topo{,.*}.yaml"
           }
         ]
       }
