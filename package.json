@@ -17,7 +17,7 @@
   ],
   "main": "./dist/extension.js",
   "topo": {
-    "version": "0.1.0-20251103164837"
+    "version": "0.1.0-20251119122257"
   },
   "contributes": {
     "commands": [

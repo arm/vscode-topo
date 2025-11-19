@@ -2,7 +2,7 @@ import * as manifest from './manifest';
 import * as vscode from 'vscode';
 import { TopoCli } from './topoCli';
 
-type ProjectInitializerBinary = Pick<TopoCli, 'initProject'>;
+type ProjectInitializerBinary = Pick<TopoCli, 'init'>;
 
 export class ProjectInit {
 
@@ -20,33 +20,14 @@ export class ProjectInit {
     }
 
     private async initProject(): Promise<void> {
-        const folderUri = await vscode.window.showOpenDialog({
-            canSelectFolders: true,
-            canSelectFiles: false,
-            canSelectMany: false,
-            defaultUri: vscode.workspace.workspaceFolders
-                ? vscode.workspace.workspaceFolders[0].uri
-                : undefined,
-            openLabel: 'Select the project folder'
-        });
-
-        if (!folderUri || folderUri.length === 0) {
-            return;
-        }
-
-        const projectPath = folderUri[0].fsPath;
-
-        const projectName = await vscode.window.showInputBox({
-            prompt: 'Enter the project name',
-            value: 'example-project'
-        });
-        if (!projectName) {
-            return;
-        }
         try {
-            const sshTarget = manifest.BOARD_SSH_TARGET;
-            await this.topoCli.initProject(projectPath, projectName, sshTarget);
-            vscode.window.showInformationMessage(`Project "${projectName}" initialized successfully.`);
+            const projectPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+            if (!projectPath) {
+                vscode.window.showErrorMessage('No workspace folder is open. Please open a folder to initialize the project.');
+                return;
+            }
+            await this.topoCli.init(projectPath);
+            vscode.window.showInformationMessage(`Project initialized successfully.`);
         } catch (err: unknown) {
             const errorMsg = err instanceof Error ? err.message : String(err);
             vscode.window.showErrorMessage(`Failed to initialize project: ${errorMsg}`);
