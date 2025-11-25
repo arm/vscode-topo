@@ -11,5 +11,14 @@ vsc-extension-quickstart.md
 **/eslint.config.mjs
 **/*.map
 **/*.ts
+**/*.tsx
 **/.vscode-test.*
 __mocks__
+**/__snapshots__
+test-workspace/**
+coverage
+.github
+jest.config.js
+tsconfig.eslint.json
+tsconfig.json
+.eslintignore
