@@ -35,7 +35,6 @@ export default defineConfig((config: ConfigEnv) => {
           'fs',
           'path',
           'child_process',
-          'lodash.debounce',
           'util',
           'net'
         ],
