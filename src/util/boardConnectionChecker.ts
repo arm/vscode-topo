@@ -1,6 +1,5 @@
 
 import net from 'net';
-import { BOARD_HOSTNAME } from '../manifest';
 import { logger } from './logger';
 
 export class BoardConnectionChecker {
@@ -9,7 +8,7 @@ export class BoardConnectionChecker {
     * Checks if the SSH port of the board is open.
     * @returns {Promise<boolean>} - Returns true if the port is open, false otherwise.
     */
-    public async isBoardSshPortOpen(): Promise<boolean> {
+    public async isBoardSshPortOpen(sshHostname: string): Promise<boolean> {
         try {
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), 2000);
@@ -28,7 +27,7 @@ export class BoardConnectionChecker {
                     reject(new Error('Timeout'));
                 });
     
-                socket.connect(22, BOARD_HOSTNAME, () => {
+                socket.connect(22, sshHostname, () => {
                     socket.end();
                     controller.signal.removeEventListener('abort', onAbort);
                     resolve({ status: 200 });

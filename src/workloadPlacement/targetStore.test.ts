@@ -1,0 +1,123 @@
+import * as vscode from 'vscode';
+import { TargetStore, TargetStoreContext } from './targetStore';
+import { Target } from './target';
+
+jest.mock('vscode');
+jest.mock('../util/logger');
+
+type Watcher = Pick<vscode.FileSystemWatcher, 'onDidCreate' | 'onDidChange' | 'onDidDelete' | 'dispose'>;
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+const waitImmediate = async () => {
+    await Promise.resolve();
+    await Promise.resolve();
+};
+
+function createMockContext() {
+    const globalMap = new Map<string, string | undefined>();
+    const workspaceMap = new Map<string, string | undefined>();
+
+    const globalStorageUri = vscode.Uri.parse('file:///fake/globalStorage');
+    const globalState = {
+        get: (k: string) => globalMap.get(k),
+        update: async (k: string, v: string | undefined) => { globalMap.set(k, v); },
+    } as unknown as vscode.ExtensionContext['globalState'];
+    const workspaceState = {
+        get: (k: string) => workspaceMap.get(k),
+        update: async (k: string, v: string | undefined) => { workspaceMap.set(k, v); },
+    } as unknown as vscode.Memento;
+
+    const context: TargetStoreContext = {
+        globalState,
+        workspaceState,
+        globalStorageUri,
+    };
+
+    return { context };
+}
+
+describe('TargetStore', () => {
+
+    const emitter = new vscode.EventEmitter<vscode.Uri>();
+    const fsWatchers: { pattern: string, watcher: Watcher }[] = [];
+    (vscode.workspace.createFileSystemWatcher as jest.Mock).mockImplementation((pattern) => {
+        const watcher = {
+            onDidCreate: emitter.event,
+            onDidChange: emitter.event,
+            onDidDelete: emitter.event,
+            dispose: () => {}
+        };
+        fsWatchers.push({ pattern, watcher });
+        return watcher;
+    });
+    (vscode.workspace.fs.writeFile as jest.Mock).mockImplementation(async (uri, _content) => {
+        for (const _entry of fsWatchers) {
+            emitter.fire(uri);
+        }
+    });
+
+    beforeEach(() => {
+        (TargetStore as any).instance = undefined;
+        (vscode as any).window.state = { focused: true };
+    });
+
+    it('persists targets via setTarget and exposes them via getTargets', async () => {
+        const { context } = createMockContext();
+        const store = TargetStore.getInstance(context);
+
+        const t = new Target('t1', 'alice@example.com', 'Alice');
+        await store.upsertTarget(t);
+
+        const targets = store.getTargets();
+        expect(targets.some(x => x.id === 't1')).toBe(true);
+
+        const raw = context.globalState.get('targets') as string | undefined;
+        expect(typeof raw).toBe('string');
+        const parsed = JSON.parse(raw || '{}');
+        expect(parsed.t1).toBeDefined();
+        expect(parsed.t1.ssh).toBe('alice@example.com');
+    });
+
+    it('stores selected target and fires onChanged when setSelected is called', async () => {
+        const { context } = createMockContext();
+        const store = TargetStore.getInstance(context);
+        const t = new Target('t2', 'bob@example.com', 'Bob');
+        await store.upsertTarget(t);
+        const cb = jest.fn();
+        store.onChanged(cb);
+
+        await store.setSelected('t2');
+
+        expect(context.workspaceState.get('selectedTarget')).toBe('t2');
+        expect(cb).toHaveBeenCalled();
+    });
+
+    it('returns the selected Target via getSelectedTarget', async () => {
+        const { context } = createMockContext();
+        const store = TargetStore.getInstance(context);
+
+        const t = new Target('t3', 'carol@example.com', 'Carol');
+        await store.upsertTarget(t);
+        await store.setSelected('t3');
+
+        const selected = await store.getSelectedTarget();
+        expect(selected).toBeDefined();
+        expect(selected?.id).toBe('t3');
+        expect(selected?.ssh).toBe('carol@example.com');
+    });
+
+    it('fires onChanged when signal file is modified externally and window is not focused', async () => {
+        const { context } = createMockContext();
+        const store = TargetStore.getInstance(context);
+        const cb = jest.fn();
+        store.onChanged(cb);
+        (vscode as any).window.state.focused = false;
+        const signalUri = (vscode as any).Uri.joinPath(context.globalStorageUri, 'targets-update.signal');
+
+        await vscode.workspace.fs.writeFile(signalUri, new TextEncoder().encode('1'));
+        await waitImmediate();
+
+        expect(cb).toHaveBeenCalled();
+    });
+});

@@ -1,6 +1,7 @@
 import * as manifest from './manifest';
 import * as vscode from 'vscode';
 import { TopoCli } from './topoCli';
+import { TargetStore } from './workloadPlacement/targetStore';
 
 type ProjectInitializerBinary = Pick<TopoCli, 'init'>;
 
@@ -9,8 +10,9 @@ export class ProjectInit {
     public static initProjectCommand = `${manifest.PACKAGE_NAME}.initProject`;
 
     constructor(
-        private readonly context: vscode.ExtensionContext,
-    private readonly topoCli: ProjectInitializerBinary,
+        private readonly context: Pick<vscode.ExtensionContext, 'subscriptions'>,
+        private readonly topoCli: Pick<ProjectInitializerBinary, 'init'>,
+        private readonly targetStore: Pick<TargetStore, 'getSelectedTarget'>,
     ) {}
 
     public async activate() {
@@ -26,7 +28,12 @@ export class ProjectInit {
                 vscode.window.showErrorMessage('No workspace folder is open. Please open a folder to initialize the project.');
                 return;
             }
-            await this.topoCli.init(projectPath);
+            const selectedTarget = await this.targetStore.getSelectedTarget();
+            if (!selectedTarget) {
+                vscode.window.showErrorMessage('No target selected. Please select a target before initializing the project.');
+                return;
+            }
+            await this.topoCli.init(projectPath, selectedTarget.ssh);
             vscode.window.showInformationMessage(`Project initialized successfully.`);
         } catch (err: unknown) {
             const errorMsg = err instanceof Error ? err.message : String(err);

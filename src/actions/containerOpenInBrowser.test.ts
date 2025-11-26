@@ -1,4 +1,4 @@
-import { BOARD_HOST_URL } from '../manifest';
+import { Target } from '../workloadPlacement/target';
 import { ContainersManager, ContainerItem } from '../workloadPlacement/containersManager';
 import { ContainerOpenInBrowser } from './containerOpenInBrowser';
 import vscode from 'vscode';
@@ -9,7 +9,10 @@ describe('ContainerOpenInBrowser', () => {
     let containersManager: jest.Mocked<ContainersManager>;
     let context: any;
     const registerCommandMock = vscode.commands.registerCommand as jest.Mock;
-
+    const target = new Target(
+        'topo',
+        'user@topo.local',
+    );
     const mockContainer: ContainerItem = {
         id: 'abc123',
         name: 'mock',
@@ -23,6 +26,7 @@ describe('ContainerOpenInBrowser', () => {
         ports: ['8080:80', '1234:1234'],
         cpuUsage: '',
         memUsage: '',
+        target,
     };
 
     beforeEach(() => {
@@ -42,12 +46,12 @@ describe('ContainerOpenInBrowser', () => {
             ([cmd]: [string, any]) => cmd === ContainerOpenInBrowser.openInBrowserCommandType
         )?.[1];
         const port = '8080:80';
-        const item = { id: 'abc123', ports: [port] } as ContainerItem;
+        const item = { id: 'abc123', ports: [port], target } as ContainerItem;
   
         await openInBrowser(item);
 
         const publishedPort = port.split(':')[0];
-        const url = `${BOARD_HOST_URL}:${publishedPort}`;
+        const url = `http://${target.host}:${publishedPort}`;
         expect(vscode.env.openExternal).toHaveBeenCalledWith(vscode.Uri.parse(url));
         expect(vscode.window.showWarningMessage).not.toHaveBeenCalled();
     });
@@ -58,7 +62,7 @@ describe('ContainerOpenInBrowser', () => {
         const openInBrowser = registerCommandMock.mock.calls.find(
             ([cmd]: [string, any]) => cmd === ContainerOpenInBrowser.openInBrowserCommandType
         )?.[1];
-        const item = { id: 'abc123', ports: [] } as unknown as ContainerItem;
+        const item = { id: 'abc123', ports: [], target } as unknown as ContainerItem;
 
         await openInBrowser(item);
 
@@ -72,7 +76,7 @@ describe('ContainerOpenInBrowser', () => {
         const openInBrowser = registerCommandMock.mock.calls.find(
             ([cmd]: [string, any]) => cmd === ContainerOpenInBrowser.openInBrowserCommandType
         )?.[1];
-        const item = { id: 'abc123', ports: ['22:22'] } as ContainerItem;
+        const item = { id: 'abc123', ports: ['22:22'], target } as ContainerItem;
 
         await openInBrowser(item);
 

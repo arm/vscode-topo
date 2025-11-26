@@ -3,7 +3,9 @@ import { logger } from '../util/logger';
 import { BoardConnectionChecker } from '../util/boardConnectionChecker';
 import { Deferred } from '../util/deferred';
 import { ContainerCommands, DockerPsItem } from './containerCommands';
-import { BOARD_DOCKER_CONTEXT, BOARD_SSH_CONNECTION } from '../manifest';
+import { getDockerContextName } from '../util/dockerContext';
+import { TargetStore } from './targetStore';
+import { Target } from './target';
 
 /**
  * Represents a Docker container item from the output of the "docker ps" command.
@@ -20,6 +22,7 @@ import { BOARD_DOCKER_CONTEXT, BOARD_SSH_CONNECTION } from '../manifest';
  * @property {string[]} ports - The ports exposed by the container.
  * @property {string} cpuUsage - The CPU usage of the container.
  * @property {string} memUsage - The memory usage of the container.
+ * @property {Target} target - The target associated with the container.
  */
 export interface ContainerItem {
   id: string;
@@ -34,11 +37,13 @@ export interface ContainerItem {
   ports: string[];
   cpuUsage: string;
   memUsage: string;
+  target: Target;
 }
 
 export interface BoardState {
     isReachable: boolean;
     hasContainerRuntime: boolean;
+    targetId: string | undefined;
 }
 
 export class ContainersManager {
@@ -48,34 +53,86 @@ export class ContainersManager {
     private boardStateInitialised = false;
     private readonly _onDataUpdate = new vscode.EventEmitter<void>();
     public readonly onDataUpdate = this._onDataUpdate.event;
+    private readonly defaultBoardState: BoardState = {
+        isReachable: false,
+        hasContainerRuntime: false,
+        targetId: undefined,
+    };
     private refreshTimer: NodeJS.Timeout | undefined;
     private shouldAutoRefresh = false;
     private containersData: ContainerItem[] = [];
-    private boardState: BoardState = {
-        isReachable: false,
-        hasContainerRuntime: false,
-    };
+    private boardState: BoardState = this.defaultBoardState;
+    private target: Target | undefined;
 
     constructor(
-        private readonly boardConnectionChecker: BoardConnectionChecker,
+        private readonly boardConnectionChecker: Pick<BoardConnectionChecker, 'isBoardSshPortOpen'>,
         private readonly containerCommands: ContainerCommands,
+        private readonly targetStore: Pick<TargetStore, 'onChanged' | 'getSelectedTarget'>,
     ) {}
+
+    private get contextName(): string {
+        if (!this.target) {
+            throw new Error('Cannot get Docker context: no target is currently selected');
+        }
+        return getDockerContextName(this.target);
+    }
 
     private get isBoardAvailable(): boolean {
         return this.boardState.isReachable && this.boardState.hasContainerRuntime;
     }
 
     public async activate(): Promise<void> {
-        await this.containerCommands.ensureContext(BOARD_DOCKER_CONTEXT, BOARD_SSH_CONNECTION);
+        await this.updateTarget();
+        this.targetStore.onChanged(async () => {
+            await this.updateTarget();
+        });
+    }
+
+    private async updateTarget() {
+        const selectedTarget = await this.targetStore.getSelectedTarget();
+        await this.unsetTarget();
+        if (selectedTarget) {
+            await this.setTarget(selectedTarget);
+        }
         await this.startAutoRefresh();
     }
 
+    private async setTarget(target: Target) {
+        this.target = target;
+        await this.containerCommands.ensureContext(this.contextName, target.ssh);
+    }
+
+    private async unsetTarget() {
+        await this.stopAutoRefresh();
+        this.target = undefined;
+        this.containersData = [];
+        this.containersDataInitialised = false;
+        this.boardState = this.defaultBoardState;
+        this.boardStateInitialised = false;
+    }
+
     private async getBoardStateInfo(): Promise<BoardState> {
-        const isBoardReachable = await this.boardConnectionChecker.isBoardSshPortOpen();
-        const isBoardContainerRuntimeOn = isBoardReachable ? await this.containerCommands.isContainerRuntimeOn(BOARD_DOCKER_CONTEXT, BOARD_SSH_CONNECTION) : false;
+        const target = this.target;
+        if (!target) {
+            return {
+                isReachable: false,
+                hasContainerRuntime: false,
+                targetId: undefined,
+            };
+        }
+        const isBoardReachable = await this.boardConnectionChecker.isBoardSshPortOpen(target.host);
+        if (!isBoardReachable) {
+            return {
+                isReachable: false,
+                hasContainerRuntime: false,
+                targetId: target.id,
+            };
+        }
+        const isBoardContainerRuntimeOn = await this.containerCommands.isContainerRuntimeOn(target.ssh);
         return {
             isReachable: isBoardReachable,
-            hasContainerRuntime: isBoardContainerRuntimeOn
+            hasContainerRuntime: isBoardContainerRuntimeOn,
+            targetId: target.id,
         };
     }
 
@@ -133,12 +190,16 @@ export class ContainersManager {
 
     private async getContainersInfo(): Promise<ContainerItem[]> {
         try {
-            const items = await this.containerCommands.getContainers(BOARD_DOCKER_CONTEXT);
+            const target = this.target;
+            if (!target) {
+                return [];
+            }
+            const items = await this.containerCommands.getContainers(this.contextName);
             const ids = items.map(item => item.ID);
-            const inspectStdout = await this.containerCommands.inspectContainers(ids, BOARD_DOCKER_CONTEXT);
+            const inspectStdout = await this.containerCommands.inspectContainers(ids, this.contextName);
             const inspectLines = inspectStdout.trim().split(/\r?\n/);
             const parsedInspectLines = inspectLines.map(line => line.split(';'));
-            const statsOutput = await this.containerCommands.containerStats(ids, BOARD_DOCKER_CONTEXT);
+            const statsOutput = await this.containerCommands.containerStats(ids, this.contextName);
             const statsLines = statsOutput.trim().split(/\r?\n/);
             const parsedStatsLines = statsLines.map(line => line.split(';'));
             const containersData = items.reduce<ContainerItem[]>((acc, item) => {
@@ -148,7 +209,7 @@ export class ContainersManager {
                 const runtime = containerInspectLine ? containerInspectLine[2] : '';
                 const cpuUsage = containerStatsLine ? containerStatsLine[1] : '';
                 const memUsage = containerStatsLine ? containerStatsLine[2] : '';
-                acc.push(this.createContainerItem(item, runtime, ports, cpuUsage, memUsage));
+                acc.push(this.createContainerItem(item, runtime, ports, cpuUsage, memUsage, target));
                 return acc;
             }, []);
             return containersData;
@@ -212,18 +273,18 @@ export class ContainersManager {
     }
 
     public async stopContainer(containerId: string): Promise<void> {
-        return this.containerCommands.stopContainer(containerId, BOARD_DOCKER_CONTEXT);
+        return this.containerCommands.stopContainer(containerId, this.contextName);
     }
 
     public async startContainer(containerId: string): Promise<void> {
-        return this.containerCommands.startContainer(containerId, BOARD_DOCKER_CONTEXT);
+        return this.containerCommands.startContainer(containerId, this.contextName);
     }
 
     public async deleteContainer(containerId: string): Promise<void> {
-        return this.containerCommands.deleteContainer(containerId, BOARD_DOCKER_CONTEXT);
+        return this.containerCommands.deleteContainer(containerId, this.contextName);
     }
 
-    private createContainerItem(item: DockerPsItem, runtime: string, ports: string[], cpuUsage: string, memUsage: string): ContainerItem {
+    private createContainerItem(item: DockerPsItem, runtime: string, ports: string[], cpuUsage: string, memUsage: string, target: Target): ContainerItem {
         return {
             id: item.ID,
             name: item.Names,
@@ -237,6 +298,7 @@ export class ContainersManager {
             ports,
             cpuUsage,
             memUsage,
+            target,
         };
     }
 }

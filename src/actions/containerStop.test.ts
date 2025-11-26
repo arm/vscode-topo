@@ -2,6 +2,7 @@ import { BOARD_HOST_RUNTIME } from '../manifest';
 import { ContainerTreeItem } from '../workloadPlacement/containerTreeItems';
 import * as vscode from 'vscode';
 import { ContainerStop } from './containerStop';
+import { Target } from '../workloadPlacement/target';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -10,6 +11,10 @@ describe('ContainerStop', () => {
     let showErrorMessageSpy: jest.SpyInstance;
     let commandHandler: { command: string; callback: (...args: any[]) => void } | undefined;
     const registerCommandMock = vscode.commands.registerCommand as jest.Mock;
+    const target = new Target(
+        'topo',
+        'user@topo.local',
+    );
 
     beforeEach(() => {
         showErrorMessageSpy = jest.spyOn(vscode.window, 'showErrorMessage').mockImplementation(jest.fn());
@@ -42,6 +47,7 @@ describe('ContainerStop', () => {
             ports: [],
             cpuUsage: '0.0%',
             memUsage: '0B / 1GiB',
+            target,
         };
         const stopContainerSpy = jest.fn(async () => undefined);
         const containersManager = {
@@ -74,6 +80,7 @@ describe('ContainerStop', () => {
             ports: [],
             cpuUsage: '0.0%',
             memUsage: '0B / 1GiB',
+            target,
         };
         const containerStop = new ContainerStop(context, containersManager);
         await containerStop.activate();

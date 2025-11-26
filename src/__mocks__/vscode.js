@@ -111,6 +111,7 @@ const window = {
         onDidExpandElement: new EventEmitter().event,
         onDidCollapseElement: new EventEmitter().event,
     })),
+    state: { focused: true },
 };
 const fs = {
     readFile: jest.fn(),
@@ -126,6 +127,7 @@ const workspace = {
     onDidSaveTextDocument: new EventEmitter().event,
     openTextDocument: jest.fn(),
     updateWorkspaceFolders: jest.fn(),
+    createFileSystemWatcher: jest.fn(),
 };
 
 const TreeItemCollapsibleState = {
@@ -180,6 +182,13 @@ class ThemeIcon {
     }
 }
 
+const UIKind = {
+	Desktop: 1,
+	Web: 2
+};
+
+env.uiKind = UIKind.Desktop;
+
 module.exports = {
     CodeAction,
     ColorThemeKind,
@@ -210,4 +219,5 @@ module.exports = {
     TreeItemCollapsibleState,
     ThemeColor,
     ThemeIcon,
+    UIKind,
 };

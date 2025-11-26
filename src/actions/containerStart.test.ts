@@ -2,6 +2,7 @@ import { BOARD_HOST_RUNTIME } from '../manifest';
 import { ContainerTreeItem } from '../workloadPlacement/containerTreeItems';
 import * as vscode from 'vscode';
 import { ContainerStart } from './containerStart';
+import { Target } from '../workloadPlacement/target';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -10,6 +11,10 @@ describe('ContainerStart', () => {
     let showErrorMessageSpy: jest.SpyInstance;
     let commandHandler: { command: string; callback: (...args: any[]) => void } | undefined;
     const registerCommandMock = vscode.commands.registerCommand as jest.Mock;
+    const target = new Target(
+        'topo',
+        'user@topo.local',
+    );
 
     beforeEach(() => {
         showErrorMessageSpy = jest.spyOn(vscode.window, 'showErrorMessage').mockImplementation(jest.fn());
@@ -47,6 +52,7 @@ describe('ContainerStart', () => {
             ports: [],
             cpuUsage: '0.0%',
             memUsage: '0B / 1GiB',
+            target,
         };
         const startContainerSpy = jest.fn(async () => undefined);
         const containersManager = {
@@ -79,6 +85,7 @@ describe('ContainerStart', () => {
             ports: [],
             cpuUsage: '0.0%',
             memUsage: '0B / 1GiB',
+            target,
         };
         const containerStart = new ContainerStart(context, containersManager);
         await containerStart.activate();

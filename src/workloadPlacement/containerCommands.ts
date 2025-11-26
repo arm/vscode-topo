@@ -22,7 +22,7 @@ export interface DockerPsItem {
 }
 
 export interface ContainerCommands {
-    isContainerRuntimeOn(contextName: string, boardSshConnection: string): Promise<boolean>;
+    isContainerRuntimeOn(boardSshConnection: string): Promise<boolean>;
     getCurrentContext(): Promise<string>;
     useContext(contextName: string): Promise<void>;
     getContexts(): Promise<string[]>;

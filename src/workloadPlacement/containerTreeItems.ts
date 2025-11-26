@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { BOARD_HOST_RUNTIME } from '../manifest';
 import { ContainerItem } from './containersManager';
+import { Target } from './target';
 
 /** Represents an individual container in the target tree view. */
 export class ContainerTreeItem extends vscode.TreeItem implements ContainerItem {
@@ -20,6 +21,7 @@ export class ContainerTreeItem extends vscode.TreeItem implements ContainerItem 
         public readonly ports: string[],
         public readonly cpuUsage: string,
         public readonly memUsage: string,
+        public readonly target: Target
     ) {
         super(image, vscode.TreeItemCollapsibleState.None);
         this.description = `${name} - ${runningFor}`;

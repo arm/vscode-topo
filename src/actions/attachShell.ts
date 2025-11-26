@@ -1,8 +1,9 @@
 import * as vscode from 'vscode';
-import { BOARD_HOSTNAME, BOARD_SSH_CONNECTION } from '../manifest';
 import { ContainerItem } from '../workloadPlacement/containersManager';
 import { ContainerCommands } from '../workloadPlacement/containerCommands';
 import * as manifest from '../manifest';
+import { getDockerContextName } from '../util/dockerContext';
+import { TargetStore } from '../workloadPlacement/targetStore';
 
 export class AttachShell {
 
@@ -11,6 +12,7 @@ export class AttachShell {
     constructor(
         private readonly context: vscode.ExtensionContext,
         private readonly containerCommands: ContainerCommands,
+        private readonly targetStore: Pick<TargetStore, 'getSelectedTarget'>,
     ) {}
 
     public activate() {
@@ -21,13 +23,18 @@ export class AttachShell {
 
     public async attachShell(item: ContainerItem) {
         const terminal = vscode.window.createTerminal({ name: `Shell: ${item.image}` });
-        terminal.sendText(this.containerCommands.getAttachShellCommand(item.id, manifest.BOARD_DOCKER_CONTEXT));
+        terminal.sendText(this.containerCommands.getAttachShellCommand(item.id, getDockerContextName(item.target)));
         terminal.show();
     }
 
     public async attachSSH() {
-        const terminal = vscode.window.createTerminal({ name: `SSH: ${BOARD_HOSTNAME}` });
-        terminal.sendText(`ssh ${BOARD_SSH_CONNECTION}`);
+        const target = await this.targetStore.getSelectedTarget();
+        if (!target) {
+            vscode.window.showErrorMessage('No target is currently selected');
+            return;
+        }
+        const terminal = vscode.window.createTerminal({ name: `SSH: ${target.displayName}` });
+        terminal.sendText(`ssh ${target.ssh}`);
         terminal.show();
     }
 }

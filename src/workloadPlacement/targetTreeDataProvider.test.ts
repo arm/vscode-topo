@@ -3,12 +3,17 @@ import { ContainerTreeItem } from './containerTreeItems';
 import { SubsystemTreeItem } from './targetTreeDataProvider';
 import * as manifest from '../manifest';
 import { ContainerItem } from './containersManager';
+import { Target } from './target';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 describe('TargetTreeDataProvider', () => {
     let provider: TargetTreeDataProvider;
     let containersManagerMock: any;
+    const target = new Target(
+        'topo',
+        'user@topo.local',
+    );
 
     const mockContainers: ContainerItem[] = [
         {
@@ -24,6 +29,7 @@ describe('TargetTreeDataProvider', () => {
             ports: [],
             cpuUsage: '0.0%',
             memUsage: '0B / 1GiB',
+            target,
         },
         {
             id: 'id2',
@@ -38,6 +44,7 @@ describe('TargetTreeDataProvider', () => {
             ports: [],
             cpuUsage: '0.0%',
             memUsage: '0B / 1GiB',
+            target,
         },
         {
             id: 'id3',
@@ -52,6 +59,7 @@ describe('TargetTreeDataProvider', () => {
             ports: [],
             cpuUsage: '0.0%',
             memUsage: '0B / 1GiB',
+            target,
         }
     ];
 
@@ -64,7 +72,11 @@ describe('TargetTreeDataProvider', () => {
             onDataUpdate: jest.fn(),
             getBoardState: jest.fn().mockResolvedValue(boardState),
         };
-        provider = new TargetTreeDataProvider(containersManagerMock);
+        const targetStoreMock = {
+            onChanged: jest.fn(),
+            getSelectedTarget: jest.fn().mockResolvedValue(target),
+        };
+        provider = new TargetTreeDataProvider(containersManagerMock, targetStoreMock);
         jest.clearAllTimers();
     });
 

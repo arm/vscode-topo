@@ -1,9 +1,10 @@
 import * as vscode from 'vscode';
 import { AttachVsCode } from './attachVsCode';
 import { exec } from '../util/exec';
-import { BOARD_DOCKER_CONTEXT, BOARD_HOST_RUNTIME } from '../manifest';
+import { BOARD_HOST_RUNTIME } from '../manifest';
 import { ContainerTreeItem } from '../workloadPlacement/containerTreeItems';
 import { DockerCommands } from '../workloadPlacement/dockerCommands';
+import { Target } from '../workloadPlacement/target';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -19,6 +20,11 @@ describe('attachVsCode', () => {
     let attachVsCode: AttachVsCode;
     const registerCommandMock = vscode.commands.registerCommand as jest.Mock;
     const dockerCommands = new DockerCommands();
+    const target = new Target(
+        'topo',
+        'user@topo.local',
+    );
+    const dockerContext = 'topo.local';
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -52,6 +58,7 @@ describe('attachVsCode', () => {
             ports: [],
             cpuUsage: '0.0%',
             memUsage: '0B / 1GiB',
+            target,
         };
         registerCommandMock.mockReturnValue({ dispose: jest.fn() });
         await attachVsCode.activate();
@@ -59,8 +66,8 @@ describe('attachVsCode', () => {
             if (command === 'docker context show') {
                 return { stdout: 'default\n', stderr: '' };
             }
-            if (command === `docker context use ${BOARD_DOCKER_CONTEXT}`) {
-                return { stdout: `${BOARD_DOCKER_CONTEXT}\n`, stderr: '' };
+            if (command === `docker context use ${dockerContext}`) {
+                return { stdout: `${dockerContext}\n`, stderr: '' };
             }
             if (command === 'docker context use default') {
                 return { stdout: 'default\n', stderr: '' };
@@ -76,7 +83,7 @@ describe('attachVsCode', () => {
         await jest.advanceTimersByTimeAsync(3000);
 
         expect(execMock).toHaveBeenCalledWith('docker context show');
-        expect(execMock).toHaveBeenCalledWith(`docker context use ${BOARD_DOCKER_CONTEXT}`);
+        expect(execMock).toHaveBeenCalledWith(`docker context use ${dockerContext}`);
         expect(vscode.commands.executeCommand).toHaveBeenCalledWith('remote-containers.attachToRunningContainer', containerItem.id);
         expect(execMock).toHaveBeenLastCalledWith('docker context use default');
     });
