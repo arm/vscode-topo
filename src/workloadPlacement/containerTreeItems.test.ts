@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { ContainerTreeItem } from './containerTreeItems';
 import { SubsystemTreeItem } from './targetTreeDataProvider';
+import { Target } from './target';
 
 describe('SubsystemTreeItem', () => {
     it('should set label and contextValue', () => {
@@ -12,6 +13,10 @@ describe('SubsystemTreeItem', () => {
 });
 
 describe('ContainerTreeItem', () => {
+    const target = new Target(
+        'topo',
+        'user@topo.local',
+    );
     it('should set label (image), description (name - uptime), tooltip, contextValue, command, and iconPath', () => {
         const item = new ContainerTreeItem(
             'id123',
@@ -26,6 +31,7 @@ describe('ContainerTreeItem', () => {
             ['8080:80'],
             '2.5%',
             '0B / 1GiB',
+            target,
         );
         expect(item.label).toBe('nginx:latest');
         expect(item.description).toBe('my-container - 10m');
@@ -58,6 +64,7 @@ describe('ContainerTreeItem', () => {
             [],
             '2.5%',
             '0B / 1GiB',
+            target,
         );
         expect(item.iconPath).toBeInstanceOf(vscode.ThemeIcon);
         expect((item.iconPath as vscode.ThemeIcon).id).toBe('debug-breakpoint-log');

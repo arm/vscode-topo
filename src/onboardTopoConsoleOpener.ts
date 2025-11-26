@@ -1,5 +1,6 @@
 import * as manifest from './manifest';
 import * as vscode from 'vscode';
+import { TargetStore } from './workloadPlacement/targetStore';
 
 export class OnBoardTopoConsoleOpener {
 
@@ -7,6 +8,7 @@ export class OnBoardTopoConsoleOpener {
 
     constructor(
         private readonly context: vscode.ExtensionContext,
+        private readonly targetStore: Pick<TargetStore, 'getSelectedTarget'>,
     ) {}
 
     public async activate() {
@@ -16,8 +18,13 @@ export class OnBoardTopoConsoleOpener {
     }
 
     private async openTopoConsole(): Promise<void> {
+        const target = await this.targetStore.getSelectedTarget();
+        if (!target) {
+            vscode.window.showErrorMessage('No target selected, cannot open board console');
+            return;
+        }
         try {
-            await vscode.env.openExternal(vscode.Uri.parse(manifest.BOARD_HOST_URL));
+            await vscode.env.openExternal(vscode.Uri.parse(`http://${target.host}`));
         } catch (err: unknown) {
             const errorMsg = err instanceof Error ? err.message : String(err);
             vscode.window.showErrorMessage(`Failed to open board console: ${errorMsg}`);

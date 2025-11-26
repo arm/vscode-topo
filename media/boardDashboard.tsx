@@ -1,8 +1,9 @@
-import { BOARD_HOSTNAME } from '../src/manifest';
 import { MessageHandler } from '../src/util/types';
 import type { BoardState, ContainerItem } from '../src/workloadPlacement/containersManager';
+import { Target } from '../src/workloadPlacement/target';
 
 export interface BoardDashboardProps {
+  target: Target;
   containersData: ContainerItem[];
   boardState: BoardState;
   messageHandler: MessageHandler;
@@ -180,7 +181,7 @@ function ContainerTable({ containers, messageHandler, subsystem }: { containers:
     );
 }
 
-export function BoardDashboard({ containersData, boardState, messageHandler }: BoardDashboardProps) {
+export function BoardDashboard({ target, containersData, boardState, messageHandler }: BoardDashboardProps) {
 
     let errorMessage: string | undefined = undefined;
     if (!boardState.isReachable) {
@@ -204,7 +205,7 @@ export function BoardDashboard({ containersData, boardState, messageHandler }: B
 
     return (
         <div className="board-dashboard">
-            <h1>Board Dashboard: {BOARD_HOSTNAME}</h1>
+            <h1>Board Dashboard: {target.name ?? target.id}</h1>
             <div className="section-group">
                 <h3>
           Host

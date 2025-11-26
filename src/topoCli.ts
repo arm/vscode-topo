@@ -124,9 +124,13 @@ export class TopoCli {
         });
     }
 
-    public init(projectPath: string): Promise<void> {
+    /** Runs the binary to initialize a project. */
+    public init(projectPath: string, sshTarget?: string): Promise<void> {
         return new Promise((resolve, reject) => {
             const cmd = ['init'];
+            if (sshTarget) {
+                cmd.push('--target', sshTarget);
+            }
             childProcess.execFile(
                 this.getBinaryPath(),
                 cmd,

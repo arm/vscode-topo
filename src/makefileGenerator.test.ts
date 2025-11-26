@@ -10,20 +10,23 @@ jest.mock('vscode');
 describe('MakefileGenerator', () => {
     let context: { subscriptions: any[] };
     let topoCli: { generateMakefile: jest.Mock };
+    let targetStore: { getSelectedTarget: jest.Mock };
     let makefileGenerator: MakefileGenerator;
     const selectedFolderPath = '/folder';
     const composeFileName = manifest.BOARD_DEFAULT_COMPOSE_FILE;
     const composeFilePath = path.join(selectedFolderPath, composeFileName);
+    const targetHost = 'topo.local';
 
     beforeEach(() => {
         context = { subscriptions: [] };
         topoCli = { generateMakefile: jest.fn() };
+        targetStore = { getSelectedTarget: jest.fn().mockResolvedValue({ host: targetHost }) };
         jest.clearAllMocks();
         (vscode.commands.registerCommand as jest.Mock).mockImplementation((_cmd, cb) => cb);
         (vscode.window.showOpenDialog as jest.Mock).mockResolvedValue([{ fsPath: selectedFolderPath }]);
         (vscode.window.showInformationMessage as jest.Mock).mockImplementation(jest.fn());
         (vscode.window.showErrorMessage as jest.Mock).mockImplementation(jest.fn());
-        makefileGenerator = new MakefileGenerator(context as any, topoCli as any);
+        makefileGenerator = new MakefileGenerator(context as any, topoCli as any, targetStore);
     });
 
     it('registers the generateMakefile and context commands on activate', async () => {
@@ -41,14 +44,14 @@ describe('MakefileGenerator', () => {
     it('calls topoCli.generateMakefile with correct arguments from palette', async () => {
         await makefileGenerator.activate();
         await (vscode.commands.registerCommand as jest.Mock).mock.calls[0][1]();
-        expect(topoCli.generateMakefile).toHaveBeenCalledWith(composeFilePath, manifest.BOARD_SSH_TARGET);
+        expect(topoCli.generateMakefile).toHaveBeenCalledWith(composeFilePath, targetHost);
     });
 
     it('calls topoCli.generateMakefile with correct arguments from context menu', async () => {
         await makefileGenerator.activate();
         const fileUri = { fsPath: '/folder/compose.topo.yaml' } as vscode.Uri;
         await (vscode.commands.registerCommand as jest.Mock).mock.calls[1][1](fileUri);
-        expect(topoCli.generateMakefile).toHaveBeenCalledWith(fileUri.fsPath, manifest.BOARD_SSH_TARGET);
+        expect(topoCli.generateMakefile).toHaveBeenCalledWith(fileUri.fsPath, targetHost);
     });
 
     it('shows error message if generateMakefile throws', async () => {

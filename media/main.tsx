@@ -64,6 +64,7 @@ function handleMessage(event: MessageEvent) {
         }
         boardDashboardRoot.render(
             <BoardDashboard
+                target={message.target}
                 containersData={message.containersData}
                 boardState={message.boardState}
                 messageHandler={vscode}

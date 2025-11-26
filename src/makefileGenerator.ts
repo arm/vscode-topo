@@ -2,6 +2,7 @@ import * as manifest from './manifest';
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { TopoCli } from './topoCli';
+import { TargetStore } from './workloadPlacement/targetStore';
 
 type MakefileGeneratorBinary = Pick<TopoCli, 'generateMakefile'>;
 
@@ -11,7 +12,8 @@ export class MakefileGenerator {
 
     constructor(
         private readonly context: vscode.ExtensionContext,
-    private readonly topoCli: MakefileGeneratorBinary,
+        private readonly topoCli: MakefileGeneratorBinary,
+        private readonly targetStore: Pick<TargetStore, 'getSelectedTarget'>,
     ) {}
 
     public async activate() {
@@ -28,6 +30,11 @@ export class MakefileGenerator {
     }
 
     private async generateMakefile(fileUri?: vscode.Uri): Promise<void> {
+        const target = await this.targetStore.getSelectedTarget();
+        if (!target) {
+            vscode.window.showErrorMessage('No target selected, cannot generate Makefile');
+            return;
+        }
         let composeFilePath: string | undefined;
         if (fileUri && fileUri.fsPath) {
             composeFilePath = fileUri.fsPath;
@@ -47,8 +54,7 @@ export class MakefileGenerator {
             composeFilePath = path.join(folderUri[0].fsPath, manifest.BOARD_DEFAULT_COMPOSE_FILE);
         }
         try {
-            const sshTarget = manifest.BOARD_SSH_TARGET;
-            await this.topoCli.generateMakefile(composeFilePath, sshTarget);
+            await this.topoCli.generateMakefile(composeFilePath, target.host);
         } catch (err: unknown) {
             const errorMsg = err instanceof Error ? err.message : String(err);
             vscode.window.showErrorMessage(`Failed to generate Makefile: ${errorMsg}`);

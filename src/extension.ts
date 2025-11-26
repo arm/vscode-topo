@@ -21,34 +21,35 @@ import { BoardConnectionChecker } from './util/boardConnectionChecker';
 import { ContainerDelete } from './actions/containerDelete';
 import { OpenSerial } from './actions/openSerial';
 import { DockerCommands } from './workloadPlacement/dockerCommands';
-import * as manifest from './manifest';
 import { OpenBoardDashboard } from './actions/openBoardDashboard';
+import { TargetStore } from './workloadPlacement/targetStore';
 
 let topoCli: TopoCli;
 
 export async function activate(context: vscode.ExtensionContext) {
-    topoCli = new TopoCli(context.extensionPath, context.environmentVariableCollection, manifest.BOARD_SSH_TARGET);
+    topoCli = new TopoCli(context.extensionPath, context.environmentVariableCollection);
     const topoCliVersionChecker = new TopoCliVersionChecker(topoCli, context.extensionPath);
 
     if (!topoCliVersionChecker.checkTopoCliVersion()) {
         return;
     }
 
+    const targetStore = TargetStore.getInstance(context);
     const deployer = new Deployer(topoCli);
-    const onBoardTopoConsoleOpener = new OnBoardTopoConsoleOpener(context);
-    const projectInit = new ProjectInit(context, topoCli);
+    const onBoardTopoConsoleOpener = new OnBoardTopoConsoleOpener(context, targetStore);
+    const projectInit = new ProjectInit(context, topoCli, targetStore);
     const messageHandler = new MessageHandler(topoCli, deployer);
     const composeEditorProvider = new ComposeEditorProvider(context, messageHandler);
-    const makefileGenerator = new MakefileGenerator(context, topoCli);
+    const makefileGenerator = new MakefileGenerator(context, topoCli, targetStore);
     const boardConnectionChecker = new BoardConnectionChecker();
     const containerOpenInBrowser = new ContainerOpenInBrowser(context);
     const dockerCommands = new DockerCommands();
     const attachVsCode = new AttachVsCode(context, dockerCommands);
-    const attachShell = new AttachShell(context, dockerCommands);
-    const containersManager = new ContainersManager(boardConnectionChecker, dockerCommands);
-    const targetTreeDataProvider = new TargetTreeDataProvider(containersManager);
+    const attachShell = new AttachShell(context, dockerCommands, targetStore);
+    const containersManager = new ContainersManager(boardConnectionChecker, dockerCommands, targetStore);
+    const targetTreeDataProvider = new TargetTreeDataProvider(containersManager, targetStore);
     const targetManager = new TargetManager(context, targetTreeDataProvider);
-    const boardDashboardMessageHandler = new BoardDashboardMessageHandler(containersManager, containerOpenInBrowser, attachVsCode, attachShell);
+    const boardDashboardMessageHandler = new BoardDashboardMessageHandler(containersManager, targetStore, containerOpenInBrowser, attachVsCode, attachShell);
     const boardDashboardProvider = new BoardDashboardProvider(context, boardDashboardMessageHandler, containersManager);
     const containerStart = new ContainerStart(context, containersManager);
     const containerStop = new ContainerStop(context, containersManager);
@@ -66,6 +67,7 @@ export async function activate(context: vscode.ExtensionContext) {
     await containerOpenInBrowser.activate();
     await targetManager.activate();
     await boardDashboardProvider.activate();
+    await targetStore.activate();
     await containersManager.activate();
     await containerStart.activate();
     await containerStop.activate();
@@ -76,4 +78,5 @@ export async function activate(context: vscode.ExtensionContext) {
 
 export async function deactivate(): Promise<void> {
     await topoCli.deactivate();
+    await TargetStore.getInstance().deactivate();
 }

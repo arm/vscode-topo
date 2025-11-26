@@ -4,13 +4,15 @@ import { ContainersManager } from '../workloadPlacement/containersManager';
 import { ContainerOpenInBrowser } from '../actions/containerOpenInBrowser';
 import { AttachVsCode } from '../actions/attachVsCode';
 import { AttachShell } from '../actions/attachShell';
+import { TargetStore } from '../workloadPlacement/targetStore';
 
 export class BoardDashboardMessageHandler {
     constructor(
         private readonly containersManager: ContainersManager,
-    private readonly containerOpenInBrowser: ContainerOpenInBrowser,
-    private readonly attachVsCode: AttachVsCode,
-    private readonly attachShell: AttachShell,
+        private readonly targetStore: Pick<TargetStore, 'getSelectedTarget'>,
+        private readonly containerOpenInBrowser: ContainerOpenInBrowser,
+        private readonly attachVsCode: AttachVsCode,
+        private readonly attachShell: AttachShell,
     ) {
     }
 
@@ -19,10 +21,16 @@ export class BoardDashboardMessageHandler {
     ): Promise<void> {
         const containersData = await this.containersManager.getContainersData();
         const boardState = await this.containersManager.getBoardState();
+        const target = await this.targetStore.getSelectedTarget();
+        if (!target) {
+            logger.error('No target selected, cannot render board dashboard');
+            return;
+        }
         webview.postMessage({
             type: 'render-board-dashboard',
             boardState,
-            containersData
+            containersData,
+            target,
         });
     }
 

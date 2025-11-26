@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import { BOARD_HOST_URL } from '../manifest';
 import { ContainerItem } from '../workloadPlacement/containersManager';
 import * as manifest from '../manifest';
 
@@ -27,7 +26,8 @@ export class ContainerOpenInBrowser {
             vscode.window.showWarningMessage('No common web port found for this container.');
             return;
         }
-        const url = `${BOARD_HOST_URL}:${publishedPorts[0]}`;
+        const target = item.target;
+        const url = `http://${target.host}:${publishedPorts[0]}`;
         await vscode.env.openExternal(vscode.Uri.parse(url));
     }
 

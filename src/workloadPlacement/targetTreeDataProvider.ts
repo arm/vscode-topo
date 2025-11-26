@@ -2,12 +2,15 @@ import * as vscode from 'vscode';
 import { ContainerTreeItem } from './containerTreeItems';
 import { ContainersManager } from './containersManager';
 import * as manifest from '../manifest';
+import { TargetStore } from './targetStore';
+import { Target } from './target';
 
 /** Represents a board */
 class BoardTreeItem extends vscode.TreeItem {
-    constructor() {
+
+    constructor(target: Target) {
         super('Board', vscode.TreeItemCollapsibleState.Expanded);
-        this.description = manifest.BOARD_HOSTNAME;
+        this.description = target.id;
         this.iconPath = new vscode.ThemeIcon('chip');
         this.contextValue = 'Board';
     }
@@ -28,10 +31,10 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
     private _onDidChangeTreeData = new vscode.EventEmitter<vscode.TreeItem | undefined>();
     readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
-    private containersManager: ContainersManager;
-
-    constructor(containersManager: ContainersManager) {
-        this.containersManager = containersManager;
+    constructor(
+        private readonly containersManager: ContainersManager,
+        private readonly targetStore: Pick<TargetStore, 'getSelectedTarget'>,
+    ) {
         this.containersManager.onDataUpdate(() => {
             this._onDidChangeTreeData.fire(undefined);
         });
@@ -54,8 +57,12 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
                 noBoardItem.contextValue = 'noContainerRuntime';
                 return [noBoardItem];
             }
+            const selectedTarget = await this.targetStore.getSelectedTarget();
+            if (!selectedTarget) {
+                return [];
+            }
             return [
-                new BoardTreeItem()
+                new BoardTreeItem(selectedTarget)
             ];
         }
 
@@ -91,6 +98,7 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
             info.ports,
             info.cpuUsage,
             info.memUsage,
+            info.target,
         ));
         const sortedSubsystemTreeItems = subsystemTreeItems.sort((a, b) => {
             if (a.state === 'running' && b.state !== 'running') {

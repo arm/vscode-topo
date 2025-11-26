@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
-import { BOARD_DOCKER_CONTEXT } from '../manifest';
 import { ContainerItem } from '../workloadPlacement/containersManager';
 import { ContainerCommands } from '../workloadPlacement/containerCommands';
 import * as manifest from '../manifest';
+import { getDockerContextName } from '../util/dockerContext';
 
 export class AttachVsCode {
 
@@ -26,6 +26,7 @@ export class AttachVsCode {
                 item.id
             );
         };
-        await this.containerCommands.executeWithContext(attachVsCodeOperation, BOARD_DOCKER_CONTEXT, 3000);
+        const dockerContext = getDockerContextName(item.target);
+        await this.containerCommands.executeWithContext(attachVsCodeOperation, dockerContext, 3000);
     }
 }
