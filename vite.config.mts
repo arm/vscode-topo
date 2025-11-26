@@ -10,10 +10,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
 
 export default defineConfig((config: ConfigEnv) => {
-  console.log(config)
   const { mode } = config;
   const isDev = process.argv.includes('--watch');
   console.log(`Vite is running in ${isDev ? 'development' : 'production'} mode`);
+  console.log(`Build config:\n${JSON.stringify(config, null, 2)}`);
   // ------------------------
   // 1) Extension Host Build
   // ------------------------
@@ -23,7 +23,7 @@ export default defineConfig((config: ConfigEnv) => {
       emptyOutDir: false,
       target:    'node16',
       outDir:    'dist',
-      sourcemap: 'inline',
+      sourcemap: isDev ? 'inline' : false,
       lib: {
         entry:     path.resolve(__dirname, 'src/extension.ts'),
         formats:   ['cjs'],
@@ -56,7 +56,7 @@ export default defineConfig((config: ConfigEnv) => {
     emptyOutDir: false,
     target: 'esnext',
     outDir: 'dist',
-    sourcemap: 'inline',
+    sourcemap: isDev ? 'inline' : false,
     rollupOptions: {
       input: {
         main: path.resolve(__dirname, 'media/main.tsx')
