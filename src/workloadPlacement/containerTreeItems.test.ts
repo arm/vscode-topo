@@ -47,7 +47,7 @@ describe('ContainerTreeItem', () => {
         // Check iconPath for running status
         expect(item.iconPath).toBeInstanceOf(vscode.ThemeIcon);
         expect((item.iconPath as vscode.ThemeIcon).id).toBe('debug-breakpoint-log');
-        expect((item.iconPath as vscode.ThemeIcon).color).toEqual({ name: 'terminal.ansiGreen' });
+        expect((item.iconPath as vscode.ThemeIcon).color).toEqual({ id: 'terminal.ansiGreen' });
     });
 
     it('should set correct iconPath for stopped container', () => {
@@ -68,6 +68,6 @@ describe('ContainerTreeItem', () => {
         );
         expect(item.iconPath).toBeInstanceOf(vscode.ThemeIcon);
         expect((item.iconPath as vscode.ThemeIcon).id).toBe('debug-breakpoint-log');
-        expect((item.iconPath as vscode.ThemeIcon).color).toEqual({ name: 'terminal.ansiWhite' });
+        expect((item.iconPath as vscode.ThemeIcon).color).toEqual({ id: 'terminal.ansiWhite' });
     });
 });
