@@ -170,8 +170,8 @@ const TreeItem = class {
 };
 
 class ThemeColor {
-    constructor(name) {
-        this.name = name;
+    constructor(id) {
+        this.id = id;
     }
 }
 
