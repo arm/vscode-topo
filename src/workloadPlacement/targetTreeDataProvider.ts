@@ -29,7 +29,7 @@ export class SubsystemTreeItem extends vscode.TreeItem {
 
 export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
     private _onDidChangeTreeData = new vscode.EventEmitter<vscode.TreeItem | undefined>();
-    readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
+    public readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
     constructor(
         private readonly containersManager: ContainersManager,
@@ -40,7 +40,7 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
         });
     }
 
-    async getChildren(element?: vscode.TreeItem): Promise<vscode.TreeItem[]> {
+    public async getChildren(element?: vscode.TreeItem): Promise<vscode.TreeItem[]> {
         if (!element) {
             const boardState = await this.containersManager.getBoardState();
             if (!boardState.isReachable) {
@@ -112,11 +112,11 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
         return sortedSubsystemTreeItems;
     }
 
-    getTreeItem(element: vscode.TreeItem): vscode.TreeItem {
+    public getTreeItem(element: vscode.TreeItem): vscode.TreeItem {
         return element;
     }
 
-    refresh(): void {
+    public refresh(): void {
         this._onDidChangeTreeData.fire(undefined);
     }
 }

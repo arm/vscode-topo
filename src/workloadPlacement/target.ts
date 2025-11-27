@@ -1,4 +1,23 @@
 export class Target {
+
+    public static from(obj: unknown): Target {
+        if (obj instanceof Target) { return obj; }
+        if (obj && typeof obj === 'object') {
+            const maybe = obj as Record<string, unknown>;
+            const id = typeof maybe.id === 'string' ? maybe.id.trim() : '';
+            const ssh = typeof maybe.ssh === 'string' ? maybe.ssh.trim() : '';
+            const name = typeof maybe.name === 'string' ? maybe.name.trim() : undefined;
+            if (!id) {
+                throw new Error('Invalid stored target: missing id');
+            }
+            if (!ssh) {
+                throw new Error('Invalid stored target: missing ssh');
+            }
+            return new Target(id, ssh, name);
+        }
+        throw new Error('Invalid stored target: expected an object with id and ssh properties');
+    }
+
     public readonly user?: string;
     public readonly host: string;
     public readonly id: string;
@@ -38,25 +57,7 @@ export class Target {
         return { host: sshTarget };
     }
 
-    toJSON() {
+    public toJSON() {
         return { id: this.id, ssh: this.ssh, name: this.name };
-    }
-
-    static from(obj: unknown): Target {
-        if (obj instanceof Target) { return obj; }
-        if (obj && typeof obj === 'object') {
-            const maybe = obj as Record<string, unknown>;
-            const id = typeof maybe.id === 'string' ? maybe.id.trim() : '';
-            const ssh = typeof maybe.ssh === 'string' ? maybe.ssh.trim() : '';
-            const name = typeof maybe.name === 'string' ? maybe.name.trim() : undefined;
-            if (!id) {
-                throw new Error('Invalid stored target: missing id');
-            }
-            if (!ssh) {
-                throw new Error('Invalid stored target: missing ssh');
-            }
-            return new Target(id, ssh, name);
-        }
-        throw new Error('Invalid stored target: expected an object with id and ssh properties');
     }
 }

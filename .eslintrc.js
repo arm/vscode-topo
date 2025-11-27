@@ -20,7 +20,15 @@ module.exports = {
         'plugin:react-hooks/recommended',
       ],
       rules: {
-        // TypeScript rules
+        '@typescript-eslint/explicit-member-accessibility': ['error', {
+          accessibility: 'explicit',
+          overrides: {
+            constructors: 'no-public',
+            methods: 'explicit',
+            properties: 'explicit',
+            accessors: 'explicit'
+          }
+        }],
         '@typescript-eslint/naming-convention': [
           'error',
           { selector: 'import', format: ['camelCase', 'PascalCase'] },
@@ -37,18 +45,15 @@ module.exports = {
         ],
         '@typescript-eslint/no-explicit-any': 'error',
 
-        // General best practices
         curly: 'warn',
         eqeqeq: 'warn',
         'no-throw-literal': 'warn',
         semi: 'warn',
         'no-multiple-empty-lines': ['error', { max: 1 }],
         'eol-last': ['error', 'always'],
-
-        // React rules
-        'react/jsx-uses-react': 'off', // not needed with React 17+
-        'react/react-in-jsx-scope': 'off', // not needed with React 17+
-        'react/prop-types': 'off', // not used with TypeScript
+        'react/jsx-uses-react': 'off',
+        'react/react-in-jsx-scope': 'off',
+        'react/prop-types': 'off',
       },
       settings: {
         react: {
