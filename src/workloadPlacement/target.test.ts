@@ -23,9 +23,9 @@ describe('Target', () => {
     });
 
     it('returns stored id, ssh and name via toJSON', () => {
-        const t = new Target('id4', 'carol@domain', 'my-name');
+        const t = new Target('id4', 'carol@domain');
         const json = t.toJSON();
-        expect(json).toEqual({ id: 'id4', ssh: 'carol@domain', name: 'my-name' });
+        expect(json).toEqual({ id: 'id4', ssh: 'carol@domain' });
     });
 
     it('throws for empty id or ssh in constructor', () => {
@@ -49,7 +49,6 @@ describe('Target', () => {
         expect(t).toBeInstanceOf(Target);
         expect(t.id).toBe('id7');
         expect(t.ssh).toBe('eva@xyz');
-        expect(t.name).toBe('label');
         expect(t.user).toBe('eva');
         expect(t.host).toBe('xyz');
     });

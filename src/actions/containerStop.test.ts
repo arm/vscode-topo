@@ -1,5 +1,5 @@
 import { BOARD_HOST_RUNTIME } from '../manifest';
-import { ContainerTreeItem } from '../workloadPlacement/containerTreeItems';
+import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
 import * as vscode from 'vscode';
 import { ContainerStop } from './containerStop';
 import { Target } from '../workloadPlacement/target';
@@ -33,7 +33,7 @@ describe('ContainerStop', () => {
         });
     });
     it('calls stopContainer and shows info message on success', async () => {
-        const container: ContainerTreeItem = {
+        const container: TargetTreeContainerItem = {
             id: 'abc123',
             name: 'my-container',
             image: 'nginx',
@@ -66,7 +66,7 @@ describe('ContainerStop', () => {
         const containersManager = {
             stopContainer: async () => { throw new Error('fail'); },
         };
-        const container: ContainerTreeItem = {
+        const container: TargetTreeContainerItem = {
             id: 'abc123',
             name: 'my-container',
             image: 'nginx',

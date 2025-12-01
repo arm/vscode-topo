@@ -4,7 +4,7 @@ import { ContainerItem } from './containersManager';
 import { Target } from './target';
 
 /** Represents an individual container in the target tree view. */
-export class ContainerTreeItem extends vscode.TreeItem implements ContainerItem {
+export class TargetTreeContainerItem extends vscode.TreeItem implements ContainerItem {
 
     public readonly subsystem: string;
 
@@ -28,7 +28,7 @@ export class ContainerTreeItem extends vscode.TreeItem implements ContainerItem 
         this.tooltip = `ID: ${id}\nImage: ${image}\nName: ${name}\nStatus: ${status}\nLabels: ${labels}\nUptime: ${runningFor}\n`;
         this.subsystem = runtime === BOARD_HOST_RUNTIME ? 'Host' : 'Ambient';
         this.contextValue = `service ${state} ${this.subsystem}`;
-        this.iconPath = ContainerTreeItem.getIconForState(state);
+        this.iconPath = TargetTreeContainerItem.getIconForState(state);
     }
 
     private static getIconForState(state: string): vscode.ThemeIcon {

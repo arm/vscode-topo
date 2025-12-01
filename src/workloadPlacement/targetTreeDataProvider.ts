@@ -1,81 +1,73 @@
 import * as vscode from 'vscode';
-import { ContainerTreeItem } from './containerTreeItems';
+import { TargetTreeContainerItem } from './targetTreeContainerItem';
 import { ContainersManager } from './containersManager';
 import * as manifest from '../manifest';
 import { TargetStore } from './targetStore';
-import { Target } from './target';
-
-/** Represents a board */
-class BoardTreeItem extends vscode.TreeItem {
-
-    constructor(target: Target) {
-        super('Board', vscode.TreeItemCollapsibleState.Expanded);
-        this.description = target.id;
-        this.iconPath = new vscode.ThemeIcon('chip');
-        this.contextValue = 'Board';
-    }
-}
-
-/** Represents a subsystem of the target (Host or Ambient) */
-export class SubsystemTreeItem extends vscode.TreeItem {
-    constructor(
-        public readonly group: 'Host' | 'Ambient'
-    ) {
-        super(group, vscode.TreeItemCollapsibleState.Collapsed);
-        this.iconPath = new vscode.ThemeIcon('multiple-windows');
-        this.contextValue = `Subsystem ${group}`;
-    }
-}
+import { TargetTreeBoardItem } from './targetTreeBoardItem';
+import { TargetTreeSubsystemItem } from './targetTreeSubsystemItem';
+import { logger } from '../util/logger';
 
 export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
+
+    public static readonly SelectTargetCommandType = `${manifest.PACKAGE_NAME}.selectTarget`;
+
     private _onDidChangeTreeData = new vscode.EventEmitter<vscode.TreeItem | undefined>();
     public readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
     constructor(
+        private readonly context: Pick<vscode.ExtensionContext, 'subscriptions'>,
         private readonly containersManager: ContainersManager,
-        private readonly targetStore: Pick<TargetStore, 'getSelectedTarget'>,
+        private readonly targetStore: Pick<TargetStore, 'getSelectedTarget' | 'getTargets' | 'setSelected' | 'onChanged'>,
     ) {
-        this.containersManager.onDataUpdate(() => {
+    }
+
+    public async activate(): Promise<void> {
+        const onTargetStoreChanged = this.targetStore.onChanged(() => {
             this._onDidChangeTreeData.fire(undefined);
         });
+        const onContainersManagerDataUpdate = this.containersManager.onDataUpdate(() => {
+            this._onDidChangeTreeData.fire(undefined);
+        });
+        this.context.subscriptions.push(
+            vscode.commands.registerCommand(TargetTreeDataProvider.SelectTargetCommandType, (node: unknown) => this.selectTarget(node)),
+            onTargetStoreChanged,
+            onContainersManagerDataUpdate,
+            this._onDidChangeTreeData,
+        );
+    }
+
+    private async selectTarget(target: unknown): Promise<void> {
+        if (!(target instanceof TargetTreeBoardItem)) {
+            logger.warn(`Invalid target type: expected TargetTreeBoardItem but received\n${JSON.stringify(target, null, 2)}`);
+            return;
+        }
+        await this.targetStore.setSelected(target.id);
     }
 
     public async getChildren(element?: vscode.TreeItem): Promise<vscode.TreeItem[]> {
         if (!element) {
             const boardState = await this.containersManager.getBoardState();
-            if (!boardState.isReachable) {
-                const noBoardItem = new vscode.TreeItem('No board found', vscode.TreeItemCollapsibleState.None);
-                noBoardItem.iconPath = new vscode.ThemeIcon('error');
-                noBoardItem.description = '';
-                noBoardItem.contextValue = 'noBoard';
-                return [noBoardItem];
-            }
-            if (!boardState.hasContainerRuntime) {
-                const noBoardItem = new vscode.TreeItem('No container runtime found', vscode.TreeItemCollapsibleState.None);
-                noBoardItem.iconPath = new vscode.ThemeIcon('error');
-                noBoardItem.description = '';
-                noBoardItem.contextValue = 'noContainerRuntime';
-                return [noBoardItem];
-            }
             const selectedTarget = await this.targetStore.getSelectedTarget();
-            if (!selectedTarget) {
-                return [];
-            }
-            return [
-                new BoardTreeItem(selectedTarget)
-            ];
+            const boardTreeItems = this.targetStore.getTargets().map(target => {
+                const selected = target.id === selectedTarget?.id;
+                const connectionReady = selected && target.id === boardState.targetId;
+                const targetReady = boardState.isReachable && boardState.hasContainerRuntime;
+                return new TargetTreeBoardItem(target, selected, connectionReady, targetReady);
+            });
+            const sortedBoardTreeItems = boardTreeItems.sort((a, b) => a.displayName.localeCompare(b.displayName));
+            return sortedBoardTreeItems;
         }
 
-        if (element instanceof BoardTreeItem) {
-            const hostSubsystem = new SubsystemTreeItem('Host');
-            const ambientSubsystem = new SubsystemTreeItem('Ambient');
+        if (element instanceof TargetTreeBoardItem) {
+            const hostSubsystem = new TargetTreeSubsystemItem('Host');
+            const ambientSubsystem = new TargetTreeSubsystemItem('Ambient');
             return [
                 hostSubsystem,
                 ambientSubsystem
             ];
         }
 
-        if (!(element instanceof SubsystemTreeItem)) {
+        if (!(element instanceof TargetTreeSubsystemItem)) {
             return [];
         }
 
@@ -85,7 +77,7 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
                 ? item.runtime === manifest.BOARD_HOST_RUNTIME
                 : item.runtime === manifest.BOARD_AMBIENT_RUNTIME
         );
-        const subsystemTreeItems = subsystemContainers.map(info => new ContainerTreeItem(
+        const subsystemTreeItems = subsystemContainers.map(info => new TargetTreeContainerItem(
             info.id,
             info.name,
             info.state,
@@ -119,4 +111,5 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
     public refresh(): void {
         this._onDidChangeTreeData.fire(undefined);
     }
+
 }

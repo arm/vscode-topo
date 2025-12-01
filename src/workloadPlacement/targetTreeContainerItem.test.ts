@@ -1,24 +1,14 @@
 import * as vscode from 'vscode';
-import { ContainerTreeItem } from './containerTreeItems';
-import { SubsystemTreeItem } from './targetTreeDataProvider';
+import { TargetTreeContainerItem } from './targetTreeContainerItem';
 import { Target } from './target';
 
-describe('SubsystemTreeItem', () => {
-    it('should set label and contextValue', () => {
-        const item = new SubsystemTreeItem('Host');
-        expect(item.label).toBe('Host');
-        expect(item.contextValue).toBe('Subsystem Host');
-        expect(item.collapsibleState).toBe(vscode.TreeItemCollapsibleState.Collapsed);
-    });
-});
-
-describe('ContainerTreeItem', () => {
+describe('TargetTreeContainerItem', () => {
     const target = new Target(
         'topo',
         'user@topo.local',
     );
     it('should set label (image), description (name - uptime), tooltip, contextValue, command, and iconPath', () => {
-        const item = new ContainerTreeItem(
+        const item = new TargetTreeContainerItem(
             'id123',
             'my-container',
             'running',
@@ -51,7 +41,7 @@ describe('ContainerTreeItem', () => {
     });
 
     it('should set correct iconPath for stopped container', () => {
-        const item = new ContainerTreeItem(
+        const item = new TargetTreeContainerItem(
             'id456',
             'stopped-container',
             'exited',

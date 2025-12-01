@@ -7,8 +7,8 @@ A Visual Studio Code extension for managing and editing a Topo project with ease
 
 - Custom editor for `compose.topo.yaml` files
 - Visual form-based editing and YAML synchronization
+- Dynamic target management
 - Subsystem-aware service grouping
-- Integrated with VS Code’s custom editor API
 
 ## Requirements
 
@@ -20,7 +20,7 @@ A Visual Studio Code extension for managing and editing a Topo project with ease
 2. Open a `compose.topo.yaml` file to launch the compose editor.
 3. Use the form to add or remove services.
 4. Use the deploy button or the makefile to deploy a project
-5. Access the Topo view container to visualize the board services 
+5. Access the target-manager view to visualize the board services 
 
 
 ## Building from Source

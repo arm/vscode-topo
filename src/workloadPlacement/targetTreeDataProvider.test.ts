@@ -1,14 +1,27 @@
 import { TargetTreeDataProvider } from './targetTreeDataProvider';
-import { ContainerTreeItem } from './containerTreeItems';
-import { SubsystemTreeItem } from './targetTreeDataProvider';
+import { TargetTreeContainerItem } from './targetTreeContainerItem';
+import { TargetTreeSubsystemItem } from './targetTreeSubsystemItem';
+import { TargetTreeBoardItem } from './targetTreeBoardItem';
+import * as vscode from 'vscode';
 import * as manifest from '../manifest';
 import { ContainerItem } from './containersManager';
 import { Target } from './target';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+jest.mock('../util/logger');
+jest.mock('vscode');
+
+async function executeCommand(command: string, ...args: unknown[]) {
+    const calls = (vscode.commands.registerCommand as jest.Mock).mock.calls;
+    const addCall = calls.find((c: any[]) => c[0] === command);
+    const handler = addCall![1] as (...args: any[]) => Promise<void>;
+    await handler(...args);
+}
+
 describe('TargetTreeDataProvider', () => {
     let provider: TargetTreeDataProvider;
+    let context: { subscriptions: any[] };
     let containersManagerMock: any;
     const target = new Target(
         'topo',
@@ -62,9 +75,16 @@ describe('TargetTreeDataProvider', () => {
             target,
         }
     ];
+    const targetStoreMock = {
+        onChanged: jest.fn(),
+        getSelectedTarget: jest.fn().mockResolvedValue(target),
+        getTargets: jest.fn(),
+        setSelected: jest.fn(),
+    };
 
     beforeEach(() => {
         const boardState = { isReachable: true, hasContainerRuntime: true };
+        context = { subscriptions: [] };
         containersManagerMock = {
             getContainersData: jest.fn().mockResolvedValue(mockContainers),
             startAutoRefresh: jest.fn(),
@@ -72,77 +92,112 @@ describe('TargetTreeDataProvider', () => {
             onDataUpdate: jest.fn(),
             getBoardState: jest.fn().mockResolvedValue(boardState),
         };
-        const targetStoreMock = {
-            onChanged: jest.fn(),
-            getSelectedTarget: jest.fn().mockResolvedValue(target),
-        };
-        provider = new TargetTreeDataProvider(containersManagerMock, targetStoreMock);
+        provider = new TargetTreeDataProvider(context, containersManagerMock, targetStoreMock);
         jest.clearAllTimers();
+        jest.clearAllMocks();
     });
 
-    it('returns Board at root and Host/Ambient as its children', async () => {
-        const rootChildren = await provider.getChildren();
-        expect(rootChildren).toHaveLength(1);
-        expect(rootChildren[0].label).toBe('Board');
+    describe('activation / registration', () => {
+        it('registers the selectTarget command when activated', async () => {
+            await provider.activate();
 
-        // Get children of Board
-        const boardChildren = await provider.getChildren(rootChildren[0]);
-        expect(boardChildren).toHaveLength(2);
-        expect(boardChildren[0]).toBeInstanceOf(SubsystemTreeItem);
-        expect(boardChildren[1]).toBeInstanceOf(SubsystemTreeItem);
-        expect((boardChildren[0] as SubsystemTreeItem).group).toBe('Host');
-        expect((boardChildren[1] as SubsystemTreeItem).group).toBe('Ambient');
+            expect(vscode.commands.registerCommand).toHaveBeenCalledWith(
+                TargetTreeDataProvider.SelectTargetCommandType,
+                expect.any(Function)
+            );
+            expect(context.subscriptions.length).toBe(4);
+        });
     });
 
-    it('returns containers for Host and Ambient groups', async () => {
-    // Host group: should filter out containers with runtime === manifest.BOARD_AMBIENT_RUNTIME
-        const hostGroup = new SubsystemTreeItem('Host');
-        const hostChildren = await provider.getChildren(hostGroup);
-        expect(hostChildren).toHaveLength(1);
-        expect(hostChildren[0]).toBeInstanceOf(ContainerTreeItem);
-        expect((hostChildren[0] as ContainerTreeItem).name).toBe('cont2');
+    describe('getChildren', () => {
+        it('returns Board at root and Host/Ambient as its children', async () => {
+            targetStoreMock.getTargets.mockReturnValue([target]);
+            const rootChildren = await provider.getChildren();
+            expect(rootChildren).toHaveLength(1);
+            expect(rootChildren[0].label).toBe('topo');
 
-        // Ambient group: should include containers with runtime === manifest.BOARD_AMBIENT_RUNTIME
-        const ambientGroup = new SubsystemTreeItem('Ambient');
-        const ambientChildren = await provider.getChildren(ambientGroup);
-        expect(ambientChildren).toHaveLength(2);
-        expect(ambientChildren[0]).toBeInstanceOf(ContainerTreeItem);
-        expect(ambientChildren.map(c => (c as ContainerTreeItem).name)).toEqual(expect.arrayContaining(['cont1', 'cont3']));
-        // Assert running containers are sorted before non-running containers, and by name
-        const sortedNames = ambientChildren.map(c => (c as ContainerTreeItem).name);
-        expect(sortedNames).toEqual(['cont1', 'cont3']);
+            const boardChildren = await provider.getChildren(rootChildren[0]);
+
+            expect(boardChildren).toHaveLength(2);
+            expect(boardChildren[0]).toBeInstanceOf(TargetTreeSubsystemItem);
+            expect(boardChildren[1]).toBeInstanceOf(TargetTreeSubsystemItem);
+            expect((boardChildren[0] as TargetTreeSubsystemItem).group).toBe('Host');
+            expect((boardChildren[1] as TargetTreeSubsystemItem).group).toBe('Ambient');
+        });
+
+        it('returns containers for Host and Ambient groups', async () => {
+            const hostGroup = new TargetTreeSubsystemItem('Host');
+            const hostChildren = await provider.getChildren(hostGroup);
+            expect(hostChildren).toHaveLength(1);
+            expect(hostChildren[0]).toBeInstanceOf(TargetTreeContainerItem);
+            expect((hostChildren[0] as TargetTreeContainerItem).name).toBe('cont2');
+            const ambientGroup = new TargetTreeSubsystemItem('Ambient');
+
+            const ambientChildren = await provider.getChildren(ambientGroup);
+
+            expect(ambientChildren).toHaveLength(2);
+            expect(ambientChildren[0]).toBeInstanceOf(TargetTreeContainerItem);
+            expect(ambientChildren.map(c => (c as TargetTreeContainerItem).name)).toEqual(expect.arrayContaining(['cont1', 'cont3']));
+            const sortedNames = ambientChildren.map(c => (c as TargetTreeContainerItem).name);
+            expect(sortedNames).toEqual(['cont1', 'cont3']);
+        });
+
+        it('handles parsing error in getContainersData gracefully', async () => {
+            containersManagerMock.getContainersData.mockResolvedValueOnce([]);
+            const ambientGroup = new TargetTreeSubsystemItem('Ambient');
+
+            const children = await provider.getChildren(ambientGroup);
+
+            expect(children).toEqual([]);
+        });
+
+        it('returns empty array when there are no targets', async () => {
+            targetStoreMock.getTargets.mockReturnValue([]);
+            containersManagerMock.getBoardState.mockResolvedValueOnce({ isReachable: false, hasContainerRuntime: true });
+
+            const rootChildren = await provider.getChildren();
+
+            expect(rootChildren.length).toEqual(0);
+        });
     });
 
-    it('getTreeItem returns the element itself', () => {
-        const item = new SubsystemTreeItem('Host');
-        expect(provider.getTreeItem(item)).toBe(item);
+    describe('getTreeItem', () => {
+        it('getTreeItem returns the element itself', () => {
+            const item = new TargetTreeSubsystemItem('Host');
+
+            const treeItem = provider.getTreeItem(item);
+
+            expect(treeItem).toBe(item);
+        });
     });
 
-    it('refresh fires the event', () => {
-        const spy = jest.fn();
-        provider.onDidChangeTreeData(spy);
-        provider.refresh();
-        expect(spy).toHaveBeenCalledWith(undefined);
+    describe('refresh', () => {
+        it('refresh fires the event', () => {
+            const spy = jest.fn();
+            provider.onDidChangeTreeData(spy);
+
+            provider.refresh();
+
+            expect(spy).toHaveBeenCalledWith(undefined);
+        });
     });
 
-    it('handles parsing error in getContainersData gracefully', async () => {
-        containersManagerMock.getContainersData.mockResolvedValueOnce([]);
-        const ambientGroup = new SubsystemTreeItem('Ambient');
-        const children = await provider.getChildren(ambientGroup);
-        expect(children).toEqual([]);
-    });
+    describe('selectTarget command', () => {
+        it('invokes targetStore.setSelected when select command is executed with a board item', async () => {
+            await provider.activate();
+            const boardItem = new TargetTreeBoardItem(target, true, true, true);
 
-    it('returns empty array when board is not reachable', async () => {
-        containersManagerMock.getBoardState.mockResolvedValueOnce({ isReachable: false, hasContainerRuntime: true });
-        const rootChildren = await provider.getChildren();
-        expect(rootChildren.length).toEqual(1);
-        expect(rootChildren[0].label).toBe('No board found');
-    });
+            await executeCommand(TargetTreeDataProvider.SelectTargetCommandType, boardItem);
 
-    it('returns empty array when container runtime is not found', async () => {
-        containersManagerMock.getBoardState.mockResolvedValueOnce({ isReachable: true, hasContainerRuntime: false });
-        const rootChildren = await provider.getChildren();
-        expect(rootChildren.length).toEqual(1);
-        expect(rootChildren[0].label).toBe('No container runtime found');
+            expect(targetStoreMock.setSelected).toHaveBeenCalledWith(target.id);
+        });
+
+        it('does not call setSelected when select command is executed with a non-board item', async () => {
+            await provider.activate();
+
+            await executeCommand(TargetTreeDataProvider.SelectTargetCommandType);
+
+            expect(targetStoreMock.setSelected).not.toHaveBeenCalled();
+        });
     });
 });
