@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { AttachVsCode } from './attachVsCode';
 import { exec } from '../util/exec';
 import { BOARD_HOST_RUNTIME } from '../manifest';
-import { ContainerTreeItem } from '../workloadPlacement/containerTreeItems';
+import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
 import { DockerCommands } from '../workloadPlacement/dockerCommands';
 import { Target } from '../workloadPlacement/target';
 
@@ -44,7 +44,7 @@ describe('attachVsCode', () => {
 
     it('attachVsCode command calls remote-containers.attachToRunningContainer with container id', async () => {
         jest.useFakeTimers();
-        const containerItem: ContainerTreeItem = {
+        const containerItem: TargetTreeContainerItem = {
             id: 'abc123',
             name: 'my-container',
             image: 'nginx',

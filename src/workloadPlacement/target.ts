@@ -6,14 +6,13 @@ export class Target {
             const maybe = obj as Record<string, unknown>;
             const id = typeof maybe.id === 'string' ? maybe.id.trim() : '';
             const ssh = typeof maybe.ssh === 'string' ? maybe.ssh.trim() : '';
-            const name = typeof maybe.name === 'string' ? maybe.name.trim() : undefined;
             if (!id) {
                 throw new Error('Invalid stored target: missing id');
             }
             if (!ssh) {
                 throw new Error('Invalid stored target: missing ssh');
             }
-            return new Target(id, ssh, name);
+            return new Target(id, ssh);
         }
         throw new Error('Invalid stored target: expected an object with id and ssh properties');
     }
@@ -22,12 +21,10 @@ export class Target {
     public readonly host: string;
     public readonly id: string;
     public readonly ssh: string;
-    public readonly name?: string;
 
-    constructor(id: string, ssh: string, name?: string) {
+    constructor(id: string, ssh: string) {
         this.id = id.toString().trim();
         this.ssh = ssh.toString().trim();
-        this.name = name?.toString().trim();
 
         if (!this.id) {
             throw new TypeError('Target id must be a non-empty string');
@@ -43,7 +40,7 @@ export class Target {
     }
 
     public get displayName(): string {
-        return this.name || this.id;
+        return this.id;
     }
 
     private static parseSsh(sshTarget: string): { user?: string; host: string } {
@@ -58,6 +55,6 @@ export class Target {
     }
 
     public toJSON() {
-        return { id: this.id, ssh: this.ssh, name: this.name };
+        return { id: this.id, ssh: this.ssh };
     }
 }

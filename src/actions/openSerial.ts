@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { SerialMonitorApiV2, SerialMonitorExtension } from '@eclipse-cdt-cloud/vscode-serial-monitor';
-import { SubsystemTreeItem } from '../workloadPlacement/targetTreeDataProvider';
+import { TargetTreeSubsystemItem } from '../workloadPlacement/targetTreeSubsystemItem';
 import { PACKAGE_NAME } from '../manifest';
 
 const SERIAL_EXTENSION = 'eclipse-cdt.serial-monitor';
@@ -19,7 +19,7 @@ export class OpenSerial {
         );
     }
 
-    public async openSerial(item: SubsystemTreeItem) {
+    public async openSerial(item: TargetTreeSubsystemItem) {
         const api = await this.getSerialMonitor();
         if (!api) {
             return;

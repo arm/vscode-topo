@@ -25,6 +25,7 @@ import { OpenBoardDashboard } from './actions/openBoardDashboard';
 import { TargetStore } from './workloadPlacement/targetStore';
 
 let topoCli: TopoCli;
+let targetTreeDataProvider: TargetTreeDataProvider;
 
 export async function activate(context: vscode.ExtensionContext) {
     topoCli = new TopoCli(context.extensionPath, context.environmentVariableCollection);
@@ -47,8 +48,8 @@ export async function activate(context: vscode.ExtensionContext) {
     const attachVsCode = new AttachVsCode(context, dockerCommands);
     const attachShell = new AttachShell(context, dockerCommands, targetStore);
     const containersManager = new ContainersManager(boardConnectionChecker, dockerCommands, targetStore);
-    const targetTreeDataProvider = new TargetTreeDataProvider(containersManager, targetStore);
-    const targetManager = new TargetManager(context, targetTreeDataProvider);
+    targetTreeDataProvider = new TargetTreeDataProvider(context, containersManager, targetStore);
+    const targetManager = new TargetManager(context, targetTreeDataProvider, targetStore);
     const boardDashboardMessageHandler = new BoardDashboardMessageHandler(containersManager, targetStore, containerOpenInBrowser, attachVsCode, attachShell);
     const boardDashboardProvider = new BoardDashboardProvider(context, boardDashboardMessageHandler, containersManager);
     const containerStart = new ContainerStart(context, containersManager);
@@ -67,8 +68,8 @@ export async function activate(context: vscode.ExtensionContext) {
     await containerOpenInBrowser.activate();
     await targetManager.activate();
     await boardDashboardProvider.activate();
-    await targetStore.activate();
     await containersManager.activate();
+    await targetTreeDataProvider.activate();
     await containerStart.activate();
     await containerStop.activate();
     await containerDelete.activate();

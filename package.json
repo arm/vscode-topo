@@ -93,6 +93,17 @@
         "category": "Arm Topo"
       },
       {
+        "command": "topo.selectTarget",
+        "title": "Select Target",
+        "category": "Arm Topo"
+      },
+      {
+        "command": "topo.addTarget",
+        "title": "Add Target",
+        "icon": "$(add)",
+        "category": "Arm Topo"
+      },
+      {
         "command": "topo.openBoardDashboard",
         "title": "Open Board Dashboard",
         "category": "Arm Topo"
@@ -135,6 +146,12 @@
         }
       ]
     },
+    "viewsWelcome": [
+      {
+        "view": "topo.target-manager",
+        "contents": "No targets found\n[Add Target](command:topo.addTarget)"
+      }
+    ],
     "menus": {
       "editor/title": [
         {
@@ -190,6 +207,14 @@
           "when": "false"
         },
         {
+          "command": "topo.addTarget",
+          "when": "false"
+        },
+        {
+          "command": "topo.selectTarget",
+          "when": "false"
+        },
+        {
           "command": "topo.openBoardDashboard",
           "when": "false"
         },
@@ -224,8 +249,14 @@
       ],
       "view/item/context": [
         {
+          "command": "topo.selectTarget",
+          "when": "view == topo.target-manager && viewItem =~ /Board/",
+          "group": "topo/1_select"
+        },
+        {
           "command": "topo.openBoardDashboard",
-          "when": "view === topo.target-manager && viewItem =~ /Board/"
+          "when": "view === topo.target-manager && viewItem =~ /Board/ && viewItem =~ /Selected/ && viewItem=~ /ConnectionReady/ && viewItem=~ /TargetReady/",
+          "group": "topo/2_actions"
         },
         {
           "command": "topo.attachVsCode",
@@ -261,6 +292,13 @@
           "command": "topo.openSerial",
           "when": "view === topo.target-manager && viewItem =~ /Subsystem/",
           "group": "inline"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "topo.addTarget",
+          "when": "view == topo.target-manager",
+          "group": "navigation"
         }
       ]
     },

@@ -33,7 +33,7 @@ export class AttachShell {
             vscode.window.showErrorMessage('No target is currently selected');
             return;
         }
-        const terminal = vscode.window.createTerminal({ name: `SSH: ${target.displayName}` });
+        const terminal = vscode.window.createTerminal({ name: `SSH: ${target.id}` });
         terminal.sendText(`ssh ${target.ssh}`);
         terminal.show();
     }

@@ -1,14 +1,12 @@
 import * as vscode from 'vscode';
 import { logger } from '../util/logger';
-import * as manifest from '../manifest';
 import debounce from 'lodash.debounce';
+import { Target } from './target';
+import { getErrorMessage } from '../util/getErrorMessage';
 
 type GlobalStoreKeys = 'targets';
 type WorkspaceStoreKeys = 'selectedTarget';
 export type TargetStoreContext = Pick<vscode.ExtensionContext, 'globalState' | 'workspaceState' | 'globalStorageUri'>;
-
-import { Target } from './target';
-import { getErrorMessage } from '../util/getErrorMessage';
 
 export class TargetStore {
     private static instance: TargetStore | undefined;
@@ -43,12 +41,6 @@ export class TargetStore {
         this.disposables.push(watcher, this._onChanged);
     }
 
-    public async activate(): Promise<void> {
-        const topoTarget = new Target('topo', manifest.BOARD_SSH_CONNECTION, 'topo');
-        await this.upsertTarget(topoTarget);
-        await this.setSelected(topoTarget.id);
-    }
-
     public async deactivate(): Promise<void> {
         this.dispose();
     }
@@ -78,8 +70,11 @@ export class TargetStore {
         return [...targets.values()];
     }
 
-    public async upsertTarget(target: Target): Promise<void> {
+    public async addTarget(target: Target): Promise<void> {
         const targets = this.loadTargets();
+        if (targets.has(target.id)) {
+            throw new Error(`Target with id "${target.id}" already exists`);
+        }
         targets.set(target.id, target);
         await this.saveTargets(targets);
     }
@@ -160,8 +155,8 @@ export class TargetStore {
         for (const d of this.disposables) {
             try {
                 d.dispose();
-            } catch {
-                // ignore
+            } catch (err) {
+                logger.error(`Error disposing TargetStore disposable: ${getErrorMessage(err)}`);
             }
         }
         this.disposables = [];

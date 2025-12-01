@@ -62,12 +62,42 @@ describe('TargetStore', () => {
         (vscode as any).window.state = { focused: true };
     });
 
+    it('adds a target successfully and persists it', async () => {
+        const { context } = createMockContext();
+        const store = TargetStore.getInstance(context);
+        const t = new Target('t-success', 'success@example.com');
+
+        const addTargetOperation = store.addTarget(t);
+
+        await expect(addTargetOperation).resolves.toBeUndefined();
+        const targets = store.getTargets();
+        expect(targets.some(x => x.id === 't-success')).toBe(true);
+        const raw = context.globalState.get('targets') as string | undefined;
+        expect(typeof raw).toBe('string');
+        const parsed = JSON.parse(raw || '{}');
+        expect(parsed['t-success']).toBeDefined();
+        expect(parsed['t-success'].ssh).toBe('success@example.com');
+    });
+
+    it('throws an error when addTarget fails', async () => {
+        const { context } = createMockContext();
+        (context.globalState as any).update = jest.fn().mockRejectedValue(new Error('persist-fail'));
+        const store = TargetStore.getInstance(context);
+        const t = new Target('t-fail', 'fail@example.com');
+
+        const addTargetOperation = store.addTarget(t);
+
+        await expect(addTargetOperation).rejects.toThrow('persist-fail');
+        const raw = context.globalState.get('targets') as string | undefined;
+        expect(raw).toBeUndefined();
+    });
+
     it('persists targets via setTarget and exposes them via getTargets', async () => {
         const { context } = createMockContext();
         const store = TargetStore.getInstance(context);
 
-        const t = new Target('t1', 'alice@example.com', 'Alice');
-        await store.upsertTarget(t);
+        const t = new Target('t1', 'alice@example.com');
+        await store.addTarget(t);
 
         const targets = store.getTargets();
         expect(targets.some(x => x.id === 't1')).toBe(true);
@@ -82,8 +112,8 @@ describe('TargetStore', () => {
     it('stores selected target and fires onChanged when setSelected is called', async () => {
         const { context } = createMockContext();
         const store = TargetStore.getInstance(context);
-        const t = new Target('t2', 'bob@example.com', 'Bob');
-        await store.upsertTarget(t);
+        const t = new Target('t2', 'bob@example.com');
+        await store.addTarget(t);
         const cb = jest.fn();
         store.onChanged(cb);
 
@@ -97,8 +127,8 @@ describe('TargetStore', () => {
         const { context } = createMockContext();
         const store = TargetStore.getInstance(context);
 
-        const t = new Target('t3', 'carol@example.com', 'Carol');
-        await store.upsertTarget(t);
+        const t = new Target('t3', 'carol@example.com');
+        await store.addTarget(t);
         await store.setSelected('t3');
 
         const selected = await store.getSelectedTarget();
@@ -119,5 +149,19 @@ describe('TargetStore', () => {
         await waitImmediate();
 
         expect(cb).toHaveBeenCalled();
+    });
+
+    it('deactivates the store, disposing resources and clearing the singleton', async () => {
+        const { context } = createMockContext();
+        const store = TargetStore.getInstance(context);
+        await store.addTarget(new Target('td', 'd@example.com'));
+        const cb = jest.fn();
+        store.onChanged(cb);
+
+        await store.deactivate();
+
+        expect((TargetStore as any).instance).toBeUndefined();
+        const newStore = TargetStore.getInstance(context);
+        expect(newStore).not.toBe(store);
     });
 });

@@ -109,6 +109,7 @@ export class ContainersManager {
         this.containersDataInitialised = false;
         this.boardState = this.defaultBoardState;
         this.boardStateInitialised = false;
+        this._onDataUpdate.fire();
     }
 
     private async getBoardStateInfo(): Promise<BoardState> {
