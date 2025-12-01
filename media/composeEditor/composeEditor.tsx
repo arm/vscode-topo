@@ -78,6 +78,8 @@ const getSubsystemServices = (
 
 export const ComposeEditor: React.FC<ComposeEditorProps> = ({ messageHandler, quickPicker, project, templates, configMetadata }) => {
 
+    const [isDeploying, setIsDeploying] = React.useState(false);
+
     const addService = (serviceName: string, templateId: string): void => {
         messageHandler.postMessage({ type: 'add-service', serviceName, templateId });
     };
@@ -99,8 +101,6 @@ export const ComposeEditor: React.FC<ComposeEditorProps> = ({ messageHandler, qu
             window.removeEventListener('message', handler);
         };
     }, []);
-
-    const [isDeploying, setIsDeploying] = React.useState(false);
 
     return (
         <form className="compose-editor">
