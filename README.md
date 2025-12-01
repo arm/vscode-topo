@@ -28,8 +28,8 @@ A Visual Studio Code extension for managing and editing a Topo project with ease
 Follow these steps to build and package the extension locally:
 
 ### Prerequisites
-- Node.js (>=16.x)
-- npm (>=6.x)
+- Node.js (>=20.x)
+- npm (>=9.x)
 - VS Code Extension Manager (vsce) for packaging (`npm install -g vsce`)
 
 ### Setup
