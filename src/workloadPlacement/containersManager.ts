@@ -268,7 +268,7 @@ export class ContainersManager {
     public async stopAutoRefresh(): Promise<void> {
         this.shouldAutoRefresh = false;
         if (this.refreshTimer) {
-            clearInterval(this.refreshTimer);
+            clearTimeout(this.refreshTimer);
             this.refreshTimer = undefined;
         }
     }
