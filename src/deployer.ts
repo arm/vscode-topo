@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { spawn, ChildProcess } from 'child_process';
-import { TopoCli } from './topoCli';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -17,7 +16,6 @@ export class Deployer {
     public readonly onError = this.onErrorEmitter.event;
 
     constructor(
-        private readonly topoCli: Pick<TopoCli , 'generateMakefile'>,
     ) {}
 
     public async start(composeFilePath: string): Promise<void> {
@@ -27,17 +25,8 @@ export class Deployer {
         const composeFolderPath = path.dirname(composeFilePath);
         const makefilePath = path.join(composeFolderPath, 'Makefile');
         if (!fs.existsSync(makefilePath)) {
-            const choice = await vscode.window.showInformationMessage(
-                'Makefile not found in the folder. Would you like to create one?',
-                'Yes',
-                'No'
-            );
-            if (choice === 'Yes') {
-                await this.topoCli.generateMakefile(composeFilePath);
-            } else {
-                this.onErrorEmitter.fire(Error('Deploy operation cancelled'));
-                return;
-            }
+            this.onErrorEmitter.fire(new Error(`No makefile found at ${makefilePath}`));
+            return;
         }
         this.proc = spawn('make', [], { cwd: composeFolderPath, shell: true, detached: true });
         if (this.proc.stdout) {

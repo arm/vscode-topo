@@ -4,7 +4,6 @@ import { TopoCli } from './topoCli';
 import { OnBoardTopoConsoleOpener } from './onboardTopoConsoleOpener';
 import { ProjectInit } from './projectInit';
 import { TopoCliVersionChecker } from './topoCliVersionChecker';
-import { MakefileGenerator } from './makefileGenerator';
 import { TargetManager } from './workloadPlacement/targetManager';
 import { TargetTreeDataProvider } from './workloadPlacement/targetTreeDataProvider';
 import { ContainersManager } from './workloadPlacement/containersManager';
@@ -36,12 +35,11 @@ export async function activate(context: vscode.ExtensionContext) {
     }
 
     const targetStore = TargetStore.getInstance(context);
-    const deployer = new Deployer(topoCli);
+    const deployer = new Deployer();
     const onBoardTopoConsoleOpener = new OnBoardTopoConsoleOpener(context, targetStore);
     const projectInit = new ProjectInit(context, topoCli, targetStore);
     const messageHandler = new MessageHandler(topoCli, deployer);
     const composeEditorProvider = new ComposeEditorProvider(context, messageHandler);
-    const makefileGenerator = new MakefileGenerator(context, topoCli, targetStore);
     const boardConnectionChecker = new BoardConnectionChecker();
     const containerOpenInBrowser = new ContainerOpenInBrowser(context);
     const dockerCommands = new DockerCommands();
@@ -62,7 +60,6 @@ export async function activate(context: vscode.ExtensionContext) {
     await onBoardTopoConsoleOpener.activate();
     await composeEditorProvider.activate();
     await projectInit.activate();
-    await makefileGenerator.activate();
     await attachVsCode.activate();
     await attachShell.activate();
     await containerOpenInBrowser.activate();

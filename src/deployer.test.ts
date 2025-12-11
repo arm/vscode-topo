@@ -1,8 +1,6 @@
-import { TopoCli } from './topoCli';
 import { Deployer } from './deployer';
 import { spawn } from 'child_process';
 import path from 'path';
-import * as vscode from 'vscode';
 import * as fs from 'fs';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -42,15 +40,12 @@ jest.mock('fs', () => ({
 
 describe('Deployer', () => {
     let deployer: Deployer;
-    let composeFilePath: string;
-    let topoCli: Pick<TopoCli, 'generateMakefile'>;
+    const composeFilePath: string = '/tmp/compose.topo.yaml';
+    const makefilePath: string = path.join(path.dirname(composeFilePath), 'Makefile');
 
     beforeEach(() => {
-        topoCli = {
-            generateMakefile: jest.fn(),
-        };
-        deployer = new Deployer(topoCli);
-        composeFilePath = '/tmp/compose.topo.yaml';
+        deployer = new Deployer();
+
         jest.clearAllMocks();
     });
 
@@ -132,41 +127,14 @@ describe('Deployer', () => {
         expect(errorListener).toHaveBeenCalledWith(new Error('fail'));
     });
 
-    it('should create makefile and start deployment when makefile does not exist and user accepts', async () => {
-        (fs.existsSync as jest.Mock).mockReturnValue(false);
-        const showInfoSpy = (vscode.window.showInformationMessage as jest.Mock).mockResolvedValue('Yes');
-
-        await deployer.start(composeFilePath);
-
-        expect(showInfoSpy).toHaveBeenCalledWith(
-            'Makefile not found in the folder. Would you like to create one?',
-            'Yes',
-            'No'
-        );
-        expect(topoCli.generateMakefile).toHaveBeenCalled();
-        expect(spawn).toHaveBeenCalledWith('make', [], expect.objectContaining({
-            cwd: path.dirname(composeFilePath),
-            shell: true,
-            detached: true
-        }));
-    });
-
-    it('should cancel deployment when user declines to create the makefile', async () => {
-        (fs.existsSync as jest.Mock).mockReturnValue(false);
-        const showInfoSpy = (vscode.window.showInformationMessage as jest.Mock).mockResolvedValue('No');    
+    it('should cancel deployment when the makefile is not found', async () => {
+        (fs.existsSync as jest.Mock).mockReturnValue(false);   
         const errorListener = jest.fn();
         deployer.onError(errorListener);
     
         await deployer.start(composeFilePath);
-    
-        expect(showInfoSpy).toHaveBeenCalledWith(
-            'Makefile not found in the folder. Would you like to create one?',
-            'Yes',
-            'No'
-        );
-        expect(topoCli.generateMakefile).not.toHaveBeenCalled();
         expect(errorListener).toHaveBeenCalled();
         // Verify the error message from the fired error event.
-        expect(errorListener.mock.calls[0][0].message).toBe('Deploy operation cancelled');
+        expect(errorListener.mock.calls[0][0].message).toBe(`No makefile found at ${makefilePath}`);
     });
 });

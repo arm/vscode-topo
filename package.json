@@ -55,16 +55,6 @@
         "category": "Arm Topo"
       },
       {
-        "command": "topo.generateMakefile",
-        "title": "Generate Makefile",
-        "category": "Arm Topo"
-      },
-      {
-        "command": "topo.generateMakefile.context",
-        "title": "Generate Makefile",
-        "category": "Arm Topo"
-      },
-      {
         "command": "topo.attachVsCode",
         "title": "Attach VS Code",
         "category": "Arm Topo"
@@ -180,11 +170,6 @@
           "command": "topo.showPreview",
           "group": "navigation@1",
           "when": "resourceFilename =~ /compose(\\..*)?\\.yaml$/ && activeCustomEditorId != 'topo.composeEditor'"
-        },
-        {
-          "command": "topo.generateMakefile.context",
-          "when": "resourceFilename =~ /compose(\\..*)?\\.yaml$/",
-          "group": "topo"
         }
       ],
       "commandPalette": [
@@ -198,14 +183,6 @@
         },
         {
           "command": "topo.showPreview",
-          "when": "false"
-        },
-        {
-          "command": "topo.generateMakefile",
-          "when": "false"
-        },
-        {
-          "command": "topo.generateMakefile.context",
           "when": "false"
         },
         {

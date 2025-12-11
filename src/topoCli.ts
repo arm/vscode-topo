@@ -118,30 +118,4 @@ export class TopoCli {
         });
     }
 
-    /** Runs the binary to generate a Makefile for a compose file. */
-    public generateMakefile(composeFilePath: string, sshTarget?: string): Promise<void> {
-        const bin = this.getBinaryPath();
-        return new Promise((resolve, reject) => {
-            const cmd = ['generate-makefile', composeFilePath];
-            if (sshTarget) {
-                cmd.push('--target', sshTarget);
-            }
-            childProcess.execFile(
-                bin,
-                cmd,
-                {
-                    cwd: path.dirname(composeFilePath),
-                    env: this.getProcessEnv(),
-                },
-                (error, _stdout, stderr) => {
-                    if (error) {
-                        reject(new Error(stderr || error.message));
-                    } else {
-                        resolve();
-                    }
-                }
-            );
-        });
-    }
-
 }
