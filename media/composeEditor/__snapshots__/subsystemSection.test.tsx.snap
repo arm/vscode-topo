@@ -18,11 +18,6 @@ exports[`SubsystemSection renders correctly 1`] = `
           >
             Service Name
           </th>
-          <th
-            class="service-actions"
-          >
-            Actions
-          </th>
         </tr>
       </thead>
       <tbody>
@@ -33,14 +28,6 @@ exports[`SubsystemSection renders correctly 1`] = `
               value="project1"
             />
           </td>
-          <td>
-            <button
-              class="remove-button"
-              type="button"
-            >
-              Remove
-            </button>
-          </td>
         </tr>
         <tr>
           <td>
@@ -49,23 +36,9 @@ exports[`SubsystemSection renders correctly 1`] = `
               value="project2"
             />
           </td>
-          <td>
-            <button
-              class="remove-button"
-              type="button"
-            >
-              Remove
-            </button>
-          </td>
         </tr>
       </tbody>
     </table>
-    <button
-      class="add-service-button"
-      type="button"
-    >
-      Add Service
-    </button>
   </div>
 </div>
 `;

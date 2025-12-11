@@ -1,19 +1,14 @@
 /// <reference types="vscode" />
+// eslint-disable-next-line @typescript-eslint/triple-slash-reference
+/// <reference path="./vscode-webview.d.ts" />
 
 import ReactDOM from 'react-dom/client';
 import { ConfigMetadata, ProjectDescription } from '../src/util/types';
-import { ComposeEditor, QuickPicker } from './composeEditor/composeEditor';
+import { ComposeEditor } from './composeEditor/composeEditor';
 import './main.css';
-import { Deferred } from '../src/util/deferred';
 import { BoardDashboard } from './boardDashboard';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
-declare function acquireVsCodeApi(): {
-  postMessage: (msg: any) => void;
-  setState: (state: any) => void;
-  getState: () => any;
-};
 
 const vscode = acquireVsCodeApi();
 
@@ -29,7 +24,6 @@ function handleMessage(event: MessageEvent) {
     }
   
     const message = event.data;
-    const templates = message.templates;
     const configMetadata = message.configMetadata as ConfigMetadata;
     const project = message.project as ProjectDescription;
     switch (message.type) {
@@ -44,11 +38,8 @@ function handleMessage(event: MessageEvent) {
         }
         composeEditorRoot.render(
             <ComposeEditor
-                yamlText={message.text}
                 messageHandler={vscode}
-                quickPicker={quickPicker}
                 project={project}
-                templates={templates}
                 configMetadata={configMetadata}
             />
         );
@@ -89,39 +80,3 @@ document.addEventListener('DOMContentLoaded', () => {
         handleMessage(messageQueue.shift()!);
     }
 });
-
-const quickPicker: QuickPicker<string> = {
-    showQuickPick: async (items) => {
-        const result = new Deferred<string>();
-        const handler = (event: MessageEvent) => {
-            const message = event.data;
-            if (message.type === 'quick-pick-result') {
-                window.removeEventListener('message', handler);
-                result.resolve(message.result);
-            }
-        };
-        window.addEventListener('message', handler);
-        vscode.postMessage({
-            type: 'show-quick-pick',
-            items: items
-        });
-        return result.promise;
-    },
-    createQuickPick: async (items, options) => {
-        const result = new Deferred<string>();
-        const handler = (event: MessageEvent) => {
-            const message = event.data;
-            if (message.type === 'quick-pick-result') {
-                window.removeEventListener('message', handler);
-                result.resolve(message.result);
-            }
-        };
-        window.addEventListener('message', handler);
-        vscode.postMessage({
-            type: 'create-quick-pick',
-            items: items,
-            placeholder: options?.placeHolder || 'Choose an option',
-        });
-        return result.promise;
-    },
-};

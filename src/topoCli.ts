@@ -93,37 +93,6 @@ export class TopoCli {
         return JSON.parse(out);
     }
 
-    /** Runs the binary to add a service to a compose file. */
-    public addService(composeFilepath: string, templateId: string, serviceName?: string): Promise<void> {
-        const bin = this.getBinaryPath();
-        return new Promise((resolve, reject) => {
-            serviceName = serviceName || templateId;
-            const cmd = ['add-service', composeFilepath, templateId, serviceName];
-            childProcess.execFile(bin, cmd, { cwd: "." }, (err, _stdout, stderr) => {
-                if (err) {
-                    reject(new Error(stderr));
-                } else {
-                    resolve();
-                }
-            });
-        });
-    }
-
-    /** Runs the binary to remove a service to a compose file. */
-    public removeService(composeFilepath: string, serviceName: string): Promise<void> {
-        const bin = this.getBinaryPath();
-        return new Promise((resolve, reject) => {
-            const cmd = ['remove-service', composeFilepath, serviceName];
-            childProcess.execFile(bin, cmd, { cwd: "." }, (err, _stdout, stderr) => {
-                if (err) {
-                    reject(new Error(stderr));
-                } else {
-                    resolve();
-                }
-            });
-        });
-    }
-
     /** Runs the binary to initialize a project. */
     public init(projectPath: string, sshTarget?: string): Promise<void> {
         return new Promise((resolve, reject) => {

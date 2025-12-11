@@ -21,7 +21,7 @@ export class ComposeEditorProvider implements vscode.CustomTextEditorProvider {
 
     constructor(
         private readonly context: vscode.ExtensionContext,
-    private readonly messageHandler: MessageHandler,
+        private readonly messageHandler: MessageHandler,
     ) {}
 
     public async activate(): Promise<void> {

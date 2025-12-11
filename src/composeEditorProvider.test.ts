@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { ComposeEditorProvider, DeployerType } from './composeEditorProvider';
-import { ConfigMetadata, ProjectDescription, TemplateDescription } from './util/types';
+import { ConfigMetadata, ProjectDescription } from './util/types';
 import * as manifest from './manifest';
 import { logger } from './util/logger';
 import { MessageHandler, MessageHandlerTopoCli } from './messageHandler';
@@ -12,13 +12,6 @@ jest.mock('vscode');
 jest.mock('./util/logger');
 
 describe('ComposeEditorProvider', () => {
-    const templates: TemplateDescription[] = [
-        {
-            id: 'p',
-            url: 'u',
-            subsystem: 'Host',
-            ports: [],
-        }];
     const configMetadata: ConfigMetadata = {
         boards: [
             {
@@ -56,10 +49,7 @@ describe('ComposeEditorProvider', () => {
     beforeEach(() => {
         jest.clearAllMocks();
         topoCli = {
-            listTemplates: jest.fn().mockReturnValue(templates),
             getProject: jest.fn().mockReturnValue(project),
-            addService: jest.fn().mockReturnValue(undefined),
-            removeService: jest.fn().mockReturnValue(undefined),
             getConfigMetadata: jest.fn().mockReturnValue(configMetadata),
         };
         deployer = {
@@ -116,36 +106,8 @@ describe('ComposeEditorProvider', () => {
         await handler({ type: 'compose-editor-webview-ready' });
 
         expect(post).toHaveBeenCalledWith({
-            type: 'render-compose-editor', text: 'hi', project, templates, configMetadata,
+            type: 'render-compose-editor', project, configMetadata,
         });
-    });
-
-    it('invokes generate when requested', async () => {
-        const filePath = path.resolve('/ext', 'f.yaml');
-        const serviceName = 'newService';
-        const templateId = 'template1';
-        const doc: any = { uri: { toString: () => 'u', fsPath: filePath }, getText: () => '' };
-        let handler: any;
-        const post = jest.fn();
-        const webviewPanel: any = {
-            webview: {
-                options: {},
-                html: '',
-                postMessage: post,
-                onDidReceiveMessage: (cb: any) => { handler = cb; },
-                asWebviewUri: (uri: any) => uri
-            },
-            onDidDispose: (_cb: any) => ({ dispose: jest.fn() })
-        };
-        await provider.resolveCustomTextEditor(doc, webviewPanel, null as any);
-
-        handler({ type: 'add-service', filePath, serviceName, templateId });
-
-        expect(topoCli.addService).toHaveBeenCalledWith(
-            filePath,
-            templateId,
-            serviceName,
-        );
     });
 
     it('sets webview options correctly', async () => {
@@ -173,134 +135,6 @@ describe('ComposeEditorProvider', () => {
         expect(roots[0].fsPath).toContain(
             path.join(context.extensionPath, 'dist')
         );
-    });
-
-    it('handles failure to gather templates', async () => {
-        const error = new Error('fail-load');
-        topoCli.listTemplates.mockImplementation(() => { throw error; });
-        const showErr = jest.fn();
-        (vscode.window.showErrorMessage as jest.Mock) = showErr;
-        const doc: any = { uri: { toString: () => 'u', fsPath: '/ext/fail.yaml' }, getText: () => 'foo' };
-        let handler: any;
-        const webviewPanel: any = {
-            webview: {
-                options: {}, html: '', postMessage: jest.fn(),
-                onDidReceiveMessage: (cb: any) => { handler = cb; },
-                asWebviewUri: (uri: any) => uri
-            },
-            onDidDispose: (_cb: any) => ({ dispose: jest.fn() })
-        };
-        await provider.resolveCustomTextEditor(doc, webviewPanel, null as any);
-
-        await expect(handler({ type: 'compose-editor-webview-ready' })).rejects.toThrow('fail-load');
-    });
-
-    it('shows error when add-service fails', async () => {
-    // simulate add-service rejection
-        const genError = new Error('add-service-fail');
-        topoCli.addService.mockRejectedValue(genError);
-        const showErr = jest.fn();
-        (vscode.window.showErrorMessage as jest.Mock) = showErr;
-        const doc: any = { uri: { toString: () => 'u', fsPath: '/ext/x.yaml' }, getText: () => '' };
-        let handler: any;
-        const webviewPanel: any = {
-            webview: {
-                options: {}, html: '', postMessage: jest.fn(),
-                onDidReceiveMessage: (cb: any) => { handler = cb; },
-                asWebviewUri: (uri: any) => uri
-            },
-            onDidDispose: (_cb: any) => ({ dispose: jest.fn() })
-        };
-        await provider.resolveCustomTextEditor(doc, webviewPanel, null as any);
-
-        handler({ type: 'add-service' });
-        await Promise.resolve();
-
-        expect(topoCli.addService).toHaveBeenCalled();
-        expect(showErr).toHaveBeenCalledWith(`Script error: ${genError.message}`);
-    });
-
-    it('handles remove-service message and updates', async () => {
-        const doc: any = { uri: { toString: () => 'u', fsPath: '/ext/r.yaml' }, getText: () => '' };
-        let handler: any;
-        const post = jest.fn();
-        const webviewPanel: any = {
-            webview: {
-                options: {},
-                html: '',
-                postMessage: post,
-                onDidReceiveMessage: (cb: any) => { handler = cb; },
-                asWebviewUri: (uri: any) => uri
-            },
-            onDidDispose: (_cb: any) => ({ dispose: jest.fn() })
-        };
-        await provider.resolveCustomTextEditor(doc, webviewPanel, null as any);
-        handler({ type: 'compose-editor-webview-ready' });
-
-        handler({ type: 'remove-service', serviceName: 'text' });
-
-        expect(topoCli.removeService).toHaveBeenCalledWith(doc.uri.fsPath, 'text');
-        expect(post).toHaveBeenCalled();
-    });
-
-    it('handles show-quick-pick and posts result', async () => {
-        const doc: any = { uri: { toString: () => 'u', fsPath: '/ext/q.yaml' }, getText: () => '' };
-        let handler: any;
-        const post = jest.fn();
-        const webviewPanel: any = {
-            webview: {
-                options: {},
-                html: '',
-                postMessage: post,
-                onDidReceiveMessage: (cb: any) => { handler = cb; },
-                asWebviewUri: (uri: any) => uri
-            },
-            onDidDispose: (_cb: any) => ({ dispose: jest.fn() })
-        };
-        (vscode.window.showQuickPick as jest.Mock).mockResolvedValue('picked');
-        await provider.resolveCustomTextEditor(doc, webviewPanel, null as any);
-
-        await handler({ type: 'show-quick-pick', items: ['picked', 'other'] });
-
-        expect(post).toHaveBeenCalledWith({ type: 'quick-pick-result', result: 'picked' });
-    });
-
-    it('handles create-quick-pick and posts result', async () => {
-        const doc: any = { uri: { toString: () => 'u', fsPath: '/ext/cqp.yaml' }, getText: () => '' };
-        let handler: any;
-        const post = jest.fn();
-        const webviewPanel: any = {
-            webview: {
-                options: {},
-                html: '',
-                postMessage: post,
-                onDidReceiveMessage: (cb: any) => { handler = cb; },
-                asWebviewUri: (uri: any) => uri
-            },
-            onDidDispose: (_cb: any) => ({ dispose: jest.fn() })
-        };
-        // Mock createQuickPick
-        const mockQp = {
-            title: '',
-            matchOnDescription: false,
-            items: [],
-            value: 'chosen',
-            selectedItems: [{ label: 'chosen' }],
-            onDidAccept: (cb: any) => { mockQp._accept = cb; },
-            onDidHide: (cb: any) => { mockQp._hide = cb; },
-            show: jest.fn(),
-            hide: jest.fn(),
-            _accept: undefined as any,
-            _hide: undefined as any,
-        };
-        (vscode.window.createQuickPick as jest.Mock).mockReturnValue(mockQp);
-        await provider.resolveCustomTextEditor(doc, webviewPanel, null as any);
-
-        const promise = handler({ type: 'create-quick-pick', items: ['chosen'], placeholder: 'Pick one' });
-        mockQp._accept();
-        await promise;
-
-        expect(post).toHaveBeenCalledWith({ type: 'quick-pick-result', result: 'chosen' });
     });
 
     it('handles deploy message and posts deploy-complete', async () => {

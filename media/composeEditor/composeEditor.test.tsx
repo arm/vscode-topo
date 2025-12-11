@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { ComposeEditor } from './composeEditor';
-import { TemplateDescription, ProjectDescription, ConfigMetadata } from '../../src/util/types';
+import { ProjectDescription, ConfigMetadata } from '../../src/util/types';
 import * as manifest from '../../src/manifest';
 
 describe('ComposeEditor', () => {
@@ -33,43 +33,17 @@ describe('ComposeEditor', () => {
         ]
     };
 
-    const templates: TemplateDescription[] = [
-        {
-            id: 'project1',
-            url: 'u1',
-            subsystem: 'Host',
-            ports: []
-        },
-        {
-            id: 'project2',
-            url: 'u2',
-            subsystem: 'Ambient',
-            ports: []
-        },
-    ];
-
     let messageHandler: { postMessage: jest.Mock };
-    let quickPicker: {
-    showQuickPick: jest.Mock,
-    createQuickPick: jest.Mock,
-  };
 
     beforeEach(() => {
         messageHandler = { postMessage: jest.fn() };
-        quickPicker = {
-            showQuickPick: jest.fn().mockResolvedValue('project1'),
-            createQuickPick: jest.fn().mockResolvedValue('test'),
-        };
     });
 
     function renderComposeEditor(customProps = {}) {
         return render(
             <ComposeEditor
-                yamlText={''}
                 messageHandler={messageHandler}
                 project={project}
-                templates={templates}
-                quickPicker={quickPicker}
                 configMetadata={configMetadata}
                 {...customProps}
             />

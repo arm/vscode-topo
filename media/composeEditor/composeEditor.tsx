@@ -1,7 +1,6 @@
 import React from 'react';
 import { SubsystemSection } from './subsystemSection';
 import {
-    TemplateDescription,
     Subsystem,
     ProjectDescription,
     ServiceCreationDescription,
@@ -10,32 +9,9 @@ import {
     subsystems,
 } from '../../src/util/types';
 
-export type QuickPicker<T> = {
-  showQuickPick(
-    items: T[],
-    options?: {
-      placeHolder?: string;
-      canPickMany?: boolean;
-      matchOnDetail?: boolean;
-      matchOnDescription?: boolean;
-    }
-  ): Thenable<T | undefined>;
-  createQuickPick(
-    items: T[],
-    options?: {
-      placeHolder?: string;
-      canPickMany?: boolean;
-      matchOnDetail?: boolean;
-      matchOnDescription?: boolean;
-    }) : Thenable<T | undefined>;
-}
-
 interface ComposeEditorProps {
-  yamlText: string;
   messageHandler: MessageHandler;
-  quickPicker: QuickPicker<string>,
   project: ProjectDescription;
-  templates: TemplateDescription[];
   configMetadata: ConfigMetadata;
 }
 
@@ -76,17 +52,9 @@ const getSubsystemServices = (
         }));
 };
 
-export const ComposeEditor: React.FC<ComposeEditorProps> = ({ messageHandler, quickPicker, project, templates, configMetadata }) => {
+export const ComposeEditor: React.FC<ComposeEditorProps> = ({ messageHandler, project, configMetadata }) => {
 
     const [isDeploying, setIsDeploying] = React.useState(false);
-
-    const addService = (serviceName: string, templateId: string): void => {
-        messageHandler.postMessage({ type: 'add-service', serviceName, templateId });
-    };
-
-    const removeService = (serviceName: string): void => {
-        messageHandler.postMessage({ type: 'remove-service', serviceName });
-    };
 
     const handler = (event: MessageEvent) => {
         const message = event.data;
@@ -107,18 +75,11 @@ export const ComposeEditor: React.FC<ComposeEditorProps> = ({ messageHandler, qu
             <h3>Project: {project.name}</h3>
             {subsystems.map(subsystem => {
                 const subsystemServices = getSubsystemServices(project, subsystem, configMetadata, board);
-                const subsystemTemplates = templates.filter(t => t.subsystem === subsystem);
                 return (
                     <SubsystemSection
                         key={subsystem}
                         title={subsystem}
                         subsystemServices={subsystemServices}
-                        templates={subsystemTemplates}
-                        quickPicker={quickPicker}
-                        configMetadata={configMetadata}
-                        addService={addService}
-                        removeService={removeService}
-                        board={board}
                     />
                 );
             })}
