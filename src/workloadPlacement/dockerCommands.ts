@@ -2,6 +2,15 @@ import { exec } from '../util/exec';
 import { logger } from '../util/logger';
 import { ContainerCommands, DockerPsItem } from './containerCommands';
 
+/**
+ * Generates a SSH URI based on the board's SSH connection string.
+ * @param boardSshConnection - The SSH connection string of the board.
+ * @returns The SSH URI.
+ */
+const getSshUri = (boardSshConnection: string): string => {
+    return `ssh://${boardSshConnection}`;
+};
+
 export class DockerCommands implements ContainerCommands {
 
     public async isContainerRuntimeOn(boardSshConnection: string): Promise<boolean> {
@@ -47,22 +56,23 @@ export class DockerCommands implements ContainerCommands {
     public async ensureContext(contextName: string, boardSshConnection: string): Promise<void> {
         try {
             const { stdout, stderr } = await exec(`docker context ls --format '{{.Name}}'`);
-            const err = stderr.trim();
-            if (err) {
-                throw new Error(err || 'Failed to list Docker contexts');
+            const readContextsErr = stderr.trim();
+            if (readContextsErr) {
+                throw new Error(readContextsErr || 'Failed to list Docker contexts');
             }
             const contexts = stdout.trim().split(/\r?\n/).filter(c => c);
             if (contexts.includes(contextName)) {
                 return;
             }
-            const { stderr: stderr2 } = await exec(`docker context create ${contextName} --docker host=ssh://${boardSshConnection}`);
-            const err2 = stderr2.trim();
-            if (err2) {
-                throw new Error(err2 || 'Failed to create Docker context');
+            const { stderr: stderr2 } = await exec(`docker context create ${contextName} --docker host=${getSshUri(boardSshConnection)}`);
+            const createContextErr = stderr2.trim();
+            if (createContextErr) {
+                throw new Error(createContextErr || 'Failed to create Docker context');
             }
         } catch (error: unknown) {
             logger.error('Error ensuring Docker context:');
             logger.error(error);
+            throw error;
         }
     }
 
@@ -88,8 +98,8 @@ export class DockerCommands implements ContainerCommands {
         }
     }
 
-    public async getContainers(contextName: string): Promise<DockerPsItem[]> {
-        const { stdout } = await exec(`docker --context ${contextName} ps -a --format "{{json .}}"`);
+    public async getContainers(boardSshConnection: string): Promise<DockerPsItem[]> {
+        const { stdout } = await exec(`docker --host ${getSshUri(boardSshConnection)} ps -a --format "{{json .}}"`);
         const lines = stdout.trim().split(/\r?\n/).filter(l => l);
         if (lines.length === 0) {
             return [];
@@ -98,12 +108,12 @@ export class DockerCommands implements ContainerCommands {
         return items;
     }
 
-    public async inspectContainers(containerIds: string[], contextName: string): Promise<string> {
+    public async inspectContainers(containerIds: string[], boardSshConnection: string): Promise<string> {
         const ids = containerIds.join(' ');
         let inspectStdout = '';
         try {
             const result = await exec(
-                `docker --context ${contextName} inspect ${ids} --format '{{.Id}};{{json .NetworkSettings.Ports}};{{.HostConfig.Runtime}}'`
+                `docker --host ${getSshUri(boardSshConnection)} inspect ${ids} --format '{{.Id}};{{json .NetworkSettings.Ports}};{{.HostConfig.Runtime}}'`
             );
             inspectStdout = result.stdout;
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -120,12 +130,12 @@ export class DockerCommands implements ContainerCommands {
         return inspectStdout.trim();
     }
 
-    public async containerStats(containerIds: string[], contextName: string): Promise<string> {
+    public async containerStats(containerIds: string[], boardSshConnection: string): Promise<string> {
         const ids = containerIds.join(' ');
         let statsStdout = '';
         try {
             const result = await exec(
-                `docker --context ${contextName} stats ${ids} --no-stream --no-trunc --format '{{.ID}};{{.CPUPerc}};{{.MemUsage}}'`
+                `docker --host ${getSshUri(boardSshConnection)} stats ${ids} --no-stream --no-trunc --format '{{.ID}};{{.CPUPerc}};{{.MemUsage}}'`
             );
             statsStdout = result.stdout;
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -142,9 +152,9 @@ export class DockerCommands implements ContainerCommands {
         return statsStdout.trim();
     }
 
-    public async stopContainer(containerId: string, contextName: string): Promise<void> {
+    public async stopContainer(containerId: string, boardSshConnection: string): Promise<void> {
         try {
-            const { stderr } = await exec(`docker --context ${contextName} stop ${containerId}`);
+            const { stderr } = await exec(`docker --host ${getSshUri(boardSshConnection)} stop ${containerId}`);
             const err = stderr.trim();
             if (err) {
                 throw new Error(err || 'Failed to stop service');
@@ -154,9 +164,9 @@ export class DockerCommands implements ContainerCommands {
         }
     }
 
-    public async startContainer(containerId: string, contextName: string): Promise<void> {
+    public async startContainer(containerId: string, boardSshConnection: string): Promise<void> {
         try {
-            const { stderr } = await exec(`docker --context ${contextName} start ${containerId}`);
+            const { stderr } = await exec(`docker --host ${getSshUri(boardSshConnection)} start ${containerId}`);
             const err = stderr.trim();
             if (err) {
                 throw new Error(err || 'Failed to start service');
@@ -166,9 +176,9 @@ export class DockerCommands implements ContainerCommands {
         }
     }
 
-    public async deleteContainer(containerId: string, contextName: string): Promise<void> {
+    public async deleteContainer(containerId: string, boardSshConnection: string): Promise<void> {
         try {
-            const { stderr } = await exec(`docker --context ${contextName} rm -f ${containerId}`);
+            const { stderr } = await exec(`docker --host ${getSshUri(boardSshConnection)} rm -f ${containerId}`);
             const err = stderr.trim();
             if (err) {
                 throw new Error(err || 'Failed to delete service');
@@ -178,8 +188,8 @@ export class DockerCommands implements ContainerCommands {
         }
     }
 
-    public getAttachShellCommand(containerId: string, contextName: string): string {
-        return `docker --context ${contextName} exec -it ${containerId} sh`;
+    public getAttachShellCommand(containerId: string, boardSshConnection: string): string {
+        return `docker --host ${getSshUri(boardSshConnection)} exec -it ${containerId} sh`;
     }
 
 }

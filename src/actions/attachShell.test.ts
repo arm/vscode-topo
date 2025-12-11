@@ -48,7 +48,7 @@ describe('AttachShell', () => {
         handler(fakeItem);
         expect(vscode.window.createTerminal).toHaveBeenCalledWith({ name: 'Shell: clabel' });
         const terminal = (vscode.window.createTerminal as jest.Mock).mock.results[0].value;
-        expect(terminal.sendText).toHaveBeenCalledWith(`docker --context ${target.host} exec -it cid sh`);
+        expect(terminal.sendText).toHaveBeenCalledWith(`docker --host ssh://${target.ssh} exec -it cid sh`);
         expect(terminal.show).toHaveBeenCalled();
     });
 });

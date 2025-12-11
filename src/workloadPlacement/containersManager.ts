@@ -3,7 +3,6 @@ import { logger } from '../util/logger';
 import { BoardConnectionChecker } from '../util/boardConnectionChecker';
 import { Deferred } from '../util/deferred';
 import { ContainerCommands, DockerPsItem } from './containerCommands';
-import { getDockerContextName } from '../util/dockerContext';
 import { TargetStore } from './targetStore';
 import { Target } from './target';
 
@@ -70,13 +69,6 @@ export class ContainersManager {
         private readonly targetStore: Pick<TargetStore, 'onChanged' | 'getSelectedTarget'>,
     ) {}
 
-    private get contextName(): string {
-        if (!this.target) {
-            throw new Error('Cannot get Docker context: no target is currently selected');
-        }
-        return getDockerContextName(this.target);
-    }
-
     private get isBoardAvailable(): boolean {
         return this.boardState.isReachable && this.boardState.hasContainerRuntime;
     }
@@ -99,7 +91,6 @@ export class ContainersManager {
 
     private async setTarget(target: Target) {
         this.target = target;
-        await this.containerCommands.ensureContext(this.contextName, target.ssh);
     }
 
     private async unsetTarget() {
@@ -195,12 +186,12 @@ export class ContainersManager {
             if (!target) {
                 return [];
             }
-            const items = await this.containerCommands.getContainers(this.contextName);
+            const items = await this.containerCommands.getContainers(target.ssh);
             const ids = items.map(item => item.ID);
-            const inspectStdout = await this.containerCommands.inspectContainers(ids, this.contextName);
+            const inspectStdout = await this.containerCommands.inspectContainers(ids, target.ssh);
             const inspectLines = inspectStdout.trim().split(/\r?\n/);
             const parsedInspectLines = inspectLines.map(line => line.split(';'));
-            const statsOutput = await this.containerCommands.containerStats(ids, this.contextName);
+            const statsOutput = await this.containerCommands.containerStats(ids, target.ssh);
             const statsLines = statsOutput.trim().split(/\r?\n/);
             const parsedStatsLines = statsLines.map(line => line.split(';'));
             const containersData = items.reduce<ContainerItem[]>((acc, item) => {
@@ -274,15 +265,27 @@ export class ContainersManager {
     }
 
     public async stopContainer(containerId: string): Promise<void> {
-        return this.containerCommands.stopContainer(containerId, this.contextName);
+        const target = this.target;
+        if (!target) {
+            throw new Error('Cannot stop container: no target is currently selected');
+        }
+        return this.containerCommands.stopContainer(containerId, target.ssh);
     }
 
     public async startContainer(containerId: string): Promise<void> {
-        return this.containerCommands.startContainer(containerId, this.contextName);
+        const target = this.target;
+        if (!target) {
+            throw new Error('Cannot start container: no target is currently selected');
+        }
+        return this.containerCommands.startContainer(containerId, target.ssh);
     }
 
     public async deleteContainer(containerId: string): Promise<void> {
-        return this.containerCommands.deleteContainer(containerId, this.contextName);
+        const target = this.target;
+        if (!target) {
+            throw new Error('Cannot delete container: no target is currently selected');
+        }
+        return this.containerCommands.deleteContainer(containerId, target.ssh);
     }
 
     private createContainerItem(item: DockerPsItem, runtime: string, ports: string[], cpuUsage: string, memUsage: string, target: Target): ContainerItem {
