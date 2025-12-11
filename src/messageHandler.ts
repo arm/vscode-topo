@@ -61,7 +61,6 @@ export class MessageHandler {
      */
     private async handleDeploy(
         document: vscode.TextDocument,
-        webview: vscode.Webview,
     ): Promise<void> {
         const composeFilePath = document.uri.fsPath;
         logger.show();
@@ -73,23 +72,6 @@ export class MessageHandler {
                 cancellable: true,
             },
             async (_progress, token) => {
-                const disposables: vscode.Disposable[] = [];
-                disposables.push(
-                    this.deployer.onStdoutData((data) => {
-                        logger.info(data.toString());
-                    }),
-                    this.deployer.onStderrData((data) => {
-                        logger.error(data.toString());
-                    }),
-                    this.deployer.onExit((_code) => {
-                        disposables.forEach(d => d.dispose());
-                    }),
-                    this.deployer.onError((err) => {
-                        logger.error(err.message);
-                        disposables.forEach(d => d.dispose());
-                    }),
-                );
-                this.deployer.start(composeFilePath);
                 token.onCancellationRequested(() => {
                     try {
                         this.deployer.stop();
@@ -97,19 +79,36 @@ export class MessageHandler {
                         logger.error('An error happened:');
                         logger.error(err);
                     }
-                    webview.postMessage({
-                        type: 'deploy-complete',
-                    });
                 });
-                await new Promise<void>((resolve, reject) => {
-                    this.deployer.onExit((code) => {
-                        if (code === 0) {
-                            resolve();
-                        } else {
-                            reject(new Error(`Make exited with code ${code}`));
-                        }
+                return new Promise<void>((resolve, reject) => {
+                    const disposables: vscode.Disposable[] = [];
+                    disposables.push(
+                        this.deployer.onStdoutData((data) => {
+                            logger.info(data.toString());
+                        }),
+                        this.deployer.onStderrData((data) => {
+                            logger.error(data.toString());
+                        }),
+                        this.deployer.onExit((code) => {
+                            disposables.forEach(d => d.dispose());
+                            if (code === 0) {
+                                resolve();
+                            } else {
+                                reject(new Error(`Make exited with code ${code}`));
+                            }
+                        }),
+                        this.deployer.onError((err) => {
+                            logger.error(err.message);
+                            disposables.forEach(d => d.dispose());
+                            reject(err);
+                        }),
+                    );
+                    this.deployer.start(composeFilePath).catch(err => {
+                        logger.error('An error happened:');
+                        logger.error(err);
+                        disposables.forEach(d => d.dispose());
+                        reject(err);
                     });
-                    this.deployer.onError(reject);
                 });
             }
         );
@@ -153,7 +152,7 @@ export class MessageHandler {
             break;
         case 'deploy':
             try {
-                await this.handleDeploy(document, webview);
+                await this.handleDeploy(document);
             } catch (err) {
                 console.error('Error in deploy:', err);
             }

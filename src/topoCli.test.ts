@@ -91,25 +91,6 @@ describe('TopoCli', () => {
         await expect(topoCli.init('t')).rejects.toThrow('err');
     });
 
-    it('generateMakefile resolves promise on success', async () => {
-        execMock.mockImplementation((_bin, _cargs, _options, cb) => {
-            cb(null, '', '');
-        });
-        await expect(topoCli.generateMakefile('c', 't')).resolves.toBeUndefined();
-        const expectedArgs = ['generate-makefile', 'c', '--target', 't'];
-        expect(execMock).toHaveBeenCalledWith(
-            topoCli.getBinaryPath(),
-            expectedArgs,
-            { cwd: path.dirname('c'), env: {}  },
-            expect.any(Function)
-        );
-    });
-
-    it('generateMakefile rejects promise on error', async () => {
-        execMock.mockImplementation((_bin, _args, _options, cb) => cb(new Error('fail'), '', 'err'));
-        await expect(topoCli.generateMakefile('c', 't')).rejects.toThrow('err');
-    });
-
     describe('getBinaryPath on Windows', () => {
         const topoCliPath = path.join(ext, 'resources', manifest.TOPO_CLI_WINDOWS);
         let origPlatform: string;

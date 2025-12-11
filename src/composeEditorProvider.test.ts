@@ -11,6 +11,8 @@ import { MessageHandler, MessageHandlerTopoCli } from './messageHandler';
 jest.mock('vscode');
 jest.mock('./util/logger');
 
+const waitImmediate = () => new Promise<void>(resolve => setTimeout(() => resolve(), 0));
+
 describe('ComposeEditorProvider', () => {
     const configMetadata: ConfigMetadata = {
         boards: [
@@ -41,31 +43,41 @@ describe('ComposeEditorProvider', () => {
     };
     let topoCli: jest.Mocked<MessageHandlerTopoCli>;
     let provider: ComposeEditorProvider;
-    let deployer: jest.Mocked<DeployerType>;
+    let deployer: DeployerType;
     const context: any = { extensionPath: '/ext', extensionUri: vscode.Uri.file('/ext'), subscriptions: [] };
-    let onExitCallback: ((e: number | null) => any) | undefined;
     let messageHandler: MessageHandler;
+    let stdoutDataEmitter: vscode.EventEmitter<Buffer>;
+    let stderrDataEmitter: vscode.EventEmitter<Buffer>;
+    let exitEmitter: vscode.EventEmitter<number | null>;
+    let errorEmitter: vscode.EventEmitter<Error>;
+    let consoleErrorSpy: jest.SpyInstance;
 
     beforeEach(() => {
         jest.clearAllMocks();
+        consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {/* no-op */});
         topoCli = {
             getProject: jest.fn().mockReturnValue(project),
             getConfigMetadata: jest.fn().mockReturnValue(configMetadata),
         };
+        stderrDataEmitter = new vscode.EventEmitter<Buffer>();
+        stdoutDataEmitter = new vscode.EventEmitter<Buffer>();
+        exitEmitter = new vscode.EventEmitter<number | null>();
+        errorEmitter = new vscode.EventEmitter<Error>();
         deployer = {
-            start: jest.fn(),
+            start: jest.fn().mockImplementation(() => Promise.resolve()),
             stop: jest.fn(),
-            onStdoutData: jest.fn(),
-            onStderrData: jest.fn(),
-            onExit: jest.fn(cb => {
-                onExitCallback = cb;
-                return { dispose: jest.fn() };
-            }),
-            onError: jest.fn(),
+            onStdoutData: stdoutDataEmitter.event,
+            onStderrData: stderrDataEmitter.event,
+            onExit: exitEmitter.event,
+            onError: errorEmitter.event,
         };
         (vscode.workspace.fs.writeFile as jest.Mock) = jest.fn().mockResolvedValue(undefined);
         messageHandler = new MessageHandler(topoCli, deployer);
         provider = new ComposeEditorProvider(context, messageHandler);
+    });
+
+    afterEach(() => {
+        consoleErrorSpy.mockRestore();
     });
 
     it('registers custom editor provider', async () => {
@@ -162,7 +174,8 @@ describe('ComposeEditorProvider', () => {
         await provider.resolveCustomTextEditor(doc, webviewPanel, null as any);
 
         handler({ type: 'deploy' });
-        onExitCallback?.(0);
+        exitEmitter.fire(0); // Simulate successful exit
+        await waitImmediate();
 
         expect(deployer.start).toHaveBeenCalledWith(composeFilePath);
         expect(post).toHaveBeenCalledWith({ type: 'deploy-complete' });
@@ -195,12 +208,79 @@ describe('ComposeEditorProvider', () => {
             },
             onDidDispose: (_cb: any) => ({ dispose: jest.fn() })
         };
-
         await provider.resolveCustomTextEditor(doc, webviewPanel, null as any);
 
         handler({ type: 'deploy' });
         // simulate cancellation explicitly
         cancellationCallback();
+        // process would fire an exit event after being stopped
+        exitEmitter.fire(130);
+        await waitImmediate();
+
+        expect(deployer.start).toHaveBeenCalledWith(composeFilePath);
+        expect(post).toHaveBeenCalledWith({ type: 'deploy-complete' });
+    });
+
+    it('handles deploy process errors', async () => {
+        const composeFolder = '/ext';
+        const composeFilePath = path.resolve(composeFolder, 'd.yaml');
+        const doc: any = { uri: { toString: () => 'u', fsPath: composeFilePath}, getText: () => '' };
+        let handler: any;
+        const post = jest.fn();
+        (vscode.window.withProgress as jest.Mock).mockImplementation(async (_opts, cb) => {
+            const token = {
+                onCancellationRequested: (cb2: any) => cb2(),
+            };
+            await cb({}, token);
+        });
+        const webviewPanel: any = {
+            webview: {
+                options: {},
+                html: '',
+                postMessage: post,
+                onDidReceiveMessage: (cb: any) => { handler = cb; },
+                asWebviewUri: (uri: any) => uri
+            },
+            onDidDispose: (_cb: any) => ({ dispose: jest.fn() })
+        };
+        await provider.resolveCustomTextEditor(doc, webviewPanel, null as any);
+        deployer.start = jest.fn().mockRejectedValue(new Error('deploy-fail'));
+
+        handler({ type: 'deploy' });
+        await waitImmediate();
+
+        expect(deployer.start).toHaveBeenCalledWith(composeFilePath);
+        expect(post).toHaveBeenCalledWith({ type: 'deploy-complete' });
+    });
+
+    it('handles other deploy errors', async () => {
+        const composeFolder = '/ext';
+        const composeFilePath = path.resolve(composeFolder, 'd.yaml');
+        const doc: any = { uri: { toString: () => 'u', fsPath: composeFilePath}, getText: () => '' };
+        let handler: any;
+        const post = jest.fn();
+        (vscode.window.withProgress as jest.Mock).mockImplementation(async (_opts, cb) => {
+            const token = {
+                onCancellationRequested: (cb2: any) => cb2(),
+            };
+            await cb({}, token);
+        });
+        const webviewPanel: any = {
+            webview: {
+                options: {},
+                html: '',
+                postMessage: post,
+                onDidReceiveMessage: (cb: any) => { handler = cb; },
+                asWebviewUri: (uri: any) => uri
+            },
+            onDidDispose: (_cb: any) => ({ dispose: jest.fn() })
+        };
+        await provider.resolveCustomTextEditor(doc, webviewPanel, null as any);
+
+        handler({ type: 'deploy' });
+        // simulate cancellation explicitly
+        errorEmitter.fire(new Error('Simulated error'));
+        await waitImmediate();
 
         expect(deployer.start).toHaveBeenCalledWith(composeFilePath);
         expect(post).toHaveBeenCalledWith({ type: 'deploy-complete' });
@@ -212,17 +292,6 @@ describe('ComposeEditorProvider', () => {
         const doc: any = { uri: { toString: () => 'u', fsPath: composeFilePath}, getText: () => '' };
         let handler: ((msg: any) => void) | undefined;
         const post = jest.fn();
-        let onStdout: ((data: Buffer) => void) | undefined;
-        let onStderr: ((data: Buffer) => void) | undefined;
-        // Mock deployer event registration
-        (deployer.onStdoutData as jest.Mock).mockImplementation((cb: (data: Buffer) => void) => {
-            onStdout = cb;
-            return { dispose: jest.fn() };
-        });
-        deployer.onStderrData.mockImplementation(cb => {
-            onStderr = cb;
-            return { dispose: jest.fn() };
-        });
         (vscode.window.withProgress as jest.Mock).mockImplementation(async (_opts, cb) => {
             await cb({}, { onCancellationRequested: () => {} });
         });
@@ -240,9 +309,9 @@ describe('ComposeEditorProvider', () => {
 
         handler?.({ type: 'deploy' });
         // Simulate stdout and stderr events
-        onStdout?.(Buffer.from('hello stdout'));
-        onStderr?.(Buffer.from('hello stderr'));
-        onExitCallback?.(0); // Simulate successful exit
+        stdoutDataEmitter.fire(Buffer.from('hello stdout'));
+        stderrDataEmitter.fire(Buffer.from('hello stderr'));
+        exitEmitter.fire(0); // Simulate successful exit
 
         expect(logger.info).toHaveBeenCalledWith('hello stdout');
         expect(logger.error).toHaveBeenCalledWith('hello stderr');
