@@ -32,11 +32,11 @@ export interface ContainerCommands {
         contextName: string,
         timeout: number
     ): Promise<T>;
-    startContainer(containerId: string, contextName: string): Promise<void>;
-    stopContainer(containerId: string, contextName: string): Promise<void>;
-    deleteContainer(containerId: string, contextName: string): Promise<void>;
-    getContainers(contextName: string): Promise<DockerPsItem[]>;
-    inspectContainers(containerIds: string[], contextName: string): Promise<string>;
-    containerStats(containerIds: string[], contextName: string): Promise<string>;
-    getAttachShellCommand(containerId: string, contextName: string): string;
+    startContainer(containerId: string, boardSshConnection: string): Promise<void>;
+    stopContainer(containerId: string, boardSshConnection: string): Promise<void>;
+    deleteContainer(containerId: string, boardSshConnection: string): Promise<void>;
+    getContainers(boardSshConnection: string): Promise<DockerPsItem[]>;
+    inspectContainers(containerIds: string[], boardSshConnection: string): Promise<string>;
+    containerStats(containerIds: string[], boardSshConnection: string): Promise<string>;
+    getAttachShellCommand(containerId: string, boardSshConnection: string): string;
 }

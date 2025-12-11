@@ -3,6 +3,7 @@ import { ContainerItem } from '../workloadPlacement/containersManager';
 import { ContainerCommands } from '../workloadPlacement/containerCommands';
 import * as manifest from '../manifest';
 import { getDockerContextName } from '../util/dockerContext';
+import { getErrorMessage } from '../util/getErrorMessage';
 
 export class AttachVsCode {
 
@@ -27,6 +28,11 @@ export class AttachVsCode {
             );
         };
         const dockerContext = getDockerContextName(item.target);
-        await this.containerCommands.executeWithContext(attachVsCodeOperation, dockerContext, 3000);
+        try {
+            await this.containerCommands.ensureContext(dockerContext, item.target.ssh);
+            await this.containerCommands.executeWithContext(attachVsCodeOperation, dockerContext, 3000);
+        } catch (err: unknown) {
+            vscode.window.showErrorMessage(`Failed to attach VS Code to container: ${getErrorMessage(err)}`);
+        }
     }
 }

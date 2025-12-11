@@ -2,7 +2,6 @@ import * as vscode from 'vscode';
 import { ContainerItem } from '../workloadPlacement/containersManager';
 import { ContainerCommands } from '../workloadPlacement/containerCommands';
 import * as manifest from '../manifest';
-import { getDockerContextName } from '../util/dockerContext';
 import { TargetStore } from '../workloadPlacement/targetStore';
 
 export class AttachShell {
@@ -23,7 +22,7 @@ export class AttachShell {
 
     public async attachShell(item: ContainerItem) {
         const terminal = vscode.window.createTerminal({ name: `Shell: ${item.image}` });
-        terminal.sendText(this.containerCommands.getAttachShellCommand(item.id, getDockerContextName(item.target)));
+        terminal.sendText(this.containerCommands.getAttachShellCommand(item.id, item.target.ssh));
         terminal.show();
     }
 
