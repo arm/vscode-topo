@@ -3,7 +3,7 @@ import { logger } from './util/logger';
 import { DeployerType } from './composeEditorProvider';
 import { TopoCli } from './topoCli';
 
-export type MessageHandlerTopoCli = Pick<TopoCli, 'listTemplates' | 'getProject' | 'addService' | 'getConfigMetadata' | 'removeService'>;
+export type MessageHandlerTopoCli = Pick<TopoCli, 'getProject' | 'getConfigMetadata' >;
 
 export class MessageHandler {
     constructor(
@@ -15,42 +15,13 @@ export class MessageHandler {
         webview: vscode.Webview,
         document: vscode.TextDocument,
     ): void {
-        const templates = this.topoCli.listTemplates();
         const project = this.topoCli.getProject(document.uri.fsPath);
         const configMetadata = this.topoCli.getConfigMetadata();
         webview.postMessage({
             type: 'render-compose-editor',
-            text: document.getText(),
             project,
-            templates,
             configMetadata,
         });
-    }
-
-    // Handle addService request
-    private async handleAddService(document: vscode.TextDocument, templateId: string, serviceName: string): Promise<void> {
-        const filePath = document.uri.fsPath;
-        try {
-            await this.topoCli.addService(filePath, templateId, serviceName).catch(err => {
-                vscode.window.showErrorMessage(`Script error: ${err.message}`);
-            });
-        } catch (err: unknown) {
-            const errorMsg = err instanceof Error ? err.message : String(err);
-            vscode.window.showErrorMessage(`Failed to add service: ${errorMsg}`);
-        }
-    }
-
-    // Handle handleRemoveService request
-    private async handleRemoveService(document: vscode.TextDocument, serviceName: string): Promise<void> {
-        const filePath = document.uri.fsPath;
-        try {
-            await this.topoCli.removeService(filePath, serviceName).catch(err => {
-                vscode.window.showErrorMessage(`Script error: ${err.message}`);
-            });
-        } catch (err: unknown) {
-            const errorMsg = err instanceof Error ? err.message : String(err);
-            vscode.window.showErrorMessage(`Failed to remove service: ${errorMsg}`);
-        }
     }
 
     private handleShowQuickPick(
@@ -154,24 +125,6 @@ export class MessageHandler {
         e: any
     ): Promise<void> {
         switch (e.type) {
-        case 'add-service':
-            try {
-                await this.handleAddService(document, e.templateId, e.serviceName);
-                this.renderComposeEditor(webview, document);
-            } catch (err: unknown) {
-                const errorMsg = err instanceof Error ? err.message : String(err);
-                vscode.window.showErrorMessage(`Error handling add-service: ${errorMsg}`);
-            }
-            break;
-        case 'remove-service':
-            try {
-                await this.handleRemoveService(document, e.serviceName);
-                this.renderComposeEditor(webview, document);
-            } catch (err: unknown) {
-                const errorMsg = err instanceof Error ? err.message : String(err);
-                vscode.window.showErrorMessage(`Error handling remove-service: ${errorMsg}`);
-            }
-            break;
         case 'show-quick-pick':
             try {
                 const result = await this.handleShowQuickPick(e.items);

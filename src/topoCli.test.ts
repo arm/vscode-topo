@@ -76,34 +76,6 @@ describe('TopoCli', () => {
         expect(topoCli.getProject('p')).toEqual(list);
     });
 
-    it('addService resolves promise on success', async () => {
-        execMock.mockImplementation((_bin, _cargs, _options, cb) => {
-            cb(null, '', '');
-        });
-        await expect(topoCli.addService('c', 't', 's')).resolves.toBeUndefined();
-        const expectedArgs = ['add-service', 'c', 't', 's'];
-        expect(execMock).toHaveBeenCalledWith(topoCli.getBinaryPath(), expectedArgs, { cwd: "." }, expect.any(Function));
-    });
-
-    it('addService rejects promise on error', async () => {
-        execMock.mockImplementation((_bin, _args, _options, cb) => cb(new Error('fail'), '', 'err')); 
-        await expect(topoCli.addService('c', 't', 's')).rejects.toThrow('err');
-    });
-
-    it('removeService resolves promise on success', async () => {
-        execMock.mockImplementation((_bin, _cargs, _options, cb) => {
-            cb(null, '', '');
-        });
-        await expect(topoCli.removeService('c', 's')).resolves.toBeUndefined();
-        const expectedArgs = ['remove-service', 'c', 's'];
-        expect(execMock).toHaveBeenCalledWith(topoCli.getBinaryPath(), expectedArgs, { cwd: "." }, expect.any(Function));
-    });
-
-    it('removeService rejects promise on error', async () => {
-        execMock.mockImplementation((_bin, _args, _options, cb) => cb(new Error('fail'), '', 'err')); 
-        await expect(topoCli.removeService('c', 's')).rejects.toThrow('err');
-    });
-
     it('init resolves promise on success', async () => {
         execMock.mockImplementation((_bin, _cargs, _options, cb) => {
             cb(null, '', '');

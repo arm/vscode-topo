@@ -5,9 +5,9 @@
 ### Step changes:
 
 - Removal of unused features including
-    - service addition
+    - ~~service addition~~
+    - ~~service deletion~~
     - makefile generation
-    - service deletion
 
 ## Step 2 - disable and update
 
