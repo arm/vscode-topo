@@ -121,7 +121,7 @@ export class ComposeEditorProvider implements vscode.CustomTextEditorProvider {
             await this.createWebview(webviewPanel, document);
         }
     }
-  
+
     protected async source(): Promise<void> {
         const views = [...this.views.entries()];
         const activeView = views.find(([_uri, view]) => view.active);
@@ -136,7 +136,7 @@ export class ComposeEditorProvider implements vscode.CustomTextEditorProvider {
 
     /**
      *  Subscribe to document changes and forward updates
-     */ 
+     */
     private subscribeToDocumentChanges(
         panel: vscode.WebviewPanel,
         document: vscode.TextDocument,

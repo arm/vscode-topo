@@ -14,25 +14,25 @@ export class BoardConnectionChecker {
             const timeout = setTimeout(() => controller.abort(), 2000);
             const response = await new Promise<{ status: number }>((resolve, reject) => {
                 const socket = new net.Socket();
-    
+
                 // Handle abort signal
                 const onAbort = () => {
                     socket.destroy();
                     reject(new Error('Aborted'));
                 };
                 controller.signal.addEventListener('abort', onAbort);
-    
+
                 socket.setTimeout(2000, () => {
                     socket.destroy();
                     reject(new Error('Timeout'));
                 });
-    
+
                 socket.connect(22, sshHostname, () => {
                     socket.end();
                     controller.signal.removeEventListener('abort', onAbort);
                     resolve({ status: 200 });
                 });
-    
+
                 socket.on('error', (err) => {
                     controller.signal.removeEventListener('abort', onAbort);
                     reject(err);

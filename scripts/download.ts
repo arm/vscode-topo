@@ -110,7 +110,7 @@ const findFileInDir = (dir: string, filename: string): string | undefined => {
 const extractFileFromArchive = async (buffer: Buffer, destPath: string, filename: string, type: 'tar' | 'zip'): Promise<void> => {
     const ext = type === 'tar' ? '.tar.gz' : '.zip';
     const tmpArchive = `${destPath}${ext}`;
-    const tmpDir = fs.mkdtempSync(path.join(nodeOs.tmpdir(), 'topo-'));  
+    const tmpDir = fs.mkdtempSync(path.join(nodeOs.tmpdir(), 'topo-'));
     fs.writeFileSync(tmpArchive, buffer);
     try {
         fs.mkdirSync(tmpDir, { recursive: true });

@@ -15,7 +15,7 @@ describe('OpenBoardDashboard', () => {
         const action = new OpenBoardDashboard(context, fakeProvider);
 
         action.activate();
-	
+
         expect(context.subscriptions.length).toBe(1);
         expect(registerCommandMock).toHaveBeenCalledWith(OpenBoardDashboard.openBoardDashboardCommandType, expect.any(Function));
     });
@@ -31,7 +31,7 @@ describe('OpenBoardDashboard', () => {
         const handler = registerCall[1];
 
         handler();
-    
+
         expect(fakeProvider.showDashboard).toHaveBeenCalledTimes(1);
     });
 });

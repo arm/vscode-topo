@@ -87,7 +87,7 @@ describe('TopoCli', () => {
     });
 
     it('init rejects promise on error', async () => {
-        execMock.mockImplementation((_bin, _args, _options, cb) => cb(new Error('fail'), '', 'err')); 
+        execMock.mockImplementation((_bin, _args, _options, cb) => cb(new Error('fail'), '', 'err'));
         await expect(topoCli.init('t')).rejects.toThrow('err');
     });
 

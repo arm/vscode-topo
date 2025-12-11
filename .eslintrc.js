@@ -20,6 +20,9 @@ module.exports = {
         'plugin:react-hooks/recommended',
       ],
       rules: {
+        'no-multi-spaces': ['error', { ignoreEOLComments: true }],
+        'no-irregular-whitespace': 'error',
+        'no-trailing-spaces': 'error',
         '@typescript-eslint/explicit-member-accessibility': ['error', {
           accessibility: 'explicit',
           overrides: {

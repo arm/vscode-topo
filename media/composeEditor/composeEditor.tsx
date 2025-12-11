@@ -41,7 +41,7 @@ const getSubsystemServices = (
             return [];
         }
     }
-  
+
     return Object.entries(project.services)
     // TODO match annotations
         .filter(([, service]) => service.runtime === subsystemInfo.runtime)
