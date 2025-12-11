@@ -11,7 +11,7 @@ export interface TemplateDescription {
 export interface SubsystemInfo {
   id: Subsystem;
   runtime: string;
-  annotations: Record<string, string>; 
+  annotations: Record<string, string>;
 }
 
 export interface BoardInfo {
@@ -29,7 +29,7 @@ export interface ServiceDescription {
   },
   containerName: string;
   runtime?: string;
-  annotations?: Record<string, string>; 
+  annotations?: Record<string, string>;
 }
 
 export interface ProjectDescription {

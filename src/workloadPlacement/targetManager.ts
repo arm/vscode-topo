@@ -30,26 +30,26 @@ export class TargetManager {
             vscode.commands.registerCommand(TargetManager.AddTargetCommandType, () => this.addTarget()),
         );
     }
-    
+
     private async addTarget(): Promise<Target | undefined> {
         const ssh = await vscode.window.showInputBox({
             title: 'Enter a connection string for the target',
             placeHolder: 'root@192.168.1.1'
-        });    
+        });
         if (!ssh?.trim()) {
             return;
         }
-    
+
         const id = await vscode.window.showInputBox({
             title: 'Enter a unique id for the target',
             placeHolder: ssh
         });
-        if (!id?.trim()) {  
-            return;  
-        }  
-    
+        if (!id?.trim()) {
+            return;
+        }
+
         const newTarget = new Target(id, ssh);
-    
+
         try {
             await this.targetStore.addTarget(newTarget);
         } catch (error) {

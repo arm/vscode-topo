@@ -47,7 +47,7 @@ describe('ContainerOpenInBrowser', () => {
         )?.[1];
         const port = '8080:80';
         const item = { id: 'abc123', ports: [port], target } as ContainerItem;
-  
+
         await openInBrowser(item);
 
         const publishedPort = port.split(':')[0];

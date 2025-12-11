@@ -22,7 +22,7 @@ function handleMessage(event: MessageEvent) {
         messageQueue.push(event);
         return;
     }
-  
+
     const message = event.data;
     const configMetadata = message.configMetadata as ConfigMetadata;
     const project = message.project as ProjectDescription;

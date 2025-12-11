@@ -52,7 +52,7 @@ describe('Deployer', () => {
     it('should start the process and emit events', () => {
 
         deployer.start(composeFilePath);
-  
+
         expect(spawn).toHaveBeenCalledWith('make', [], expect.objectContaining({
             cwd: path.dirname(composeFilePath),
             shell: true,
@@ -128,10 +128,10 @@ describe('Deployer', () => {
     });
 
     it('should cancel deployment when the makefile is not found', async () => {
-        (fs.existsSync as jest.Mock).mockReturnValue(false);   
+        (fs.existsSync as jest.Mock).mockReturnValue(false);
         const errorListener = jest.fn();
         deployer.onError(errorListener);
-    
+
         await deployer.start(composeFilePath);
         expect(errorListener).toHaveBeenCalled();
         // Verify the error message from the fired error event.
