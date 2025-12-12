@@ -109,6 +109,9 @@ export class DockerCommands implements ContainerCommands {
     }
 
     public async inspectContainers(containerIds: string[], boardSshConnection: string): Promise<string> {
+        if (containerIds.length === 0) {
+            return '';
+        }
         const ids = containerIds.join(' ');
         let inspectStdout = '';
         try {
@@ -131,6 +134,9 @@ export class DockerCommands implements ContainerCommands {
     }
 
     public async containerStats(containerIds: string[], boardSshConnection: string): Promise<string> {
+        if (containerIds.length === 0) {
+            return '';
+        }
         const ids = containerIds.join(' ');
         let statsStdout = '';
         try {
