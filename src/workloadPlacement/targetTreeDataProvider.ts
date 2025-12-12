@@ -6,10 +6,12 @@ import { TargetStore } from './targetStore';
 import { TargetTreeBoardItem } from './targetTreeBoardItem';
 import { TargetTreeSubsystemItem } from './targetTreeSubsystemItem';
 import { logger } from '../util/logger';
+import { getErrorMessage } from '../util/getErrorMessage';
 
 export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
 
     public static readonly SelectTargetCommandType = `${manifest.PACKAGE_NAME}.selectTarget`;
+    public static readonly RemoveTargetCommandType = `${manifest.PACKAGE_NAME}.removeTarget`;
 
     private _onDidChangeTreeData = new vscode.EventEmitter<vscode.TreeItem | undefined>();
     public readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
@@ -17,7 +19,7 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
     constructor(
         private readonly context: Pick<vscode.ExtensionContext, 'subscriptions'>,
         private readonly containersManager: ContainersManager,
-        private readonly targetStore: Pick<TargetStore, 'getSelectedTarget' | 'getTargets' | 'setSelected' | 'onChanged'>,
+        private readonly targetStore: Pick<TargetStore, 'getSelectedTarget' | 'getTargets' | 'setSelected' | 'onChanged' | 'deleteTarget'>,
     ) {
     }
 
@@ -30,18 +32,37 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
         });
         this.context.subscriptions.push(
             vscode.commands.registerCommand(TargetTreeDataProvider.SelectTargetCommandType, (node: unknown) => this.selectTarget(node)),
+            vscode.commands.registerCommand(TargetTreeDataProvider.RemoveTargetCommandType, (node: unknown) => this.removeTarget(node)),
             onTargetStoreChanged,
             onContainersManagerDataUpdate,
             this._onDidChangeTreeData,
         );
     }
 
-    private async selectTarget(target: unknown): Promise<void> {
-        if (!(target instanceof TargetTreeBoardItem)) {
-            logger.warn(`Invalid target type: expected TargetTreeBoardItem but received\n${JSON.stringify(target, null, 2)}`);
+    private async selectTarget(treeNode: unknown): Promise<void> {
+        if (!(treeNode instanceof TargetTreeBoardItem)) {
+            const errMsg = `Invalid target type for select: expected TargetTreeBoardItem but received\n${JSON.stringify(treeNode, null, 2)}`;
+            logger.error(errMsg);
             return;
         }
-        await this.targetStore.setSelected(target.id);
+        await this.targetStore.setSelected(treeNode.targetId);
+    }
+
+    private async removeTarget(treeNode: unknown): Promise<void> {
+        if (!(treeNode instanceof TargetTreeBoardItem)) {
+            const errMsg = `Invalid target type for remove: expected TargetTreeBoardItem but received\n${JSON.stringify(treeNode, null, 2)}`;
+            logger.error(errMsg);
+            return;
+        }
+        try {
+            await this.targetStore.deleteTarget(treeNode.targetId);
+        } catch (err) {
+            const errorMessage = `Failed to remove target: ${getErrorMessage(err)}`;
+            vscode.window.showErrorMessage(errorMessage);
+            logger.error(errorMessage);
+        } finally {
+            this._onDidChangeTreeData.fire(undefined);
+        }
     }
 
     public async getChildren(element?: vscode.TreeItem): Promise<vscode.TreeItem[]> {

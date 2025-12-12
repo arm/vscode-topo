@@ -90,6 +90,11 @@
         "category": "Arm Topo"
       },
       {
+        "command": "topo.removeTarget",
+        "title": "Remove Target",
+        "category": "Arm Topo"
+      },
+      {
         "command": "topo.addTarget",
         "title": "Add Target",
         "icon": "$(add)",
@@ -194,6 +199,10 @@
           "when": "false"
         },
         {
+          "command": "topo.removeTarget",
+          "when": "false"
+        },
+        {
           "command": "topo.openBoardDashboard",
           "when": "false"
         },
@@ -236,6 +245,11 @@
           "command": "topo.openBoardDashboard",
           "when": "view === topo.target-manager && viewItem =~ /Board/ && viewItem =~ /Selected/ && viewItem=~ /ConnectionReady/ && viewItem=~ /TargetReady/",
           "group": "topo/2_actions"
+        },
+        {
+          "command": "topo.removeTarget",
+          "when": "view == topo.target-manager && viewItem =~ /Board/",
+          "group": "topo/3_cleanup"
         },
         {
           "command": "topo.attachVsCode",
