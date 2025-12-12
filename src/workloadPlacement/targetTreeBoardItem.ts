@@ -3,6 +3,7 @@ import { Target } from './target';
 
 /** Represents a board */
 export class TargetTreeBoardItem extends vscode.TreeItem {
+    public readonly targetId: string;
 
     constructor(
         target: Target,
@@ -26,6 +27,7 @@ export class TargetTreeBoardItem extends vscode.TreeItem {
         }
         this.contextValue = contextValues.join(' ');
         this.collapsibleState = this.getTreeItemState();
+        this.targetId = target.id;
     }
 
     public get displayName(): string {

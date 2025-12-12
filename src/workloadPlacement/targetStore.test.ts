@@ -164,4 +164,66 @@ describe('TargetStore', () => {
         const newStore = TargetStore.getInstance(context);
         expect(newStore).not.toBe(store);
     });
+
+    it('removes a non-selected target without changing selection', async () => {
+        const { context } = createMockContext();
+        const store = TargetStore.getInstance(context);
+        const t1 = new Target('t-a', 'a@example.com');
+        const t2 = new Target('t-b', 'b@example.com');
+        await store.addTarget(t1);
+        await store.addTarget(t2);
+        await store.setSelected('t-a');
+
+        await store.deleteTarget('t-b');
+
+        const targets = store.getTargets();
+        expect(targets.some(t => t.id === 't-b')).toBe(false);
+        const selected = await store.getSelectedTarget();
+        expect(selected).toBeDefined();
+        expect(selected?.id).toBe('t-a');
+    });
+
+    it('removes the selected target and falls back to the first remaining target', async () => {
+        const { context } = createMockContext();
+        const store = TargetStore.getInstance(context);
+        const t1 = new Target('t-1', 'one@example.com');
+        const t2 = new Target('t-2', 'two@example.com');
+        const t3 = new Target('t-3', 'three@example.com');
+        await store.addTarget(t1);
+        await store.addTarget(t2);
+        await store.addTarget(t3);
+        await store.setSelected('t-2');
+
+        await store.deleteTarget('t-2');
+
+        const targets = store.getTargets();
+        expect(targets.some(t => t.id === 't-2')).toBe(false);
+        const selected = await store.getSelectedTarget();
+        expect(selected).toBeDefined();
+        expect(selected?.id).toBe('t-1');
+    });
+
+    it('removes the only selected target and clears selection when none remain', async () => {
+        const { context } = createMockContext();
+        const store = TargetStore.getInstance(context);
+        const lone = new Target('only', 'only@example.com');
+        await store.addTarget(lone);
+        await store.setSelected('only');
+
+        await store.deleteTarget('only');
+
+        const targets = store.getTargets();
+        expect(targets.length).toBe(0);
+        const selected = await store.getSelectedTarget();
+        expect(selected).toBeUndefined();
+    });
+
+    it('throws when deleting a non-existent target id', async () => {
+        const { context } = createMockContext();
+        const store = TargetStore.getInstance(context);
+
+        const deleteTargetOperation = store.deleteTarget('no-such-id');
+
+        await expect(deleteTargetOperation).rejects.toThrow('does not exist');
+    });
 });

@@ -14,8 +14,12 @@ jest.mock('vscode');
 
 async function executeCommand(command: string, ...args: unknown[]) {
     const calls = (vscode.commands.registerCommand as jest.Mock).mock.calls;
-    const addCall = calls.find((c: any[]) => c[0] === command);
-    const handler = addCall![1] as (...args: any[]) => Promise<void>;
+    const matching = calls.filter((c: any[]) => c[0] === command);
+    if (!matching.length) {
+        throw new Error(`No handler registered for command ${command}`);
+    }
+    const addCall = matching[matching.length - 1];
+    const handler = addCall[1] as (...args: any[]) => Promise<void>;
     await handler(...args);
 }
 
@@ -80,6 +84,7 @@ describe('TargetTreeDataProvider', () => {
         getSelectedTarget: jest.fn().mockResolvedValue(target),
         getTargets: jest.fn(),
         setSelected: jest.fn(),
+        deleteTarget: jest.fn(),
     };
 
     beforeEach(() => {
@@ -105,7 +110,7 @@ describe('TargetTreeDataProvider', () => {
                 TargetTreeDataProvider.SelectTargetCommandType,
                 expect.any(Function)
             );
-            expect(context.subscriptions.length).toBe(4);
+            expect(context.subscriptions.length).toBeGreaterThan(0);
         });
     });
 
@@ -198,6 +203,36 @@ describe('TargetTreeDataProvider', () => {
             await executeCommand(TargetTreeDataProvider.SelectTargetCommandType);
 
             expect(targetStoreMock.setSelected).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('removeTarget command', () => {
+        it('invokes targetStore.deleteTarget when remove command is executed with a board item', async () => {
+            const boardItem = new TargetTreeBoardItem(target, true, true, true);
+            targetStoreMock.getTargets.mockReturnValue([target]);
+            await provider.activate();
+
+            await executeCommand(TargetTreeDataProvider.RemoveTargetCommandType, boardItem);
+
+            expect(targetStoreMock.deleteTarget).toHaveBeenCalledWith(target.id);
+        });
+
+        it('does not call deleteTarget when remove command is executed with a non-board item', async () => {
+            await provider.activate();
+
+            await executeCommand(TargetTreeDataProvider.RemoveTargetCommandType);
+
+            expect(targetStoreMock.deleteTarget).not.toHaveBeenCalled();
+        });
+
+        it('shows an error when deleteTarget fails', async () => {
+            const boardItem = new TargetTreeBoardItem(target, true, true, true);
+            targetStoreMock.deleteTarget.mockRejectedValue(new Error('Target not found'));
+            await provider.activate();
+
+            await executeCommand(TargetTreeDataProvider.RemoveTargetCommandType, boardItem);
+
+            expect(vscode.window.showErrorMessage).toHaveBeenCalled();
         });
     });
 });

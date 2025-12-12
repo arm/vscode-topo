@@ -84,10 +84,19 @@ export class TargetStore {
         return targets.find(target => target.id === this.selected);
     }
 
-    public async deleteTarget(target: Target): Promise<void> {
+    public async deleteTarget(targetId: string): Promise<void> {
         const targets = this.loadTargets();
-        targets.delete(target.id);
+        if (!targets.has(targetId)) {
+            throw new Error(`Target with id "${targetId}" does not exist`);
+        }
+        targets.delete(targetId);
         await this.saveTargets(targets);
+        const currentSelected = this.selected;
+        if (currentSelected === targetId) {
+            const remaining = [...targets.keys()];
+            const newSelected = remaining.length ? remaining.sort((a, b) => a.localeCompare(b))[0] : undefined;
+            await this.setSelected(newSelected);
+        }
     }
 
     protected loadTargets(): Map<string, Target> {
