@@ -47,7 +47,7 @@ export async function activate(context: vscode.ExtensionContext) {
     const attachShell = new AttachShell(context, dockerCommands, targetStore);
     const containersManager = new ContainersManager(boardConnectionChecker, dockerCommands, targetStore);
     targetTreeDataProvider = new TargetTreeDataProvider(context, containersManager, targetStore);
-    const targetManager = new TargetManager(context, targetTreeDataProvider, targetStore);
+    const targetManager = new TargetManager(context, targetTreeDataProvider, targetStore, containersManager);
     const boardDashboardMessageHandler = new BoardDashboardMessageHandler(containersManager, targetStore, containerOpenInBrowser, attachVsCode, attachShell);
     const boardDashboardProvider = new BoardDashboardProvider(context, boardDashboardMessageHandler, containersManager);
     const containerStart = new ContainerStart(context, containersManager);

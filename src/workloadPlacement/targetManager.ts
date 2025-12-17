@@ -5,29 +5,49 @@ import { Target } from './target';
 import { TargetStore } from './targetStore';
 import { getErrorMessage } from '../util/getErrorMessage';
 import { logger } from '../util/logger';
+import { ContainersManager } from './containersManager';
+import { getTreeItemIcon } from './targetTreeBoardItem';
 
 export class TargetManager {
 
     public static readonly TargetManagerViewId = `${manifest.PACKAGE_NAME}.target-manager`;
+    public static readonly TargetManagerStatusBarId = `${manifest.PACKAGE_NAME}.target-manager`;
     public static readonly RefreshCommandType = `${manifest.PACKAGE_NAME}.refresh`;
     public static readonly AddTargetCommandType = `${manifest.PACKAGE_NAME}.addTarget`;
+    public static readonly FocusViewCommand = `${TargetManager.TargetManagerViewId}.focus`;
+    public static readonly statusPriority = 100;
+
+    protected statusBarItem: vscode.StatusBarItem | undefined;
 
     constructor(
         private readonly context: vscode.ExtensionContext,
         private readonly targetTreeDataProvider: TargetTreeDataProvider,
-        private readonly targetStore: Pick<TargetStore, 'addTarget' | 'setSelected'>,
+        private readonly targetStore: Pick<TargetStore, 'addTarget' | 'setSelected' | 'getSelectedTarget' | 'onChanged'>,
+        private readonly containersManager: Pick<ContainersManager, 'getBoardState' | 'onDataUpdate'>,
     ) {}
 
     public async activate() {
+        this.statusBarItem = vscode.window.createStatusBarItem(TargetManager.TargetManagerStatusBarId, vscode.StatusBarAlignment.Left, TargetManager.statusPriority);
+        this.statusBarItem.command = TargetManager.FocusViewCommand;
         const treeView = vscode.window.createTreeView(TargetManager.TargetManagerViewId, {
             treeDataProvider: this.targetTreeDataProvider,
             showCollapseAll: true
         });
+        await this.safeUpdateStatusBar();
 
         this.context.subscriptions.push(
+            this.statusBarItem,
             treeView,
-            vscode.commands.registerCommand(TargetManager.RefreshCommandType, () => this.targetTreeDataProvider.refresh()),
-            vscode.commands.registerCommand(TargetManager.AddTargetCommandType, () => this.addTarget()),
+            vscode.commands.registerCommand(
+                TargetManager.RefreshCommandType,
+                () => this.targetTreeDataProvider.refresh()
+            ),
+            vscode.commands.registerCommand(
+                TargetManager.AddTargetCommandType,
+                () => this.addTarget()
+            ),
+            this.targetStore.onChanged(() => this.safeUpdateStatusBar()),
+            this.containersManager.onDataUpdate(() => this.safeUpdateStatusBar()),
         );
     }
 
@@ -59,6 +79,34 @@ export class TargetManager {
             return;
         }
         await this.targetStore.setSelected(newTarget.id);
+    }
+
+    protected async updateStatusBar(): Promise<void> {
+        if (!this.statusBarItem) {
+            return;
+        }
+        const target = await this.targetStore.getSelectedTarget();
+        if (target) {
+            const boardState = await this.containersManager.getBoardState();
+            const connectionReady = target.id === boardState.targetId;
+            const targetReady = boardState.isReachable && boardState.hasContainerRuntime;
+            const targetTreeIcon = getTreeItemIcon(true, connectionReady, targetReady);
+            const iconId = targetTreeIcon?.id || 'pass-filled';
+            this.statusBarItem.text = `$(${iconId}) ${target.id}`;
+            this.statusBarItem.tooltip = `Connection String: ${target.ssh}`;
+            this.statusBarItem.show();
+        } else {
+            this.statusBarItem.hide();
+        }
+    }
+
+    protected async safeUpdateStatusBar(): Promise<void> {
+        try {
+            await this.updateStatusBar();
+        } catch (error) {
+            const errorMsg = `Failed to update target manager status bar: ${getErrorMessage(error)}`;
+            logger.error(errorMsg);
+        }
     }
 
 }
