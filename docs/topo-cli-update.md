@@ -21,14 +21,8 @@
 ### VS Code changes:
 
 - Deploy re-enabled with support for target argument
-    - How? Possible strategy would be to start just by adding a context menu command on compose files. What compose file? All?
-- Selected target made more prominent to the user (EG: status bar indicator)
+- ~~Selected target made more prominent to the user (EG: status bar indicator)~~
 - Deploy operation should be cancelable
-
-### Topo CLI changes:
-
-- examples need to be listed in json format
-- example could include a user friendly name. Only an id is shown now.
 
 ## Step 4 - example cloning
 
@@ -47,6 +41,11 @@
 ### VS Code changes:
 
 - Example listing added
+
+### Topo CLI changes:
+
+- examples need to be listed in json format
+- example could include a user friendly name. Only an id is shown now.
 
 
 ## Step 6 - topo health
