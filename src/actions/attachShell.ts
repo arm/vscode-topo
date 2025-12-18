@@ -6,7 +6,7 @@ import { TargetStore } from '../workloadPlacement/targetStore';
 
 export class AttachShell {
 
-    public static readonly attachShellCommandType = `${manifest.PACKAGE_NAME}.attachShell`;
+    public static readonly attachShellCommand = `${manifest.PACKAGE_NAME}.attachShell`;
 
     constructor(
         private readonly context: vscode.ExtensionContext,
@@ -16,7 +16,7 @@ export class AttachShell {
 
     public activate() {
         this.context.subscriptions.push(
-            vscode.commands.registerCommand(AttachShell.attachShellCommandType, this.attachShell.bind(this))
+            vscode.commands.registerCommand(AttachShell.attachShellCommand, this.attachShell.bind(this))
         );
     }
 

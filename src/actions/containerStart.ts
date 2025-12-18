@@ -4,7 +4,7 @@ import * as manifest from '../manifest';
 
 export class ContainerStart {
 
-    public static readonly startContainerCommandType = `${manifest.PACKAGE_NAME}.startContainer`;
+    public static readonly startContainerCommand = `${manifest.PACKAGE_NAME}.startContainer`;
 
     constructor(
         private readonly context: vscode.ExtensionContext,
@@ -13,7 +13,7 @@ export class ContainerStart {
 
     public activate() {
         this.context.subscriptions.push(
-            vscode.commands.registerCommand(ContainerStart.startContainerCommandType, this.startContainer.bind(this))
+            vscode.commands.registerCommand(ContainerStart.startContainerCommand, this.startContainer.bind(this))
         );
     }
 

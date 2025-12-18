@@ -4,7 +4,7 @@ import * as manifest from '../manifest';
 
 export class ContainerDelete {
 
-    public static readonly deleteContainerCommandType = `${manifest.PACKAGE_NAME}.deleteContainer`;
+    public static readonly deleteContainerCommand = `${manifest.PACKAGE_NAME}.deleteContainer`;
 
     constructor(
         private readonly context: vscode.ExtensionContext,
@@ -13,7 +13,7 @@ export class ContainerDelete {
 
     public activate() {
         this.context.subscriptions.push(
-            vscode.commands.registerCommand(ContainerDelete.deleteContainerCommandType, this.deleteContainer.bind(this))
+            vscode.commands.registerCommand(ContainerDelete.deleteContainerCommand, this.deleteContainer.bind(this))
         );
     }
 

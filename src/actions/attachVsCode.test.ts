@@ -68,7 +68,7 @@ describe('attachVsCode', () => {
 
         await attachVsCode.activate();
 
-        expect(registerCommandMock).toHaveBeenCalledWith(AttachVsCode.attachVsCodeCommandType, expect.any(Function));
+        expect(registerCommandMock).toHaveBeenCalledWith(AttachVsCode.attachVsCodeCommand, expect.any(Function));
     });
 
     it('executes attachVsCode command that doesn\'t create context and calls remote-containers.attachToRunningContainer with container id', async () => {
@@ -90,7 +90,7 @@ describe('attachVsCode', () => {
             throw new Error(`Unknown command: ${command}`);
         });
 
-        const commandExecution = executeCommand(AttachVsCode.attachVsCodeCommandType, containerItem);
+        const commandExecution = executeCommand(AttachVsCode.attachVsCodeCommand, containerItem);
         await jest.advanceTimersByTimeAsync(3000);
         await commandExecution;
 
@@ -123,7 +123,7 @@ describe('attachVsCode', () => {
             throw new Error(`Unknown command: ${command}`);
         });
 
-        const commandExecution = executeCommand(AttachVsCode.attachVsCodeCommandType, containerItem);
+        const commandExecution = executeCommand(AttachVsCode.attachVsCodeCommand, containerItem);
         await jest.advanceTimersByTimeAsync(3000);
         await commandExecution;
 
@@ -142,7 +142,7 @@ describe('attachVsCode', () => {
             throw new Error('Fail');
         });
 
-        const commandExecution = executeCommand(AttachVsCode.attachVsCodeCommandType, containerItem);
+        const commandExecution = executeCommand(AttachVsCode.attachVsCodeCommand, containerItem);
         await jest.advanceTimersByTimeAsync(3000);
         await commandExecution;
 

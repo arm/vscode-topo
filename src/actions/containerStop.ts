@@ -4,7 +4,7 @@ import * as manifest from '../manifest';
 
 export class ContainerStop {
 
-    public static readonly stopContainerCommandType = `${manifest.PACKAGE_NAME}.stopContainer`;
+    public static readonly stopContainerCommand = `${manifest.PACKAGE_NAME}.stopContainer`;
 
     constructor(
         private readonly context: vscode.ExtensionContext,
@@ -14,7 +14,7 @@ export class ContainerStop {
     public async activate() {
 
         this.context.subscriptions.push(
-            vscode.commands.registerCommand(ContainerStop.stopContainerCommandType, this.stopContainer.bind(this)),
+            vscode.commands.registerCommand(ContainerStop.stopContainerCommand, this.stopContainer.bind(this)),
         );
     }
 

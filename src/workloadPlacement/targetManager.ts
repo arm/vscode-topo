@@ -10,14 +10,13 @@ import { getTreeItemIcon } from './targetTreeBoardItem';
 
 export class TargetManager {
 
-    public static readonly TargetManagerViewId = `${manifest.PACKAGE_NAME}.target-manager`;
-    public static readonly TargetManagerStatusBarId = `${manifest.PACKAGE_NAME}.target-manager`;
-    public static readonly RefreshCommandType = `${manifest.PACKAGE_NAME}.refresh`;
-    public static readonly AddTargetCommandType = `${manifest.PACKAGE_NAME}.addTarget`;
-    public static readonly FocusViewCommand = `${TargetManager.TargetManagerViewId}.focus`;
+    public static readonly viewId = `${manifest.PACKAGE_NAME}.target-manager`;
+    public static readonly refreshCommand = `${manifest.PACKAGE_NAME}.refresh`;
+    public static readonly addTargetCommand = `${manifest.PACKAGE_NAME}.addTarget`;
+    public static readonly FocusViewCommand = `${TargetManager.viewId}.focus`;
     public static readonly statusPriority = 100;
 
-    protected statusBarItem: vscode.StatusBarItem | undefined;
+    private statusBarItem: vscode.StatusBarItem | undefined;
 
     constructor(
         private readonly context: vscode.ExtensionContext,
@@ -27,9 +26,9 @@ export class TargetManager {
     ) {}
 
     public async activate() {
-        this.statusBarItem = vscode.window.createStatusBarItem(TargetManager.TargetManagerStatusBarId, vscode.StatusBarAlignment.Left, TargetManager.statusPriority);
+        this.statusBarItem = vscode.window.createStatusBarItem(TargetManager.viewId, vscode.StatusBarAlignment.Left, TargetManager.statusPriority);
         this.statusBarItem.command = TargetManager.FocusViewCommand;
-        const treeView = vscode.window.createTreeView(TargetManager.TargetManagerViewId, {
+        const treeView = vscode.window.createTreeView(TargetManager.viewId, {
             treeDataProvider: this.targetTreeDataProvider,
             showCollapseAll: true
         });
@@ -39,11 +38,11 @@ export class TargetManager {
             this.statusBarItem,
             treeView,
             vscode.commands.registerCommand(
-                TargetManager.RefreshCommandType,
+                TargetManager.refreshCommand,
                 () => this.targetTreeDataProvider.refresh()
             ),
             vscode.commands.registerCommand(
-                TargetManager.AddTargetCommandType,
+                TargetManager.addTargetCommand,
                 () => this.addTarget()
             ),
             this.targetStore.onChanged(() => this.safeUpdateStatusBar()),

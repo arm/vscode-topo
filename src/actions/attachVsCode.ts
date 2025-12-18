@@ -7,7 +7,7 @@ import { getErrorMessage } from '../util/getErrorMessage';
 
 export class AttachVsCode {
 
-    public static readonly attachVsCodeCommandType = `${manifest.PACKAGE_NAME}.attachVsCode`;
+    public static readonly attachVsCodeCommand = `${manifest.PACKAGE_NAME}.attachVsCode`;
 
     constructor(
         private readonly context: vscode.ExtensionContext,
@@ -16,7 +16,7 @@ export class AttachVsCode {
 
     public async activate() {
         this.context.subscriptions.push(
-            vscode.commands.registerCommand(AttachVsCode.attachVsCodeCommandType, this.attachVsCodeToContainer.bind(this))
+            vscode.commands.registerCommand(AttachVsCode.attachVsCodeCommand, this.attachVsCodeToContainer.bind(this))
         );
     }
 

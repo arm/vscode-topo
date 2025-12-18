@@ -10,8 +10,8 @@ import { getErrorMessage } from '../util/getErrorMessage';
 
 export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
 
-    public static readonly SelectTargetCommandType = `${manifest.PACKAGE_NAME}.selectTarget`;
-    public static readonly RemoveTargetCommandType = `${manifest.PACKAGE_NAME}.removeTarget`;
+    public static readonly selectTargetCommand = `${manifest.PACKAGE_NAME}.selectTarget`;
+    public static readonly removeTargetCommand = `${manifest.PACKAGE_NAME}.removeTarget`;
 
     private _onDidChangeTreeData = new vscode.EventEmitter<vscode.TreeItem | undefined>();
     public readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
@@ -31,8 +31,8 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
             this._onDidChangeTreeData.fire(undefined);
         });
         this.context.subscriptions.push(
-            vscode.commands.registerCommand(TargetTreeDataProvider.SelectTargetCommandType, (node: unknown) => this.selectTarget(node)),
-            vscode.commands.registerCommand(TargetTreeDataProvider.RemoveTargetCommandType, (node: unknown) => this.removeTarget(node)),
+            vscode.commands.registerCommand(TargetTreeDataProvider.selectTargetCommand, (node: unknown) => this.selectTarget(node)),
+            vscode.commands.registerCommand(TargetTreeDataProvider.removeTargetCommand, (node: unknown) => this.removeTarget(node)),
             onTargetStoreChanged,
             onContainersManagerDataUpdate,
             this._onDidChangeTreeData,

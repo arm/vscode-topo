@@ -8,14 +8,15 @@ const SERIAL_OPTIONS = { baudRate: 115200 };
 
 export class OpenSerial {
 
-    public static readonly openSerialCommandType = `${PACKAGE_NAME}.openSerial`;
+    public static readonly openSerialCommand = `${PACKAGE_NAME}.openSerial`;
+
     protected serialCache = new Map<string, string>();
 
     constructor(private readonly context: vscode.ExtensionContext) { }
 
     public activate() {
         this.context.subscriptions.push(
-            vscode.commands.registerCommand(OpenSerial.openSerialCommandType, this.openSerial.bind(this))
+            vscode.commands.registerCommand(OpenSerial.openSerialCommand, this.openSerial.bind(this))
         );
     }
 

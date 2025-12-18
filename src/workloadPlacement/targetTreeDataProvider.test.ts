@@ -107,7 +107,7 @@ describe('TargetTreeDataProvider', () => {
             await provider.activate();
 
             expect(vscode.commands.registerCommand).toHaveBeenCalledWith(
-                TargetTreeDataProvider.SelectTargetCommandType,
+                TargetTreeDataProvider.selectTargetCommand,
                 expect.any(Function)
             );
             expect(context.subscriptions.length).toBeGreaterThan(0);
@@ -192,7 +192,7 @@ describe('TargetTreeDataProvider', () => {
             await provider.activate();
             const boardItem = new TargetTreeBoardItem(target, true, true, true);
 
-            await executeCommand(TargetTreeDataProvider.SelectTargetCommandType, boardItem);
+            await executeCommand(TargetTreeDataProvider.selectTargetCommand, boardItem);
 
             expect(targetStoreMock.setSelected).toHaveBeenCalledWith(target.id);
         });
@@ -200,7 +200,7 @@ describe('TargetTreeDataProvider', () => {
         it('does not call setSelected when select command is executed with a non-board item', async () => {
             await provider.activate();
 
-            await executeCommand(TargetTreeDataProvider.SelectTargetCommandType);
+            await executeCommand(TargetTreeDataProvider.selectTargetCommand);
 
             expect(targetStoreMock.setSelected).not.toHaveBeenCalled();
         });
@@ -212,7 +212,7 @@ describe('TargetTreeDataProvider', () => {
             targetStoreMock.getTargets.mockReturnValue([target]);
             await provider.activate();
 
-            await executeCommand(TargetTreeDataProvider.RemoveTargetCommandType, boardItem);
+            await executeCommand(TargetTreeDataProvider.removeTargetCommand, boardItem);
 
             expect(targetStoreMock.deleteTarget).toHaveBeenCalledWith(target.id);
         });
@@ -220,7 +220,7 @@ describe('TargetTreeDataProvider', () => {
         it('does not call deleteTarget when remove command is executed with a non-board item', async () => {
             await provider.activate();
 
-            await executeCommand(TargetTreeDataProvider.RemoveTargetCommandType);
+            await executeCommand(TargetTreeDataProvider.removeTargetCommand);
 
             expect(targetStoreMock.deleteTarget).not.toHaveBeenCalled();
         });
@@ -230,7 +230,7 @@ describe('TargetTreeDataProvider', () => {
             targetStoreMock.deleteTarget.mockRejectedValue(new Error('Target not found'));
             await provider.activate();
 
-            await executeCommand(TargetTreeDataProvider.RemoveTargetCommandType, boardItem);
+            await executeCommand(TargetTreeDataProvider.removeTargetCommand, boardItem);
 
             expect(vscode.window.showErrorMessage).toHaveBeenCalled();
         });

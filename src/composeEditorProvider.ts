@@ -11,9 +11,9 @@ const isUri = (uri: unknown): uri is vscode.Uri => (uri as vscode.Uri).path !== 
 export class ComposeEditorProvider implements vscode.CustomTextEditorProvider {
 
     public static readonly viewType = `${manifest.PACKAGE_NAME}.composeEditor`;
-    public static readonly sourceCommandType = `${manifest.PACKAGE_NAME}.showSource`;
-    public static readonly previewCommandType = `${manifest.PACKAGE_NAME}.showPreview`;
-    public static readonly sidePreviewCommandType = `${manifest.PACKAGE_NAME}.showPreviewToSide`;
+    public static readonly sourceCommand = `${manifest.PACKAGE_NAME}.showSource`;
+    public static readonly previewCommand = `${manifest.PACKAGE_NAME}.showPreview`;
+    public static readonly sidePreviewCommand = `${manifest.PACKAGE_NAME}.showPreviewToSide`;
 
     private readonly views = new Map<string, vscode.WebviewPanel>();
     private readonly documents = new Map<string, vscode.TextDocument>();
@@ -37,15 +37,15 @@ export class ComposeEditorProvider implements vscode.CustomTextEditorProvider {
                 editorOptions,
             ),
             vscode.commands.registerCommand(
-                ComposeEditorProvider.sourceCommandType,
+                ComposeEditorProvider.sourceCommand,
                 () => this.source(),
             ),
             vscode.commands.registerCommand(
-                ComposeEditorProvider.sidePreviewCommandType,
+                ComposeEditorProvider.sidePreviewCommand,
                 async (uri: vscode.Uri | undefined) => this.preview(uri, true),
             ),
             vscode.commands.registerCommand(
-                ComposeEditorProvider.previewCommandType,
+                ComposeEditorProvider.previewCommand,
                 async (uri: vscode.Uri | undefined) => this.preview(uri)
             ),
         );
