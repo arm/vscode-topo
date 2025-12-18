@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { logger } from './util/logger';
 import { DeployerType } from './composeEditorProvider';
 import { TopoCli } from './topoCli';
+import { getErrorMessage } from './util/getErrorMessage';
 
 export type MessageHandlerTopoCli = Pick<TopoCli, 'getProject' | 'getConfigMetadata' >;
 
@@ -63,8 +64,6 @@ export class MessageHandler {
         document: vscode.TextDocument,
     ): Promise<void> {
         const composeFilePath = document.uri.fsPath;
-        logger.show();
-        logger.info('Deploy operation started');
         await vscode.window.withProgress(
             {
                 location: vscode.ProgressLocation.Notification,
@@ -82,6 +81,12 @@ export class MessageHandler {
                 });
                 return new Promise<void>((resolve, reject) => {
                     const disposables: vscode.Disposable[] = [];
+                    const errorHandler = (err: Error) => {
+                        logger.error('An error happened:');
+                        logger.error(err);
+                        disposables.forEach(d => d.dispose());
+                        reject(err);
+                    };
                     disposables.push(
                         this.deployer.onStdoutData((data) => {
                             logger.info(data.toString());
@@ -94,21 +99,18 @@ export class MessageHandler {
                             if (code === 0) {
                                 resolve();
                             } else {
-                                reject(new Error(`Make exited with code ${code}`));
+                                reject(new Error(`Deploy operation exited with code ${code}`));
                             }
                         }),
-                        this.deployer.onError((err) => {
-                            logger.error(err.message);
+                        this.deployer.onError(errorHandler),
+                    );
+                    this.deployer.start(composeFilePath)
+                        .then(() => logger.show())
+                        .catch((err: Error) => {
+                            vscode.window.showErrorMessage(`An error happened: ${getErrorMessage(err)}`);
                             disposables.forEach(d => d.dispose());
                             reject(err);
-                        }),
-                    );
-                    this.deployer.start(composeFilePath).catch(err => {
-                        logger.error('An error happened:');
-                        logger.error(err);
-                        disposables.forEach(d => d.dispose());
-                        reject(err);
-                    });
+                        });
                 });
             }
         );

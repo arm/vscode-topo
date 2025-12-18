@@ -19,7 +19,7 @@ A Visual Studio Code extension for managing and editing a Topo project with ease
 1. Install the extension from the VSIX or VS Code Marketplace.
 2. Open a `compose.topo.yaml` file to launch the compose editor.
 3. Use the form to add or remove services.
-4. Use the deploy button or the makefile to deploy a project
+4. Use the deploy button
 5. Access the target-manager view to visualize the board services 
 
 

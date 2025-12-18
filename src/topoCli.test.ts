@@ -91,6 +91,34 @@ describe('TopoCli', () => {
         await expect(topoCli.init('t')).rejects.toThrow('err');
     });
 
+    it('deploy spawns a child process and returns it', () => {
+        const fakeProc = { pid: 1234 } as unknown as childProcess.ChildProcessWithoutNullStreams;
+        (childProcess.spawn as jest.Mock).mockReturnValue(fakeProc);
+
+        const result = topoCli.deploy('/fake/project');
+
+        expect(childProcess.spawn).toHaveBeenCalledWith(
+            topoCli.getBinaryPath(),
+            ['deploy'],
+            { cwd: '/fake/project', env: expect.any(Object), detached: true }
+        );
+        expect(result).toBe(fakeProc);
+    });
+
+    it('deploy includes --target and sets env when ssh target provided', () => {
+        const fakeProc = { pid: 4321 } as unknown as childProcess.ChildProcessWithoutNullStreams;
+        (childProcess.spawn as jest.Mock).mockReturnValue(fakeProc);
+
+        const result = topoCli.deploy('/fake/project', 'me@example.com');
+
+        expect(childProcess.spawn).toHaveBeenCalledWith(
+            topoCli.getBinaryPath(),
+            ['deploy', '--target', 'me@example.com'],
+            { cwd: '/fake/project', env: expect.any(Object), detached: true }
+        );
+        expect(result).toBe(fakeProc);
+    });
+
     describe('getBinaryPath on Windows', () => {
         const topoCliPath = path.join(ext, 'resources', manifest.TOPO_CLI_WINDOWS);
         let origPlatform: string;

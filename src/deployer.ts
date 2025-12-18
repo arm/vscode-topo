@@ -1,9 +1,11 @@
 import * as vscode from 'vscode';
 import { spawn, ChildProcess } from 'child_process';
-import * as fs from 'fs';
 import * as path from 'path';
+import { TopoCli } from './topoCli';
+import { TargetStore } from './workloadPlacement/targetStore';
 
 export class Deployer {
+    private deploying = false;
     private proc: ChildProcess | undefined;
     private onStdoutDataEmitter = new vscode.EventEmitter<Buffer>();
     private onStderrDataEmitter = new vscode.EventEmitter<Buffer>();
@@ -16,50 +18,81 @@ export class Deployer {
     public readonly onError = this.onErrorEmitter.event;
 
     constructor(
+        private readonly topoCli: Pick<TopoCli, 'deploy'>,
+        private readonly targetStore: Pick<TargetStore, 'getSelectedTarget'>,
     ) {}
 
     public async start(composeFilePath: string): Promise<void> {
-        if (this.proc) {
+        if (this.deploying) {
             return;
+        }
+        this.deploying = true;
+        const target = await this.targetStore.getSelectedTarget();
+        if (!target) {
+            this.deploying = false;
+            const err = new Error('No target selected. Please select a target before deploying.');
+            throw err;
         }
         const composeFolderPath = path.dirname(composeFilePath);
-        const makefilePath = path.join(composeFolderPath, 'Makefile');
-        if (!fs.existsSync(makefilePath)) {
-            this.onErrorEmitter.fire(new Error(`No makefile found at ${makefilePath}`));
-            return;
-        }
-        this.proc = spawn('make', [], { cwd: composeFolderPath, shell: true, detached: true });
+        this.proc = this.topoCli.deploy(composeFolderPath, target.ssh);
         if (this.proc.stdout) {
-            this.proc.stdout.on('data', (data: Buffer) => this.onStdoutDataEmitter.fire(data));
+            this.proc.stdout.on(
+                'data',
+                (data: Buffer) => this.onStdoutDataEmitter.fire(data)
+            );
         }
         if (this.proc.stderr) {
-            this.proc.stderr.on('data', (data: Buffer) => this.onStderrDataEmitter.fire(data));
+            this.proc.stderr.on(
+                'data',
+                (data: Buffer) =>
+                    this.onStderrDataEmitter.fire(data)
+            );
         }
-        this.proc.on('exit', (code: number | null) => {
-            this.proc = undefined;
-            this.onExitEmitter.fire(code);
-        });
-        this.proc.on('error', (err: Error) => {
-            this.proc = undefined;
-            this.onErrorEmitter.fire(err);
-        });
+        this.proc.on(
+            'exit',
+            (code: number | null) => {
+                this.proc = undefined;
+                this.deploying = false;
+                this.onExitEmitter.fire(code);
+            });
+        this.proc.on(
+            'error',
+            (err: Error) => {
+                this.proc = undefined;
+                this.deploying = false;
+                this.onErrorEmitter.fire(err);
+            });
     }
 
     public stop(): void {
         if (this.proc === undefined) {
             return;
         }
-        if (process.platform === 'win32') {
-            if (this.proc.pid !== undefined) {
-                spawn('taskkill', ['/pid', this.proc.pid.toString(), '/T', '/F']);
-            }
-        } else {
-            if (this.proc.pid) {
-                process.kill(-this.proc.pid);
+
+        try {
+            if (process.platform === 'win32') {
+                if (this.proc.pid !== undefined) {
+                    const taskkillProc = spawn('taskkill', ['/pid', this.proc.pid.toString(), '/T', '/F']);
+                    taskkillProc.on('error', (err) => {
+                        this.onErrorEmitter.fire(err as Error);
+                    });
+                    taskkillProc.on('exit', (code) => {
+                        if (code !== 0) {
+                            this.onErrorEmitter.fire(new Error(`taskkill exited with code ${code}`));
+                        }
+                    });
+                }
             } else {
-                this.proc.kill('SIGTERM');
+                if (this.proc.pid) {
+                    // Use a negative PID on Unix-like systems to signal
+                    // the entire process group created with `detached: true`.
+                    process.kill(-this.proc.pid);
+                } else {
+                    this.proc.kill('SIGTERM');
+                }
             }
+        } catch (err) {
+            this.onErrorEmitter.fire(err as Error);
         }
-        this.proc = undefined;
     }
 }

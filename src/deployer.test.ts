@@ -1,37 +1,40 @@
 import { Deployer } from './deployer';
 import { spawn } from 'child_process';
 import path from 'path';
-import * as fs from 'fs';
+import { Target } from './workloadPlacement/target';
+import { TargetStore } from './workloadPlacement/targetStore';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+type EventHandler = (...args: any[]) => void;
+const events: { [key: string]: EventHandler[] } = {};
+const proc = {
+    stdout: {
+        on: jest.fn((event: string, cb: EventHandler) => {
+            events[event] = events[event] || [];
+            events[event].push(cb);
+        })
+    },
+    stderr: {
+        on: jest.fn((event: string, cb: EventHandler) => {
+            events[event] = events[event] || [];
+            events[event].push(cb);
+        })
+    },
+    on: jest.fn((event: string, cb: EventHandler) => {
+        events[event] = events[event] || [];
+        events[event].push(cb);
+    }),
+    pid: 1234,
+    kill: jest.fn()
+};
+
 jest.mock('child_process', () => {
-  type EventHandler = (...args: any[]) => void;
-  const events: { [key: string]: EventHandler[] } = {};
-  return {
-      spawn: jest.fn(() => {
-          return {
-              stdout: {
-                  on: jest.fn((event: string, cb: EventHandler) => {
-                      events[event] = events[event] || [];
-                      events[event].push(cb);
-                  })
-              },
-              stderr: {
-                  on: jest.fn((event: string, cb: EventHandler) => {
-                      events[event] = events[event] || [];
-                      events[event].push(cb);
-                  })
-              },
-              on: jest.fn((event: string, cb: EventHandler) => {
-                  events[event] = events[event] || [];
-                  events[event].push(cb);
-              }),
-              pid: 1234,
-              kill: jest.fn()
-          };
-      }),
-  };
+    return {
+        spawn: jest.fn(() => {
+            return proc;
+        }),
+    };
 });
 
 jest.mock('fs', () => ({
@@ -41,62 +44,75 @@ jest.mock('fs', () => ({
 describe('Deployer', () => {
     let deployer: Deployer;
     const composeFilePath: string = '/tmp/compose.topo.yaml';
-    const makefilePath: string = path.join(path.dirname(composeFilePath), 'Makefile');
+    const target = new Target('test-target', 'user@host');
+
+    const topoCli = {
+        deploy: jest.fn(() => {
+            return (spawn as jest.Mock)();
+        }),
+    };
+    const targetStore: jest.Mocked<Pick<TargetStore, 'getSelectedTarget'>> = {
+        getSelectedTarget: jest.fn(async () => target),
+    };
 
     beforeEach(() => {
-        deployer = new Deployer();
+        deployer = new Deployer(topoCli, targetStore);
 
         jest.clearAllMocks();
     });
 
-    it('should start the process and emit events', () => {
+    it('should start the process and emit events', async () => {
 
-        deployer.start(composeFilePath);
+        await deployer.start(composeFilePath);
 
-        expect(spawn).toHaveBeenCalledWith('make', [], expect.objectContaining({
-            cwd: path.dirname(composeFilePath),
-            shell: true,
-            detached: true
-        }));
+        expect(topoCli.deploy).toHaveBeenCalledWith(path.dirname(composeFilePath), target.ssh);
     });
 
-    it('should not start if already started', () => {
-        deployer.start(composeFilePath);
+    it('should fail if no target is selected', async () => {
+        targetStore.getSelectedTarget.mockResolvedValueOnce(undefined);
 
-        deployer.start(composeFilePath);
+        const deployOperation = deployer.start(composeFilePath);
+
+        await expect(deployOperation).rejects.toMatchObject({
+            message: expect.stringContaining('No target selected'),
+        });
+    });
+
+    it('should not start if already started', async () => {
+        await deployer.start(composeFilePath);
+
+        await deployer.start(composeFilePath);
 
         expect(spawn).toHaveBeenCalledTimes(1);
     });
 
-    it('should stop the process on non-win32', () => {
+    it('should stop the process on non-win32', async () => {
         const originalPlatform = process.platform;
         Object.defineProperty(process, 'platform', { value: 'linux' });
         // Patch process.kill to a jest mock
         const oldKill = process.kill;
         process.kill = jest.fn();
-        deployer.start(composeFilePath);
+        await deployer.start(composeFilePath);
 
-        deployer.stop();
+        await deployer.stop();
 
         expect(process.kill).toHaveBeenCalledWith(-1234);
         process.kill = oldKill;
         Object.defineProperty(process, 'platform', { value: originalPlatform });
     });
 
-    it('should stop the process on win32', () => {
+    it('should stop the process on win32', async () => {
         const originalPlatform = process.platform;
         Object.defineProperty(process, 'platform', { value: 'win32' });
-        deployer.start(composeFilePath);
+        await deployer.start(composeFilePath);
 
-        deployer.stop();
+        await deployer.stop();
 
         expect(spawn).toHaveBeenCalledWith('taskkill', ['/pid', '1234', '/T', '/F']);
         Object.defineProperty(process, 'platform', { value: originalPlatform });
     });
 
-    it('should emit stdout, stderr, exit, and error events', () => {
-
-        deployer.start(composeFilePath);
+    it('should emit stdout, stderr, exit, and error events', async () => {
 
         const stdoutListener = jest.fn();
         const stderrListener = jest.fn();
@@ -106,6 +122,9 @@ describe('Deployer', () => {
         deployer.onStderrData(stderrListener);
         deployer.onExit(exitListener);
         deployer.onError(errorListener);
+
+        await deployer.start(composeFilePath);
+
         // Simulate events
         // Get the mock process object from the spawn mock
         const events = (spawn as jest.Mock).mock.results[0].value;
@@ -127,14 +146,4 @@ describe('Deployer', () => {
         expect(errorListener).toHaveBeenCalledWith(new Error('fail'));
     });
 
-    it('should cancel deployment when the makefile is not found', async () => {
-        (fs.existsSync as jest.Mock).mockReturnValue(false);
-        const errorListener = jest.fn();
-        deployer.onError(errorListener);
-
-        await deployer.start(composeFilePath);
-        expect(errorListener).toHaveBeenCalled();
-        // Verify the error message from the fired error event.
-        expect(errorListener.mock.calls[0][0].message).toBe(`No makefile found at ${makefilePath}`);
-    });
 });

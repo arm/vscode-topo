@@ -35,9 +35,9 @@ export async function activate(context: vscode.ExtensionContext) {
     }
 
     const targetStore = TargetStore.getInstance(context);
-    const deployer = new Deployer();
+    const deployer = new Deployer(topoCli, targetStore);
     const onBoardTopoConsoleOpener = new OnBoardTopoConsoleOpener(context, targetStore);
-    const projectInit = new ProjectInit(context, topoCli, targetStore);
+    const projectInit = new ProjectInit(context, topoCli);
     const messageHandler = new MessageHandler(topoCli, deployer);
     const composeEditorProvider = new ComposeEditorProvider(context, messageHandler);
     const boardConnectionChecker = new BoardConnectionChecker();

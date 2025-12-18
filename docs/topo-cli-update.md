@@ -9,20 +9,20 @@
     - ~~service deletion~~
     - ~~makefile generation~~
 
-## Step 2 - disable and update
+## ~~Step 2 - disable and update~~
 
-### VS Code changes:
+### ~~VS Code changes:~~
 
-- Topo CLI updated to latest version (to be determined).
-- Deploy functionality to be disabled
+- ~~Topo CLI updated to latest version (to be determined)~~
+- ~~Deploy functionality to be disabled~~
 
-## Step 3 - deploy operation
+## ~~Step 3 - deploy operation~~
 
-### VS Code changes:
+### ~~VS Code changes:~~
 
-- Deploy re-enabled with support for target argument
+- ~~Deploy re-enabled with support for target argument~~
 - ~~Selected target made more prominent to the user (EG: status bar indicator)~~
-- Deploy operation should be cancelable
+- ~~Deploy operation should be cancelable~~
 
 ## Step 4 - example cloning
 
@@ -46,7 +46,6 @@
 
 - examples need to be listed in json format
 - example could include a user friendly name. Only an id is shown now.
-
 
 ## Step 6 - topo health
 

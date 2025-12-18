@@ -94,12 +94,9 @@ export class TopoCli {
     }
 
     /** Runs the binary to initialize a project. */
-    public init(projectPath: string, sshTarget?: string): Promise<void> {
+    public init(projectPath: string): Promise<void> {
         return new Promise((resolve, reject) => {
             const cmd = ['init'];
-            if (sshTarget) {
-                cmd.push('--target', sshTarget);
-            }
             childProcess.execFile(
                 this.getBinaryPath(),
                 cmd,
@@ -116,6 +113,22 @@ export class TopoCli {
                 }
             );
         });
+    }
+
+    public deploy(projectPath: string, sshTarget?: string): childProcess.ChildProcessWithoutNullStreams {
+        const cmd = ['deploy'];
+        if (sshTarget) {
+            cmd.push('--target', sshTarget);
+        }
+        return childProcess.spawn(
+            this.getBinaryPath(),
+            cmd,
+            {
+                cwd: projectPath,
+                env: this.getProcessEnv(),
+                detached: true,
+            }
+        );
     }
 
 }
