@@ -151,7 +151,7 @@ describe('ComposeEditorProvider', () => {
 
     it('handles deploy message and posts deploy-complete', async () => {
         const composeFolder = '/ext';
-        const composeFilePath = path.resolve(composeFolder, 'd.yaml');
+        const composeFilePath = path.resolve(composeFolder, 'compose.yaml');
         const doc: any = { uri: { toString: () => 'u', fsPath: composeFilePath }, getText: () => '' };
         let handler: any;
         const post = jest.fn();
@@ -183,7 +183,7 @@ describe('ComposeEditorProvider', () => {
 
     it('handles deploy cancellation', async () => {
         const composeFolder = '/ext';
-        const composeFilePath = path.resolve(composeFolder, 'd.yaml');
+        const composeFilePath = path.resolve(composeFolder, 'compose.yaml');
         const doc: any = { uri: { toString: () => 'u', fsPath: composeFilePath}, getText: () => '' };
         let handler: any;
         const post = jest.fn();
@@ -223,7 +223,7 @@ describe('ComposeEditorProvider', () => {
 
     it('handles deploy process errors', async () => {
         const composeFolder = '/ext';
-        const composeFilePath = path.resolve(composeFolder, 'd.yaml');
+        const composeFilePath = path.resolve(composeFolder, 'compose.yaml');
         const doc: any = { uri: { toString: () => 'u', fsPath: composeFilePath}, getText: () => '' };
         let handler: any;
         const post = jest.fn();
@@ -250,12 +250,13 @@ describe('ComposeEditorProvider', () => {
         await waitImmediate();
 
         expect(deployer.start).toHaveBeenCalledWith(composeFilePath);
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(expect.stringContaining('deploy-fail'));
         expect(post).toHaveBeenCalledWith({ type: 'deploy-complete' });
     });
 
     it('handles other deploy errors', async () => {
         const composeFolder = '/ext';
-        const composeFilePath = path.resolve(composeFolder, 'd.yaml');
+        const composeFilePath = path.resolve(composeFolder, 'compose.yaml');
         const doc: any = { uri: { toString: () => 'u', fsPath: composeFilePath}, getText: () => '' };
         let handler: any;
         const post = jest.fn();
@@ -288,7 +289,7 @@ describe('ComposeEditorProvider', () => {
 
     it('logs stdout and stderr and shows output channel during deploy', async () => {
         const composeFolder = '/ext';
-        const composeFilePath = path.resolve(composeFolder, 'd.yaml');
+        const composeFilePath = path.resolve(composeFolder, 'compose.yaml');
         const doc: any = { uri: { toString: () => 'u', fsPath: composeFilePath}, getText: () => '' };
         let handler: ((msg: any) => void) | undefined;
         const post = jest.fn();
@@ -312,10 +313,11 @@ describe('ComposeEditorProvider', () => {
         stdoutDataEmitter.fire(Buffer.from('hello stdout'));
         stderrDataEmitter.fire(Buffer.from('hello stderr'));
         exitEmitter.fire(0); // Simulate successful exit
+        await waitImmediate();
 
+        expect(logger.show).toHaveBeenCalled();
         expect(logger.info).toHaveBeenCalledWith('hello stdout');
         expect(logger.error).toHaveBeenCalledWith('hello stderr');
-        expect(logger.show).toHaveBeenCalled();
     });
 
     it('warns on unknown message type', async () => {

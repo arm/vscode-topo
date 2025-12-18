@@ -19,7 +19,7 @@
   ],
   "main": "./dist/extension.js",
   "topo": {
-    "version": "0.1.0-20251119122257"
+    "version": "0.1.0-20251215154158"
   },
   "contributes": {
     "commands": [
@@ -119,7 +119,7 @@
         "priority": "option",
         "selector": [
           {
-            "filenamePattern": "compose.topo{,.*}.yaml"
+            "filenamePattern": "compose{,.*}.yaml"
           }
         ]
       }
