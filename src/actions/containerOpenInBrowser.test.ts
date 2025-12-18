@@ -43,7 +43,7 @@ describe('ContainerOpenInBrowser', () => {
         const containerOpenInBrowser = new ContainerOpenInBrowser(context);
         await containerOpenInBrowser.activate();
         const openInBrowser = registerCommandMock.mock.calls.find(
-            ([cmd]: [string, any]) => cmd === ContainerOpenInBrowser.openInBrowserCommandType
+            ([cmd]: [string, any]) => cmd === ContainerOpenInBrowser.openInBrowserCommand
         )?.[1];
         const port = '8080:80';
         const item = { id: 'abc123', ports: [port], target } as ContainerItem;
@@ -60,7 +60,7 @@ describe('ContainerOpenInBrowser', () => {
         const containerOpenInBrowser = new ContainerOpenInBrowser(context);
         await containerOpenInBrowser.activate();
         const openInBrowser = registerCommandMock.mock.calls.find(
-            ([cmd]: [string, any]) => cmd === ContainerOpenInBrowser.openInBrowserCommandType
+            ([cmd]: [string, any]) => cmd === ContainerOpenInBrowser.openInBrowserCommand
         )?.[1];
         const item = { id: 'abc123', ports: [], target } as unknown as ContainerItem;
 
@@ -74,7 +74,7 @@ describe('ContainerOpenInBrowser', () => {
         const containerOpenInBrowser = new ContainerOpenInBrowser(context);
         await containerOpenInBrowser.activate();
         const openInBrowser = registerCommandMock.mock.calls.find(
-            ([cmd]: [string, any]) => cmd === ContainerOpenInBrowser.openInBrowserCommandType
+            ([cmd]: [string, any]) => cmd === ContainerOpenInBrowser.openInBrowserCommand
         )?.[1];
         const item = { id: 'abc123', ports: ['22:22'], target } as ContainerItem;
 

@@ -87,23 +87,23 @@ describe('TargetManager', () => {
 
             await targetManager.activate();
 
-            expect(vscode.window.createTreeView).toHaveBeenCalledWith(TargetManager.TargetManagerViewId, expect.anything());
-            expect(vscode.commands.registerCommand).toHaveBeenCalledWith(TargetManager.RefreshCommandType, expect.any(Function));
-            expect(vscode.commands.registerCommand).toHaveBeenCalledWith(TargetManager.AddTargetCommandType, expect.any(Function));
+            expect(vscode.window.createTreeView).toHaveBeenCalledWith(TargetManager.viewId, expect.anything());
+            expect(vscode.commands.registerCommand).toHaveBeenCalledWith(TargetManager.refreshCommand, expect.any(Function));
+            expect(vscode.commands.registerCommand).toHaveBeenCalledWith(TargetManager.addTargetCommand, expect.any(Function));
             expect(context.subscriptions.length).toBeGreaterThan(0);
         });
     });
 
     describe('target addition', () => {
 
-        it('handles AddTargetCommandType: prompts for ssh and name, stores and selects new target', async () => {
+        it('handles addTargetCommand: prompts for ssh and name, stores and selects new target', async () => {
             (vscode.window.showInputBox as jest.Mock)
                 .mockResolvedValueOnce('root@192.0.2.1')
                 .mockResolvedValueOnce('My target');
             const { targetStore, targetManager } = createTargetManager();
             await targetManager.activate();
 
-            await executeCommand(TargetManager.AddTargetCommandType);
+            await executeCommand(TargetManager.addTargetCommand);
 
             expect((targetStore.addTarget as jest.Mock).mock.calls.length).toBeGreaterThanOrEqual(1);
             const created = (targetStore.addTarget as jest.Mock).mock.calls[0][0];
@@ -117,7 +117,7 @@ describe('TargetManager', () => {
             const { targetStore, targetManager } = createTargetManager();
             await targetManager.activate();
 
-            await executeCommand(TargetManager.AddTargetCommandType);
+            await executeCommand(TargetManager.addTargetCommand);
 
             expect(targetStore.addTarget).not.toHaveBeenCalled();
             expect(targetStore.setSelected).not.toHaveBeenCalled();
@@ -130,7 +130,7 @@ describe('TargetManager', () => {
             const { targetStore, targetManager } = createTargetManager();
             await targetManager.activate();
 
-            await executeCommand(TargetManager.AddTargetCommandType);
+            await executeCommand(TargetManager.addTargetCommand);
 
             expect(targetStore.addTarget).not.toHaveBeenCalled();
             expect(targetStore.setSelected).not.toHaveBeenCalled();
@@ -144,7 +144,7 @@ describe('TargetManager', () => {
             (targetStore.addTarget as jest.Mock).mockRejectedValueOnce(new Error('boom'));
             await targetManager.activate();
 
-            await executeCommand(TargetManager.AddTargetCommandType);
+            await executeCommand(TargetManager.addTargetCommand);
 
             expect(targetStore.addTarget).toHaveBeenCalled();
             expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('boom'));

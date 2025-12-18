@@ -32,7 +32,7 @@ describe('AttachShell', () => {
         const context = { subscriptions: [] };
         const attachShell = new AttachShell(context as any, dockerCommands, targetStore);
         attachShell.activate();
-        expect(vscode.commands.registerCommand).toHaveBeenCalledWith(AttachShell.attachShellCommandType, expect.any(Function));
+        expect(vscode.commands.registerCommand).toHaveBeenCalledWith(AttachShell.attachShellCommand, expect.any(Function));
     });
 
     it('attachShell command opens terminal and sends docker exec', () => {
@@ -40,7 +40,7 @@ describe('AttachShell', () => {
         const attachShell = new AttachShell(context as any, dockerCommands, targetStore);
         attachShell.activate();
         const attachShellCall = registerCommandMock.mock.calls.find(
-            ([cmd]) => cmd === AttachShell.attachShellCommandType
+            ([cmd]) => cmd === AttachShell.attachShellCommand
         );
         expect(attachShellCall).toBeDefined();
         const handler = attachShellCall[1];

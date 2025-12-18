@@ -19,14 +19,14 @@ describe('ContainerStart', () => {
     beforeEach(() => {
         showErrorMessageSpy = jest.spyOn(vscode.window, 'showErrorMessage').mockImplementation(jest.fn());
         registerCommandMock.mockImplementation((command, callback) => {
-            if (command !== ContainerStart.startContainerCommandType) {
+            if (command !== ContainerStart.startContainerCommand) {
                 throw Error('Unexpected command registration');
             }
             commandHandler = { command, callback };
             return { dispose: jest.fn() };
         });
         (vscode.commands.executeCommand as jest.Mock).mockImplementation((command, ...args) => {
-            if (command === ContainerStart.startContainerCommandType && commandHandler) {
+            if (command === ContainerStart.startContainerCommand && commandHandler) {
                 return commandHandler.callback(...args);
             }
             return Promise.resolve();
@@ -62,7 +62,7 @@ describe('ContainerStart', () => {
         await containerStart.activate();
 
         // Simulate command handler
-        await vscode.commands.executeCommand(ContainerStart.startContainerCommandType, container);
+        await vscode.commands.executeCommand(ContainerStart.startContainerCommand, container);
 
         expect(startContainerSpy).toHaveBeenCalledWith('abc123');
     });
@@ -90,7 +90,7 @@ describe('ContainerStart', () => {
         const containerStart = new ContainerStart(context, containersManager);
         await containerStart.activate();
 
-        await vscode.commands.executeCommand(ContainerStart.startContainerCommandType, container);
+        await vscode.commands.executeCommand(ContainerStart.startContainerCommand, container);
 
         expect(showErrorMessageSpy).toHaveBeenCalledWith(expect.stringContaining('Failed to start service.'));
     });

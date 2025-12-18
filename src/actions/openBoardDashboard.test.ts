@@ -17,7 +17,7 @@ describe('OpenBoardDashboard', () => {
         action.activate();
 
         expect(context.subscriptions.length).toBe(1);
-        expect(registerCommandMock).toHaveBeenCalledWith(OpenBoardDashboard.openBoardDashboardCommandType, expect.any(Function));
+        expect(registerCommandMock).toHaveBeenCalledWith(OpenBoardDashboard.openBoardDashboardCommand, expect.any(Function));
     });
 
     it('calls showDashboard on the provider when invoking the registered command', async () => {
@@ -26,7 +26,7 @@ describe('OpenBoardDashboard', () => {
         const action = new OpenBoardDashboard(context, fakeProvider);
         action.activate();
         const registerCall = registerCommandMock.mock.calls.find(
-            ([cmd]: [string, unknown]) => cmd === OpenBoardDashboard.openBoardDashboardCommandType
+            ([cmd]: [string, unknown]) => cmd === OpenBoardDashboard.openBoardDashboardCommand
         );
         const handler = registerCall[1];
 
