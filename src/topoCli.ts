@@ -27,7 +27,7 @@ export class TopoCli {
         }
     }
 
-    public async deactivate(): Promise<void> {
+    public dispose(): void {
         this.env.clear();
     }
 

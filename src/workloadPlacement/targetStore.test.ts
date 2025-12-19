@@ -158,7 +158,7 @@ describe('TargetStore', () => {
         const cb = jest.fn();
         store.onChanged(cb);
 
-        await store.deactivate();
+        store.dispose();
 
         expect((TargetStore as any).instance).toBeUndefined();
         const newStore = TargetStore.getInstance(context);

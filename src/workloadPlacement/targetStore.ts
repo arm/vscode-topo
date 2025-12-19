@@ -41,10 +41,6 @@ export class TargetStore {
         this.disposables.push(watcher, this._onChanged);
     }
 
-    public async deactivate(): Promise<void> {
-        this.dispose();
-    }
-
     // Debounced function to publish a change to other VS Code instances
     protected publishChange = debounce(async () => {
         try {
