@@ -23,11 +23,8 @@ import { DockerCommands } from './workloadPlacement/dockerCommands';
 import { OpenBoardDashboard } from './actions/openBoardDashboard';
 import { TargetStore } from './workloadPlacement/targetStore';
 
-let topoCli: TopoCli;
-let targetTreeDataProvider: TargetTreeDataProvider;
-
-export async function activate(context: vscode.ExtensionContext) {
-    topoCli = new TopoCli(context.extensionPath, context.environmentVariableCollection);
+export async function activate(context: vscode.ExtensionContext): Promise<void> {
+    const topoCli = new TopoCli(context.extensionPath, context.environmentVariableCollection);
     const topoCliVersionChecker = new TopoCliVersionChecker(topoCli, context.extensionPath);
 
     if (!topoCliVersionChecker.checkTopoCliVersion()) {
@@ -46,7 +43,7 @@ export async function activate(context: vscode.ExtensionContext) {
     const attachVsCode = new AttachVsCode(context, dockerCommands);
     const attachShell = new AttachShell(context, dockerCommands, targetStore);
     const containersManager = new ContainersManager(boardConnectionChecker, dockerCommands, targetStore);
-    targetTreeDataProvider = new TargetTreeDataProvider(context, containersManager, targetStore);
+    const targetTreeDataProvider = new TargetTreeDataProvider(context, containersManager, targetStore);
     const targetManager = new TargetManager(context, targetTreeDataProvider, targetStore, containersManager);
     const boardDashboardMessageHandler = new BoardDashboardMessageHandler(containersManager, targetStore, containerOpenInBrowser, attachVsCode, attachShell);
     const boardDashboardProvider = new BoardDashboardProvider(context, boardDashboardMessageHandler, containersManager);
@@ -56,25 +53,27 @@ export async function activate(context: vscode.ExtensionContext) {
     const openBoardDashboard = new OpenBoardDashboard(context, boardDashboardProvider);
     const openSerial = new OpenSerial(context);
 
+    context.subscriptions.push(
+        targetStore
+    );
+
     await topoCli.activate();
+    context.subscriptions.push(
+        topoCli
+    );
     await onBoardTopoConsoleOpener.activate();
-    await composeEditorProvider.activate();
     await projectInit.activate();
-    await attachVsCode.activate();
-    await attachShell.activate();
+    await composeEditorProvider.activate();
     await containerOpenInBrowser.activate();
-    await targetManager.activate();
-    await boardDashboardProvider.activate();
+    await attachVsCode.activate();
+    attachShell.activate();
     await containersManager.activate();
     await targetTreeDataProvider.activate();
-    await containerStart.activate();
+    await targetManager.activate();
+    await boardDashboardProvider.activate();
+    containerStart.activate();
     await containerStop.activate();
-    await containerDelete.activate();
-    await openBoardDashboard.activate();
-    await openSerial.activate();
-}
-
-export async function deactivate(): Promise<void> {
-    await topoCli.deactivate();
-    await TargetStore.getInstance().deactivate();
+    containerDelete.activate();
+    openBoardDashboard.activate();
+    openSerial.activate();
 }
