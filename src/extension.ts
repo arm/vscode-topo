@@ -22,6 +22,7 @@ import { OpenSerial } from './actions/openSerial';
 import { DockerCommands } from './workloadPlacement/dockerCommands';
 import { OpenBoardDashboard } from './actions/openBoardDashboard';
 import { TargetStore } from './workloadPlacement/targetStore';
+import { ProjectClone } from './projectClone';
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
     const topoCli = new TopoCli(context.extensionPath, context.environmentVariableCollection);
@@ -35,6 +36,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     const deployer = new Deployer(topoCli, targetStore);
     const onBoardTopoConsoleOpener = new OnBoardTopoConsoleOpener(context, targetStore);
     const projectInit = new ProjectInit(context, topoCli);
+    const projectClone = new ProjectClone(context, topoCli);
     const messageHandler = new MessageHandler(topoCli, deployer);
     const composeEditorProvider = new ComposeEditorProvider(context, messageHandler);
     const boardConnectionChecker = new BoardConnectionChecker();
@@ -63,6 +65,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     );
     await onBoardTopoConsoleOpener.activate();
     await projectInit.activate();
+    await projectClone.activate();
     await composeEditorProvider.activate();
     await containerOpenInBrowser.activate();
     await attachVsCode.activate();

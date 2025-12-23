@@ -24,17 +24,14 @@
 - ~~Selected target made more prominent to the user (EG: status bar indicator)~~
 - ~~Deploy operation should be cancelable~~
 
-## Step 4 - example cloning
+## Step 4 - remote and local cloning
 
 ### VS Code changes:
 
-- Clone operation added
-    - The user must be able to provide clone parameters. Two options: redirect topo CLI stdin or let VS Code know what parameters will be needed before cloning.
+- ~~Clone operation added for remote repos~~
+    - ~~The user must be able to provide clone parameters. Initially done by letting clone run in a VS Code terminal~~
 
-### Topo CLI changes:
-
-- `topo clone` implemented as discussed into topo CLI
-- A new operation to show example arguments can be added
+- Clone operation added for local repos
 
 ## Step 5 - example listing
 
