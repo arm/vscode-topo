@@ -9,6 +9,18 @@ export interface TopoCliVersion {
     commit: string;
 }
 
+export interface CloneRemoteSource {
+    url: string;
+    type: 'git';
+}
+
+export interface CloneLocalSource {
+    path: string;
+    type: 'local';
+}
+
+export type CloneSource = CloneRemoteSource | CloneLocalSource;
+
 /**
  * Encapsulates operations against the topo-cli binary.
  */
@@ -129,6 +141,12 @@ export class TopoCli {
                 detached: true,
             }
         );
+    }
+
+    public getCloneCommand(projectPath: string, source: CloneSource): string[] {
+        const sourceStr = source.type === 'git' ? `git:${source.url}` : `local:${source.path}`;
+        const cmd = ['topo', 'clone', projectPath, sourceStr];
+        return cmd;
     }
 
 }

@@ -1,7 +1,7 @@
 import * as path from 'path';
 import * as childProcess from 'child_process';
 import * as vscode from 'vscode';
-import { TopoCli } from './topoCli';
+import { TopoCli, CloneRemoteSource, CloneLocalSource } from './topoCli';
 import { ProjectDescription, TemplateDescription } from './util/types';
 import * as manifest from './manifest';
 
@@ -117,6 +117,24 @@ describe('TopoCli', () => {
             { cwd: '/fake/project', env: expect.any(Object), detached: true }
         );
         expect(result).toBe(fakeProc);
+    });
+
+    it('builds clone command for git source', () => {
+        const src: CloneRemoteSource = { type: 'git', url: 'https://example.com/repo.git' };
+
+        const cmd = topoCli.getCloneCommand('/tmp/myproj', src);
+
+        const expected = 'topo clone /tmp/myproj git:https://example.com/repo.git'.split(' ');
+        expect(cmd).toEqual(expected);
+    });
+
+    it('builds clone command for local source', () => {
+        const src: CloneLocalSource = { type: 'local', path: '/path/to/source' };
+
+        const cmd = topoCli.getCloneCommand('myproject', src);
+
+        const expected = 'topo clone myproject local:/path/to/source'.split(' ');
+        expect(cmd).toEqual(expected);
     });
 
     describe('getBinaryPath on Windows', () => {

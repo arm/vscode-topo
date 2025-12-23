@@ -126,6 +126,8 @@ const workspace = {
     onDidChangeWorkspaceFolders: jest.fn(() => ({ dispose: jest.fn() })),
     onDidSaveTextDocument: new EventEmitter().event,
     openTextDocument: jest.fn(),
+    workspaceFolders: undefined,
+    getWorkspaceFolder: jest.fn(),
     updateWorkspaceFolders: jest.fn(),
     createFileSystemWatcher: jest.fn(),
 };
@@ -134,6 +136,12 @@ const TreeItemCollapsibleState = {
     None: 0,
     Collapsed: 1,
     Expanded: 2
+};
+
+const TaskRevealKind = {
+    Always: 1,
+    Silent: 2,
+    Never: 3
 };
 
 const TreeItem = class {
@@ -215,6 +223,7 @@ module.exports = {
     tasks,
     window,
     workspace,
+    TaskRevealKind,
     TreeItem,
     TreeItemCollapsibleState,
     ThemeColor,

@@ -50,6 +50,11 @@
         "category": "Arm Topo"
       },
       {
+        "command": "topo.remoteClone",
+        "title": "Clone Remote Project",
+        "category": "Arm Topo"
+      },
+      {
         "command": "topo.openTopoConsole",
         "title": "Open on-board Topo console",
         "category": "Arm Topo"
