@@ -106,6 +106,7 @@ const window = {
     showInputBox: jest.fn(),
     withProgress: jest.fn(),
     registerTreeDataProvider: jest.fn(),
+    registerCustomEditorProvider: jest.fn(),
     createTerminal: jest.fn(),
     createTreeView: jest.fn(() => ({
         onDidExpandElement: new EventEmitter().event,
@@ -129,7 +130,12 @@ const workspace = {
     workspaceFolders: undefined,
     getWorkspaceFolder: jest.fn(),
     updateWorkspaceFolders: jest.fn(),
-    createFileSystemWatcher: jest.fn(),
+    createFileSystemWatcher: jest.fn(() => ({
+        onDidCreate: new EventEmitter().event,
+        onDidChange: new EventEmitter().event,
+        onDidDelete: new EventEmitter().event,
+        dispose: jest.fn(),
+    })),
 };
 
 const TreeItemCollapsibleState = {
