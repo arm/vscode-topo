@@ -144,7 +144,7 @@ export class TopoCli {
     }
 
     public getCloneCommand(projectPath: string, source: CloneSource): string[] {
-        const sourceStr = source.type === 'git' ? `git:${source.url}` : `local:${source.path}`;
+        const sourceStr = source.type === 'git' ? `git:${source.url}` : `dir:${source.path}`;
         const cmd = ['topo', 'clone', projectPath, sourceStr];
         return cmd;
     }

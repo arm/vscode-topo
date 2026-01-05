@@ -133,7 +133,7 @@ describe('TopoCli', () => {
 
         const cmd = topoCli.getCloneCommand('myproject', src);
 
-        const expected = 'topo clone myproject local:/path/to/source'.split(' ');
+        const expected = 'topo clone myproject dir:/path/to/source'.split(' ');
         expect(cmd).toEqual(expected);
     });
 
