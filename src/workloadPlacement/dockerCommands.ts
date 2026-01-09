@@ -11,14 +11,26 @@ const getSshUri = (boardSshConnection: string): string => {
     return `ssh://${boardSshConnection}`;
 };
 
+/**
+ * Checks if a given stderr output indicates an error, ignoring warnings.
+ * @param stderr - The collected stderr output to check.
+ * @returns True if there is an error, false otherwise.
+ */
+const hasStderrError = (stderr: string): boolean => {
+    const lines = stderr.trim().split(/\r?\n/).map(line => line.trim());
+    return lines.some(line => line !== '' && !line.toLowerCase().startsWith('warning:'));
+};
+
 export class DockerCommands implements ContainerCommands {
 
     public async isContainerRuntimeOn(boardSshConnection: string): Promise<boolean> {
         try {
             const { stdout, stderr } = await exec(`ssh ${boardSshConnection} 'docker info'`);
-            const err = stderr.trim();
-            if (err) {
-                throw new Error(err || 'Failed to get Docker info');
+            if (hasStderrError(stderr)) {
+                throw new Error(stderr);
+            } else if(stderr.trim().length > 0) {
+                logger.warn('Warnings emitted when checking Docker runtime status:');
+                logger.warn(stderr);
             }
             return stdout.includes('Server Version');
         } catch (error: unknown) {
