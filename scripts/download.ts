@@ -176,25 +176,6 @@ const downloadFile = async (sourcePath: string, destPath: string, filename: stri
 };
 
 // --- Parse CLI args ---------------------------------------------------------
-const argv = process.argv.slice(2);
-let githubToken: string | undefined;
-
-for (let i = 0; i < argv.length; i++) {
-    if ((argv[i] === '--token' || argv[i] === '-t') && argv[i+1]) {
-        githubToken = argv[i+1];
-        i++;
-    }
-}
-
-if (!githubToken) {
-    githubToken = process.env.GITHUB_TOKEN;
-}
-
-if (!githubToken) {
-    console.error('✖ No GitHub token provided via --token or GITHUB_TOKEN; public assets only.');
-    process.exit(1);
-}
-
 const parsedArgs = yargs(process.argv.slice(2))
     .option('t', {
         alias: 'target',
@@ -202,12 +183,25 @@ const parsedArgs = yargs(process.argv.slice(2))
         choices: DOWNLOAD_TARGETS,
         default: `${nodeOs.platform()}-${nodeOs.arch()}`
     })
+    .option('token', {
+        description: 'GitHub token for downloading release assets',
+        type: 'string',
+        default: process.env.GITHUB_TOKEN,
+        defaultDescription: 'GITHUB_TOKEN env var',
+    })
+    .check((argv) => {
+        if (!argv.token) {
+            throw new Error('✖ No GitHub token provided via --token or GITHUB_TOKEN');
+        }
+        return true;
+    })
     .version(false)
     .strict()
     .command('$0', 'Downloads the tool for the given architecture and OS')
-    .parseSync() as unknown as { target: DownloadTarget };
+    .parseSync() as unknown as { target: DownloadTarget; token: string; };
 
 const target = parsedArgs.target;
+const githubToken = parsedArgs.token;
 
 // --- Read package.json ------------------------------------------------------
 const pkgPath = path.resolve(process.cwd(), 'package.json');
