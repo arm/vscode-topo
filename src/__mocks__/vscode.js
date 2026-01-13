@@ -113,6 +113,10 @@ const window = {
         onDidCollapseElement: new EventEmitter().event,
     })),
     state: { focused: true },
+    createOutputChannel: jest.fn(() => ({
+        appendLine: jest.fn(),
+        show: jest.fn(),
+    })),
 };
 const fs = {
     readFile: jest.fn(),
@@ -121,7 +125,7 @@ const fs = {
 const workspace = {
     fs,
     findFiles: jest.fn(async () => []),
-    getConfiguration: jest.fn(),
+    getConfiguration: jest.fn(() => ({ get: jest.fn() })),
     onDidChangeConfiguration: new EventEmitter().event,
     onDidChangeTextDocument: jest.fn(() => ({ dispose: jest.fn() })),
     onDidChangeWorkspaceFolders: jest.fn(() => ({ dispose: jest.fn() })),

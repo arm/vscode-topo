@@ -9,10 +9,26 @@ export enum Verbosity {
     debug = 4
 }
 
+export const stringifyMessage = (message: unknown): string => {
+    if (typeof message === 'string') {
+        return message;
+    }
+
+    if (message instanceof Error) {
+        return message.toString();
+    }
+
+    try {
+        return JSON.stringify(message, undefined, '\t');
+    } catch {
+        return String(message);
+    }
+};
+
 abstract class Logger {
     private logVerbosity: Verbosity;
 
-    protected constructor() {
+    constructor() {
         this.logVerbosity = this.getVerbosity();
         vscode.workspace.onDidChangeConfiguration((e) => {
             if (e.affectsConfiguration(`${manifest.PACKAGE_NAME}.${manifest.CONFIG_LOGGING_VERBOSITY}`)) {
@@ -36,9 +52,7 @@ abstract class Logger {
         }
 
         if (verbosity <= this.logVerbosity) {
-            const stringifiedMessage =
-                typeof message === 'string' ? message : (message = JSON.stringify(message, undefined, '\t'));
-            this.logMessage(stringifiedMessage);
+            this.logMessage(stringifyMessage(message));
         }
     }
 
@@ -48,7 +62,7 @@ abstract class Logger {
     public debug = (message: unknown): void => this.log(Verbosity.debug, message);
 }
 
-class OutputChannelLogger extends Logger {
+export class OutputChannelLogger extends Logger {
     public static instance = new OutputChannelLogger();
 
     private outputChannel: vscode.OutputChannel | undefined;
