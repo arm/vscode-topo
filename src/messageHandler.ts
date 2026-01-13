@@ -1,15 +1,13 @@
 import * as vscode from 'vscode';
-import { logger } from './util/logger';
-import { DeployerType } from './composeEditorProvider';
 import { TopoCli } from './topoCli';
-import { getErrorMessage } from './util/getErrorMessage';
+import { Deploy } from './actions/deploy';
 
 export type MessageHandlerTopoCli = Pick<TopoCli, 'getProject' | 'getConfigMetadata' >;
 
 export class MessageHandler {
     constructor(
       private readonly topoCli: MessageHandlerTopoCli,
-      private readonly deployer: DeployerType,
+      private readonly deploy: Pick<Deploy, 'deploy'>,
     ) {}
 
     public renderComposeEditor(
@@ -58,65 +56,6 @@ export class MessageHandler {
     }
 
     /**
-     * Handle deploy request: clean and execute makefile
-     */
-    private async handleDeploy(
-        document: vscode.TextDocument,
-    ): Promise<void> {
-        const composeFilePath = document.uri.fsPath;
-        await vscode.window.withProgress(
-            {
-                location: vscode.ProgressLocation.Notification,
-                title: 'Deploying...',
-                cancellable: true,
-            },
-            async (_progress, token) => {
-                token.onCancellationRequested(() => {
-                    try {
-                        this.deployer.stop();
-                    } catch (err) {
-                        logger.error('An error happened:');
-                        logger.error(err);
-                    }
-                });
-                return new Promise<void>((resolve, reject) => {
-                    const disposables: vscode.Disposable[] = [];
-                    const errorHandler = (err: Error) => {
-                        logger.error('An error happened:');
-                        logger.error(err);
-                        disposables.forEach(d => d.dispose());
-                        reject(err);
-                    };
-                    disposables.push(
-                        this.deployer.onStdoutData((data) => {
-                            logger.info(data.toString());
-                        }),
-                        this.deployer.onStderrData((data) => {
-                            logger.error(data.toString());
-                        }),
-                        this.deployer.onExit((code) => {
-                            disposables.forEach(d => d.dispose());
-                            if (code === 0) {
-                                resolve();
-                            } else {
-                                reject(new Error(`Deploy operation exited with code ${code}`));
-                            }
-                        }),
-                        this.deployer.onError(errorHandler),
-                    );
-                    this.deployer.start(composeFilePath)
-                        .then(() => logger.show())
-                        .catch((err: Error) => {
-                            vscode.window.showErrorMessage(`An error happened: ${getErrorMessage(err)}`);
-                            disposables.forEach(d => d.dispose());
-                            reject(err);
-                        });
-                });
-            }
-        );
-    }
-
-    /**
      * Handle incoming messages from the webview
      */
     public async handleMessage(
@@ -154,7 +93,7 @@ export class MessageHandler {
             break;
         case 'deploy':
             try {
-                await this.handleDeploy(document);
+                await this.deploy.deploy(document.uri.fsPath);
             } catch (err) {
                 console.error('Error in deploy:', err);
             }

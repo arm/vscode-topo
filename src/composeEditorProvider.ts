@@ -1,10 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as manifest from './manifest';
-import { Deployer } from './deployer';
 import { MessageHandler } from './messageHandler';
-
-export type DeployerType = Pick<Deployer, 'start' | 'stop' | 'onStdoutData' | 'onStderrData' | 'onExit' | 'onError'>;
 
 const isUri = (uri: unknown): uri is vscode.Uri => (uri as vscode.Uri).path !== undefined;
 
