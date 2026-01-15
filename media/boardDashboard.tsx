@@ -205,7 +205,7 @@ export function BoardDashboard({ target, containersData, boardState, messageHand
 
     return (
         <div className="board-dashboard">
-            <h1>Board Dashboard: {target.name ?? target.id}</h1>
+            <h1>Board Dashboard: {target.id}</h1>
             <div className="section-group">
                 <h3>
           Host
