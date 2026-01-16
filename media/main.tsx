@@ -8,13 +8,11 @@ import { ComposeEditor } from './composeEditor/composeEditor';
 import './main.css';
 import { BoardDashboard } from './boardDashboard';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 const vscode = acquireVsCodeApi();
 
 let composeEditorRoot: ReactDOM.Root | null = null;
 let boardDashboardRoot: ReactDOM.Root | null = null;
-const messageQueue: any[] = [];
+const messageQueue: MessageEvent[] = [];
 let domReady = false;
 
 function handleMessage(event: MessageEvent) {

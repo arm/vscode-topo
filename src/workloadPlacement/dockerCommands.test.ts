@@ -297,6 +297,14 @@ describe('DockerCommands', () => {
             await expect(stopContainerOperation).resolves.toBeUndefined();
             expect(execMock).toHaveBeenCalledWith("docker --host ssh://user@host stop c");
         });
+
+        it('throws an error when docker command fails', async () => {
+            execMock.mockRejectedValueOnce(new Error('fail'));
+
+            const stopContainerOperation = dockerCommands.stopContainer('c', 'user@host');
+
+            await expect(stopContainerOperation).rejects.toThrow('fail');
+        });
     });
 
     describe('startContainer', () => {
@@ -316,6 +324,14 @@ describe('DockerCommands', () => {
             await expect(startContainerOperation).resolves.toBeUndefined();
             expect(execMock).toHaveBeenCalledWith("docker --host ssh://user@host start c");
         });
+
+        it('throws an error when docker command fails', async () => {
+            execMock.mockRejectedValueOnce(new Error('fail'));
+
+            const startContainerOperation = dockerCommands.startContainer('c', 'user@host');
+
+            await expect(startContainerOperation).rejects.toThrow('fail');
+        });
     });
 
     describe('deleteContainer', () => {
@@ -334,6 +350,14 @@ describe('DockerCommands', () => {
 
             await expect(deleteContainerOperation).resolves.toBeUndefined();
             expect(execMock).toHaveBeenCalledWith("docker --host ssh://user@host rm -f c");
+        });
+
+        it('throws an error when docker command fails', async () => {
+            execMock.mockRejectedValueOnce(new Error('fail'));
+
+            const deleteContainerOperation = dockerCommands.deleteContainer('c', 'user@host');
+
+            await expect(deleteContainerOperation).rejects.toThrow('fail');
         });
     });
 

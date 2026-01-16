@@ -2,7 +2,6 @@ import * as vscode from 'vscode';
 import { logger } from '../util/logger';
 import debounce from 'lodash.debounce';
 import { Target } from './target';
-import { getErrorMessage } from '../util/getErrorMessage';
 
 type GlobalStoreKeys = 'targets';
 type WorkspaceStoreKeys = 'selectedTarget';
@@ -48,7 +47,7 @@ export class TargetStore {
             const payload = new TextEncoder().encode(Date.now().toString());
             await vscode.workspace.fs.writeFile(signalUri, payload);
         } catch (err: unknown) {
-            logger.error(`Failed to publish target change signal: ${getErrorMessage(err)}`);
+            logger.error(`Failed to publish target change signal`, err);
         }
     }, 500);
 
@@ -105,14 +104,14 @@ export class TargetStore {
                 try {
                     entries.push([k, Target.from(v as Record<string, unknown>)]);
                 } catch (err) {
-                    throw new Error(`Failed to parse target entry for key "${k}": ${getErrorMessage(err)}`);
+                    throw new Error(`Failed to parse target entry for key "${k}"`, { cause: err });
                 }
             }
             return new Map(entries);
         } catch (err) {
-            const errorMsg = `Failed to load targets: ${getErrorMessage(err)}`;
-            logger.error(errorMsg);
-            throw Error(errorMsg);
+            const errorMsg = 'Failed to load targets';
+            logger.error(errorMsg, err);
+            throw Error(errorMsg, { cause: err });
         }
     }
 
@@ -161,7 +160,7 @@ export class TargetStore {
             try {
                 d.dispose();
             } catch (err) {
-                logger.error(`Error disposing TargetStore disposable: ${getErrorMessage(err)}`);
+                logger.error(`Error disposing TargetStore disposable`, err);
             }
         }
         this.disposables = [];

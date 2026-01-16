@@ -41,8 +41,7 @@ export class BoardConnectionChecker {
             clearTimeout(timeout);
             return response.status === 200;
         } catch (err) {
-            logger.error('Error checking board SSH port:');
-            logger.error(err);
+            logger.error('Error checking board SSH port', err);
             return false;
         }
     }

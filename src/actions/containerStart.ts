@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { ContainerItem, ContainersManager } from '../workloadPlacement/containersManager';
 import * as manifest from '../manifest';
+import { getErrorMessage } from '../util/getErrorMessage';
 
 export class ContainerStart {
 
@@ -21,11 +22,7 @@ export class ContainerStart {
         try {
             await this.containersManager.startContainer(item.id);
         } catch (err: unknown) {
-            if (err instanceof Error) {
-                vscode.window.showErrorMessage(`Failed to start service. ${err.message}`);
-            } else {
-                vscode.window.showErrorMessage('Failed to start service. Unknown error');
-            }
+            vscode.window.showErrorMessage(`Failed to start service: ${getErrorMessage(err)}`);
         }
     }
 

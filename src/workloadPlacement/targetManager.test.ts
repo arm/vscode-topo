@@ -141,14 +141,15 @@ describe('TargetManager', () => {
                 .mockResolvedValueOnce('root@192.0.2.1')
                 .mockResolvedValueOnce('My target');
             const { targetTreeDataProvider, targetStore, targetManager } = createTargetManager();
-            (targetStore.addTarget as jest.Mock).mockRejectedValueOnce(new Error('boom'));
+            const error = new Error('boom');
+            (targetStore.addTarget as jest.Mock).mockRejectedValueOnce(error);
             await targetManager.activate();
 
             await executeCommand(TargetManager.addTargetCommand);
 
             expect(targetStore.addTarget).toHaveBeenCalled();
-            expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('boom'));
-            expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(expect.stringContaining('boom'));
+            expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('Failed to add target'), error);
+            expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(expect.stringContaining('Failed to add target'));
             expect(targetStore.setSelected).not.toHaveBeenCalled();
             expect(targetTreeDataProvider.refresh).not.toHaveBeenCalled();
         });
@@ -220,7 +221,8 @@ describe('TargetManager', () => {
             (containersManager.getBoardState as jest.Mock).mockResolvedValue({ isReachable: true, hasContainerRuntime: true, targetId: target.id });
             (vscode.window.createStatusBarItem as jest.Mock).mockImplementation(mockedStatusBarItemCreation);
             await targetManager.activate();
-            (containersManager.getBoardState as jest.Mock).mockRejectedValue(new Error('boom'));
+            const error = new Error('boom');
+            (containersManager.getBoardState as jest.Mock).mockRejectedValue(error);
 
             onDataUpdateEmitter.fire();
             await waitImmediate();
@@ -231,7 +233,7 @@ describe('TargetManager', () => {
             expect(statusBarItem.tooltip).toBe('Connection String: root@localhost');
             expect(statusBarItem.show).toHaveBeenCalledTimes(1);
             expect(statusBarItem.hide).not.toHaveBeenCalled();
-            expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('boom'));
+            expect(logger.error).toHaveBeenCalledWith("Failed to update target manager status bar", error);
         });
 
     });

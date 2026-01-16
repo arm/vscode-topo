@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { TopoCli } from './topoCli';
 import { Deploy } from './actions/deploy';
+import { logger } from './util/logger';
 
 export type MessageHandlerTopoCli = Pick<TopoCli, 'getProject' | 'getConfigMetadata' >;
 
@@ -75,7 +76,7 @@ export class MessageHandler {
                     });
                 }
             } catch (err) {
-                console.error('Error in show-quick-pick:', err);
+                logger.error('Error in show-quick-pick', err);
             }
             break;
         case 'create-quick-pick':
@@ -88,14 +89,14 @@ export class MessageHandler {
                     });
                 }
             } catch (err) {
-                console.error('Error in create-quick-pick:', err);
+                logger.error('Error in create-quick-pick', err);
             }
             break;
         case 'deploy':
             try {
                 await this.deploy.deploy(document.uri.fsPath);
             } catch (err) {
-                console.error('Error in deploy:', err);
+                logger.error('Error in deploy', err);
             }
             finally {
                 webview.postMessage({
@@ -107,7 +108,7 @@ export class MessageHandler {
             this.renderComposeEditor(webview, document);
             break;
         default:
-            console.warn(`Unknown message type: ${e.type}`);
+            logger.warn(`Unknown message type: ${e.type}`);
         }
     }
 }

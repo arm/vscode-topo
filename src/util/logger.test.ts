@@ -102,4 +102,22 @@ describe('stringifyMessage', () => {
 
         expect(stringifyMessage(bigIntValue)).toBe(String(bigIntValue));
     });
+
+    it('preserves textual form for non-finite numbers like NaN', () => {
+        const value = NaN;
+
+        expect(stringifyMessage(value)).toBe(String(value));
+    });
+
+    it('returns the string representation for undefined', () => {
+        const value = undefined;
+
+        expect(stringifyMessage(value)).toBe(String(value));
+    });
+
+    it('returns the string representation for Buffers', () => {
+        const buf = Buffer.from('hello buffer');
+
+        expect(stringifyMessage(buf)).toBe(buf.toString());
+    });
 });

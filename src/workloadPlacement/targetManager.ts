@@ -3,7 +3,6 @@ import { TargetTreeDataProvider } from './targetTreeDataProvider';
 import * as manifest from '../manifest';
 import { Target } from './target';
 import { TargetStore } from './targetStore';
-import { getErrorMessage } from '../util/getErrorMessage';
 import { logger } from '../util/logger';
 import { ContainersManager } from './containersManager';
 import { getTreeItemIcon } from './targetTreeBoardItem';
@@ -72,8 +71,8 @@ export class TargetManager {
         try {
             await this.targetStore.addTarget(newTarget);
         } catch (error) {
-            const errorMsg = `Failed to add target: ${getErrorMessage(error)}`;
-            logger.warn(errorMsg);
+            const errorMsg = `Failed to add target`;
+            logger.warn(errorMsg, error);
             vscode.window.showWarningMessage(errorMsg);
             return;
         }
@@ -103,8 +102,7 @@ export class TargetManager {
         try {
             await this.updateStatusBar();
         } catch (error) {
-            const errorMsg = `Failed to update target manager status bar: ${getErrorMessage(error)}`;
-            logger.error(errorMsg);
+            logger.error(`Failed to update target manager status bar`, error);
         }
     }
 

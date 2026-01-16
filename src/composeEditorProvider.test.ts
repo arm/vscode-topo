@@ -5,6 +5,7 @@ import { ConfigMetadata, ProjectDescription } from './util/types';
 import * as manifest from './manifest';
 import { MessageHandler, MessageHandlerTopoCli } from './messageHandler';
 import { Deploy } from './actions/deploy';
+import { logger } from './util/logger';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -46,11 +47,9 @@ describe('ComposeEditorProvider', () => {
     let deploy: jest.Mocked<Pick<Deploy, 'deploy'>>;
     const context: any = { extensionPath: '/ext', extensionUri: vscode.Uri.file('/ext'), subscriptions: [] };
     let messageHandler: MessageHandler;
-    let consoleErrorSpy: jest.SpyInstance;
 
     beforeEach(() => {
         jest.clearAllMocks();
-        consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {/* no-op */});
         topoCli = {
             getProject: jest.fn().mockReturnValue(project),
             getConfigMetadata: jest.fn().mockReturnValue(configMetadata),
@@ -61,10 +60,6 @@ describe('ComposeEditorProvider', () => {
         };
         messageHandler = new MessageHandler(topoCli, deploy);
         provider = new ComposeEditorProvider(context, messageHandler);
-    });
-
-    afterEach(() => {
-        consoleErrorSpy.mockRestore();
     });
 
     it('registers custom editor provider', async () => {
@@ -210,11 +205,10 @@ describe('ComposeEditorProvider', () => {
             onDidDispose: (_cb: any) => ({ dispose: jest.fn() })
         };
         await provider.resolveCustomTextEditor(doc, webviewPanel, null as any);
-        const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
 
         await handler({ type: 'not-a-real-type' });
 
-        expect(warnSpy).toHaveBeenCalledWith('Unknown message type: not-a-real-type');
+        expect(logger.warn).toHaveBeenCalledWith('Unknown message type: not-a-real-type');
     });
 
 });
