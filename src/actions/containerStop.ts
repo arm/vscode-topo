@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { ContainerItem, ContainersManager } from '../workloadPlacement/containersManager';
 import * as manifest from '../manifest';
+import { getErrorMessage } from '../util/getErrorMessage';
 
 export class ContainerStop {
 
@@ -22,11 +23,7 @@ export class ContainerStop {
         try {
             await this.containersManager.stopContainer(item.id);
         } catch (err: unknown) {
-            if (err instanceof Error) {
-                vscode.window.showErrorMessage(`Failed to stop service. ${err.message}`);
-            } else {
-                vscode.window.showErrorMessage('Failed to stop service. Unknown error');
-            }
+            vscode.window.showErrorMessage(`Failed to stop service: ${getErrorMessage(err)}`);
         }
     }
 

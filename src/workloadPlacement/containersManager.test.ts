@@ -398,11 +398,13 @@ describe('ContainersManager', () => {
         };
         const manager = new ContainersManager(boardConnectionChecker, dockerCommands, targetStore);
         await manager.activate();
-        execMock.mockRejectedValueOnce({
+        execMock.mockResolvedValue({
             stderr: 'fail'
         });
 
-        await expect(manager.stopContainer('abc123')).rejects.toThrow('Failed to stop service');
+        const stopOperation = manager.stopContainer('abc123');
+
+        await expect(stopOperation).rejects.toThrow('fail');
     });
 
     it('resolves when docker start succeeds', async () => {
@@ -471,11 +473,13 @@ describe('ContainersManager', () => {
         };
         const manager = new ContainersManager(boardConnectionChecker, dockerCommands, targetStore);
         await manager.activate();
-        execMock.mockRejectedValueOnce({
+        execMock.mockResolvedValueOnce({
             stderr: 'fail'
         });
 
-        await expect(manager.startContainer('abc123')).rejects.toThrow('Failed to start service');
+        const startOperation = manager.startContainer('abc123');
+
+        await expect(startOperation).rejects.toThrow('fail');
     });
 
     it('updates when targetStore onChanged fires (re-queries selected target)', async () => {

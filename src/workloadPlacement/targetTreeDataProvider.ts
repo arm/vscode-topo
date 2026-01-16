@@ -6,7 +6,6 @@ import { TargetStore } from './targetStore';
 import { TargetTreeBoardItem } from './targetTreeBoardItem';
 import { TargetTreeSubsystemItem } from './targetTreeSubsystemItem';
 import { logger } from '../util/logger';
-import { getErrorMessage } from '../util/getErrorMessage';
 
 export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
 
@@ -41,8 +40,8 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
 
     private async selectTarget(treeNode: unknown): Promise<void> {
         if (!(treeNode instanceof TargetTreeBoardItem)) {
-            const errMsg = `Invalid target type for select: expected TargetTreeBoardItem but received\n${JSON.stringify(treeNode, null, 2)}`;
-            logger.error(errMsg);
+            const errMsg = `Invalid target type for select: expected TargetTreeBoardItem but received:`;
+            logger.error(errMsg, treeNode);
             return;
         }
         await this.targetStore.setSelected(treeNode.targetId);
@@ -50,16 +49,16 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
 
     private async removeTarget(treeNode: unknown): Promise<void> {
         if (!(treeNode instanceof TargetTreeBoardItem)) {
-            const errMsg = `Invalid target type for remove: expected TargetTreeBoardItem but received\n${JSON.stringify(treeNode, null, 2)}`;
-            logger.error(errMsg);
+            const errMsg = `Invalid target type for remove: expected TargetTreeBoardItem but received:`;
+            logger.error(errMsg, treeNode);
             return;
         }
         try {
             await this.targetStore.deleteTarget(treeNode.targetId);
         } catch (err) {
-            const errorMessage = `Failed to remove target: ${getErrorMessage(err)}`;
+            const errorMessage = `Failed to remove target`;
             vscode.window.showErrorMessage(errorMessage);
-            logger.error(errorMessage);
+            logger.error(errorMessage, err);
         } finally {
             this._onDidChangeTreeData.fire(undefined);
         }

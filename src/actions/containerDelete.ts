@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { ContainerItem, ContainersManager } from '../workloadPlacement/containersManager';
 import * as manifest from '../manifest';
+import { getErrorMessage } from '../util/getErrorMessage';
 
 export class ContainerDelete {
 
@@ -21,11 +22,7 @@ export class ContainerDelete {
         try {
             await this.containersManager.deleteContainer(item.id);
         } catch (err: unknown) {
-            if (err instanceof Error) {
-                vscode.window.showErrorMessage(`Failed to delete service. ${err.message}`);
-            } else {
-                vscode.window.showErrorMessage('Failed to delete service. Unknown error');
-            }
+            vscode.window.showErrorMessage(`Failed to delete service: ${getErrorMessage(err)}`);
         }
     }
 

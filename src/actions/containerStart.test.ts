@@ -92,6 +92,6 @@ describe('ContainerStart', () => {
 
         await vscode.commands.executeCommand(ContainerStart.startContainerCommand, container);
 
-        expect(showErrorMessageSpy).toHaveBeenCalledWith(expect.stringContaining('Failed to start service.'));
+        expect(showErrorMessageSpy).toHaveBeenCalledWith(expect.stringContaining('Failed to start service: fail'));
     });
 });

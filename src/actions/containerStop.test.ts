@@ -87,6 +87,6 @@ describe('ContainerStop', () => {
 
         await vscode.commands.executeCommand(ContainerStop.stopContainerCommand, container);
 
-        expect(showErrorMessageSpy).toHaveBeenCalledWith(expect.stringContaining('Failed to stop service.'));
+        expect(showErrorMessageSpy).toHaveBeenCalledWith(expect.stringContaining('Failed to stop service: fail'));
     });
 });

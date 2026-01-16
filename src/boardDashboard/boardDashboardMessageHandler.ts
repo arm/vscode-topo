@@ -42,7 +42,6 @@ export class BoardDashboardMessageHandler {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         e: any
     ): Promise<void> {
-        logger.debug(`Received message from webview: ${e.type}`);
         switch (e.type) {
         case 'start-container':
             try {
@@ -50,7 +49,7 @@ export class BoardDashboardMessageHandler {
                 logger.info(`Container ${e.containerId} started successfully`);
                 this.renderBoardDashboard(webview);
             } catch (err: unknown) {
-                logger.error(`Failed to start container ${e.containerId}: ${err instanceof Error ? err.message : "Unknown error"}`);
+                logger.error(`Failed to start the container ${e.containerId}`, err);
             }
             break;
         case 'stop-container':
@@ -59,7 +58,7 @@ export class BoardDashboardMessageHandler {
                 logger.info(`Container ${e.containerId} stopped successfully`);
                 this.renderBoardDashboard(webview);
             } catch (err: unknown) {
-                logger.error(`Failed to stop container ${e.containerId}: ${err instanceof Error ? err.message : "Unknown error"}`);
+                logger.error(`Failed to stop the container ${e.containerId}`, err);
             }
             break;
         case 'delete-container':
@@ -68,7 +67,7 @@ export class BoardDashboardMessageHandler {
                 logger.info(`Container ${e.containerId} deleted successfully`);
                 this.renderBoardDashboard(webview);
             } catch (err: unknown) {
-                logger.error(`Failed to delete container ${e.containerId}: ${err instanceof Error ? err.message : "Unknown error"}`);
+                logger.error(`Failed to delete the container ${e.containerId}`, err);
             }
             break;
         case 'open-container-in-browser':
@@ -81,7 +80,7 @@ export class BoardDashboardMessageHandler {
                     await this.containerOpenInBrowser.openContainerInBrowser(container);
                 }
             } catch (err: unknown) {
-                logger.error(`Failed to open container in browser: ${err instanceof Error ? err.message : "Unknown error"}`);
+                logger.error(`Failed to open the container ${e.containerId} in browser`, err);
             }
             break;
         case 'attach-vscode':
@@ -94,7 +93,7 @@ export class BoardDashboardMessageHandler {
                     await this.attachVsCode.attachVsCodeToContainer(container);
                 }
             } catch (err: unknown) {
-                logger.error(`Failed to attach VS Code to container: ${err instanceof Error ? err.message : "Unknown error"}`);
+                logger.error(`Failed to attach VS Code to the container ${e.containerId}`, err);
             }
             break;
         case 'attach-shell':
@@ -107,21 +106,21 @@ export class BoardDashboardMessageHandler {
                     await this.attachShell.attachShell(container);
                 }
             } catch (err: unknown) {
-                logger.error(`Failed to attach sshto container: ${err instanceof Error ? err.message : "Unknown error"}`);
+                logger.error(`Failed to attach a shell to the container ${e.containerId}`, err);
             }
             break;
         case 'attach-ssh':
             try {
                 await this.attachShell.attachSSH();
             } catch (err: unknown) {
-                logger.error(`Failed to attach via SSH to the Host: ${err instanceof Error ? err.message : "Unknown error"}`);
+                logger.error(`Failed to attach via SSH to the Host`, err);
             }
             break;
         case 'board-dashboard-webview-ready':
             this.renderBoardDashboard(webview);
             break;
         default:
-            console.warn(`Unknown message type: ${e.type}`);
+            logger.warn(`Unknown message type: ${e.type}`);
         }
     }
 }

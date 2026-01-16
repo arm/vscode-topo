@@ -78,14 +78,16 @@ describe('Deploy', () => {
     it('handles deploy process errors', async () => {
         const composeFolder = '/ext';
         const composeFilePath = path.resolve(composeFolder, 'compose.yaml');
-        deployer.start = jest.fn().mockRejectedValue(new Error('deploy-fail'));
+        const error = new Error('deploy-fail');
+        deployer.start = jest.fn().mockRejectedValue(error);
 
         const deployOperation = deploy.deploy(composeFilePath);
         const deployOperationAssertion = expect(deployOperation).rejects.toThrow('deploy-fail');
         await waitImmediate();
 
         expect(deployer.start).toHaveBeenCalledWith(composeFilePath);
-        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(expect.stringContaining('deploy-fail'));
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith("An error happened while starting deployment");
+        expect(logger.error).toHaveBeenCalledWith("Failed to start deployment", error);
         await deployOperationAssertion;
     });
 
@@ -108,17 +110,19 @@ describe('Deploy', () => {
         const composeFilePath = path.resolve(composeFolder, 'compose.yaml');
 
         const deployOperation = deploy.deploy(composeFilePath);
+        const stdoutData = Buffer.from('hello stdout');
+        const stderrData = Buffer.from('hello stderr');
         // Simulate stdout and stderr events
-        stdoutDataEmitter.fire(Buffer.from('hello stdout'));
-        stderrDataEmitter.fire(Buffer.from('hello stderr'));
+        stdoutDataEmitter.fire(stdoutData);
+        stderrDataEmitter.fire(stderrData);
         // Simulate successful exit
         exitEmitter.fire(0);
         await waitImmediate();
 
         await expect(deployOperation).resolves.toBeUndefined();
         expect(logger.show).toHaveBeenCalled();
-        expect(logger.info).toHaveBeenCalledWith('hello stdout');
-        expect(logger.error).toHaveBeenCalledWith('hello stderr');
+        expect(logger.info).toHaveBeenCalledWith(stdoutData);
+        expect(logger.error).toHaveBeenCalledWith(stderrData);
     });
 
 });

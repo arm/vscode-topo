@@ -29,13 +29,11 @@ export class DockerCommands implements ContainerCommands {
             if (hasStderrError(stderr)) {
                 throw new Error(stderr);
             } else if(stderr.trim().length > 0) {
-                logger.warn('Warnings emitted when checking Docker runtime status:');
-                logger.warn(stderr);
+                logger.warn('Warnings emitted when checking Docker runtime status', stderr);
             }
             return stdout.includes('Server Version');
         } catch (error: unknown) {
-            logger.error('Error checking Docker runtime status:');
-            logger.error(error);
+            logger.error('Error checking Docker runtime status', error);
             return false;
         }
     }
@@ -82,8 +80,7 @@ export class DockerCommands implements ContainerCommands {
                 throw new Error(createContextErr || 'Failed to create Docker context');
             }
         } catch (error: unknown) {
-            logger.error('Error ensuring Docker context:');
-            logger.error(error);
+            logger.error('Error ensuring Docker context', error);
             throw error;
         }
     }
@@ -140,7 +137,7 @@ export class DockerCommands implements ContainerCommands {
                 throw err;
             }
             inspectStdout = err.stdout;
-            logger.error(err);
+            logger.error('Error inspecting containers', err);
         }
         return inspectStdout.trim();
     }
@@ -165,44 +162,32 @@ export class DockerCommands implements ContainerCommands {
                 throw err;
             }
             statsStdout = err.stdout;
-            logger.error(err);
+            logger.error('Error getting container stats', err);
         }
         return statsStdout.trim();
     }
 
     public async stopContainer(containerId: string, boardSshConnection: string): Promise<void> {
-        try {
-            const { stderr } = await exec(`docker --host ${getSshUri(boardSshConnection)} stop ${containerId}`);
-            const err = stderr.trim();
-            if (err) {
-                throw new Error(err || 'Failed to stop service');
-            }
-        } catch (error: unknown) {
-            throw new Error((error as Error).message || 'Failed to stop service');
+        const { stderr } = await exec(`docker --host ${getSshUri(boardSshConnection)} stop ${containerId}`);
+        const err = stderr.trim();
+        if (err) {
+            throw new Error(err || 'Failed to stop service');
         }
     }
 
     public async startContainer(containerId: string, boardSshConnection: string): Promise<void> {
-        try {
-            const { stderr } = await exec(`docker --host ${getSshUri(boardSshConnection)} start ${containerId}`);
-            const err = stderr.trim();
-            if (err) {
-                throw new Error(err || 'Failed to start service');
-            }
-        } catch (error: unknown) {
-            throw new Error((error as Error).message || 'Failed to start service');
+        const { stderr } = await exec(`docker --host ${getSshUri(boardSshConnection)} start ${containerId}`);
+        const err = stderr.trim();
+        if (err) {
+            throw new Error(err || 'Failed to start service');
         }
     }
 
     public async deleteContainer(containerId: string, boardSshConnection: string): Promise<void> {
-        try {
-            const { stderr } = await exec(`docker --host ${getSshUri(boardSshConnection)} rm -f ${containerId}`);
-            const err = stderr.trim();
-            if (err) {
-                throw new Error(err || 'Failed to delete service');
-            }
-        } catch (error: unknown) {
-            throw new Error((error as Error).message || 'Failed to delete service');
+        const { stderr } = await exec(`docker --host ${getSshUri(boardSshConnection)} rm -f ${containerId}`);
+        const err = stderr.trim();
+        if (err) {
+            throw new Error(err || 'Failed to delete service');
         }
     }
 
