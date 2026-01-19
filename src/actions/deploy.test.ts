@@ -1,4 +1,5 @@
 import path from 'path';
+import os from 'os';
 import * as vscode from 'vscode';
 import { logger } from '../util/logger';
 import { Deploy } from './deploy';
@@ -11,14 +12,19 @@ const waitImmediate = () => new Promise<void>(resolve => setTimeout(() => resolv
 
 describe('Deploy', () => {
     let deploy: Deploy;
-    const composeFilePath: string = '/tmp/compose.topo.yaml';
+    const composeFileUri = vscode.Uri.file(path.join(os.tmpdir(), 'compose.yaml'));
+    const composeFilePath = composeFileUri.fsPath;
     let deployer: DeployerType;
     let stdoutDataEmitter: vscode.EventEmitter<Buffer>;
     let stderrDataEmitter: vscode.EventEmitter<Buffer>;
     let exitEmitter: vscode.EventEmitter<number | null>;
     let errorEmitter: vscode.EventEmitter<Error>;
+    let context: Pick<vscode.ExtensionContext, 'subscriptions'>;
+    let deployHandler: ((resource?: vscode.Uri) => Promise<void>) | undefined;
+    let registerSpy: jest.SpyInstance;
 
     beforeEach(() => {
+        context = { subscriptions: [] };
         stderrDataEmitter = new vscode.EventEmitter<Buffer>();
         stdoutDataEmitter = new vscode.EventEmitter<Buffer>();
         exitEmitter = new vscode.EventEmitter<number | null>();
@@ -31,14 +37,29 @@ describe('Deploy', () => {
             onExit: exitEmitter.event,
             onError: errorEmitter.event,
         };
-        deploy = new Deploy(deployer);
+        deploy = new Deploy(context, deployer);
         (vscode.window.withProgress as jest.Mock).mockImplementation(async (_opts, cb) => {
             const token = {
                 onCancellationRequested: (cb2: () => void) => cb2(),
             };
             await cb({}, token);
         });
-        jest.clearAllMocks();
+        registerSpy = jest.spyOn(vscode.commands, 'registerCommand').mockImplementation((_, handler: (...args: unknown[]) => Promise<void>) => {
+            deployHandler = handler;
+            return { dispose: () => {} } as vscode.Disposable;
+        });
+    });
+
+    afterEach(() => {
+        deployHandler = undefined;
+        jest.restoreAllMocks();
+    });
+
+    it('registers the deploy command on activate', () => {
+        deploy.activate();
+
+        expect(registerSpy).toHaveBeenCalledWith(Deploy.deployCommand, expect.any(Function));
+        expect(context.subscriptions.length).toBeGreaterThan(0);
     });
 
     it('handles successful deploy operation', async () => {
@@ -53,8 +74,6 @@ describe('Deploy', () => {
     });
 
     it('handles deploy cancellation', async () => {
-        const composeFolder = '/ext';
-        const composeFilePath = path.resolve(composeFolder, 'compose.yaml');
         let cancellationCallback: () => void;
         (vscode.window.withProgress as jest.Mock).mockImplementation(async (_opts, cb) => {
             const token = {
@@ -76,8 +95,6 @@ describe('Deploy', () => {
     });
 
     it('handles deploy process errors', async () => {
-        const composeFolder = '/ext';
-        const composeFilePath = path.resolve(composeFolder, 'compose.yaml');
         const error = new Error('deploy-fail');
         deployer.start = jest.fn().mockRejectedValue(error);
 
@@ -86,15 +103,11 @@ describe('Deploy', () => {
         await waitImmediate();
 
         expect(deployer.start).toHaveBeenCalledWith(composeFilePath);
-        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith("An error happened while starting deployment");
         expect(logger.error).toHaveBeenCalledWith("Failed to start deployment", error);
         await deployOperationAssertion;
     });
 
     it('handles other deploy errors', async () => {
-        const composeFolder = '/ext';
-        const composeFilePath = path.resolve(composeFolder, 'compose.yaml');
-
         const deployOperation = deploy.deploy(composeFilePath);
         const deployOperationAssertion = expect(deployOperation).rejects.toThrow('Simulated error');
         // simulate cancellation explicitly
@@ -106,8 +119,6 @@ describe('Deploy', () => {
     });
 
     it('logs stdout and stderr and shows output channel during deploy', async () => {
-        const composeFolder = '/ext';
-        const composeFilePath = path.resolve(composeFolder, 'compose.yaml');
 
         const deployOperation = deploy.deploy(composeFilePath);
         const stdoutData = Buffer.from('hello stdout');
@@ -123,6 +134,30 @@ describe('Deploy', () => {
         expect(logger.show).toHaveBeenCalled();
         expect(logger.info).toHaveBeenCalledWith(stdoutData);
         expect(logger.error).toHaveBeenCalledWith(stderrData);
+    });
+
+    it('invokes handler when command called', async () => {
+        deploy.activate();
+
+        const op = deployHandler!(composeFileUri);
+        exitEmitter.fire(0);
+        await waitImmediate();
+
+        await expect(op).resolves.toBeUndefined();
+        expect(deployer.start).toHaveBeenCalledWith(composeFilePath);
+    });
+
+    it('logs and shows error when deploy command fails', async () => {
+        const error = new Error('deploy-command-fail');
+        deployer.start = jest.fn().mockRejectedValue(error);
+        deploy.activate();
+
+        deployHandler!(composeFileUri);
+        await waitImmediate();
+
+        expect(deployer.start).toHaveBeenCalledWith(composeFilePath);
+        expect(logger.error).toHaveBeenCalledWith('Error executing deploy command', error);
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(expect.stringContaining('Error executing deploy command'));
     });
 
 });

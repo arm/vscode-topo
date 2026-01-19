@@ -1,14 +1,38 @@
 import * as vscode from 'vscode';
 import { logger } from '../util/logger';
 import { Deployer } from '../deployer';
+import * as manifest from '../manifest';
+import { getErrorMessage } from '../util/getErrorMessage';
 
 export type DeployerType = Pick<Deployer, 'start' | 'stop' | 'onStdoutData' | 'onStderrData' | 'onExit' | 'onError'>;
 
 export class Deploy {
 
+    public static readonly deployCommand = `${manifest.PACKAGE_NAME}.deploy.context`;
+
     constructor(
+        private readonly context: Pick<vscode.ExtensionContext, 'subscriptions'>,
         private readonly deployer: DeployerType,
     ) {}
+
+    public activate(): void {
+        this.context.subscriptions.push(
+            vscode.commands.registerCommand(Deploy.deployCommand, this.handleDeployCommand.bind(this))
+        );
+    }
+
+    private async handleDeployCommand(resource?: vscode.Uri): Promise<void> {
+        if (!resource) {
+            throw new Error('No compose file selected for deployment');
+        }
+        try {
+            await this.deploy(resource.fsPath);
+        } catch (err) {
+            const errorMsg = 'Error executing deploy command';
+            logger.error(errorMsg, err);
+            void vscode.window.showErrorMessage(`${errorMsg}: ${getErrorMessage(err)}`);
+        }
+    }
 
     public async deploy(
         composeFilePath: string,
@@ -53,7 +77,6 @@ export class Deploy {
                     this.deployer.start(composeFilePath)
                         .then(() => logger.show())
                         .catch((err: Error) => {
-                            vscode.window.showErrorMessage(`An error happened while starting deployment`);
                             logger.error('Failed to start deployment', err);
                             disposables.forEach(d => d.dispose());
                             reject(err);

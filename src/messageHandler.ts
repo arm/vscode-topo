@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { TopoCli } from './topoCli';
 import { Deploy } from './actions/deploy';
 import { logger } from './util/logger';
+import { getErrorMessage } from './util/getErrorMessage';
 
 export type MessageHandlerTopoCli = Pick<TopoCli, 'getProject' | 'getConfigMetadata' >;
 
@@ -96,7 +97,9 @@ export class MessageHandler {
             try {
                 await this.deploy.deploy(document.uri.fsPath);
             } catch (err) {
-                logger.error('Error in deploy', err);
+                const errorMsg = 'Error during deployment';
+                logger.error(errorMsg, err);
+                vscode.window.showErrorMessage(`${errorMsg}: ${getErrorMessage(err)}`);
             }
             finally {
                 webview.postMessage({
