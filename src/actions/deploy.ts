@@ -53,6 +53,7 @@ export class Deploy {
                 });
                 return new Promise<void>((resolve, reject) => {
                     const disposables: vscode.Disposable[] = [];
+                    const cleanup = () => disposables.forEach(d => d.dispose());
                     disposables.push(
                         this.deployer.onStdoutData((data) => {
                             logger.info(data);
@@ -61,7 +62,12 @@ export class Deploy {
                             logger.error(data);
                         }),
                         this.deployer.onExit((code) => {
-                            disposables.forEach(d => d.dispose());
+                            cleanup();
+                            if (token.isCancellationRequested && (code === null || code === 0)) {
+                                logger.info('Deployment cancelled');
+                                resolve();
+                                return;
+                            }
                             if (code === 0) {
                                 resolve();
                             } else {
@@ -69,16 +75,19 @@ export class Deploy {
                             }
                         }),
                         this.deployer.onError((err: Error) => {
-                            logger.error('An error happened during deployment', err);
-                            disposables.forEach(d => d.dispose());
+                            cleanup();
+                            const errorMsg = token.isCancellationRequested
+                                ? 'Deployment error after cancellation'
+                                : 'Deployment error';
+                            logger.error(errorMsg, err);
                             reject(err);
                         }),
                     );
                     this.deployer.start(composeFilePath)
                         .then(() => logger.show())
                         .catch((err: Error) => {
+                            cleanup();
                             logger.error('Failed to start deployment', err);
-                            disposables.forEach(d => d.dispose());
                             reject(err);
                         });
                 });
