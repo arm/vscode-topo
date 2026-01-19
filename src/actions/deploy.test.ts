@@ -74,23 +74,52 @@ describe('Deploy', () => {
     });
 
     it('handles deploy cancellation', async () => {
-        let cancellationCallback: () => void;
+        const cancellationEventEmitter = new vscode.EventEmitter<void>();
+        let token: vscode.CancellationToken;
         (vscode.window.withProgress as jest.Mock).mockImplementation(async (_opts, cb) => {
-            const token = {
-                onCancellationRequested: (cb2: () => void) => {
-                    cancellationCallback = cb2;
-                },
+            token = {
+                onCancellationRequested: cancellationEventEmitter.event,
+                isCancellationRequested: false,
             };
             await cb({}, token);
         });
 
         const deployOperation = deploy.deploy(composeFilePath);
-        const deployOperationAssertion = expect(deployOperation).rejects.toThrow('Deploy operation exited with code 130');
-        cancellationCallback!();
-        exitEmitter.fire(130);
+        // simulate cancellation
+        token!.isCancellationRequested = true;
+        cancellationEventEmitter.fire();
+        // process would exit with code null (cancelled by SIGTERM)
+        exitEmitter.fire(null);
         await waitImmediate();
 
         expect(deployer.start).toHaveBeenCalledWith(composeFilePath);
+        expect(deployer.stop).toHaveBeenCalled();
+        await expect(deployOperation).resolves.toBeUndefined();
+    });
+
+    it('handles error on deploy cancellation', async () => {
+        const cancellationEventEmitter = new vscode.EventEmitter<void>();
+        let token: vscode.CancellationToken;
+        (vscode.window.withProgress as jest.Mock).mockImplementation(async (_opts, cb) => {
+            token = {
+                onCancellationRequested: cancellationEventEmitter.event,
+                isCancellationRequested: false,
+            };
+            await cb({}, token);
+        });
+
+        const deployOperation = deploy.deploy(composeFilePath);
+        const deployOperationAssertion = expect(deployOperation).rejects.toThrow('Deploy operation exited with code 1');
+
+        // simulate cancellation
+        token!.isCancellationRequested = true;
+        cancellationEventEmitter.fire();
+        // process would exit with error code 1
+        exitEmitter.fire(1);
+        await waitImmediate();
+
+        expect(deployer.start).toHaveBeenCalledWith(composeFilePath);
+        expect(deployer.stop).toHaveBeenCalled();
         await deployOperationAssertion;
     });
 
