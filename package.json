@@ -120,6 +120,11 @@
         "title": "Open UART",
         "icon": "$(console)",
         "category": "Arm Topo"
+      },
+      {
+        "command": "topo.deploy.context",
+        "title": "Topo Deploy",
+        "category": "Arm Topo"
       }
     ],
     "customEditors": [
@@ -178,6 +183,11 @@
           "command": "topo.showPreview",
           "group": "1_open",
           "when": "resourceFilename =~ /compose(\\..*)?\\.yaml$/ && activeCustomEditorId != 'topo.composeEditor'"
+        },
+        {
+          "command": "topo.deploy.context",
+          "group": "topo",
+          "when": "resourceFilename =~ /compose(\\..*)?\\.yaml$/ && activeCustomEditorId != 'topo.composeEditor'"
         }
       ],
       "explorer/context": [
@@ -185,6 +195,11 @@
           "command": "topo.showPreview",
           "group": "navigation@1",
           "when": "resourceFilename =~ /compose(\\..*)?\\.yaml$/ && activeCustomEditorId != 'topo.composeEditor'"
+        },
+        {
+          "command": "topo.deploy.context",
+          "group": "topo",
+          "when": "resourceFilename =~ /compose(\\..*)?\\.yaml$/"
         }
       ],
       "commandPalette": [
@@ -242,6 +257,10 @@
         },
         {
           "command": "topo.openInBrowser",
+          "when": "false"
+        },
+        {
+          "command": "topo.deploy.context",
           "when": "false"
         }
       ],

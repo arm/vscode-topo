@@ -183,11 +183,15 @@ describe('ComposeEditorProvider', () => {
             onDidDispose: (_cb: any) => ({ dispose: jest.fn() })
         };
         await provider.resolveCustomTextEditor(doc, webviewPanel, null as any);
-        deploy.deploy.mockRejectedValueOnce(new Error('deploy-fail'));
+        const error = new Error('deploy-fail');
+        deploy.deploy.mockRejectedValueOnce(error);
 
         handler({ type: 'deploy' });
         await waitImmediate();
+
         expect(post).toHaveBeenCalledWith({ type: 'deploy-complete' });
+        expect(logger.error).toHaveBeenCalledWith('Error during deployment', error);
+        expect(vscode.window.showErrorMessage as jest.Mock).toHaveBeenCalledWith('Error during deployment: deploy-fail');
     });
 
     it('warns on unknown message type', async () => {

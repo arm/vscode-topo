@@ -38,7 +38,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     const onBoardTopoConsoleOpener = new OnBoardTopoConsoleOpener(context, targetStore);
     const projectInit = new ProjectInit(context, topoCli);
     const projectClone = new ProjectClone(context, topoCli);
-    const deploy = new Deploy(deployer);
+    const deploy = new Deploy(context, deployer);
     const messageHandler = new MessageHandler(topoCli, deploy);
     const composeEditorProvider = new ComposeEditorProvider(context, messageHandler);
     const boardConnectionChecker = new BoardConnectionChecker();
@@ -68,6 +68,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     await onBoardTopoConsoleOpener.activate();
     await projectInit.activate();
     await projectClone.activate();
+    deploy.activate();
     await composeEditorProvider.activate();
     await containerOpenInBrowser.activate();
     await attachVsCode.activate();
