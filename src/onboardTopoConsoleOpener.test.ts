@@ -1,17 +1,15 @@
 import * as vscode from 'vscode';
 import { OnBoardTopoConsoleOpener } from './onboardTopoConsoleOpener';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 jest.mock('vscode');
 
 describe('OnBoardTopoConsoleOpener', () => {
-    let context: { subscriptions: any[] };
-    let commandHandler: { command: string; callback: (...args: any[]) => void } | undefined;
+    let context: Pick<vscode.ExtensionContext, 'subscriptions'>;
+    let commandHandler: { command: string; callback: (...args: unknown[]) => void } | undefined;
     const targetUrl = 'http://topo.local';
     let targetStore: { getSelectedTarget: jest.Mock };
 
-    const activateOnBoardTopoConsoleOpener = (context: vscode.ExtensionContext, targetStore: { getSelectedTarget: jest.Mock }) => {
+    const activateOnBoardTopoConsoleOpener = (context: Pick<vscode.ExtensionContext, 'subscriptions'>, targetStore: { getSelectedTarget: jest.Mock }) => {
         const onBoardTopoConsoleOpener = new OnBoardTopoConsoleOpener(context, targetStore);
         onBoardTopoConsoleOpener.activate();
         return onBoardTopoConsoleOpener;
@@ -37,7 +35,7 @@ describe('OnBoardTopoConsoleOpener', () => {
     });
 
     it('registers the openTopoConsole command', () => {
-        activateOnBoardTopoConsoleOpener(context as any, targetStore);
+        activateOnBoardTopoConsoleOpener(context, targetStore);
         expect(vscode.commands.registerCommand).toHaveBeenCalledWith(
             OnBoardTopoConsoleOpener.openTopoConsoleCommand,
             expect.any(Function)
@@ -46,7 +44,7 @@ describe('OnBoardTopoConsoleOpener', () => {
 
     it('opens the on-board Topo console URL in the browser', async () => {
         (vscode.env.openExternal as jest.Mock).mockResolvedValue(true);
-        activateOnBoardTopoConsoleOpener(context as any, targetStore);
+        activateOnBoardTopoConsoleOpener(context, targetStore);
 
         await vscode.commands.executeCommand(OnBoardTopoConsoleOpener.openTopoConsoleCommand);
 
@@ -58,7 +56,7 @@ describe('OnBoardTopoConsoleOpener', () => {
 
     it('shows an error message if openExternal fails', async () => {
         (vscode.env.openExternal as jest.Mock).mockRejectedValue(new Error('fail'));
-        activateOnBoardTopoConsoleOpener(context as any, targetStore);
+        activateOnBoardTopoConsoleOpener(context, targetStore);
 
         await vscode.commands.executeCommand(OnBoardTopoConsoleOpener.openTopoConsoleCommand);
 

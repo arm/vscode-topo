@@ -2,11 +2,10 @@ import * as vscode from 'vscode';
 import { AttachVsCode } from './attachVsCode';
 import { exec } from '../util/exec';
 import { BOARD_HOST_RUNTIME } from '../manifest';
-import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
 import { DockerCommands } from '../workloadPlacement/dockerCommands';
 import { Target } from '../workloadPlacement/target';
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import { ContainerItem } from '../workloadPlacement/containersManager';
+import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
 
 jest.mock('../util/exec', () => ({
     exec: jest.fn()
@@ -16,14 +15,14 @@ jest.mock('../util/logger');
 
 async function executeCommand(command: string, ...args: unknown[]) {
     const calls = (vscode.commands.registerCommand as jest.Mock).mock.calls;
-    const addCall = calls.find((c: any[]) => c[0] === command);
-    const handler = addCall![1] as (...args: any[]) => Promise<void>;
+    const addCall = calls.find((c: unknown[]) => c[0] === command);
+    const handler = addCall![1] as (...args: unknown[]) => Promise<void>;
     await handler(...args);
 }
 
 describe('attachVsCode', () => {
     let execMock: jest.Mock;
-    let context: any;
+    let context: Pick<vscode.ExtensionContext, 'subscriptions'>;
     let attachVsCode: AttachVsCode;
     const registerCommandMock = vscode.commands.registerCommand as jest.Mock;
     const dockerCommands = new DockerCommands();
@@ -31,7 +30,7 @@ describe('attachVsCode', () => {
         'topo',
         'user@topo.local',
     );
-    const containerItem: TargetTreeContainerItem = {
+    const containerItem: ContainerItem = {
         id: 'abc123',
         name: 'my-container',
         image: 'nginx',
@@ -41,12 +40,12 @@ describe('attachVsCode', () => {
         runningFor: '',
         runtime: BOARD_HOST_RUNTIME,
         createdAt: '',
-        subsystem: 'Host',
         ports: [],
         cpuUsage: '0.0%',
         memUsage: '0B / 1GiB',
         target,
     };
+    const treeItem = new TargetTreeContainerItem(containerItem);
     const dockerContext = 'topo.local';
 
     beforeEach(() => {
@@ -90,7 +89,7 @@ describe('attachVsCode', () => {
             throw new Error(`Unknown command: ${command}`);
         });
 
-        const commandExecution = executeCommand(AttachVsCode.attachVsCodeCommand, containerItem);
+        const commandExecution = executeCommand(AttachVsCode.attachVsCodeCommand, treeItem);
         await jest.advanceTimersByTimeAsync(3000);
         await commandExecution;
 
@@ -123,7 +122,7 @@ describe('attachVsCode', () => {
             throw new Error(`Unknown command: ${command}`);
         });
 
-        const commandExecution = executeCommand(AttachVsCode.attachVsCodeCommand, containerItem);
+        const commandExecution = executeCommand(AttachVsCode.attachVsCodeCommand, treeItem);
         await jest.advanceTimersByTimeAsync(3000);
         await commandExecution;
 
@@ -142,10 +141,10 @@ describe('attachVsCode', () => {
             throw new Error('Fail');
         });
 
-        const commandExecution = executeCommand(AttachVsCode.attachVsCodeCommand, containerItem);
+        const commandExecution = executeCommand(AttachVsCode.attachVsCodeCommand, treeItem);
         await jest.advanceTimersByTimeAsync(3000);
         await commandExecution;
 
-        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith('Failed to attach VS Code to container: Fail');
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith('Failed to attach VS Code to the container abc123');
     });
 });

@@ -1,29 +1,33 @@
 import * as vscode from 'vscode';
-import { ContainerItem, ContainersManager } from '../workloadPlacement/containersManager';
+import { ContainersManager } from '../workloadPlacement/containersManager';
 import * as manifest from '../manifest';
-import { getErrorMessage } from '../util/getErrorMessage';
+import { ensureTargetTreeContainerItem } from './util/ensureTargetTreeContainerItem';
+import { logger } from '../util/logger';
 
 export class ContainerDelete {
 
     public static readonly deleteContainerCommand = `${manifest.PACKAGE_NAME}.deleteContainer`;
 
     constructor(
-        private readonly context: vscode.ExtensionContext,
+        private readonly context: Pick<vscode.ExtensionContext, 'subscriptions'>,
         private readonly containersManager: Pick<ContainersManager, 'deleteContainer'>,
     ) {}
 
     public activate() {
         this.context.subscriptions.push(
-            vscode.commands.registerCommand(ContainerDelete.deleteContainerCommand, this.deleteContainer.bind(this))
+            vscode.commands.registerCommand(ContainerDelete.deleteContainerCommand, this.deleteContainerCommandHandler.bind(this))
         );
     }
 
-    private async deleteContainer(item: ContainerItem) {
+    private async deleteContainerCommandHandler(treeNode: unknown): Promise<void> {
+        ensureTargetTreeContainerItem(treeNode);
         try {
-            await this.containersManager.deleteContainer(item.id);
+            await this.containersManager.deleteContainer(treeNode.containerItem.id);
         } catch (err: unknown) {
-            vscode.window.showErrorMessage(`Failed to delete service: ${getErrorMessage(err)}`);
+            const errorMsg = `Failed to delete the container ${treeNode.containerItem.id}`;
+            vscode.window.showErrorMessage(errorMsg);
+            logger.error(errorMsg, err);
         }
     }
-
 }
+

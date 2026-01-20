@@ -97,21 +97,7 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
                 ? item.runtime === manifest.BOARD_HOST_RUNTIME
                 : item.runtime === manifest.BOARD_AMBIENT_RUNTIME
         );
-        const subsystemTreeItems = subsystemContainers.map(info => new TargetTreeContainerItem(
-            info.id,
-            info.name,
-            info.state,
-            info.status,
-            info.labels,
-            info.runningFor,
-            info.image,
-            info.createdAt,
-            info.runtime,
-            info.ports,
-            info.cpuUsage,
-            info.memUsage,
-            info.target,
-        ));
+        const subsystemTreeItems = subsystemContainers.map(info => new TargetTreeContainerItem(info));
         const sortedSubsystemTreeItems = subsystemTreeItems.sort((a, b) => {
             if (a.state === 'running' && b.state !== 'running') {
                 return -1;

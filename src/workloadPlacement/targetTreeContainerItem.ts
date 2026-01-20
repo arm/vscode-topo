@@ -1,34 +1,26 @@
 import * as vscode from 'vscode';
 import { BOARD_HOST_RUNTIME } from '../manifest';
 import { ContainerItem } from './containersManager';
-import { Target } from './target';
 
 /** Represents an individual container in the target tree view. */
-export class TargetTreeContainerItem extends vscode.TreeItem implements ContainerItem {
+export class TargetTreeContainerItem extends vscode.TreeItem {
 
     public readonly subsystem: string;
+    public readonly contextValue: string;
+    public readonly state: string;
+    public readonly name: string;
 
     constructor(
-        public readonly id: string,
-        public readonly name: string,
-        public readonly state: string,
-        public readonly status: string,
-        public readonly labels: string,
-        public readonly runningFor: string,
-        public readonly image: string,
-        public readonly createdAt: string,
-        public readonly runtime: string,
-        public readonly ports: string[],
-        public readonly cpuUsage: string,
-        public readonly memUsage: string,
-        public readonly target: Target
+        public readonly containerItem: ContainerItem,
     ) {
-        super(image, vscode.TreeItemCollapsibleState.None);
-        this.description = `${name} - ${runningFor}`;
-        this.tooltip = `ID: ${id}\nImage: ${image}\nName: ${name}\nStatus: ${status}\nLabels: ${labels}\nUptime: ${runningFor}\n`;
-        this.subsystem = runtime === BOARD_HOST_RUNTIME ? 'Host' : 'Ambient';
-        this.contextValue = `service ${state} ${this.subsystem}`;
-        this.iconPath = TargetTreeContainerItem.getIconForState(state);
+        super(containerItem.image, vscode.TreeItemCollapsibleState.None);
+        this.description = `${containerItem.name} - ${containerItem.runningFor}`;
+        this.tooltip = `ID: ${containerItem.id}\nImage: ${containerItem.image}\nName: ${containerItem.name}\nStatus: ${containerItem.status}\nLabels: ${containerItem.labels}\nUptime: ${containerItem.runningFor}\n`;
+        this.subsystem = containerItem.runtime === BOARD_HOST_RUNTIME ? 'Host' : 'Ambient';
+        this.contextValue = `service ${containerItem.state} ${this.subsystem}`;
+        this.iconPath = TargetTreeContainerItem.getIconForState(containerItem.state);
+        this.state = containerItem.state;
+        this.name = containerItem.name;
     }
 
     private static getIconForState(state: string): vscode.ThemeIcon {

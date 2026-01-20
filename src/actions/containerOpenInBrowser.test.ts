@@ -2,8 +2,11 @@ import { Target } from '../workloadPlacement/target';
 import { ContainersManager, ContainerItem } from '../workloadPlacement/containersManager';
 import { ContainerOpenInBrowser } from './containerOpenInBrowser';
 import vscode from 'vscode';
+import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
+jest.mock('../util/logger');
 
 describe('ContainerOpenInBrowser', () => {
     let containersManager: jest.Mocked<ContainersManager>;
@@ -46,9 +49,15 @@ describe('ContainerOpenInBrowser', () => {
             ([cmd]: [string, any]) => cmd === ContainerOpenInBrowser.openInBrowserCommand
         )?.[1];
         const port = '8080:80';
-        const item = { id: 'abc123', ports: [port], target } as ContainerItem;
+        const item = {
+            id: 'abc123',
+            ports: [port],
+            state: 'running',
+            target
+        } as ContainerItem;
+        const treeItem = new TargetTreeContainerItem(item);
 
-        await openInBrowser(item);
+        await openInBrowser(treeItem);
 
         const publishedPort = port.split(':')[0];
         const url = `http://${target.host}:${publishedPort}`;
@@ -62,11 +71,17 @@ describe('ContainerOpenInBrowser', () => {
         const openInBrowser = registerCommandMock.mock.calls.find(
             ([cmd]: [string, any]) => cmd === ContainerOpenInBrowser.openInBrowserCommand
         )?.[1];
-        const item = { id: 'abc123', ports: [], target } as unknown as ContainerItem;
+        const item = {
+            id: 'abc123',
+            ports: [],
+            state: 'running',
+            target
+        } as unknown as ContainerItem;
+        const treeItem = new TargetTreeContainerItem(item);
 
-        await openInBrowser(item);
+        await openInBrowser(treeItem);
 
-        expect(vscode.window.showWarningMessage).toHaveBeenCalledWith('No common web port found for this container.');
+        expect(vscode.window.showWarningMessage).toHaveBeenCalledWith('No web ports found for container abc123');
         expect(vscode.env.openExternal).not.toHaveBeenCalled();
     });
 
@@ -76,11 +91,17 @@ describe('ContainerOpenInBrowser', () => {
         const openInBrowser = registerCommandMock.mock.calls.find(
             ([cmd]: [string, any]) => cmd === ContainerOpenInBrowser.openInBrowserCommand
         )?.[1];
-        const item = { id: 'abc123', ports: ['22:22'], target } as ContainerItem;
+        const item = {
+            id: 'abc123',
+            ports: ['22:22'],
+            state: 'running',
+            target
+        } as ContainerItem;
+        const treeItem = new TargetTreeContainerItem(item);
 
-        await openInBrowser(item);
+        await openInBrowser(treeItem);
 
-        expect(vscode.window.showWarningMessage).toHaveBeenCalledWith('No common web port found for this container.');
+        expect(vscode.window.showWarningMessage).toHaveBeenCalledWith('No web ports found for container abc123');
         expect(vscode.env.openExternal).not.toHaveBeenCalled();
     });
 });
