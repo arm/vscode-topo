@@ -1,20 +1,35 @@
 import { BOARD_HOST_RUNTIME } from '../manifest';
-import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
 import * as vscode from 'vscode';
 import { ContainerStart } from './containerStart';
 import { Target } from '../workloadPlacement/target';
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import { ContainerItem } from '../workloadPlacement/containersManager';
+import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
 
 describe('ContainerStart', () => {
-    const context: any = { subscriptions: [] };
+    const context: Pick<vscode.ExtensionContext, 'subscriptions'> = { subscriptions: [] };
     let showErrorMessageSpy: jest.SpyInstance;
-    let commandHandler: { command: string; callback: (...args: any[]) => void } | undefined;
+    let commandHandler: { command: string; callback: (...args: unknown[]) => void } | undefined;
     const registerCommandMock = vscode.commands.registerCommand as jest.Mock;
     const target = new Target(
         'topo',
         'user@topo.local',
     );
+    const container: ContainerItem = {
+        id: 'abc123',
+        name: 'my-container',
+        image: 'nginx',
+        state: 'running',
+        status: 'Up',
+        labels: '',
+        runningFor: '',
+        runtime: BOARD_HOST_RUNTIME,
+        createdAt: '',
+        ports: [],
+        cpuUsage: '0.0%',
+        memUsage: '0B / 1GiB',
+        target,
+    };
+    const treeItem = new TargetTreeContainerItem(container);
 
     beforeEach(() => {
         showErrorMessageSpy = jest.spyOn(vscode.window, 'showErrorMessage').mockImplementation(jest.fn());
@@ -38,22 +53,6 @@ describe('ContainerStart', () => {
     });
 
     it('calls startContainer and shows info message on success', async () => {
-        const container: TargetTreeContainerItem = {
-            id: 'abc123',
-            name: 'my-container',
-            image: 'nginx',
-            state: 'exited',
-            status: 'Up',
-            labels: '',
-            runningFor: '',
-            runtime: BOARD_HOST_RUNTIME,
-            createdAt: '',
-            subsystem: 'Host',
-            ports: [],
-            cpuUsage: '0.0%',
-            memUsage: '0B / 1GiB',
-            target,
-        };
         const startContainerSpy = jest.fn(async () => undefined);
         const containersManager = {
             startContainer: startContainerSpy,
@@ -62,7 +61,7 @@ describe('ContainerStart', () => {
         await containerStart.activate();
 
         // Simulate command handler
-        await vscode.commands.executeCommand(ContainerStart.startContainerCommand, container);
+        await vscode.commands.executeCommand(ContainerStart.startContainerCommand, treeItem);
 
         expect(startContainerSpy).toHaveBeenCalledWith('abc123');
     });
@@ -71,27 +70,11 @@ describe('ContainerStart', () => {
         const containersManager = {
             startContainer: async () => { throw new Error('fail'); },
         };
-        const container: TargetTreeContainerItem = {
-            id: 'abc123',
-            name: 'my-container',
-            image: 'nginx',
-            state: 'running',
-            status: 'Up',
-            labels: '',
-            runningFor: '',
-            runtime: BOARD_HOST_RUNTIME,
-            createdAt: '',
-            subsystem: 'Host',
-            ports: [],
-            cpuUsage: '0.0%',
-            memUsage: '0B / 1GiB',
-            target,
-        };
         const containerStart = new ContainerStart(context, containersManager);
         await containerStart.activate();
 
-        await vscode.commands.executeCommand(ContainerStart.startContainerCommand, container);
+        await vscode.commands.executeCommand(ContainerStart.startContainerCommand, treeItem);
 
-        expect(showErrorMessageSpy).toHaveBeenCalledWith(expect.stringContaining('Failed to start service: fail'));
+        expect(showErrorMessageSpy).toHaveBeenCalledWith(expect.stringContaining('Failed to start the container abc123'));
     });
 });

@@ -46,29 +46,35 @@ export class BoardDashboardMessageHandler {
         case 'start-container':
             try {
                 await this.containersManager.startContainer(e.containerId);
-                logger.info(`Container ${e.containerId} started successfully`);
-                this.renderBoardDashboard(webview);
             } catch (err: unknown) {
-                logger.error(`Failed to start the container ${e.containerId}`, err);
+                const errorMsg = `Failed to start the container ${e.containerId}`;
+                logger.error(errorMsg, err);
+                vscode.window.showErrorMessage(errorMsg);
             }
+            logger.info(`Container ${e.containerId} started successfully`);
+            await this.renderBoardDashboard(webview);
             break;
         case 'stop-container':
             try {
                 await this.containersManager.stopContainer(e.containerId);
-                logger.info(`Container ${e.containerId} stopped successfully`);
-                this.renderBoardDashboard(webview);
             } catch (err: unknown) {
-                logger.error(`Failed to stop the container ${e.containerId}`, err);
+                const errorMsg = `Failed to stop the container ${e.containerId}`;
+                logger.error(errorMsg, err);
+                vscode.window.showErrorMessage(errorMsg);
             }
+            logger.info(`Container ${e.containerId} stopped successfully`);
+            await this.renderBoardDashboard(webview);
             break;
         case 'delete-container':
             try {
                 await this.containersManager.deleteContainer(e.containerId);
-                logger.info(`Container ${e.containerId} deleted successfully`);
-                this.renderBoardDashboard(webview);
             } catch (err: unknown) {
-                logger.error(`Failed to delete the container ${e.containerId}`, err);
+                const errorMsg = `Failed to delete the container ${e.containerId}`;
+                logger.error(errorMsg, err);
+                vscode.window.showErrorMessage(errorMsg);
             }
+            logger.info(`Container ${e.containerId} deleted successfully`);
+            await this.renderBoardDashboard(webview);
             break;
         case 'open-container-in-browser':
             try {
@@ -77,10 +83,15 @@ export class BoardDashboardMessageHandler {
                 if (!container) {
                     logger.warn(`Container with ID ${e.containerId} not found`);
                 } else {
-                    await this.containerOpenInBrowser.openContainerInBrowser(container);
+                    const result = await this.containerOpenInBrowser.openContainerInBrowser(container);
+                    if (result === 'no-web-ports') {
+                        vscode.window.showWarningMessage(`No web ports found for container ${e.containerId}`);
+                    }
                 }
             } catch (err: unknown) {
-                logger.error(`Failed to open the container ${e.containerId} in browser`, err);
+                const errorMsg = `Failed to open the container ${e.containerId} in browser`;
+                logger.error(errorMsg, err);
+                vscode.window.showErrorMessage(errorMsg);
             }
             break;
         case 'attach-vscode':
@@ -90,10 +101,12 @@ export class BoardDashboardMessageHandler {
                 if (!container) {
                     logger.warn(`Container with ID ${e.containerId} not found`);
                 } else {
-                    await this.attachVsCode.attachVsCodeToContainer(container);
+                    await this.attachVsCode.attachVsCode(container);
                 }
             } catch (err: unknown) {
-                logger.error(`Failed to attach VS Code to the container ${e.containerId}`, err);
+                const errorMsg = `Failed to attach VS Code to the container ${e.containerId}`;
+                logger.error(errorMsg, err);
+                vscode.window.showErrorMessage(errorMsg);
             }
             break;
         case 'attach-shell':
@@ -106,18 +119,28 @@ export class BoardDashboardMessageHandler {
                     await this.attachShell.attachShell(container);
                 }
             } catch (err: unknown) {
-                logger.error(`Failed to attach a shell to the container ${e.containerId}`, err);
+                const errorMsg = `Failed to attach a shell to the container ${e.containerId}`;
+                logger.error(errorMsg, err);
+                vscode.window.showErrorMessage(errorMsg);
             }
             break;
         case 'attach-ssh':
             try {
                 await this.attachShell.attachSSH();
             } catch (err: unknown) {
-                logger.error(`Failed to attach via SSH to the Host`, err);
+                const errorMsg = 'Failed to attach via SSH to the Host';
+                logger.error(errorMsg, err);
+                vscode.window.showErrorMessage(errorMsg);
             }
             break;
         case 'board-dashboard-webview-ready':
-            this.renderBoardDashboard(webview);
+            try {
+                await this.renderBoardDashboard(webview);
+            } catch (err: unknown) {
+                const errorMsg = 'Failed to render board dashboard';
+                logger.error(errorMsg, err);
+                vscode.window.showErrorMessage(errorMsg);
+            }
             break;
         default:
             logger.warn(`Unknown message type: ${e.type}`);

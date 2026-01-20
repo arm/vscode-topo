@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
 import { TargetTreeContainerItem } from './targetTreeContainerItem';
 import { Target } from './target';
+import { BOARD_AMBIENT_RUNTIME } from '../manifest';
+import { ContainerItem } from './containersManager';
 
 describe('TargetTreeContainerItem', () => {
     const target = new Target(
@@ -8,21 +10,22 @@ describe('TargetTreeContainerItem', () => {
         'user@topo.local',
     );
     it('should set label (image), description (name - uptime), tooltip, contextValue, command, and iconPath', () => {
-        const item = new TargetTreeContainerItem(
-            'id123',
-            'my-container',
-            'running',
-            'Up 2 days',
-            'label1=value1',
-            '10m',
-            'nginx:latest',
-            '',
-            'io.containerd.runtime',
-            ['8080:80'],
-            '2.5%',
-            '0B / 1GiB',
+        const container: ContainerItem = {
+            id: 'id123',
+            name: 'my-container',
+            image: 'nginx:latest',
+            state: 'running',
+            status: 'Up',
+            labels: 'label1=value1',
+            runningFor: '10m',
+            runtime: BOARD_AMBIENT_RUNTIME,
+            createdAt: '',
+            ports: ['8080:80'],
+            cpuUsage: '2.5%',
+            memUsage: '0B / 1GiB',
             target,
-        );
+        };
+        const item = new TargetTreeContainerItem(container);
         expect(item.label).toBe('nginx:latest');
         expect(item.description).toBe('my-container - 10m');
         expect(item.tooltip).toContain('id123');
@@ -32,7 +35,6 @@ describe('TargetTreeContainerItem', () => {
         expect(item.tooltip).toContain('10m');
         expect(item.subsystem).toBe('Ambient');
         expect(item.contextValue).toBe('service running Ambient');
-        expect(item.ports).toEqual(['8080:80']);
 
         // Check iconPath for running status
         expect(item.iconPath).toBeInstanceOf(vscode.ThemeIcon);
@@ -41,21 +43,22 @@ describe('TargetTreeContainerItem', () => {
     });
 
     it('should set correct iconPath for stopped container', () => {
-        const item = new TargetTreeContainerItem(
-            'id456',
-            'stopped-container',
-            'exited',
-            'Up 2 days',
-            'label2=value2',
-            '5m',
-            'ubuntu:22.04',
-            '',
-            'io.containerd.runtime',
-            [],
-            '2.5%',
-            '0B / 1GiB',
+        const container: ContainerItem = {
+            id: 'id456',
+            name: 'stopped-container',
+            image: 'nginx',
+            state: 'exited',
+            status: 'Exited (0) 2 days ago',
+            labels: '',
+            runningFor: '',
+            runtime: BOARD_AMBIENT_RUNTIME,
+            createdAt: '',
+            ports: [],
+            cpuUsage: '0.0%',
+            memUsage: '0B / 1GiB',
             target,
-        );
+        };
+        const item = new TargetTreeContainerItem(container);
         expect(item.iconPath).toBeInstanceOf(vscode.ThemeIcon);
         expect((item.iconPath as vscode.ThemeIcon).id).toBe('debug-breakpoint-log');
         expect((item.iconPath as vscode.ThemeIcon).color).toEqual({ id: 'terminal.ansiWhite' });

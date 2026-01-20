@@ -3,24 +3,30 @@ import { ContainerItem } from '../workloadPlacement/containersManager';
 import { ContainerCommands } from '../workloadPlacement/containerCommands';
 import * as manifest from '../manifest';
 import { TargetStore } from '../workloadPlacement/targetStore';
+import { ensureTargetTreeContainerItem } from './util/ensureTargetTreeContainerItem';
 
 export class AttachShell {
 
     public static readonly attachShellCommand = `${manifest.PACKAGE_NAME}.attachShell`;
 
     constructor(
-        private readonly context: vscode.ExtensionContext,
+        private readonly context: Pick<vscode.ExtensionContext, 'subscriptions'>,
         private readonly containerCommands: ContainerCommands,
         private readonly targetStore: Pick<TargetStore, 'getSelectedTarget'>,
     ) {}
 
     public activate() {
         this.context.subscriptions.push(
-            vscode.commands.registerCommand(AttachShell.attachShellCommand, this.attachShell.bind(this))
+            vscode.commands.registerCommand(AttachShell.attachShellCommand, this.attachShellCommandHandler.bind(this))
         );
     }
 
-    public async attachShell(item: ContainerItem) {
+    private async attachShellCommandHandler(treeNode: unknown): Promise<void> {
+        ensureTargetTreeContainerItem(treeNode);
+        await this.attachShell(treeNode.containerItem);
+    }
+
+    public async attachShell(item: ContainerItem): Promise<void> {
         const terminal = vscode.window.createTerminal({ name: `Shell: ${item.image}` });
         terminal.sendText(this.containerCommands.getAttachShellCommand(item.id, item.target.ssh));
         terminal.show();
@@ -29,8 +35,7 @@ export class AttachShell {
     public async attachSSH() {
         const target = await this.targetStore.getSelectedTarget();
         if (!target) {
-            vscode.window.showErrorMessage('No target is currently selected');
-            return;
+            throw new Error('No target is currently selected');
         }
         const terminal = vscode.window.createTerminal({ name: `SSH: ${target.id}` });
         terminal.sendText(`ssh ${target.ssh}`);

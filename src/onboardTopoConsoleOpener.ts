@@ -7,7 +7,7 @@ export class OnBoardTopoConsoleOpener {
     public static openTopoConsoleCommand = `${manifest.PACKAGE_NAME}.openTopoConsole`;
 
     constructor(
-        private readonly context: vscode.ExtensionContext,
+        private readonly context: Pick<vscode.ExtensionContext, 'subscriptions'>,
         private readonly targetStore: Pick<TargetStore, 'getSelectedTarget'>,
     ) {}
 
