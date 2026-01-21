@@ -3,7 +3,7 @@ export enum Verbosity {
     error = 1,
     warn = 2,
     info = 3,
-    debug = 4
+    debug = 4,
 }
 
 export const logger = {
@@ -13,5 +13,5 @@ export const logger = {
     info: jest.fn((_message: unknown): void => {}),
     debug: jest.fn((_message: unknown): void => {}),
     getVerbosity: jest.fn(),
-    show: jest.fn()
+    show: jest.fn(),
 };

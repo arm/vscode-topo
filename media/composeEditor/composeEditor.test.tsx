@@ -1,4 +1,10 @@
-import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
+import {
+    render,
+    screen,
+    fireEvent,
+    act,
+    waitFor,
+} from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { ComposeEditor } from './composeEditor';
 import { ProjectDescription, ConfigMetadata } from '../../src/util/types';
@@ -13,24 +19,24 @@ describe('ComposeEditor', () => {
                     context: './service1',
                 },
                 containerName: 'service1-container',
-            }
-        }
+            },
+        },
     };
     const configMetadata: ConfigMetadata = {
         boards: [
             {
-                id: "NXP i.MX 93",
+                id: 'NXP i.MX 93',
                 subsystems: [
                     {
-                        id: "Ambient",
+                        id: 'Ambient',
                         runtime: manifest.BOARD_AMBIENT_RUNTIME,
                         annotations: {
-                            "remoteproc.mcu": "imx-rproc"
-                        }
-                    }
-                ]
-            }
-        ]
+                            'remoteproc.mcu': 'imx-rproc',
+                        },
+                    },
+                ],
+            },
+        ],
     };
 
     let messageHandler: { postMessage: jest.Mock };
@@ -46,7 +52,7 @@ describe('ComposeEditor', () => {
                 project={project}
                 configMetadata={configMetadata}
                 {...customProps}
-            />
+            />,
         );
     }
 
@@ -60,14 +66,18 @@ describe('ComposeEditor', () => {
         renderComposeEditor();
         const deployButton = screen.getByRole('button', { name: /Deploy/i });
         fireEvent.click(deployButton);
-        expect(screen.getByRole('button', { name: /Deploying.../i })).toBeDisabled();
+        expect(
+            screen.getByRole('button', { name: /Deploying.../i }),
+        ).toBeDisabled();
     });
 
     it('calls messageHandler.postMessage with type deploy when Deploy is clicked', () => {
         renderComposeEditor();
         const deployButton = screen.getByRole('button', { name: /Deploy/i });
         fireEvent.click(deployButton);
-        expect(messageHandler.postMessage).toHaveBeenCalledWith({ type: 'deploy' });
+        expect(messageHandler.postMessage).toHaveBeenCalledWith({
+            type: 'deploy',
+        });
     });
 
     it('enables Deploy button when there are no errors and not deploying', () => {
@@ -85,7 +95,10 @@ describe('ComposeEditor', () => {
         const removeEventListener = jest.spyOn(window, 'removeEventListener');
         const { unmount } = renderComposeEditor();
         unmount();
-        expect(removeEventListener).toHaveBeenCalledWith('message', expect.any(Function));
+        expect(removeEventListener).toHaveBeenCalledWith(
+            'message',
+            expect.any(Function),
+        );
         removeEventListener.mockRestore();
     });
 
@@ -97,11 +110,17 @@ describe('ComposeEditor', () => {
         expect(deployButton).toBeDisabled();
         // Simulate receiving the deploy-complete message
         await act(async () => {
-            window.dispatchEvent(new MessageEvent('message', { data: { type: 'deploy-complete' } }));
+            window.dispatchEvent(
+                new MessageEvent('message', {
+                    data: { type: 'deploy-complete' },
+                }),
+            );
         });
         await waitFor(() => {
             // Button should be enabled again
-            expect(screen.getByRole('button', { name: /Deploy/i })).toBeEnabled();
+            expect(
+                screen.getByRole('button', { name: /Deploy/i }),
+            ).toBeEnabled();
         });
     });
 });

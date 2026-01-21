@@ -4,20 +4,28 @@ import { Deployer } from '../deployer';
 import * as manifest from '../manifest';
 import { getErrorMessage } from '../util/getErrorMessage';
 
-export type DeployerType = Pick<Deployer, 'start' | 'stop' | 'onStdoutData' | 'onStderrData' | 'onExit' | 'onError'>;
+export type DeployerType = Pick<
+    Deployer,
+    'start' | 'stop' | 'onStdoutData' | 'onStderrData' | 'onExit' | 'onError'
+>;
 
 export class Deploy {
-
     public static readonly deployCommand = `${manifest.PACKAGE_NAME}.deploy.context`;
 
     constructor(
-        private readonly context: Pick<vscode.ExtensionContext, 'subscriptions'>,
+        private readonly context: Pick<
+            vscode.ExtensionContext,
+            'subscriptions'
+        >,
         private readonly deployer: DeployerType,
     ) {}
 
     public activate(): void {
         this.context.subscriptions.push(
-            vscode.commands.registerCommand(Deploy.deployCommand, this.handleDeployCommand.bind(this))
+            vscode.commands.registerCommand(
+                Deploy.deployCommand,
+                this.handleDeployCommand.bind(this),
+            ),
         );
     }
 
@@ -30,13 +38,13 @@ export class Deploy {
         } catch (err) {
             const errorMsg = 'Error executing deploy command';
             logger.error(errorMsg, err);
-            void vscode.window.showErrorMessage(`${errorMsg}: ${getErrorMessage(err)}`);
+            void vscode.window.showErrorMessage(
+                `${errorMsg}: ${getErrorMessage(err)}`,
+            );
         }
     }
 
-    public async deploy(
-        composeFilePath: string,
-    ): Promise<void> {
+    public async deploy(composeFilePath: string): Promise<void> {
         await vscode.window.withProgress(
             {
                 location: vscode.ProgressLocation.Notification,
@@ -48,12 +56,16 @@ export class Deploy {
                     try {
                         this.deployer.stop();
                     } catch (err) {
-                        logger.error('An error happened while trying to stop deployment', err);
+                        logger.error(
+                            'An error happened while trying to stop deployment',
+                            err,
+                        );
                     }
                 });
                 return new Promise<void>((resolve, reject) => {
                     const disposables: vscode.Disposable[] = [];
-                    const cleanup = () => disposables.forEach(d => d.dispose());
+                    const cleanup = () =>
+                        disposables.forEach((d) => d.dispose());
                     disposables.push(
                         this.deployer.onStdoutData((data) => {
                             logger.info(data);
@@ -63,7 +75,10 @@ export class Deploy {
                         }),
                         this.deployer.onExit((code) => {
                             cleanup();
-                            if (token.isCancellationRequested && (code === null || code === 0)) {
+                            if (
+                                token.isCancellationRequested &&
+                                (code === null || code === 0)
+                            ) {
                                 logger.info('Deployment cancelled');
                                 resolve();
                                 return;
@@ -71,7 +86,11 @@ export class Deploy {
                             if (code === 0) {
                                 resolve();
                             } else {
-                                reject(new Error(`Deploy operation exited with code ${code}`));
+                                reject(
+                                    new Error(
+                                        `Deploy operation exited with code ${code}`,
+                                    ),
+                                );
                             }
                         }),
                         this.deployer.onError((err: Error) => {
@@ -83,7 +102,8 @@ export class Deploy {
                             reject(err);
                         }),
                     );
-                    this.deployer.start(composeFilePath)
+                    this.deployer
+                        .start(composeFilePath)
                         .then(() => logger.show())
                         .catch((err: Error) => {
                             cleanup();
@@ -91,7 +111,7 @@ export class Deploy {
                             reject(err);
                         });
                 });
-            }
+            },
         );
     }
 }

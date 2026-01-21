@@ -3,32 +3,42 @@ import * as vscode from 'vscode';
 import { TargetStore } from './workloadPlacement/targetStore';
 
 export class OnBoardTopoConsoleOpener {
-
     public static openTopoConsoleCommand = `${manifest.PACKAGE_NAME}.openTopoConsole`;
 
     constructor(
-        private readonly context: Pick<vscode.ExtensionContext, 'subscriptions'>,
+        private readonly context: Pick<
+            vscode.ExtensionContext,
+            'subscriptions'
+        >,
         private readonly targetStore: Pick<TargetStore, 'getSelectedTarget'>,
     ) {}
 
     public async activate() {
         this.context.subscriptions.push(
-            vscode.commands.registerCommand(OnBoardTopoConsoleOpener.openTopoConsoleCommand, this.openTopoConsole.bind(this))
+            vscode.commands.registerCommand(
+                OnBoardTopoConsoleOpener.openTopoConsoleCommand,
+                this.openTopoConsole.bind(this),
+            ),
         );
     }
 
     private async openTopoConsole(): Promise<void> {
         const target = await this.targetStore.getSelectedTarget();
         if (!target) {
-            vscode.window.showErrorMessage('No target selected, cannot open board console');
+            vscode.window.showErrorMessage(
+                'No target selected, cannot open board console',
+            );
             return;
         }
         try {
-            await vscode.env.openExternal(vscode.Uri.parse(`http://${target.host}`));
+            await vscode.env.openExternal(
+                vscode.Uri.parse(`http://${target.host}`),
+            );
         } catch (err: unknown) {
             const errorMsg = err instanceof Error ? err.message : String(err);
-            vscode.window.showErrorMessage(`Failed to open board console: ${errorMsg}`);
+            vscode.window.showErrorMessage(
+                `Failed to open board console: ${errorMsg}`,
+            );
         }
     }
-
 }

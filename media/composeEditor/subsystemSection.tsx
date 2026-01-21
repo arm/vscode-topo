@@ -2,15 +2,14 @@ import React from 'react';
 import { ServiceCreationDescription, Subsystem } from '../../src/util/types';
 
 export interface SubsystemSectionProps {
-  readonly title: Subsystem;
-  readonly subsystemServices: ServiceCreationDescription[];
+    readonly title: Subsystem;
+    readonly subsystemServices: ServiceCreationDescription[];
 }
 
 export const SubsystemSection: React.FC<SubsystemSectionProps> = ({
     title,
     subsystemServices,
 }) => {
-
     return (
         <div className="section-group">
             <h3>{title}</h3>
@@ -25,13 +24,13 @@ export const SubsystemSection: React.FC<SubsystemSectionProps> = ({
                         {subsystemServices.map((service, i) => (
                             <tr key={i}>
                                 <td>
-                                    <input
-                                        value={service.name}
-                                        readOnly
-                                    />
+                                    <input value={service.name} readOnly />
                                     {service.errors.length > 0 && (
-                                        <span className="warning-icon" title={service.errors[0]}>
-                    ⚠️
+                                        <span
+                                            className="warning-icon"
+                                            title={service.errors[0]}
+                                        >
+                                            ⚠️
                                         </span>
                                     )}
                                 </td>

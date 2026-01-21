@@ -1,7 +1,6 @@
 import { Target } from './target';
 
 describe('Target', () => {
-
     it('parses user and host from user@host', () => {
         const t = new Target('id1', 'alice@example.com');
         expect(t.user).toBe('alice');
@@ -29,12 +28,18 @@ describe('Target', () => {
     });
 
     it('throws for empty id or ssh in constructor', () => {
-        expect(() => new Target('', 'host')).toThrow(/Target id must be a non-empty string/);
-        expect(() => new Target('id', '')).toThrow(/Target ssh must be a non-empty string/);
+        expect(() => new Target('', 'host')).toThrow(
+            /Target id must be a non-empty string/,
+        );
+        expect(() => new Target('id', '')).toThrow(
+            /Target ssh must be a non-empty string/,
+        );
     });
 
     it('throws when ssh contains user but missing host', () => {
-        expect(() => new Target('id5', 'user@')).toThrow(/missing host in SSH target/);
+        expect(() => new Target('id5', 'user@')).toThrow(
+            /missing host in SSH target/,
+        );
     });
 
     it('returns the same instance when passed to static from', () => {
@@ -54,7 +59,11 @@ describe('Target', () => {
     });
 
     it('throws for invalid stored objects in static from', () => {
-        expect(() => Target.from({})).toThrow(/Invalid stored target: missing id/);
-        expect(() => Target.from({ id: 'x' })).toThrow(/Invalid stored target: missing ssh/);
+        expect(() => Target.from({})).toThrow(
+            /Invalid stored target: missing id/,
+        );
+        expect(() => Target.from({ id: 'x' })).toThrow(
+            /Invalid stored target: missing ssh/,
+        );
     });
 });

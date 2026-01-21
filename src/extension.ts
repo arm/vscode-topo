@@ -25,9 +25,17 @@ import { TargetStore } from './workloadPlacement/targetStore';
 import { ProjectClone } from './projectClone';
 import { Deploy } from './actions/deploy';
 
-export async function activate(context: vscode.ExtensionContext): Promise<void> {
-    const topoCli = new TopoCli(context.extensionPath, context.environmentVariableCollection);
-    const topoCliVersionChecker = new TopoCliVersionChecker(topoCli, context.extensionPath);
+export async function activate(
+    context: vscode.ExtensionContext,
+): Promise<void> {
+    const topoCli = new TopoCli(
+        context.extensionPath,
+        context.environmentVariableCollection,
+    );
+    const topoCliVersionChecker = new TopoCliVersionChecker(
+        topoCli,
+        context.extensionPath,
+    );
 
     if (!topoCliVersionChecker.checkTopoCliVersion()) {
         return;
@@ -35,36 +43,64 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
     const targetStore = TargetStore.getInstance(context);
     const deployer = new Deployer(topoCli, targetStore);
-    const onBoardTopoConsoleOpener = new OnBoardTopoConsoleOpener(context, targetStore);
+    const onBoardTopoConsoleOpener = new OnBoardTopoConsoleOpener(
+        context,
+        targetStore,
+    );
     const projectInit = new ProjectInit(context, topoCli);
     const projectClone = new ProjectClone(context, topoCli);
     const deploy = new Deploy(context, deployer);
     const messageHandler = new MessageHandler(topoCli, deploy);
-    const composeEditorProvider = new ComposeEditorProvider(context, messageHandler);
+    const composeEditorProvider = new ComposeEditorProvider(
+        context,
+        messageHandler,
+    );
     const boardConnectionChecker = new BoardConnectionChecker();
     const containerOpenInBrowser = new ContainerOpenInBrowser(context);
     const dockerCommands = new DockerCommands();
     const attachVsCode = new AttachVsCode(context, dockerCommands);
     const attachShell = new AttachShell(context, dockerCommands, targetStore);
-    const containersManager = new ContainersManager(boardConnectionChecker, dockerCommands, targetStore);
-    const targetTreeDataProvider = new TargetTreeDataProvider(context, containersManager, targetStore);
-    const targetManager = new TargetManager(context, targetTreeDataProvider, targetStore, containersManager);
-    const boardDashboardMessageHandler = new BoardDashboardMessageHandler(containersManager, targetStore, containerOpenInBrowser, attachVsCode, attachShell);
-    const boardDashboardProvider = new BoardDashboardProvider(context, boardDashboardMessageHandler, containersManager);
+    const containersManager = new ContainersManager(
+        boardConnectionChecker,
+        dockerCommands,
+        targetStore,
+    );
+    const targetTreeDataProvider = new TargetTreeDataProvider(
+        context,
+        containersManager,
+        targetStore,
+    );
+    const targetManager = new TargetManager(
+        context,
+        targetTreeDataProvider,
+        targetStore,
+        containersManager,
+    );
+    const boardDashboardMessageHandler = new BoardDashboardMessageHandler(
+        containersManager,
+        targetStore,
+        containerOpenInBrowser,
+        attachVsCode,
+        attachShell,
+    );
+    const boardDashboardProvider = new BoardDashboardProvider(
+        context,
+        boardDashboardMessageHandler,
+        containersManager,
+    );
     const containerStart = new ContainerStart(context, containersManager);
     const containerStop = new ContainerStop(context, containersManager);
     const containerDelete = new ContainerDelete(context, containersManager);
-    const openBoardDashboard = new OpenBoardDashboard(context, boardDashboardProvider);
+    const openBoardDashboard = new OpenBoardDashboard(
+        context,
+        boardDashboardProvider,
+    );
     const openSerial = new OpenSerial(context);
 
-    context.subscriptions.push(
-        targetStore
-    );
+    context.subscriptions.push(targetStore);
 
     await topoCli.activate();
-    context.subscriptions.push(
-        topoCli
-    );
+    context.subscriptions.push(topoCli);
     await onBoardTopoConsoleOpener.activate();
     await projectInit.activate();
     await projectClone.activate();

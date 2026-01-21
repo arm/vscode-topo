@@ -1,7 +1,8 @@
 export class Target {
-
     public static from(obj: unknown): Target {
-        if (obj instanceof Target) { return obj; }
+        if (obj instanceof Target) {
+            return obj;
+        }
         if (obj && typeof obj === 'object') {
             const maybe = obj as Record<string, unknown>;
             const id = typeof maybe.id === 'string' ? maybe.id.trim() : '';
@@ -14,7 +15,9 @@ export class Target {
             }
             return new Target(id, ssh);
         }
-        throw new Error('Invalid stored target: expected an object with id and ssh properties');
+        throw new Error(
+            'Invalid stored target: expected an object with id and ssh properties',
+        );
     }
 
     public readonly user?: string;
@@ -43,7 +46,10 @@ export class Target {
         return this.id;
     }
 
-    private static parseSsh(sshTarget: string): { user?: string; host: string } {
+    private static parseSsh(sshTarget: string): {
+        user?: string;
+        host: string;
+    } {
         if (sshTarget.includes('@')) {
             const [user, host] = sshTarget.split('@');
             if (!host) {

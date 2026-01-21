@@ -16,7 +16,7 @@ class Uri extends URI {
 const Disposable = jest.fn(() => {
     return { dispose: jest.fn() };
 });
-Disposable.from = disposable => disposable;
+Disposable.from = (disposable) => disposable;
 class EventEmitter {
     constructor() {
         this._callbacks = [];
@@ -29,16 +29,22 @@ class EventEmitter {
         };
     }
     fire(event) {
-        this._callbacks.forEach(cb => cb(event));
+        this._callbacks.forEach((cb) => cb(event));
     }
 }
 const RelativePattern = jest.fn();
-const ShellExecution = jest.fn((executablePath, executionArgs, options) => (
-    { executablePath, executionArgs, options }
-));
-const Task = jest.fn((definition, scope, name, type, execution) => (
-    { definition, scope, name, type, execution }
-));
+const ShellExecution = jest.fn((executablePath, executionArgs, options) => ({
+    executablePath,
+    executionArgs,
+    options,
+}));
+const Task = jest.fn((definition, scope, name, type, execution) => ({
+    definition,
+    scope,
+    name,
+    type,
+    execution,
+}));
 const ColorThemeKind = {
     Dark: 1,
 };
@@ -46,7 +52,7 @@ const ColorThemeKind = {
 const Position = jest.fn();
 
 const QuickPickItemKind = {
-    Separator: -1
+    Separator: -1,
 };
 
 const Range = jest.fn();
@@ -66,7 +72,7 @@ const StatusBarAlignment = { Left: 'Left' };
 const TaskScope = { Workspace: 'Workspace' };
 const ViewColumn = {
     Active: -1,
-    Beside: -2
+    Beside: -2,
 };
 const ProgressLocation = { Notification: 1 };
 
@@ -76,19 +82,19 @@ const commands = {
     registerCommand: jest.fn(),
 };
 const debug = {
-    startDebugging: jest.fn()
+    startDebugging: jest.fn(),
 };
 const env = {
     openExternal: jest.fn(),
 };
 const languages = {
-    createDiagnosticCollection: jest.fn()
+    createDiagnosticCollection: jest.fn(),
 };
 const tasks = {
     executeTask: jest.fn(),
     fetchTasks: jest.fn(() => []),
     onDidStartTaskProcess: new EventEmitter().event,
-    onDidEndTaskProcess: new EventEmitter().event
+    onDidEndTaskProcess: new EventEmitter().event,
 };
 const window = {
     activeColorTheme: { kind: 1 },
@@ -145,13 +151,13 @@ const workspace = {
 const TreeItemCollapsibleState = {
     None: 0,
     Collapsed: 1,
-    Expanded: 2
+    Expanded: 2,
 };
 
 const TaskRevealKind = {
     Always: 1,
     Silent: 2,
-    Never: 3
+    Never: 3,
 };
 
 const TreeItem = class {
@@ -201,8 +207,8 @@ class ThemeIcon {
 }
 
 const UIKind = {
-	Desktop: 1,
-	Web: 2
+    Desktop: 1,
+    Web: 2,
 };
 
 env.uiKind = UIKind.Desktop;

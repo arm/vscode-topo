@@ -15,32 +15,38 @@ describe('ProjectInit', () => {
         context = { subscriptions: [] };
         topoCli = { init: jest.fn() };
         jest.clearAllMocks();
-        (vscode.commands.registerCommand as jest.Mock).mockImplementation((_cmd, cb) => cb);
-        (vscode.window.showInformationMessage as jest.Mock).mockImplementation(jest.fn());
-        (vscode.window.showErrorMessage as jest.Mock).mockImplementation(jest.fn());
+        (vscode.commands.registerCommand as jest.Mock).mockImplementation(
+            (_cmd, cb) => cb,
+        );
+        (vscode.window.showInformationMessage as jest.Mock).mockImplementation(
+            jest.fn(),
+        );
+        (vscode.window.showErrorMessage as jest.Mock).mockImplementation(
+            jest.fn(),
+        );
         projectInit = new ProjectInit(context, topoCli);
     });
 
     it('registers the initProject command on activate', async () => {
-
         await projectInit.activate();
 
         expect(vscode.commands.registerCommand).toHaveBeenCalledWith(
             ProjectInit.initProjectCommand,
-            expect.any(Function)
+            expect.any(Function),
         );
     });
 
     it('calls topoCli.init with currently opened workspace path', async () => {
-
-        (vscode.workspace as any).workspaceFolders = [{ uri: { fsPath: workspacePath } }];
+        (vscode.workspace as any).workspaceFolders = [
+            { uri: { fsPath: workspacePath } },
+        ];
         await projectInit.activate();
 
         await (vscode.commands.registerCommand as jest.Mock).mock.calls[0][1]();
 
         expect(topoCli.init).toHaveBeenCalledWith(workspacePath);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
-            'Project initialized successfully.'
+            'Project initialized successfully.',
         );
     });
 
@@ -51,7 +57,7 @@ describe('ProjectInit', () => {
         await (vscode.commands.registerCommand as jest.Mock).mock.calls[0][1]();
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-            'Failed to initialize project: fail'
+            'Failed to initialize project: fail',
         );
     });
 });

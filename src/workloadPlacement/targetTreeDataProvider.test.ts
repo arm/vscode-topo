@@ -27,10 +27,7 @@ describe('TargetTreeDataProvider', () => {
     let provider: TargetTreeDataProvider;
     let context: { subscriptions: any[] };
     let containersManagerMock: any;
-    const target = new Target(
-        'topo',
-        'user@topo.local',
-    );
+    const target = new Target('topo', 'user@topo.local');
 
     const mockContainers: ContainerItem[] = [
         {
@@ -77,7 +74,7 @@ describe('TargetTreeDataProvider', () => {
             cpuUsage: '0.0%',
             memUsage: '0B / 1GiB',
             target,
-        }
+        },
     ];
     const targetStoreMock = {
         onChanged: jest.fn(),
@@ -97,7 +94,11 @@ describe('TargetTreeDataProvider', () => {
             onDataUpdate: jest.fn(),
             getBoardState: jest.fn().mockResolvedValue(boardState),
         };
-        provider = new TargetTreeDataProvider(context, containersManagerMock, targetStoreMock);
+        provider = new TargetTreeDataProvider(
+            context,
+            containersManagerMock,
+            targetStoreMock,
+        );
         jest.clearAllTimers();
         jest.clearAllMocks();
     });
@@ -108,7 +109,7 @@ describe('TargetTreeDataProvider', () => {
 
             expect(vscode.commands.registerCommand).toHaveBeenCalledWith(
                 TargetTreeDataProvider.selectTargetCommand,
-                expect.any(Function)
+                expect.any(Function),
             );
             expect(context.subscriptions.length).toBeGreaterThan(0);
         });
@@ -126,8 +127,12 @@ describe('TargetTreeDataProvider', () => {
             expect(boardChildren).toHaveLength(2);
             expect(boardChildren[0]).toBeInstanceOf(TargetTreeSubsystemItem);
             expect(boardChildren[1]).toBeInstanceOf(TargetTreeSubsystemItem);
-            expect((boardChildren[0] as TargetTreeSubsystemItem).group).toBe('Host');
-            expect((boardChildren[1] as TargetTreeSubsystemItem).group).toBe('Ambient');
+            expect((boardChildren[0] as TargetTreeSubsystemItem).group).toBe(
+                'Host',
+            );
+            expect((boardChildren[1] as TargetTreeSubsystemItem).group).toBe(
+                'Ambient',
+            );
         });
 
         it('returns containers for Host and Ambient groups', async () => {
@@ -135,15 +140,21 @@ describe('TargetTreeDataProvider', () => {
             const hostChildren = await provider.getChildren(hostGroup);
             expect(hostChildren).toHaveLength(1);
             expect(hostChildren[0]).toBeInstanceOf(TargetTreeContainerItem);
-            expect((hostChildren[0] as TargetTreeContainerItem).name).toBe('cont2');
+            expect((hostChildren[0] as TargetTreeContainerItem).name).toBe(
+                'cont2',
+            );
             const ambientGroup = new TargetTreeSubsystemItem('Ambient');
 
             const ambientChildren = await provider.getChildren(ambientGroup);
 
             expect(ambientChildren).toHaveLength(2);
             expect(ambientChildren[0]).toBeInstanceOf(TargetTreeContainerItem);
-            expect(ambientChildren.map(c => (c as TargetTreeContainerItem).name)).toEqual(expect.arrayContaining(['cont1', 'cont3']));
-            const sortedNames = ambientChildren.map(c => (c as TargetTreeContainerItem).name);
+            expect(
+                ambientChildren.map((c) => (c as TargetTreeContainerItem).name),
+            ).toEqual(expect.arrayContaining(['cont1', 'cont3']));
+            const sortedNames = ambientChildren.map(
+                (c) => (c as TargetTreeContainerItem).name,
+            );
             expect(sortedNames).toEqual(['cont1', 'cont3']);
         });
 
@@ -158,7 +169,10 @@ describe('TargetTreeDataProvider', () => {
 
         it('returns empty array when there are no targets', async () => {
             targetStoreMock.getTargets.mockReturnValue([]);
-            containersManagerMock.getBoardState.mockResolvedValueOnce({ isReachable: false, hasContainerRuntime: true });
+            containersManagerMock.getBoardState.mockResolvedValueOnce({
+                isReachable: false,
+                hasContainerRuntime: true,
+            });
 
             const rootChildren = await provider.getChildren();
 
@@ -192,7 +206,10 @@ describe('TargetTreeDataProvider', () => {
             await provider.activate();
             const boardItem = new TargetTreeBoardItem(target, true, true, true);
 
-            await executeCommand(TargetTreeDataProvider.selectTargetCommand, boardItem);
+            await executeCommand(
+                TargetTreeDataProvider.selectTargetCommand,
+                boardItem,
+            );
 
             expect(targetStoreMock.setSelected).toHaveBeenCalledWith(target.id);
         });
@@ -212,9 +229,14 @@ describe('TargetTreeDataProvider', () => {
             targetStoreMock.getTargets.mockReturnValue([target]);
             await provider.activate();
 
-            await executeCommand(TargetTreeDataProvider.removeTargetCommand, boardItem);
+            await executeCommand(
+                TargetTreeDataProvider.removeTargetCommand,
+                boardItem,
+            );
 
-            expect(targetStoreMock.deleteTarget).toHaveBeenCalledWith(target.id);
+            expect(targetStoreMock.deleteTarget).toHaveBeenCalledWith(
+                target.id,
+            );
         });
 
         it('does not call deleteTarget when remove command is executed with a non-board item', async () => {
@@ -227,10 +249,15 @@ describe('TargetTreeDataProvider', () => {
 
         it('shows an error when deleteTarget fails', async () => {
             const boardItem = new TargetTreeBoardItem(target, true, true, true);
-            targetStoreMock.deleteTarget.mockRejectedValue(new Error('Target not found'));
+            targetStoreMock.deleteTarget.mockRejectedValue(
+                new Error('Target not found'),
+            );
             await provider.activate();
 
-            await executeCommand(TargetTreeDataProvider.removeTargetCommand, boardItem);
+            await executeCommand(
+                TargetTreeDataProvider.removeTargetCommand,
+                boardItem,
+            );
 
             expect(vscode.window.showErrorMessage).toHaveBeenCalled();
         });

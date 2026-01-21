@@ -25,41 +25,45 @@ function handleMessage(event: MessageEvent) {
     const configMetadata = message.configMetadata as ConfigMetadata;
     const project = message.project as ProjectDescription;
     switch (message.type) {
-    case 'render-compose-editor':
-        if (!composeEditorRoot) {
-            const composeEditorContainer = document.getElementById('compose-editor');
-            if (!composeEditorContainer) {
-                console.error('Compose editor container not found!');
-                return;
+        case 'render-compose-editor':
+            if (!composeEditorRoot) {
+                const composeEditorContainer =
+                    document.getElementById('compose-editor');
+                if (!composeEditorContainer) {
+                    console.error('Compose editor container not found!');
+                    return;
+                }
+                composeEditorRoot = ReactDOM.createRoot(composeEditorContainer);
             }
-            composeEditorRoot = ReactDOM.createRoot(composeEditorContainer);
-        }
-        composeEditorRoot.render(
-            <ComposeEditor
-                messageHandler={vscode}
-                project={project}
-                configMetadata={configMetadata}
-            />
-        );
-        break;
-    case 'render-board-dashboard':
-        if (!boardDashboardRoot) {
-            const boardDashboardContainer = document.getElementById('board-dashboard');
-            if (!boardDashboardContainer) {
-                console.error('Board dashboard container not found!');
-                return;
+            composeEditorRoot.render(
+                <ComposeEditor
+                    messageHandler={vscode}
+                    project={project}
+                    configMetadata={configMetadata}
+                />,
+            );
+            break;
+        case 'render-board-dashboard':
+            if (!boardDashboardRoot) {
+                const boardDashboardContainer =
+                    document.getElementById('board-dashboard');
+                if (!boardDashboardContainer) {
+                    console.error('Board dashboard container not found!');
+                    return;
+                }
+                boardDashboardRoot = ReactDOM.createRoot(
+                    boardDashboardContainer,
+                );
             }
-            boardDashboardRoot = ReactDOM.createRoot(boardDashboardContainer);
-        }
-        boardDashboardRoot.render(
-            <BoardDashboard
-                target={message.target}
-                containersData={message.containersData}
-                boardState={message.boardState}
-                messageHandler={vscode}
-            />
-        );
-        break;
+            boardDashboardRoot.render(
+                <BoardDashboard
+                    target={message.target}
+                    containersData={message.containersData}
+                    boardState={message.boardState}
+                    messageHandler={vscode}
+                />,
+            );
+            break;
     }
 }
 

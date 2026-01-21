@@ -9,24 +9,25 @@ import { Deferred } from '../src/util/deferred';
 const vscode = acquireVsCodeApi();
 
 export type QuickPicker<T> = {
-  showQuickPick(
-    items: T[],
-    options?: {
-      placeHolder?: string;
-      canPickMany?: boolean;
-      matchOnDetail?: boolean;
-      matchOnDescription?: boolean;
-    }
-  ): Thenable<T | undefined>;
-  createQuickPick(
-    items: T[],
-    options?: {
-      placeHolder?: string;
-      canPickMany?: boolean;
-      matchOnDetail?: boolean;
-      matchOnDescription?: boolean;
-    }) : Thenable<T | undefined>;
-}
+    showQuickPick(
+        items: T[],
+        options?: {
+            placeHolder?: string;
+            canPickMany?: boolean;
+            matchOnDetail?: boolean;
+            matchOnDescription?: boolean;
+        },
+    ): Thenable<T | undefined>;
+    createQuickPick(
+        items: T[],
+        options?: {
+            placeHolder?: string;
+            canPickMany?: boolean;
+            matchOnDetail?: boolean;
+            matchOnDescription?: boolean;
+        },
+    ): Thenable<T | undefined>;
+};
 
 export const quickPicker: QuickPicker<string> = {
     showQuickPick: async (items) => {
@@ -41,7 +42,7 @@ export const quickPicker: QuickPicker<string> = {
         window.addEventListener('message', handler);
         vscode.postMessage({
             type: 'show-quick-pick',
-            items: items
+            items: items,
         });
         return result.promise;
     },

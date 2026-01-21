@@ -1,18 +1,21 @@
 import { MessageHandler } from '../src/util/types';
-import type { BoardState, ContainerItem } from '../src/workloadPlacement/containersManager';
+import type {
+    BoardState,
+    ContainerItem,
+} from '../src/workloadPlacement/containersManager';
 import { Target } from '../src/workloadPlacement/target';
 
 export interface BoardDashboardProps {
-  target: Target;
-  containersData: ContainerItem[];
-  boardState: BoardState;
-  messageHandler: MessageHandler;
+    target: Target;
+    containersData: ContainerItem[];
+    boardState: BoardState;
+    messageHandler: MessageHandler;
 }
 
 function splitContainersByRuntime(containers: ContainerItem[]) {
     const host: ContainerItem[] = [];
     const ambient: ContainerItem[] = [];
-    containers.forEach(c => {
+    containers.forEach((c) => {
         if (!c.runtime || c.runtime === 'runc') {
             host.push(c);
         } else {
@@ -24,23 +27,28 @@ function splitContainersByRuntime(containers: ContainerItem[]) {
 
 function StateIcon({ state }: { state: string }) {
     return (
-        <span
-            className="state-icon"
-            title={state}
-        >
-            <span
-                className="codicon codicon-debug-breakpoint-log"
-            ></span>
+        <span className="state-icon" title={state}>
+            <span className="codicon codicon-debug-breakpoint-log"></span>
         </span>
     );
 }
 
-function ContainerTable({ containers, messageHandler, subsystem }: { containers: ContainerItem[], messageHandler: MessageHandler, subsystem: string }) {
+function ContainerTable({
+    containers,
+    messageHandler,
+    subsystem,
+}: {
+    containers: ContainerItem[];
+    messageHandler: MessageHandler;
+    subsystem: string;
+}) {
     if (containers.length === 0) {
-        return <div className="no-containers-message">
-            <span className="codicon codicon-error" />
-            <span>No containers</span>
-        </div>;
+        return (
+            <div className="no-containers-message">
+                <span className="codicon codicon-error" />
+                <span>No containers</span>
+            </div>
+        );
     }
     containers.sort((a, b) => {
         if (a.state === 'running' && b.state !== 'running') {
@@ -67,12 +75,17 @@ function ContainerTable({ containers, messageHandler, subsystem }: { containers:
             </thead>
             <tbody>
                 <tr>
-                    <td colSpan={8}><hr /></td>
+                    <td colSpan={8}>
+                        <hr />
+                    </td>
                 </tr>
-                {containers.map(c => {
+                {containers.map((c) => {
                     const isRunning = c.state === 'running';
                     return (
-                        <tr key={c.id} className={isRunning ? 'running' : 'not-running'}>
+                        <tr
+                            key={c.id}
+                            className={isRunning ? 'running' : 'not-running'}
+                        >
                             <td>
                                 <StateIcon state={c.state} />
                             </td>
@@ -84,24 +97,27 @@ function ContainerTable({ containers, messageHandler, subsystem }: { containers:
                             <td>
                                 {c.ports.length > 0
                                     ? c.ports.map((port, idx) => (
-                                        <div key={idx} className="container-port-item">
-                                            {port}
-                                            <button
-                                                title="Open in browser"
-                                                className="action-btn link-btn container-port-link-btn"
-                                                onClick={() => {
-                                                    messageHandler.postMessage({
-                                                        type: 'open-container-in-browser',
-                                                        containerId: c.id,
-                                                    });
-                                                }}
-                                            >
-                                                <span
-                                                    className="codicon codicon-link-external container-port-link-icon"
-                                                />
-                                            </button>
-                                        </div>
-                                    ))
+                                          <div
+                                              key={idx}
+                                              className="container-port-item"
+                                          >
+                                              {port}
+                                              <button
+                                                  title="Open in browser"
+                                                  className="action-btn link-btn container-port-link-btn"
+                                                  onClick={() => {
+                                                      messageHandler.postMessage(
+                                                          {
+                                                              type: 'open-container-in-browser',
+                                                              containerId: c.id,
+                                                          },
+                                                      );
+                                                  }}
+                                              >
+                                                  <span className="codicon codicon-link-external container-port-link-icon" />
+                                              </button>
+                                          </div>
+                                      ))
                                     : null}
                             </td>
                             <td>
@@ -111,7 +127,10 @@ function ContainerTable({ containers, messageHandler, subsystem }: { containers:
                                             title="Stop container"
                                             className="action-btn stop-btn"
                                             onClick={() => {
-                                                messageHandler.postMessage({ type: 'stop-container', containerId: c.id });
+                                                messageHandler.postMessage({
+                                                    type: 'stop-container',
+                                                    containerId: c.id,
+                                                });
                                             }}
                                         >
                                             <span className="codicon codicon-debug-stop" />
@@ -120,18 +139,27 @@ function ContainerTable({ containers, messageHandler, subsystem }: { containers:
                                             title="Delete container"
                                             className="action-btn delete-btn"
                                             onClick={() => {
-                                                messageHandler.postMessage({ type: 'delete-container', containerId: c.id });
+                                                messageHandler.postMessage({
+                                                    type: 'delete-container',
+                                                    containerId: c.id,
+                                                });
                                             }}
                                         >
                                             <span className="codicon codicon-trash vscode-codicon-trash" />
                                         </button>
-                                        { subsystem === 'Host' ? (
+                                        {subsystem === 'Host' ? (
                                             <>
                                                 <button
                                                     title="Attach VS Code"
                                                     className="action-btn vscode-attach-btn"
                                                     onClick={() => {
-                                                        messageHandler.postMessage({ type: 'attach-vscode', containerId: c.id });
+                                                        messageHandler.postMessage(
+                                                            {
+                                                                type: 'attach-vscode',
+                                                                containerId:
+                                                                    c.id,
+                                                            },
+                                                        );
                                                     }}
                                                     style={{ marginLeft: 4 }}
                                                 >
@@ -141,14 +169,20 @@ function ContainerTable({ containers, messageHandler, subsystem }: { containers:
                                                     title="Attach Shell"
                                                     className="action-btn shell-attach-btn"
                                                     onClick={() => {
-                                                        messageHandler.postMessage({ type: 'attach-shell', containerId: c.id });
+                                                        messageHandler.postMessage(
+                                                            {
+                                                                type: 'attach-shell',
+                                                                containerId:
+                                                                    c.id,
+                                                            },
+                                                        );
                                                     }}
                                                     style={{ marginLeft: 4 }}
                                                 >
                                                     <span className="codicon codicon-terminal shell-attach-icon" />
                                                 </button>
                                             </>
-                                        ) : null }
+                                        ) : null}
                                     </>
                                 ) : (
                                     <>
@@ -156,8 +190,11 @@ function ContainerTable({ containers, messageHandler, subsystem }: { containers:
                                             title="Start container"
                                             className="action-btn play-btn"
                                             onClick={() => {
-                                                messageHandler.postMessage({ type: 'start-container', containerId: c.id });
-                                            } }
+                                                messageHandler.postMessage({
+                                                    type: 'start-container',
+                                                    containerId: c.id,
+                                                });
+                                            }}
                                         >
                                             <span className="codicon codicon-debug-start" />
                                         </button>
@@ -165,7 +202,10 @@ function ContainerTable({ containers, messageHandler, subsystem }: { containers:
                                             title="Delete container"
                                             className="action-btn trash-btn"
                                             onClick={() => {
-                                                messageHandler.postMessage({ type: 'delete-container', containerId: c.id });
+                                                messageHandler.postMessage({
+                                                    type: 'delete-container',
+                                                    containerId: c.id,
+                                                });
                                             }}
                                         >
                                             <span className="codicon codicon-trash vscode-codicon-trash" />
@@ -181,14 +221,20 @@ function ContainerTable({ containers, messageHandler, subsystem }: { containers:
     );
 }
 
-export function BoardDashboard({ target, containersData, boardState, messageHandler }: BoardDashboardProps) {
-
+export function BoardDashboard({
+    target,
+    containersData,
+    boardState,
+    messageHandler,
+}: BoardDashboardProps) {
     let errorMessage: string | undefined = undefined;
     if (!boardState.isReachable) {
-        errorMessage = 'No board found. Please ensure the board is running and accessible.';
+        errorMessage =
+            'No board found. Please ensure the board is running and accessible.';
     } else {
         if (!boardState.hasContainerRuntime) {
-            errorMessage = 'No container runtime found. Please ensure the container runtime of the board is installed and running.';
+            errorMessage =
+                'No container runtime found. Please ensure the container runtime of the board is installed and running.';
         }
     }
     if (errorMessage) {
@@ -208,7 +254,7 @@ export function BoardDashboard({ target, containersData, boardState, messageHand
             <h1>Board Dashboard: {target.id}</h1>
             <div className="section-group">
                 <h3>
-          Host
+                    Host
                     <button
                         title="Attach via SSH"
                         className="action-btn ssh-attach-btn"
@@ -223,7 +269,7 @@ export function BoardDashboard({ target, containersData, boardState, messageHand
                 <ContainerTable
                     containers={host}
                     messageHandler={messageHandler}
-                    subsystem='Host'
+                    subsystem="Host"
                 />
             </div>
             <div className="section-group">
@@ -231,7 +277,7 @@ export function BoardDashboard({ target, containersData, boardState, messageHand
                 <ContainerTable
                     containers={ambient}
                     messageHandler={messageHandler}
-                    subsystem='Ambient'
+                    subsystem="Ambient"
                 />
             </div>
         </div>

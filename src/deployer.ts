@@ -30,38 +30,33 @@ export class Deployer {
         const target = await this.targetStore.getSelectedTarget();
         if (!target) {
             this.deploying = false;
-            const err = new Error('No target selected. Please select a target before deploying.');
+            const err = new Error(
+                'No target selected. Please select a target before deploying.',
+            );
             throw err;
         }
         const composeFolderPath = path.dirname(composeFilePath);
         this.proc = this.topoCli.deploy(composeFolderPath, target.ssh);
         if (this.proc.stdout) {
-            this.proc.stdout.on(
-                'data',
-                (data: Buffer) => this.onStdoutDataEmitter.fire(data)
+            this.proc.stdout.on('data', (data: Buffer) =>
+                this.onStdoutDataEmitter.fire(data),
             );
         }
         if (this.proc.stderr) {
-            this.proc.stderr.on(
-                'data',
-                (data: Buffer) =>
-                    this.onStderrDataEmitter.fire(data)
+            this.proc.stderr.on('data', (data: Buffer) =>
+                this.onStderrDataEmitter.fire(data),
             );
         }
-        this.proc.on(
-            'exit',
-            (code: number | null) => {
-                this.proc = undefined;
-                this.deploying = false;
-                this.onExitEmitter.fire(code);
-            });
-        this.proc.on(
-            'error',
-            (err: Error) => {
-                this.proc = undefined;
-                this.deploying = false;
-                this.onErrorEmitter.fire(err);
-            });
+        this.proc.on('exit', (code: number | null) => {
+            this.proc = undefined;
+            this.deploying = false;
+            this.onExitEmitter.fire(code);
+        });
+        this.proc.on('error', (err: Error) => {
+            this.proc = undefined;
+            this.deploying = false;
+            this.onErrorEmitter.fire(err);
+        });
     }
 
     public stop(): void {
@@ -72,13 +67,20 @@ export class Deployer {
         try {
             if (process.platform === 'win32') {
                 if (this.proc.pid !== undefined) {
-                    const taskkillProc = spawn('taskkill', ['/pid', this.proc.pid.toString(), '/T', '/F']);
+                    const taskkillProc = spawn('taskkill', [
+                        '/pid',
+                        this.proc.pid.toString(),
+                        '/T',
+                        '/F',
+                    ]);
                     taskkillProc.on('error', (err) => {
                         this.onErrorEmitter.fire(err as Error);
                     });
                     taskkillProc.on('exit', (code) => {
                         if (code !== 0) {
-                            this.onErrorEmitter.fire(new Error(`taskkill exited with code ${code}`));
+                            this.onErrorEmitter.fire(
+                                new Error(`taskkill exited with code ${code}`),
+                            );
                         }
                     });
                 }

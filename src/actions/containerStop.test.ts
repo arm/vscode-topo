@@ -6,14 +6,15 @@ import { ContainerItem } from '../workloadPlacement/containersManager';
 import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
 
 describe('ContainerStop', () => {
-    const context: Pick<vscode.ExtensionContext, 'subscriptions'> = { subscriptions: [] };
+    const context: Pick<vscode.ExtensionContext, 'subscriptions'> = {
+        subscriptions: [],
+    };
     let showErrorMessageSpy: jest.SpyInstance;
-    let commandHandler: { command: string; callback: (...args: unknown[]) => void } | undefined;
+    let commandHandler:
+        | { command: string; callback: (...args: unknown[]) => void }
+        | undefined;
     const registerCommandMock = vscode.commands.registerCommand as jest.Mock;
-    const target = new Target(
-        'topo',
-        'user@topo.local',
-    );
+    const target = new Target('topo', 'user@topo.local');
     const container: ContainerItem = {
         id: 'abc123',
         name: 'my-container',
@@ -32,7 +33,9 @@ describe('ContainerStop', () => {
     const treeItem = new TargetTreeContainerItem(container);
 
     beforeEach(() => {
-        showErrorMessageSpy = jest.spyOn(vscode.window, 'showErrorMessage').mockImplementation(jest.fn());
+        showErrorMessageSpy = jest
+            .spyOn(vscode.window, 'showErrorMessage')
+            .mockImplementation(jest.fn());
         registerCommandMock.mockImplementation((command, callback) => {
             if (command !== ContainerStop.stopContainerCommand) {
                 throw Error('Unexpected command registration');
@@ -40,12 +43,17 @@ describe('ContainerStop', () => {
             commandHandler = { command, callback };
             return { dispose: jest.fn() };
         });
-        (vscode.commands.executeCommand as jest.Mock).mockImplementation((command, ...args) => {
-            if (command === ContainerStop.stopContainerCommand && commandHandler) {
-                return commandHandler.callback(...args);
-            }
-            return Promise.resolve();
-        });
+        (vscode.commands.executeCommand as jest.Mock).mockImplementation(
+            (command, ...args) => {
+                if (
+                    command === ContainerStop.stopContainerCommand &&
+                    commandHandler
+                ) {
+                    return commandHandler.callback(...args);
+                }
+                return Promise.resolve();
+            },
+        );
     });
     it('calls stopContainer and shows info message on success', async () => {
         const stopContainerSpy = jest.fn(async () => undefined);
@@ -56,20 +64,30 @@ describe('ContainerStop', () => {
         await containerStop.activate();
 
         // Simulate command handler
-        await vscode.commands.executeCommand(ContainerStop.stopContainerCommand, treeItem);
+        await vscode.commands.executeCommand(
+            ContainerStop.stopContainerCommand,
+            treeItem,
+        );
 
         expect(stopContainerSpy).toHaveBeenCalledWith('abc123');
     });
 
     it('shows error message if stopContainer throws', async () => {
         const containersManager = {
-            stopContainer: async () => { throw new Error('fail'); },
+            stopContainer: async () => {
+                throw new Error('fail');
+            },
         };
         const containerStop = new ContainerStop(context, containersManager);
         await containerStop.activate();
 
-        await vscode.commands.executeCommand(ContainerStop.stopContainerCommand, treeItem);
+        await vscode.commands.executeCommand(
+            ContainerStop.stopContainerCommand,
+            treeItem,
+        );
 
-        expect(showErrorMessageSpy).toHaveBeenCalledWith(expect.stringContaining('Failed to stop the container abc123'));
+        expect(showErrorMessageSpy).toHaveBeenCalledWith(
+            expect.stringContaining('Failed to stop the container abc123'),
+        );
     });
 });

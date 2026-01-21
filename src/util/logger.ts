@@ -7,7 +7,7 @@ export enum Verbosity {
     error = 1,
     warn = 2,
     info = 3,
-    debug = 4
+    debug = 4,
 }
 
 export const stringifyMessage = (message: unknown): string => {
@@ -20,7 +20,6 @@ export const stringifyMessage = (message: unknown): string => {
     }
 
     if (typeof message === 'number') {
-
         return Number.isFinite(message) ? message.toString() : String(message);
     }
 
@@ -41,7 +40,11 @@ abstract class Logger {
     constructor() {
         this.logVerbosity = this.getVerbosity();
         vscode.workspace.onDidChangeConfiguration((e) => {
-            if (e.affectsConfiguration(`${manifest.PACKAGE_NAME}.${manifest.CONFIG_LOGGING_VERBOSITY}`)) {
+            if (
+                e.affectsConfiguration(
+                    `${manifest.PACKAGE_NAME}.${manifest.CONFIG_LOGGING_VERBOSITY}`,
+                )
+            ) {
                 this.logVerbosity = this.getVerbosity();
             }
         });
@@ -49,7 +52,9 @@ abstract class Logger {
 
     public getVerbosity(): Verbosity {
         const config =
-            vscode.workspace.getConfiguration(manifest.PACKAGE_NAME).get<string>(manifest.CONFIG_LOGGING_VERBOSITY) ||
+            vscode.workspace
+                .getConfiguration(manifest.PACKAGE_NAME)
+                .get<string>(manifest.CONFIG_LOGGING_VERBOSITY) ||
             manifest.DEFAULT_LOGGING_VERBOSITY;
         return Verbosity[config as keyof typeof Verbosity];
     }
@@ -68,10 +73,14 @@ abstract class Logger {
         }
     }
 
-    public error = (...messages: unknown[]): void => this.log(Verbosity.error, ...messages);
-    public warn = (...messages: unknown[]): void => this.log(Verbosity.warn, ...messages);
-    public info = (...messages: unknown[]): void => this.log(Verbosity.info, ...messages);
-    public debug = (...messages: unknown[]): void => this.log(Verbosity.debug, ...messages);
+    public error = (...messages: unknown[]): void =>
+        this.log(Verbosity.error, ...messages);
+    public warn = (...messages: unknown[]): void =>
+        this.log(Verbosity.warn, ...messages);
+    public info = (...messages: unknown[]): void =>
+        this.log(Verbosity.info, ...messages);
+    public debug = (...messages: unknown[]): void =>
+        this.log(Verbosity.debug, ...messages);
 }
 
 export class OutputChannelLogger extends Logger {
@@ -81,7 +90,9 @@ export class OutputChannelLogger extends Logger {
 
     protected logMessage(message: string): void {
         if (!this.outputChannel) {
-            this.outputChannel = vscode.window.createOutputChannel(manifest.DISPLAY_NAME);
+            this.outputChannel = vscode.window.createOutputChannel(
+                manifest.DISPLAY_NAME,
+            );
         }
         this.outputChannel.appendLine(message);
     }

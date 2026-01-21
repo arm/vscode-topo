@@ -13,7 +13,9 @@ describe('OutputChannelLogger', () => {
         (vscode.window.createOutputChannel as jest.Mock).mockReturnValue({
             appendLine: appendLineMock,
         });
-        (vscode.workspace.getConfiguration as jest.Mock).mockReturnValue({ get: configurationGetMock });
+        (vscode.workspace.getConfiguration as jest.Mock).mockReturnValue({
+            get: configurationGetMock,
+        });
     });
 
     it('does not log when verbosity is off', () => {
@@ -56,8 +58,10 @@ describe('OutputChannelLogger', () => {
 
     it('updates verbosity when configuration changes', () => {
         configurationGetMock.mockReturnValue('error');
-        const configurationChangeEmitter = new vscode.EventEmitter<vscode.ConfigurationChangeEvent>();
-        (vscode.workspace as any).onDidChangeConfiguration = configurationChangeEmitter.event;
+        const configurationChangeEmitter =
+            new vscode.EventEmitter<vscode.ConfigurationChangeEvent>();
+        (vscode.workspace as any).onDidChangeConfiguration =
+            configurationChangeEmitter.event;
         const logger = new OutputChannelLogger();
 
         logger.info('ignored info');

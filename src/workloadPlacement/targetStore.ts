@@ -5,7 +5,10 @@ import { Target } from './target';
 
 type GlobalStoreKeys = 'targets';
 type WorkspaceStoreKeys = 'selectedTarget';
-export type TargetStoreContext = Pick<vscode.ExtensionContext, 'globalState' | 'workspaceState' | 'globalStorageUri'>;
+export type TargetStoreContext = Pick<
+    vscode.ExtensionContext,
+    'globalState' | 'workspaceState' | 'globalStorageUri'
+>;
 
 export class TargetStore {
     private static instance: TargetStore | undefined;
@@ -13,19 +16,25 @@ export class TargetStore {
     public static getInstance(context?: TargetStoreContext): TargetStore {
         if (!TargetStore.instance) {
             if (!context) {
-                throw new Error('TargetStore not initialized. Context is required when initializing the TargetStore.');
+                throw new Error(
+                    'TargetStore not initialized. Context is required when initializing the TargetStore.',
+                );
             }
             TargetStore.instance = new TargetStore(context);
         }
         return TargetStore.instance;
     }
 
-    private _onChanged: vscode.EventEmitter<void> = new vscode.EventEmitter<void>();
+    private _onChanged: vscode.EventEmitter<void> =
+        new vscode.EventEmitter<void>();
     public readonly onChanged: vscode.Event<void> = this._onChanged.event;
     private disposables: vscode.Disposable[] = [];
 
     private constructor(protected context: TargetStoreContext) {
-        const pattern = new vscode.RelativePattern(this.context.globalStorageUri, 'targets-update.signal');
+        const pattern = new vscode.RelativePattern(
+            this.context.globalStorageUri,
+            'targets-update.signal',
+        );
         const watcher = vscode.workspace.createFileSystemWatcher(pattern);
         watcher.onDidCreate(() => {
             if (!vscode.window.state.focused) {
@@ -43,7 +52,10 @@ export class TargetStore {
     // Debounced function to publish a change to other VS Code instances
     protected publishChange = debounce(async () => {
         try {
-            const signalUri = vscode.Uri.joinPath(this.context.globalStorageUri, 'targets-update.signal');
+            const signalUri = vscode.Uri.joinPath(
+                this.context.globalStorageUri,
+                'targets-update.signal',
+            );
             const payload = new TextEncoder().encode(Date.now().toString());
             await vscode.workspace.fs.writeFile(signalUri, payload);
         } catch (err: unknown) {
@@ -76,7 +88,7 @@ export class TargetStore {
 
     public async getSelectedTarget(): Promise<Target | undefined> {
         const targets = this.getTargets();
-        return targets.find(target => target.id === this.selected);
+        return targets.find((target) => target.id === this.selected);
     }
 
     public async deleteTarget(targetId: string): Promise<void> {
@@ -89,7 +101,9 @@ export class TargetStore {
         const currentSelected = this.selected;
         if (currentSelected === targetId) {
             const remaining = [...targets.keys()];
-            const newSelected = remaining.length ? remaining.sort((a, b) => a.localeCompare(b))[0] : undefined;
+            const newSelected = remaining.length
+                ? remaining.sort((a, b) => a.localeCompare(b))[0]
+                : undefined;
             await this.setSelected(newSelected);
         }
     }
@@ -102,9 +116,15 @@ export class TargetStore {
             const entries: [string, Target][] = [];
             for (const [k, v] of rawEntries) {
                 try {
-                    entries.push([k, Target.from(v as Record<string, unknown>)]);
+                    entries.push([
+                        k,
+                        Target.from(v as Record<string, unknown>),
+                    ]);
                 } catch (err) {
-                    throw new Error(`Failed to parse target entry for key "${k}"`, { cause: err });
+                    throw new Error(
+                        `Failed to parse target entry for key "${k}"`,
+                        { cause: err },
+                    );
                 }
             }
             return new Map(entries);
@@ -127,7 +147,10 @@ export class TargetStore {
         return this.get(this.context.globalState, key);
     }
 
-    protected async setGlobal(key: GlobalStoreKeys, value: string | undefined): Promise<void> {
+    protected async setGlobal(
+        key: GlobalStoreKeys,
+        value: string | undefined,
+    ): Promise<void> {
         await this.set(this.context.globalState, key, value);
 
         if (vscode.env.uiKind === vscode.UIKind.Desktop) {
@@ -139,17 +162,27 @@ export class TargetStore {
         return this.get(this.context.workspaceState, key);
     }
 
-    protected setWorkspace(key: WorkspaceStoreKeys, value: string | undefined): Promise<void> {
+    protected setWorkspace(
+        key: WorkspaceStoreKeys,
+        value: string | undefined,
+    ): Promise<void> {
         return this.set(this.context.workspaceState, key, value);
     }
 
-    protected get(memento: vscode.Memento, key: GlobalStoreKeys | WorkspaceStoreKeys): string | undefined {
+    protected get(
+        memento: vscode.Memento,
+        key: GlobalStoreKeys | WorkspaceStoreKeys,
+    ): string | undefined {
         const value = memento.get<string>(key);
         logger.debug(`Reading state ${key}: ${value}`);
         return value;
     }
 
-    protected async set(memento: vscode.Memento, key: GlobalStoreKeys | WorkspaceStoreKeys, value: string | undefined): Promise<void> {
+    protected async set(
+        memento: vscode.Memento,
+        key: GlobalStoreKeys | WorkspaceStoreKeys,
+        value: string | undefined,
+    ): Promise<void> {
         logger.debug(`Writing state ${key}: ${value}`);
         await memento.update(key, value);
     }

@@ -6,18 +6,23 @@ import { TargetStore } from '../workloadPlacement/targetStore';
 import { ensureTargetTreeContainerItem } from './util/ensureTargetTreeContainerItem';
 
 export class AttachShell {
-
     public static readonly attachShellCommand = `${manifest.PACKAGE_NAME}.attachShell`;
 
     constructor(
-        private readonly context: Pick<vscode.ExtensionContext, 'subscriptions'>,
+        private readonly context: Pick<
+            vscode.ExtensionContext,
+            'subscriptions'
+        >,
         private readonly containerCommands: ContainerCommands,
         private readonly targetStore: Pick<TargetStore, 'getSelectedTarget'>,
     ) {}
 
     public activate() {
         this.context.subscriptions.push(
-            vscode.commands.registerCommand(AttachShell.attachShellCommand, this.attachShellCommandHandler.bind(this))
+            vscode.commands.registerCommand(
+                AttachShell.attachShellCommand,
+                this.attachShellCommandHandler.bind(this),
+            ),
         );
     }
 
@@ -27,8 +32,15 @@ export class AttachShell {
     }
 
     public async attachShell(item: ContainerItem): Promise<void> {
-        const terminal = vscode.window.createTerminal({ name: `Shell: ${item.image}` });
-        terminal.sendText(this.containerCommands.getAttachShellCommand(item.id, item.target.ssh));
+        const terminal = vscode.window.createTerminal({
+            name: `Shell: ${item.image}`,
+        });
+        terminal.sendText(
+            this.containerCommands.getAttachShellCommand(
+                item.id,
+                item.target.ssh,
+            ),
+        );
         terminal.show();
     }
 
@@ -37,7 +49,9 @@ export class AttachShell {
         if (!target) {
             throw new Error('No target is currently selected');
         }
-        const terminal = vscode.window.createTerminal({ name: `SSH: ${target.id}` });
+        const terminal = vscode.window.createTerminal({
+            name: `SSH: ${target.id}`,
+        });
         terminal.sendText(`ssh ${target.ssh}`);
         terminal.show();
     }

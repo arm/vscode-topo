@@ -1,16 +1,15 @@
 {
-	"compilerOptions": {
-	  "target": "ES2022",
-      "module": "commonjs",
-	  "lib": ["ES2022", "dom"],
-	  "jsx": "react-jsx",  
-	  "sourceMap": true,
-	  "rootDir": ".",
-	  "strict": true,
-	  "esModuleInterop": true,
-	  "forceConsistentCasingInFileNames": true,
-	  "skipLibCheck": true
-	},
-	"include": ["src", "media"]
-  }
-  
+    "compilerOptions": {
+        "target": "ES2022",
+        "module": "commonjs",
+        "lib": ["ES2022", "dom"],
+        "jsx": "react-jsx",
+        "sourceMap": true,
+        "rootDir": ".",
+        "strict": true,
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "skipLibCheck": true
+    },
+    "include": ["src", "media"]
+}

@@ -26,14 +26,14 @@ const DOWNLOAD_TARGETS = [
     'linux-x64',
     'linux-arm64',
     'darwin-x64',
-    'darwin-arm64'
+    'darwin-arm64',
 ] as const;
-type DownloadTarget = typeof DOWNLOAD_TARGETS[number];
+type DownloadTarget = (typeof DOWNLOAD_TARGETS)[number];
 
-const GITHUB_REGEX = /^https:\/\/github.com\/(.+)\/(.+)\/releases\/download\/(.+)\/(.+)$/;
+const GITHUB_REGEX =
+    /^https:\/\/github.com\/(.+)\/(.+)\/releases\/download\/(.+)\/(.+)$/;
 
 const readFromUrl = async (url: string, token: string): Promise<Response> => {
-
     let response: Response;
 
     const match = url.match(GITHUB_REGEX);
@@ -44,22 +44,27 @@ const readFromUrl = async (url: string, token: string): Promise<Response> => {
         const tagName = match[3];
         const assetName = match[4];
 
-        const apiResponse = await fetch(`https://api.github.com/repos/${user}/${repo}/releases/tags/${tagName}`, {
-            headers: {
-                Authorization: `token ${token}`,
-                Accept: 'application/vnd.github.v3.raw'
-            }
-        });
+        const apiResponse = await fetch(
+            `https://api.github.com/repos/${user}/${repo}/releases/tags/${tagName}`,
+            {
+                headers: {
+                    Authorization: `token ${token}`,
+                    Accept: 'application/vnd.github.v3.raw',
+                },
+            },
+        );
 
-        const release = await apiResponse.json() as Release;
+        const release = (await apiResponse.json()) as Release;
         if (!release) {
             throw new Error(`Release ${tagName} not found`);
         }
         if (release.status && release.status !== '200') {
-            throw new Error(`Release ${tagName} fetching failed. Status="${release.status} Message="${release.message}".`);
+            throw new Error(
+                `Release ${tagName} fetching failed. Status="${release.status} Message="${release.message}".`,
+            );
         }
 
-        const asset = release.assets.find(item => item.name === assetName);
+        const asset = release.assets.find((item) => item.name === assetName);
         if (!asset) {
             throw new Error(`Asset ${assetName} not found`);
         }
@@ -68,16 +73,16 @@ const readFromUrl = async (url: string, token: string): Promise<Response> => {
             redirect: 'manual',
             headers: {
                 Authorization: `token ${token}`,
-                Accept: 'application/octet-stream'
-            }
+                Accept: 'application/octet-stream',
+            },
         });
 
         if (response.status === 302) {
             const authenticatedUrl = response.headers.get('location')!;
             response = await fetch(authenticatedUrl, {
                 headers: {
-                    Accept: 'application/octet-stream'
-                }
+                    Accept: 'application/octet-stream',
+                },
             });
         }
         if (!response.ok) {
@@ -98,7 +103,10 @@ const readFromUrl = async (url: string, token: string): Promise<Response> => {
 };
 
 const findFileInDir = (dir: string, filename: string): string | undefined => {
-    const entries = fs.readdirSync(dir, { recursive: true, withFileTypes: true });
+    const entries = fs.readdirSync(dir, {
+        recursive: true,
+        withFileTypes: true,
+    });
     for (const entry of entries) {
         if (entry.isFile() && entry.name === filename) {
             return path.join(entry.parentPath, entry.name);
@@ -107,7 +115,12 @@ const findFileInDir = (dir: string, filename: string): string | undefined => {
     return undefined;
 };
 
-const extractFileFromArchive = async (buffer: Buffer, destPath: string, filename: string, type: 'tar' | 'zip'): Promise<void> => {
+const extractFileFromArchive = async (
+    buffer: Buffer,
+    destPath: string,
+    filename: string,
+    type: 'tar' | 'zip',
+): Promise<void> => {
     const ext = type === 'tar' ? '.tar.gz' : '.zip';
     const tmpArchive = `${destPath}${ext}`;
     const tmpDir = fs.mkdtempSync(path.join(nodeOs.tmpdir(), 'topo-'));
@@ -117,11 +130,11 @@ const extractFileFromArchive = async (buffer: Buffer, destPath: string, filename
         if (type === 'tar') {
             await tar.x({
                 file: tmpArchive,
-                cwd: tmpDir
+                cwd: tmpDir,
             });
         } else if (type === 'zip') {
             await extract(tmpArchive, {
-                dir: path.resolve(tmpDir)
+                dir: path.resolve(tmpDir),
             });
         }
         const targetFilePath = findFileInDir(tmpDir, filename);
@@ -137,7 +150,10 @@ const extractFileFromArchive = async (buffer: Buffer, destPath: string, filename
             try {
                 fs.rmSync(tmpDir, { recursive: true, force: true });
             } catch (cleanupErr) {
-                console.warn(`Warning: Failed to remove temporary directory "${tmpDir}":`, cleanupErr);
+                console.warn(
+                    `Warning: Failed to remove temporary directory "${tmpDir}":`,
+                    cleanupErr,
+                );
             }
         }
     }
@@ -152,10 +168,16 @@ const extractFileFromArchive = async (buffer: Buffer, destPath: string, filename
  * @param filename - Filename inside the archive to extract
  * @param token - GitHub token for authentication
  */
-const downloadFile = async (sourcePath: string, destPath: string, filename: string, token: string): Promise<void> => {
-
+const downloadFile = async (
+    sourcePath: string,
+    destPath: string,
+    filename: string,
+    token: string,
+): Promise<void> => {
     if (!sourcePath.startsWith('http')) {
-        throw new Error(`Invalid source path: ${sourcePath}. Must be a http URL.`);
+        throw new Error(
+            `Invalid source path: ${sourcePath}. Must be a http URL.`,
+        );
     }
     const response = await readFromUrl(sourcePath, token);
     const arrayBuffer = await response.arrayBuffer();
@@ -171,7 +193,9 @@ const downloadFile = async (sourcePath: string, destPath: string, filename: stri
     } else if (isZip) {
         await extractFileFromArchive(buffer, destPath, filename, 'zip');
     } else {
-        throw new Error(`Unsupported archive format for "${sourcePath}"; expected .tar.gz or .zip`);
+        throw new Error(
+            `Unsupported archive format for "${sourcePath}"; expected .tar.gz or .zip`,
+        );
     }
 };
 
@@ -181,7 +205,7 @@ const parsedArgs = yargs(process.argv.slice(2))
         alias: 'target',
         description: 'VS Code extension target, defaults to system',
         choices: DOWNLOAD_TARGETS,
-        default: `${nodeOs.platform()}-${nodeOs.arch()}`
+        default: `${nodeOs.platform()}-${nodeOs.arch()}`,
     })
     .option('token', {
         description: 'GitHub token for downloading release assets',
@@ -191,14 +215,16 @@ const parsedArgs = yargs(process.argv.slice(2))
     })
     .check((argv) => {
         if (!argv.token) {
-            throw new Error('✖ No GitHub token provided via --token or GITHUB_TOKEN');
+            throw new Error(
+                '✖ No GitHub token provided via --token or GITHUB_TOKEN',
+            );
         }
         return true;
     })
     .version(false)
     .strict()
     .command('$0', 'Downloads the tool for the given architecture and OS')
-    .parseSync() as unknown as { target: DownloadTarget; token: string; };
+    .parseSync() as unknown as { target: DownloadTarget; token: string };
 
 const target = parsedArgs.target;
 const githubToken = parsedArgs.token;
@@ -214,23 +240,25 @@ const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
 const key = manifest.TOPO_CLI;
 const section = pkg[key];
 if (!section || typeof section.version !== 'string') {
-    console.error(`✖ package.json must have a top-level "${key}" object with a string "version" property.`);
+    console.error(
+        `✖ package.json must have a top-level "${key}" object with a string "version" property.`,
+    );
     process.exit(1);
 }
 const version = section.version.replace(/^v/, '');
 
 // --- Parse GitHub repo owner/name -------------------------------------------
 const repository = {
-    url: 'https://github.com/Arm-Debug/topo-cli'
+    url: 'https://github.com/Arm-Debug/topo-cli',
 };
-const m = repository.url.match(
-    /github\.com[:/]([^/]+)\/(.+?)(?:\.git)?$/
-);
+const m = repository.url.match(/github\.com[:/]([^/]+)\/(.+?)(?:\.git)?$/);
 if (!m) {
-    console.error(`✖ couldn’t parse owner/repo out of repository.url="${repository.url}"`);
+    console.error(
+        `✖ couldn’t parse owner/repo out of repository.url="${repository.url}"`,
+    );
     process.exit(1);
 }
-const [ , owner, repo ] = m;
+const [, owner, repo] = m;
 
 // --- Determine asset name ---------------------------------------------------
 const assetMapping: Record<string, string> = {
@@ -256,7 +284,12 @@ console.log(`→ Downloading ${downloadUrl}`);
 // --- Perform download --------------------------------------------------------
 (async () => {
     try {
-        await downloadFile(downloadUrl, destFilename, topoFilename, githubToken);
+        await downloadFile(
+            downloadUrl,
+            destFilename,
+            topoFilename,
+            githubToken,
+        );
         fs.chmodSync(destFilename, '755');
     } catch (err: unknown) {
         const errorMsg = err instanceof Error ? err.message : err;

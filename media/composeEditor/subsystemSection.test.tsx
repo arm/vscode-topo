@@ -5,15 +5,11 @@ import { SubsystemSection } from './subsystemSection';
 import { ServiceCreationDescription } from '../../src/util/types';
 
 describe('SubsystemSection', () => {
-
     let services: ServiceCreationDescription[];
 
     const renderComponent = () => {
         return render(
-            <SubsystemSection
-                title="Host"
-                subsystemServices={services}
-            />
+            <SubsystemSection title="Host" subsystemServices={services} />,
         );
     };
 
@@ -24,22 +20,22 @@ describe('SubsystemSection', () => {
                 name: 'project1',
                 errors: [],
                 build: {
-                    context: './project1'
+                    context: './project1',
                 },
                 containerName: 'container1',
                 annotations: {},
-                runtime: manifest.BOARD_AMBIENT_RUNTIME
+                runtime: manifest.BOARD_AMBIENT_RUNTIME,
             },
             {
                 name: 'project2',
                 errors: [],
                 build: {
-                    context: './project2'
+                    context: './project2',
                 },
                 containerName: 'container2',
                 annotations: {},
-                runtime: manifest.BOARD_AMBIENT_RUNTIME
-            }
+                runtime: manifest.BOARD_AMBIENT_RUNTIME,
+            },
         ];
     });
 
