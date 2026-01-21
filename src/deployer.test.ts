@@ -13,20 +13,20 @@ const proc = {
         on: jest.fn((event: string, cb: EventHandler) => {
             events[event] = events[event] || [];
             events[event].push(cb);
-        })
+        }),
     },
     stderr: {
         on: jest.fn((event: string, cb: EventHandler) => {
             events[event] = events[event] || [];
             events[event].push(cb);
-        })
+        }),
     },
     on: jest.fn((event: string, cb: EventHandler) => {
         events[event] = events[event] || [];
         events[event].push(cb);
     }),
     pid: 1234,
-    kill: jest.fn()
+    kill: jest.fn(),
 };
 
 jest.mock('child_process', () => {
@@ -62,10 +62,12 @@ describe('Deployer', () => {
     });
 
     it('should start the process and emit events', async () => {
-
         await deployer.start(composeFilePath);
 
-        expect(topoCli.deploy).toHaveBeenCalledWith(path.dirname(composeFilePath), target.ssh);
+        expect(topoCli.deploy).toHaveBeenCalledWith(
+            path.dirname(composeFilePath),
+            target.ssh,
+        );
     });
 
     it('should fail if no target is selected', async () => {
@@ -108,12 +110,16 @@ describe('Deployer', () => {
 
         await deployer.stop();
 
-        expect(spawn).toHaveBeenCalledWith('taskkill', ['/pid', '1234', '/T', '/F']);
+        expect(spawn).toHaveBeenCalledWith('taskkill', [
+            '/pid',
+            '1234',
+            '/T',
+            '/F',
+        ]);
         Object.defineProperty(process, 'platform', { value: originalPlatform });
     });
 
     it('should emit stdout, stderr, exit, and error events', async () => {
-
         const stdoutListener = jest.fn();
         const stderrListener = jest.fn();
         const exitListener = jest.fn();
@@ -129,14 +135,22 @@ describe('Deployer', () => {
         // Get the mock process object from the spawn mock
         const events = (spawn as jest.Mock).mock.results[0].value;
         // Simulate stdout and stderr
-        (events.stdout.on.mock.calls[0][1] as (data: Buffer) => void)(Buffer.from('out'));
-        (events.stderr.on.mock.calls[0][1] as (data: Buffer) => void)(Buffer.from('err'));
+        (events.stdout.on.mock.calls[0][1] as (data: Buffer) => void)(
+            Buffer.from('out'),
+        );
+        (events.stderr.on.mock.calls[0][1] as (data: Buffer) => void)(
+            Buffer.from('err'),
+        );
         // Simulate exit and error
-        const exitCall = events.on.mock.calls.find((call: any[]) => call[0] === 'exit');
+        const exitCall = events.on.mock.calls.find(
+            (call: any[]) => call[0] === 'exit',
+        );
         if (exitCall) {
             (exitCall[1] as (code: number | null) => void)(0);
         }
-        const errorCall = events.on.mock.calls.find((call: any[]) => call[0] === 'error');
+        const errorCall = events.on.mock.calls.find(
+            (call: any[]) => call[0] === 'error',
+        );
         if (errorCall) {
             (errorCall[1] as (err: Error) => void)(new Error('fail'));
         }
@@ -145,5 +159,4 @@ describe('Deployer', () => {
         expect(exitListener).toHaveBeenCalledWith(0);
         expect(errorListener).toHaveBeenCalledWith(new Error('fail'));
     });
-
 });

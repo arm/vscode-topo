@@ -9,11 +9,10 @@ export class BoardDashboardProvider {
     constructor(
         private readonly context: vscode.ExtensionContext,
         private readonly messageHandler: BoardDashboardMessageHandler,
-        private readonly containersManager: ContainersManager
+        private readonly containersManager: ContainersManager,
     ) {}
 
-    public async activate(): Promise<void> {
-    }
+    public async activate(): Promise<void> {}
 
     public showDashboard(): void {
         const webviewPanel = vscode.window.createWebviewPanel(
@@ -22,18 +21,21 @@ export class BoardDashboardProvider {
             vscode.ViewColumn.One,
             {
                 enableScripts: true,
-                retainContextWhenHidden: true
-            }
+                retainContextWhenHidden: true,
+            },
         );
-        webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview);
+        webviewPanel.webview.html = this.getHtmlForWebview(
+            webviewPanel.webview,
+        );
 
         const dataUpdateDisposable = this.containersManager.onDataUpdate(() => {
             this.messageHandler.renderBoardDashboard(webviewPanel.webview);
         });
 
-        const onMessageReceiveDisposable = webviewPanel.webview.onDidReceiveMessage(e =>
-            this.messageHandler.handleMessage(webviewPanel.webview, e)
-        );
+        const onMessageReceiveDisposable =
+            webviewPanel.webview.onDidReceiveMessage((e) =>
+                this.messageHandler.handleMessage(webviewPanel.webview, e),
+            );
         webviewPanel.onDidDispose(() => {
             dataUpdateDisposable.dispose();
             onMessageReceiveDisposable.dispose();
@@ -42,18 +44,10 @@ export class BoardDashboardProvider {
 
     private getHtmlForWebview(webview: vscode.Webview): string {
         const scriptUri = webview.asWebviewUri(
-            vscode.Uri.joinPath(
-                this.context.extensionUri,
-                'dist',
-                'main.js'
-            )
+            vscode.Uri.joinPath(this.context.extensionUri, 'dist', 'main.js'),
         );
         const styleUri = webview.asWebviewUri(
-            vscode.Uri.joinPath(
-                this.context.extensionUri,
-                'dist',
-                'main.css'
-            )
+            vscode.Uri.joinPath(this.context.extensionUri, 'dist', 'main.css'),
         );
 
         return `<!DOCTYPE html>

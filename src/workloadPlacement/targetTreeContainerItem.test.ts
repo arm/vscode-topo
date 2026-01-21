@@ -5,10 +5,7 @@ import { BOARD_AMBIENT_RUNTIME } from '../manifest';
 import { ContainerItem } from './containersManager';
 
 describe('TargetTreeContainerItem', () => {
-    const target = new Target(
-        'topo',
-        'user@topo.local',
-    );
+    const target = new Target('topo', 'user@topo.local');
     it('should set label (image), description (name - uptime), tooltip, contextValue, command, and iconPath', () => {
         const container: ContainerItem = {
             id: 'id123',
@@ -38,8 +35,12 @@ describe('TargetTreeContainerItem', () => {
 
         // Check iconPath for running status
         expect(item.iconPath).toBeInstanceOf(vscode.ThemeIcon);
-        expect((item.iconPath as vscode.ThemeIcon).id).toBe('debug-breakpoint-log');
-        expect((item.iconPath as vscode.ThemeIcon).color).toEqual({ id: 'terminal.ansiGreen' });
+        expect((item.iconPath as vscode.ThemeIcon).id).toBe(
+            'debug-breakpoint-log',
+        );
+        expect((item.iconPath as vscode.ThemeIcon).color).toEqual({
+            id: 'terminal.ansiGreen',
+        });
     });
 
     it('should set correct iconPath for stopped container', () => {
@@ -60,7 +61,11 @@ describe('TargetTreeContainerItem', () => {
         };
         const item = new TargetTreeContainerItem(container);
         expect(item.iconPath).toBeInstanceOf(vscode.ThemeIcon);
-        expect((item.iconPath as vscode.ThemeIcon).id).toBe('debug-breakpoint-log');
-        expect((item.iconPath as vscode.ThemeIcon).color).toEqual({ id: 'terminal.ansiWhite' });
+        expect((item.iconPath as vscode.ThemeIcon).id).toBe(
+            'debug-breakpoint-log',
+        );
+        expect((item.iconPath as vscode.ThemeIcon).color).toEqual({
+            id: 'terminal.ansiWhite',
+        });
     });
 });

@@ -38,9 +38,9 @@ describe('ensureTargetTreeContainerItem', () => {
                 id: 'abc123',
                 ssh: 'root@test-host',
                 displayName: '',
-                toJSON: function (): { id: string; ssh: string; } {
+                toJSON: function (): { id: string; ssh: string } {
                     throw new Error('Function not implemented.');
-                }
+                },
             },
         };
         const instanceLike = new TargetTreeContainerItem(containerItem);
@@ -71,6 +71,10 @@ describe('ensureTargetTreeContainerItem', () => {
         const op = () => ensureTargetTreeContainerItem(undefined);
 
         expect(op).toThrow(errMsg);
-        expect(logger.error).toHaveBeenCalledWith(errMsg, loggerErrMsg, undefined);
+        expect(logger.error).toHaveBeenCalledWith(
+            errMsg,
+            loggerErrMsg,
+            undefined,
+        );
     });
 });

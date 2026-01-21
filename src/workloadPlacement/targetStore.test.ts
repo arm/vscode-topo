@@ -5,7 +5,10 @@ import { Target } from './target';
 jest.mock('vscode');
 jest.mock('../util/logger');
 
-type Watcher = Pick<vscode.FileSystemWatcher, 'onDidCreate' | 'onDidChange' | 'onDidDelete' | 'dispose'>;
+type Watcher = Pick<
+    vscode.FileSystemWatcher,
+    'onDidCreate' | 'onDidChange' | 'onDidDelete' | 'dispose'
+>;
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -21,11 +24,15 @@ function createMockContext() {
     const globalStorageUri = vscode.Uri.parse('file:///fake/globalStorage');
     const globalState = {
         get: (k: string) => globalMap.get(k),
-        update: async (k: string, v: string | undefined) => { globalMap.set(k, v); },
+        update: async (k: string, v: string | undefined) => {
+            globalMap.set(k, v);
+        },
     } as unknown as vscode.ExtensionContext['globalState'];
     const workspaceState = {
         get: (k: string) => workspaceMap.get(k),
-        update: async (k: string, v: string | undefined) => { workspaceMap.set(k, v); },
+        update: async (k: string, v: string | undefined) => {
+            workspaceMap.set(k, v);
+        },
     } as unknown as vscode.Memento;
 
     const context: TargetStoreContext = {
@@ -38,24 +45,27 @@ function createMockContext() {
 }
 
 describe('TargetStore', () => {
-
     const emitter = new vscode.EventEmitter<vscode.Uri>();
-    const fsWatchers: { pattern: string, watcher: Watcher }[] = [];
-    (vscode.workspace.createFileSystemWatcher as jest.Mock).mockImplementation((pattern) => {
-        const watcher = {
-            onDidCreate: emitter.event,
-            onDidChange: emitter.event,
-            onDidDelete: emitter.event,
-            dispose: () => {}
-        };
-        fsWatchers.push({ pattern, watcher });
-        return watcher;
-    });
-    (vscode.workspace.fs.writeFile as jest.Mock).mockImplementation(async (uri, _content) => {
-        for (const _entry of fsWatchers) {
-            emitter.fire(uri);
-        }
-    });
+    const fsWatchers: { pattern: string; watcher: Watcher }[] = [];
+    (vscode.workspace.createFileSystemWatcher as jest.Mock).mockImplementation(
+        (pattern) => {
+            const watcher = {
+                onDidCreate: emitter.event,
+                onDidChange: emitter.event,
+                onDidDelete: emitter.event,
+                dispose: () => {},
+            };
+            fsWatchers.push({ pattern, watcher });
+            return watcher;
+        },
+    );
+    (vscode.workspace.fs.writeFile as jest.Mock).mockImplementation(
+        async (uri, _content) => {
+            for (const _entry of fsWatchers) {
+                emitter.fire(uri);
+            }
+        },
+    );
 
     beforeEach(() => {
         (TargetStore as any).instance = undefined;
@@ -71,7 +81,7 @@ describe('TargetStore', () => {
 
         await expect(addTargetOperation).resolves.toBeUndefined();
         const targets = store.getTargets();
-        expect(targets.some(x => x.id === 't-success')).toBe(true);
+        expect(targets.some((x) => x.id === 't-success')).toBe(true);
         const raw = context.globalState.get('targets') as string | undefined;
         expect(typeof raw).toBe('string');
         const parsed = JSON.parse(raw || '{}');
@@ -81,7 +91,9 @@ describe('TargetStore', () => {
 
     it('throws an error when addTarget fails', async () => {
         const { context } = createMockContext();
-        (context.globalState as any).update = jest.fn().mockRejectedValue(new Error('persist-fail'));
+        (context.globalState as any).update = jest
+            .fn()
+            .mockRejectedValue(new Error('persist-fail'));
         const store = TargetStore.getInstance(context);
         const t = new Target('t-fail', 'fail@example.com');
 
@@ -100,7 +112,7 @@ describe('TargetStore', () => {
         await store.addTarget(t);
 
         const targets = store.getTargets();
-        expect(targets.some(x => x.id === 't1')).toBe(true);
+        expect(targets.some((x) => x.id === 't1')).toBe(true);
 
         const raw = context.globalState.get('targets') as string | undefined;
         expect(typeof raw).toBe('string');
@@ -143,9 +155,15 @@ describe('TargetStore', () => {
         const cb = jest.fn();
         store.onChanged(cb);
         (vscode as any).window.state.focused = false;
-        const signalUri = (vscode as any).Uri.joinPath(context.globalStorageUri, 'targets-update.signal');
+        const signalUri = (vscode as any).Uri.joinPath(
+            context.globalStorageUri,
+            'targets-update.signal',
+        );
 
-        await vscode.workspace.fs.writeFile(signalUri, new TextEncoder().encode('1'));
+        await vscode.workspace.fs.writeFile(
+            signalUri,
+            new TextEncoder().encode('1'),
+        );
         await waitImmediate();
 
         expect(cb).toHaveBeenCalled();
@@ -177,7 +195,7 @@ describe('TargetStore', () => {
         await store.deleteTarget('t-b');
 
         const targets = store.getTargets();
-        expect(targets.some(t => t.id === 't-b')).toBe(false);
+        expect(targets.some((t) => t.id === 't-b')).toBe(false);
         const selected = await store.getSelectedTarget();
         expect(selected).toBeDefined();
         expect(selected?.id).toBe('t-a');
@@ -197,7 +215,7 @@ describe('TargetStore', () => {
         await store.deleteTarget('t-2');
 
         const targets = store.getTargets();
-        expect(targets.some(t => t.id === 't-2')).toBe(false);
+        expect(targets.some((t) => t.id === 't-2')).toBe(false);
         const selected = await store.getSelectedTarget();
         expect(selected).toBeDefined();
         expect(selected?.id).toBe('t-1');

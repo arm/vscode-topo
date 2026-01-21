@@ -7,6 +7,8 @@ describe('TargetTreeSubsystemItem', () => {
         expect(item.label).toBe('Host');
         expect(item.contextValue).toBe('Subsystem Host');
         expect(item.iconPath).toBeInstanceOf(vscode.ThemeIcon);
-        expect(item.collapsibleState).toBe(vscode.TreeItemCollapsibleState.Collapsed);
+        expect(item.collapsibleState).toBe(
+            vscode.TreeItemCollapsibleState.Collapsed,
+        );
     });
 });

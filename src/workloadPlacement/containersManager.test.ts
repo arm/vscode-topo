@@ -14,16 +14,16 @@ const waitImmediate = async () => {
 };
 
 jest.mock('../util/exec', () => ({
-    exec: jest.fn()
+    exec: jest.fn(),
 }));
 jest.mock('../util/logger');
 jest.mock('vscode');
 
 const webServerPortInfo = {
-    "80/tcp": [
-        { HostIp: "0.0.0.0", HostPort: "8080" },
-        { HostIp: "::", HostPort: "8080" }
-    ]
+    '80/tcp': [
+        { HostIp: '0.0.0.0', HostPort: '8080' },
+        { HostIp: '::', HostPort: '8080' },
+    ],
 };
 const mockContainers: DockerPsItem[] = [
     {
@@ -34,7 +34,7 @@ const mockContainers: DockerPsItem[] = [
         Status: 'Up 4 days',
         Labels: 'foo=bar',
         RunningFor: '1h',
-        CreatedAt: '2024-01-01T00:00:00Z'
+        CreatedAt: '2024-01-01T00:00:00Z',
     },
     {
         ID: 'id2',
@@ -44,45 +44,41 @@ const mockContainers: DockerPsItem[] = [
         Status: 'Exited (0) 2 hours ago',
         Labels: 'baz=qux',
         RunningFor: '2h',
-        CreatedAt: '2024-01-02T00:00:00Z'
-    }
+        CreatedAt: '2024-01-02T00:00:00Z',
+    },
 ];
 const serializedWebServerPortInfo = JSON.stringify(webServerPortInfo);
 const dockerCommands = new DockerCommands();
 const defaultContextOutput = {
     stdout: 'default\ntopo\n',
-    stderr: ''
+    stderr: '',
 };
 const defaultPsOutput = {
-    stdout: mockContainers.map(c => JSON.stringify(c)).join('\n'),
-    stderr: ''
+    stdout: mockContainers.map((c) => JSON.stringify(c)).join('\n'),
+    stderr: '',
 };
 const defaultInspectOutput = {
     stdout: [
         `${mockContainers[0].ID};${serializedWebServerPortInfo};${manifest.BOARD_HOST_RUNTIME}`,
-        `${mockContainers[1].ID};{};${manifest.BOARD_AMBIENT_RUNTIME}`
+        `${mockContainers[1].ID};{};${manifest.BOARD_AMBIENT_RUNTIME}`,
     ].join('\n'),
-    stderr: ''
+    stderr: '',
 };
 const defaultStatsOutput = {
     stdout: [
         `${mockContainers[0].ID};2.5%;50MiB / 1GiB`,
-        `${mockContainers[1].ID};0.0%;0B / 1GiB`
+        `${mockContainers[1].ID};0.0%;0B / 1GiB`,
     ].join('\n'),
-    stderr: ''
+    stderr: '',
 };
 const defaultInfoOutput = {
     stdout: 'Server Version: 8',
-    stderr: ''
+    stderr: '',
 };
 const execMock = exec as unknown as jest.Mock;
-const target = new Target(
-    'topo',
-    'user@topo.local',
-);
+const target = new Target('topo', 'user@topo.local');
 
 describe('ContainersManager', () => {
-
     beforeEach(() => {
         jest.useFakeTimers();
         jest.resetAllMocks();
@@ -94,10 +90,9 @@ describe('ContainersManager', () => {
     });
 
     it('getContainersData returns containers with runtime', async () => {
-        execMock
-            .mockImplementation(async (command: string) => {
-                switch (command) {
-                case 'docker context ls --format \'{{.Name}}\'':
+        execMock.mockImplementation(async (command: string) => {
+            switch (command) {
+                case "docker context ls --format '{{.Name}}'":
                     return defaultContextOutput;
                 case `docker --host ssh://${target.ssh} ps -a --format "{{json .}}"`:
                     return defaultPsOutput;
@@ -109,8 +104,8 @@ describe('ContainersManager', () => {
                     return defaultInfoOutput;
                 default:
                     throw Error(`Unexpected command: ${command}`);
-                }
-            });
+            }
+        });
         const boardConnectionChecker = {
             isBoardSshPortOpen: jest.fn().mockResolvedValue(true),
         };
@@ -118,7 +113,11 @@ describe('ContainersManager', () => {
             onChanged: jest.fn(),
             getSelectedTarget: jest.fn().mockResolvedValue(target),
         };
-        const manager = new ContainersManager(boardConnectionChecker, dockerCommands, targetStore);
+        const manager = new ContainersManager(
+            boardConnectionChecker,
+            dockerCommands,
+            targetStore,
+        );
         await manager.activate();
 
         const result = await manager.getContainersData();
@@ -158,10 +157,9 @@ describe('ContainersManager', () => {
     });
 
     it('getContainersData returns empty array on ps error', async () => {
-        execMock
-            .mockImplementation(async (command: string) => {
-                switch (command) {
-                case 'docker context ls --format \'{{.Name}}\'':
+        execMock.mockImplementation(async (command: string) => {
+            switch (command) {
+                case "docker context ls --format '{{.Name}}'":
                     return defaultContextOutput;
                 case `docker --host ssh://${target.ssh} ps -a --format "{{json .}}"`:
                     throw Error('ps error');
@@ -171,8 +169,8 @@ describe('ContainersManager', () => {
                     return defaultInfoOutput;
                 default:
                     throw Error(`Unexpected command: ${command}`);
-                }
-            });
+            }
+        });
         const boardConnectionChecker = {
             isBoardSshPortOpen: jest.fn().mockResolvedValue(true),
         };
@@ -180,7 +178,11 @@ describe('ContainersManager', () => {
             onChanged: jest.fn(),
             getSelectedTarget: jest.fn().mockResolvedValue(target),
         };
-        const manager = new ContainersManager(boardConnectionChecker, dockerCommands, targetStore);
+        const manager = new ContainersManager(
+            boardConnectionChecker,
+            dockerCommands,
+            targetStore,
+        );
         await manager.activate();
 
         const result = await manager.getContainersData();
@@ -188,10 +190,9 @@ describe('ContainersManager', () => {
     });
 
     it('getContainersData returns empty array on parse error', async () => {
-        execMock
-            .mockImplementation(async (command: string) => {
-                switch (command) {
-                case 'docker context ls --format \'{{.Name}}\'':
+        execMock.mockImplementation(async (command: string) => {
+            switch (command) {
+                case "docker context ls --format '{{.Name}}'":
                     return defaultContextOutput;
                 case `docker --host ssh://${target.ssh} ps -a --format "{{json .}}"`:
                     return {
@@ -202,8 +203,8 @@ describe('ContainersManager', () => {
                     return defaultInfoOutput;
                 default:
                     throw Error(`Unexpected command: ${command}`);
-                }
-            });
+            }
+        });
         const boardConnectionChecker = {
             isBoardSshPortOpen: jest.fn().mockResolvedValue(true),
         };
@@ -211,7 +212,11 @@ describe('ContainersManager', () => {
             onChanged: jest.fn(),
             getSelectedTarget: jest.fn().mockResolvedValue(target),
         };
-        const manager = new ContainersManager(boardConnectionChecker, dockerCommands, targetStore);
+        const manager = new ContainersManager(
+            boardConnectionChecker,
+            dockerCommands,
+            targetStore,
+        );
 
         await manager.activate();
 
@@ -220,10 +225,9 @@ describe('ContainersManager', () => {
     });
 
     it('getContainersData caches result after first call', async () => {
-        execMock
-            .mockImplementation(async (command: string) => {
-                switch (command) {
-                case 'docker context ls --format \'{{.Name}}\'':
+        execMock.mockImplementation(async (command: string) => {
+            switch (command) {
+                case "docker context ls --format '{{.Name}}'":
                     return defaultContextOutput;
                 case `docker --host ssh://${target.ssh} ps -a --format "{{json .}}"`:
                     return defaultPsOutput;
@@ -235,8 +239,8 @@ describe('ContainersManager', () => {
                     return defaultInfoOutput;
                 default:
                     throw Error(`Unexpected command: ${command}`);
-                }
-            });
+            }
+        });
         const boardConnectionChecker = {
             isBoardSshPortOpen: jest.fn().mockResolvedValue(true),
         };
@@ -244,7 +248,11 @@ describe('ContainersManager', () => {
             onChanged: jest.fn(),
             getSelectedTarget: jest.fn().mockResolvedValue(target),
         };
-        const manager = new ContainersManager(boardConnectionChecker, dockerCommands, targetStore);
+        const manager = new ContainersManager(
+            boardConnectionChecker,
+            dockerCommands,
+            targetStore,
+        );
         await manager.activate();
 
         const first = await manager.getContainersData();
@@ -257,10 +265,9 @@ describe('ContainersManager', () => {
     });
 
     it('startAutoRefresh and stopAutoRefresh manage timer and update data', async () => {
-        execMock
-            .mockImplementation(async (command: string) => {
-                switch (command) {
-                case 'docker context ls --format \'{{.Name}}\'':
+        execMock.mockImplementation(async (command: string) => {
+            switch (command) {
+                case "docker context ls --format '{{.Name}}'":
                     return defaultContextOutput;
                 case `docker --host ssh://${target.ssh} ps -a --format "{{json .}}"`:
                     return defaultPsOutput;
@@ -272,8 +279,8 @@ describe('ContainersManager', () => {
                     return defaultInfoOutput;
                 default:
                     throw Error(`Unexpected command: ${command}`);
-                }
-            });
+            }
+        });
         const boardConnectionChecker = {
             isBoardSshPortOpen: jest.fn().mockResolvedValue(true),
         };
@@ -281,7 +288,11 @@ describe('ContainersManager', () => {
             onChanged: jest.fn(),
             getSelectedTarget: jest.fn().mockResolvedValue(target),
         };
-        const manager = new ContainersManager(boardConnectionChecker, dockerCommands, targetStore);
+        const manager = new ContainersManager(
+            boardConnectionChecker,
+            dockerCommands,
+            targetStore,
+        );
         await manager.activate();
 
         const spy = jest.fn();
@@ -295,10 +306,9 @@ describe('ContainersManager', () => {
     });
 
     it('fires onDataUpdate event', async () => {
-        execMock
-            .mockImplementation(async (command: string) => {
-                switch (command) {
-                case 'docker context ls --format \'{{.Name}}\'':
+        execMock.mockImplementation(async (command: string) => {
+            switch (command) {
+                case "docker context ls --format '{{.Name}}'":
                     return defaultContextOutput;
                 case `docker --host ssh://${target.ssh} ps -a --format "{{json .}}"`:
                     return defaultPsOutput;
@@ -310,8 +320,8 @@ describe('ContainersManager', () => {
                     return defaultInfoOutput;
                 default:
                     throw Error(`Unexpected command: ${command}`);
-                }
-            });
+            }
+        });
         const boardConnectionChecker = {
             isBoardSshPortOpen: jest.fn().mockResolvedValue(true),
         };
@@ -319,7 +329,11 @@ describe('ContainersManager', () => {
             onChanged: jest.fn(),
             getSelectedTarget: jest.fn().mockResolvedValue(target),
         };
-        const manager = new ContainersManager(boardConnectionChecker, dockerCommands, targetStore);
+        const manager = new ContainersManager(
+            boardConnectionChecker,
+            dockerCommands,
+            targetStore,
+        );
         await manager.activate();
 
         const spy = jest.fn();
@@ -332,10 +346,9 @@ describe('ContainersManager', () => {
     });
 
     it('resolves when docker stop succeeds', async () => {
-        execMock
-            .mockImplementation(async (command: string) => {
-                switch (command) {
-                case 'docker context ls --format \'{{.Name}}\'':
+        execMock.mockImplementation(async (command: string) => {
+            switch (command) {
+                case "docker context ls --format '{{.Name}}'":
                     return defaultContextOutput;
                 case `docker --host ssh://${target.ssh} ps -a --format "{{json .}}"`:
                     return defaultPsOutput;
@@ -347,8 +360,8 @@ describe('ContainersManager', () => {
                     return defaultInfoOutput;
                 default:
                     throw Error(`Unexpected command: ${command}`);
-                }
-            });
+            }
+        });
         const boardConnectionChecker = {
             isBoardSshPortOpen: jest.fn().mockResolvedValue(true),
         };
@@ -356,26 +369,29 @@ describe('ContainersManager', () => {
             onChanged: jest.fn(),
             getSelectedTarget: jest.fn().mockResolvedValue(target),
         };
-        const manager = new ContainersManager(boardConnectionChecker, dockerCommands, targetStore);
+        const manager = new ContainersManager(
+            boardConnectionChecker,
+            dockerCommands,
+            targetStore,
+        );
         await manager.activate();
 
         execMock.mockResolvedValueOnce({
             stdout: 'Stopped',
-            stderr: ''
+            stderr: '',
         });
 
         await expect(manager.stopContainer('abc123')).resolves.toBeUndefined();
 
         expect(exec).toHaveBeenCalledWith(
-            `docker --host ssh://${target.ssh} stop abc123`
+            `docker --host ssh://${target.ssh} stop abc123`,
         );
     });
 
     it('rejects when docker stop fails', async () => {
-        execMock
-            .mockImplementation(async (command: string) => {
-                switch (command) {
-                case 'docker context ls --format \'{{.Name}}\'':
+        execMock.mockImplementation(async (command: string) => {
+            switch (command) {
+                case "docker context ls --format '{{.Name}}'":
                     return defaultContextOutput;
                 case `docker --host ssh://${target.ssh} ps -a --format "{{json .}}"`:
                     return defaultPsOutput;
@@ -387,8 +403,8 @@ describe('ContainersManager', () => {
                     return defaultInfoOutput;
                 default:
                     throw Error(`Unexpected command: ${command}`);
-                }
-            });
+            }
+        });
         const boardConnectionChecker = {
             isBoardSshPortOpen: jest.fn().mockResolvedValue(true),
         };
@@ -396,10 +412,14 @@ describe('ContainersManager', () => {
             onChanged: jest.fn(),
             getSelectedTarget: jest.fn().mockResolvedValue(target),
         };
-        const manager = new ContainersManager(boardConnectionChecker, dockerCommands, targetStore);
+        const manager = new ContainersManager(
+            boardConnectionChecker,
+            dockerCommands,
+            targetStore,
+        );
         await manager.activate();
         execMock.mockResolvedValue({
-            stderr: 'fail'
+            stderr: 'fail',
         });
 
         const stopOperation = manager.stopContainer('abc123');
@@ -408,10 +428,9 @@ describe('ContainersManager', () => {
     });
 
     it('resolves when docker start succeeds', async () => {
-        execMock
-            .mockImplementation(async (command: string) => {
-                switch (command) {
-                case 'docker context ls --format \'{{.Name}}\'':
+        execMock.mockImplementation(async (command: string) => {
+            switch (command) {
+                case "docker context ls --format '{{.Name}}'":
                     return defaultContextOutput;
                 case `docker --host ssh://${target.ssh} ps -a --format "{{json .}}"`:
                     return defaultPsOutput;
@@ -423,8 +442,8 @@ describe('ContainersManager', () => {
                     return defaultInfoOutput;
                 default:
                     throw Error(`Unexpected command: ${command}`);
-                }
-            });
+            }
+        });
         const boardConnectionChecker = {
             isBoardSshPortOpen: jest.fn().mockResolvedValue(true),
         };
@@ -432,11 +451,15 @@ describe('ContainersManager', () => {
             onChanged: jest.fn(),
             getSelectedTarget: jest.fn().mockResolvedValue(target),
         };
-        const manager = new ContainersManager(boardConnectionChecker, dockerCommands, targetStore);
+        const manager = new ContainersManager(
+            boardConnectionChecker,
+            dockerCommands,
+            targetStore,
+        );
         await manager.activate();
         execMock.mockResolvedValueOnce({
             stdout: 'Started',
-            stderr: ''
+            stderr: '',
         });
 
         await expect(manager.startContainer('abc123')).resolves.toBeUndefined();
@@ -447,10 +470,9 @@ describe('ContainersManager', () => {
     });
 
     it('rejects when docker start fails', async () => {
-        execMock
-            .mockImplementation(async (command: string) => {
-                switch (command) {
-                case 'docker context ls --format \'{{.Name}}\'':
+        execMock.mockImplementation(async (command: string) => {
+            switch (command) {
+                case "docker context ls --format '{{.Name}}'":
                     return defaultContextOutput;
                 case `docker --host ssh://${target.ssh} ps -a --format "{{json .}}"`:
                     return defaultPsOutput;
@@ -462,8 +484,8 @@ describe('ContainersManager', () => {
                     return defaultInfoOutput;
                 default:
                     throw Error(`Unexpected command: ${command}`);
-                }
-            });
+            }
+        });
         const boardConnectionChecker = {
             isBoardSshPortOpen: jest.fn().mockResolvedValue(true),
         };
@@ -471,10 +493,14 @@ describe('ContainersManager', () => {
             onChanged: jest.fn(),
             getSelectedTarget: jest.fn().mockResolvedValue(target),
         };
-        const manager = new ContainersManager(boardConnectionChecker, dockerCommands, targetStore);
+        const manager = new ContainersManager(
+            boardConnectionChecker,
+            dockerCommands,
+            targetStore,
+        );
         await manager.activate();
         execMock.mockResolvedValueOnce({
-            stderr: 'fail'
+            stderr: 'fail',
         });
 
         const startOperation = manager.startContainer('abc123');
@@ -484,17 +510,16 @@ describe('ContainersManager', () => {
 
     it('updates when targetStore onChanged fires (re-queries selected target)', async () => {
         const newTarget = new Target('other-id', 'bob@other.local');
-        execMock
-            .mockImplementation(async (command: string) => {
-                switch (command) {
+        execMock.mockImplementation(async (command: string) => {
+            switch (command) {
                 case `ssh ${target.ssh} 'docker info'`:
                     return defaultInfoOutput;
                 case `ssh ${newTarget.ssh} 'docker info'`:
                     return defaultInfoOutput;
                 default:
                     throw Error(`Unexpected command: ${command}`);
-                }
-            });
+            }
+        });
         let currentSelected: Target | null = target;
         const onChangeEmitter = new vscode.EventEmitter<void>();
         const boardConnectionChecker = {
@@ -502,11 +527,19 @@ describe('ContainersManager', () => {
         };
         const targetStore = {
             onChanged: onChangeEmitter.event,
-            getSelectedTarget: jest.fn().mockImplementation(async () => currentSelected),
+            getSelectedTarget: jest
+                .fn()
+                .mockImplementation(async () => currentSelected),
         };
-        const manager = new ContainersManager(boardConnectionChecker, dockerCommands, targetStore);
+        const manager = new ContainersManager(
+            boardConnectionChecker,
+            dockerCommands,
+            targetStore,
+        );
         await manager.activate();
-        expect((targetStore.getSelectedTarget as jest.Mock).mock.calls.length).toBeGreaterThanOrEqual(1);
+        expect(
+            (targetStore.getSelectedTarget as jest.Mock).mock.calls.length,
+        ).toBeGreaterThanOrEqual(1);
         const dataUpdateSpy = jest.fn();
         manager.onDataUpdate(dataUpdateSpy);
         currentSelected = newTarget;
@@ -514,6 +547,8 @@ describe('ContainersManager', () => {
         onChangeEmitter.fire();
         await waitImmediate();
 
-        expect((targetStore.getSelectedTarget as jest.Mock).mock.calls.length).toBeGreaterThanOrEqual(2);
+        expect(
+            (targetStore.getSelectedTarget as jest.Mock).mock.calls.length,
+        ).toBeGreaterThanOrEqual(2);
     });
 });

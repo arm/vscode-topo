@@ -4,12 +4,15 @@ import { Deploy } from './actions/deploy';
 import { logger } from './util/logger';
 import { getErrorMessage } from './util/getErrorMessage';
 
-export type MessageHandlerTopoCli = Pick<TopoCli, 'getProject' | 'getConfigMetadata' >;
+export type MessageHandlerTopoCli = Pick<
+    TopoCli,
+    'getProject' | 'getConfigMetadata'
+>;
 
 export class MessageHandler {
     constructor(
-      private readonly topoCli: MessageHandlerTopoCli,
-      private readonly deploy: Pick<Deploy, 'deploy'>,
+        private readonly topoCli: MessageHandlerTopoCli,
+        private readonly deploy: Pick<Deploy, 'deploy'>,
     ) {}
 
     public renderComposeEditor(
@@ -25,11 +28,9 @@ export class MessageHandler {
         });
     }
 
-    private handleShowQuickPick(
-        items: string[]
-    ): Promise<string | undefined> {
+    private handleShowQuickPick(items: string[]): Promise<string | undefined> {
         return new Promise((resolve) => {
-            vscode.window.showQuickPick(items).then(selected => {
+            vscode.window.showQuickPick(items).then((selected) => {
                 resolve(selected);
             });
         });
@@ -39,16 +40,18 @@ export class MessageHandler {
         items: string[],
         placeholder: string,
     ): Promise<string | undefined> {
-        return new Promise(resolve => {
+        return new Promise((resolve) => {
             const qp = vscode.window.createQuickPick();
 
             qp.title = placeholder;
             qp.matchOnDescription = true;
-            qp.items = items.map(label => ({ label }));
+            qp.items = items.map((label) => ({ label }));
 
             qp.onDidAccept(() => {
                 const text = qp.value.trim();
-                resolve(qp.selectedItems.length ? qp.selectedItems[0].label : text);
+                resolve(
+                    qp.selectedItems.length ? qp.selectedItems[0].label : text,
+                );
                 qp.hide();
             });
 
@@ -64,54 +67,58 @@ export class MessageHandler {
         webview: vscode.Webview,
         document: vscode.TextDocument,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        e: any
+        e: any,
     ): Promise<void> {
         switch (e.type) {
-        case 'show-quick-pick':
-            try {
-                const result = await this.handleShowQuickPick(e.items);
-                if (result) {
+            case 'show-quick-pick':
+                try {
+                    const result = await this.handleShowQuickPick(e.items);
+                    if (result) {
+                        webview.postMessage({
+                            type: 'quick-pick-result',
+                            result,
+                        });
+                    }
+                } catch (err) {
+                    logger.error('Error in show-quick-pick', err);
+                }
+                break;
+            case 'create-quick-pick':
+                try {
+                    const result = await this.handleCreateQuickPick(
+                        e.items,
+                        e.placeholder,
+                    );
+                    if (result) {
+                        webview.postMessage({
+                            type: 'quick-pick-result',
+                            result,
+                        });
+                    }
+                } catch (err) {
+                    logger.error('Error in create-quick-pick', err);
+                }
+                break;
+            case 'deploy':
+                try {
+                    await this.deploy.deploy(document.uri.fsPath);
+                } catch (err) {
+                    const errorMsg = 'Error during deployment';
+                    logger.error(errorMsg, err);
+                    vscode.window.showErrorMessage(
+                        `${errorMsg}: ${getErrorMessage(err)}`,
+                    );
+                } finally {
                     webview.postMessage({
-                        type: 'quick-pick-result',
-                        result,
+                        type: 'deploy-complete',
                     });
                 }
-            } catch (err) {
-                logger.error('Error in show-quick-pick', err);
-            }
-            break;
-        case 'create-quick-pick':
-            try {
-                const result = await this.handleCreateQuickPick(e.items, e.placeholder);
-                if (result) {
-                    webview.postMessage({
-                        type: 'quick-pick-result',
-                        result,
-                    });
-                }
-            } catch (err) {
-                logger.error('Error in create-quick-pick', err);
-            }
-            break;
-        case 'deploy':
-            try {
-                await this.deploy.deploy(document.uri.fsPath);
-            } catch (err) {
-                const errorMsg = 'Error during deployment';
-                logger.error(errorMsg, err);
-                vscode.window.showErrorMessage(`${errorMsg}: ${getErrorMessage(err)}`);
-            }
-            finally {
-                webview.postMessage({
-                    type: 'deploy-complete',
-                });
-            }
-            break;
-        case 'compose-editor-webview-ready':
-            this.renderComposeEditor(webview, document);
-            break;
-        default:
-            logger.warn(`Unknown message type: ${e.type}`);
+                break;
+            case 'compose-editor-webview-ready':
+                this.renderComposeEditor(webview, document);
+                break;
+            default:
+                logger.warn(`Unknown message type: ${e.type}`);
         }
     }
 }

@@ -1,5 +1,8 @@
 import { Target } from '../workloadPlacement/target';
-import { ContainersManager, ContainerItem } from '../workloadPlacement/containersManager';
+import {
+    ContainersManager,
+    ContainerItem,
+} from '../workloadPlacement/containersManager';
 import { ContainerOpenInBrowser } from './containerOpenInBrowser';
 import vscode from 'vscode';
 import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
@@ -12,10 +15,7 @@ describe('ContainerOpenInBrowser', () => {
     let containersManager: jest.Mocked<ContainersManager>;
     let context: any;
     const registerCommandMock = vscode.commands.registerCommand as jest.Mock;
-    const target = new Target(
-        'topo',
-        'user@topo.local',
-    );
+    const target = new Target('topo', 'user@topo.local');
     const mockContainer: ContainerItem = {
         id: 'abc123',
         name: 'mock',
@@ -36,7 +36,7 @@ describe('ContainerOpenInBrowser', () => {
         jest.clearAllMocks();
         containersManager = {
             getContainersData: jest.fn(),
-            stopContainer: jest.fn()
+            stopContainer: jest.fn(),
         } as any;
         context = { subscriptions: [] };
     });
@@ -46,14 +46,15 @@ describe('ContainerOpenInBrowser', () => {
         const containerOpenInBrowser = new ContainerOpenInBrowser(context);
         await containerOpenInBrowser.activate();
         const openInBrowser = registerCommandMock.mock.calls.find(
-            ([cmd]: [string, any]) => cmd === ContainerOpenInBrowser.openInBrowserCommand
+            ([cmd]: [string, any]) =>
+                cmd === ContainerOpenInBrowser.openInBrowserCommand,
         )?.[1];
         const port = '8080:80';
         const item = {
             id: 'abc123',
             ports: [port],
             state: 'running',
-            target
+            target,
         } as ContainerItem;
         const treeItem = new TargetTreeContainerItem(item);
 
@@ -61,7 +62,9 @@ describe('ContainerOpenInBrowser', () => {
 
         const publishedPort = port.split(':')[0];
         const url = `http://${target.host}:${publishedPort}`;
-        expect(vscode.env.openExternal).toHaveBeenCalledWith(vscode.Uri.parse(url));
+        expect(vscode.env.openExternal).toHaveBeenCalledWith(
+            vscode.Uri.parse(url),
+        );
         expect(vscode.window.showWarningMessage).not.toHaveBeenCalled();
     });
 
@@ -69,19 +72,22 @@ describe('ContainerOpenInBrowser', () => {
         const containerOpenInBrowser = new ContainerOpenInBrowser(context);
         await containerOpenInBrowser.activate();
         const openInBrowser = registerCommandMock.mock.calls.find(
-            ([cmd]: [string, any]) => cmd === ContainerOpenInBrowser.openInBrowserCommand
+            ([cmd]: [string, any]) =>
+                cmd === ContainerOpenInBrowser.openInBrowserCommand,
         )?.[1];
         const item = {
             id: 'abc123',
             ports: [],
             state: 'running',
-            target
+            target,
         } as unknown as ContainerItem;
         const treeItem = new TargetTreeContainerItem(item);
 
         await openInBrowser(treeItem);
 
-        expect(vscode.window.showWarningMessage).toHaveBeenCalledWith('No web ports found for container abc123');
+        expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
+            'No web ports found for container abc123',
+        );
         expect(vscode.env.openExternal).not.toHaveBeenCalled();
     });
 
@@ -89,19 +95,22 @@ describe('ContainerOpenInBrowser', () => {
         const containerOpenInBrowser = new ContainerOpenInBrowser(context);
         await containerOpenInBrowser.activate();
         const openInBrowser = registerCommandMock.mock.calls.find(
-            ([cmd]: [string, any]) => cmd === ContainerOpenInBrowser.openInBrowserCommand
+            ([cmd]: [string, any]) =>
+                cmd === ContainerOpenInBrowser.openInBrowserCommand,
         )?.[1];
         const item = {
             id: 'abc123',
             ports: ['22:22'],
             state: 'running',
-            target
+            target,
         } as ContainerItem;
         const treeItem = new TargetTreeContainerItem(item);
 
         await openInBrowser(treeItem);
 
-        expect(vscode.window.showWarningMessage).toHaveBeenCalledWith('No web ports found for container abc123');
+        expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
+            'No web ports found for container abc123',
+        );
         expect(vscode.env.openExternal).not.toHaveBeenCalled();
     });
 });

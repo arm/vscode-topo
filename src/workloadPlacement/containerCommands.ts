@@ -11,14 +11,14 @@
  * @property {string} CreatedAt - The timestamp indicating when the container was created.
  */
 export interface DockerPsItem {
-  ID: string;
-  Names: string;
-  Image: string;
-  State: string;
-  Status: string;
-  Labels: string;
-  RunningFor: string;
-  CreatedAt: string;
+    ID: string;
+    Names: string;
+    Image: string;
+    State: string;
+    Status: string;
+    Labels: string;
+    RunningFor: string;
+    CreatedAt: string;
 }
 
 export interface ContainerCommands {
@@ -26,17 +26,38 @@ export interface ContainerCommands {
     getCurrentContext(): Promise<string>;
     useContext(contextName: string): Promise<void>;
     getContexts(): Promise<string[]>;
-    ensureContext(contextName: string, boardSshConnection: string): Promise<void>;
+    ensureContext(
+        contextName: string,
+        boardSshConnection: string,
+    ): Promise<void>;
     executeWithContext<T>(
         operation: () => Thenable<T> | T,
         contextName: string,
-        timeout: number
+        timeout: number,
     ): Promise<T>;
-    startContainer(containerId: string, boardSshConnection: string): Promise<void>;
-    stopContainer(containerId: string, boardSshConnection: string): Promise<void>;
-    deleteContainer(containerId: string, boardSshConnection: string): Promise<void>;
+    startContainer(
+        containerId: string,
+        boardSshConnection: string,
+    ): Promise<void>;
+    stopContainer(
+        containerId: string,
+        boardSshConnection: string,
+    ): Promise<void>;
+    deleteContainer(
+        containerId: string,
+        boardSshConnection: string,
+    ): Promise<void>;
     getContainers(boardSshConnection: string): Promise<DockerPsItem[]>;
-    inspectContainers(containerIds: string[], boardSshConnection: string): Promise<string>;
-    containerStats(containerIds: string[], boardSshConnection: string): Promise<string>;
-    getAttachShellCommand(containerId: string, boardSshConnection: string): string;
+    inspectContainers(
+        containerIds: string[],
+        boardSshConnection: string,
+    ): Promise<string>;
+    containerStats(
+        containerIds: string[],
+        boardSshConnection: string,
+    ): Promise<string>;
+    getAttachShellCommand(
+        containerId: string,
+        boardSshConnection: string,
+    ): string;
 }

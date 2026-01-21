@@ -1,6 +1,10 @@
 import * as path from 'path';
 import * as childProcess from 'child_process';
-import { ConfigMetadata, ProjectDescription, TemplateDescription } from './util/types';
+import {
+    ConfigMetadata,
+    ProjectDescription,
+    TemplateDescription,
+} from './util/types';
 import * as vscode from 'vscode';
 import * as manifest from './manifest';
 
@@ -35,7 +39,10 @@ export class TopoCli {
         const sep = process.platform === 'win32' ? ';' : ':';
         this.env.prepend('PATH', this.getBinaryFolder() + sep);
         if (this.defaultSshTarget) {
-            this.env.replace(manifest.TOPO_TARGET_ENV_VAR, this.defaultSshTarget);
+            this.env.replace(
+                manifest.TOPO_TARGET_ENV_VAR,
+                this.defaultSshTarget,
+            );
         }
     }
 
@@ -62,7 +69,9 @@ export class TopoCli {
     public getBinaryPath(): string {
         const binaryFolder = this.getBinaryFolder();
         const isWin = process.platform === 'win32';
-        const binaryName = isWin ? manifest.TOPO_CLI_WINDOWS : manifest.TOPO_CLI;
+        const binaryName = isWin
+            ? manifest.TOPO_CLI_WINDOWS
+            : manifest.TOPO_CLI;
         const base = path.join(binaryFolder, binaryName);
         return base;
     }
@@ -70,8 +79,12 @@ export class TopoCli {
     /** Returns the version string of the binary (via version). */
     public getVersion(): TopoCliVersion {
         const bin = this.getBinaryPath();
-        const out = childProcess.execFileSync(bin, ['--version'], { encoding: 'utf8' });
-        const match = out.match(/topo version (?<version>\S+) \(commit: (?<commit>\S+)\)/i);
+        const out = childProcess.execFileSync(bin, ['--version'], {
+            encoding: 'utf8',
+        });
+        const match = out.match(
+            /topo version (?<version>\S+) \(commit: (?<commit>\S+)\)/i,
+        );
         if (!match || !match.groups) {
             throw new Error(`Failed to parse version output: ${out}`);
         }
@@ -85,7 +98,9 @@ export class TopoCli {
     /** Lists templates (via list-templates). */
     public listTemplates(): TemplateDescription[] {
         const bin = this.getBinaryPath();
-        const out = childProcess.execFileSync(bin, ['list-templates'], { encoding: 'utf8' });
+        const out = childProcess.execFileSync(bin, ['list-templates'], {
+            encoding: 'utf8',
+        });
         const templates = JSON.parse(out);
         return templates;
     }
@@ -93,7 +108,9 @@ export class TopoCli {
     /** Lists config metadata (via get-config-metadata). */
     public getConfigMetadata(): ConfigMetadata {
         const bin = this.getBinaryPath();
-        const out = childProcess.execFileSync(bin, ['get-config-metadata'], { encoding: 'utf8' });
+        const out = childProcess.execFileSync(bin, ['get-config-metadata'], {
+            encoding: 'utf8',
+        });
         return JSON.parse(out);
     }
 
@@ -122,31 +139,30 @@ export class TopoCli {
                     } else {
                         resolve();
                     }
-                }
+                },
             );
         });
     }
 
-    public deploy(projectPath: string, sshTarget?: string): childProcess.ChildProcessWithoutNullStreams {
+    public deploy(
+        projectPath: string,
+        sshTarget?: string,
+    ): childProcess.ChildProcessWithoutNullStreams {
         const cmd = ['deploy'];
         if (sshTarget) {
             cmd.push('--target', sshTarget);
         }
-        return childProcess.spawn(
-            this.getBinaryPath(),
-            cmd,
-            {
-                cwd: projectPath,
-                env: this.getProcessEnv(),
-                detached: true,
-            }
-        );
+        return childProcess.spawn(this.getBinaryPath(), cmd, {
+            cwd: projectPath,
+            env: this.getProcessEnv(),
+            detached: true,
+        });
     }
 
     public getCloneCommand(projectPath: string, source: CloneSource): string[] {
-        const sourceStr = source.type === 'git' ? `git:${source.url}` : `dir:${source.path}`;
+        const sourceStr =
+            source.type === 'git' ? `git:${source.url}` : `dir:${source.path}`;
         const cmd = ['topo', 'clone', projectPath, sourceStr];
         return cmd;
     }
-
 }

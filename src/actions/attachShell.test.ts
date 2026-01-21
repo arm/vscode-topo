@@ -11,14 +11,13 @@ jest.mock('../util/logger');
 describe('AttachShell', () => {
     const registerCommandMock = vscode.commands.registerCommand as jest.Mock;
     const dockerCommands = new DockerCommands();
-    const target = new Target(
-        'topo',
-        'user@topo.local',
-    );
+    const target = new Target('topo', 'user@topo.local');
     const targetStore = {
         getSelectedTarget: jest.fn().mockResolvedValue(target),
     };
-    const context: Pick<vscode.ExtensionContext, 'subscriptions'> = { subscriptions: [] };
+    const context: Pick<vscode.ExtensionContext, 'subscriptions'> = {
+        subscriptions: [],
+    };
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -30,16 +29,27 @@ describe('AttachShell', () => {
     });
 
     it('registers attachShell command on activate', () => {
-        const attachShell = new AttachShell(context, dockerCommands, targetStore);
+        const attachShell = new AttachShell(
+            context,
+            dockerCommands,
+            targetStore,
+        );
         attachShell.activate();
-        expect(vscode.commands.registerCommand).toHaveBeenCalledWith(AttachShell.attachShellCommand, expect.any(Function));
+        expect(vscode.commands.registerCommand).toHaveBeenCalledWith(
+            AttachShell.attachShellCommand,
+            expect.any(Function),
+        );
     });
 
     it('attachShell command opens terminal and sends docker exec', () => {
-        const attachShell = new AttachShell(context, dockerCommands, targetStore);
+        const attachShell = new AttachShell(
+            context,
+            dockerCommands,
+            targetStore,
+        );
         attachShell.activate();
         const attachShellCall = registerCommandMock.mock.calls.find(
-            ([cmd]) => cmd === AttachShell.attachShellCommand
+            ([cmd]) => cmd === AttachShell.attachShellCommand,
         );
         expect(attachShellCall).toBeDefined();
         const handler = attachShellCall[1];
@@ -53,9 +63,14 @@ describe('AttachShell', () => {
 
         handler(treeItem);
 
-        expect(vscode.window.createTerminal).toHaveBeenCalledWith({ name: 'Shell: clabel' });
-        const terminal = (vscode.window.createTerminal as jest.Mock).mock.results[0].value;
-        expect(terminal.sendText).toHaveBeenCalledWith(`docker --host ssh://${target.ssh} exec -it cid sh`);
+        expect(vscode.window.createTerminal).toHaveBeenCalledWith({
+            name: 'Shell: clabel',
+        });
+        const terminal = (vscode.window.createTerminal as jest.Mock).mock
+            .results[0].value;
+        expect(terminal.sendText).toHaveBeenCalledWith(
+            `docker --host ssh://${target.ssh} exec -it cid sh`,
+        );
         expect(terminal.show).toHaveBeenCalled();
     });
 });

@@ -24,19 +24,19 @@ import { Target } from './target';
  * @property {Target} target - The target associated with the container.
  */
 export interface ContainerItem {
-  id: string;
-  name: string;
-  image: string;
-  state: string;
-  status: string;
-  labels: string;
-  runningFor: string;
-  createdAt: string;
-  runtime: string;
-  ports: string[];
-  cpuUsage: string;
-  memUsage: string;
-  target: Target;
+    id: string;
+    name: string;
+    image: string;
+    state: string;
+    status: string;
+    labels: string;
+    runningFor: string;
+    createdAt: string;
+    runtime: string;
+    ports: string[];
+    cpuUsage: string;
+    memUsage: string;
+    target: Target;
 }
 
 export interface BoardState {
@@ -64,13 +64,21 @@ export class ContainersManager {
     private target: Target | undefined;
 
     constructor(
-        private readonly boardConnectionChecker: Pick<BoardConnectionChecker, 'isBoardSshPortOpen'>,
+        private readonly boardConnectionChecker: Pick<
+            BoardConnectionChecker,
+            'isBoardSshPortOpen'
+        >,
         private readonly containerCommands: ContainerCommands,
-        private readonly targetStore: Pick<TargetStore, 'onChanged' | 'getSelectedTarget'>,
+        private readonly targetStore: Pick<
+            TargetStore,
+            'onChanged' | 'getSelectedTarget'
+        >,
     ) {}
 
     private get isBoardAvailable(): boolean {
-        return this.boardState.isReachable && this.boardState.hasContainerRuntime;
+        return (
+            this.boardState.isReachable && this.boardState.hasContainerRuntime
+        );
     }
 
     public async activate(): Promise<void> {
@@ -112,7 +120,8 @@ export class ContainersManager {
                 targetId: undefined,
             };
         }
-        const isBoardReachable = await this.boardConnectionChecker.isBoardSshPortOpen(target.host);
+        const isBoardReachable =
+            await this.boardConnectionChecker.isBoardSshPortOpen(target.host);
         if (!isBoardReachable) {
             return {
                 isReachable: false,
@@ -120,7 +129,8 @@ export class ContainersManager {
                 targetId: target.id,
             };
         }
-        const isBoardContainerRuntimeOn = await this.containerCommands.isContainerRuntimeOn(target.ssh);
+        const isBoardContainerRuntimeOn =
+            await this.containerCommands.isContainerRuntimeOn(target.ssh);
         return {
             isReachable: isBoardReachable,
             hasContainerRuntime: isBoardContainerRuntimeOn,
@@ -186,27 +196,61 @@ export class ContainersManager {
             if (!target) {
                 return [];
             }
-            const items = await this.containerCommands.getContainers(target.ssh);
-            const ids = items.map(item => item.ID);
-            const inspectStdout = await this.containerCommands.inspectContainers(ids, target.ssh);
+            const items = await this.containerCommands.getContainers(
+                target.ssh,
+            );
+            const ids = items.map((item) => item.ID);
+            const inspectStdout =
+                await this.containerCommands.inspectContainers(ids, target.ssh);
             const inspectLines = inspectStdout.trim().split(/\r?\n/);
-            const parsedInspectLines = inspectLines.map(line => line.split(';'));
-            const statsOutput = await this.containerCommands.containerStats(ids, target.ssh);
+            const parsedInspectLines = inspectLines.map((line) =>
+                line.split(';'),
+            );
+            const statsOutput = await this.containerCommands.containerStats(
+                ids,
+                target.ssh,
+            );
             const statsLines = statsOutput.trim().split(/\r?\n/);
-            const parsedStatsLines = statsLines.map(line => line.split(';'));
-            const containersData = items.reduce<ContainerItem[]>((acc, item) => {
-                const containerInspectLine = parsedInspectLines.find(inspectLine => inspectLine[0].slice(0, 12) === item.ID);
-                const containerStatsLine = parsedStatsLines.find(stat => stat[0].slice(0, 12) === item.ID);
-                const ports = containerInspectLine ? this.parsePorts(containerInspectLine[1]) : [];
-                const runtime = containerInspectLine ? containerInspectLine[2] : '';
-                const cpuUsage = containerStatsLine ? containerStatsLine[1] : '';
-                const memUsage = containerStatsLine ? containerStatsLine[2] : '';
-                acc.push(this.createContainerItem(item, runtime, ports, cpuUsage, memUsage, target));
-                return acc;
-            }, []);
+            const parsedStatsLines = statsLines.map((line) => line.split(';'));
+            const containersData = items.reduce<ContainerItem[]>(
+                (acc, item) => {
+                    const containerInspectLine = parsedInspectLines.find(
+                        (inspectLine) =>
+                            inspectLine[0].slice(0, 12) === item.ID,
+                    );
+                    const containerStatsLine = parsedStatsLines.find(
+                        (stat) => stat[0].slice(0, 12) === item.ID,
+                    );
+                    const ports = containerInspectLine
+                        ? this.parsePorts(containerInspectLine[1])
+                        : [];
+                    const runtime = containerInspectLine
+                        ? containerInspectLine[2]
+                        : '';
+                    const cpuUsage = containerStatsLine
+                        ? containerStatsLine[1]
+                        : '';
+                    const memUsage = containerStatsLine
+                        ? containerStatsLine[2]
+                        : '';
+                    acc.push(
+                        this.createContainerItem(
+                            item,
+                            runtime,
+                            ports,
+                            cpuUsage,
+                            memUsage,
+                            target,
+                        ),
+                    );
+                    return acc;
+                },
+                [],
+            );
             return containersData;
         } catch (err: unknown) {
-            const errorMsg = err instanceof Error ? err.message : "Unknown error";
+            const errorMsg =
+                err instanceof Error ? err.message : 'Unknown error';
             logger.error(`Failed to get containers info: ${errorMsg}`);
             return this.containersData;
         }
@@ -222,11 +266,15 @@ export class ContainersManager {
                         return [];
                     }
                     // For each mapping, return host:container
-                    return (arr as Array<{ HostPort?: string; }>)
+                    return (arr as Array<{ HostPort?: string }>)
                         .map((m) => {
-                            const hostPort = m && m.HostPort ? m.HostPort : undefined;
-                            const containerPortNum = containerPort.split('/')[0];
-                            return hostPort ? `${hostPort}:${containerPortNum}` : undefined;
+                            const hostPort =
+                                m && m.HostPort ? m.HostPort : undefined;
+                            const containerPortNum =
+                                containerPort.split('/')[0];
+                            return hostPort
+                                ? `${hostPort}:${containerPortNum}`
+                                : undefined;
                         })
                         .filter((p): p is string => !!p);
                 })
@@ -267,7 +315,9 @@ export class ContainersManager {
     public async stopContainer(containerId: string): Promise<void> {
         const target = this.target;
         if (!target) {
-            throw new Error('Cannot stop container: no target is currently selected');
+            throw new Error(
+                'Cannot stop container: no target is currently selected',
+            );
         }
         return this.containerCommands.stopContainer(containerId, target.ssh);
     }
@@ -275,7 +325,9 @@ export class ContainersManager {
     public async startContainer(containerId: string): Promise<void> {
         const target = this.target;
         if (!target) {
-            throw new Error('Cannot start container: no target is currently selected');
+            throw new Error(
+                'Cannot start container: no target is currently selected',
+            );
         }
         return this.containerCommands.startContainer(containerId, target.ssh);
     }
@@ -283,12 +335,21 @@ export class ContainersManager {
     public async deleteContainer(containerId: string): Promise<void> {
         const target = this.target;
         if (!target) {
-            throw new Error('Cannot delete container: no target is currently selected');
+            throw new Error(
+                'Cannot delete container: no target is currently selected',
+            );
         }
         return this.containerCommands.deleteContainer(containerId, target.ssh);
     }
 
-    private createContainerItem(item: DockerPsItem, runtime: string, ports: string[], cpuUsage: string, memUsage: string, target: Target): ContainerItem {
+    private createContainerItem(
+        item: DockerPsItem,
+        runtime: string,
+        ports: string[],
+        cpuUsage: string,
+        memUsage: string,
+        target: Target,
+    ): ContainerItem {
         return {
             id: item.ID,
             name: item.Names,

@@ -12,7 +12,6 @@ jest.mock('./topoCliVersionChecker', () => {
 });
 
 describe('extension activation', () => {
-
     beforeEach(() => {
         jest.useFakeTimers();
     });
@@ -48,8 +47,12 @@ describe('extension activation', () => {
             workspaceState,
             globalStorageUri,
         } as unknown as vscode.ExtensionContext;
-        (vscode.commands.registerCommand as jest.Mock).mockImplementation(() => ({ dispose: jest.fn() }));
-        (vscode.window.showInformationMessage as jest.Mock).mockImplementation(() => undefined);
+        (vscode.commands.registerCommand as jest.Mock).mockImplementation(
+            () => ({ dispose: jest.fn() }),
+        );
+        (vscode.window.showInformationMessage as jest.Mock).mockImplementation(
+            () => undefined,
+        );
 
         await activate(context);
 

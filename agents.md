@@ -32,14 +32,14 @@ Strive for code that is simple, performant, and robust. When in doubt, err on th
 
 - **Limit function length**: Keep functions concise, ideally under 70 lines. Shorter functions are easier to understand, test, and debug. They promote single responsibility, where each function does one thing well, leading to a more modular and maintainable codebase.
 
-- **Prefer stateful operations higher up the stack**: Adopt a Function Core, Imperative Shell approach. Let the parent function manage state, keeping helpers stateless, calculating changes without directly applying them.  Keep leaf functions pure and focused on specific computations. This results in a core which is easy to extensively unit test, and makes stateful operations easier to trace and debug in the outer layers of the program
+- **Prefer stateful operations higher up the stack**: Adopt a Function Core, Imperative Shell approach. Let the parent function manage state, keeping helpers stateless, calculating changes without directly applying them. Keep leaf functions pure and focused on specific computations. This results in a core which is easy to extensively unit test, and makes stateful operations easier to trace and debug in the outer layers of the program
 
 ### Error Handling
 
 - **Use assertions**: Use assertions to verify that conditions hold true at specific points in the code. Assertions work as internal checks, increase robustness, and simplify debugging.
-  - Assert function arguments and return values: Check that functions receive and return expected values.
-  - Validate invariants: Keep critical conditions stable by asserting invariants during execution.
-  - Use pair assertions: Check critical data at multiple points to catch inconsistencies early.
+    - Assert function arguments and return values: Check that functions receive and return expected values.
+    - Validate invariants: Keep critical conditions stable by asserting invariants during execution.
+    - Use pair assertions: Check critical data at multiple points to catch inconsistencies early.
 
 - **Fail fast on programmer errors**: Detect unexpected conditions immediately, stopping faulty code from continuing.
 

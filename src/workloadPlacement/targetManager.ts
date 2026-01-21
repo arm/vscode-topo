@@ -8,7 +8,6 @@ import { ContainersManager } from './containersManager';
 import { getTreeItemIcon } from './targetTreeBoardItem';
 
 export class TargetManager {
-
     public static readonly viewId = `${manifest.PACKAGE_NAME}.target-manager`;
     public static readonly refreshCommand = `${manifest.PACKAGE_NAME}.refresh`;
     public static readonly addTargetCommand = `${manifest.PACKAGE_NAME}.addTarget`;
@@ -20,39 +19,50 @@ export class TargetManager {
     constructor(
         private readonly context: vscode.ExtensionContext,
         private readonly targetTreeDataProvider: TargetTreeDataProvider,
-        private readonly targetStore: Pick<TargetStore, 'addTarget' | 'setSelected' | 'getSelectedTarget' | 'onChanged'>,
-        private readonly containersManager: Pick<ContainersManager, 'getBoardState' | 'onDataUpdate'>,
+        private readonly targetStore: Pick<
+            TargetStore,
+            'addTarget' | 'setSelected' | 'getSelectedTarget' | 'onChanged'
+        >,
+        private readonly containersManager: Pick<
+            ContainersManager,
+            'getBoardState' | 'onDataUpdate'
+        >,
     ) {}
 
     public async activate() {
-        this.statusBarItem = vscode.window.createStatusBarItem(TargetManager.viewId, vscode.StatusBarAlignment.Left, TargetManager.statusPriority);
+        this.statusBarItem = vscode.window.createStatusBarItem(
+            TargetManager.viewId,
+            vscode.StatusBarAlignment.Left,
+            TargetManager.statusPriority,
+        );
         this.statusBarItem.command = TargetManager.FocusViewCommand;
         const treeView = vscode.window.createTreeView(TargetManager.viewId, {
             treeDataProvider: this.targetTreeDataProvider,
-            showCollapseAll: true
+            showCollapseAll: true,
         });
         await this.safeUpdateStatusBar();
 
         this.context.subscriptions.push(
             this.statusBarItem,
             treeView,
-            vscode.commands.registerCommand(
-                TargetManager.refreshCommand,
-                () => this.targetTreeDataProvider.refresh()
+            vscode.commands.registerCommand(TargetManager.refreshCommand, () =>
+                this.targetTreeDataProvider.refresh(),
             ),
             vscode.commands.registerCommand(
                 TargetManager.addTargetCommand,
-                () => this.addTarget()
+                () => this.addTarget(),
             ),
             this.targetStore.onChanged(() => this.safeUpdateStatusBar()),
-            this.containersManager.onDataUpdate(() => this.safeUpdateStatusBar()),
+            this.containersManager.onDataUpdate(() =>
+                this.safeUpdateStatusBar(),
+            ),
         );
     }
 
     private async addTarget(): Promise<Target | undefined> {
         const ssh = await vscode.window.showInputBox({
             title: 'Enter a connection string for the target',
-            placeHolder: 'root@192.168.1.1'
+            placeHolder: 'root@192.168.1.1',
         });
         if (!ssh?.trim()) {
             return;
@@ -60,7 +70,7 @@ export class TargetManager {
 
         const id = await vscode.window.showInputBox({
             title: 'Enter a unique id for the target',
-            placeHolder: ssh
+            placeHolder: ssh,
         });
         if (!id?.trim()) {
             return;
@@ -87,8 +97,13 @@ export class TargetManager {
         if (target) {
             const boardState = await this.containersManager.getBoardState();
             const connectionReady = target.id === boardState.targetId;
-            const targetReady = boardState.isReachable && boardState.hasContainerRuntime;
-            const targetTreeIcon = getTreeItemIcon(true, connectionReady, targetReady);
+            const targetReady =
+                boardState.isReachable && boardState.hasContainerRuntime;
+            const targetTreeIcon = getTreeItemIcon(
+                true,
+                connectionReady,
+                targetReady,
+            );
             const iconId = targetTreeIcon?.id || 'pass-filled';
             this.statusBarItem.text = `$(${iconId}) ${target.id}`;
             this.statusBarItem.tooltip = `Connection String: ${target.ssh}`;
@@ -105,5 +120,4 @@ export class TargetManager {
             logger.error(`Failed to update target manager status bar`, error);
         }
     }
-
 }

@@ -1,43 +1,43 @@
-
 import net from 'net';
 import { logger } from './logger';
 
 export class BoardConnectionChecker {
-
     /**
-    * Checks if the SSH port of the board is open.
-    * @returns {Promise<boolean>} - Returns true if the port is open, false otherwise.
-    */
+     * Checks if the SSH port of the board is open.
+     * @returns {Promise<boolean>} - Returns true if the port is open, false otherwise.
+     */
     public async isBoardSshPortOpen(sshHostname: string): Promise<boolean> {
         try {
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), 2000);
-            const response = await new Promise<{ status: number }>((resolve, reject) => {
-                const socket = new net.Socket();
+            const response = await new Promise<{ status: number }>(
+                (resolve, reject) => {
+                    const socket = new net.Socket();
 
-                // Handle abort signal
-                const onAbort = () => {
-                    socket.destroy();
-                    reject(new Error('Aborted'));
-                };
-                controller.signal.addEventListener('abort', onAbort);
+                    // Handle abort signal
+                    const onAbort = () => {
+                        socket.destroy();
+                        reject(new Error('Aborted'));
+                    };
+                    controller.signal.addEventListener('abort', onAbort);
 
-                socket.setTimeout(2000, () => {
-                    socket.destroy();
-                    reject(new Error('Timeout'));
-                });
+                    socket.setTimeout(2000, () => {
+                        socket.destroy();
+                        reject(new Error('Timeout'));
+                    });
 
-                socket.connect(22, sshHostname, () => {
-                    socket.end();
-                    controller.signal.removeEventListener('abort', onAbort);
-                    resolve({ status: 200 });
-                });
+                    socket.connect(22, sshHostname, () => {
+                        socket.end();
+                        controller.signal.removeEventListener('abort', onAbort);
+                        resolve({ status: 200 });
+                    });
 
-                socket.on('error', (err) => {
-                    controller.signal.removeEventListener('abort', onAbort);
-                    reject(err);
-                });
-            });
+                    socket.on('error', (err) => {
+                        controller.signal.removeEventListener('abort', onAbort);
+                        reject(err);
+                    });
+                },
+            );
             clearTimeout(timeout);
             return response.status === 200;
         } catch (err) {

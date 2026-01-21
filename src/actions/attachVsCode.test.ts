@@ -8,7 +8,7 @@ import { ContainerItem } from '../workloadPlacement/containersManager';
 import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
 
 jest.mock('../util/exec', () => ({
-    exec: jest.fn()
+    exec: jest.fn(),
 }));
 jest.mock('vscode');
 jest.mock('../util/logger');
@@ -26,10 +26,7 @@ describe('attachVsCode', () => {
     let attachVsCode: AttachVsCode;
     const registerCommandMock = vscode.commands.registerCommand as jest.Mock;
     const dockerCommands = new DockerCommands();
-    const target = new Target(
-        'topo',
-        'user@topo.local',
-    );
+    const target = new Target('topo', 'user@topo.local');
     const containerItem: ContainerItem = {
         id: 'abc123',
         name: 'my-container',
@@ -62,22 +59,26 @@ describe('attachVsCode', () => {
     });
 
     it('registers the command', async () => {
-        const registerCommandMock = vscode.commands.registerCommand as jest.Mock;
+        const registerCommandMock = vscode.commands
+            .registerCommand as jest.Mock;
         registerCommandMock.mockReturnValue({ dispose: jest.fn() });
 
         await attachVsCode.activate();
 
-        expect(registerCommandMock).toHaveBeenCalledWith(AttachVsCode.attachVsCodeCommand, expect.any(Function));
+        expect(registerCommandMock).toHaveBeenCalledWith(
+            AttachVsCode.attachVsCodeCommand,
+            expect.any(Function),
+        );
     });
 
-    it('executes attachVsCode command that doesn\'t create context and calls remote-containers.attachToRunningContainer with container id', async () => {
+    it("executes attachVsCode command that doesn't create context and calls remote-containers.attachToRunningContainer with container id", async () => {
         registerCommandMock.mockReturnValue({ dispose: jest.fn() });
         await attachVsCode.activate();
         execMock.mockImplementation(async (command) => {
             if (command === 'docker context show') {
                 return { stdout: 'default\n', stderr: '' };
             }
-            if (command === 'docker context ls --format \'{{.Name}}\'') {
+            if (command === "docker context ls --format '{{.Name}}'") {
                 return { stdout: 'default\ntopo.local\n', stderr: '' };
             }
             if (command === `docker context use ${dockerContext}`) {
@@ -89,14 +90,24 @@ describe('attachVsCode', () => {
             throw new Error(`Unknown command: ${command}`);
         });
 
-        const commandExecution = executeCommand(AttachVsCode.attachVsCodeCommand, treeItem);
+        const commandExecution = executeCommand(
+            AttachVsCode.attachVsCodeCommand,
+            treeItem,
+        );
         await jest.advanceTimersByTimeAsync(3000);
         await commandExecution;
 
         expect(execMock).toHaveBeenCalledWith('docker context show');
-        expect(execMock).toHaveBeenCalledWith('docker context ls --format \'{{.Name}}\'');
-        expect(execMock).toHaveBeenCalledWith(`docker context use ${dockerContext}`);
-        expect(vscode.commands.executeCommand).toHaveBeenCalledWith('remote-containers.attachToRunningContainer', containerItem.id);
+        expect(execMock).toHaveBeenCalledWith(
+            "docker context ls --format '{{.Name}}'",
+        );
+        expect(execMock).toHaveBeenCalledWith(
+            `docker context use ${dockerContext}`,
+        );
+        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            'remote-containers.attachToRunningContainer',
+            containerItem.id,
+        );
         expect(execMock).toHaveBeenLastCalledWith('docker context use default');
     });
 
@@ -107,7 +118,7 @@ describe('attachVsCode', () => {
             if (command === 'docker context show') {
                 return { stdout: 'default\n', stderr: '' };
             }
-            if (command === 'docker context ls --format \'{{.Name}}\'') {
+            if (command === "docker context ls --format '{{.Name}}'") {
                 return { stdout: 'default\n', stderr: '' };
             }
             if (command === `docker context use ${dockerContext}`) {
@@ -116,21 +127,36 @@ describe('attachVsCode', () => {
             if (command === 'docker context use default') {
                 return { stdout: 'default\n', stderr: '' };
             }
-            if (command === `docker context create ${dockerContext} --docker host=ssh://${target.ssh}`) {
+            if (
+                command ===
+                `docker context create ${dockerContext} --docker host=ssh://${target.ssh}`
+            ) {
                 return { stdout: '', stderr: '' };
             }
             throw new Error(`Unknown command: ${command}`);
         });
 
-        const commandExecution = executeCommand(AttachVsCode.attachVsCodeCommand, treeItem);
+        const commandExecution = executeCommand(
+            AttachVsCode.attachVsCodeCommand,
+            treeItem,
+        );
         await jest.advanceTimersByTimeAsync(3000);
         await commandExecution;
 
         expect(execMock).toHaveBeenCalledWith('docker context show');
-        expect(execMock).toHaveBeenCalledWith('docker context ls --format \'{{.Name}}\'');
-        expect(execMock).toHaveBeenCalledWith(`docker context create ${dockerContext} --docker host=ssh://${target.ssh}`);
-        expect(execMock).toHaveBeenCalledWith(`docker context use ${dockerContext}`);
-        expect(vscode.commands.executeCommand).toHaveBeenCalledWith('remote-containers.attachToRunningContainer', containerItem.id);
+        expect(execMock).toHaveBeenCalledWith(
+            "docker context ls --format '{{.Name}}'",
+        );
+        expect(execMock).toHaveBeenCalledWith(
+            `docker context create ${dockerContext} --docker host=ssh://${target.ssh}`,
+        );
+        expect(execMock).toHaveBeenCalledWith(
+            `docker context use ${dockerContext}`,
+        );
+        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            'remote-containers.attachToRunningContainer',
+            containerItem.id,
+        );
         expect(execMock).toHaveBeenLastCalledWith('docker context use default');
     });
 
@@ -141,10 +167,15 @@ describe('attachVsCode', () => {
             throw new Error('Fail');
         });
 
-        const commandExecution = executeCommand(AttachVsCode.attachVsCodeCommand, treeItem);
+        const commandExecution = executeCommand(
+            AttachVsCode.attachVsCodeCommand,
+            treeItem,
+        );
         await jest.advanceTimersByTimeAsync(3000);
         await commandExecution;
 
-        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith('Failed to attach VS Code to the container abc123');
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
+            'Failed to attach VS Code to the container abc123',
+        );
     });
 });

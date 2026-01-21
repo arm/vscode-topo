@@ -3,10 +3,10 @@ import * as path from 'path';
 import * as manifest from './manifest';
 import { MessageHandler } from './messageHandler';
 
-const isUri = (uri: unknown): uri is vscode.Uri => (uri as vscode.Uri).path !== undefined;
+const isUri = (uri: unknown): uri is vscode.Uri =>
+    (uri as vscode.Uri).path !== undefined;
 
 export class ComposeEditorProvider implements vscode.CustomTextEditorProvider {
-
     public static readonly viewType = `${manifest.PACKAGE_NAME}.composeEditor`;
     public static readonly sourceCommand = `${manifest.PACKAGE_NAME}.showSource`;
     public static readonly previewCommand = `${manifest.PACKAGE_NAME}.showPreview`;
@@ -24,7 +24,7 @@ export class ComposeEditorProvider implements vscode.CustomTextEditorProvider {
     public async activate(): Promise<void> {
         const editorOptions = {
             webviewOptions: {
-                retainContextWhenHidden: true
+                retainContextWhenHidden: true,
             },
         };
         this.context.subscriptions.push(
@@ -43,7 +43,7 @@ export class ComposeEditorProvider implements vscode.CustomTextEditorProvider {
             ),
             vscode.commands.registerCommand(
                 ComposeEditorProvider.previewCommand,
-                async (uri: vscode.Uri | undefined) => this.preview(uri)
+                async (uri: vscode.Uri | undefined) => this.preview(uri),
             ),
         );
     }
@@ -51,31 +51,41 @@ export class ComposeEditorProvider implements vscode.CustomTextEditorProvider {
     public async resolveCustomTextEditor(
         document: vscode.TextDocument,
         webviewPanel: vscode.WebviewPanel,
-        _token: vscode.CancellationToken
+        _token: vscode.CancellationToken,
     ): Promise<void> {
         this.createWebview(webviewPanel, document);
     }
 
-    private createWebview(webviewPanel: vscode.WebviewPanel, document: vscode.TextDocument) {
+    private createWebview(
+        webviewPanel: vscode.WebviewPanel,
+        document: vscode.TextDocument,
+    ) {
         webviewPanel.webview.options = {
             enableScripts: true,
             localResourceRoots: [
                 vscode.Uri.file(path.join(this.context.extensionPath, 'dist')),
                 vscode.Uri.file(path.join(this.context.extensionPath, 'media')),
-            ]
+            ],
         };
 
-        webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview);
+        webviewPanel.webview.html = this.getHtmlForWebview(
+            webviewPanel.webview,
+        );
         this.views.set(document.uri.toString(), webviewPanel);
 
         const changeDocSub = this.subscribeToDocumentChanges(
             webviewPanel,
-            document
+            document,
         );
 
-        const onMessageReceiveDisposable = webviewPanel.webview.onDidReceiveMessage(
-            e => this.messageHandler.handleMessage(webviewPanel.webview, document, e)
-        );
+        const onMessageReceiveDisposable =
+            webviewPanel.webview.onDidReceiveMessage((e) =>
+                this.messageHandler.handleMessage(
+                    webviewPanel.webview,
+                    document,
+                    e,
+                ),
+            );
 
         webviewPanel.onDidDispose(() => {
             this.views.delete(document.uri.toString());
@@ -84,7 +94,10 @@ export class ComposeEditorProvider implements vscode.CustomTextEditorProvider {
         });
     }
 
-    protected async preview(uri: vscode.Uri | undefined, openToSide = false): Promise<void> {
+    protected async preview(
+        uri: vscode.Uri | undefined,
+        openToSide = false,
+    ): Promise<void> {
         uri = isUri(uri) ? uri : vscode.window.activeTextEditor?.document.uri;
         this.lastViewColumn = vscode.window.activeTextEditor?.viewColumn;
 
@@ -101,7 +114,9 @@ export class ComposeEditorProvider implements vscode.CustomTextEditorProvider {
             // File doesn't exist
         }
         if (!document) {
-            vscode.window.showErrorMessage(`Cannot open document: ${uri.toString()}`);
+            vscode.window.showErrorMessage(
+                `Cannot open document: ${uri.toString()}`,
+            );
             return;
         }
 
@@ -113,7 +128,9 @@ export class ComposeEditorProvider implements vscode.CustomTextEditorProvider {
             const webviewPanel = vscode.window.createWebviewPanel(
                 ComposeEditorProvider.viewType,
                 path.basename(uri.fsPath),
-                openToSide ? vscode.ViewColumn.Beside : vscode.ViewColumn.Active
+                openToSide
+                    ? vscode.ViewColumn.Beside
+                    : vscode.ViewColumn.Active,
             );
             await this.createWebview(webviewPanel, document);
         }
@@ -124,10 +141,9 @@ export class ComposeEditorProvider implements vscode.CustomTextEditorProvider {
         const activeView = views.find(([_uri, view]) => view.active);
         if (activeView) {
             const [uri] = activeView;
-            vscode.window.showTextDocument(
-                vscode.Uri.parse(uri),
-                { viewColumn: this.lastViewColumn },
-            );
+            vscode.window.showTextDocument(vscode.Uri.parse(uri), {
+                viewColumn: this.lastViewColumn,
+            });
         }
     }
 
@@ -138,9 +154,12 @@ export class ComposeEditorProvider implements vscode.CustomTextEditorProvider {
         panel: vscode.WebviewPanel,
         document: vscode.TextDocument,
     ): vscode.Disposable {
-        return vscode.workspace.onDidChangeTextDocument(e => {
+        return vscode.workspace.onDidChangeTextDocument((e) => {
             if (e.document.uri.toString() === document.uri.toString()) {
-                this.messageHandler.renderComposeEditor(panel.webview, document);
+                this.messageHandler.renderComposeEditor(
+                    panel.webview,
+                    document,
+                );
             }
         });
     }
@@ -150,18 +169,10 @@ export class ComposeEditorProvider implements vscode.CustomTextEditorProvider {
      */
     private getHtmlForWebview(webview: vscode.Webview): string {
         const scriptUri = webview.asWebviewUri(
-            vscode.Uri.joinPath(
-                this.context.extensionUri,
-                'dist',
-                'main.js'
-            )
+            vscode.Uri.joinPath(this.context.extensionUri, 'dist', 'main.js'),
         );
         const styleUri = webview.asWebviewUri(
-            vscode.Uri.joinPath(
-                this.context.extensionUri,
-                'dist',
-                'main.css'
-            )
+            vscode.Uri.joinPath(this.context.extensionUri, 'dist', 'main.css'),
         );
 
         return `<!DOCTYPE html>

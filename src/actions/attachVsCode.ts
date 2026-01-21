@@ -7,17 +7,22 @@ import { ensureTargetTreeContainerItem } from './util/ensureTargetTreeContainerI
 import { logger } from '../util/logger';
 
 export class AttachVsCode {
-
     public static readonly attachVsCodeCommand = `${manifest.PACKAGE_NAME}.attachVsCode`;
 
     constructor(
-        private readonly context: Pick<vscode.ExtensionContext, 'subscriptions'>,
+        private readonly context: Pick<
+            vscode.ExtensionContext,
+            'subscriptions'
+        >,
         private readonly containerCommands: ContainerCommands,
     ) {}
 
     public async activate() {
         this.context.subscriptions.push(
-            vscode.commands.registerCommand(AttachVsCode.attachVsCodeCommand, this.attachVsCodeCommandHandler.bind(this))
+            vscode.commands.registerCommand(
+                AttachVsCode.attachVsCodeCommand,
+                this.attachVsCodeCommandHandler.bind(this),
+            ),
         );
     }
 
@@ -36,11 +41,18 @@ export class AttachVsCode {
         const attachVsCodeOperation = () => {
             vscode.commands.executeCommand(
                 'remote-containers.attachToRunningContainer',
-                item.id
+                item.id,
             );
         };
         const dockerContext = getDockerContextName(item.target);
-        await this.containerCommands.ensureContext(dockerContext, item.target.ssh);
-        await this.containerCommands.executeWithContext(attachVsCodeOperation, dockerContext, 3000);
+        await this.containerCommands.ensureContext(
+            dockerContext,
+            item.target.ssh,
+        );
+        await this.containerCommands.executeWithContext(
+            attachVsCodeOperation,
+            dockerContext,
+            3000,
+        );
     }
 }
