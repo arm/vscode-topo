@@ -6,11 +6,11 @@ import { TargetTreeContainerItem } from '../../workloadPlacement/targetTreeConta
  * @param treeNode The tree node to check.
  * @throws Will throw an error if the treeNode is not a TargetTreeContainerItem.
  */
-export function ensureTargetTreeContainerItem(
+export function assertTargetTreeContainerItem(
     treeNode: unknown,
 ): asserts treeNode is TargetTreeContainerItem {
     if (!(treeNode instanceof TargetTreeContainerItem)) {
-        const errMsg = `This operation cannot be performed on this item.`;
+        const errMsg = `This operation cannot be performed on this item`;
         logger.error(
             errMsg,
             `Expected TargetTreeContainerItem but received`,

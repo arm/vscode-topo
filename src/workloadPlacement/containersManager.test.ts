@@ -418,9 +418,7 @@ describe('ContainersManager', () => {
             targetStore,
         );
         await manager.activate();
-        execMock.mockResolvedValue({
-            stderr: 'fail',
-        });
+        execMock.mockRejectedValueOnce(new Error('fail'));
 
         const stopOperation = manager.stopContainer('abc123');
 
@@ -499,9 +497,7 @@ describe('ContainersManager', () => {
             targetStore,
         );
         await manager.activate();
-        execMock.mockResolvedValueOnce({
-            stderr: 'fail',
-        });
+        execMock.mockRejectedValueOnce(new Error('fail'));
 
         const startOperation = manager.startContainer('abc123');
 

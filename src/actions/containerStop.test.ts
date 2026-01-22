@@ -4,6 +4,7 @@ import { ContainerStop } from './containerStop';
 import { Target } from '../workloadPlacement/target';
 import { ContainerItem } from '../workloadPlacement/containersManager';
 import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
+import { TopoError } from '../errors/topoError';
 
 describe('ContainerStop', () => {
     const context: Pick<vscode.ExtensionContext, 'subscriptions'> = {
@@ -72,10 +73,10 @@ describe('ContainerStop', () => {
         expect(stopContainerSpy).toHaveBeenCalledWith('abc123');
     });
 
-    it('shows error message if stopContainer throws', async () => {
+    it('shows error message if stopContainer throws a TopoError', async () => {
         const containersManager = {
             stopContainer: async () => {
-                throw new Error('fail');
+                throw new TopoError('DOCKER', 'fail');
             },
         };
         const containerStop = new ContainerStop(context, containersManager);
@@ -87,7 +88,26 @@ describe('ContainerStop', () => {
         );
 
         expect(showErrorMessageSpy).toHaveBeenCalledWith(
-            expect.stringContaining('Failed to stop the container abc123'),
+            expect.stringContaining(
+                'Failed to stop the container abc123. fail',
+            ),
         );
+    });
+
+    it('re-throw non-TopoError errors from stopContainer', async () => {
+        const containersManager = {
+            stopContainer: async () => {
+                throw new Error('non-TopoError');
+            },
+        };
+        const containerStop = new ContainerStop(context, containersManager);
+        await containerStop.activate();
+
+        await expect(
+            vscode.commands.executeCommand(
+                ContainerStop.stopContainerCommand,
+                treeItem,
+            ),
+        ).rejects.toThrow('non-TopoError');
     });
 });

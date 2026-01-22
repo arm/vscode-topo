@@ -1,6 +1,12 @@
-import { exec } from '../util/exec';
+import { TopoError } from '../errors/topoError';
+import { exec, ExecResult } from '../util/exec';
 import { logger } from '../util/logger';
 import { ContainerCommands, DockerPsItem } from './containerCommands';
+
+export interface DockerError extends Error {
+    stderr: ExecResult['stderr'];
+    stdout: ExecResult['stdout'];
+}
 
 /**
  * Generates a SSH URI based on the board's SSH connection string.
@@ -13,17 +19,62 @@ const getSshUri = (boardSshConnection: string): string => {
 
 /**
  * Checks if a given stderr output indicates an error, ignoring warnings.
- * @param stderr - The collected stderr output to check.
+ * @param err - The collected error output to check.
  * @returns True if there is an error, false otherwise.
  */
-const hasStderrError = (stderr: string): boolean => {
-    const lines = stderr
-        .trim()
-        .split(/\r?\n/)
-        .map((line) => line.trim());
+const hasStderrError = (err: string): boolean => {
+    const lines = err.split(/\r?\n/).map((line) => line.trim());
     return lines.some(
         (line) => line !== '' && !line.toLowerCase().startsWith('warning:'),
     );
+};
+
+/**
+ * Checks if the error is a Docker-related error.
+ * @param err the error to check
+ * @returns true if it's a Docker error, false otherwise
+ */
+const isDockerError = (err: unknown): err is DockerError => {
+    if (!(err instanceof Error)) {
+        return false;
+    }
+    return err.message.startsWith('Command failed: docker ');
+};
+
+/**
+ * Helper to run docker commands, convert errors to TopoError when appropriate,
+ * and log any stderr output as warnings.
+ * @param cmd - The docker command to run.
+ * @param warnMsg - The message to log if there is any stderr output.
+ * @param shouldTreatErrorAsWarning - Optional function to determine if an error should be treated as a warning.
+ * @returns The stdout of the command.
+ */
+const runDockerCmd = async (
+    cmd: string,
+    warnMsg: string,
+    shouldTreatErrorAsWarning?: (err: string) => boolean,
+): Promise<string> => {
+    let res: ExecResult;
+    try {
+        res = await exec(cmd);
+    } catch (err: unknown) {
+        if (isDockerError(err)) {
+            const stderr = err.stderr.toString().trim();
+            if (shouldTreatErrorAsWarning?.(stderr)) {
+                logger.warn(warnMsg, stderr);
+                return err.stdout.toString().trim();
+            }
+            throw new TopoError('DOCKER', stderr, { cause: err });
+        } else {
+            throw err;
+        }
+    }
+    const stderr = res.stderr.toString().trim();
+    if (stderr) {
+        logger.warn(warnMsg, stderr);
+    }
+    const stdout = res.stdout.toString().trim();
+    return stdout;
 };
 
 export class DockerCommands implements ContainerCommands {
@@ -34,12 +85,13 @@ export class DockerCommands implements ContainerCommands {
             const { stdout, stderr } = await exec(
                 `ssh ${boardSshConnection} 'docker info'`,
             );
-            if (hasStderrError(stderr)) {
-                throw new Error(stderr);
-            } else if (stderr.trim().length > 0) {
+            const err = stderr.toString();
+            if (hasStderrError(err)) {
+                throw new Error(err);
+            } else if (err.trim().length > 0) {
                 logger.warn(
                     'Warnings emitted when checking Docker runtime status',
-                    stderr,
+                    err,
                 );
             }
             return stdout.includes('Server Version');
@@ -50,22 +102,15 @@ export class DockerCommands implements ContainerCommands {
     }
 
     public async getCurrentContext(): Promise<string> {
-        const { stdout, stderr } = await exec(`docker context show`);
-        const err = stderr.trim();
-        if (err) {
-            throw new Error(err || 'Failed to get current Docker context');
-        }
-        return stdout.trim();
+        const cmd = `docker context show`;
+        const warnMsg = `Warnings emitted when getting current Docker context`;
+        return runDockerCmd(cmd, warnMsg);
     }
 
     public async getContexts(): Promise<string[]> {
-        const { stdout, stderr } = await exec(
-            `docker context ls --format '{{.Name}}'`,
-        );
-        const err = stderr.trim();
-        if (err) {
-            throw new Error(err || 'Failed to list Docker contexts');
-        }
+        const cmd = `docker context ls --format '{{.Name}}'`;
+        const warnMsg = `Warnings emitted when listing Docker contexts`;
+        const stdout = await runDockerCmd(cmd, warnMsg);
         return stdout
             .trim()
             .split(/\r?\n/)
@@ -73,7 +118,11 @@ export class DockerCommands implements ContainerCommands {
     }
 
     public async useContext(contextName: string): Promise<void> {
-        await exec(`docker context use ${contextName}`);
+        const cmd = `docker context use ${contextName}`;
+        await runDockerCmd(
+            cmd,
+            `Warnings emitted when using Docker context ${contextName}`,
+        );
     }
 
     /**
@@ -83,36 +132,16 @@ export class DockerCommands implements ContainerCommands {
         contextName: string,
         boardSshConnection: string,
     ): Promise<void> {
-        try {
-            const { stdout, stderr } = await exec(
-                `docker context ls --format '{{.Name}}'`,
-            );
-            const readContextsErr = stderr.trim();
-            if (readContextsErr) {
-                throw new Error(
-                    readContextsErr || 'Failed to list Docker contexts',
-                );
-            }
-            const contexts = stdout
-                .trim()
-                .split(/\r?\n/)
-                .filter((c) => c);
-            if (contexts.includes(contextName)) {
-                return;
-            }
-            const { stderr: stderr2 } = await exec(
-                `docker context create ${contextName} --docker host=${getSshUri(boardSshConnection)}`,
-            );
-            const createContextErr = stderr2.trim();
-            if (createContextErr) {
-                throw new Error(
-                    createContextErr || 'Failed to create Docker context',
-                );
-            }
-        } catch (error: unknown) {
-            logger.error('Error ensuring Docker context', error);
-            throw error;
+        const cmd1 = `docker context ls --format '{{.Name}}'`;
+        const warnMsg1 = `Warnings emitted when listing Docker contexts`;
+        const stdout1 = await runDockerCmd(cmd1, warnMsg1);
+        const contexts = stdout1.split(/\r?\n/).filter((c) => c);
+        if (contexts.includes(contextName)) {
+            return;
         }
+        const cmd2 = `docker context create ${contextName} --docker host=${getSshUri(boardSshConnection)}`;
+        const warnMsg2 = `Warnings emitted when creating Docker context ${contextName}`;
+        await runDockerCmd(cmd2, warnMsg2);
     }
 
     public async executeWithContext<T>(
@@ -139,9 +168,9 @@ export class DockerCommands implements ContainerCommands {
     public async getContainers(
         boardSshConnection: string,
     ): Promise<DockerPsItem[]> {
-        const { stdout } = await exec(
-            `docker --host ${getSshUri(boardSshConnection)} ps -a --format "{{json .}}"`,
-        );
+        const cmd = `docker --host ${getSshUri(boardSshConnection)} ps -a --format "{{json .}}"`;
+        const warnMsg = `Warnings emitted when listing containers`;
+        const stdout = await runDockerCmd(cmd, warnMsg);
         const lines = stdout
             .trim()
             .split(/\r?\n/)
@@ -161,35 +190,18 @@ export class DockerCommands implements ContainerCommands {
             return '';
         }
         const ids = containerIds.join(' ');
-        let inspectStdout = '';
-        try {
-            const result = await exec(
-                `docker --host ${getSshUri(boardSshConnection)} inspect ${ids} --format '{{.Id}};{{json .NetworkSettings.Ports}};{{.HostConfig.Runtime}}'`,
+        const cmd = `docker --host ${getSshUri(boardSshConnection)} inspect ${ids} --format '{{.Id}};{{json .NetworkSettings.Ports}};{{.HostConfig.Runtime}}'`;
+        const warnMsg = `Warnings emitted when inspecting containers ${containerIds.join(', ')}`;
+        const isErrorAWarning = (err: string): boolean => {
+            const lines = err
+                .split(/\r?\n/)
+                .map((line) => line.trim())
+                .filter((line) => line !== '');
+            return lines.every((line) =>
+                line.startsWith('Error: No such object:'),
             );
-            inspectStdout = result.stdout;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (err: any) {
-            if (
-                typeof err !== 'object' ||
-                err === null ||
-                !Object.hasOwn(err, 'stderr')
-            ) {
-                throw err;
-            }
-            if (
-                err.stderr
-                    .trim()
-                    .split(/\r?\n/)
-                    .some(
-                        (l: string) => !l.startsWith('Error: No such object:'),
-                    )
-            ) {
-                throw err;
-            }
-            inspectStdout = err.stdout;
-            logger.error('Error inspecting containers', err);
-        }
-        return inspectStdout.trim();
+        };
+        return runDockerCmd(cmd, warnMsg, isErrorAWarning);
     }
 
     public async containerStats(
@@ -200,74 +212,45 @@ export class DockerCommands implements ContainerCommands {
             return '';
         }
         const ids = containerIds.join(' ');
-        let statsStdout = '';
-        try {
-            const result = await exec(
-                `docker --host ${getSshUri(boardSshConnection)} stats ${ids} --no-stream --no-trunc --format '{{.ID}};{{.CPUPerc}};{{.MemUsage}}'`,
+        const cmd = `docker --host ${getSshUri(boardSshConnection)} stats ${ids} --no-stream --no-trunc --format '{{.ID}};{{.CPUPerc}};{{.MemUsage}}'`;
+        const warnMsg = `Warnings emitted when getting container stats for container ${containerIds.join(', ')}`;
+        const isErrorAWarning = (err: string): boolean => {
+            const lines = err
+                .split(/\r?\n/)
+                .map((line) => line.trim())
+                .filter((line) => line !== '');
+            return lines.every((line) =>
+                line.startsWith('Error: No such object:'),
             );
-            statsStdout = result.stdout;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (err: any) {
-            if (
-                typeof err !== 'object' ||
-                err === null ||
-                !Object.hasOwn(err, 'stderr')
-            ) {
-                throw err;
-            }
-            if (
-                err.stderr
-                    .trim()
-                    .split(/\r?\n/)
-                    .some(
-                        (l: string) => !l.startsWith('Error: No such object:'),
-                    )
-            ) {
-                throw err;
-            }
-            statsStdout = err.stdout;
-            logger.error('Error getting container stats', err);
-        }
-        return statsStdout.trim();
+        };
+        return runDockerCmd(cmd, warnMsg, isErrorAWarning);
     }
 
     public async stopContainer(
         containerId: string,
         boardSshConnection: string,
     ): Promise<void> {
-        const { stderr } = await exec(
-            `docker --host ${getSshUri(boardSshConnection)} stop ${containerId}`,
-        );
-        const err = stderr.trim();
-        if (err) {
-            throw new Error(err || 'Failed to stop service');
-        }
+        const cmd = `docker --host ${getSshUri(boardSshConnection)} stop ${containerId}`;
+        const warnMsg = `Warnings emitted when stopping container ${containerId}`;
+        await runDockerCmd(cmd, warnMsg);
     }
 
     public async startContainer(
         containerId: string,
         boardSshConnection: string,
     ): Promise<void> {
-        const { stderr } = await exec(
-            `docker --host ${getSshUri(boardSshConnection)} start ${containerId}`,
-        );
-        const err = stderr.trim();
-        if (err) {
-            throw new Error(err || 'Failed to start service');
-        }
+        const cmd = `docker --host ${getSshUri(boardSshConnection)} start ${containerId}`;
+        const warnMsg = `Warnings emitted when starting container ${containerId}`;
+        await runDockerCmd(cmd, warnMsg);
     }
 
     public async deleteContainer(
         containerId: string,
         boardSshConnection: string,
     ): Promise<void> {
-        const { stderr } = await exec(
-            `docker --host ${getSshUri(boardSshConnection)} rm -f ${containerId}`,
-        );
-        const err = stderr.trim();
-        if (err) {
-            throw new Error(err || 'Failed to delete service');
-        }
+        const cmd = `docker --host ${getSshUri(boardSshConnection)} rm -f ${containerId}`;
+        const warnMsg = `Warnings emitted when deleting container ${containerId}`;
+        await runDockerCmd(cmd, warnMsg);
     }
 
     public getAttachShellCommand(

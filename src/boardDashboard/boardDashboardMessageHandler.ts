@@ -1,10 +1,12 @@
 import * as vscode from 'vscode';
 import { logger } from '../util/logger';
+import { showAndLogError } from '../util/showAndLogError';
 import { ContainersManager } from '../workloadPlacement/containersManager';
 import { ContainerOpenInBrowser } from '../actions/containerOpenInBrowser';
 import { AttachVsCode } from '../actions/attachVsCode';
 import { AttachShell } from '../actions/attachShell';
 import { TargetStore } from '../workloadPlacement/targetStore';
+import { isTopoError } from '../errors/topoError';
 
 export class BoardDashboardMessageHandler {
     constructor(
@@ -23,7 +25,7 @@ export class BoardDashboardMessageHandler {
             logger.error('No target selected, cannot render board dashboard');
             return;
         }
-        webview.postMessage({
+        await webview.postMessage({
             type: 'render-board-dashboard',
             boardState,
             containersData,
@@ -39,42 +41,69 @@ export class BoardDashboardMessageHandler {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         e: any,
     ): Promise<void> {
-        switch (e.type) {
-            case 'start-container':
-                try {
-                    await this.containersManager.startContainer(e.containerId);
-                } catch (err: unknown) {
-                    const errorMsg = `Failed to start the container ${e.containerId}`;
-                    logger.error(errorMsg, err);
-                    vscode.window.showErrorMessage(errorMsg);
-                }
-                logger.info(`Container ${e.containerId} started successfully`);
-                await this.renderBoardDashboard(webview);
-                break;
-            case 'stop-container':
-                try {
-                    await this.containersManager.stopContainer(e.containerId);
-                } catch (err: unknown) {
-                    const errorMsg = `Failed to stop the container ${e.containerId}`;
-                    logger.error(errorMsg, err);
-                    vscode.window.showErrorMessage(errorMsg);
-                }
-                logger.info(`Container ${e.containerId} stopped successfully`);
-                await this.renderBoardDashboard(webview);
-                break;
-            case 'delete-container':
-                try {
-                    await this.containersManager.deleteContainer(e.containerId);
-                } catch (err: unknown) {
-                    const errorMsg = `Failed to delete the container ${e.containerId}`;
-                    logger.error(errorMsg, err);
-                    vscode.window.showErrorMessage(errorMsg);
-                }
-                logger.info(`Container ${e.containerId} deleted successfully`);
-                await this.renderBoardDashboard(webview);
-                break;
-            case 'open-container-in-browser':
-                try {
+        try {
+            switch (e.type) {
+                case 'start-container':
+                    try {
+                        await this.containersManager.startContainer(
+                            e.containerId,
+                        );
+                    } catch (err: unknown) {
+                        if (isTopoError(err) && err.code === 'DOCKER') {
+                            showAndLogError(
+                                `Failed to start the container ${e.containerId}`,
+                                err,
+                            );
+                            return;
+                        }
+                        throw err;
+                    }
+                    logger.info(
+                        `Container ${e.containerId} started successfully`,
+                    );
+                    await this.renderBoardDashboard(webview);
+                    break;
+                case 'stop-container':
+                    try {
+                        await this.containersManager.stopContainer(
+                            e.containerId,
+                        );
+                    } catch (err: unknown) {
+                        if (isTopoError(err) && err.code === 'DOCKER') {
+                            showAndLogError(
+                                `Failed to stop the container ${e.containerId}`,
+                                err,
+                            );
+                            return;
+                        }
+                        throw err;
+                    }
+                    logger.info(
+                        `Container ${e.containerId} stopped successfully`,
+                    );
+                    await this.renderBoardDashboard(webview);
+                    break;
+                case 'delete-container':
+                    try {
+                        await this.containersManager.deleteContainer(
+                            e.containerId,
+                        );
+                    } catch (err: unknown) {
+                        if (isTopoError(err) && err.code === 'DOCKER') {
+                            showAndLogError(
+                                `Failed to delete the container ${e.containerId}`,
+                                err,
+                            );
+                            return;
+                        }
+                        throw err;
+                    }
+                    logger.info(
+                        `Container ${e.containerId} deleted successfully`,
+                    );
+                    await this.renderBoardDashboard(webview);
+                    break;
+                case 'open-container-in-browser': {
                     const containersData =
                         await this.containersManager.getContainersData();
                     const container = containersData.find(
@@ -95,14 +124,9 @@ export class BoardDashboardMessageHandler {
                             );
                         }
                     }
-                } catch (err: unknown) {
-                    const errorMsg = `Failed to open the container ${e.containerId} in browser`;
-                    logger.error(errorMsg, err);
-                    vscode.window.showErrorMessage(errorMsg);
+                    break;
                 }
-                break;
-            case 'attach-vscode':
-                try {
+                case 'attach-vscode': {
                     const containersData =
                         await this.containersManager.getContainersData();
                     const container = containersData.find(
@@ -113,16 +137,22 @@ export class BoardDashboardMessageHandler {
                             `Container with ID ${e.containerId} not found`,
                         );
                     } else {
-                        await this.attachVsCode.attachVsCode(container);
+                        try {
+                            await this.attachVsCode.attachVsCode(container);
+                        } catch (err: unknown) {
+                            if (isTopoError(err) && err.code === 'DOCKER') {
+                                showAndLogError(
+                                    `Failed to attach VS Code to the container ${e.containerId}`,
+                                    err,
+                                );
+                                return;
+                            }
+                            throw err;
+                        }
                     }
-                } catch (err: unknown) {
-                    const errorMsg = `Failed to attach VS Code to the container ${e.containerId}`;
-                    logger.error(errorMsg, err);
-                    vscode.window.showErrorMessage(errorMsg);
+                    break;
                 }
-                break;
-            case 'attach-shell':
-                try {
+                case 'attach-shell': {
                     const containersData =
                         await this.containersManager.getContainersData();
                     const container = containersData.find(
@@ -133,34 +163,34 @@ export class BoardDashboardMessageHandler {
                             `Container with ID ${e.containerId} not found`,
                         );
                     } else {
-                        await this.attachShell.attachShell(container);
+                        this.attachShell.attachShell(container);
                     }
-                } catch (err: unknown) {
-                    const errorMsg = `Failed to attach a shell to the container ${e.containerId}`;
-                    logger.error(errorMsg, err);
-                    vscode.window.showErrorMessage(errorMsg);
+                    break;
                 }
-                break;
-            case 'attach-ssh':
-                try {
-                    await this.attachShell.attachSSH();
-                } catch (err: unknown) {
-                    const errorMsg = 'Failed to attach via SSH to the Host';
-                    logger.error(errorMsg, err);
-                    vscode.window.showErrorMessage(errorMsg);
-                }
-                break;
-            case 'board-dashboard-webview-ready':
-                try {
+                case 'attach-ssh':
+                    try {
+                        await this.attachShell.attachSSH();
+                    } catch (err: unknown) {
+                        if (isTopoError(err) && err.code === 'DOCKER') {
+                            showAndLogError(
+                                'Failed to attach SSH to the board',
+                                err,
+                            );
+                            return;
+                        }
+                        throw err;
+                    }
+                    break;
+                case 'board-dashboard-webview-ready':
                     await this.renderBoardDashboard(webview);
-                } catch (err: unknown) {
-                    const errorMsg = 'Failed to render board dashboard';
-                    logger.error(errorMsg, err);
-                    vscode.window.showErrorMessage(errorMsg);
-                }
-                break;
-            default:
-                logger.warn(`Unknown message type: ${e.type}`);
+                    break;
+                default:
+                    logger.warn(`Unknown message type: ${e.type}`);
+            }
+        } catch (err: unknown) {
+            const errorMsg =
+                'Unexpected error handling message from board dashboard webview';
+            showAndLogError(errorMsg, err);
         }
     }
 }

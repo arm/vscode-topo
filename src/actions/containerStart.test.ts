@@ -4,6 +4,7 @@ import { ContainerStart } from './containerStart';
 import { Target } from '../workloadPlacement/target';
 import { ContainerItem } from '../workloadPlacement/containersManager';
 import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
+import { TopoError } from '../errors/topoError';
 
 describe('ContainerStart', () => {
     const context: Pick<vscode.ExtensionContext, 'subscriptions'> = {
@@ -77,10 +78,10 @@ describe('ContainerStart', () => {
         expect(startContainerSpy).toHaveBeenCalledWith('abc123');
     });
 
-    it('shows error message if startContainer throws', async () => {
+    it('shows error message if startContainer throws a TopoError', async () => {
         const containersManager = {
             startContainer: async () => {
-                throw new Error('fail');
+                throw new TopoError('DOCKER', 'fail');
             },
         };
         const containerStart = new ContainerStart(context, containersManager);
@@ -92,7 +93,26 @@ describe('ContainerStart', () => {
         );
 
         expect(showErrorMessageSpy).toHaveBeenCalledWith(
-            expect.stringContaining('Failed to start the container abc123'),
+            expect.stringContaining(
+                'Failed to start the container abc123. fail',
+            ),
         );
+    });
+
+    it('re-throws non-TopoError errors from startContainer', async () => {
+        const containersManager = {
+            startContainer: async () => {
+                throw new Error('non-TopoError');
+            },
+        };
+        const containerStart = new ContainerStart(context, containersManager);
+        await containerStart.activate();
+
+        await expect(
+            vscode.commands.executeCommand(
+                ContainerStart.startContainerCommand,
+                treeItem,
+            ),
+        ).rejects.toThrow('non-TopoError');
     });
 });

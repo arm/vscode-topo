@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { ContainerItem } from '../workloadPlacement/containersManager';
 import * as manifest from '../manifest';
-import { ensureTargetTreeContainerItem } from './util/ensureTargetTreeContainerItem';
+import { assertTargetTreeContainerItem } from './util/assertTargetTreeContainerItem';
 import { logger } from '../util/logger';
 
 type OperationResult = 'success' | 'no-web-ports';
@@ -23,7 +23,7 @@ export class ContainerOpenInBrowser {
     private async openContainerInBrowserCommandHandler(
         treeNode: unknown,
     ): Promise<void> {
-        ensureTargetTreeContainerItem(treeNode);
+        assertTargetTreeContainerItem(treeNode);
         try {
             const result = await this.openContainerInBrowser(
                 treeNode.containerItem,

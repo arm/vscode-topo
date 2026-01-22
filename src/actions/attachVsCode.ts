@@ -3,8 +3,9 @@ import { ContainerItem } from '../workloadPlacement/containersManager';
 import { ContainerCommands } from '../workloadPlacement/containerCommands';
 import * as manifest from '../manifest';
 import { getDockerContextName } from '../util/dockerContext';
-import { ensureTargetTreeContainerItem } from './util/ensureTargetTreeContainerItem';
-import { logger } from '../util/logger';
+import { assertTargetTreeContainerItem } from './util/assertTargetTreeContainerItem';
+import { isTopoError } from '../errors/topoError';
+import { showAndLogError } from '../util/showAndLogError';
 
 export class AttachVsCode {
     public static readonly attachVsCodeCommand = `${manifest.PACKAGE_NAME}.attachVsCode`;
@@ -27,13 +28,16 @@ export class AttachVsCode {
     }
 
     private async attachVsCodeCommandHandler(treeNode: unknown) {
-        ensureTargetTreeContainerItem(treeNode);
+        assertTargetTreeContainerItem(treeNode);
         try {
             await this.attachVsCode(treeNode.containerItem);
         } catch (err: unknown) {
-            const errorMsg = `Failed to attach VS Code to the container ${treeNode.containerItem.id}`;
-            vscode.window.showErrorMessage(errorMsg);
-            logger.error(errorMsg, err);
+            if (isTopoError(err) && err.code === 'DOCKER') {
+                const userError = `Failed to attach VS Code to the container ${treeNode.containerItem.id}`;
+                showAndLogError(userError, err);
+                return;
+            }
+            throw err;
         }
     }
 

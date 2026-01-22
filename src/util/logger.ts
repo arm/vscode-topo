@@ -23,8 +23,12 @@ export const stringifyMessage = (message: unknown): string => {
         return Number.isFinite(message) ? message.toString() : String(message);
     }
 
-    if (util.types.isNativeError(message) || Buffer.isBuffer(message)) {
+    if (Buffer.isBuffer(message)) {
         return message.toString();
+    }
+
+    if (util.types.isNativeError(message)) {
+        return message.stack || message.message;
     }
 
     try {
