@@ -3,7 +3,7 @@ import { ContainerItem } from '../workloadPlacement/containersManager';
 import { ContainerCommands } from '../workloadPlacement/containerCommands';
 import * as manifest from '../manifest';
 import { TargetStore } from '../workloadPlacement/targetStore';
-import { ensureTargetTreeContainerItem } from './util/ensureTargetTreeContainerItem';
+import { assertTargetTreeContainerItem } from './util/assertTargetTreeContainerItem';
 
 export class AttachShell {
     public static readonly attachShellCommand = `${manifest.PACKAGE_NAME}.attachShell`;
@@ -27,11 +27,11 @@ export class AttachShell {
     }
 
     private async attachShellCommandHandler(treeNode: unknown): Promise<void> {
-        ensureTargetTreeContainerItem(treeNode);
-        await this.attachShell(treeNode.containerItem);
+        assertTargetTreeContainerItem(treeNode);
+        this.attachShell(treeNode.containerItem);
     }
 
-    public async attachShell(item: ContainerItem): Promise<void> {
+    public attachShell(item: ContainerItem): void {
         const terminal = vscode.window.createTerminal({
             name: `Shell: ${item.image}`,
         });

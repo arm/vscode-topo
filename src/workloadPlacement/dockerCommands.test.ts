@@ -1,23 +1,22 @@
-import { DockerCommands } from './dockerCommands';
+import { DockerCommands, DockerError } from './dockerCommands';
 import { exec } from '../util/exec';
 import { logger } from '../util/logger';
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import { TopoError } from '../errors/topoError';
 
 jest.mock('../util/exec', () => ({
     exec: jest.fn(),
 }));
 
-jest.mock('../util/logger', () => ({
-    logger: {
-        error: jest.fn(),
-        info: jest.fn(),
-        debug: jest.fn(),
-        show: jest.fn(),
-    },
-}));
+jest.mock('../util/logger');
 
-const execMock: any = exec as any;
+const execMock: jest.Mock = exec as jest.Mock;
+
+function makeDockerError(stdout: string, stderr: string): DockerError {
+    const e = new Error('Command failed: docker something') as DockerError;
+    e.stdout = stdout;
+    e.stderr = stderr;
+    return e;
+}
 
 describe('DockerCommands', () => {
     let dockerCommands: DockerCommands;
@@ -45,7 +44,7 @@ describe('DockerCommands', () => {
         });
 
         it('returns false and logs when exec throws', async () => {
-            execMock.mockRejectedValueOnce(new Error('boom'));
+            execMock.mockRejectedValueOnce(makeDockerError('', 'Boom'));
 
             const res = await dockerCommands.isContainerRuntimeOn('user@host');
 
@@ -75,13 +74,21 @@ describe('DockerCommands', () => {
             expect(execMock).toHaveBeenCalledWith('docker context show');
         });
 
-        it('throws when stderr present', async () => {
+        it('logs when stderr present', async () => {
             execMock.mockResolvedValueOnce({ stdout: '', stderr: 'err' });
+
+            await dockerCommands.getCurrentContext();
+
+            expect(logger.warn).toHaveBeenCalledWith(expect.any(String), 'err');
+        });
+
+        it('throws when exec fails', async () => {
+            execMock.mockRejectedValueOnce(new Error('fail'));
 
             const getCurrentContextOperation =
                 dockerCommands.getCurrentContext();
 
-            await expect(getCurrentContextOperation).rejects.toThrow('err');
+            await expect(getCurrentContextOperation).rejects.toThrow('fail');
         });
     });
 
@@ -100,12 +107,20 @@ describe('DockerCommands', () => {
             );
         });
 
-        it('throws when stderr present', async () => {
+        it('logs when stderr present', async () => {
             execMock.mockResolvedValueOnce({ stdout: '', stderr: 'err' });
+
+            await dockerCommands.getContexts();
+
+            expect(logger.warn).toHaveBeenCalledWith(expect.any(String), 'err');
+        });
+
+        it('throws when exec fails', async () => {
+            execMock.mockRejectedValueOnce(new Error('fail'));
 
             const getContextsOperation = dockerCommands.getContexts();
 
-            await expect(getContextsOperation).rejects.toThrow('err');
+            await expect(getContextsOperation).rejects.toThrow('fail');
         });
     });
 
@@ -154,8 +169,7 @@ describe('DockerCommands', () => {
                 'user@host',
             );
 
-            await expect(ensureContextOperation).rejects.toThrow();
-            expect(logger.error).toHaveBeenCalled();
+            await expect(ensureContextOperation).rejects.toThrow('list-fail');
         });
     });
 
@@ -167,9 +181,9 @@ describe('DockerCommands', () => {
                     return {
                         stdout: 'orig\n',
                         stderr: '',
-                    } as any;
+                    };
                 }
-                return { stdout: '', stderr: '' } as any;
+                return { stdout: '', stderr: '' };
             });
 
             const res = await dockerCommands.executeWithContext(
@@ -193,9 +207,9 @@ describe('DockerCommands', () => {
                     return {
                         stdout: 'orig\n',
                         stderr: '',
-                    } as any;
+                    };
                 }
-                return { stdout: '', stderr: '' } as any;
+                return { stdout: '', stderr: '' };
             });
             const op = jest.fn().mockRejectedValue(new Error('op-fail'));
 
@@ -250,9 +264,10 @@ describe('DockerCommands', () => {
         });
 
         it('returns err.stdout when exec rejects with only not-found errors', async () => {
-            const err: any = new Error('one');
-            err.stderr = 'Error: No such object: a\nError: No such object: b';
-            err.stdout = 'fallback';
+            const err = makeDockerError(
+                'fallback',
+                'Error: No such object: a\nError: No such object: b',
+            );
             execMock.mockRejectedValueOnce(err);
 
             const out = await dockerCommands.inspectContainers(
@@ -260,19 +275,32 @@ describe('DockerCommands', () => {
                 'user@host',
             );
 
+            expect(logger.warn).toHaveBeenCalledWith(
+                expect.any(String),
+                err.stderr,
+            );
             expect(out).toBe('fallback');
-            expect(logger.error).toHaveBeenCalled();
         });
 
-        it('rethrows when exec rejects with anything other than "not found" error', async () => {
-            const err: any = new Error('boom');
-            err.stderr = 'Something bad';
-            err.stdout = 'x';
+        it('rethrows when exec rejects with unknown error', async () => {
+            const err = new Error('boom');
             execMock.mockRejectedValueOnce(err);
 
             await expect(
                 dockerCommands.inspectContainers(['a'], 'ctx'),
             ).rejects.toBe(err);
+        });
+
+        it('throws a TopoError when exec rejects with a DockerError', async () => {
+            const dockerErr = makeDockerError('', 'some docker error');
+            execMock.mockRejectedValue(dockerErr);
+
+            await expect(
+                dockerCommands.inspectContainers(['a'], 'ctx'),
+            ).rejects.toThrow(TopoError);
+            await expect(
+                dockerCommands.inspectContainers(['a'], 'ctx'),
+            ).rejects.toThrow('some docker error');
         });
 
         it('returns empty string when provided with an empty array', async () => {
@@ -296,21 +324,23 @@ describe('DockerCommands', () => {
         });
 
         it('returns err.stdout when exec rejects with only not-found errors', async () => {
-            const err: any = new Error('one');
-            err.stderr = 'Error: No such object: a';
-            err.stdout = 'fallback-stats';
+            const err = makeDockerError(
+                'fallback-stats',
+                'Error: No such object: a',
+            );
             execMock.mockRejectedValueOnce(err);
 
             const out = await dockerCommands.containerStats(['a'], 'user@host');
 
             expect(out).toBe('fallback-stats');
-            expect(logger.error).toHaveBeenCalled();
+            expect(logger.warn).toHaveBeenCalledWith(
+                expect.any(String),
+                err.stderr,
+            );
         });
 
-        it('rethrows when exec rejects with other stderr', async () => {
-            const err: any = new Error('boom');
-            err.stderr = 'Other error';
-            err.stdout = 'x';
+        it('rethrows when exec rejects with unknown error', async () => {
+            const err = new Error('boom');
             execMock.mockRejectedValueOnce(err);
 
             const containerStatsOperation = dockerCommands.containerStats(
@@ -319,6 +349,18 @@ describe('DockerCommands', () => {
             );
 
             await expect(containerStatsOperation).rejects.toBe(err);
+        });
+
+        it('throws a TopoError when exec rejects with a DockerError', async () => {
+            const dockerErr = makeDockerError('', 'some docker error');
+            execMock.mockRejectedValue(dockerErr);
+
+            await expect(
+                dockerCommands.containerStats(['a'], 'ctx'),
+            ).rejects.toThrow(TopoError);
+            await expect(
+                dockerCommands.containerStats(['a'], 'ctx'),
+            ).rejects.toThrow('some docker error');
         });
 
         it('returns empty string when provided with an empty array', async () => {
@@ -330,26 +372,22 @@ describe('DockerCommands', () => {
     });
 
     describe('stopContainer', () => {
-        it('throws when stderr present', async () => {
+        it('logs a warning when stderr present', async () => {
             execMock.mockResolvedValueOnce({ stdout: '', stderr: 'fail' });
 
-            const stopContainerOperation = dockerCommands.stopContainer(
-                'c',
-                'user@host',
-            );
+            await dockerCommands.stopContainer('c', 'user@host');
 
-            await expect(stopContainerOperation).rejects.toThrow('fail');
+            expect(logger.warn).toHaveBeenCalledWith(
+                expect.any(String),
+                'fail',
+            );
         });
 
         it('succeeds when exec returns empty stderr', async () => {
             execMock.mockResolvedValue({ stdout: '', stderr: '' });
 
-            const stopContainerOperation = dockerCommands.stopContainer(
-                'c',
-                'user@host',
-            );
+            await dockerCommands.stopContainer('c', 'user@host');
 
-            await expect(stopContainerOperation).resolves.toBeUndefined();
             expect(execMock).toHaveBeenCalledWith(
                 'docker --host ssh://user@host stop c',
             );
@@ -368,26 +406,22 @@ describe('DockerCommands', () => {
     });
 
     describe('startContainer', () => {
-        it('throws when stderr present', async () => {
+        it('logs a warning when stderr present', async () => {
             execMock.mockResolvedValueOnce({ stdout: '', stderr: 'fail' });
 
-            const startContainerOperation = dockerCommands.startContainer(
-                'c',
-                'user@host',
-            );
+            await dockerCommands.startContainer('c', 'user@host');
 
-            await expect(startContainerOperation).rejects.toThrow('fail');
+            expect(logger.warn).toHaveBeenCalledWith(
+                expect.any(String),
+                'fail',
+            );
         });
 
         it('succeeds when exec returns empty stderr', async () => {
             execMock.mockResolvedValue({ stdout: '', stderr: '' });
 
-            const startContainerOperation = dockerCommands.startContainer(
-                'c',
-                'user@host',
-            );
+            await dockerCommands.startContainer('c', 'user@host');
 
-            await expect(startContainerOperation).resolves.toBeUndefined();
             expect(execMock).toHaveBeenCalledWith(
                 'docker --host ssh://user@host start c',
             );
@@ -406,26 +440,22 @@ describe('DockerCommands', () => {
     });
 
     describe('deleteContainer', () => {
-        it('throws when stderr present', async () => {
+        it('logs a warning when stderr present', async () => {
             execMock.mockResolvedValueOnce({ stdout: '', stderr: 'fail' });
 
-            const deleteContainerOperation = dockerCommands.deleteContainer(
-                'c',
-                'ctx',
-            );
+            await dockerCommands.deleteContainer('c', 'ctx');
 
-            await expect(deleteContainerOperation).rejects.toThrow('fail');
+            expect(logger.warn).toHaveBeenCalledWith(
+                expect.any(String),
+                'fail',
+            );
         });
 
         it('succeeds when exec returns empty stderr', async () => {
             execMock.mockResolvedValue({ stdout: '', stderr: '' });
 
-            const deleteContainerOperation = dockerCommands.deleteContainer(
-                'c',
-                'user@host',
-            );
+            await dockerCommands.deleteContainer('c', 'user@host');
 
-            await expect(deleteContainerOperation).resolves.toBeUndefined();
             expect(execMock).toHaveBeenCalledWith(
                 'docker --host ssh://user@host rm -f c',
             );

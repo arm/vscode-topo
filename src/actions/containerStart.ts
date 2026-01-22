@@ -1,8 +1,9 @@
 import * as vscode from 'vscode';
 import { ContainersManager } from '../workloadPlacement/containersManager';
 import * as manifest from '../manifest';
-import { ensureTargetTreeContainerItem } from './util/ensureTargetTreeContainerItem';
-import { logger } from '../util/logger';
+import { assertTargetTreeContainerItem } from './util/assertTargetTreeContainerItem';
+import { showAndLogError } from '../util/showAndLogError';
+import { isTopoError } from '../errors/topoError';
 
 export class ContainerStart {
     public static readonly startContainerCommand = `${manifest.PACKAGE_NAME}.startContainer`;
@@ -30,15 +31,18 @@ export class ContainerStart {
     private async startContainerCommandHandler(
         treeNode: unknown,
     ): Promise<void> {
-        ensureTargetTreeContainerItem(treeNode);
+        assertTargetTreeContainerItem(treeNode);
         try {
             await this.containersManager.startContainer(
                 treeNode.containerItem.id,
             );
         } catch (err: unknown) {
-            const errorMsg = `Failed to start the container ${treeNode.containerItem.id}`;
-            vscode.window.showErrorMessage(errorMsg);
-            logger.error(errorMsg, err);
+            if (isTopoError(err) && err.code === 'DOCKER') {
+                const userError = `Failed to start the container ${treeNode.containerItem.id}`;
+                showAndLogError(userError, err);
+                return;
+            }
+            throw err;
         }
     }
 }

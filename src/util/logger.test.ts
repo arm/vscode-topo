@@ -84,9 +84,8 @@ describe('stringifyMessage', () => {
     it('should return the error string if message is an Error', () => {
         const message = new Error('This is an error message');
 
-        expect(stringifyMessage(message)).toBe(message.toString());
+        expect(stringifyMessage(message)).toContain('This is an error message');
     });
-
     it('should return the JSON stringified object if message is an object', () => {
         const message = { key: 'value', number: 42 };
         const expected = JSON.stringify(message, undefined, '\t');

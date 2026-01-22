@@ -6,6 +6,7 @@ import { DockerCommands } from '../workloadPlacement/dockerCommands';
 import { Target } from '../workloadPlacement/target';
 import { ContainerItem } from '../workloadPlacement/containersManager';
 import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
+import { TopoError } from '../errors/topoError';
 
 jest.mock('../util/exec', () => ({
     exec: jest.fn(),
@@ -164,7 +165,7 @@ describe('attachVsCode', () => {
         registerCommandMock.mockReturnValue({ dispose: jest.fn() });
         await attachVsCode.activate();
         execMock.mockImplementation(async () => {
-            throw new Error('Fail');
+            throw new TopoError('DOCKER', 'fail');
         });
 
         const commandExecution = executeCommand(
@@ -175,7 +176,7 @@ describe('attachVsCode', () => {
         await commandExecution;
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-            'Failed to attach VS Code to the container abc123',
+            'Failed to attach VS Code to the container abc123. fail',
         );
     });
 });

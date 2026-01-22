@@ -1,8 +1,9 @@
 import * as vscode from 'vscode';
 import { ContainersManager } from '../workloadPlacement/containersManager';
 import * as manifest from '../manifest';
-import { ensureTargetTreeContainerItem } from './util/ensureTargetTreeContainerItem';
-import { logger } from '../util/logger';
+import { assertTargetTreeContainerItem } from './util/assertTargetTreeContainerItem';
+import { showAndLogError } from '../util/showAndLogError';
+import { isTopoError } from '../errors/topoError';
 
 export class ContainerDelete {
     public static readonly deleteContainerCommand = `${manifest.PACKAGE_NAME}.deleteContainer`;
@@ -30,15 +31,18 @@ export class ContainerDelete {
     private async deleteContainerCommandHandler(
         treeNode: unknown,
     ): Promise<void> {
-        ensureTargetTreeContainerItem(treeNode);
+        assertTargetTreeContainerItem(treeNode);
         try {
             await this.containersManager.deleteContainer(
                 treeNode.containerItem.id,
             );
         } catch (err: unknown) {
-            const errorMsg = `Failed to delete the container ${treeNode.containerItem.id}`;
-            vscode.window.showErrorMessage(errorMsg);
-            logger.error(errorMsg, err);
+            if (isTopoError(err) && err.code === 'DOCKER') {
+                const userError = `Failed to delete the container ${treeNode.containerItem.id}`;
+                showAndLogError(userError, err);
+                return;
+            }
+            throw err;
         }
     }
 }
