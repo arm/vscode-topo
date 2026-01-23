@@ -45,7 +45,9 @@ export interface BoardState {
     targetId: string | undefined;
 }
 
-export class ContainersManager {
+const refreshInterval = 3000;
+
+export class ContainersManager implements vscode.Disposable {
     private containersDataDeferred: Deferred<void> | undefined = undefined;
     private boardStateDeferred: Deferred<void> | undefined = undefined;
     private containersDataInitialised = false;
@@ -62,6 +64,7 @@ export class ContainersManager {
     private containersData: ContainerItem[] = [];
     private boardState: BoardState = this.defaultBoardState;
     private target: Target | undefined;
+    private disposables: vscode.Disposable[] = [];
 
     constructor(
         private readonly boardConnectionChecker: Pick<
@@ -73,7 +76,14 @@ export class ContainersManager {
             TargetStore,
             'onChanged' | 'getSelectedTarget'
         >,
-    ) {}
+    ) {
+        const onChangedDisposable = this.targetStore.onChanged(async () => {
+            await this.updateTarget().catch((err) => {
+                logger.error(`Failed to update the target`, err);
+            });
+        });
+        this.disposables.push(this._onDataUpdate, onChangedDisposable);
+    }
 
     private get isBoardAvailable(): boolean {
         return (
@@ -83,14 +93,11 @@ export class ContainersManager {
 
     public async activate(): Promise<void> {
         await this.updateTarget();
-        this.targetStore.onChanged(async () => {
-            await this.updateTarget();
-        });
     }
 
     private async updateTarget() {
         const selectedTarget = await this.targetStore.getSelectedTarget();
-        await this.unsetTarget();
+        this.unsetTarget();
         if (selectedTarget) {
             await this.setTarget(selectedTarget);
         }
@@ -101,8 +108,8 @@ export class ContainersManager {
         this.target = target;
     }
 
-    private async unsetTarget() {
-        await this.stopAutoRefresh();
+    private unsetTarget(): void {
+        this.stopAutoRefresh();
         this.target = undefined;
         this.containersData = [];
         this.containersDataInitialised = false;
@@ -298,13 +305,13 @@ export class ContainersManager {
                     await this.loadContainersData();
                 }
                 this._onDataUpdate.fire();
-                this.refreshTimer = setTimeout(refresh, 3000);
+                this.refreshTimer = setTimeout(refresh, refreshInterval);
             }
         };
         await refresh();
     }
 
-    public async stopAutoRefresh(): Promise<void> {
+    public stopAutoRefresh(): void {
         this.shouldAutoRefresh = false;
         if (this.refreshTimer) {
             clearTimeout(this.refreshTimer);
@@ -365,5 +372,17 @@ export class ContainersManager {
             memUsage,
             target,
         };
+    }
+
+    public dispose(): void {
+        this.stopAutoRefresh();
+        [...this.disposables].reverse().forEach((d) => {
+            try {
+                d.dispose();
+            } catch (error) {
+                logger.error(`Error disposing resource`, error);
+            }
+        });
+        this.disposables = [];
     }
 }
