@@ -65,6 +65,7 @@ export async function activate(
         dockerCommands,
         targetStore,
     );
+    context.subscriptions.push(containersManager);
     const targetTreeDataProvider = new TargetTreeDataProvider(
         context,
         containersManager,
@@ -96,9 +97,7 @@ export async function activate(
         boardDashboardProvider,
     );
     const openSerial = new OpenSerial(context);
-
     context.subscriptions.push(targetStore);
-
     await topoCli.activate();
     context.subscriptions.push(topoCli);
     await onBoardTopoConsoleOpener.activate();
