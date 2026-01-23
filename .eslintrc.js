@@ -45,6 +45,7 @@ module.exports = {
                         args: 'all',
                     },
                 ],
+                '@typescript-eslint/no-unused-private-class-members': 'error',
                 '@typescript-eslint/no-explicit-any': 'error',
 
                 curly: 'warn',
