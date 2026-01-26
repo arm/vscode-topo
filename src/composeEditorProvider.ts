@@ -132,7 +132,7 @@ export class ComposeEditorProvider implements vscode.CustomTextEditorProvider {
                     ? vscode.ViewColumn.Beside
                     : vscode.ViewColumn.Active,
             );
-            await this.createWebview(webviewPanel, document);
+            this.createWebview(webviewPanel, document);
         }
     }
 

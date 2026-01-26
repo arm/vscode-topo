@@ -96,7 +96,7 @@ describe('Deployer', () => {
         process.kill = jest.fn();
         await deployer.start(composeFilePath);
 
-        await deployer.stop();
+        deployer.stop();
 
         expect(process.kill).toHaveBeenCalledWith(-1234);
         process.kill = oldKill;
@@ -108,7 +108,7 @@ describe('Deployer', () => {
         Object.defineProperty(process, 'platform', { value: 'win32' });
         await deployer.start(composeFilePath);
 
-        await deployer.stop();
+        deployer.stop();
 
         expect(spawn).toHaveBeenCalledWith('taskkill', [
             '/pid',

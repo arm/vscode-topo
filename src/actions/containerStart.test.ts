@@ -67,7 +67,7 @@ describe('ContainerStart', () => {
             startContainer: startContainerSpy,
         };
         const containerStart = new ContainerStart(context, containersManager);
-        await containerStart.activate();
+        containerStart.activate();
 
         // Simulate command handler
         await vscode.commands.executeCommand(
@@ -85,7 +85,7 @@ describe('ContainerStart', () => {
             },
         };
         const containerStart = new ContainerStart(context, containersManager);
-        await containerStart.activate();
+        containerStart.activate();
 
         await vscode.commands.executeCommand(
             ContainerStart.startContainerCommand,
@@ -106,7 +106,7 @@ describe('ContainerStart', () => {
             },
         };
         const containerStart = new ContainerStart(context, containersManager);
-        await containerStart.activate();
+        containerStart.activate();
 
         await expect(
             vscode.commands.executeCommand(

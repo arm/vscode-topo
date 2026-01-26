@@ -20,6 +20,7 @@ module.exports = {
                 'plugin:react-hooks/recommended',
             ],
             rules: {
+                '@typescript-eslint/await-thenable': 'error',
                 '@typescript-eslint/explicit-member-accessibility': [
                     'error',
                     {
