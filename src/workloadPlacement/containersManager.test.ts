@@ -6,8 +6,6 @@ import { DockerPsItem } from './containerCommands';
 import { Target } from './target';
 import * as vscode from 'vscode';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 const waitImmediate = async () => {
     await Promise.resolve();
     await Promise.resolve();
@@ -302,7 +300,7 @@ describe('ContainersManager', () => {
         await jest.advanceTimersByTimeAsync(4000);
         expect(spy).toHaveBeenCalled();
 
-        await manager.stopAutoRefresh();
+        manager.stopAutoRefresh();
     });
 
     it('fires onDataUpdate event', async () => {
@@ -342,7 +340,7 @@ describe('ContainersManager', () => {
         await manager.startAutoRefresh();
         await jest.advanceTimersByTimeAsync(3000);
         expect(spy).toHaveBeenCalled();
-        await manager.stopAutoRefresh();
+        manager.stopAutoRefresh();
     });
 
     it('resolves when docker stop succeeds', async () => {

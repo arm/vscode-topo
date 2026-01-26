@@ -71,7 +71,7 @@ describe('ContainerDelete', () => {
             deleteContainer: deleteContainerSpy,
         };
         const containerDelete = new ContainerDelete(context, containersManager);
-        await containerDelete.activate();
+        containerDelete.activate();
 
         await vscode.commands.executeCommand(
             ContainerDelete.deleteContainerCommand,
@@ -88,7 +88,7 @@ describe('ContainerDelete', () => {
             },
         };
         const containerDelete = new ContainerDelete(context, containersManager);
-        await containerDelete.activate();
+        containerDelete.activate();
 
         await vscode.commands.executeCommand(
             ContainerDelete.deleteContainerCommand,
@@ -109,7 +109,7 @@ describe('ContainerDelete', () => {
             },
         };
         const containerDelete = new ContainerDelete(context, containersManager);
-        await containerDelete.activate();
+        containerDelete.activate();
 
         await expect(
             vscode.commands.executeCommand(
