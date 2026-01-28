@@ -3,6 +3,7 @@ import { TopoCli } from './topoCli';
 import { Deploy } from './actions/deploy';
 import { logger } from './util/logger';
 import { getErrorMessage } from './util/getErrorMessage';
+import { MessagePoster } from './util/types';
 
 export type MessageHandlerTopoCli = Pick<
     TopoCli,
@@ -16,12 +17,12 @@ export class MessageHandler {
     ) {}
 
     public renderComposeEditor(
-        webview: vscode.Webview,
+        messagePoster: MessagePoster,
         document: vscode.TextDocument,
     ): void {
         const project = this.topoCli.getProject(document.uri.fsPath);
         const configMetadata = this.topoCli.getConfigMetadata();
-        webview.postMessage({
+        messagePoster.postMessage({
             type: 'render-compose-editor',
             project,
             configMetadata,
@@ -64,7 +65,7 @@ export class MessageHandler {
      * Handle incoming messages from the webview
      */
     public async handleMessage(
-        webview: vscode.Webview,
+        messagePoster: MessagePoster,
         document: vscode.TextDocument,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         e: any,
@@ -74,7 +75,7 @@ export class MessageHandler {
                 try {
                     const result = await this.handleShowQuickPick(e.items);
                     if (result) {
-                        webview.postMessage({
+                        messagePoster.postMessage({
                             type: 'quick-pick-result',
                             result,
                         });
@@ -90,7 +91,7 @@ export class MessageHandler {
                         e.placeholder,
                     );
                     if (result) {
-                        webview.postMessage({
+                        messagePoster.postMessage({
                             type: 'quick-pick-result',
                             result,
                         });
@@ -109,13 +110,13 @@ export class MessageHandler {
                         `${errorMsg}: ${getErrorMessage(err)}`,
                     );
                 } finally {
-                    webview.postMessage({
+                    messagePoster.postMessage({
                         type: 'deploy-complete',
                     });
                 }
                 break;
             case 'compose-editor-webview-ready':
-                this.renderComposeEditor(webview, document);
+                this.renderComposeEditor(messagePoster, document);
                 break;
             default:
                 logger.warn(`Unknown message type: ${e.type}`);

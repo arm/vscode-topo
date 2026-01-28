@@ -5,12 +5,12 @@ import {
     ProjectDescription,
     ServiceCreationDescription,
     ConfigMetadata,
-    MessageHandler,
+    MessagePoster,
     subsystems,
 } from '../../src/util/types';
 
 interface ComposeEditorProps {
-    messageHandler: MessageHandler;
+    messagePoster: MessagePoster;
     project: ProjectDescription;
     configMetadata: ConfigMetadata;
 }
@@ -56,7 +56,7 @@ const getSubsystemServices = (
 };
 
 export const ComposeEditor: React.FC<ComposeEditorProps> = ({
-    messageHandler,
+    messagePoster,
     project,
     configMetadata,
 }) => {
@@ -100,7 +100,7 @@ export const ComposeEditor: React.FC<ComposeEditorProps> = ({
                     className="deploy-button"
                     onClick={() => {
                         setIsDeploying(true);
-                        messageHandler.postMessage({ type: 'deploy' });
+                        messagePoster.postMessage({ type: 'deploy' });
                     }}
                     disabled={isDeploying}
                 >

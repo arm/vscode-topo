@@ -42,7 +42,6 @@ export interface ServiceCreationDescription extends ServiceDescription {
     errors: string[];
 }
 
-export type MessageHandler = {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    postMessage(msg: any): void;
+export type MessagePoster = {
+    postMessage(message: unknown): void | Thenable<boolean>;
 };

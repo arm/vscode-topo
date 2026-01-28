@@ -39,16 +39,16 @@ describe('ComposeEditor', () => {
         ],
     };
 
-    let messageHandler: { postMessage: jest.Mock };
+    let messagePoster: { postMessage: jest.Mock };
 
     beforeEach(() => {
-        messageHandler = { postMessage: jest.fn() };
+        messagePoster = { postMessage: jest.fn() };
     });
 
     function renderComposeEditor(customProps = {}) {
         return render(
             <ComposeEditor
-                messageHandler={messageHandler}
+                messagePoster={messagePoster}
                 project={project}
                 configMetadata={configMetadata}
                 {...customProps}
@@ -71,11 +71,11 @@ describe('ComposeEditor', () => {
         ).toBeDisabled();
     });
 
-    it('calls messageHandler.postMessage with type deploy when Deploy is clicked', () => {
+    it('calls messagePoster.postMessage with type deploy when Deploy is clicked', () => {
         renderComposeEditor();
         const deployButton = screen.getByRole('button', { name: /Deploy/i });
         fireEvent.click(deployButton);
-        expect(messageHandler.postMessage).toHaveBeenCalledWith({
+        expect(messagePoster.postMessage).toHaveBeenCalledWith({
             type: 'deploy',
         });
     });

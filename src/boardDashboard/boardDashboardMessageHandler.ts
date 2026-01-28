@@ -7,17 +7,33 @@ import { AttachVsCode } from '../actions/attachVsCode';
 import { AttachShell } from '../actions/attachShell';
 import { TargetStore } from '../workloadPlacement/targetStore';
 import { isTopoError } from '../errors/topoError';
+import { MessagePoster } from '../util/types';
 
 export class BoardDashboardMessageHandler {
     constructor(
-        private readonly containersManager: ContainersManager,
+        private readonly containersManager: Pick<
+            ContainersManager,
+            | 'getContainersData'
+            | 'getBoardState'
+            | 'startContainer'
+            | 'stopContainer'
+            | 'deleteContainer'
+        >,
         private readonly targetStore: Pick<TargetStore, 'getSelectedTarget'>,
-        private readonly containerOpenInBrowser: ContainerOpenInBrowser,
-        private readonly attachVsCode: AttachVsCode,
-        private readonly attachShell: AttachShell,
+        private readonly containerOpenInBrowser: Pick<
+            ContainerOpenInBrowser,
+            'openContainerInBrowser'
+        >,
+        private readonly attachVsCode: Pick<AttachVsCode, 'attachVsCode'>,
+        private readonly attachShell: Pick<
+            AttachShell,
+            'attachShell' | 'attachSSH'
+        >,
     ) {}
 
-    public async renderBoardDashboard(webview: vscode.Webview): Promise<void> {
+    public async renderBoardDashboard(
+        messagePoster: MessagePoster,
+    ): Promise<void> {
         const containersData = await this.containersManager.getContainersData();
         const boardState = await this.containersManager.getBoardState();
         const target = await this.targetStore.getSelectedTarget();
@@ -25,7 +41,7 @@ export class BoardDashboardMessageHandler {
             logger.error('No target selected, cannot render board dashboard');
             return;
         }
-        await webview.postMessage({
+        await messagePoster.postMessage({
             type: 'render-board-dashboard',
             boardState,
             containersData,
@@ -37,7 +53,7 @@ export class BoardDashboardMessageHandler {
      * Handle incoming messages from the webview
      */
     public async handleMessage(
-        webview: vscode.Webview,
+        messagePoster: MessagePoster,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         e: any,
     ): Promise<void> {
@@ -61,7 +77,7 @@ export class BoardDashboardMessageHandler {
                     logger.info(
                         `Container ${e.containerId} started successfully`,
                     );
-                    await this.renderBoardDashboard(webview);
+                    await this.renderBoardDashboard(messagePoster);
                     break;
                 case 'stop-container':
                     try {
@@ -81,7 +97,7 @@ export class BoardDashboardMessageHandler {
                     logger.info(
                         `Container ${e.containerId} stopped successfully`,
                     );
-                    await this.renderBoardDashboard(webview);
+                    await this.renderBoardDashboard(messagePoster);
                     break;
                 case 'delete-container':
                     try {
@@ -101,7 +117,7 @@ export class BoardDashboardMessageHandler {
                     logger.info(
                         `Container ${e.containerId} deleted successfully`,
                     );
-                    await this.renderBoardDashboard(webview);
+                    await this.renderBoardDashboard(messagePoster);
                     break;
                 case 'open-container-in-browser': {
                     const containersData =
@@ -182,7 +198,7 @@ export class BoardDashboardMessageHandler {
                     }
                     break;
                 case 'board-dashboard-webview-ready':
-                    await this.renderBoardDashboard(webview);
+                    await this.renderBoardDashboard(messagePoster);
                     break;
                 default:
                     logger.warn(`Unknown message type: ${e.type}`);

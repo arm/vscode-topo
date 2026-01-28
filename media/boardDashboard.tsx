@@ -1,4 +1,4 @@
-import { MessageHandler } from '../src/util/types';
+import { MessagePoster } from '../src/util/types';
 import type {
     BoardState,
     ContainerItem,
@@ -9,7 +9,7 @@ export interface BoardDashboardProps {
     target: Target;
     containersData: ContainerItem[];
     boardState: BoardState;
-    messageHandler: MessageHandler;
+    messagePoster: MessagePoster;
 }
 
 function splitContainersByRuntime(containers: ContainerItem[]) {
@@ -35,11 +35,11 @@ function StateIcon({ state }: { state: string }) {
 
 function ContainerTable({
     containers,
-    messageHandler,
+    messagePoster,
     subsystem,
 }: {
     containers: ContainerItem[];
-    messageHandler: MessageHandler;
+    messagePoster: MessagePoster;
     subsystem: string;
 }) {
     if (containers.length === 0) {
@@ -106,7 +106,7 @@ function ContainerTable({
                                                   title="Open in browser"
                                                   className="action-btn link-btn container-port-link-btn"
                                                   onClick={() => {
-                                                      messageHandler.postMessage(
+                                                      messagePoster.postMessage(
                                                           {
                                                               type: 'open-container-in-browser',
                                                               containerId: c.id,
@@ -127,7 +127,7 @@ function ContainerTable({
                                             title="Stop container"
                                             className="action-btn stop-btn"
                                             onClick={() => {
-                                                messageHandler.postMessage({
+                                                messagePoster.postMessage({
                                                     type: 'stop-container',
                                                     containerId: c.id,
                                                 });
@@ -139,7 +139,7 @@ function ContainerTable({
                                             title="Delete container"
                                             className="action-btn delete-btn"
                                             onClick={() => {
-                                                messageHandler.postMessage({
+                                                messagePoster.postMessage({
                                                     type: 'delete-container',
                                                     containerId: c.id,
                                                 });
@@ -153,7 +153,7 @@ function ContainerTable({
                                                     title="Attach VS Code"
                                                     className="action-btn vscode-attach-btn"
                                                     onClick={() => {
-                                                        messageHandler.postMessage(
+                                                        messagePoster.postMessage(
                                                             {
                                                                 type: 'attach-vscode',
                                                                 containerId:
@@ -169,7 +169,7 @@ function ContainerTable({
                                                     title="Attach Shell"
                                                     className="action-btn shell-attach-btn"
                                                     onClick={() => {
-                                                        messageHandler.postMessage(
+                                                        messagePoster.postMessage(
                                                             {
                                                                 type: 'attach-shell',
                                                                 containerId:
@@ -190,7 +190,7 @@ function ContainerTable({
                                             title="Start container"
                                             className="action-btn play-btn"
                                             onClick={() => {
-                                                messageHandler.postMessage({
+                                                messagePoster.postMessage({
                                                     type: 'start-container',
                                                     containerId: c.id,
                                                 });
@@ -202,7 +202,7 @@ function ContainerTable({
                                             title="Delete container"
                                             className="action-btn trash-btn"
                                             onClick={() => {
-                                                messageHandler.postMessage({
+                                                messagePoster.postMessage({
                                                     type: 'delete-container',
                                                     containerId: c.id,
                                                 });
@@ -225,7 +225,7 @@ export function BoardDashboard({
     target,
     containersData,
     boardState,
-    messageHandler,
+    messagePoster,
 }: BoardDashboardProps) {
     let errorMessage: string | undefined = undefined;
     if (!boardState.isReachable) {
@@ -259,7 +259,7 @@ export function BoardDashboard({
                         title="Attach via SSH"
                         className="action-btn ssh-attach-btn"
                         onClick={() => {
-                            messageHandler.postMessage({ type: 'attach-ssh' });
+                            messagePoster.postMessage({ type: 'attach-ssh' });
                         }}
                         style={{ marginLeft: 4 }}
                     >
@@ -268,7 +268,7 @@ export function BoardDashboard({
                 </h3>
                 <ContainerTable
                     containers={host}
-                    messageHandler={messageHandler}
+                    messagePoster={messagePoster}
                     subsystem="Host"
                 />
             </div>
@@ -276,7 +276,7 @@ export function BoardDashboard({
                 <h3>Ambient</h3>
                 <ContainerTable
                     containers={ambient}
-                    messageHandler={messageHandler}
+                    messagePoster={messagePoster}
                     subsystem="Ambient"
                 />
             </div>
