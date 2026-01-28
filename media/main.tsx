@@ -37,7 +37,7 @@ function handleMessage(event: MessageEvent) {
             }
             composeEditorRoot.render(
                 <ComposeEditor
-                    messageHandler={vscode}
+                    messagePoster={vscode}
                     project={project}
                     configMetadata={configMetadata}
                 />,
@@ -60,7 +60,7 @@ function handleMessage(event: MessageEvent) {
                     target={message.target}
                     containersData={message.containersData}
                     boardState={message.boardState}
-                    messageHandler={vscode}
+                    messagePoster={vscode}
                 />,
             );
             break;
