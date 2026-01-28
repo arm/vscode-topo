@@ -347,7 +347,7 @@
         "clean": "git clean -f -x ./node_modules ./dist ./resources ./coverage",
         "build-tests": "tsc -p . --outDir out",
         "watch-tests": "tsc -p . -w --outDir out",
-        "lint": "prettier -c . && eslint .",
+        "lint": "npm run prettier-check && npm run eslint-check && npm run tsc-check",
         "test": "jest --passWithNoTests --coverage",
         "build:extension": "vite build --mode extension",
         "build:webview": "vite build --mode webview",
@@ -355,7 +355,10 @@
         "watch:extension": "vite build --mode extension --watch --minify=false",
         "watch:webview": "vite build --mode webview --watch --minify=false",
         "watch": "npm-run-all --parallel watch:extension watch:webview",
-        "download": "ts-node scripts/download.ts"
+        "download": "ts-node scripts/download.ts",
+        "prettier-check": "prettier -c .",
+        "eslint-check": "eslint .",
+        "tsc-check": "tsc --noEmit -p tsconfig.json"
     },
     "devDependencies": {
         "@eclipse-cdt-cloud/vscode-serial-monitor": "^2.0.0",
