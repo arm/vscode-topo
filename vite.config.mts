@@ -1,10 +1,5 @@
 // vite.config.mjs
-import {
-    BuildEnvironmentOptions,
-    ConfigEnv,
-    defineConfig,
-    UserConfigExport,
-} from 'vite';
+import { BuildEnvironmentOptions, ConfigEnv, defineConfig } from 'vite';
 import tsconfigPaths from 'vite-tsconfig-paths';
 import react from '@vitejs/plugin-react';
 import copy from 'rollup-plugin-copy';
@@ -51,7 +46,11 @@ export default defineConfig((config: ConfigEnv) => {
             },
         };
         return {
-            plugins: [tsconfigPaths()],
+            plugins: [
+                tsconfigPaths({
+                    projects: [path.resolve(__dirname, 'tsconfig.json')],
+                }),
+            ],
             build,
         };
     }
@@ -77,7 +76,9 @@ export default defineConfig((config: ConfigEnv) => {
     // (mode === 'webview' or default)
     return {
         plugins: [
-            tsconfigPaths(),
+            tsconfigPaths({
+                projects: [path.resolve(__dirname, 'tsconfig.json')],
+            }),
             react(),
             copy({
                 targets: [{ src: 'media/main.css', dest: 'dist' }],
