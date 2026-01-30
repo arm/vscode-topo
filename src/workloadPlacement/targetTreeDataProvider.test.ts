@@ -4,29 +4,36 @@ import { TargetTreeSubsystemItem } from './targetTreeSubsystemItem';
 import { TargetTreeBoardItem } from './targetTreeBoardItem';
 import * as vscode from 'vscode';
 import * as manifest from '../manifest';
-import { ContainerItem } from './containersManager';
+import { ContainerItem, ContainersManager } from './containersManager';
 import { Target } from './target';
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 jest.mock('../util/logger');
 jest.mock('vscode');
 
 async function executeCommand(command: string, ...args: unknown[]) {
     const calls = (vscode.commands.registerCommand as jest.Mock).mock.calls;
-    const matching = calls.filter((c: any[]) => c[0] === command);
+    const matching = calls.filter((c: unknown[]) => c[0] === command);
     if (!matching.length) {
         throw new Error(`No handler registered for command ${command}`);
     }
     const addCall = matching[matching.length - 1];
-    const handler = addCall[1] as (...args: any[]) => Promise<void>;
+    const handler = addCall[1] as (...args: unknown[]) => Promise<void>;
     await handler(...args);
 }
 
 describe('TargetTreeDataProvider', () => {
     let provider: TargetTreeDataProvider;
-    let context: { subscriptions: any[] };
-    let containersManagerMock: any;
+    let context: Pick<vscode.ExtensionContext, 'subscriptions'>;
+    let containersManagerMock: jest.Mocked<
+        Pick<
+            ContainersManager,
+            | 'getContainersData'
+            | 'startAutoRefresh'
+            | 'stopAutoRefresh'
+            | 'onDataUpdate'
+            | 'getBoardState'
+        >
+    >;
     const target = new Target('topo', 'user@topo.local');
 
     const mockContainers: ContainerItem[] = [
@@ -172,6 +179,7 @@ describe('TargetTreeDataProvider', () => {
             containersManagerMock.getBoardState.mockResolvedValueOnce({
                 isReachable: false,
                 hasContainerRuntime: true,
+                targetId: target.id,
             });
 
             const rootChildren = await provider.getChildren();

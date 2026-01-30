@@ -4,9 +4,7 @@ import path from 'path';
 import { Target } from './workloadPlacement/target';
 import { TargetStore } from './workloadPlacement/targetStore';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
-type EventHandler = (...args: any[]) => void;
+type EventHandler = (...args: unknown[]) => void;
 const events: { [key: string]: EventHandler[] } = {};
 const proc = {
     stdout: {
@@ -143,13 +141,13 @@ describe('Deployer', () => {
         );
         // Simulate exit and error
         const exitCall = events.on.mock.calls.find(
-            (call: any[]) => call[0] === 'exit',
+            (call: unknown[]) => call[0] === 'exit',
         );
         if (exitCall) {
             (exitCall[1] as (code: number | null) => void)(0);
         }
         const errorCall = events.on.mock.calls.find(
-            (call: any[]) => call[0] === 'error',
+            (call: unknown[]) => call[0] === 'error',
         );
         if (errorCall) {
             (errorCall[1] as (err: Error) => void)(new Error('fail'));

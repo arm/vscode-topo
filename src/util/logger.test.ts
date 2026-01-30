@@ -1,6 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { OutputChannelLogger, stringifyMessage } from './logger';
 import * as vscode from 'vscode';
+import { mutable } from './mutable';
 
 jest.mock('vscode');
 
@@ -60,7 +60,7 @@ describe('OutputChannelLogger', () => {
         configurationGetMock.mockReturnValue('error');
         const configurationChangeEmitter =
             new vscode.EventEmitter<vscode.ConfigurationChangeEvent>();
-        (vscode.workspace as any).onDidChangeConfiguration =
+        mutable(vscode.workspace).onDidChangeConfiguration =
             configurationChangeEmitter.event;
         const logger = new OutputChannelLogger();
 

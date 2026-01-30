@@ -45,3 +45,5 @@ export interface ServiceCreationDescription extends ServiceDescription {
 export type MessagePoster = {
     postMessage(message: unknown): void | Thenable<boolean>;
 };
+
+export type Mutable<T> = { -readonly [P in keyof T]: T[P] };

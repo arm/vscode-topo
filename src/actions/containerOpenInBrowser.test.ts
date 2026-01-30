@@ -7,13 +7,13 @@ import { ContainerOpenInBrowser } from './containerOpenInBrowser';
 import vscode from 'vscode';
 import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 jest.mock('../util/logger');
 
 describe('ContainerOpenInBrowser', () => {
-    let containersManager: jest.Mocked<ContainersManager>;
-    let context: any;
+    let containersManager: jest.Mocked<
+        Pick<ContainersManager, 'getContainersData' | 'stopContainer'>
+    >;
+    let context: Pick<vscode.ExtensionContext, 'subscriptions'>;
     const registerCommandMock = vscode.commands.registerCommand as jest.Mock;
     const target = new Target('topo', 'user@topo.local');
     const mockContainer: ContainerItem = {
@@ -37,7 +37,7 @@ describe('ContainerOpenInBrowser', () => {
         containersManager = {
             getContainersData: jest.fn(),
             stopContainer: jest.fn(),
-        } as any;
+        };
         context = { subscriptions: [] };
     });
 
@@ -46,7 +46,7 @@ describe('ContainerOpenInBrowser', () => {
         const containerOpenInBrowser = new ContainerOpenInBrowser(context);
         await containerOpenInBrowser.activate();
         const openInBrowser = registerCommandMock.mock.calls.find(
-            ([cmd]: [string, any]) =>
+            ([cmd]: [string, unknown]) =>
                 cmd === ContainerOpenInBrowser.openInBrowserCommand,
         )?.[1];
         const port = '8080:80';
@@ -72,7 +72,7 @@ describe('ContainerOpenInBrowser', () => {
         const containerOpenInBrowser = new ContainerOpenInBrowser(context);
         await containerOpenInBrowser.activate();
         const openInBrowser = registerCommandMock.mock.calls.find(
-            ([cmd]: [string, any]) =>
+            ([cmd]: [string, unknown]) =>
                 cmd === ContainerOpenInBrowser.openInBrowserCommand,
         )?.[1];
         const item = {
@@ -95,15 +95,24 @@ describe('ContainerOpenInBrowser', () => {
         const containerOpenInBrowser = new ContainerOpenInBrowser(context);
         await containerOpenInBrowser.activate();
         const openInBrowser = registerCommandMock.mock.calls.find(
-            ([cmd]: [string, any]) =>
+            ([cmd]: [string, unknown]) =>
                 cmd === ContainerOpenInBrowser.openInBrowserCommand,
         )?.[1];
-        const item = {
+        const item: ContainerItem = {
             id: 'abc123',
             ports: ['22:22'],
             state: 'running',
             target,
-        } as ContainerItem;
+            name: '',
+            image: '',
+            status: '',
+            labels: '',
+            runningFor: '',
+            createdAt: '',
+            runtime: '',
+            cpuUsage: '',
+            memUsage: '',
+        };
         const treeItem = new TargetTreeContainerItem(item);
 
         await openInBrowser(treeItem);

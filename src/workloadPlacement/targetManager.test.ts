@@ -6,8 +6,6 @@ import { logger } from '../util/logger';
 import { ContainersManager } from './containersManager';
 import { Target } from './target';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 jest.mock('vscode');
 jest.mock('../util/logger');
 
@@ -17,7 +15,9 @@ const waitImmediate = () =>
 const createTargetManager = () => {
     const onChangeEmitter = new vscode.EventEmitter<void>();
     const onDataUpdateEmitter = new vscode.EventEmitter<void>();
-    const context = { subscriptions: [] };
+    const context: Pick<vscode.ExtensionContext, 'subscriptions'> = {
+        subscriptions: [],
+    };
     const targetTreeDataProvider = {
         refresh: jest.fn(),
     } as unknown as TargetTreeDataProvider;
@@ -38,7 +38,7 @@ const createTargetManager = () => {
         onDataUpdate: onDataUpdateEmitter.event,
     };
     const targetManager = new TargetManager(
-        context as any,
+        context,
         targetTreeDataProvider,
         targetStore,
         containersManager,
@@ -56,8 +56,8 @@ const createTargetManager = () => {
 
 async function executeCommand(command: string, ...args: unknown[]) {
     const calls = (vscode.commands.registerCommand as jest.Mock).mock.calls;
-    const addCall = calls.find((c: any[]) => c[0] === command);
-    const handler = addCall![1] as (...args: any[]) => Promise<void>;
+    const addCall = calls.find((c: unknown[]) => c[0] === command);
+    const handler = addCall![1] as (...args: unknown[]) => Promise<void>;
     await handler(...args);
 }
 

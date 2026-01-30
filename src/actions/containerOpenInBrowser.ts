@@ -9,7 +9,12 @@ type OperationResult = 'success' | 'no-web-ports';
 export class ContainerOpenInBrowser {
     public static readonly openInBrowserCommand = `${manifest.PACKAGE_NAME}.openInBrowser`;
 
-    constructor(private readonly context: vscode.ExtensionContext) {}
+    constructor(
+        private readonly context: Pick<
+            vscode.ExtensionContext,
+            'subscriptions'
+        >,
+    ) {}
 
     public async activate() {
         this.context.subscriptions.push(

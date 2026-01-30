@@ -17,7 +17,10 @@ export class ComposeEditorProvider implements vscode.CustomTextEditorProvider {
     private lastViewColumn: vscode.ViewColumn | undefined;
 
     constructor(
-        private readonly context: vscode.ExtensionContext,
+        private readonly context: Pick<
+            vscode.ExtensionContext,
+            'subscriptions' | 'extensionPath' | 'extensionUri'
+        >,
         private readonly messageHandler: MessageHandler,
     ) {}
 
