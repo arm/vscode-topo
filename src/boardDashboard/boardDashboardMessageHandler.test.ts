@@ -330,8 +330,9 @@ describe('BoardDashboardMessageHandler', () => {
                     containerId: 'a',
                 });
 
-                expect(logger.warn).toHaveBeenCalledWith(
-                    'Container with ID a not found',
+                expect(showAndLogError).toHaveBeenCalledWith(
+                    'Unexpected error handling message from board dashboard webview',
+                    new Error('Container with ID a not found'),
                 );
                 expect(
                     containerOpenInBrowser.openContainerInBrowser,
@@ -405,8 +406,9 @@ describe('BoardDashboardMessageHandler', () => {
                     containerId: 'a',
                 });
 
-                expect(logger.warn).toHaveBeenCalledWith(
-                    'Container with ID a not found',
+                expect(showAndLogError).toHaveBeenCalledWith(
+                    'Unexpected error handling message from board dashboard webview',
+                    new Error('Container with ID a not found'),
                 );
                 expect(attachVsCode.attachVsCode).not.toHaveBeenCalled();
             });
@@ -474,8 +476,9 @@ describe('BoardDashboardMessageHandler', () => {
                     containerId: 'a',
                 });
 
-                expect(logger.warn).toHaveBeenCalledWith(
-                    'Container with ID a not found',
+                expect(showAndLogError).toHaveBeenCalledWith(
+                    'Unexpected error handling message from board dashboard webview',
+                    new Error('Container with ID a not found'),
                 );
                 expect(attachShell.attachShell).not.toHaveBeenCalled();
             });
@@ -537,8 +540,9 @@ describe('BoardDashboardMessageHandler', () => {
                 type: 'nope',
             });
 
-            expect(logger.warn).toHaveBeenCalledWith(
-                'Unknown message type: nope',
+            expect(showAndLogError).toHaveBeenCalledWith(
+                'Unexpected error handling message from board dashboard webview',
+                new Error('Unknown message type: nope'),
             );
         });
 
