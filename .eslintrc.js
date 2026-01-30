@@ -48,7 +48,7 @@ module.exports = {
                 ],
                 '@typescript-eslint/no-unused-private-class-members': 'error',
                 '@typescript-eslint/no-explicit-any': 'error',
-
+                '@typescript-eslint/switch-exhaustiveness-check': 'error',
                 curly: 'warn',
                 eqeqeq: 'warn',
                 'no-throw-literal': 'warn',
