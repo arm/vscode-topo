@@ -4,8 +4,6 @@
 
 import { Deferred } from '../src/util/deferred';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 const vscode = acquireVsCodeApi();
 
 export type QuickPicker<T> = {

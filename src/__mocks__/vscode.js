@@ -211,6 +211,11 @@ const UIKind = {
     Web: 2,
 };
 
+const EndOfLine = {
+    LF: 1,
+    CRLF: 2,
+};
+
 env.uiKind = UIKind.Desktop;
 
 module.exports = {
@@ -219,6 +224,7 @@ module.exports = {
     CodeActionKind,
     DiagnosticSeverity,
     Disposable,
+    EndOfLine,
     EventEmitter,
     Position,
     QuickPickItemKind,

@@ -7,8 +7,6 @@ import { MessageHandler, MessageHandlerTopoCli } from './messageHandler';
 import { Deploy } from './actions/deploy';
 import { logger } from './util/logger';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 jest.mock('vscode');
 jest.mock('./util/logger');
 
@@ -32,6 +30,29 @@ describe('ComposeEditorProvider', () => {
             },
         ],
     };
+
+    const composeFolder = '/ext';
+    const composeFilePath = path.resolve(composeFolder, 'compose.yaml');
+    const composeFileUri = vscode.Uri.file(composeFilePath);
+    const doc: vscode.TextDocument = {
+        uri: composeFileUri,
+        getText: () => 'hi',
+        fileName: '',
+        isUntitled: false,
+        languageId: '',
+        version: 0,
+        isDirty: false,
+        isClosed: false,
+        save: jest.fn(),
+        eol: vscode.EndOfLine.LF,
+        lineCount: 0,
+        lineAt: jest.fn(),
+        offsetAt: jest.fn(),
+        positionAt: jest.fn(),
+        getWordRangeAtPosition: jest.fn(),
+        validateRange: jest.fn(),
+        validatePosition: jest.fn(),
+    };
     const project: ProjectDescription = {
         name: 'test-project',
         services: {
@@ -43,10 +64,19 @@ describe('ComposeEditorProvider', () => {
             },
         },
     };
+    const cancellationToken: vscode.CancellationToken = {
+        isCancellationRequested: false,
+        onCancellationRequested: (_cb: (...args: unknown[]) => void) => ({
+            dispose: jest.fn(),
+        }),
+    };
+    let post: (arg: unknown) => Thenable<boolean>;
+    let onDidReceiveMessageEmitter: vscode.EventEmitter<unknown>;
+    let webviewPanel: vscode.WebviewPanel;
     let topoCli: jest.Mocked<MessageHandlerTopoCli>;
     let provider: ComposeEditorProvider;
     let deploy: jest.Mocked<Pick<Deploy, 'deploy'>>;
-    const context: any = {
+    const context = {
         extensionPath: '/ext',
         extensionUri: vscode.Uri.file('/ext'),
         subscriptions: [],
@@ -55,6 +85,31 @@ describe('ComposeEditorProvider', () => {
 
     beforeEach(() => {
         jest.clearAllMocks();
+
+        post = jest.fn();
+        onDidReceiveMessageEmitter = new vscode.EventEmitter<unknown>();
+        webviewPanel = {
+            webview: {
+                options: {},
+                html: '',
+                postMessage: post,
+                onDidReceiveMessage: onDidReceiveMessageEmitter.event,
+                asWebviewUri: (uri: vscode.Uri) => uri,
+                cspSource: '',
+            },
+            onDidDispose: (_cb: () => Promise<void>) => ({
+                dispose: jest.fn(),
+            }),
+            viewType: '',
+            title: '',
+            options: {},
+            viewColumn: undefined,
+            active: false,
+            visible: false,
+            onDidChangeViewState: jest.fn(),
+            reveal: jest.fn(),
+            dispose: jest.fn(),
+        };
         topoCli = {
             getProject: jest.fn().mockReturnValue(project),
             getConfigMetadata: jest.fn().mockReturnValue(configMetadata),
@@ -91,27 +146,15 @@ describe('ComposeEditorProvider', () => {
     });
 
     it('posts init message with services', async () => {
-        const doc: any = {
-            uri: { toString: () => 'u', fsPath: '/ext/f.yaml' },
-            getText: () => 'hi',
-        };
-        const post = jest.fn();
-        let handler: any;
-        const webviewPanel: any = {
-            webview: {
-                options: {},
-                html: '',
-                postMessage: post,
-                onDidReceiveMessage: (cb: any) => {
-                    handler = cb;
-                },
-                asWebviewUri: (uri: any) => uri,
-            },
-            onDidDispose: (_cb: any) => ({ dispose: jest.fn() }),
-        };
-        await provider.resolveCustomTextEditor(doc, webviewPanel, null as any);
+        await provider.resolveCustomTextEditor(
+            doc,
+            webviewPanel,
+            cancellationToken,
+        );
 
-        await handler({ type: 'compose-editor-webview-ready' });
+        onDidReceiveMessageEmitter.fire({
+            type: 'compose-editor-webview-ready',
+        });
 
         expect(post).toHaveBeenCalledWith({
             type: 'render-compose-editor',
@@ -121,102 +164,60 @@ describe('ComposeEditorProvider', () => {
     });
 
     it('sets webview options correctly', async () => {
-        const doc: any = {
-            uri: { toString: () => '', fsPath: '/ext/a.yaml' },
-            getText: () => '',
-        };
-        const post = jest.fn();
-        const webviewPanel: any = {
-            webview: {
-                options: {},
-                html: '',
-                postMessage: post,
-                onDidReceiveMessage: (_cb: any) => {},
-                asWebviewUri: (uri: vscode.Uri) => uri.toString(),
-            },
-            onDidDispose: (_cb: any) => ({ dispose: jest.fn() }),
-        };
-
-        await provider.resolveCustomTextEditor(doc, webviewPanel, null as any);
+        await provider.resolveCustomTextEditor(
+            doc,
+            webviewPanel,
+            cancellationToken,
+        );
 
         expect(webviewPanel.webview.options.enableScripts).toBe(true);
         const roots = webviewPanel.webview.options.localResourceRoots;
         expect(Array.isArray(roots)).toBe(true);
-        expect(roots[0].fsPath).toContain(
+        expect(roots![0].fsPath).toContain(
             path.join(context.extensionPath, 'dist'),
         );
     });
 
     it('handles successful deploy and posts deploy-complete', async () => {
-        const composeFolder = '/ext';
-        const composeFilePath = path.resolve(composeFolder, 'compose.yaml');
-        const doc: any = {
-            uri: { toString: () => 'u', fsPath: composeFilePath },
-            getText: () => '',
-        };
-        let handler: any;
-        const post = jest.fn();
         (vscode.window.withProgress as jest.Mock).mockImplementation(
             async (_opts, cb) => {
                 const token = {
-                    onCancellationRequested: (cb2: any) => cb2(),
+                    onCancellationRequested: (cb2: () => Promise<void>) =>
+                        cb2(),
                 };
                 await cb({}, token);
             },
         );
-        const webviewPanel: any = {
-            webview: {
-                options: {},
-                html: '',
-                postMessage: post,
-                onDidReceiveMessage: (cb: any) => {
-                    handler = cb;
-                },
-                asWebviewUri: (uri: any) => uri,
-            },
-            onDidDispose: (_cb: any) => ({ dispose: jest.fn() }),
-        };
-        await provider.resolveCustomTextEditor(doc, webviewPanel, null as any);
+        await provider.resolveCustomTextEditor(
+            doc,
+            webviewPanel,
+            cancellationToken,
+        );
 
-        handler({ type: 'deploy' });
+        onDidReceiveMessageEmitter.fire({ type: 'deploy' });
         await waitImmediate();
         expect(post).toHaveBeenCalledWith({ type: 'deploy-complete' });
     });
 
     it('handles unsuccessful deploy and posts deploy-complete', async () => {
-        const composeFolder = '/ext';
-        const composeFilePath = path.resolve(composeFolder, 'compose.yaml');
-        const doc: any = {
-            uri: { toString: () => 'u', fsPath: composeFilePath },
-            getText: () => '',
-        };
-        let handler: any;
-        const post = jest.fn();
         (vscode.window.withProgress as jest.Mock).mockImplementation(
             async (_opts, cb) => {
                 const token = {
-                    onCancellationRequested: (cb2: any) => cb2(),
+                    onCancellationRequested: (cb2: () => Promise<void>) =>
+                        cb2(),
                 };
                 await cb({}, token);
             },
         );
-        const webviewPanel: any = {
-            webview: {
-                options: {},
-                html: '',
-                postMessage: post,
-                onDidReceiveMessage: (cb: any) => {
-                    handler = cb;
-                },
-                asWebviewUri: (uri: any) => uri,
-            },
-            onDidDispose: (_cb: any) => ({ dispose: jest.fn() }),
-        };
-        await provider.resolveCustomTextEditor(doc, webviewPanel, null as any);
+        await provider.resolveCustomTextEditor(
+            doc,
+            webviewPanel,
+            cancellationToken,
+        );
         const error = new Error('deploy-fail');
         deploy.deploy.mockRejectedValueOnce(error);
 
-        handler({ type: 'deploy' });
+        onDidReceiveMessageEmitter.fire({ type: 'deploy' });
         await waitImmediate();
 
         expect(post).toHaveBeenCalledWith({ type: 'deploy-complete' });
@@ -230,27 +231,13 @@ describe('ComposeEditorProvider', () => {
     });
 
     it('warns on unknown message type', async () => {
-        const doc: any = {
-            uri: { toString: () => 'u', fsPath: '/ext/unknown.yaml' },
-            getText: () => '',
-        };
-        let handler: any;
-        const post = jest.fn();
-        const webviewPanel: any = {
-            webview: {
-                options: {},
-                html: '',
-                postMessage: post,
-                onDidReceiveMessage: (cb: any) => {
-                    handler = cb;
-                },
-                asWebviewUri: (uri: any) => uri,
-            },
-            onDidDispose: (_cb: any) => ({ dispose: jest.fn() }),
-        };
-        await provider.resolveCustomTextEditor(doc, webviewPanel, null as any);
+        await provider.resolveCustomTextEditor(
+            doc,
+            webviewPanel,
+            cancellationToken,
+        );
 
-        await handler({ type: 'not-a-real-type' });
+        onDidReceiveMessageEmitter.fire({ type: 'not-a-real-type' });
 
         expect(logger.warn).toHaveBeenCalledWith(
             'Unknown message type: not-a-real-type',

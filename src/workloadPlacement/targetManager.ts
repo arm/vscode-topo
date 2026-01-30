@@ -17,7 +17,10 @@ export class TargetManager {
     private statusBarItem: vscode.StatusBarItem | undefined;
 
     constructor(
-        private readonly context: vscode.ExtensionContext,
+        private readonly context: Pick<
+            vscode.ExtensionContext,
+            'subscriptions'
+        >,
         private readonly targetTreeDataProvider: TargetTreeDataProvider,
         private readonly targetStore: Pick<
             TargetStore,

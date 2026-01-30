@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { TargetStore, TargetStoreContext } from './targetStore';
 import { Target } from './target';
+import { mutable } from '../util/mutable';
 
 jest.mock('vscode');
 jest.mock('../util/logger');
@@ -10,14 +11,12 @@ type Watcher = Pick<
     'onDidCreate' | 'onDidChange' | 'onDidDelete' | 'dispose'
 >;
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 const waitImmediate = async () => {
     await Promise.resolve();
     await Promise.resolve();
 };
 
-function createMockContext() {
+function createMockContext(): { context: TargetStoreContext } {
     const globalMap = new Map<string, string | undefined>();
     const workspaceMap = new Map<string, string | undefined>();
 
@@ -68,8 +67,24 @@ describe('TargetStore', () => {
     );
 
     beforeEach(() => {
-        (TargetStore as any).instance = undefined;
-        (vscode as any).window.state = { focused: true };
+        mutable(vscode.window).state = {
+            focused: true,
+            active: true,
+        };
+        jest.clearAllMocks();
+    });
+
+    afterEach(() => {
+        try {
+            TargetStore.getInstance().dispose();
+        } catch (err) {
+            if (
+                !(err instanceof Error) ||
+                !err.message.includes('TargetStore not initialized')
+            ) {
+                throw err;
+            }
+        }
     });
 
     it('adds a target successfully and persists it', async () => {
@@ -91,7 +106,7 @@ describe('TargetStore', () => {
 
     it('throws an error when addTarget fails', async () => {
         const { context } = createMockContext();
-        (context.globalState as any).update = jest
+        context.globalState.update = jest
             .fn()
             .mockRejectedValue(new Error('persist-fail'));
         const store = TargetStore.getInstance(context);
@@ -154,8 +169,8 @@ describe('TargetStore', () => {
         const store = TargetStore.getInstance(context);
         const cb = jest.fn();
         store.onChanged(cb);
-        (vscode as any).window.state.focused = false;
-        const signalUri = (vscode as any).Uri.joinPath(
+        mutable(vscode.window.state).focused = false;
+        const signalUri = vscode.Uri.joinPath(
             context.globalStorageUri,
             'targets-update.signal',
         );
@@ -178,7 +193,6 @@ describe('TargetStore', () => {
 
         store.dispose();
 
-        expect((TargetStore as any).instance).toBeUndefined();
         const newStore = TargetStore.getInstance(context);
         expect(newStore).not.toBe(store);
     });

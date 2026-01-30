@@ -21,7 +21,14 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
             vscode.ExtensionContext,
             'subscriptions'
         >,
-        private readonly containersManager: ContainersManager,
+        private readonly containersManager: Pick<
+            ContainersManager,
+            | 'getContainersData'
+            | 'startAutoRefresh'
+            | 'stopAutoRefresh'
+            | 'onDataUpdate'
+            | 'getBoardState'
+        >,
         private readonly targetStore: Pick<
             TargetStore,
             | 'getSelectedTarget'

@@ -38,9 +38,7 @@ describe('assertTargetTreeContainerItem', () => {
                 id: 'abc123',
                 ssh: 'root@test-host',
                 displayName: '',
-                toJSON: function (): { id: string; ssh: string } {
-                    throw new Error('Function not implemented.');
-                },
+                toJSON: jest.fn(),
             },
         };
         const instanceLike = new TargetTreeContainerItem(containerItem);

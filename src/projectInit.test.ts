@@ -1,12 +1,11 @@
 import * as vscode from 'vscode';
 import { ProjectInit } from './projectInit';
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import { mutable } from './util/mutable';
 
 jest.mock('vscode');
 
 describe('ProjectInit', () => {
-    let context: { subscriptions: any[] };
+    let context: Pick<vscode.ExtensionContext, 'subscriptions'>;
     let topoCli: { init: jest.Mock };
     let projectInit: ProjectInit;
     const workspacePath = '/fake/workspace';
@@ -37,14 +36,15 @@ describe('ProjectInit', () => {
     });
 
     it('calls topoCli.init with currently opened workspace path', async () => {
-        (vscode.workspace as any).workspaceFolders = [
-            { uri: { fsPath: workspacePath } },
+        const workspaceUri = vscode.Uri.file(workspacePath);
+        mutable(vscode.workspace).workspaceFolders = [
+            { uri: workspaceUri, name: 'workspace', index: 0 },
         ];
         await projectInit.activate();
 
         await (vscode.commands.registerCommand as jest.Mock).mock.calls[0][1]();
 
-        expect(topoCli.init).toHaveBeenCalledWith(workspacePath);
+        expect(topoCli.init).toHaveBeenCalledWith(workspaceUri.fsPath);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
             'Project initialized successfully.',
         );
