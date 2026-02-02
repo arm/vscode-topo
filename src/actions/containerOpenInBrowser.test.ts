@@ -14,7 +14,7 @@ describe('ContainerOpenInBrowser', () => {
         Pick<ContainersManager, 'getContainersData' | 'stopContainer'>
     >;
     let context: Pick<vscode.ExtensionContext, 'subscriptions'>;
-    const registerCommandMock = vscode.commands.registerCommand as jest.Mock;
+    const registerCommandMock = jest.mocked(vscode.commands.registerCommand);
     const target = new Target('topo', 'user@topo.local');
     const mockContainer: ContainerItem = {
         id: 'abc123',
@@ -46,9 +46,8 @@ describe('ContainerOpenInBrowser', () => {
         const containerOpenInBrowser = new ContainerOpenInBrowser(context);
         await containerOpenInBrowser.activate();
         const openInBrowser = registerCommandMock.mock.calls.find(
-            ([cmd]: [string, unknown]) =>
-                cmd === ContainerOpenInBrowser.openInBrowserCommand,
-        )?.[1];
+            ([cmd]) => cmd === ContainerOpenInBrowser.openInBrowserCommand,
+        )![1];
         const port = '8080:80';
         const item = {
             id: 'abc123',
@@ -72,9 +71,8 @@ describe('ContainerOpenInBrowser', () => {
         const containerOpenInBrowser = new ContainerOpenInBrowser(context);
         await containerOpenInBrowser.activate();
         const openInBrowser = registerCommandMock.mock.calls.find(
-            ([cmd]: [string, unknown]) =>
-                cmd === ContainerOpenInBrowser.openInBrowserCommand,
-        )?.[1];
+            ([cmd]) => cmd === ContainerOpenInBrowser.openInBrowserCommand,
+        )![1];
         const item = {
             id: 'abc123',
             ports: [],
@@ -95,9 +93,8 @@ describe('ContainerOpenInBrowser', () => {
         const containerOpenInBrowser = new ContainerOpenInBrowser(context);
         await containerOpenInBrowser.activate();
         const openInBrowser = registerCommandMock.mock.calls.find(
-            ([cmd]: [string, unknown]) =>
-                cmd === ContainerOpenInBrowser.openInBrowserCommand,
-        )?.[1];
+            ([cmd]) => cmd === ContainerOpenInBrowser.openInBrowserCommand,
+        )![1];
         const item: ContainerItem = {
             id: 'abc123',
             ports: ['22:22'],

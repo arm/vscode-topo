@@ -25,6 +25,8 @@ describe('Deploy', () => {
     let context: Pick<vscode.ExtensionContext, 'subscriptions'>;
     let deployHandler: ((resource?: vscode.Uri) => Promise<void>) | undefined;
     let registerSpy: jest.SpyInstance;
+    let token: vscode.CancellationToken;
+    const cancellationEventEmitter = new vscode.EventEmitter<void>();
 
     beforeEach(() => {
         context = { subscriptions: [] };
@@ -41,12 +43,18 @@ describe('Deploy', () => {
             onError: errorEmitter.event,
         };
         deploy = new Deploy(context, deployer);
-        (vscode.window.withProgress as jest.Mock).mockImplementation(
+        token = {
+            onCancellationRequested: cancellationEventEmitter.event,
+            isCancellationRequested: false,
+        };
+        jest.mocked(vscode.window.withProgress).mockImplementation(
             async (_opts, cb) => {
-                const token = {
-                    onCancellationRequested: (cb2: () => void) => cb2(),
-                };
-                await cb({}, token);
+                await cb(
+                    {
+                        report: jest.fn(),
+                    },
+                    token,
+                );
             },
         );
         registerSpy = jest
@@ -85,21 +93,9 @@ describe('Deploy', () => {
     });
 
     it('handles deploy cancellation', async () => {
-        const cancellationEventEmitter = new vscode.EventEmitter<void>();
-        let token: vscode.CancellationToken;
-        (vscode.window.withProgress as jest.Mock).mockImplementation(
-            async (_opts, cb) => {
-                token = {
-                    onCancellationRequested: cancellationEventEmitter.event,
-                    isCancellationRequested: false,
-                };
-                await cb({}, token);
-            },
-        );
-
         const deployOperation = deploy.deploy(composeFilePath);
         // simulate cancellation
-        token!.isCancellationRequested = true;
+        token.isCancellationRequested = true;
         cancellationEventEmitter.fire();
         // process would exit with code null (cancelled by SIGTERM)
         exitEmitter.fire(null);
@@ -111,25 +107,13 @@ describe('Deploy', () => {
     });
 
     it('handles error on deploy cancellation', async () => {
-        const cancellationEventEmitter = new vscode.EventEmitter<void>();
-        let token: vscode.CancellationToken;
-        (vscode.window.withProgress as jest.Mock).mockImplementation(
-            async (_opts, cb) => {
-                token = {
-                    onCancellationRequested: cancellationEventEmitter.event,
-                    isCancellationRequested: false,
-                };
-                await cb({}, token);
-            },
-        );
-
         const deployOperation = deploy.deploy(composeFilePath);
         const deployOperationAssertion = expect(
             deployOperation,
         ).rejects.toThrow('Deploy operation exited with code 1');
 
         // simulate cancellation
-        token!.isCancellationRequested = true;
+        token.isCancellationRequested = true;
         cancellationEventEmitter.fire();
         // process would exit with error code 1
         exitEmitter.fire(1);

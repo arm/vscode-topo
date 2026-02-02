@@ -9,7 +9,7 @@ jest.mock('../util/exec', () => ({
 
 jest.mock('../util/logger');
 
-const execMock: jest.Mock = exec as jest.Mock;
+const execMock: jest.Mock = jest.mocked(exec);
 
 function makeDockerError(stdout: string, stderr: string): DockerError {
     const e = new Error('Command failed: docker something') as DockerError;

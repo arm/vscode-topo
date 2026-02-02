@@ -55,21 +55,22 @@ const createTargetManager = () => {
 };
 
 async function executeCommand(command: string, ...args: unknown[]) {
-    const calls = (vscode.commands.registerCommand as jest.Mock).mock.calls;
+    const calls = jest.mocked(vscode.commands.registerCommand).mock.calls;
     const addCall = calls.find((c: unknown[]) => c[0] === command);
     const handler = addCall![1] as (...args: unknown[]) => Promise<void>;
     await handler(...args);
 }
 
 let statusBarItems: vscode.StatusBarItem[] = [];
-const mockedStatusBarItemCreation = (
+
+const mockedStatusBarItemCreation: typeof vscode.window.createStatusBarItem = ((
     id: string,
-    alignment: vscode.StatusBarAlignment,
-    priority: number,
+    alignment?: vscode.StatusBarAlignment,
+    priority?: number,
 ) => {
     const statusBarItem: vscode.StatusBarItem = {
         id,
-        alignment,
+        alignment: alignment || vscode.StatusBarAlignment.Left,
         priority,
         name: undefined,
         text: '',
@@ -84,10 +85,10 @@ const mockedStatusBarItemCreation = (
     };
     statusBarItems.push(statusBarItem);
     return statusBarItem;
-};
+}) as unknown as typeof vscode.window.createStatusBarItem;
 
 describe('TargetManager', () => {
-    const registerCommandMock = vscode.commands.registerCommand as jest.Mock;
+    const registerCommandMock = jest.mocked(vscode.commands.registerCommand);
 
     beforeEach(() => {
         statusBarItems = [];
@@ -119,7 +120,7 @@ describe('TargetManager', () => {
 
     describe('target addition', () => {
         it('handles addTargetCommand: prompts for ssh and name, stores and selects new target', async () => {
-            (vscode.window.showInputBox as jest.Mock)
+            jest.mocked(vscode.window.showInputBox)
                 .mockResolvedValueOnce('root@192.0.2.1')
                 .mockResolvedValueOnce('My target');
             const { targetStore, targetManager } = createTargetManager();
@@ -128,17 +129,16 @@ describe('TargetManager', () => {
             await executeCommand(TargetManager.addTargetCommand);
 
             expect(
-                (targetStore.addTarget as jest.Mock).mock.calls.length,
+                jest.mocked(targetStore.addTarget).mock.calls.length,
             ).toBeGreaterThanOrEqual(1);
-            const created = (targetStore.addTarget as jest.Mock).mock
-                .calls[0][0];
+            const created = jest.mocked(targetStore.addTarget).mock.calls[0][0];
             expect(created).toBeDefined();
             expect(created.id).toBe('My target');
             expect(targetStore.setSelected).toHaveBeenCalledWith('My target');
         });
 
         it('does nothing when ssh input is cancelled', async () => {
-            (vscode.window.showInputBox as jest.Mock).mockResolvedValueOnce(
+            jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
                 undefined,
             );
             const { targetStore, targetManager } = createTargetManager();
@@ -151,7 +151,7 @@ describe('TargetManager', () => {
         });
 
         it('does nothing when id input is cancelled', async () => {
-            (vscode.window.showInputBox as jest.Mock)
+            jest.mocked(vscode.window.showInputBox)
                 .mockResolvedValueOnce('root@192.0.2.1')
                 .mockResolvedValueOnce(undefined);
             const { targetStore, targetManager } = createTargetManager();
@@ -164,18 +164,18 @@ describe('TargetManager', () => {
         });
 
         it('shows error when targetStore.addTarget fails', async () => {
-            (vscode.window.showInputBox as jest.Mock)
+            jest.mocked(vscode.window.showInputBox)
                 .mockResolvedValueOnce('root@192.0.2.1')
                 .mockResolvedValueOnce('My target');
             const { targetTreeDataProvider, targetStore, targetManager } =
                 createTargetManager();
             const error = new Error('boom');
-            (targetStore.addTarget as jest.Mock).mockRejectedValueOnce(error);
+            jest.mocked(targetStore.addTarget).mockRejectedValueOnce(error);
             await targetManager.activate();
 
             await executeCommand(TargetManager.addTargetCommand);
 
-            expect(targetStore.addTarget).toHaveBeenCalled();
+            expect(jest.mocked(targetStore.addTarget)).toHaveBeenCalled();
             expect(logger.warn).toHaveBeenCalledWith(
                 expect.stringContaining('Failed to add target'),
                 error,
@@ -183,8 +183,10 @@ describe('TargetManager', () => {
             expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
                 expect.stringContaining('Failed to add target'),
             );
-            expect(targetStore.setSelected).not.toHaveBeenCalled();
-            expect(targetTreeDataProvider.refresh).not.toHaveBeenCalled();
+            expect(jest.mocked(targetStore.setSelected)).not.toHaveBeenCalled();
+            expect(
+                jest.mocked(targetTreeDataProvider.refresh),
+            ).not.toHaveBeenCalled();
         });
     });
 
@@ -193,15 +195,15 @@ describe('TargetManager', () => {
             const target = new Target('test', 'root@localhost');
             const { targetManager, targetStore, containersManager } =
                 createTargetManager();
-            (targetStore.getSelectedTarget as jest.Mock).mockResolvedValue(
+            jest.mocked(targetStore.getSelectedTarget).mockResolvedValue(
                 target,
             );
-            (containersManager.getBoardState as jest.Mock).mockResolvedValue({
+            jest.mocked(containersManager.getBoardState).mockResolvedValue({
                 isReachable: true,
                 hasContainerRuntime: true,
                 targetId: undefined,
             });
-            (vscode.window.createStatusBarItem as jest.Mock).mockImplementation(
+            jest.mocked(vscode.window.createStatusBarItem).mockImplementation(
                 mockedStatusBarItemCreation,
             );
 
@@ -221,14 +223,15 @@ describe('TargetManager', () => {
         it("doesn't show an item in the status bar when no target is selected", async () => {
             const { targetManager, targetStore, containersManager } =
                 createTargetManager();
-            (targetStore.getSelectedTarget as jest.Mock).mockResolvedValue(
+            jest.mocked(targetStore.getSelectedTarget).mockResolvedValue(
                 undefined,
             );
-            (containersManager.getBoardState as jest.Mock).mockResolvedValue({
+            jest.mocked(containersManager.getBoardState).mockResolvedValue({
                 isReachable: false,
                 hasContainerRuntime: true,
+                targetId: undefined,
             });
-            (vscode.window.createStatusBarItem as jest.Mock).mockImplementation(
+            jest.mocked(vscode.window.createStatusBarItem).mockImplementation(
                 mockedStatusBarItemCreation,
             );
 
@@ -251,21 +254,22 @@ describe('TargetManager', () => {
                 containersManager,
                 onChangeEmitter,
             } = createTargetManager();
-            (targetStore.getSelectedTarget as jest.Mock).mockResolvedValue(
+            jest.mocked(targetStore.getSelectedTarget).mockResolvedValue(
                 target1,
             );
-            (containersManager.getBoardState as jest.Mock).mockResolvedValue({
+            jest.mocked(containersManager.getBoardState).mockResolvedValue({
                 isReachable: false,
                 hasContainerRuntime: true,
+                targetId: target1.id,
             });
-            (vscode.window.createStatusBarItem as jest.Mock).mockImplementation(
+            jest.mocked(vscode.window.createStatusBarItem).mockImplementation(
                 mockedStatusBarItemCreation,
             );
             await targetManager.activate();
-            (targetStore.getSelectedTarget as jest.Mock).mockResolvedValue(
+            jest.mocked(targetStore.getSelectedTarget).mockResolvedValue(
                 target2,
             );
-            (containersManager.getBoardState as jest.Mock).mockResolvedValue({
+            jest.mocked(containersManager.getBoardState).mockResolvedValue({
                 isReachable: true,
                 hasContainerRuntime: true,
                 targetId: target2.id,
@@ -292,20 +296,20 @@ describe('TargetManager', () => {
                 containersManager,
                 onDataUpdateEmitter,
             } = createTargetManager();
-            (targetStore.getSelectedTarget as jest.Mock).mockResolvedValue(
+            jest.mocked(targetStore.getSelectedTarget).mockResolvedValue(
                 target,
             );
-            (containersManager.getBoardState as jest.Mock).mockResolvedValue({
+            jest.mocked(containersManager.getBoardState).mockResolvedValue({
                 isReachable: true,
                 hasContainerRuntime: true,
                 targetId: target.id,
             });
-            (vscode.window.createStatusBarItem as jest.Mock).mockImplementation(
+            jest.mocked(vscode.window.createStatusBarItem).mockImplementation(
                 mockedStatusBarItemCreation,
             );
             await targetManager.activate();
             const error = new Error('boom');
-            (containersManager.getBoardState as jest.Mock).mockRejectedValue(
+            jest.mocked(containersManager.getBoardState).mockRejectedValue(
                 error,
             );
 

@@ -73,7 +73,7 @@ const defaultInfoOutput = {
     stdout: 'Server Version: 8',
     stderr: '',
 };
-const execMock = exec as unknown as jest.Mock;
+const execMock = exec as jest.Mock;
 const target = new Target('topo', 'user@topo.local');
 
 describe('ContainersManager', () => {
@@ -532,7 +532,7 @@ describe('ContainersManager', () => {
         );
         await manager.activate();
         expect(
-            (targetStore.getSelectedTarget as jest.Mock).mock.calls.length,
+            targetStore.getSelectedTarget.mock.calls.length,
         ).toBeGreaterThanOrEqual(1);
         const dataUpdateSpy = jest.fn();
         manager.onDataUpdate(dataUpdateSpy);
@@ -542,7 +542,7 @@ describe('ContainersManager', () => {
         await waitImmediate();
 
         expect(
-            (targetStore.getSelectedTarget as jest.Mock).mock.calls.length,
+            targetStore.getSelectedTarget.mock.calls.length,
         ).toBeGreaterThanOrEqual(2);
     });
 });

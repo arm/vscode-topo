@@ -68,7 +68,7 @@ const CodeAction = jest.fn();
 
 // Enums
 const ShellQuoting = { Escape: 'Escape' };
-const StatusBarAlignment = { Left: 'Left' };
+const StatusBarAlignment = { Left: 1, Right: 2 };
 const TaskScope = { Workspace: 'Workspace' };
 const ViewColumn = {
     Active: -1,
@@ -79,7 +79,7 @@ const ProgressLocation = { Notification: 1 };
 // Namespaces
 const commands = {
     executeCommand: jest.fn(),
-    registerCommand: jest.fn(),
+    registerCommand: jest.fn(() => ({ dispose: jest.fn() })),
 };
 const debug = {
     startDebugging: jest.fn(),
@@ -95,6 +95,14 @@ const tasks = {
     fetchTasks: jest.fn(() => []),
     onDidStartTaskProcess: new EventEmitter().event,
     onDidEndTaskProcess: new EventEmitter().event,
+};
+const LogLevel = {
+    Off: 0,
+    Trace: 1,
+    Debug: 2,
+    Info: 3,
+    Warning: 4,
+    Error: 5,
 };
 const window = {
     activeColorTheme: { kind: 1 },
@@ -113,7 +121,10 @@ const window = {
     withProgress: jest.fn(),
     registerTreeDataProvider: jest.fn(),
     registerCustomEditorProvider: jest.fn(),
-    createTerminal: jest.fn(),
+    createTerminal: jest.fn(() => ({
+        sendText: jest.fn(),
+        show: jest.fn(),
+    })),
     createTreeView: jest.fn(() => ({
         onDidExpandElement: new EventEmitter().event,
         onDidCollapseElement: new EventEmitter().event,
@@ -121,7 +132,20 @@ const window = {
     state: { focused: true },
     createOutputChannel: jest.fn(() => ({
         appendLine: jest.fn(),
+        name: '',
+        append: jest.fn(),
+        replace: jest.fn(),
+        clear: jest.fn(),
         show: jest.fn(),
+        hide: jest.fn(),
+        dispose: jest.fn(),
+        logLevel: LogLevel.Warning,
+        onDidChangeLogLevel: new EventEmitter().event,
+        trace: jest.fn(),
+        debug: jest.fn(),
+        info: jest.fn(),
+        warn: jest.fn(),
+        error: jest.fn(),
     })),
 };
 const fs = {
@@ -131,7 +155,12 @@ const fs = {
 const workspace = {
     fs,
     findFiles: jest.fn(async () => []),
-    getConfiguration: jest.fn(() => ({ get: jest.fn() })),
+    getConfiguration: jest.fn(() => ({
+        get: jest.fn(),
+        has: jest.fn(),
+        inspect: jest.fn(),
+        update: jest.fn(),
+    })),
     onDidChangeConfiguration: new EventEmitter().event,
     onDidChangeTextDocument: jest.fn(() => ({ dispose: jest.fn() })),
     onDidChangeWorkspaceFolders: jest.fn(() => ({ dispose: jest.fn() })),
@@ -226,6 +255,7 @@ module.exports = {
     Disposable,
     EndOfLine,
     EventEmitter,
+    LogLevel,
     Position,
     QuickPickItemKind,
     Range,

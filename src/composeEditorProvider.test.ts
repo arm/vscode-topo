@@ -71,11 +71,10 @@ describe('ComposeEditorProvider', () => {
             },
         },
     };
+    const cancellationEventEmitter = new vscode.EventEmitter<void>();
     const cancellationToken: vscode.CancellationToken = {
         isCancellationRequested: false,
-        onCancellationRequested: (_cb: (...args: unknown[]) => void) => ({
-            dispose: jest.fn(),
-        }),
+        onCancellationRequested: cancellationEventEmitter.event,
     };
     let post: (arg: unknown) => Thenable<boolean>;
     let onDidReceiveMessageEmitter: vscode.EventEmitter<unknown>;
@@ -121,9 +120,6 @@ describe('ComposeEditorProvider', () => {
             getProject: jest.fn().mockReturnValue(project),
             getConfigMetadata: jest.fn().mockReturnValue(configMetadata),
         };
-        (vscode.workspace.fs.writeFile as jest.Mock) = jest
-            .fn()
-            .mockResolvedValue(undefined);
         deploy = {
             deploy: jest.fn().mockResolvedValue(undefined),
         };
@@ -192,13 +188,18 @@ describe('ComposeEditorProvider', () => {
     });
 
     it('handles successful deploy and posts deploy-complete', async () => {
-        (vscode.window.withProgress as jest.Mock).mockImplementation(
+        jest.mocked(vscode.window.withProgress).mockImplementation(
             async (_opts, cb) => {
-                const token = {
-                    onCancellationRequested: (cb2: () => Promise<void>) =>
-                        cb2(),
+                const token: vscode.CancellationToken = {
+                    onCancellationRequested: cancellationEventEmitter.event,
+                    isCancellationRequested: false,
                 };
-                await cb({}, token);
+                await cb(
+                    {
+                        report: jest.fn(),
+                    },
+                    token,
+                );
             },
         );
         await provider.resolveCustomTextEditor(
@@ -213,15 +214,6 @@ describe('ComposeEditorProvider', () => {
     });
 
     it('handles unsuccessful deploy and posts deploy-complete', async () => {
-        (vscode.window.withProgress as jest.Mock).mockImplementation(
-            async (_opts, cb) => {
-                const token = {
-                    onCancellationRequested: (cb2: () => Promise<void>) =>
-                        cb2(),
-                };
-                await cb({}, token);
-            },
-        );
         await provider.resolveCustomTextEditor(
             doc,
             webviewPanel,
@@ -239,7 +231,7 @@ describe('ComposeEditorProvider', () => {
             error,
         );
         expect(
-            vscode.window.showErrorMessage as jest.Mock,
+            jest.mocked(vscode.window.showErrorMessage),
         ).toHaveBeenCalledWith('Error during deployment: deploy-fail');
     });
 

@@ -2,21 +2,25 @@ import * as path from 'path';
 import * as childProcess from 'child_process';
 import * as vscode from 'vscode';
 import { TopoCli, CloneRemoteSource, CloneLocalSource } from './topoCli';
-import { ProjectDescription, TemplateDescription } from './util/types';
+import { ProjectDescription, TemplateDescription, Mutable } from './util/types';
 import * as manifest from './manifest';
+import { ChildProcessWithoutNullStreams } from 'child_process';
+import { mock } from 'jest-mock-extended';
 
 jest.mock('child_process');
 jest.mock('fs');
 jest.mock('process');
 
-const execSyncMock = childProcess.execFileSync as jest.Mock;
-const execMock = childProcess.execFile as unknown as jest.Mock;
+const execSyncMock = jest.mocked(childProcess.execFileSync);
+const execMock = jest.mocked(childProcess.execFile);
+const spawnMock = jest.mocked(childProcess.spawn);
 
 describe('TopoCli', () => {
     const ext = '/fake/ext';
     const env = {} as vscode.EnvironmentVariableCollection;
     let topoCli: TopoCli;
     let origPlatform: string;
+    let cp: Mutable<ChildProcessWithoutNullStreams>;
 
     beforeAll(() => {
         origPlatform = process.platform;
@@ -31,6 +35,7 @@ describe('TopoCli', () => {
     beforeEach(() => {
         jest.clearAllMocks();
         topoCli = new TopoCli(ext, env);
+        cp = mock<ChildProcessWithoutNullStreams>();
     });
 
     it('getBinaryPath builds correct path', () => {
@@ -84,7 +89,8 @@ describe('TopoCli', () => {
 
     it('init resolves promise on success', async () => {
         execMock.mockImplementation((_bin, _cargs, _options, cb) => {
-            cb(null, '', '');
+            cb!(null, '', '');
+            return cp;
         });
         const workspacePath = '/fake/workspace';
         await expect(topoCli.init(workspacePath)).resolves.toBeUndefined();
@@ -98,17 +104,18 @@ describe('TopoCli', () => {
     });
 
     it('init rejects promise on error', async () => {
-        execMock.mockImplementation((_bin, _args, _options, cb) =>
-            cb(new Error('fail'), '', 'err'),
-        );
+        execMock.mockImplementation((_bin, _args, _options, cb) => {
+            cb!(new Error('fail'), '', 'err');
+            return cp;
+        });
         await expect(topoCli.init('t')).rejects.toThrow('err');
     });
 
     it('deploy spawns a child process and returns it', () => {
-        const fakeProc = {
-            pid: 1234,
-        } as unknown as childProcess.ChildProcessWithoutNullStreams;
-        (childProcess.spawn as jest.Mock).mockReturnValue(fakeProc);
+        const fakeProc = mock<Mutable<ChildProcessWithoutNullStreams>>();
+        fakeProc.pid = 1234;
+
+        spawnMock.mockReturnValue(fakeProc);
 
         const result = topoCli.deploy('/fake/project');
 
@@ -121,10 +128,10 @@ describe('TopoCli', () => {
     });
 
     it('deploy includes --target and sets env when ssh target provided', () => {
-        const fakeProc = {
-            pid: 4321,
-        } as unknown as childProcess.ChildProcessWithoutNullStreams;
-        (childProcess.spawn as jest.Mock).mockReturnValue(fakeProc);
+        const fakeProc = mock<Mutable<ChildProcessWithoutNullStreams>>();
+        fakeProc.pid = 4321;
+
+        spawnMock.mockReturnValue(fakeProc);
 
         const result = topoCli.deploy('/fake/project', 'me@example.com');
 

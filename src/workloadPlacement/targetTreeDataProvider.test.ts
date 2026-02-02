@@ -11,7 +11,7 @@ jest.mock('../util/logger');
 jest.mock('vscode');
 
 async function executeCommand(command: string, ...args: unknown[]) {
-    const calls = (vscode.commands.registerCommand as jest.Mock).mock.calls;
+    const calls = jest.mocked(vscode.commands.registerCommand).mock.calls;
     const matching = calls.filter((c: unknown[]) => c[0] === command);
     if (!matching.length) {
         throw new Error(`No handler registered for command ${command}`);
