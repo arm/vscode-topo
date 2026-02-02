@@ -9,7 +9,7 @@ jest.mock('vscode');
 jest.mock('../util/logger');
 
 describe('AttachShell', () => {
-    const registerCommandMock = vscode.commands.registerCommand as jest.Mock;
+    const registerCommandMock = jest.mocked(vscode.commands.registerCommand);
     const dockerCommands = new DockerCommands();
     const target = new Target('topo', 'user@topo.local');
     const targetStore = {
@@ -21,11 +21,6 @@ describe('AttachShell', () => {
 
     beforeEach(() => {
         jest.clearAllMocks();
-        registerCommandMock.mockReturnValue({ dispose: jest.fn() });
-        (vscode.window.createTerminal as jest.Mock).mockReturnValue({
-            sendText: jest.fn(),
-            show: jest.fn(),
-        });
     });
 
     it('registers attachShell command on activate', () => {
@@ -52,7 +47,7 @@ describe('AttachShell', () => {
             ([cmd]) => cmd === AttachShell.attachShellCommand,
         );
         expect(attachShellCall).toBeDefined();
-        const handler = attachShellCall[1];
+        const handler = attachShellCall![1];
         const fakeItem = {
             id: 'cid',
             image: 'clabel',
@@ -66,7 +61,7 @@ describe('AttachShell', () => {
         expect(vscode.window.createTerminal).toHaveBeenCalledWith({
             name: 'Shell: clabel',
         });
-        const terminal = (vscode.window.createTerminal as jest.Mock).mock
+        const terminal = jest.mocked(vscode.window.createTerminal).mock
             .results[0].value;
         expect(terminal.sendText).toHaveBeenCalledWith(
             `docker --host ssh://${target.ssh} exec -it cid sh`,

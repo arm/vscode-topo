@@ -31,17 +31,14 @@ describe('OnBoardTopoConsoleOpener', () => {
                 .mockResolvedValue({ host: 'topo.local' }),
         };
         commandHandler = undefined;
-        (vscode.commands.registerCommand as jest.Mock).mockClear();
-        (vscode.env.openExternal as jest.Mock).mockClear();
-        (vscode.window.showErrorMessage as jest.Mock).mockClear();
-        (vscode.commands.registerCommand as jest.Mock).mockImplementation(
+        jest.mocked(vscode.commands.registerCommand).mockImplementation(
             (command, callback) => {
                 commandHandler = { command, callback };
                 return { dispose: jest.fn() };
             },
         );
-        (vscode.commands.executeCommand as jest.Mock).mockImplementation(
-            (command, ...args) => {
+        jest.mocked(vscode.commands.executeCommand).mockImplementation(
+            async (command, ...args) => {
                 if (
                     command ===
                         OnBoardTopoConsoleOpener.openTopoConsoleCommand &&
@@ -54,6 +51,10 @@ describe('OnBoardTopoConsoleOpener', () => {
         );
     });
 
+    afterEach(() => {
+        jest.resetAllMocks();
+    });
+
     it('registers the openTopoConsole command', () => {
         activateOnBoardTopoConsoleOpener(context, targetStore);
         expect(vscode.commands.registerCommand).toHaveBeenCalledWith(
@@ -63,7 +64,7 @@ describe('OnBoardTopoConsoleOpener', () => {
     });
 
     it('opens the on-board Topo console URL in the browser', async () => {
-        (vscode.env.openExternal as jest.Mock).mockResolvedValue(true);
+        jest.mocked(vscode.env.openExternal).mockResolvedValue(true);
         activateOnBoardTopoConsoleOpener(context, targetStore);
 
         await vscode.commands.executeCommand(
@@ -77,7 +78,7 @@ describe('OnBoardTopoConsoleOpener', () => {
     });
 
     it('shows an error message if openExternal fails', async () => {
-        (vscode.env.openExternal as jest.Mock).mockRejectedValue(
+        jest.mocked(vscode.env.openExternal).mockRejectedValue(
             new Error('fail'),
         );
         activateOnBoardTopoConsoleOpener(context, targetStore);

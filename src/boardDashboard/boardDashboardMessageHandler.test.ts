@@ -82,8 +82,6 @@ describe('BoardDashboardMessageHandler', () => {
             attachVsCode,
             attachShell,
         );
-
-        (vscode.window.showWarningMessage as jest.Mock).mockClear();
     });
 
     describe('renderBoardDashboard', () => {

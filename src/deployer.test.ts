@@ -45,8 +45,8 @@ describe('Deployer', () => {
     const target = new Target('test-target', 'user@host');
 
     const topoCli = {
-        deploy: jest.fn(() => {
-            return (spawn as jest.Mock)();
+        deploy: jest.fn((command: string, ...args: string[]) => {
+            return spawn(command, args);
         }),
     };
     const targetStore: jest.Mocked<Pick<TargetStore, 'getSelectedTarget'>> = {
@@ -131,7 +131,7 @@ describe('Deployer', () => {
 
         // Simulate events
         // Get the mock process object from the spawn mock
-        const events = (spawn as jest.Mock).mock.results[0].value;
+        const events = jest.mocked(spawn).mock.results[0].value;
         // Simulate stdout and stderr
         (events.stdout.on.mock.calls[0][1] as (data: Buffer) => void)(
             Buffer.from('out'),

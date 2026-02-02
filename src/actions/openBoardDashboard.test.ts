@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { OpenBoardDashboard } from './openBoardDashboard';
 
 describe('OpenBoardDashboard', () => {
-    const registerCommandMock = vscode.commands.registerCommand as jest.Mock;
+    const registerCommandMock = jest.mocked(vscode.commands.registerCommand);
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -33,10 +33,9 @@ describe('OpenBoardDashboard', () => {
         const action = new OpenBoardDashboard(context, fakeProvider);
         action.activate();
         const registerCall = registerCommandMock.mock.calls.find(
-            ([cmd]: [string, unknown]) =>
-                cmd === OpenBoardDashboard.openBoardDashboardCommand,
+            ([cmd]) => cmd === OpenBoardDashboard.openBoardDashboardCommand,
         );
-        const handler = registerCall[1];
+        const handler = registerCall![1];
 
         handler();
 

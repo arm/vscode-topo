@@ -14,7 +14,7 @@ describe('ContainerDelete', () => {
     let commandHandler:
         | { command: string; callback: (...args: unknown[]) => void }
         | undefined;
-    const registerCommandMock = vscode.commands.registerCommand as jest.Mock;
+    const registerCommandMock = jest.mocked(vscode.commands.registerCommand);
 
     const target = new Target('topo', 'user@topo.local');
     const container: ContainerItem = {
@@ -48,8 +48,8 @@ describe('ContainerDelete', () => {
             return { dispose: jest.fn() };
         });
 
-        (vscode.commands.executeCommand as jest.Mock).mockImplementation(
-            (command, ...args) => {
+        jest.mocked(vscode.commands.executeCommand).mockImplementation(
+            async (command, ...args) => {
                 if (
                     command === ContainerDelete.deleteContainerCommand &&
                     commandHandler

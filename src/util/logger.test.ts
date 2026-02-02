@@ -1,25 +1,32 @@
 import { OutputChannelLogger, stringifyMessage } from './logger';
 import * as vscode from 'vscode';
 import { mutable } from './mutable';
+import { mock, MockProxy } from 'jest-mock-extended';
 
 jest.mock('vscode');
 
 describe('OutputChannelLogger', () => {
-    const appendLineMock = jest.fn();
-    const configurationGetMock = jest.fn();
+    let outputChannelMock: MockProxy<vscode.LogOutputChannel>;
+    let configurationMock: MockProxy<vscode.WorkspaceConfiguration>;
 
     beforeEach(() => {
-        jest.clearAllMocks();
-        (vscode.window.createOutputChannel as jest.Mock).mockReturnValue({
-            appendLine: appendLineMock,
-        });
-        (vscode.workspace.getConfiguration as jest.Mock).mockReturnValue({
-            get: configurationGetMock,
-        });
+        outputChannelMock = mock<vscode.LogOutputChannel>();
+        configurationMock = mock<vscode.WorkspaceConfiguration>();
+
+        jest.mocked(vscode.window.createOutputChannel).mockReturnValue(
+            outputChannelMock,
+        );
+        jest.mocked(vscode.workspace.getConfiguration).mockReturnValue(
+            configurationMock,
+        );
+    });
+
+    afterEach(() => {
+        jest.resetAllMocks();
     });
 
     it('does not log when verbosity is off', () => {
-        configurationGetMock.mockReturnValue('off');
+        configurationMock.get.mockReturnValue('off');
         const logger = new OutputChannelLogger();
 
         logger.error('error');
@@ -27,22 +34,24 @@ describe('OutputChannelLogger', () => {
         logger.info('info');
         logger.debug('debug');
 
-        expect(appendLineMock).not.toHaveBeenCalled();
+        expect(outputChannelMock.appendLine).not.toHaveBeenCalled();
     });
 
     it('uses default verbosity when configuration is missing', () => {
-        configurationGetMock.mockReturnValue(undefined);
+        configurationMock.get.mockReturnValue(undefined);
         const logger = new OutputChannelLogger();
 
         logger.info('ignored info');
         logger.warn('visible warn');
 
-        expect(appendLineMock).toHaveBeenCalledTimes(1);
-        expect(appendLineMock).toHaveBeenCalledWith('visible warn');
+        expect(outputChannelMock.appendLine).toHaveBeenCalledTimes(1);
+        expect(outputChannelMock.appendLine).toHaveBeenCalledWith(
+            'visible warn',
+        );
     });
 
     it('logs messages only when within the current verbosity', () => {
-        configurationGetMock.mockReturnValue('info');
+        configurationMock.get.mockReturnValue('info');
         const logger = new OutputChannelLogger();
 
         logger.debug('debug');
@@ -50,27 +59,33 @@ describe('OutputChannelLogger', () => {
         logger.warn('warn');
         logger.error('error');
 
-        expect(appendLineMock).toHaveBeenCalledTimes(3);
-        expect(appendLineMock).toHaveBeenNthCalledWith(1, 'info');
-        expect(appendLineMock).toHaveBeenNthCalledWith(2, 'warn');
-        expect(appendLineMock).toHaveBeenNthCalledWith(3, 'error');
+        expect(outputChannelMock.appendLine).toHaveBeenCalledTimes(3);
+        expect(outputChannelMock.appendLine).toHaveBeenNthCalledWith(1, 'info');
+        expect(outputChannelMock.appendLine).toHaveBeenNthCalledWith(2, 'warn');
+        expect(outputChannelMock.appendLine).toHaveBeenNthCalledWith(
+            3,
+            'error',
+        );
     });
 
     it('updates verbosity when configuration changes', () => {
-        configurationGetMock.mockReturnValue('error');
+        configurationMock.get.mockReturnValue('error');
         const configurationChangeEmitter =
             new vscode.EventEmitter<vscode.ConfigurationChangeEvent>();
         mutable(vscode.workspace).onDidChangeConfiguration =
             configurationChangeEmitter.event;
+
         const logger = new OutputChannelLogger();
 
         logger.info('ignored info');
-        configurationGetMock.mockReturnValue('info');
+        configurationMock.get.mockReturnValue('info');
         configurationChangeEmitter.fire({ affectsConfiguration: () => true });
         logger.info('visible info');
 
-        expect(appendLineMock).toHaveBeenCalledTimes(1);
-        expect(appendLineMock).toHaveBeenCalledWith('visible info');
+        expect(outputChannelMock.appendLine).toHaveBeenCalledTimes(1);
+        expect(outputChannelMock.appendLine).toHaveBeenCalledWith(
+            'visible info',
+        );
     });
 });
 

@@ -15,7 +15,7 @@ jest.mock('vscode');
 jest.mock('../util/logger');
 
 async function executeCommand(command: string, ...args: unknown[]) {
-    const calls = (vscode.commands.registerCommand as jest.Mock).mock.calls;
+    const calls = jest.mocked(vscode.commands.registerCommand).mock.calls;
     const addCall = calls.find((c: unknown[]) => c[0] === command);
     const handler = addCall![1] as (...args: unknown[]) => Promise<void>;
     await handler(...args);
@@ -25,7 +25,7 @@ describe('attachVsCode', () => {
     let execMock: jest.Mock;
     let context: Pick<vscode.ExtensionContext, 'subscriptions'>;
     let attachVsCode: AttachVsCode;
-    const registerCommandMock = vscode.commands.registerCommand as jest.Mock;
+    const registerCommandMock = jest.mocked(vscode.commands.registerCommand);
     const dockerCommands = new DockerCommands();
     const target = new Target('topo', 'user@topo.local');
     const containerItem: ContainerItem = {
@@ -47,8 +47,7 @@ describe('attachVsCode', () => {
     const dockerContext = 'topo.local';
 
     beforeEach(() => {
-        jest.clearAllMocks();
-        execMock = exec as unknown as jest.Mock;
+        execMock = jest.mocked(exec);
         context = { subscriptions: [] };
         attachVsCode = new AttachVsCode(context, dockerCommands);
         jest.useFakeTimers();
@@ -57,13 +56,10 @@ describe('attachVsCode', () => {
     afterEach(() => {
         jest.clearAllTimers();
         jest.useRealTimers();
+        jest.resetAllMocks();
     });
 
     it('registers the command', async () => {
-        const registerCommandMock = vscode.commands
-            .registerCommand as jest.Mock;
-        registerCommandMock.mockReturnValue({ dispose: jest.fn() });
-
         await attachVsCode.activate();
 
         expect(registerCommandMock).toHaveBeenCalledWith(

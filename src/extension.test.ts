@@ -47,12 +47,9 @@ describe('extension activation', () => {
             workspaceState,
             globalStorageUri,
         } as unknown as vscode.ExtensionContext;
-        (vscode.commands.registerCommand as jest.Mock).mockImplementation(
-            () => ({ dispose: jest.fn() }),
-        );
-        (vscode.window.showInformationMessage as jest.Mock).mockImplementation(
-            () => undefined,
-        );
+        jest.mocked(vscode.commands.registerCommand).mockImplementation(() => ({
+            dispose: jest.fn(),
+        }));
 
         await activate(context);
 

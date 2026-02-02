@@ -13,16 +13,7 @@ describe('ProjectInit', () => {
     beforeEach(() => {
         context = { subscriptions: [] };
         topoCli = { init: jest.fn() };
-        jest.clearAllMocks();
-        (vscode.commands.registerCommand as jest.Mock).mockImplementation(
-            (_cmd, cb) => cb,
-        );
-        (vscode.window.showInformationMessage as jest.Mock).mockImplementation(
-            jest.fn(),
-        );
-        (vscode.window.showErrorMessage as jest.Mock).mockImplementation(
-            jest.fn(),
-        );
+        jest.resetAllMocks();
         projectInit = new ProjectInit(context, topoCli);
     });
 
@@ -42,7 +33,7 @@ describe('ProjectInit', () => {
         ];
         await projectInit.activate();
 
-        await (vscode.commands.registerCommand as jest.Mock).mock.calls[0][1]();
+        await jest.mocked(vscode.commands.registerCommand).mock.calls[0][1]();
 
         expect(topoCli.init).toHaveBeenCalledWith(workspaceUri.fsPath);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
@@ -54,7 +45,7 @@ describe('ProjectInit', () => {
         topoCli.init.mockRejectedValue(new Error('fail'));
         await projectInit.activate();
 
-        await (vscode.commands.registerCommand as jest.Mock).mock.calls[0][1]();
+        await jest.mocked(vscode.commands.registerCommand).mock.calls[0][1]();
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
             'Failed to initialize project: fail',

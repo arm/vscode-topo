@@ -45,20 +45,23 @@ function createMockContext(): { context: TargetStoreContext } {
 
 describe('TargetStore', () => {
     const emitter = new vscode.EventEmitter<vscode.Uri>();
-    const fsWatchers: { pattern: string; watcher: Watcher }[] = [];
-    (vscode.workspace.createFileSystemWatcher as jest.Mock).mockImplementation(
+    const fsWatchers: { pattern: vscode.GlobPattern; watcher: Watcher }[] = [];
+    jest.mocked(vscode.workspace.createFileSystemWatcher).mockImplementation(
         (pattern) => {
-            const watcher = {
+            const watcher: vscode.FileSystemWatcher = {
                 onDidCreate: emitter.event,
                 onDidChange: emitter.event,
                 onDidDelete: emitter.event,
                 dispose: () => {},
+                ignoreCreateEvents: false,
+                ignoreChangeEvents: false,
+                ignoreDeleteEvents: false,
             };
             fsWatchers.push({ pattern, watcher });
             return watcher;
         },
     );
-    (vscode.workspace.fs.writeFile as jest.Mock).mockImplementation(
+    jest.mocked(vscode.workspace.fs.writeFile).mockImplementation(
         async (uri, _content) => {
             for (const _entry of fsWatchers) {
                 emitter.fire(uri);

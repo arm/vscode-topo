@@ -12,6 +12,7 @@ jest.mock('vscode');
 describe('TopoCliVersionChecker', () => {
     let topoCli: Pick<TopoCli, 'getVersion'>;
     const extensionPath = '/fake/extension/path';
+    const showError = jest.mocked(vscode.window.showErrorMessage);
 
     beforeEach(() => {
         topoCli = {
@@ -21,11 +22,11 @@ describe('TopoCliVersionChecker', () => {
     });
 
     it('returns true if versions match', () => {
-        (topoCli.getVersion as jest.Mock).mockReturnValue({
+        jest.mocked(topoCli.getVersion).mockReturnValue({
             version: '1.2.3',
             commit: 'abcd',
         });
-        (fs.readFileSync as jest.Mock).mockReturnValue(
+        jest.mocked(fs.readFileSync).mockReturnValue(
             JSON.stringify({ [manifest.TOPO_CLI]: { version: '1.2.3' } }),
         );
         const checker = new TopoCliVersionChecker(topoCli, extensionPath);
@@ -34,16 +35,14 @@ describe('TopoCliVersionChecker', () => {
     });
 
     it('shows error and returns false if version mismatches', () => {
-        (topoCli.getVersion as jest.Mock).mockReturnValue({
+        jest.mocked(topoCli.getVersion).mockReturnValue({
             version: '1.2.3',
             commit: 'abcd',
         });
-        (fs.readFileSync as jest.Mock).mockReturnValue(
+        jest.mocked(fs.readFileSync).mockReturnValue(
             JSON.stringify({ [manifest.TOPO_CLI]: { version: '2.0.0' } }),
         );
         const checker = new TopoCliVersionChecker(topoCli, extensionPath);
-        const showError = vscode.window.showErrorMessage as jest.Mock;
-        showError.mockClear();
 
         const result = checker.checkTopoCliVersion();
 
@@ -54,14 +53,12 @@ describe('TopoCliVersionChecker', () => {
     });
 
     it('shows error and returns false if expected version missing', () => {
-        (topoCli.getVersion as jest.Mock).mockReturnValue({
+        jest.mocked(topoCli.getVersion).mockReturnValue({
             version: '1.2.3',
             commit: 'abcd',
         });
-        (fs.readFileSync as jest.Mock).mockReturnValue('{}');
+        jest.mocked(fs.readFileSync).mockReturnValue('{}');
         const checker = new TopoCliVersionChecker(topoCli, extensionPath);
-        const showError = vscode.window.showErrorMessage as jest.Mock;
-        showError.mockClear();
 
         const result = checker.checkTopoCliVersion();
 
