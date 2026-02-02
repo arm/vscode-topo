@@ -72,24 +72,11 @@ function parseBoardDashboardWebviewMessage(
 
 export class BoardDashboardMessageHandler {
     constructor(
-        private readonly containersManager: Pick<
-            ContainersManager,
-            | 'getContainersData'
-            | 'getBoardState'
-            | 'startContainer'
-            | 'stopContainer'
-            | 'deleteContainer'
-        >,
-        private readonly targetStore: Pick<TargetStore, 'getSelectedTarget'>,
-        private readonly containerOpenInBrowser: Pick<
-            ContainerOpenInBrowser,
-            'openContainerInBrowser'
-        >,
-        private readonly attachVsCode: Pick<AttachVsCode, 'attachVsCode'>,
-        private readonly attachShell: Pick<
-            AttachShell,
-            'attachShell' | 'attachSSH'
-        >,
+        private readonly containersManager: ContainersManager,
+        private readonly targetStore: TargetStore,
+        private readonly containerOpenInBrowser: ContainerOpenInBrowser,
+        private readonly attachVsCode: AttachVsCode,
+        private readonly attachShell: AttachShell,
     ) {}
 
     public async renderBoardDashboard(
