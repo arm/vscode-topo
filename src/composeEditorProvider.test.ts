@@ -3,12 +3,19 @@ import * as path from 'path';
 import { ComposeEditorProvider } from './composeEditorProvider';
 import { ConfigMetadata, ProjectDescription } from './util/types';
 import * as manifest from './manifest';
-import { MessageHandler, MessageHandlerTopoCli } from './messageHandler';
+import {
+    ComposeEditorMessageHandler,
+    MessageHandlerTopoCli,
+} from './composeEditorMessageHandler';
 import { Deploy } from './actions/deploy';
 import { logger } from './util/logger';
+import { showAndLogError } from './util/showAndLogError';
 
 jest.mock('vscode');
 jest.mock('./util/logger');
+jest.mock('./util/showAndLogError', () => ({
+    showAndLogError: jest.fn(),
+}));
 
 const waitImmediate = () =>
     new Promise<void>((resolve) => setTimeout(() => resolve(), 0));
@@ -81,7 +88,7 @@ describe('ComposeEditorProvider', () => {
         extensionUri: vscode.Uri.file('/ext'),
         subscriptions: [],
     };
-    let messageHandler: MessageHandler;
+    let composeEditorMessageHandler: ComposeEditorMessageHandler;
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -120,8 +127,14 @@ describe('ComposeEditorProvider', () => {
         deploy = {
             deploy: jest.fn().mockResolvedValue(undefined),
         };
-        messageHandler = new MessageHandler(topoCli, deploy);
-        provider = new ComposeEditorProvider(context, messageHandler);
+        composeEditorMessageHandler = new ComposeEditorMessageHandler(
+            topoCli,
+            deploy,
+        );
+        provider = new ComposeEditorProvider(
+            context,
+            composeEditorMessageHandler,
+        );
     });
 
     it('registers custom editor provider', async () => {
@@ -129,7 +142,7 @@ describe('ComposeEditorProvider', () => {
         vscode.window.registerCustomEditorProvider = mockReg;
         const composeEditorProvider = new ComposeEditorProvider(
             context,
-            messageHandler,
+            composeEditorMessageHandler,
         );
 
         await composeEditorProvider.activate();
@@ -239,8 +252,11 @@ describe('ComposeEditorProvider', () => {
 
         onDidReceiveMessageEmitter.fire({ type: 'not-a-real-type' });
 
-        expect(logger.warn).toHaveBeenCalledWith(
-            'Unknown message type: not-a-real-type',
+        expect(showAndLogError).toHaveBeenCalledWith(
+            'Unexpected error handling message from compose editor webview',
+            new Error(
+                'Invalid webview message: unknown type "not-a-real-type"',
+            ),
         );
     });
 });
