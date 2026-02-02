@@ -6,9 +6,15 @@ import { TopoError } from '../errors/topoError';
 import type {
     BoardState,
     ContainerItem,
+    ContainersManager,
 } from '../workloadPlacement/containersManager';
 import { Target } from '../workloadPlacement/target';
 import { MessagePoster } from '../util/types';
+import { mock } from 'jest-mock-extended';
+import type { TargetStore } from '../workloadPlacement/targetStore';
+import { ContainerOpenInBrowser } from '../actions/containerOpenInBrowser';
+import { AttachVsCode } from '../actions/attachVsCode';
+import { AttachShell } from '../actions/attachShell';
 
 jest.mock('vscode');
 jest.mock('../util/logger');
@@ -49,70 +55,25 @@ describe('BoardDashboardMessageHandler', () => {
         name: 'container-b',
     };
 
-    type ContainersManagerMock = {
-        getContainersData: jest.Mock<Promise<ContainerItem[]>, []>;
-        getBoardState: jest.Mock<Promise<BoardState>, []>;
-        startContainer: jest.Mock<Promise<void>, [string]>;
-        stopContainer: jest.Mock<Promise<void>, [string]>;
-        deleteContainer: jest.Mock<Promise<void>, [string]>;
-    };
+    const containersManager = mock<ContainersManager>();
+    const targetStore = mock<TargetStore>();
+    const containerOpenInBrowser = mock<ContainerOpenInBrowser>();
+    const attachVsCode = mock<AttachVsCode>();
+    const attachShell = mock<AttachShell>();
 
-    type TargetStoreMock = {
-        getSelectedTarget: jest.Mock<Promise<Target | undefined>, []>;
-    };
-
-    type ContainerOpenInBrowserMock = {
-        openContainerInBrowser: jest.Mock<
-            Promise<'success' | 'no-web-ports'>,
-            [ContainerItem]
-        >;
-    };
-
-    type AttachVsCodeMock = {
-        attachVsCode: jest.Mock<Promise<void>, [ContainerItem]>;
-    };
-
-    type AttachShellMock = {
-        attachShell: jest.Mock<void, [ContainerItem]>;
-        attachSSH: jest.Mock<Promise<void>, []>;
-    };
-
-    let containersManager: ContainersManagerMock;
-    let targetStore: TargetStoreMock;
-    let containerOpenInBrowser: ContainerOpenInBrowserMock;
-    let attachVsCode: AttachVsCodeMock;
-    let attachShell: AttachShellMock;
     let handler: BoardDashboardMessageHandler;
 
     beforeEach(() => {
         jest.resetAllMocks();
 
-        containersManager = {
-            getContainersData: jest.fn(async () => [containerA]),
-            getBoardState: jest.fn(async () => boardState),
-            startContainer: jest.fn(async (_containerId: string) => {}),
-            stopContainer: jest.fn(async (_containerId: string) => {}),
-            deleteContainer: jest.fn(async (_containerId: string) => {}),
-        };
+        containersManager.getContainersData.mockResolvedValue([containerA]);
+        containersManager.getBoardState.mockResolvedValue(boardState);
 
-        targetStore = {
-            getSelectedTarget: jest.fn(async () => target),
-        };
+        targetStore.getSelectedTarget.mockResolvedValue(target);
 
-        containerOpenInBrowser = {
-            openContainerInBrowser: jest.fn(
-                async (_item: ContainerItem) => 'success',
-            ),
-        };
-
-        attachVsCode = {
-            attachVsCode: jest.fn(async (_item: ContainerItem) => {}),
-        };
-
-        attachShell = {
-            attachShell: jest.fn((_item: ContainerItem) => {}),
-            attachSSH: jest.fn(async () => {}),
-        };
+        containerOpenInBrowser.openContainerInBrowser.mockResolvedValue(
+            'success',
+        );
 
         handler = new BoardDashboardMessageHandler(
             containersManager,
