@@ -10,7 +10,7 @@ import { ContainersManager } from './workloadPlacement/containersManager';
 import { Deployer } from './deployer';
 import { BoardDashboardMessageHandler } from './boardDashboard/boardDashboardMessageHandler';
 import { BoardDashboardProvider } from './boardDashboard/boardDashboardProvider';
-import { MessageHandler } from './messageHandler';
+import { ComposeEditorMessageHandler } from './composeEditorMessageHandler';
 import { ContainerStart } from './actions/containerStart';
 import { ContainerStop } from './actions/containerStop';
 import { ContainerOpenInBrowser } from './actions/containerOpenInBrowser';
@@ -50,10 +50,13 @@ export async function activate(
     const projectInit = new ProjectInit(context, topoCli);
     const projectClone = new ProjectClone(context, topoCli);
     const deploy = new Deploy(context, deployer);
-    const messageHandler = new MessageHandler(topoCli, deploy);
+    const composeEditorMessageHandler = new ComposeEditorMessageHandler(
+        topoCli,
+        deploy,
+    );
     const composeEditorProvider = new ComposeEditorProvider(
         context,
-        messageHandler,
+        composeEditorMessageHandler,
     );
     const boardConnectionChecker = new BoardConnectionChecker();
     const containerOpenInBrowser = new ContainerOpenInBrowser(context);

@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as manifest from './manifest';
-import { MessageHandler } from './messageHandler';
+import { ComposeEditorMessageHandler } from './composeEditorMessageHandler';
 
 const isUri = (uri: unknown): uri is vscode.Uri =>
     (uri as vscode.Uri).path !== undefined;
@@ -21,7 +21,7 @@ export class ComposeEditorProvider implements vscode.CustomTextEditorProvider {
             vscode.ExtensionContext,
             'subscriptions' | 'extensionPath' | 'extensionUri'
         >,
-        private readonly messageHandler: MessageHandler,
+        private readonly messageHandler: ComposeEditorMessageHandler,
     ) {}
 
     public async activate(): Promise<void> {
