@@ -7,7 +7,6 @@ import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContaine
 import { mock, MockProxy } from 'jest-mock-extended';
 import { TargetStore } from '../workloadPlacement/targetStore';
 
-jest.mock('vscode');
 jest.mock('../util/logger');
 
 describe('AttachShell', () => {

@@ -6,7 +6,6 @@ import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContaine
 import { mock, MockProxy } from 'jest-mock-extended';
 
 jest.mock('../util/logger');
-jest.mock('vscode');
 
 describe('ContainerOpenInBrowser', () => {
     let context: MockProxy<vscode.ExtensionContext>;

@@ -10,7 +10,6 @@ import { showAndLogError } from './util/showAndLogError';
 import { TopoCli } from './topoCli';
 import { mock, MockProxy } from 'jest-mock-extended';
 
-jest.mock('vscode');
 jest.mock('./util/logger');
 jest.mock('./util/showAndLogError', () => ({
     showAndLogError: jest.fn(),

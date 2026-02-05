@@ -17,7 +17,6 @@ jest.mock('../util/exec', () => ({
     exec: jest.fn(),
 }));
 jest.mock('../util/logger');
-jest.mock('vscode');
 
 const webServerPortInfo = {
     '80/tcp': [

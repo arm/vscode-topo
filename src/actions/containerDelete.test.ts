@@ -8,8 +8,6 @@ import { TopoError } from '../errors/topoError';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { ContainersManager } from '../workloadPlacement/containersManager';
 
-jest.mock('vscode');
-
 describe('ContainerDelete', () => {
     let context: MockProxy<vscode.ExtensionContext>;
     let showErrorMessageSpy: jest.SpyInstance;

@@ -3,8 +3,6 @@ import * as vscode from 'vscode';
 import { mutable } from './mutable';
 import { mock, MockProxy } from 'jest-mock-extended';
 
-jest.mock('vscode');
-
 describe('OutputChannelLogger', () => {
     let outputChannelMock: MockProxy<vscode.LogOutputChannel>;
     let configurationMock: MockProxy<vscode.WorkspaceConfiguration>;

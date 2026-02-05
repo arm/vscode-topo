@@ -4,7 +4,6 @@ import { Target } from './target';
 import { mutable } from '../util/mutable';
 import { mock, MockProxy } from 'jest-mock-extended';
 
-jest.mock('vscode');
 jest.mock('../util/logger');
 
 const waitImmediate = async () => {

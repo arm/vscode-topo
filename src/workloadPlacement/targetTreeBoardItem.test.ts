@@ -2,8 +2,6 @@ import * as vscode from 'vscode';
 import { TargetTreeBoardItem } from './targetTreeBoardItem';
 import { Target } from './target';
 
-jest.mock('vscode');
-
 describe('TargetTreeBoardItem', () => {
     const baseTarget = new Target('t-1', 'root@host.local');
 

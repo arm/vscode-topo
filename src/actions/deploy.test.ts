@@ -6,7 +6,6 @@ import { Deploy } from './deploy';
 import { Deployer } from '../deployer';
 import { mock, MockProxy } from 'jest-mock-extended';
 
-jest.mock('vscode');
 jest.mock('../util/logger');
 
 const waitImmediate = () =>
