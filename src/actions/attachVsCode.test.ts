@@ -7,6 +7,7 @@ import { Target } from '../workloadPlacement/target';
 import { ContainerItem } from '../workloadPlacement/containersManager';
 import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
 import { TopoError } from '../errors/topoError';
+import { mock, MockProxy } from 'jest-mock-extended';
 
 jest.mock('../util/exec', () => ({
     exec: jest.fn(),
@@ -23,7 +24,7 @@ async function executeCommand(command: string, ...args: unknown[]) {
 
 describe('attachVsCode', () => {
     let execMock: jest.Mock;
-    let context: Pick<vscode.ExtensionContext, 'subscriptions'>;
+    let context: MockProxy<vscode.ExtensionContext>;
     let attachVsCode: AttachVsCode;
     const registerCommandMock = jest.mocked(vscode.commands.registerCommand);
     const dockerCommands = new DockerCommands();
@@ -48,7 +49,7 @@ describe('attachVsCode', () => {
 
     beforeEach(() => {
         execMock = jest.mocked(exec);
-        context = { subscriptions: [] };
+        context = mock<vscode.ExtensionContext>({ subscriptions: [] });
         attachVsCode = new AttachVsCode(context, dockerCommands);
         jest.useFakeTimers();
     });
@@ -69,7 +70,6 @@ describe('attachVsCode', () => {
     });
 
     it("executes attachVsCode command that doesn't create context and calls remote-containers.attachToRunningContainer with container id", async () => {
-        registerCommandMock.mockReturnValue({ dispose: jest.fn() });
         await attachVsCode.activate();
         execMock.mockImplementation(async (command) => {
             if (command === 'docker context show') {
@@ -109,7 +109,6 @@ describe('attachVsCode', () => {
     });
 
     it('executes attachVsCode command that creates context and calls remote-containers.attachToRunningContainer with container id', async () => {
-        registerCommandMock.mockReturnValue({ dispose: jest.fn() });
         await attachVsCode.activate();
         execMock.mockImplementation(async (command) => {
             if (command === 'docker context show') {
@@ -158,7 +157,6 @@ describe('attachVsCode', () => {
     });
 
     it('shows an error if the attachVsCode command fails', async () => {
-        registerCommandMock.mockReturnValue({ dispose: jest.fn() });
         await attachVsCode.activate();
         execMock.mockImplementation(async () => {
             throw new TopoError('DOCKER', 'fail');

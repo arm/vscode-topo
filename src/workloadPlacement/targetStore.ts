@@ -5,15 +5,11 @@ import { Target } from './target';
 
 type GlobalStoreKeys = 'targets';
 type WorkspaceStoreKeys = 'selectedTarget';
-export type TargetStoreContext = Pick<
-    vscode.ExtensionContext,
-    'globalState' | 'workspaceState' | 'globalStorageUri'
->;
 
 export class TargetStore {
     private static instance: TargetStore | undefined;
 
-    public static getInstance(context?: TargetStoreContext): TargetStore {
+    public static getInstance(context?: vscode.ExtensionContext): TargetStore {
         if (!TargetStore.instance) {
             if (!context) {
                 throw new Error(
@@ -30,7 +26,7 @@ export class TargetStore {
     public readonly onChanged: vscode.Event<void> = this._onChanged.event;
     private disposables: vscode.Disposable[] = [];
 
-    private constructor(protected context: TargetStoreContext) {
+    private constructor(protected context: vscode.ExtensionContext) {
         const pattern = new vscode.RelativePattern(
             this.context.globalStorageUri,
             'targets-update.signal',

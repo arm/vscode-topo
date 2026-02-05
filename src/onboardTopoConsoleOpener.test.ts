@@ -1,19 +1,22 @@
 import * as vscode from 'vscode';
 import { OnBoardTopoConsoleOpener } from './onboardTopoConsoleOpener';
+import { mock, MockProxy } from 'jest-mock-extended';
+import { TargetStore } from './workloadPlacement/targetStore';
+import { Target } from './workloadPlacement/target';
 
 jest.mock('vscode');
 
 describe('OnBoardTopoConsoleOpener', () => {
-    let context: Pick<vscode.ExtensionContext, 'subscriptions'>;
+    let context: MockProxy<vscode.ExtensionContext>;
     let commandHandler:
         | { command: string; callback: (...args: unknown[]) => void }
         | undefined;
     const targetUrl = 'http://topo.local';
-    let targetStore: { getSelectedTarget: jest.Mock };
+    let targetStore: MockProxy<TargetStore>;
 
     const activateOnBoardTopoConsoleOpener = (
-        context: Pick<vscode.ExtensionContext, 'subscriptions'>,
-        targetStore: { getSelectedTarget: jest.Mock },
+        context: vscode.ExtensionContext,
+        targetStore: TargetStore,
     ) => {
         const onBoardTopoConsoleOpener = new OnBoardTopoConsoleOpener(
             context,
@@ -24,12 +27,11 @@ describe('OnBoardTopoConsoleOpener', () => {
     };
 
     beforeEach(() => {
-        context = { subscriptions: [] };
-        targetStore = {
-            getSelectedTarget: jest
-                .fn()
-                .mockResolvedValue({ host: 'topo.local' }),
-        };
+        context = mock<vscode.ExtensionContext>({ subscriptions: [] });
+        targetStore = mock<TargetStore>();
+        targetStore.getSelectedTarget.mockResolvedValue(
+            new Target('topo', 'topo.local'),
+        );
         commandHandler = undefined;
         jest.mocked(vscode.commands.registerCommand).mockImplementation(
             (command, callback) => {

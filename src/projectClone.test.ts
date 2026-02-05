@@ -1,8 +1,10 @@
 import path from 'path';
 import * as vscode from 'vscode';
 import * as manifest from './manifest';
-import { ProjectClone, ProjectClonerBinary } from './projectClone';
+import { ProjectClone } from './projectClone';
 import { mutable } from './util/mutable';
+import { TopoCli } from './topoCli';
+import { mock, MockProxy } from 'jest-mock-extended';
 
 const waitImmediate = () =>
     new Promise<void>((resolve) => setTimeout(() => resolve(), 0));
@@ -28,9 +30,8 @@ jest.mock('vscode');
 
 describe('ProjectClone', () => {
     let projectClone: ProjectClone;
-    const topoCli: jest.Mocked<ProjectClonerBinary> = {
-        getCloneCommand: jest.fn(),
-    };
+    const topoCli = mock<TopoCli>();
+    let context: MockProxy<vscode.ExtensionContext>;
     const taskExec: vscode.TaskExecution = {
         task: {
             definition: { type: 'shell', taskId: 'topo clone' },
@@ -49,8 +50,10 @@ describe('ProjectClone', () => {
     beforeEach(async () => {
         jest.resetAllMocks();
         mutable(vscode.workspace).workspaceFolders = undefined;
-        subscriptions.length = 0;
-        projectClone = new ProjectClone({ subscriptions }, topoCli);
+        context = mock<vscode.ExtensionContext>({
+            subscriptions: subscriptions,
+        });
+        projectClone = new ProjectClone(context, topoCli);
         await projectClone.activate();
     });
 

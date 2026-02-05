@@ -67,15 +67,9 @@ export class ContainersManager implements vscode.Disposable {
     private disposables: vscode.Disposable[] = [];
 
     constructor(
-        private readonly boardConnectionChecker: Pick<
-            BoardConnectionChecker,
-            'isBoardSshPortOpen'
-        >,
+        private readonly boardConnectionChecker: BoardConnectionChecker,
         private readonly containerCommands: ContainerCommands,
-        private readonly targetStore: Pick<
-            TargetStore,
-            'onChanged' | 'getSelectedTarget'
-        >,
+        private readonly targetStore: TargetStore,
     ) {
         const onChangedDisposable = this.targetStore.onChanged(async () => {
             await this.updateTarget().catch((err) => {

@@ -9,14 +9,8 @@ export class ContainerStop {
     public static readonly stopContainerCommand = `${manifest.PACKAGE_NAME}.stopContainer`;
 
     constructor(
-        private readonly context: Pick<
-            vscode.ExtensionContext,
-            'subscriptions'
-        >,
-        private readonly containersManager: Pick<
-            ContainersManager,
-            'stopContainer'
-        >,
+        private readonly context: vscode.ExtensionContext,
+        private readonly containersManager: ContainersManager,
     ) {}
 
     public async activate() {

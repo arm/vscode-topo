@@ -4,20 +4,12 @@ import { Deployer } from '../deployer';
 import * as manifest from '../manifest';
 import { getErrorMessage } from '../util/getErrorMessage';
 
-export type DeployerType = Pick<
-    Deployer,
-    'start' | 'stop' | 'onStdoutData' | 'onStderrData' | 'onExit' | 'onError'
->;
-
 export class Deploy {
     public static readonly deployCommand = `${manifest.PACKAGE_NAME}.deploy.context`;
 
     constructor(
-        private readonly context: Pick<
-            vscode.ExtensionContext,
-            'subscriptions'
-        >,
-        private readonly deployer: DeployerType,
+        private readonly context: vscode.ExtensionContext,
+        private readonly deployer: Deployer,
     ) {}
 
     public activate(): void {

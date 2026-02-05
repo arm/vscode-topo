@@ -1,51 +1,72 @@
 import * as vscode from 'vscode';
-import { TargetStore, TargetStoreContext } from './targetStore';
+import { TargetStore } from './targetStore';
 import { Target } from './target';
 import { mutable } from '../util/mutable';
+import { mock, MockProxy } from 'jest-mock-extended';
 
 jest.mock('vscode');
 jest.mock('../util/logger');
-
-type Watcher = Pick<
-    vscode.FileSystemWatcher,
-    'onDidCreate' | 'onDidChange' | 'onDidDelete' | 'dispose'
->;
 
 const waitImmediate = async () => {
     await Promise.resolve();
     await Promise.resolve();
 };
 
-function createMockContext(): { context: TargetStoreContext } {
-    const globalMap = new Map<string, string | undefined>();
-    const workspaceMap = new Map<string, string | undefined>();
+function createMockContext(): {
+    context: vscode.ExtensionContext;
+    globalState: MockProxy<vscode.Memento>;
+    workspaceState: MockProxy<vscode.Memento>;
+} {
+    const globalMap = new Map<string, unknown>();
+    const workspaceMap = new Map<string, unknown>();
+
+    const globalState = mock<vscode.ExtensionContext['globalState']>();
+    globalState.get.mockImplementation(
+        (key: string, defaultValue?: unknown) => {
+            if (!globalMap.has(key)) {
+                return defaultValue;
+            }
+            return globalMap.get(key);
+        },
+    );
+    globalState.update.mockImplementation(
+        async (key: string, value: unknown) => {
+            globalMap.set(key, value);
+        },
+    );
+
+    const workspaceState = mock<vscode.ExtensionContext['workspaceState']>();
+    workspaceState.get.mockImplementation(
+        (key: string, defaultValue?: unknown) => {
+            if (!workspaceMap.has(key)) {
+                return defaultValue;
+            }
+            return workspaceMap.get(key);
+        },
+    );
+    workspaceState.update.mockImplementation(
+        async (key: string, value: unknown) => {
+            workspaceMap.set(key, value);
+        },
+    );
 
     const globalStorageUri = vscode.Uri.parse('file:///fake/globalStorage');
-    const globalState = {
-        get: (k: string) => globalMap.get(k),
-        update: async (k: string, v: string | undefined) => {
-            globalMap.set(k, v);
-        },
-    } as unknown as vscode.ExtensionContext['globalState'];
-    const workspaceState = {
-        get: (k: string) => workspaceMap.get(k),
-        update: async (k: string, v: string | undefined) => {
-            workspaceMap.set(k, v);
-        },
-    } as unknown as vscode.Memento;
 
-    const context: TargetStoreContext = {
+    const context = mock<vscode.ExtensionContext>({
         globalState,
         workspaceState,
         globalStorageUri,
-    };
+    });
 
-    return { context };
+    return { context, globalState, workspaceState };
 }
 
 describe('TargetStore', () => {
     const emitter = new vscode.EventEmitter<vscode.Uri>();
-    const fsWatchers: { pattern: vscode.GlobPattern; watcher: Watcher }[] = [];
+    const fsWatchers: {
+        pattern: vscode.GlobPattern;
+        watcher: vscode.FileSystemWatcher;
+    }[] = [];
     jest.mocked(vscode.workspace.createFileSystemWatcher).mockImplementation(
         (pattern) => {
             const watcher: vscode.FileSystemWatcher = {
@@ -108,10 +129,8 @@ describe('TargetStore', () => {
     });
 
     it('throws an error when addTarget fails', async () => {
-        const { context } = createMockContext();
-        context.globalState.update = jest
-            .fn()
-            .mockRejectedValue(new Error('persist-fail'));
+        const { context, globalState } = createMockContext();
+        globalState.update.mockRejectedValue(new Error('persist-fail'));
         const store = TargetStore.getInstance(context);
         const t = new Target('t-fail', 'fail@example.com');
 

@@ -6,11 +6,8 @@ export class OnBoardTopoConsoleOpener {
     public static openTopoConsoleCommand = `${manifest.PACKAGE_NAME}.openTopoConsole`;
 
     constructor(
-        private readonly context: Pick<
-            vscode.ExtensionContext,
-            'subscriptions'
-        >,
-        private readonly targetStore: Pick<TargetStore, 'getSelectedTarget'>,
+        private readonly context: vscode.ExtensionContext,
+        private readonly targetStore: TargetStore,
     ) {}
 
     public async activate() {

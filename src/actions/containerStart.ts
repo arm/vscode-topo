@@ -9,14 +9,8 @@ export class ContainerStart {
     public static readonly startContainerCommand = `${manifest.PACKAGE_NAME}.startContainer`;
 
     constructor(
-        private readonly context: Pick<
-            vscode.ExtensionContext,
-            'subscriptions'
-        >,
-        private readonly containersManager: Pick<
-            ContainersManager,
-            'startContainer'
-        >,
+        private readonly context: vscode.ExtensionContext,
+        private readonly containersManager: ContainersManager,
     ) {}
 
     public activate() {

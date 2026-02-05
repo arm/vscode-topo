@@ -1,16 +1,11 @@
 import * as vscode from 'vscode';
-import { TopoCli } from './topoCli';
 import { Deploy } from './actions/deploy';
 import { logger } from './util/logger';
 import { getErrorMessage } from './util/getErrorMessage';
 import { isPlainObject } from './util/isPlainObject';
 import { MessagePoster } from './util/types';
 import { showAndLogError } from './util/showAndLogError';
-
-export type MessageHandlerTopoCli = Pick<
-    TopoCli,
-    'getProject' | 'getConfigMetadata'
->;
+import { TopoCli } from './topoCli';
 
 type ShowQuickPickMessage = { type: 'show-quick-pick'; items: string[] };
 type CreateQuickPickMessage = {
@@ -79,8 +74,8 @@ function parseWebviewMessage(value: unknown): WebviewMessage {
 
 export class ComposeEditorMessageHandler {
     constructor(
-        private readonly topoCli: MessageHandlerTopoCli,
-        private readonly deploy: Pick<Deploy, 'deploy'>,
+        private readonly topoCli: TopoCli,
+        private readonly deploy: Deploy,
     ) {}
 
     public renderComposeEditor(

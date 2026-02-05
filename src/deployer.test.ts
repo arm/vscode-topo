@@ -3,6 +3,8 @@ import { spawn } from 'child_process';
 import path from 'path';
 import { Target } from './workloadPlacement/target';
 import { TargetStore } from './workloadPlacement/targetStore';
+import { mock } from 'jest-mock-extended';
+import { TopoCli } from './topoCli';
 
 type EventHandler = (...args: unknown[]) => void;
 const events: { [key: string]: EventHandler[] } = {};
@@ -43,17 +45,12 @@ describe('Deployer', () => {
     let deployer: Deployer;
     const composeFilePath: string = '/tmp/compose.topo.yaml';
     const target = new Target('test-target', 'user@host');
-
-    const topoCli = {
-        deploy: jest.fn((command: string, ...args: string[]) => {
-            return spawn(command, args);
-        }),
-    };
-    const targetStore: jest.Mocked<Pick<TargetStore, 'getSelectedTarget'>> = {
-        getSelectedTarget: jest.fn(async () => target),
-    };
+    const topoCli = mock<TopoCli>();
+    const targetStore = mock<TargetStore>();
 
     beforeEach(() => {
+        topoCli.deploy.mockImplementation(() => spawn('topo', []));
+        targetStore.getSelectedTarget.mockResolvedValue(target);
         deployer = new Deployer(topoCli, targetStore);
 
         jest.clearAllMocks();

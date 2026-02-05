@@ -2,17 +2,12 @@ import * as manifest from './manifest';
 import * as vscode from 'vscode';
 import { TopoCli } from './topoCli';
 
-type ProjectInitializerBinary = Pick<TopoCli, 'init'>;
-
 export class ProjectInit {
     public static initProjectCommand = `${manifest.PACKAGE_NAME}.initProject`;
 
     constructor(
-        private readonly context: Pick<
-            vscode.ExtensionContext,
-            'subscriptions'
-        >,
-        private readonly topoCli: Pick<ProjectInitializerBinary, 'init'>,
+        private readonly context: vscode.ExtensionContext,
+        private readonly topoCli: TopoCli,
     ) {}
 
     public async activate() {

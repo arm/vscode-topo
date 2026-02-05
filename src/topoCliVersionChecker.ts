@@ -6,7 +6,7 @@ import * as manifest from './manifest';
 
 export class TopoCliVersionChecker {
     constructor(
-        private readonly topoCli: Pick<TopoCli, 'getVersion'>,
+        private readonly topoCli: TopoCli,
         private readonly extensionPath: string,
     ) {}
 

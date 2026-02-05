@@ -3,7 +3,8 @@ import os from 'os';
 import * as vscode from 'vscode';
 import { logger } from '../util/logger';
 import { Deploy } from './deploy';
-import { DeployerType } from './deploy';
+import { Deployer } from '../deployer';
+import { mock, MockProxy } from 'jest-mock-extended';
 
 jest.mock('vscode');
 jest.mock('../util/logger');
@@ -17,31 +18,29 @@ describe('Deploy', () => {
         path.join(os.tmpdir(), 'compose.yaml'),
     );
     const composeFilePath = composeFileUri.fsPath;
-    let deployer: DeployerType;
+    let deployer: MockProxy<Deployer>;
     let stdoutDataEmitter: vscode.EventEmitter<Buffer>;
     let stderrDataEmitter: vscode.EventEmitter<Buffer>;
     let exitEmitter: vscode.EventEmitter<number | null>;
     let errorEmitter: vscode.EventEmitter<Error>;
-    let context: Pick<vscode.ExtensionContext, 'subscriptions'>;
+    let context: MockProxy<vscode.ExtensionContext>;
     let deployHandler: ((resource?: vscode.Uri) => Promise<void>) | undefined;
     let registerSpy: jest.SpyInstance;
     let token: vscode.CancellationToken;
     const cancellationEventEmitter = new vscode.EventEmitter<void>();
 
     beforeEach(() => {
-        context = { subscriptions: [] };
+        context = mock<vscode.ExtensionContext>({ subscriptions: [] });
         stderrDataEmitter = new vscode.EventEmitter<Buffer>();
         stdoutDataEmitter = new vscode.EventEmitter<Buffer>();
         exitEmitter = new vscode.EventEmitter<number | null>();
         errorEmitter = new vscode.EventEmitter<Error>();
-        deployer = {
-            start: jest.fn().mockImplementation(() => Promise.resolve()),
-            stop: jest.fn(),
-            onStdoutData: stdoutDataEmitter.event,
-            onStderrData: stderrDataEmitter.event,
-            onExit: exitEmitter.event,
-            onError: errorEmitter.event,
-        };
+        deployer = mock<Deployer>();
+        deployer.start.mockResolvedValue(undefined);
+        deployer.onStdoutData.mockImplementation(stdoutDataEmitter.event);
+        deployer.onStderrData.mockImplementation(stderrDataEmitter.event);
+        deployer.onExit.mockImplementation(exitEmitter.event);
+        deployer.onError.mockImplementation(errorEmitter.event);
         deploy = new Deploy(context, deployer);
         token = {
             onCancellationRequested: cancellationEventEmitter.event,
@@ -126,7 +125,7 @@ describe('Deploy', () => {
 
     it('handles deploy process errors', async () => {
         const error = new Error('deploy-fail');
-        deployer.start = jest.fn().mockRejectedValue(error);
+        deployer.start.mockRejectedValueOnce(error);
 
         const deployOperation = deploy.deploy(composeFilePath);
         const deployOperationAssertion =
@@ -183,7 +182,7 @@ describe('Deploy', () => {
 
     it('logs and shows error when deploy command fails', async () => {
         const error = new Error('deploy-command-fail');
-        deployer.start = jest.fn().mockRejectedValue(error);
+        deployer.start.mockRejectedValueOnce(error);
         deploy.activate();
 
         deployHandler!(composeFileUri);

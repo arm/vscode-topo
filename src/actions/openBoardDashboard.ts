@@ -7,10 +7,7 @@ export class OpenBoardDashboard {
 
     constructor(
         private readonly context: vscode.ExtensionContext,
-        private readonly boardDashboardProvider: Pick<
-            BoardDashboardProvider,
-            'showDashboard'
-        >,
+        private readonly boardDashboardProvider: BoardDashboardProvider,
     ) {}
 
     public activate(): void {

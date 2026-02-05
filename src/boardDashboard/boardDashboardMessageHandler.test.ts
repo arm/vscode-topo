@@ -111,10 +111,6 @@ describe('BoardDashboardMessageHandler', () => {
     describe('handleMessage', () => {
         describe('start-container', () => {
             it('handles start-container, logs info, and re-renders', async () => {
-                const renderSpy = jest
-                    .spyOn(handler, 'renderBoardDashboard')
-                    .mockResolvedValue(undefined);
-
                 await handler.handleMessage(messagePoster, {
                     type: 'start-container',
                     containerId: 'a',
@@ -126,7 +122,11 @@ describe('BoardDashboardMessageHandler', () => {
                 expect(logger.info).toHaveBeenCalledWith(
                     'Container a started successfully',
                 );
-                expect(renderSpy).toHaveBeenCalledWith(messagePoster);
+                expect(messagePoster.postMessage).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        type: 'render-board-dashboard',
+                    }),
+                );
             });
 
             it('shows a TopoError for start-container docker errors and does not re-render', async () => {
@@ -134,7 +134,6 @@ describe('BoardDashboardMessageHandler', () => {
                 containersManager.startContainer.mockRejectedValueOnce(
                     dockerErr,
                 );
-                const renderSpy = jest.spyOn(handler, 'renderBoardDashboard');
 
                 await handler.handleMessage(messagePoster, {
                     type: 'start-container',
@@ -145,13 +144,12 @@ describe('BoardDashboardMessageHandler', () => {
                     'Failed to start the container a',
                     dockerErr,
                 );
-                expect(renderSpy).not.toHaveBeenCalled();
+                expect(messagePoster.postMessage).not.toHaveBeenCalled();
             });
 
             it('handles unknown errors by showing an unexpected error', async () => {
                 const err = new Error('boom');
                 containersManager.startContainer.mockRejectedValueOnce(err);
-                const renderSpy = jest.spyOn(handler, 'renderBoardDashboard');
 
                 await handler.handleMessage(messagePoster, {
                     type: 'start-container',
@@ -162,16 +160,12 @@ describe('BoardDashboardMessageHandler', () => {
                     'Unexpected error handling message from board dashboard webview',
                     err,
                 );
-                expect(renderSpy).not.toHaveBeenCalled();
+                expect(messagePoster.postMessage).not.toHaveBeenCalled();
             });
         });
 
         describe('stop-container', () => {
             it('handles stop-container, logs info, and re-renders', async () => {
-                const renderSpy = jest
-                    .spyOn(handler, 'renderBoardDashboard')
-                    .mockResolvedValue(undefined);
-
                 await handler.handleMessage(messagePoster, {
                     type: 'stop-container',
                     containerId: 'a',
@@ -183,12 +177,15 @@ describe('BoardDashboardMessageHandler', () => {
                 expect(logger.info).toHaveBeenCalledWith(
                     'Container a stopped successfully',
                 );
-                expect(renderSpy).toHaveBeenCalledWith(messagePoster);
+                expect(messagePoster.postMessage).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        type: 'render-board-dashboard',
+                    }),
+                );
             });
 
             it('handles stop-container docker TopoError and returns early', async () => {
                 const dockerErr = new TopoError('DOCKER', 'fail');
-                const renderSpy = jest.spyOn(handler, 'renderBoardDashboard');
 
                 containersManager.stopContainer.mockRejectedValueOnce(
                     dockerErr,
@@ -203,7 +200,7 @@ describe('BoardDashboardMessageHandler', () => {
                     'Failed to stop the container a',
                     dockerErr,
                 );
-                expect(renderSpy).not.toHaveBeenCalled();
+                expect(messagePoster.postMessage).not.toHaveBeenCalled();
             });
 
             it('shows an unexpected error when stop-container throws a non-TopoError', async () => {
@@ -219,15 +216,12 @@ describe('BoardDashboardMessageHandler', () => {
                     'Unexpected error handling message from board dashboard webview',
                     err,
                 );
+                expect(messagePoster.postMessage).not.toHaveBeenCalled();
             });
         });
 
         describe('delete-container', () => {
             it('handles delete-container, logs info, and re-renders', async () => {
-                const renderSpy = jest
-                    .spyOn(handler, 'renderBoardDashboard')
-                    .mockResolvedValue(undefined);
-
                 await handler.handleMessage(messagePoster, {
                     type: 'delete-container',
                     containerId: 'a',
@@ -239,12 +233,15 @@ describe('BoardDashboardMessageHandler', () => {
                 expect(logger.info).toHaveBeenCalledWith(
                     'Container a deleted successfully',
                 );
-                expect(renderSpy).toHaveBeenCalledWith(messagePoster);
+                expect(messagePoster.postMessage).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        type: 'render-board-dashboard',
+                    }),
+                );
             });
 
             it('handles delete-container docker TopoError and returns early', async () => {
                 const dockerErr = new TopoError('DOCKER', 'fail');
-                const renderSpy = jest.spyOn(handler, 'renderBoardDashboard');
 
                 containersManager.deleteContainer.mockRejectedValueOnce(
                     dockerErr,
@@ -259,7 +256,7 @@ describe('BoardDashboardMessageHandler', () => {
                     'Failed to delete the container a',
                     dockerErr,
                 );
-                expect(renderSpy).not.toHaveBeenCalled();
+                expect(messagePoster.postMessage).not.toHaveBeenCalled();
             });
 
             it('shows an unexpected error when delete-container throws a non-TopoError', async () => {
@@ -483,15 +480,15 @@ describe('BoardDashboardMessageHandler', () => {
         });
 
         it('re-renders when board-dashboard-webview-ready', async () => {
-            const renderSpy = jest
-                .spyOn(handler, 'renderBoardDashboard')
-                .mockResolvedValue(undefined);
-
             await handler.handleMessage(messagePoster, {
                 type: 'board-dashboard-webview-ready',
             });
 
-            expect(renderSpy).toHaveBeenCalledWith(messagePoster);
+            expect(messagePoster.postMessage).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    type: 'render-board-dashboard',
+                }),
+            );
         });
 
         it('logs a warning on unknown message type', async () => {

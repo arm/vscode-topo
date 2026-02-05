@@ -5,6 +5,8 @@ import { DockerCommands } from './dockerCommands';
 import { DockerPsItem } from './containerCommands';
 import { Target } from './target';
 import * as vscode from 'vscode';
+import { TargetStore } from './targetStore';
+import { mock } from 'jest-mock-extended';
 
 const waitImmediate = async () => {
     await Promise.resolve();
@@ -107,10 +109,8 @@ describe('ContainersManager', () => {
         const boardConnectionChecker = {
             isBoardSshPortOpen: jest.fn().mockResolvedValue(true),
         };
-        const targetStore = {
-            onChanged: jest.fn(),
-            getSelectedTarget: jest.fn().mockResolvedValue(target),
-        };
+        const targetStore = mock<TargetStore>();
+        targetStore.getSelectedTarget.mockResolvedValue(target);
         const manager = new ContainersManager(
             boardConnectionChecker,
             dockerCommands,
@@ -172,10 +172,8 @@ describe('ContainersManager', () => {
         const boardConnectionChecker = {
             isBoardSshPortOpen: jest.fn().mockResolvedValue(true),
         };
-        const targetStore = {
-            onChanged: jest.fn(),
-            getSelectedTarget: jest.fn().mockResolvedValue(target),
-        };
+        const targetStore = mock<TargetStore>();
+        targetStore.getSelectedTarget.mockResolvedValue(target);
         const manager = new ContainersManager(
             boardConnectionChecker,
             dockerCommands,
@@ -206,10 +204,8 @@ describe('ContainersManager', () => {
         const boardConnectionChecker = {
             isBoardSshPortOpen: jest.fn().mockResolvedValue(true),
         };
-        const targetStore = {
-            onChanged: jest.fn(),
-            getSelectedTarget: jest.fn().mockResolvedValue(target),
-        };
+        const targetStore = mock<TargetStore>();
+        targetStore.getSelectedTarget.mockResolvedValue(target);
         const manager = new ContainersManager(
             boardConnectionChecker,
             dockerCommands,
@@ -242,10 +238,8 @@ describe('ContainersManager', () => {
         const boardConnectionChecker = {
             isBoardSshPortOpen: jest.fn().mockResolvedValue(true),
         };
-        const targetStore = {
-            onChanged: jest.fn(),
-            getSelectedTarget: jest.fn().mockResolvedValue(target),
-        };
+        const targetStore = mock<TargetStore>();
+        targetStore.getSelectedTarget.mockResolvedValue(target);
         const manager = new ContainersManager(
             boardConnectionChecker,
             dockerCommands,
@@ -282,10 +276,8 @@ describe('ContainersManager', () => {
         const boardConnectionChecker = {
             isBoardSshPortOpen: jest.fn().mockResolvedValue(true),
         };
-        const targetStore = {
-            onChanged: jest.fn(),
-            getSelectedTarget: jest.fn().mockResolvedValue(target),
-        };
+        const targetStore = mock<TargetStore>();
+        targetStore.getSelectedTarget.mockResolvedValue(target);
         const manager = new ContainersManager(
             boardConnectionChecker,
             dockerCommands,
@@ -323,10 +315,8 @@ describe('ContainersManager', () => {
         const boardConnectionChecker = {
             isBoardSshPortOpen: jest.fn().mockResolvedValue(true),
         };
-        const targetStore = {
-            onChanged: jest.fn(),
-            getSelectedTarget: jest.fn().mockResolvedValue(target),
-        };
+        const targetStore = mock<TargetStore>();
+        targetStore.getSelectedTarget.mockResolvedValue(target);
         const manager = new ContainersManager(
             boardConnectionChecker,
             dockerCommands,
@@ -363,10 +353,8 @@ describe('ContainersManager', () => {
         const boardConnectionChecker = {
             isBoardSshPortOpen: jest.fn().mockResolvedValue(true),
         };
-        const targetStore = {
-            onChanged: jest.fn(),
-            getSelectedTarget: jest.fn().mockResolvedValue(target),
-        };
+        const targetStore = mock<TargetStore>();
+        targetStore.getSelectedTarget.mockResolvedValue(target);
         const manager = new ContainersManager(
             boardConnectionChecker,
             dockerCommands,
@@ -406,10 +394,8 @@ describe('ContainersManager', () => {
         const boardConnectionChecker = {
             isBoardSshPortOpen: jest.fn().mockResolvedValue(true),
         };
-        const targetStore = {
-            onChanged: jest.fn(),
-            getSelectedTarget: jest.fn().mockResolvedValue(target),
-        };
+        const targetStore = mock<TargetStore>();
+        targetStore.getSelectedTarget.mockResolvedValue(target);
         const manager = new ContainersManager(
             boardConnectionChecker,
             dockerCommands,
@@ -443,10 +429,8 @@ describe('ContainersManager', () => {
         const boardConnectionChecker = {
             isBoardSshPortOpen: jest.fn().mockResolvedValue(true),
         };
-        const targetStore = {
-            onChanged: jest.fn(),
-            getSelectedTarget: jest.fn().mockResolvedValue(target),
-        };
+        const targetStore = mock<TargetStore>();
+        targetStore.getSelectedTarget.mockResolvedValue(target);
         const manager = new ContainersManager(
             boardConnectionChecker,
             dockerCommands,
@@ -485,10 +469,8 @@ describe('ContainersManager', () => {
         const boardConnectionChecker = {
             isBoardSshPortOpen: jest.fn().mockResolvedValue(true),
         };
-        const targetStore = {
-            onChanged: jest.fn(),
-            getSelectedTarget: jest.fn().mockResolvedValue(target),
-        };
+        const targetStore = mock<TargetStore>();
+        targetStore.getSelectedTarget.mockResolvedValue(target);
         const manager = new ContainersManager(
             boardConnectionChecker,
             dockerCommands,
@@ -514,17 +496,16 @@ describe('ContainersManager', () => {
                     throw Error(`Unexpected command: ${command}`);
             }
         });
-        let currentSelected: Target | null = target;
+        let selectedTarget: Target | undefined = target;
         const onChangeEmitter = new vscode.EventEmitter<void>();
         const boardConnectionChecker = {
             isBoardSshPortOpen: jest.fn().mockResolvedValue(true),
         };
-        const targetStore = {
-            onChanged: onChangeEmitter.event,
-            getSelectedTarget: jest
-                .fn()
-                .mockImplementation(async () => currentSelected),
-        };
+        const targetStore = mock<TargetStore>();
+        targetStore.onChanged.mockImplementation(onChangeEmitter.event);
+        targetStore.getSelectedTarget.mockImplementation(
+            async () => selectedTarget,
+        );
         const manager = new ContainersManager(
             boardConnectionChecker,
             dockerCommands,
@@ -536,7 +517,7 @@ describe('ContainersManager', () => {
         ).toBeGreaterThanOrEqual(1);
         const dataUpdateSpy = jest.fn();
         manager.onDataUpdate(dataUpdateSpy);
-        currentSelected = newTarget;
+        selectedTarget = newTarget;
 
         onChangeEmitter.fire();
         await waitImmediate();
