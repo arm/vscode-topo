@@ -2,7 +2,6 @@ import * as vscode from 'vscode';
 import { mock } from 'jest-mock-extended';
 import { activate } from './extension';
 
-jest.mock('vscode');
 jest.mock('./util/logger');
 jest.mock('./topoCliVersionChecker', () => {
     return {

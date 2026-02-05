@@ -16,7 +16,6 @@ import { ContainerOpenInBrowser } from '../actions/containerOpenInBrowser';
 import { AttachVsCode } from '../actions/attachVsCode';
 import { AttachShell } from '../actions/attachShell';
 
-jest.mock('vscode');
 jest.mock('../util/logger');
 jest.mock('../util/showAndLogError', () => ({
     showAndLogError: jest.fn(),

@@ -4,8 +4,6 @@ import { mutable } from './util/mutable';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { TopoCli } from './topoCli';
 
-jest.mock('vscode');
-
 describe('ProjectInit', () => {
     let context: MockProxy<vscode.ExtensionContext>;
     let topoCli: MockProxy<TopoCli>;

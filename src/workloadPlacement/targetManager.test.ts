@@ -7,7 +7,6 @@ import { ContainersManager } from './containersManager';
 import { Target } from './target';
 import { mock, MockProxy } from 'jest-mock-extended';
 
-jest.mock('vscode');
 jest.mock('../util/logger');
 
 const waitImmediate = () =>

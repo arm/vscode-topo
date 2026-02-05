@@ -3,8 +3,6 @@ import { OpenBoardDashboard } from './openBoardDashboard';
 import { BoardDashboardProvider } from '../boardDashboard/boardDashboardProvider';
 import { mock } from 'jest-mock-extended';
 
-jest.mock('vscode');
-
 describe('OpenBoardDashboard', () => {
     const registerCommandMock = jest.mocked(vscode.commands.registerCommand);
 

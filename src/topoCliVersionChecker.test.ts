@@ -8,7 +8,6 @@ import { mock, MockProxy } from 'jest-mock-extended';
 jest.mock('fs', () => ({
     readFileSync: jest.fn(),
 }));
-jest.mock('vscode');
 
 describe('TopoCliVersionChecker', () => {
     let topoCli: MockProxy<TopoCli>;

@@ -10,7 +10,6 @@ import { mock, MockProxy } from 'jest-mock-extended';
 import { TargetStore } from './targetStore';
 
 jest.mock('../util/logger');
-jest.mock('vscode');
 
 async function executeCommand(command: string, ...args: unknown[]) {
     const calls = jest.mocked(vscode.commands.registerCommand).mock.calls;

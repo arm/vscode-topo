@@ -26,8 +26,6 @@ const workspacePath = path.join('home', 'workspace');
 const workspaceUri = vscode.Uri.file(workspacePath);
 const workspaceFolders = [{ uri: workspaceUri, name: 'workspace', index: 0 }];
 
-jest.mock('vscode');
-
 describe('ProjectClone', () => {
     let projectClone: ProjectClone;
     const topoCli = mock<TopoCli>();

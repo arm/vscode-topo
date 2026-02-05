@@ -12,7 +12,6 @@ import { mock, MockProxy } from 'jest-mock-extended';
 jest.mock('../util/exec', () => ({
     exec: jest.fn(),
 }));
-jest.mock('vscode');
 jest.mock('../util/logger');
 
 async function executeCommand(command: string, ...args: unknown[]) {

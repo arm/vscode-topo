@@ -4,8 +4,6 @@ import { mock, MockProxy } from 'jest-mock-extended';
 import { TargetStore } from './workloadPlacement/targetStore';
 import { Target } from './workloadPlacement/target';
 
-jest.mock('vscode');
-
 describe('OnBoardTopoConsoleOpener', () => {
     let context: MockProxy<vscode.ExtensionContext>;
     let commandHandler:
