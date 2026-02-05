@@ -1,18 +1,20 @@
 import * as vscode from 'vscode';
 import { ProjectInit } from './projectInit';
 import { mutable } from './util/mutable';
+import { mock, MockProxy } from 'jest-mock-extended';
+import { TopoCli } from './topoCli';
 
 jest.mock('vscode');
 
 describe('ProjectInit', () => {
-    let context: Pick<vscode.ExtensionContext, 'subscriptions'>;
-    let topoCli: { init: jest.Mock };
+    let context: MockProxy<vscode.ExtensionContext>;
+    let topoCli: MockProxy<TopoCli>;
     let projectInit: ProjectInit;
     const workspacePath = '/fake/workspace';
 
     beforeEach(() => {
-        context = { subscriptions: [] };
-        topoCli = { init: jest.fn() };
+        context = mock<vscode.ExtensionContext>({ subscriptions: [] });
+        topoCli = mock<TopoCli>();
         jest.resetAllMocks();
         projectInit = new ProjectInit(context, topoCli);
     });

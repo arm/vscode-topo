@@ -11,10 +11,7 @@ export class AttachVsCode {
     public static readonly attachVsCodeCommand = `${manifest.PACKAGE_NAME}.attachVsCode`;
 
     constructor(
-        private readonly context: Pick<
-            vscode.ExtensionContext,
-            'subscriptions'
-        >,
+        private readonly context: vscode.ExtensionContext,
         private readonly containerCommands: ContainerCommands,
     ) {}
 

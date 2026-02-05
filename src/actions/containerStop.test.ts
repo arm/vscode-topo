@@ -5,11 +5,13 @@ import { Target } from '../workloadPlacement/target';
 import { ContainerItem } from '../workloadPlacement/containersManager';
 import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
 import { TopoError } from '../errors/topoError';
+import { mock, MockProxy } from 'jest-mock-extended';
+import { ContainersManager } from '../workloadPlacement/containersManager';
+
+jest.mock('vscode');
 
 describe('ContainerStop', () => {
-    const context: Pick<vscode.ExtensionContext, 'subscriptions'> = {
-        subscriptions: [],
-    };
+    let context: MockProxy<vscode.ExtensionContext>;
     let showErrorMessageSpy: jest.SpyInstance;
     let commandHandler:
         | { command: string; callback: (...args: unknown[]) => void }
@@ -34,6 +36,7 @@ describe('ContainerStop', () => {
     const treeItem = new TargetTreeContainerItem(container);
 
     beforeEach(() => {
+        context = mock<vscode.ExtensionContext>({ subscriptions: [] });
         commandHandler = undefined;
         showErrorMessageSpy = jest
             .spyOn(vscode.window, 'showErrorMessage')
@@ -58,10 +61,8 @@ describe('ContainerStop', () => {
         );
     });
     it('calls stopContainer and shows info message on success', async () => {
-        const stopContainerSpy = jest.fn(async () => undefined);
-        const containersManager = {
-            stopContainer: stopContainerSpy,
-        };
+        const containersManager: MockProxy<ContainersManager> =
+            mock<ContainersManager>();
         const containerStop = new ContainerStop(context, containersManager);
         await containerStop.activate();
 
@@ -71,15 +72,15 @@ describe('ContainerStop', () => {
             treeItem,
         );
 
-        expect(stopContainerSpy).toHaveBeenCalledWith('abc123');
+        expect(containersManager.stopContainer).toHaveBeenCalledWith('abc123');
     });
 
     it('shows error message if stopContainer throws a TopoError', async () => {
-        const containersManager = {
-            stopContainer: async () => {
-                throw new TopoError('DOCKER', 'fail');
-            },
-        };
+        const containersManager: MockProxy<ContainersManager> =
+            mock<ContainersManager>();
+        containersManager.stopContainer.mockRejectedValue(
+            new TopoError('DOCKER', 'fail'),
+        );
         const containerStop = new ContainerStop(context, containersManager);
         await containerStop.activate();
 
@@ -96,11 +97,11 @@ describe('ContainerStop', () => {
     });
 
     it('re-throw non-TopoError errors from stopContainer', async () => {
-        const containersManager = {
-            stopContainer: async () => {
-                throw new Error('non-TopoError');
-            },
-        };
+        const containersManager: MockProxy<ContainersManager> =
+            mock<ContainersManager>();
+        containersManager.stopContainer.mockRejectedValue(
+            new Error('non-TopoError'),
+        );
         const containerStop = new ContainerStop(context, containersManager);
         await containerStop.activate();
 

@@ -5,11 +5,13 @@ import { Target } from '../workloadPlacement/target';
 import { ContainerItem } from '../workloadPlacement/containersManager';
 import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
 import { TopoError } from '../errors/topoError';
+import { mock, MockProxy } from 'jest-mock-extended';
+import { ContainersManager } from '../workloadPlacement/containersManager';
+
+jest.mock('vscode');
 
 describe('ContainerDelete', () => {
-    const context: Pick<vscode.ExtensionContext, 'subscriptions'> = {
-        subscriptions: [],
-    };
+    let context: MockProxy<vscode.ExtensionContext>;
     let showErrorMessageSpy: jest.SpyInstance;
     let commandHandler:
         | { command: string; callback: (...args: unknown[]) => void }
@@ -35,6 +37,7 @@ describe('ContainerDelete', () => {
     const treeItem = new TargetTreeContainerItem(container);
 
     beforeEach(() => {
+        context = mock<vscode.ExtensionContext>({ subscriptions: [] });
         commandHandler = undefined;
         showErrorMessageSpy = jest
             .spyOn(vscode.window, 'showErrorMessage')
@@ -66,10 +69,8 @@ describe('ContainerDelete', () => {
     });
 
     it('calls deleteContainer on success', async () => {
-        const deleteContainerSpy = jest.fn(async () => undefined);
-        const containersManager = {
-            deleteContainer: deleteContainerSpy,
-        };
+        const containersManager: MockProxy<ContainersManager> =
+            mock<ContainersManager>();
         const containerDelete = new ContainerDelete(context, containersManager);
         containerDelete.activate();
 
@@ -78,15 +79,17 @@ describe('ContainerDelete', () => {
             treeItem,
         );
 
-        expect(deleteContainerSpy).toHaveBeenCalledWith('abc123');
+        expect(containersManager.deleteContainer).toHaveBeenCalledWith(
+            'abc123',
+        );
     });
 
     it('shows error message if deleteContainer throws a TopoError', async () => {
-        const containersManager = {
-            deleteContainer: async () => {
-                throw new TopoError('DOCKER', 'fail');
-            },
-        };
+        const containersManager: MockProxy<ContainersManager> =
+            mock<ContainersManager>();
+        containersManager.deleteContainer.mockRejectedValue(
+            new TopoError('DOCKER', 'fail'),
+        );
         const containerDelete = new ContainerDelete(context, containersManager);
         containerDelete.activate();
 
@@ -103,11 +106,11 @@ describe('ContainerDelete', () => {
     });
 
     it('re-throws non-TopoError errors from deleteContainer', async () => {
-        const containersManager = {
-            deleteContainer: async () => {
-                throw new Error('non-TopoError');
-            },
-        };
+        const containersManager: MockProxy<ContainersManager> =
+            mock<ContainersManager>();
+        containersManager.deleteContainer.mockRejectedValue(
+            new Error('non-TopoError'),
+        );
         const containerDelete = new ContainerDelete(context, containersManager);
         containerDelete.activate();
 

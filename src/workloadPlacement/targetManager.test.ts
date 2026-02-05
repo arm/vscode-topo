@@ -5,6 +5,7 @@ import { TargetStore } from './targetStore';
 import { logger } from '../util/logger';
 import { ContainersManager } from './containersManager';
 import { Target } from './target';
+import { mock, MockProxy } from 'jest-mock-extended';
 
 jest.mock('vscode');
 jest.mock('../util/logger');
@@ -15,28 +16,24 @@ const waitImmediate = () =>
 const createTargetManager = () => {
     const onChangeEmitter = new vscode.EventEmitter<void>();
     const onDataUpdateEmitter = new vscode.EventEmitter<void>();
-    const context: Pick<vscode.ExtensionContext, 'subscriptions'> = {
-        subscriptions: [],
-    };
-    const targetTreeDataProvider = {
-        refresh: jest.fn(),
-    } as unknown as TargetTreeDataProvider;
-    const targetStore: Pick<
-        TargetStore,
-        'addTarget' | 'setSelected' | 'getSelectedTarget' | 'onChanged'
-    > = {
-        addTarget: jest.fn(),
-        setSelected: jest.fn(),
-        getSelectedTarget: jest.fn(),
-        onChanged: onChangeEmitter.event,
-    };
-    const containersManager: Pick<
-        ContainersManager,
-        'getBoardState' | 'onDataUpdate'
-    > = {
-        getBoardState: jest.fn(),
-        onDataUpdate: onDataUpdateEmitter.event,
-    };
+    const context = mock<vscode.ExtensionContext>({ subscriptions: [] });
+
+    const targetTreeDataProvider: MockProxy<TargetTreeDataProvider> =
+        mock<TargetTreeDataProvider>();
+
+    const targetStore = mock<TargetStore>();
+    targetStore.onChanged.mockImplementation(onChangeEmitter.event);
+
+    const containersManager: MockProxy<ContainersManager> =
+        mock<ContainersManager>();
+    containersManager.getBoardState.mockResolvedValue({
+        isReachable: false,
+        hasContainerRuntime: false,
+        targetId: undefined,
+    });
+    containersManager.onDataUpdate.mockImplementation(
+        onDataUpdateEmitter.event,
+    );
     const targetManager = new TargetManager(
         context,
         targetTreeDataProvider,
@@ -88,12 +85,9 @@ const mockedStatusBarItemCreation: typeof vscode.window.createStatusBarItem = ((
 }) as unknown as typeof vscode.window.createStatusBarItem;
 
 describe('TargetManager', () => {
-    const registerCommandMock = jest.mocked(vscode.commands.registerCommand);
-
     beforeEach(() => {
         statusBarItems = [];
         jest.clearAllMocks();
-        registerCommandMock.mockReturnValue({ dispose: jest.fn() });
     });
 
     describe('activation', () => {

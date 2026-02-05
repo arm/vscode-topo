@@ -17,26 +17,9 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
     public readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
     constructor(
-        private readonly context: Pick<
-            vscode.ExtensionContext,
-            'subscriptions'
-        >,
-        private readonly containersManager: Pick<
-            ContainersManager,
-            | 'getContainersData'
-            | 'startAutoRefresh'
-            | 'stopAutoRefresh'
-            | 'onDataUpdate'
-            | 'getBoardState'
-        >,
-        private readonly targetStore: Pick<
-            TargetStore,
-            | 'getSelectedTarget'
-            | 'getTargets'
-            | 'setSelected'
-            | 'onChanged'
-            | 'deleteTarget'
-        >,
+        private readonly context: vscode.ExtensionContext,
+        private readonly containersManager: ContainersManager,
+        private readonly targetStore: TargetStore,
     ) {}
 
     public async activate(): Promise<void> {

@@ -17,19 +17,10 @@ export class TargetManager {
     private statusBarItem: vscode.StatusBarItem | undefined;
 
     constructor(
-        private readonly context: Pick<
-            vscode.ExtensionContext,
-            'subscriptions'
-        >,
+        private readonly context: vscode.ExtensionContext,
         private readonly targetTreeDataProvider: TargetTreeDataProvider,
-        private readonly targetStore: Pick<
-            TargetStore,
-            'addTarget' | 'setSelected' | 'getSelectedTarget' | 'onChanged'
-        >,
-        private readonly containersManager: Pick<
-            ContainersManager,
-            'getBoardState' | 'onDataUpdate'
-        >,
+        private readonly targetStore: TargetStore,
+        private readonly containersManager: ContainersManager,
     ) {}
 
     public async activate() {

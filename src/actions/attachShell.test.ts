@@ -4,6 +4,8 @@ import { DockerCommands } from '../workloadPlacement/dockerCommands';
 import { Target } from '../workloadPlacement/target';
 import { ContainerItem } from '../workloadPlacement/containersManager';
 import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
+import { mock, MockProxy } from 'jest-mock-extended';
+import { TargetStore } from '../workloadPlacement/targetStore';
 
 jest.mock('vscode');
 jest.mock('../util/logger');
@@ -12,14 +14,15 @@ describe('AttachShell', () => {
     const registerCommandMock = jest.mocked(vscode.commands.registerCommand);
     const dockerCommands = new DockerCommands();
     const target = new Target('topo', 'user@topo.local');
-    const targetStore = {
-        getSelectedTarget: jest.fn().mockResolvedValue(target),
-    };
-    const context: Pick<vscode.ExtensionContext, 'subscriptions'> = {
-        subscriptions: [],
-    };
+    const targetStore = mock<TargetStore>();
+    let context: MockProxy<vscode.ExtensionContext>;
 
     beforeEach(() => {
+        context = mock<vscode.ExtensionContext>({ subscriptions: [] });
+        targetStore.getSelectedTarget.mockResolvedValue(target);
+    });
+
+    afterEach(() => {
         jest.clearAllMocks();
     });
 

@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { mock } from 'jest-mock-extended';
 import { activate } from './extension';
 
 jest.mock('vscode');
@@ -29,27 +30,19 @@ describe('extension activation', () => {
     it('registers commands and prepares disposables', async () => {
         const subscriptions: vscode.Disposable[] = [];
         const extensionPath = '/fake/extension/path';
-        const environmentVariableCollection = {
-            prepend: jest.fn(),
-        };
-        const globalState = {
-            get: jest.fn(),
-        };
-        const workspaceState = {
-            get: jest.fn(),
-        };
+        const environmentVariableCollection =
+            mock<vscode.EnvironmentVariableCollection>();
+        const globalState = mock<vscode.Memento>();
+        const workspaceState = mock<vscode.Memento>();
         const globalStorageUri = vscode.Uri.file('/fake/storage/path');
-        const context = {
+        const context = mock<vscode.ExtensionContext>({
             subscriptions,
             extensionPath,
             environmentVariableCollection,
             globalState,
             workspaceState,
             globalStorageUri,
-        } as unknown as vscode.ExtensionContext;
-        jest.mocked(vscode.commands.registerCommand).mockImplementation(() => ({
-            dispose: jest.fn(),
-        }));
+        });
 
         await activate(context);
 

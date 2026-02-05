@@ -4,8 +4,6 @@ import { CloneSource, TopoCli } from './topoCli';
 import * as path from 'path';
 import { getErrorMessage } from './util/getErrorMessage';
 
-export type ProjectClonerBinary = Pick<TopoCli, 'getCloneCommand'>;
-
 const getLocalSourcePath = async (): Promise<string | undefined> => {
     const cloneSourceUri = await vscode.window.showOpenDialog({
         canSelectFiles: false,
@@ -90,11 +88,8 @@ export class ProjectClone {
     public static localCloneCommand = `${manifest.PACKAGE_NAME}.localClone`;
 
     constructor(
-        private readonly context: Pick<
-            vscode.ExtensionContext,
-            'subscriptions'
-        >,
-        private readonly topoCli: ProjectClonerBinary,
+        private readonly context: vscode.ExtensionContext,
+        private readonly topoCli: TopoCli,
     ) {}
 
     public async activate() {

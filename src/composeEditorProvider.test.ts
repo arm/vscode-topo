@@ -3,13 +3,12 @@ import * as path from 'path';
 import { ComposeEditorProvider } from './composeEditorProvider';
 import { ConfigMetadata, ProjectDescription } from './util/types';
 import * as manifest from './manifest';
-import {
-    ComposeEditorMessageHandler,
-    MessageHandlerTopoCli,
-} from './composeEditorMessageHandler';
+import { ComposeEditorMessageHandler } from './composeEditorMessageHandler';
 import { Deploy } from './actions/deploy';
 import { logger } from './util/logger';
 import { showAndLogError } from './util/showAndLogError';
+import { TopoCli } from './topoCli';
+import { mock, MockProxy } from 'jest-mock-extended';
 
 jest.mock('vscode');
 jest.mock('./util/logger');
@@ -76,22 +75,20 @@ describe('ComposeEditorProvider', () => {
         isCancellationRequested: false,
         onCancellationRequested: cancellationEventEmitter.event,
     };
+    const context = mock<vscode.ExtensionContext>({
+        extensionUri: vscode.Uri.file('/ext'),
+        extensionPath: '/ext',
+        subscriptions: [],
+    });
     let post: (arg: unknown) => Thenable<boolean>;
     let onDidReceiveMessageEmitter: vscode.EventEmitter<unknown>;
     let webviewPanel: vscode.WebviewPanel;
-    let topoCli: jest.Mocked<MessageHandlerTopoCli>;
-    let provider: ComposeEditorProvider;
-    let deploy: jest.Mocked<Pick<Deploy, 'deploy'>>;
-    const context = {
-        extensionPath: '/ext',
-        extensionUri: vscode.Uri.file('/ext'),
-        subscriptions: [],
-    };
+    let topoCli: MockProxy<TopoCli>;
+    let deploy: MockProxy<Deploy>;
     let composeEditorMessageHandler: ComposeEditorMessageHandler;
 
     beforeEach(() => {
         jest.clearAllMocks();
-
         post = jest.fn();
         onDidReceiveMessageEmitter = new vscode.EventEmitter<unknown>();
         webviewPanel = {
@@ -116,20 +113,13 @@ describe('ComposeEditorProvider', () => {
             reveal: jest.fn(),
             dispose: jest.fn(),
         };
-        topoCli = {
-            getProject: jest.fn().mockReturnValue(project),
-            getConfigMetadata: jest.fn().mockReturnValue(configMetadata),
-        };
-        deploy = {
-            deploy: jest.fn().mockResolvedValue(undefined),
-        };
+        topoCli = mock<TopoCli>();
+        topoCli.getProject.mockReturnValue(project);
+        topoCli.getConfigMetadata.mockReturnValue(configMetadata);
+        deploy = mock<Deploy>();
         composeEditorMessageHandler = new ComposeEditorMessageHandler(
             topoCli,
             deploy,
-        );
-        provider = new ComposeEditorProvider(
-            context,
-            composeEditorMessageHandler,
         );
     });
 
@@ -145,7 +135,7 @@ describe('ComposeEditorProvider', () => {
 
         expect(mockReg).toHaveBeenCalledWith(
             ComposeEditorProvider.viewType,
-            provider,
+            composeEditorProvider,
             {
                 webviewOptions: {
                     retainContextWhenHidden: true,
@@ -155,7 +145,11 @@ describe('ComposeEditorProvider', () => {
     });
 
     it('posts init message with services', async () => {
-        await provider.resolveCustomTextEditor(
+        const composeEditorProvider = new ComposeEditorProvider(
+            context,
+            composeEditorMessageHandler,
+        );
+        await composeEditorProvider.resolveCustomTextEditor(
             doc,
             webviewPanel,
             cancellationToken,
@@ -173,7 +167,11 @@ describe('ComposeEditorProvider', () => {
     });
 
     it('sets webview options correctly', async () => {
-        await provider.resolveCustomTextEditor(
+        const composeEditorProvider = new ComposeEditorProvider(
+            context,
+            composeEditorMessageHandler,
+        );
+        await composeEditorProvider.resolveCustomTextEditor(
             doc,
             webviewPanel,
             cancellationToken,
@@ -188,6 +186,10 @@ describe('ComposeEditorProvider', () => {
     });
 
     it('handles successful deploy and posts deploy-complete', async () => {
+        const composeEditorProvider = new ComposeEditorProvider(
+            context,
+            composeEditorMessageHandler,
+        );
         jest.mocked(vscode.window.withProgress).mockImplementation(
             async (_opts, cb) => {
                 const token: vscode.CancellationToken = {
@@ -202,7 +204,7 @@ describe('ComposeEditorProvider', () => {
                 );
             },
         );
-        await provider.resolveCustomTextEditor(
+        await composeEditorProvider.resolveCustomTextEditor(
             doc,
             webviewPanel,
             cancellationToken,
@@ -214,7 +216,11 @@ describe('ComposeEditorProvider', () => {
     });
 
     it('handles unsuccessful deploy and posts deploy-complete', async () => {
-        await provider.resolveCustomTextEditor(
+        const composeEditorProvider = new ComposeEditorProvider(
+            context,
+            composeEditorMessageHandler,
+        );
+        await composeEditorProvider.resolveCustomTextEditor(
             doc,
             webviewPanel,
             cancellationToken,
@@ -236,7 +242,11 @@ describe('ComposeEditorProvider', () => {
     });
 
     it('warns on unknown message type', async () => {
-        await provider.resolveCustomTextEditor(
+        const composeEditorProvider = new ComposeEditorProvider(
+            context,
+            composeEditorMessageHandler,
+        );
+        await composeEditorProvider.resolveCustomTextEditor(
             doc,
             webviewPanel,
             cancellationToken,

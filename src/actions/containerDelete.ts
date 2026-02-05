@@ -9,14 +9,8 @@ export class ContainerDelete {
     public static readonly deleteContainerCommand = `${manifest.PACKAGE_NAME}.deleteContainer`;
 
     constructor(
-        private readonly context: Pick<
-            vscode.ExtensionContext,
-            'subscriptions'
-        >,
-        private readonly containersManager: Pick<
-            ContainersManager,
-            'deleteContainer'
-        >,
+        private readonly context: vscode.ExtensionContext,
+        private readonly containersManager: ContainersManager,
     ) {}
 
     public activate() {

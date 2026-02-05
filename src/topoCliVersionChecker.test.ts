@@ -3,6 +3,7 @@ import { TopoCliVersionChecker } from './topoCliVersionChecker';
 import { TopoCli } from './topoCli';
 import * as fs from 'fs';
 import * as manifest from './manifest';
+import { mock, MockProxy } from 'jest-mock-extended';
 
 jest.mock('fs', () => ({
     readFileSync: jest.fn(),
@@ -10,19 +11,17 @@ jest.mock('fs', () => ({
 jest.mock('vscode');
 
 describe('TopoCliVersionChecker', () => {
-    let topoCli: Pick<TopoCli, 'getVersion'>;
+    let topoCli: MockProxy<TopoCli>;
     const extensionPath = '/fake/extension/path';
     const showError = jest.mocked(vscode.window.showErrorMessage);
 
     beforeEach(() => {
-        topoCli = {
-            getVersion: jest.fn(),
-        };
+        topoCli = mock<TopoCli>();
         jest.clearAllMocks();
     });
 
     it('returns true if versions match', () => {
-        jest.mocked(topoCli.getVersion).mockReturnValue({
+        topoCli.getVersion.mockReturnValue({
             version: '1.2.3',
             commit: 'abcd',
         });
@@ -35,7 +34,7 @@ describe('TopoCliVersionChecker', () => {
     });
 
     it('shows error and returns false if version mismatches', () => {
-        jest.mocked(topoCli.getVersion).mockReturnValue({
+        topoCli.getVersion.mockReturnValue({
             version: '1.2.3',
             commit: 'abcd',
         });
@@ -53,7 +52,7 @@ describe('TopoCliVersionChecker', () => {
     });
 
     it('shows error and returns false if expected version missing', () => {
-        jest.mocked(topoCli.getVersion).mockReturnValue({
+        topoCli.getVersion.mockReturnValue({
             version: '1.2.3',
             commit: 'abcd',
         });

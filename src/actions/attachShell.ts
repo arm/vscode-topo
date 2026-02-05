@@ -9,12 +9,9 @@ export class AttachShell {
     public static readonly attachShellCommand = `${manifest.PACKAGE_NAME}.attachShell`;
 
     constructor(
-        private readonly context: Pick<
-            vscode.ExtensionContext,
-            'subscriptions'
-        >,
+        private readonly context: vscode.ExtensionContext,
         private readonly containerCommands: ContainerCommands,
-        private readonly targetStore: Pick<TargetStore, 'getSelectedTarget'>,
+        private readonly targetStore: TargetStore,
     ) {}
 
     public activate() {

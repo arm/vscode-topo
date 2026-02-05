@@ -18,8 +18,8 @@ export class Deployer {
     public readonly onError = this.onErrorEmitter.event;
 
     constructor(
-        private readonly topoCli: Pick<TopoCli, 'deploy'>,
-        private readonly targetStore: Pick<TargetStore, 'getSelectedTarget'>,
+        private readonly topoCli: TopoCli,
+        private readonly targetStore: TargetStore,
     ) {}
 
     public async start(composeFilePath: string): Promise<void> {

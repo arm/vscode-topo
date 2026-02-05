@@ -6,6 +6,8 @@ import * as vscode from 'vscode';
 import * as manifest from '../manifest';
 import { ContainerItem, ContainersManager } from './containersManager';
 import { Target } from './target';
+import { mock, MockProxy } from 'jest-mock-extended';
+import { TargetStore } from './targetStore';
 
 jest.mock('../util/logger');
 jest.mock('vscode');
@@ -23,17 +25,9 @@ async function executeCommand(command: string, ...args: unknown[]) {
 
 describe('TargetTreeDataProvider', () => {
     let provider: TargetTreeDataProvider;
-    let context: Pick<vscode.ExtensionContext, 'subscriptions'>;
-    let containersManagerMock: jest.Mocked<
-        Pick<
-            ContainersManager,
-            | 'getContainersData'
-            | 'startAutoRefresh'
-            | 'stopAutoRefresh'
-            | 'onDataUpdate'
-            | 'getBoardState'
-        >
-    >;
+    let context: MockProxy<vscode.ExtensionContext>;
+    let containersManagerMock: MockProxy<ContainersManager>;
+    let targetStoreMock: MockProxy<TargetStore>;
     const target = new Target('topo', 'user@topo.local');
 
     const mockContainers: ContainerItem[] = [
@@ -83,24 +77,29 @@ describe('TargetTreeDataProvider', () => {
             target,
         },
     ];
-    const targetStoreMock = {
-        onChanged: jest.fn(),
-        getSelectedTarget: jest.fn().mockResolvedValue(target),
-        getTargets: jest.fn(),
-        setSelected: jest.fn(),
-        deleteTarget: jest.fn(),
-    };
+    const onChangedEmitter = new vscode.EventEmitter<void>();
+    const onDataUpdateEmitter = new vscode.EventEmitter<void>();
 
     beforeEach(() => {
-        const boardState = { isReachable: true, hasContainerRuntime: true };
-        context = { subscriptions: [] };
-        containersManagerMock = {
-            getContainersData: jest.fn().mockResolvedValue(mockContainers),
-            startAutoRefresh: jest.fn(),
-            stopAutoRefresh: jest.fn(),
-            onDataUpdate: jest.fn(),
-            getBoardState: jest.fn().mockResolvedValue(boardState),
+        const boardState = {
+            isReachable: true,
+            hasContainerRuntime: true,
+            targetId: target.id,
         };
+        context = mock<vscode.ExtensionContext>({ subscriptions: [] });
+
+        containersManagerMock = mock<ContainersManager>();
+        containersManagerMock.getContainersData.mockResolvedValue(
+            mockContainers,
+        );
+        containersManagerMock.getBoardState.mockResolvedValue(boardState);
+        containersManagerMock.onDataUpdate.mockImplementation(
+            onDataUpdateEmitter.event,
+        );
+
+        targetStoreMock = mock<TargetStore>();
+        targetStoreMock.getSelectedTarget.mockResolvedValue(target);
+        targetStoreMock.onChanged.mockImplementation(onChangedEmitter.event);
         provider = new TargetTreeDataProvider(
             context,
             containersManagerMock,
