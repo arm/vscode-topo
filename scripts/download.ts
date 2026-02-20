@@ -36,13 +36,13 @@ const GITHUB_REGEX =
 const readFromUrl = async (url: string, token: string): Promise<Response> => {
     let response: Response;
 
-    const match = url.match(GITHUB_REGEX);
-    if (match) {
+    const githubMatch = url.match(GITHUB_REGEX);
+    if (githubMatch) {
         // Fetch from GitHub
-        const user = match[1];
-        const repo = match[2];
-        const tagName = match[3];
-        const assetName = match[4];
+        const user = githubMatch[1];
+        const repo = githubMatch[2];
+        const tagName = githubMatch[3];
+        const assetName = githubMatch[4];
 
         const apiResponse = await fetch(
             `https://api.github.com/repos/${user}/${repo}/releases/tags/${tagName}`,
@@ -60,7 +60,7 @@ const readFromUrl = async (url: string, token: string): Promise<Response> => {
         }
         if (release.status && release.status !== '200') {
             throw new Error(
-                `Release ${tagName} fetching failed. Status="${release.status} Message="${release.message}".`,
+                `Release ${tagName} fetching failed. Status="${release.status}" Message="${release.message}".`,
             );
         }
 
@@ -247,19 +247,6 @@ if (!section || typeof section.version !== 'string') {
 }
 const version = section.version.replace(/^v/, '');
 
-// --- Parse GitHub repo owner/name -------------------------------------------
-const repository = {
-    url: 'https://github.com/Arm-Debug/topo-cli',
-};
-const m = repository.url.match(/github\.com[:/]([^/]+)\/(.+?)(?:\.git)?$/);
-if (!m) {
-    console.error(
-        `✖ couldn’t parse owner/repo out of repository.url="${repository.url}"`,
-    );
-    process.exit(1);
-}
-const [, owner, repo] = m;
-
 // --- Determine asset name ---------------------------------------------------
 const assetMapping: Record<string, string> = {
     'linux-x64': `topo_${version}_linux_amd64.tar.gz`,
@@ -278,7 +265,7 @@ if (!assetName) {
 
 // --- Compose download URL ---------------------------------------------------
 const tag = `v${version}`;
-const downloadUrl = `https://github.com/${owner}/${repo}/releases/download/${tag}/${assetName}`;
+const downloadUrl = `https://artifactory.internal.tools.arm.com/artifactory/topo/${tag}/${assetName}`;
 console.log(`→ Downloading ${downloadUrl}`);
 
 // --- Perform download --------------------------------------------------------
