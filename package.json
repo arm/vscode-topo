@@ -55,6 +55,11 @@
                 "category": "Arm Topo"
             },
             {
+                "command": "topo.templateClone",
+                "title": "Clone Template Project",
+                "category": "Arm Topo"
+            },
+            {
                 "command": "topo.localClone",
                 "title": "Clone Local Project",
                 "category": "Arm Topo"

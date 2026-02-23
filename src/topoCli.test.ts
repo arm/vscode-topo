@@ -65,10 +65,16 @@ describe('TopoCli', () => {
                 url: 'u',
                 subsystem: 'Host',
                 ports: ['8080:80'],
+                description: 'catty template description',
             },
         ];
         execSyncMock.mockReturnValue(JSON.stringify(list));
         expect(topoCli.listTemplates()).toEqual(list);
+        expect(execSyncMock).toHaveBeenCalledWith(
+            path.join(ext, 'resources', manifest.TOPO_CLI),
+            ['templates', '-o', 'json'],
+            { encoding: 'utf8' },
+        );
     });
 
     it('getProject parses JSON output', () => {
