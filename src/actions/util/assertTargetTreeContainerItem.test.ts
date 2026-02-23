@@ -1,7 +1,7 @@
 import { assertTargetTreeContainerItem } from './assertTargetTreeContainerItem';
 import { TargetTreeContainerItem } from '../../workloadPlacement/targetTreeContainerItem';
 import { logger } from '../../util/logger';
-import { ContainerItem } from '../../workloadPlacement/containersManager';
+import { ContainerItem } from '../../util/types';
 
 jest.mock('../../util/logger', () => ({
     logger: {
@@ -30,15 +30,14 @@ describe('assertTargetTreeContainerItem', () => {
             runningFor: '',
             createdAt: '',
             runtime: '',
-            ports: [],
+            annotations: {},
+            ports: {},
             cpuUsage: '',
             memUsage: '',
             target: {
                 host: 'test-host',
                 id: 'abc123',
                 ssh: 'root@test-host',
-                displayName: '',
-                toJSON: jest.fn(),
             },
         };
         const instanceLike = new TargetTreeContainerItem(containerItem);

@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { TargetTreeContainerItem } from './targetTreeContainerItem';
 import { Target } from './target';
 import { BOARD_AMBIENT_RUNTIME } from '../manifest';
-import { ContainerItem } from './containersManager';
+import { ContainerItem } from '../util/types';
 
 describe('TargetTreeContainerItem', () => {
     const target = new Target('topo', 'user@topo.local');
@@ -16,8 +16,9 @@ describe('TargetTreeContainerItem', () => {
             labels: 'label1=value1',
             runningFor: '10m',
             runtime: BOARD_AMBIENT_RUNTIME,
+            annotations: {},
             createdAt: '',
-            ports: ['8080:80'],
+            ports: { '80/tcp': [{ HostIp: '0.0.0.0', HostPort: '8080' }] },
             cpuUsage: '2.5%',
             memUsage: '0B / 1GiB',
             target,
@@ -53,8 +54,9 @@ describe('TargetTreeContainerItem', () => {
             labels: '',
             runningFor: '',
             runtime: BOARD_AMBIENT_RUNTIME,
+            annotations: {},
             createdAt: '',
-            ports: [],
+            ports: {},
             cpuUsage: '0.0%',
             memUsage: '0B / 1GiB',
             target,

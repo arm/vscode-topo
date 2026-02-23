@@ -1,12 +1,16 @@
 import { TopoError } from '../errors/topoError';
 import { exec, ExecResult } from '../util/exec';
 import { logger } from '../util/logger';
-import { ContainerCommands, DockerPsItem } from './containerCommands';
+import type { DockerInspectItem, DockerPsItem } from '../util/types';
+import type { ContainerCommands } from './containerCommands';
+import { getErrorMessage } from '../util/getErrorMessage';
 
 export interface DockerError extends Error {
     stderr: ExecResult['stderr'];
     stdout: ExecResult['stdout'];
 }
+
+type DockerInspectOutput = Partial<DockerInspectItem>;
 
 /**
  * Generates a SSH URI based on the board's SSH connection string.
@@ -185,12 +189,12 @@ export class DockerCommands implements ContainerCommands {
     public async inspectContainers(
         containerIds: string[],
         boardSshConnection: string,
-    ): Promise<string> {
+    ): Promise<DockerInspectItem[]> {
         if (containerIds.length === 0) {
-            return '';
+            return [];
         }
         const ids = containerIds.join(' ');
-        const cmd = `docker --host ${getSshUri(boardSshConnection)} inspect ${ids} --format '{{.Id}};{{json .NetworkSettings.Ports}};{{.HostConfig.Runtime}}'`;
+        const cmd = `docker --host ${getSshUri(boardSshConnection)} inspect ${ids} --format '{{json .}}'`;
         const warnMsg = `Warnings emitted when inspecting containers ${containerIds.join(', ')}`;
         const isErrorAWarning = (err: string): boolean => {
             const lines = err
@@ -201,7 +205,43 @@ export class DockerCommands implements ContainerCommands {
                 line.startsWith('Error: No such object:'),
             );
         };
-        return runDockerCmd(cmd, warnMsg, isErrorAWarning);
+        const stdout = await runDockerCmd(cmd, warnMsg, isErrorAWarning);
+        const lines = stdout
+            .trim()
+            .split(/\r?\n/)
+            .filter((l) => l);
+        if (lines.length === 0) {
+            return [];
+        }
+        return lines.reduce((acc: DockerInspectItem[], line) => {
+            let parsed: DockerInspectOutput;
+            try {
+                parsed = JSON.parse(line);
+            } catch (err) {
+                throw new Error(
+                    `Failed to parse Docker inspect JSON output. Error: ${getErrorMessage(err)}`,
+                );
+            }
+            if (!parsed.Id) {
+                logger.error(
+                    `Docker inspect output is missing Id field, skipping container`,
+                );
+                return acc;
+            }
+            const ports = parsed.NetworkSettings?.Ports || {};
+            const runtime = parsed.HostConfig?.Runtime || '';
+            const annotations = parsed.HostConfig?.Annotations || {};
+            const element = {
+                Id: parsed.Id,
+                NetworkSettings: { Ports: ports },
+                HostConfig: {
+                    Runtime: runtime,
+                    Annotations: annotations,
+                },
+            };
+            acc.push(element);
+            return acc;
+        }, []);
     }
 
     public async containerStats(

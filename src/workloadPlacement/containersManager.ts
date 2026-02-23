@@ -2,42 +2,14 @@ import * as vscode from 'vscode';
 import { logger } from '../util/logger';
 import { BoardConnectionChecker } from '../util/boardConnectionChecker';
 import { Deferred } from '../util/deferred';
-import { ContainerCommands, DockerPsItem } from './containerCommands';
+import type {
+    ContainerItem,
+    DockerPorts,
+    DockerPsItem,
+    TargetItem,
+} from '../util/types';
+import type { ContainerCommands } from './containerCommands';
 import { TargetStore } from './targetStore';
-import { Target } from './target';
-
-/**
- * Represents a Docker container item from the output of the "docker ps" command.
- *
- * @property {string} id - The unique identifier for the container.
- * @property {string} name - The name assigned to the container.
- * @property {string} image - The Docker image used to create the container.
- * @property {string} state - The current state of the container (e.g., "running", "stopped").
- * @property {string} status - A descriptive status string of the container.
- * @property {string} labels - A string of key-value labels associated with the container.
- * @property {string} runningFor - A description indicating how long the container has been running.
- * @property {string} createdAt - The timestamp indicating when the container was created.
- * @property {string} runtime - The runtime of the container.
- * @property {string[]} ports - The ports exposed by the container.
- * @property {string} cpuUsage - The CPU usage of the container.
- * @property {string} memUsage - The memory usage of the container.
- * @property {Target} target - The target associated with the container.
- */
-export interface ContainerItem {
-    id: string;
-    name: string;
-    image: string;
-    state: string;
-    status: string;
-    labels: string;
-    runningFor: string;
-    createdAt: string;
-    runtime: string;
-    ports: string[];
-    cpuUsage: string;
-    memUsage: string;
-    target: Target;
-}
 
 export interface BoardState {
     isReachable: boolean;
@@ -63,7 +35,7 @@ export class ContainersManager implements vscode.Disposable {
     private shouldAutoRefresh = false;
     private containersData: ContainerItem[] = [];
     private boardState: BoardState = this.defaultBoardState;
-    private target: Target | undefined;
+    private target: TargetItem | undefined;
     private disposables: vscode.Disposable[] = [];
 
     constructor(
@@ -98,7 +70,7 @@ export class ContainersManager implements vscode.Disposable {
         await this.startAutoRefresh();
     }
 
-    private async setTarget(target: Target) {
+    private async setTarget(target: TargetItem) {
         this.target = target;
     }
 
@@ -201,12 +173,8 @@ export class ContainersManager implements vscode.Disposable {
                 target.ssh,
             );
             const ids = items.map((item) => item.ID);
-            const inspectStdout =
+            const inspectOutput =
                 await this.containerCommands.inspectContainers(ids, target.ssh);
-            const inspectLines = inspectStdout.trim().split(/\r?\n/);
-            const parsedInspectLines = inspectLines.map((line) =>
-                line.split(';'),
-            );
             const statsOutput = await this.containerCommands.containerStats(
                 ids,
                 target.ssh,
@@ -215,29 +183,26 @@ export class ContainersManager implements vscode.Disposable {
             const parsedStatsLines = statsLines.map((line) => line.split(';'));
             const containersData = items.reduce<ContainerItem[]>(
                 (acc, item) => {
-                    const containerInspectLine = parsedInspectLines.find(
-                        (inspectLine) =>
-                            inspectLine[0].slice(0, 12) === item.ID,
+                    const containerInspectElement = inspectOutput.find(
+                        (inspectElement) =>
+                            inspectElement.Id.slice(0, 12) === item.ID,
                     );
                     const containerStatsLine = parsedStatsLines.find(
                         (stat) => stat[0].slice(0, 12) === item.ID,
                     );
-                    const ports = containerInspectLine
-                        ? this.parsePorts(containerInspectLine[1])
-                        : [];
-                    const runtime = containerInspectLine
-                        ? containerInspectLine[2]
-                        : '';
-                    const cpuUsage = containerStatsLine
-                        ? containerStatsLine[1]
-                        : '';
-                    const memUsage = containerStatsLine
-                        ? containerStatsLine[2]
-                        : '';
+                    const cpuUsage = containerStatsLine?.[1] || '';
+                    const memUsage = containerStatsLine?.[2] || '';
+                    const runtime =
+                        containerInspectElement?.HostConfig.Runtime || '';
+                    const annotations =
+                        containerInspectElement?.HostConfig.Annotations || {};
+                    const ports =
+                        containerInspectElement?.NetworkSettings.Ports || {};
                     acc.push(
                         this.createContainerItem(
                             item,
                             runtime,
+                            annotations,
                             ports,
                             cpuUsage,
                             memUsage,
@@ -254,36 +219,6 @@ export class ContainersManager implements vscode.Disposable {
                 err instanceof Error ? err.message : 'Unknown error';
             logger.error(`Failed to get containers info: ${errorMsg}`);
             return this.containersData;
-        }
-    }
-
-    private parsePorts(portsJson: string): string[] {
-        try {
-            const portObj = JSON.parse(portsJson);
-            const ports = Object.entries(portObj)
-                .filter(([_, arr]) => Array.isArray(arr) && arr.length > 0)
-                .map(([containerPort, arr]) => {
-                    if (!Array.isArray(arr)) {
-                        return [];
-                    }
-                    // For each mapping, return host:container
-                    return (arr as Array<{ HostPort?: string }>)
-                        .map((m) => {
-                            const hostPort =
-                                m && m.HostPort ? m.HostPort : undefined;
-                            const containerPortNum =
-                                containerPort.split('/')[0];
-                            return hostPort
-                                ? `${hostPort}:${containerPortNum}`
-                                : undefined;
-                        })
-                        .filter((p): p is string => !!p);
-                })
-                .flat();
-            return Array.from(new Set(ports));
-        } catch {
-            // If JSON parsing fails, fallback to empty ports
-            return [];
         }
     }
 
@@ -346,10 +281,11 @@ export class ContainersManager implements vscode.Disposable {
     private createContainerItem(
         item: DockerPsItem,
         runtime: string,
-        ports: string[],
+        annotations: Record<string, string>,
+        ports: DockerPorts,
         cpuUsage: string,
         memUsage: string,
-        target: Target,
+        target: TargetItem,
     ): ContainerItem {
         return {
             id: item.ID,
@@ -361,6 +297,7 @@ export class ContainersManager implements vscode.Disposable {
             runningFor: item.RunningFor,
             createdAt: item.CreatedAt,
             runtime,
+            annotations,
             ports,
             cpuUsage,
             memUsage,

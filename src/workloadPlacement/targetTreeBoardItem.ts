@@ -1,12 +1,12 @@
 import * as vscode from 'vscode';
-import { Target } from './target';
+import type { TargetItem } from '../util/types';
 
 /** Represents a board */
 export class TargetTreeBoardItem extends vscode.TreeItem {
     public readonly targetId: string;
 
     constructor(
-        target: Target,
+        target: TargetItem,
         public readonly selected: boolean,
         public readonly connectionReady: boolean,
         public readonly targetReady: boolean,

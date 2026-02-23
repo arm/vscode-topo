@@ -5,9 +5,9 @@ import { showAndLogError } from '../util/showAndLogError';
 import { TopoError } from '../errors/topoError';
 import type {
     BoardState,
-    ContainerItem,
     ContainersManager,
 } from '../workloadPlacement/containersManager';
+import type { ContainerItem } from '../util/types';
 import { Target } from '../workloadPlacement/target';
 import { MessagePoster } from '../util/types';
 import { mock } from 'jest-mock-extended';
@@ -42,7 +42,8 @@ describe('BoardDashboardMessageHandler', () => {
         runningFor: '1s',
         createdAt: 'now',
         runtime: 'docker',
-        ports: [],
+        annotations: {},
+        ports: {},
         cpuUsage: '0%',
         memUsage: '0B / 0B',
         target,

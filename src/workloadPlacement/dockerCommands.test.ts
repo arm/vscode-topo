@@ -249,23 +249,38 @@ describe('DockerCommands', () => {
     });
 
     describe('inspectContainers', () => {
-        it('returns inspect stdout on success', async () => {
-            execMock.mockResolvedValueOnce({ stdout: 'id;{};r', stderr: '' });
+        it('returns inspect output on success', async () => {
+            execMock.mockResolvedValueOnce({
+                stdout: JSON.stringify({
+                    Id: 'id',
+                    NetworkSettings: { Ports: {} },
+                    HostConfig: { Runtime: 'r', Annotations: {} },
+                }),
+                stderr: '',
+            });
 
             const out = await dockerCommands.inspectContainers(
                 ['a'],
                 'user@host',
             );
 
-            expect(out).toBe('id;{};r');
-            const expectedCall =
-                "docker --host ssh://user@host inspect a --format '{{.Id}};{{json .NetworkSettings.Ports}};{{.HostConfig.Runtime}}'";
-            expect(execMock).toHaveBeenCalledWith(expectedCall);
+            const expectedOutput = [
+                {
+                    HostConfig: { Annotations: {}, Runtime: 'r' },
+                    Id: 'id',
+                    NetworkSettings: { Ports: {} },
+                },
+            ];
+            expect(out).toEqual(expectedOutput);
         });
 
-        it('returns err.stdout when exec rejects with only not-found errors', async () => {
+        it('returns partial output when exec rejects with only not-found errors', async () => {
             const err = makeDockerError(
-                'fallback',
+                JSON.stringify({
+                    Id: 'id',
+                    NetworkSettings: { Ports: {} },
+                    HostConfig: { Runtime: 'r', Annotations: {} },
+                }),
                 'Error: No such object: a\nError: No such object: b',
             );
             execMock.mockRejectedValueOnce(err);
@@ -275,11 +290,18 @@ describe('DockerCommands', () => {
                 'user@host',
             );
 
+            const expectedOutput = [
+                {
+                    HostConfig: { Annotations: {}, Runtime: 'r' },
+                    Id: 'id',
+                    NetworkSettings: { Ports: {} },
+                },
+            ];
             expect(logger.warn).toHaveBeenCalledWith(
                 expect.any(String),
                 err.stderr,
             );
-            expect(out).toBe('fallback');
+            expect(out).toEqual(expectedOutput);
         });
 
         it('rethrows when exec rejects with unknown error', async () => {
@@ -303,10 +325,10 @@ describe('DockerCommands', () => {
             ).rejects.toThrow('some docker error');
         });
 
-        it('returns empty string when provided with an empty array', async () => {
+        it('returns empty array when provided with an empty array', async () => {
             const out = await dockerCommands.inspectContainers([], 'ctx');
 
-            expect(out).toBe('');
+            expect(out).toEqual([]);
             expect(execMock).not.toHaveBeenCalled();
         });
     });

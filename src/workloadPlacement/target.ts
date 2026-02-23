@@ -1,4 +1,6 @@
-export class Target {
+import { TargetItem } from '../util/types';
+
+export class Target implements TargetItem {
     public static from(obj: unknown): Target {
         if (obj instanceof Target) {
             return obj;
@@ -40,10 +42,6 @@ export class Target {
 
         this.user = user;
         this.host = host;
-    }
-
-    public get displayName(): string {
-        return this.id;
     }
 
     private static parseSsh(sshTarget: string): {

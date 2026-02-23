@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
-import { ContainerItem } from '../workloadPlacement/containersManager';
 import { ContainerCommands } from '../workloadPlacement/containerCommands';
 import * as manifest from '../manifest';
 import { TargetStore } from '../workloadPlacement/targetStore';
 import { assertTargetTreeContainerItem } from './util/assertTargetTreeContainerItem';
+import { ContainerItem } from '../util/types';
 
 export class AttachShell {
     public static readonly attachShellCommand = `${manifest.PACKAGE_NAME}.attachShell`;

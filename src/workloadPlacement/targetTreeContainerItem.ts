@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { BOARD_HOST_RUNTIME } from '../manifest';
-import { ContainerItem } from './containersManager';
+import { ContainerItem } from '../util/types';
 
 /** Represents an individual container in the target tree view. */
 export class TargetTreeContainerItem extends vscode.TreeItem {
