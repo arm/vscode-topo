@@ -1,10 +1,8 @@
 import * as vscode from 'vscode';
 import { logger } from '../util/logger';
 import { showAndLogError } from '../util/showAndLogError';
-import {
-    ContainerItem,
-    ContainersManager,
-} from '../workloadPlacement/containersManager';
+import { ContainersManager } from '../workloadPlacement/containersManager';
+import type { ContainerItem } from '../util/types';
 import { ContainerOpenInBrowser } from '../actions/containerOpenInBrowser';
 import { AttachVsCode } from '../actions/attachVsCode';
 import { AttachShell } from '../actions/attachShell';

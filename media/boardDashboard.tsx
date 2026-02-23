@@ -1,12 +1,9 @@
-import { MessagePoster } from '../src/util/types';
-import type {
-    BoardState,
-    ContainerItem,
-} from '../src/workloadPlacement/containersManager';
-import { Target } from '../src/workloadPlacement/target';
+import { getContainerHostPorts } from '../src/util/getContainerHostPorts';
+import { ContainerItem, MessagePoster, TargetItem } from '../src/util/types';
+import type { BoardState } from '../src/workloadPlacement/containersManager';
 
 export interface BoardDashboardProps {
-    target: Target;
+    target: TargetItem;
     containersData: ContainerItem[];
     boardState: BoardState;
     messagePoster: MessagePoster;
@@ -95,30 +92,26 @@ function ContainerTable({
                             <td>{c.cpuUsage}</td>
                             <td>{c.memUsage}</td>
                             <td>
-                                {c.ports.length > 0
-                                    ? c.ports.map((port, idx) => (
-                                          <div
-                                              key={idx}
-                                              className="container-port-item"
-                                          >
-                                              {port}
-                                              <button
-                                                  title="Open in browser"
-                                                  className="action-btn link-btn container-port-link-btn"
-                                                  onClick={() => {
-                                                      messagePoster.postMessage(
-                                                          {
-                                                              type: 'open-container-in-browser',
-                                                              containerId: c.id,
-                                                          },
-                                                      );
-                                                  }}
-                                              >
-                                                  <span className="codicon codicon-link-external container-port-link-icon" />
-                                              </button>
-                                          </div>
-                                      ))
-                                    : null}
+                                {getContainerHostPorts(c).map((port, idx) => (
+                                    <div
+                                        key={idx}
+                                        className="container-port-item"
+                                    >
+                                        {port}
+                                        <button
+                                            title="Open in browser"
+                                            className="action-btn link-btn container-port-link-btn"
+                                            onClick={() => {
+                                                messagePoster.postMessage({
+                                                    type: 'open-container-in-browser',
+                                                    containerId: c.id,
+                                                });
+                                            }}
+                                        >
+                                            <span className="codicon codicon-link-external container-port-link-icon" />
+                                        </button>
+                                    </div>
+                                ))}
                             </td>
                             <td>
                                 {isRunning ? (

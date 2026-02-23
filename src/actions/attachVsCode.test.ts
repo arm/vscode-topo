@@ -4,7 +4,7 @@ import { exec } from '../util/exec';
 import { BOARD_HOST_RUNTIME } from '../manifest';
 import { DockerCommands } from '../workloadPlacement/dockerCommands';
 import { Target } from '../workloadPlacement/target';
-import { ContainerItem } from '../workloadPlacement/containersManager';
+import { ContainerItem } from '../util/types';
 import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
 import { TopoError } from '../errors/topoError';
 import { mock, MockProxy } from 'jest-mock-extended';
@@ -37,8 +37,9 @@ describe('attachVsCode', () => {
         labels: '',
         runningFor: '',
         runtime: BOARD_HOST_RUNTIME,
+        annotations: {},
         createdAt: '',
-        ports: [],
+        ports: {},
         cpuUsage: '0.0%',
         memUsage: '0B / 1GiB',
         target,

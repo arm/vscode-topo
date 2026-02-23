@@ -1,8 +1,8 @@
-import { ContainerItem, ContainersManager } from './containersManager';
+import { ContainersManager } from './containersManager';
+import { ContainerItem, DockerPsItem } from '../util/types';
 import * as manifest from '../manifest';
 import { exec } from '../util/exec';
 import { DockerCommands } from './dockerCommands';
-import { DockerPsItem } from './containerCommands';
 import { Target } from './target';
 import * as vscode from 'vscode';
 import { TargetStore } from './targetStore';
@@ -24,6 +24,7 @@ const webServerPortInfo = {
         { HostIp: '::', HostPort: '8080' },
     ],
 };
+const ambientAnnotations = { 'remoteproc.name': 'imx-rproc' };
 const mockContainers: DockerPsItem[] = [
     {
         ID: 'id1',
@@ -46,7 +47,6 @@ const mockContainers: DockerPsItem[] = [
         CreatedAt: '2024-01-02T00:00:00Z',
     },
 ];
-const serializedWebServerPortInfo = JSON.stringify(webServerPortInfo);
 const dockerCommands = new DockerCommands();
 const defaultContextOutput = {
     stdout: 'default\ntopo\n',
@@ -58,8 +58,22 @@ const defaultPsOutput = {
 };
 const defaultInspectOutput = {
     stdout: [
-        `${mockContainers[0].ID};${serializedWebServerPortInfo};${manifest.BOARD_HOST_RUNTIME}`,
-        `${mockContainers[1].ID};{};${manifest.BOARD_AMBIENT_RUNTIME}`,
+        JSON.stringify({
+            Id: mockContainers[0].ID,
+            NetworkSettings: { Ports: webServerPortInfo },
+            HostConfig: {
+                Runtime: manifest.BOARD_HOST_RUNTIME,
+                Annotations: {},
+            },
+        }),
+        JSON.stringify({
+            Id: mockContainers[1].ID,
+            NetworkSettings: { Ports: {} },
+            HostConfig: {
+                Runtime: manifest.BOARD_AMBIENT_RUNTIME,
+                Annotations: ambientAnnotations,
+            },
+        }),
     ].join('\n'),
     stderr: '',
 };
@@ -95,7 +109,7 @@ describe('ContainersManager', () => {
                     return defaultContextOutput;
                 case `docker --host ssh://${target.ssh} ps -a --format "{{json .}}"`:
                     return defaultPsOutput;
-                case `docker --host ssh://${target.ssh} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{.Id}};{{json .NetworkSettings.Ports}};{{.HostConfig.Runtime}}'`:
+                case `docker --host ssh://${target.ssh} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{json .}}'`:
                     return defaultInspectOutput;
                 case `docker --host ssh://${target.ssh} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{.ID}};{{.CPUPerc}};{{.MemUsage}}'`:
                     return defaultStatsOutput;
@@ -129,7 +143,8 @@ describe('ContainersManager', () => {
             runningFor: mockContainers[0].RunningFor,
             createdAt: mockContainers[0].CreatedAt,
             runtime: manifest.BOARD_HOST_RUNTIME,
-            ports: ['8080:80'],
+            annotations: {},
+            ports: webServerPortInfo,
             cpuUsage: '2.5%',
             memUsage: '50MiB / 1GiB',
             target,
@@ -144,7 +159,8 @@ describe('ContainersManager', () => {
             runningFor: mockContainers[1].RunningFor,
             createdAt: mockContainers[1].CreatedAt,
             runtime: manifest.BOARD_AMBIENT_RUNTIME,
-            ports: [],
+            annotations: ambientAnnotations,
+            ports: {},
             cpuUsage: '0.0%',
             memUsage: '0B / 1GiB',
             target,
@@ -224,7 +240,7 @@ describe('ContainersManager', () => {
                     return defaultContextOutput;
                 case `docker --host ssh://${target.ssh} ps -a --format "{{json .}}"`:
                     return defaultPsOutput;
-                case `docker --host ssh://${target.ssh} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{.Id}};{{json .NetworkSettings.Ports}};{{.HostConfig.Runtime}}'`:
+                case `docker --host ssh://${target.ssh} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{json .}}'`:
                     return defaultInspectOutput;
                 case `docker --host ssh://${target.ssh} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{.ID}};{{.CPUPerc}};{{.MemUsage}}'`:
                     return defaultStatsOutput;
@@ -262,7 +278,7 @@ describe('ContainersManager', () => {
                     return defaultContextOutput;
                 case `docker --host ssh://${target.ssh} ps -a --format "{{json .}}"`:
                     return defaultPsOutput;
-                case `docker --host ssh://${target.ssh} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{.Id}};{{json .NetworkSettings.Ports}};{{.HostConfig.Runtime}}'`:
+                case `docker --host ssh://${target.ssh} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{json .}}'`:
                     return defaultInspectOutput;
                 case `docker --host ssh://${target.ssh} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{.ID}};{{.CPUPerc}};{{.MemUsage}}'`:
                     return defaultStatsOutput;
@@ -301,7 +317,7 @@ describe('ContainersManager', () => {
                     return defaultContextOutput;
                 case `docker --host ssh://${target.ssh} ps -a --format "{{json .}}"`:
                     return defaultPsOutput;
-                case `docker --host ssh://${target.ssh} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{.Id}};{{json .NetworkSettings.Ports}};{{.HostConfig.Runtime}}'`:
+                case `docker --host ssh://${target.ssh} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{json .}}'`:
                     return defaultInspectOutput;
                 case `docker --host ssh://${target.ssh} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{.ID}};{{.CPUPerc}};{{.MemUsage}}'`:
                     return defaultStatsOutput;
@@ -339,7 +355,7 @@ describe('ContainersManager', () => {
                     return defaultContextOutput;
                 case `docker --host ssh://${target.ssh} ps -a --format "{{json .}}"`:
                     return defaultPsOutput;
-                case `docker --host ssh://${target.ssh} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{.Id}};{{json .NetworkSettings.Ports}};{{.HostConfig.Runtime}}'`:
+                case `docker --host ssh://${target.ssh} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{json .}}'`:
                     return defaultInspectOutput;
                 case `docker --host ssh://${target.ssh} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{.ID}};{{.CPUPerc}};{{.MemUsage}}'`:
                     return defaultStatsOutput;
@@ -380,7 +396,7 @@ describe('ContainersManager', () => {
                     return defaultContextOutput;
                 case `docker --host ssh://${target.ssh} ps -a --format "{{json .}}"`:
                     return defaultPsOutput;
-                case `docker --host ssh://${target.ssh} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{.Id}};{{json .NetworkSettings.Ports}};{{.HostConfig.Runtime}}'`:
+                case `docker --host ssh://${target.ssh} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{json .}}'`:
                     return defaultInspectOutput;
                 case `docker --host ssh://${target.ssh} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{.ID}};{{.CPUPerc}};{{.MemUsage}}'`:
                     return defaultStatsOutput;
@@ -415,7 +431,7 @@ describe('ContainersManager', () => {
                     return defaultContextOutput;
                 case `docker --host ssh://${target.ssh} ps -a --format "{{json .}}"`:
                     return defaultPsOutput;
-                case `docker --host ssh://${target.ssh} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{.Id}};{{json .NetworkSettings.Ports}};{{.HostConfig.Runtime}}'`:
+                case `docker --host ssh://${target.ssh} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{json .}}'`:
                     return defaultInspectOutput;
                 case `docker --host ssh://${target.ssh} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{.ID}};{{.CPUPerc}};{{.MemUsage}}'`:
                     return defaultStatsOutput;
@@ -455,7 +471,7 @@ describe('ContainersManager', () => {
                     return defaultContextOutput;
                 case `docker --host ssh://${target.ssh} ps -a --format "{{json .}}"`:
                     return defaultPsOutput;
-                case `docker --host ssh://${target.ssh} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{.Id}};{{json .NetworkSettings.Ports}};{{.HostConfig.Runtime}}'`:
+                case `docker --host ssh://${target.ssh} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{json .}}'`:
                     return defaultInspectOutput;
                 case `docker --host ssh://${target.ssh} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{.ID}};{{.CPUPerc}};{{.MemUsage}}'`:
                     return defaultStatsOutput;

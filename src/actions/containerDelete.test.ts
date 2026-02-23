@@ -2,7 +2,7 @@ import { BOARD_HOST_RUNTIME } from '../manifest';
 import * as vscode from 'vscode';
 import { ContainerDelete } from './containerDelete';
 import { Target } from '../workloadPlacement/target';
-import { ContainerItem } from '../workloadPlacement/containersManager';
+import { ContainerItem } from '../util/types';
 import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
 import { TopoError } from '../errors/topoError';
 import { mock, MockProxy } from 'jest-mock-extended';
@@ -26,8 +26,9 @@ describe('ContainerDelete', () => {
         labels: '',
         runningFor: '',
         runtime: BOARD_HOST_RUNTIME,
+        annotations: {},
         createdAt: '',
-        ports: [],
+        ports: {},
         cpuUsage: '0.0%',
         memUsage: '0B / 1GiB',
         target,

@@ -4,7 +4,8 @@ import { TargetTreeSubsystemItem } from './targetTreeSubsystemItem';
 import { TargetTreeBoardItem } from './targetTreeBoardItem';
 import * as vscode from 'vscode';
 import * as manifest from '../manifest';
-import { ContainerItem, ContainersManager } from './containersManager';
+import { ContainersManager } from './containersManager';
+import { ContainerItem } from '../util/types';
 import { Target } from './target';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { TargetStore } from './targetStore';
@@ -39,8 +40,9 @@ describe('TargetTreeDataProvider', () => {
             labels: 'foo=bar',
             runningFor: '1h',
             runtime: manifest.BOARD_AMBIENT_RUNTIME,
+            annotations: {},
             createdAt: '',
-            ports: [],
+            ports: {},
             cpuUsage: '0.0%',
             memUsage: '0B / 1GiB',
             target,
@@ -54,8 +56,9 @@ describe('TargetTreeDataProvider', () => {
             labels: 'baz=qux',
             runningFor: '2h',
             runtime: manifest.BOARD_HOST_RUNTIME,
+            annotations: {},
             createdAt: '',
-            ports: [],
+            ports: {},
             cpuUsage: '0.0%',
             memUsage: '0B / 1GiB',
             target,
@@ -69,8 +72,9 @@ describe('TargetTreeDataProvider', () => {
             labels: 'abc=def',
             runningFor: '30m',
             runtime: manifest.BOARD_AMBIENT_RUNTIME,
+            annotations: {},
             createdAt: '',
-            ports: [],
+            ports: {},
             cpuUsage: '0.0%',
             memUsage: '0B / 1GiB',
             target,

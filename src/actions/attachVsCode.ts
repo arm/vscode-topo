@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { ContainerItem } from '../workloadPlacement/containersManager';
+import { ContainerItem } from '../util/types';
 import { ContainerCommands } from '../workloadPlacement/containerCommands';
 import * as manifest from '../manifest';
 import { getDockerContextName } from '../util/dockerContext';

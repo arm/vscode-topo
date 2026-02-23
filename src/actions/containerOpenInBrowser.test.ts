@@ -1,5 +1,5 @@
 import { Target } from '../workloadPlacement/target';
-import { ContainerItem } from '../workloadPlacement/containersManager';
+import { ContainerItem } from '../util/types';
 import { ContainerOpenInBrowser } from './containerOpenInBrowser';
 import * as vscode from 'vscode';
 import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
@@ -23,19 +23,27 @@ describe('ContainerOpenInBrowser', () => {
         const openInBrowser = registerCommandMock.mock.calls.find(
             ([cmd]) => cmd === ContainerOpenInBrowser.openInBrowserCommand,
         )![1];
-        const port = '8080:80';
-        const item = {
+        const item: ContainerItem = {
             id: 'abc123',
-            ports: [port],
+            ports: { '8080/tcp': [{ HostPort: '8080', HostIp: '0.0.0.0' }] },
             state: 'running',
             target,
-        } as ContainerItem;
+            name: '',
+            image: '',
+            status: '',
+            labels: '',
+            runningFor: '',
+            createdAt: '',
+            runtime: '',
+            annotations: {},
+            cpuUsage: '',
+            memUsage: '',
+        };
         const treeItem = new TargetTreeContainerItem(item);
 
         await openInBrowser(treeItem);
 
-        const publishedPort = port.split(':')[0];
-        const url = `http://${target.host}:${publishedPort}`;
+        const url = `http://${target.host}:8080`;
         expect(vscode.env.openExternal).toHaveBeenCalledWith(
             vscode.Uri.parse(url),
         );
@@ -50,7 +58,7 @@ describe('ContainerOpenInBrowser', () => {
         )![1];
         const item: ContainerItem = {
             id: 'abc123',
-            ports: [],
+            ports: {},
             state: 'running',
             target,
             name: '',
@@ -60,6 +68,7 @@ describe('ContainerOpenInBrowser', () => {
             runningFor: '',
             createdAt: '',
             runtime: '',
+            annotations: {},
             cpuUsage: '',
             memUsage: '',
         };
@@ -81,7 +90,7 @@ describe('ContainerOpenInBrowser', () => {
         )![1];
         const item: ContainerItem = {
             id: 'abc123',
-            ports: ['22:22'],
+            ports: { '22/tcp': [{ HostPort: '22', HostIp: '0.0.0.0' }] },
             state: 'running',
             target,
             name: '',
@@ -91,6 +100,7 @@ describe('ContainerOpenInBrowser', () => {
             runningFor: '',
             createdAt: '',
             runtime: '',
+            annotations: {},
             cpuUsage: '',
             memUsage: '',
         };

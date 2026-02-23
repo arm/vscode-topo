@@ -1,8 +1,9 @@
 import * as vscode from 'vscode';
-import { ContainerItem } from '../workloadPlacement/containersManager';
+import { ContainerItem } from '../util/types';
 import * as manifest from '../manifest';
 import { assertTargetTreeContainerItem } from './util/assertTargetTreeContainerItem';
 import { logger } from '../util/logger';
+import { getContainerHostPorts } from '../util/getContainerHostPorts';
 
 type OperationResult = 'success' | 'no-web-ports';
 
@@ -46,17 +47,13 @@ export class ContainerOpenInBrowser {
         const commonWebPorts = [
             443, 80, 3000, 3001, 5001, 5000, 5002, 8000, 8080, 8081,
         ];
-        const containerWebPorts = commonWebPorts.find((port) =>
-            item.ports.some((p) => p.startsWith(`${port}:`)),
-        );
-        const publishedPorts = item.ports
-            .filter((p) => p.startsWith(`${containerWebPorts}:`))
-            .map((p) => p.split(':')[0]);
-        if (publishedPorts.length === 0) {
+        const hostPorts = getContainerHostPorts(item);
+        const openWebPort = commonWebPorts.find((p) => hostPorts.includes(p));
+        if (!openWebPort) {
             return 'no-web-ports';
         }
         const target = item.target;
-        const url = `http://${target.host}:${publishedPorts[0]}`;
+        const url = `http://${target.host}:${openWebPort}`;
         await vscode.env.openExternal(vscode.Uri.parse(url));
         return 'success';
     }

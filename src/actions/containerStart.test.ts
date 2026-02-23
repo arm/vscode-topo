@@ -2,11 +2,11 @@ import { BOARD_HOST_RUNTIME } from '../manifest';
 import * as vscode from 'vscode';
 import { ContainerStart } from './containerStart';
 import { Target } from '../workloadPlacement/target';
-import { ContainerItem } from '../workloadPlacement/containersManager';
 import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
 import { TopoError } from '../errors/topoError';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { ContainersManager } from '../workloadPlacement/containersManager';
+import { ContainerItem } from '../util/types';
 
 describe('ContainerStart', () => {
     let context: MockProxy<vscode.ExtensionContext>;
@@ -25,8 +25,9 @@ describe('ContainerStart', () => {
         labels: '',
         runningFor: '',
         runtime: BOARD_HOST_RUNTIME,
+        annotations: {},
         createdAt: '',
-        ports: [],
+        ports: {},
         cpuUsage: '0.0%',
         memUsage: '0B / 1GiB',
         target,
