@@ -95,12 +95,16 @@ export class TopoCli {
         return versionInfo;
     }
 
-    /** Lists templates (via list-templates). */
+    /** Lists templates (via templates). */
     public listTemplates(): TemplateDescription[] {
         const bin = this.getBinaryPath();
-        const out = childProcess.execFileSync(bin, ['list-templates'], {
-            encoding: 'utf8',
-        });
+        const out = childProcess.execFileSync(
+            bin,
+            ['templates', '-o', 'json'],
+            {
+                encoding: 'utf8',
+            },
+        );
         const templates = JSON.parse(out);
         return templates;
     }

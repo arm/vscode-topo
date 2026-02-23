@@ -97,6 +97,7 @@ export interface TemplateDescription {
     url: string;
     subsystem: Subsystem;
     ports: string[];
+    description: string;
 }
 
 export interface SubsystemInfo {

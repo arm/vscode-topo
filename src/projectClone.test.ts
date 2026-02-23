@@ -5,9 +5,22 @@ import { ProjectClone } from './projectClone';
 import { mutable } from './util/mutable';
 import { TopoCli } from './topoCli';
 import { mock, MockProxy } from 'jest-mock-extended';
+import { TemplateDescription } from './util/types';
 
 const waitImmediate = () =>
     new Promise<void>((resolve) => setTimeout(() => resolve(), 0));
+
+const getFirstSentence = (text?: string): string | undefined => {
+    if (!text) {
+        return undefined;
+    }
+    const trimmed = text.trim();
+    if (!trimmed) {
+        return undefined;
+    }
+    const match = trimmed.match(/^.*?[.!?](?=\s|$)/);
+    return (match ? match[0] : trimmed).trim();
+};
 
 const executeCommand = async function (command: string, ...args: unknown[]) {
     const registeredCommands = jest.mocked(vscode.commands.registerCommand).mock
@@ -112,22 +125,19 @@ describe('ProjectClone', () => {
                 workspaceFolders[0],
             );
             jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
-            const cloneCmd =
-                'topo clone repo git:https://example.com/repo.git'.split(' ');
-            topoCli.getCloneCommand.mockReturnValue(cloneCmd);
             jest.mocked(vscode.window.showInputBox)
                 .mockResolvedValueOnce('https://example.com/repo.git')
                 .mockResolvedValueOnce('repo');
 
             await executeCommand(ProjectClone.remoteCloneCommand);
 
-            expect(topoCli.getCloneCommand).toHaveBeenCalledWith(
-                path.join(workspaceUri.fsPath, 'repo'),
-                { url: 'https://example.com/repo.git', type: 'git' },
-            );
             expect(vscode.ShellExecution).toHaveBeenCalledWith(
                 'topo',
-                'clone repo git:https://example.com/repo.git'.split(' '),
+                [
+                    'clone',
+                    path.join(workspaceUri.fsPath, 'repo'),
+                    'git:https://example.com/repo.git',
+                ],
                 { cwd: workspaceUri.fsPath },
             );
             expect(vscode.Task).toHaveBeenCalledWith(
@@ -150,22 +160,19 @@ describe('ProjectClone', () => {
                 workspaceFolders[0],
             );
             jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
-            const cloneCmd =
-                'topo clone repo git:git@example.com:repo.git'.split(' ');
-            topoCli.getCloneCommand.mockReturnValue(cloneCmd);
             jest.mocked(vscode.window.showInputBox)
                 .mockResolvedValueOnce('git@example.com:repo.git')
                 .mockResolvedValueOnce('repo');
 
             await executeCommand(ProjectClone.remoteCloneCommand);
 
-            expect(topoCli.getCloneCommand).toHaveBeenCalledWith(
-                path.join(workspaceUri.fsPath, 'repo'),
-                { url: 'git@example.com:repo.git', type: 'git' },
-            );
             expect(vscode.ShellExecution).toHaveBeenCalledWith(
                 'topo',
-                'clone repo git:git@example.com:repo.git'.split(' '),
+                [
+                    'clone',
+                    path.join(workspaceUri.fsPath, 'repo'),
+                    'git:git@example.com:repo.git',
+                ],
                 { cwd: workspaceUri.fsPath },
             );
             expect(vscode.Task).toHaveBeenCalledWith(
@@ -188,9 +195,6 @@ describe('ProjectClone', () => {
                 workspaceFolders[0],
             );
             jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
-            const cloneCmd =
-                'topo clone repo git:https://example.com/repo.git'.split(' ');
-            topoCli.getCloneCommand.mockReturnValue(cloneCmd);
             jest.mocked(vscode.window.showInputBox)
                 .mockResolvedValueOnce('https://example.com/repo.git')
                 .mockResolvedValueOnce('repo');
@@ -211,9 +215,6 @@ describe('ProjectClone', () => {
                 workspaceFolders[0],
             );
             jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
-            const cloneCmd =
-                'topo clone repo git:https://example.com/repo.git'.split(' ');
-            topoCli.getCloneCommand.mockReturnValue(cloneCmd);
             jest.mocked(vscode.window.showInputBox)
                 .mockResolvedValueOnce('https://example.com/repo.git')
                 .mockResolvedValueOnce('repo');
@@ -241,9 +242,6 @@ describe('ProjectClone', () => {
                 workspaceFolders[0],
             );
             jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
-            const cloneCmd =
-                'topo clone repo git:https://example.com/repo.git'.split(' ');
-            topoCli.getCloneCommand.mockReturnValue(cloneCmd);
             jest.mocked(vscode.window.showInputBox)
                 .mockResolvedValueOnce('https://example.com/repo.git')
                 .mockResolvedValueOnce('repo');
@@ -310,8 +308,6 @@ describe('ProjectClone', () => {
                 workspaceFolders[0],
             );
             jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
-            const cloneCmd = 'topo clone myproj dir:/path/to/source'.split(' ');
-            topoCli.getCloneCommand.mockReturnValue(cloneCmd);
             jest.mocked(vscode.window.showOpenDialog).mockResolvedValueOnce([
                 localTemplateUri,
             ]);
@@ -321,13 +317,13 @@ describe('ProjectClone', () => {
 
             await executeCommand(ProjectClone.localCloneCommand);
 
-            expect(topoCli.getCloneCommand).toHaveBeenCalledWith(
-                path.join(workspaceUri.fsPath, 'myproj'),
-                { path: localTemplateUri.fsPath, type: 'local' },
-            );
             expect(vscode.ShellExecution).toHaveBeenCalledWith(
                 'topo',
-                'clone myproj dir:/path/to/source'.split(' '),
+                [
+                    'clone',
+                    path.join(workspaceUri.fsPath, 'myproj'),
+                    `dir:${localTemplateUri.fsPath}`,
+                ],
                 { cwd: workspaceUri.fsPath },
             );
             expect(vscode.Task).toHaveBeenCalledWith(
@@ -350,8 +346,6 @@ describe('ProjectClone', () => {
                 workspaceFolders[0],
             );
             jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
-            const cloneCmd = 'topo clone myproj dir:/path/to/source'.split(' ');
-            topoCli.getCloneCommand.mockReturnValue(cloneCmd);
             jest.mocked(vscode.window.showOpenDialog).mockResolvedValueOnce([
                 localTemplateUri,
             ]);
@@ -375,8 +369,6 @@ describe('ProjectClone', () => {
                 workspaceFolders[0],
             );
             jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
-            const cloneCmd = 'topo clone myproj dir:/path/to/source'.split(' ');
-            topoCli.getCloneCommand.mockReturnValue(cloneCmd);
             jest.mocked(vscode.window.showOpenDialog).mockResolvedValueOnce([
                 localTemplateUri,
             ]);
@@ -392,6 +384,183 @@ describe('ProjectClone', () => {
                 onDidEndTaskProcessEmitter.event;
 
             await executeCommand(ProjectClone.localCloneCommand);
+            onDidEndTaskProcessEmitter.fire({
+                execution: taskExec,
+                exitCode: 1,
+            });
+            await waitImmediate();
+
+            expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
+                'Clone task "Clone myproj" failed with exit code 1.',
+            );
+        });
+    });
+
+    describe('cloneTemplateProject', () => {
+        const templateList: TemplateDescription[] = [
+            {
+                id: 'template-alpha',
+                url: '/templates/template-alpha',
+                subsystem: 'Host',
+                ports: [],
+                description: 'Template Apple description. Apple is a fruit.',
+            },
+            {
+                id: 'template-banana',
+                url: '/templates/template-banana',
+                subsystem: 'Ambient',
+                ports: ['8080'],
+                description:
+                    'Template Cabbage description. Cabbage is a vegetable.',
+            },
+        ];
+
+        const templateQuickPickItems = templateList.map((template) => ({
+            label: template.id,
+            detail: getFirstSentence(template.description),
+            template,
+        }));
+
+        const showQuickPickItemMock = vscode.window.showQuickPick as (
+            items: readonly (vscode.QuickPickItem & {
+                template: TemplateDescription;
+            })[],
+            options?: vscode.QuickPickOptions,
+        ) => Thenable<
+            | (vscode.QuickPickItem & { template: TemplateDescription })
+            | undefined
+        >;
+
+        it('shows error when no workspace folder open', async () => {
+            await executeCommand(ProjectClone.templateCloneCommand);
+
+            const errMsg =
+                'No workspace folder is open. Please open a folder to clone the project into.';
+            expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(errMsg);
+        });
+
+        it('returns early when no template selected', async () => {
+            mutable(vscode.workspace).workspaceFolders = workspaceFolders;
+            topoCli.listTemplates.mockReturnValue(templateList);
+            jest.mocked(vscode.window.showQuickPick).mockResolvedValueOnce(
+                undefined,
+            );
+
+            await executeCommand(ProjectClone.templateCloneCommand);
+
+            expect(vscode.tasks.executeTask).not.toHaveBeenCalled();
+        });
+
+        it('returns early when no project name provided', async () => {
+            mutable(vscode.workspace).workspaceFolders = workspaceFolders;
+            topoCli.listTemplates.mockReturnValue(templateList);
+            jest.mocked(showQuickPickItemMock).mockResolvedValueOnce(
+                templateQuickPickItems[0],
+            );
+            jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
+                undefined,
+            );
+
+            await executeCommand(ProjectClone.templateCloneCommand);
+
+            expect(vscode.tasks.executeTask).not.toHaveBeenCalled();
+        });
+
+        it('creates task and runs clone command for template selection', async () => {
+            mutable(vscode.workspace).workspaceFolders = workspaceFolders;
+            topoCli.listTemplates.mockReturnValue(templateList);
+            jest.mocked(vscode.workspace).getWorkspaceFolder.mockReturnValue(
+                workspaceFolders[0],
+            );
+            jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
+            jest.mocked(showQuickPickItemMock).mockResolvedValueOnce(
+                templateQuickPickItems[0],
+            );
+            jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
+                'myproj',
+            );
+
+            await executeCommand(ProjectClone.templateCloneCommand);
+
+            expect(vscode.window.showQuickPick).toHaveBeenCalledWith(
+                templateQuickPickItems,
+                {
+                    placeHolder: 'Select a template to clone',
+                },
+            );
+            expect(vscode.window.showInputBox).toHaveBeenCalledWith({
+                prompt: 'Enter the project name',
+                value: templateQuickPickItems[0].label,
+            });
+            expect(vscode.ShellExecution).toHaveBeenCalledWith(
+                'topo',
+                [
+                    'clone',
+                    path.join(workspaceUri.fsPath, 'myproj'),
+                    'template:template-alpha',
+                ],
+                { cwd: workspaceUri.fsPath },
+            );
+            expect(vscode.Task).toHaveBeenCalledWith(
+                { type: 'shell', taskId: `${manifest.PACKAGE_NAME} clone` },
+                expect.anything(),
+                `Clone myproj`,
+                manifest.DISPLAY_NAME,
+                expect.any(vscode.ShellExecution),
+            );
+            expect(vscode.tasks.executeTask).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    presentationOptions: expect.anything(),
+                }),
+            );
+        });
+
+        it('shows error when executeTask throws', async () => {
+            mutable(vscode.workspace).workspaceFolders = workspaceFolders;
+            topoCli.listTemplates.mockReturnValue(templateList);
+            jest.mocked(vscode.workspace).getWorkspaceFolder.mockReturnValue(
+                workspaceFolders[0],
+            );
+            jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
+            jest.mocked(showQuickPickItemMock).mockResolvedValueOnce(
+                templateQuickPickItems[0],
+            );
+            jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
+                'myproj',
+            );
+            jest.mocked(vscode.tasks.executeTask).mockImplementationOnce(() => {
+                throw new Error('task fail');
+            });
+
+            await executeCommand(ProjectClone.templateCloneCommand);
+
+            expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
+                expect.stringContaining('task fail'),
+            );
+        });
+
+        it('shows error when task ends with non-zero exit code', async () => {
+            mutable(vscode.workspace).workspaceFolders = workspaceFolders;
+            topoCli.listTemplates.mockReturnValue(templateList);
+            jest.mocked(vscode.workspace).getWorkspaceFolder.mockReturnValue(
+                workspaceFolders[0],
+            );
+            jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
+            jest.mocked(showQuickPickItemMock).mockResolvedValueOnce(
+                templateQuickPickItems[0],
+            );
+            jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
+                'myproj',
+            );
+            jest.mocked(vscode.tasks.executeTask).mockResolvedValueOnce(
+                taskExec,
+            );
+            const onDidEndTaskProcessEmitter =
+                new vscode.EventEmitter<vscode.TaskProcessEndEvent>();
+            mutable(vscode.tasks).onDidEndTaskProcess =
+                onDidEndTaskProcessEmitter.event;
+
+            await executeCommand(ProjectClone.templateCloneCommand);
             onDidEndTaskProcessEmitter.fire({
                 execution: taskExec,
                 exitCode: 1,
