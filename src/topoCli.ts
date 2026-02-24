@@ -2,6 +2,7 @@ import * as path from 'path';
 import * as childProcess from 'child_process';
 import {
     ConfigMetadata,
+    HealthCheckResult,
     ProjectDescription,
     TemplateDescription,
 } from './util/types';
@@ -168,5 +169,20 @@ export class TopoCli {
             source.type === 'git' ? `git:${source.url}` : `dir:${source.path}`;
         const cmd = ['topo', 'clone', projectPath, sourceStr];
         return cmd;
+    }
+
+    public async health(sshTarget: string): Promise<HealthCheckResult> {
+        const bin = this.getBinaryPath();
+        const cmd = ['health', '--target', sshTarget, '-o', 'json'];
+        const promise = await new Promise<string>((resolve, reject) => {
+            childProcess.execFile(bin, cmd, {}, (error, stdout, stderr) => {
+                if (error) {
+                    reject(new Error(stderr || error.message));
+                } else {
+                    resolve(stdout);
+                }
+            });
+        });
+        return JSON.parse(promise);
     }
 }

@@ -1,7 +1,6 @@
 import type { DockerInspectItem, DockerPsItem } from '../util/types';
 
 export interface ContainerCommands {
-    isContainerRuntimeOn(boardSshConnection: string): Promise<boolean>;
     getCurrentContext(): Promise<string>;
     useContext(contextName: string): Promise<void>;
     getContexts(): Promise<string[]>;

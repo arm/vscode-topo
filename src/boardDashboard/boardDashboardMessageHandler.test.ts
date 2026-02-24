@@ -28,7 +28,7 @@ describe('BoardDashboardMessageHandler', () => {
     const target = new Target('topo', 'user@topo.local');
     const boardState: BoardState = {
         isReachable: true,
-        hasContainerRuntime: true,
+        hasContainerEngine: true,
         targetId: target.id,
     };
 

@@ -16,7 +16,6 @@ import { ContainerStop } from './actions/containerStop';
 import { ContainerOpenInBrowser } from './actions/containerOpenInBrowser';
 import { AttachVsCode } from './actions/attachVsCode';
 import { AttachShell } from './actions/attachShell';
-import { BoardConnectionChecker } from './util/boardConnectionChecker';
 import { ContainerDelete } from './actions/containerDelete';
 import { OpenSerial } from './actions/openSerial';
 import { DockerCommands } from './workloadPlacement/dockerCommands';
@@ -58,13 +57,12 @@ export async function activate(
         context,
         composeEditorMessageHandler,
     );
-    const boardConnectionChecker = new BoardConnectionChecker();
     const containerOpenInBrowser = new ContainerOpenInBrowser(context);
     const dockerCommands = new DockerCommands();
     const attachVsCode = new AttachVsCode(context, dockerCommands);
     const attachShell = new AttachShell(context, dockerCommands, targetStore);
     const containersManager = new ContainersManager(
-        boardConnectionChecker,
+        topoCli,
         dockerCommands,
         targetStore,
     );

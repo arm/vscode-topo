@@ -7,6 +7,7 @@ import { Target } from './target';
 import * as vscode from 'vscode';
 import { TargetStore } from './targetStore';
 import { mock } from 'jest-mock-extended';
+import { TopoCli } from '../topoCli';
 
 const waitImmediate = async () => {
     await Promise.resolve();
@@ -90,6 +91,26 @@ const defaultInfoOutput = {
 };
 const execMock = exec as jest.Mock;
 const target = new Target('topo', 'user@topo.local');
+const topoCli = mock<TopoCli>();
+topoCli.health.mockResolvedValue({
+    Host: { Dependencies: [] },
+    Target: {
+        IsLocalHost: false,
+        Dependencies: [
+            {
+                Name: 'Container Engine',
+                Healthy: true,
+                Value: 'docker',
+            },
+        ],
+        Connectivity: { Name: 'Connected', Healthy: true, Value: '' },
+        SubsystemDriver: {
+            Name: 'Subsystem Driver (remoteproc)',
+            Healthy: true,
+            Value: 'driver-x',
+        },
+    },
+});
 
 describe('ContainersManager', () => {
     beforeEach(() => {
@@ -119,13 +140,10 @@ describe('ContainersManager', () => {
                     throw Error(`Unexpected command: ${command}`);
             }
         });
-        const boardConnectionChecker = {
-            isBoardSshPortOpen: jest.fn().mockResolvedValue(true),
-        };
         const targetStore = mock<TargetStore>();
         targetStore.getSelectedTarget.mockResolvedValue(target);
         const manager = new ContainersManager(
-            boardConnectionChecker,
+            topoCli,
             dockerCommands,
             targetStore,
         );
@@ -184,13 +202,10 @@ describe('ContainersManager', () => {
                     throw Error(`Unexpected command: ${command}`);
             }
         });
-        const boardConnectionChecker = {
-            isBoardSshPortOpen: jest.fn().mockResolvedValue(true),
-        };
         const targetStore = mock<TargetStore>();
         targetStore.getSelectedTarget.mockResolvedValue(target);
         const manager = new ContainersManager(
-            boardConnectionChecker,
+            topoCli,
             dockerCommands,
             targetStore,
         );
@@ -216,13 +231,10 @@ describe('ContainersManager', () => {
                     throw Error(`Unexpected command: ${command}`);
             }
         });
-        const boardConnectionChecker = {
-            isBoardSshPortOpen: jest.fn().mockResolvedValue(true),
-        };
         const targetStore = mock<TargetStore>();
         targetStore.getSelectedTarget.mockResolvedValue(target);
         const manager = new ContainersManager(
-            boardConnectionChecker,
+            topoCli,
             dockerCommands,
             targetStore,
         );
@@ -250,13 +262,10 @@ describe('ContainersManager', () => {
                     throw Error(`Unexpected command: ${command}`);
             }
         });
-        const boardConnectionChecker = {
-            isBoardSshPortOpen: jest.fn().mockResolvedValue(true),
-        };
         const targetStore = mock<TargetStore>();
         targetStore.getSelectedTarget.mockResolvedValue(target);
         const manager = new ContainersManager(
-            boardConnectionChecker,
+            topoCli,
             dockerCommands,
             targetStore,
         );
@@ -288,13 +297,10 @@ describe('ContainersManager', () => {
                     throw Error(`Unexpected command: ${command}`);
             }
         });
-        const boardConnectionChecker = {
-            isBoardSshPortOpen: jest.fn().mockResolvedValue(true),
-        };
         const targetStore = mock<TargetStore>();
         targetStore.getSelectedTarget.mockResolvedValue(target);
         const manager = new ContainersManager(
-            boardConnectionChecker,
+            topoCli,
             dockerCommands,
             targetStore,
         );
@@ -327,13 +333,10 @@ describe('ContainersManager', () => {
                     throw Error(`Unexpected command: ${command}`);
             }
         });
-        const boardConnectionChecker = {
-            isBoardSshPortOpen: jest.fn().mockResolvedValue(true),
-        };
         const targetStore = mock<TargetStore>();
         targetStore.getSelectedTarget.mockResolvedValue(target);
         const manager = new ContainersManager(
-            boardConnectionChecker,
+            topoCli,
             dockerCommands,
             targetStore,
         );
@@ -365,13 +368,10 @@ describe('ContainersManager', () => {
                     throw Error(`Unexpected command: ${command}`);
             }
         });
-        const boardConnectionChecker = {
-            isBoardSshPortOpen: jest.fn().mockResolvedValue(true),
-        };
         const targetStore = mock<TargetStore>();
         targetStore.getSelectedTarget.mockResolvedValue(target);
         const manager = new ContainersManager(
-            boardConnectionChecker,
+            topoCli,
             dockerCommands,
             targetStore,
         );
@@ -406,13 +406,10 @@ describe('ContainersManager', () => {
                     throw Error(`Unexpected command: ${command}`);
             }
         });
-        const boardConnectionChecker = {
-            isBoardSshPortOpen: jest.fn().mockResolvedValue(true),
-        };
         const targetStore = mock<TargetStore>();
         targetStore.getSelectedTarget.mockResolvedValue(target);
         const manager = new ContainersManager(
-            boardConnectionChecker,
+            topoCli,
             dockerCommands,
             targetStore,
         );
@@ -441,13 +438,10 @@ describe('ContainersManager', () => {
                     throw Error(`Unexpected command: ${command}`);
             }
         });
-        const boardConnectionChecker = {
-            isBoardSshPortOpen: jest.fn().mockResolvedValue(true),
-        };
         const targetStore = mock<TargetStore>();
         targetStore.getSelectedTarget.mockResolvedValue(target);
         const manager = new ContainersManager(
-            boardConnectionChecker,
+            topoCli,
             dockerCommands,
             targetStore,
         );
@@ -481,13 +475,10 @@ describe('ContainersManager', () => {
                     throw Error(`Unexpected command: ${command}`);
             }
         });
-        const boardConnectionChecker = {
-            isBoardSshPortOpen: jest.fn().mockResolvedValue(true),
-        };
         const targetStore = mock<TargetStore>();
         targetStore.getSelectedTarget.mockResolvedValue(target);
         const manager = new ContainersManager(
-            boardConnectionChecker,
+            topoCli,
             dockerCommands,
             targetStore,
         );
@@ -513,16 +504,13 @@ describe('ContainersManager', () => {
         });
         let selectedTarget: Target | undefined = target;
         const onChangeEmitter = new vscode.EventEmitter<void>();
-        const boardConnectionChecker = {
-            isBoardSshPortOpen: jest.fn().mockResolvedValue(true),
-        };
         const targetStore = mock<TargetStore>();
         targetStore.onChanged.mockImplementation(onChangeEmitter.event);
         targetStore.getSelectedTarget.mockImplementation(
             async () => selectedTarget,
         );
         const manager = new ContainersManager(
-            boardConnectionChecker,
+            topoCli,
             dockerCommands,
             targetStore,
         );

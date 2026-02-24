@@ -2,7 +2,12 @@ import * as path from 'path';
 import * as childProcess from 'child_process';
 import * as vscode from 'vscode';
 import { TopoCli, CloneRemoteSource, CloneLocalSource } from './topoCli';
-import { ProjectDescription, TemplateDescription, Mutable } from './util/types';
+import {
+    ProjectDescription,
+    TemplateDescription,
+    Mutable,
+    HealthCheckResult,
+} from './util/types';
 import * as manifest from './manifest';
 import { ChildProcessWithoutNullStreams } from 'child_process';
 import { mock } from 'jest-mock-extended';
@@ -174,6 +179,50 @@ describe('TopoCli', () => {
 
         const expected = 'topo clone myproject dir:/path/to/source'.split(' ');
         expect(cmd).toEqual(expected);
+    });
+
+    it('health parses JSON output', async () => {
+        const want: HealthCheckResult = {
+            Host: { Dependencies: [] },
+            Target: {
+                IsLocalHost: false,
+                Dependencies: [
+                    {
+                        Name: 'Container Engine',
+                        Healthy: true,
+                        Value: 'docker',
+                    },
+                ],
+                Connectivity: { Name: 'Connected', Healthy: true, Value: '' },
+                SubsystemDriver: {
+                    Name: 'Subsystem Driver (remoteproc)',
+                    Healthy: true,
+                    Value: 'driver-x',
+                },
+            },
+        };
+        execMock.mockImplementation((_bin, _cargs, _options, cb) => {
+            cb!(null, JSON.stringify(want), '');
+            return cp;
+        });
+
+        expect(topoCli.health('hostname')).resolves.toEqual(want);
+        expect(execMock).toHaveBeenCalledTimes(1);
+        expect(execMock).toHaveBeenCalledWith(
+            topoCli.getBinaryPath(),
+            ['health', '--target', 'hostname', '-o', 'json'],
+            expect.any(Object),
+            expect.any(Function),
+        );
+    });
+
+    it('health throws error on invalid JSON output', async () => {
+        execMock.mockImplementation((_bin, _cargs, _options, cb) => {
+            cb!(null, 'invalid json', '');
+            return cp;
+        });
+
+        await expect(topoCli.health('hostname')).rejects.toThrow();
     });
 
     describe('getBinaryPath on Windows', () => {
