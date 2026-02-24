@@ -22,18 +22,6 @@ const getSshUri = (boardSshConnection: string): string => {
 };
 
 /**
- * Checks if a given stderr output indicates an error, ignoring warnings.
- * @param err - The collected error output to check.
- * @returns True if there is an error, false otherwise.
- */
-const hasStderrError = (err: string): boolean => {
-    const lines = err.split(/\r?\n/).map((line) => line.trim());
-    return lines.some(
-        (line) => line !== '' && !line.toLowerCase().startsWith('warning:'),
-    );
-};
-
-/**
  * Checks if the error is a Docker-related error.
  * @param err the error to check
  * @returns true if it's a Docker error, false otherwise
@@ -82,29 +70,6 @@ const runDockerCmd = async (
 };
 
 export class DockerCommands implements ContainerCommands {
-    public async isContainerRuntimeOn(
-        boardSshConnection: string,
-    ): Promise<boolean> {
-        try {
-            const { stdout, stderr } = await exec(
-                `ssh ${boardSshConnection} 'docker info'`,
-            );
-            const err = stderr.toString();
-            if (hasStderrError(err)) {
-                throw new Error(err);
-            } else if (err.trim().length > 0) {
-                logger.warn(
-                    'Warnings emitted when checking Docker runtime status',
-                    err,
-                );
-            }
-            return stdout.includes('Server Version');
-        } catch (error: unknown) {
-            logger.error('Error checking Docker runtime status', error);
-            return false;
-        }
-    }
-
     public async getCurrentContext(): Promise<string> {
         const cmd = `docker context show`;
         const warnMsg = `Warnings emitted when getting current Docker context`;

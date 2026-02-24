@@ -27,7 +27,7 @@ const createTargetManager = () => {
         mock<ContainersManager>();
     containersManager.getBoardState.mockResolvedValue({
         isReachable: false,
-        hasContainerRuntime: false,
+        hasContainerEngine: false,
         targetId: undefined,
     });
     containersManager.onDataUpdate.mockImplementation(
@@ -193,7 +193,7 @@ describe('TargetManager', () => {
             );
             jest.mocked(containersManager.getBoardState).mockResolvedValue({
                 isReachable: true,
-                hasContainerRuntime: true,
+                hasContainerEngine: true,
                 targetId: undefined,
             });
             jest.mocked(vscode.window.createStatusBarItem).mockImplementation(
@@ -221,7 +221,7 @@ describe('TargetManager', () => {
             );
             jest.mocked(containersManager.getBoardState).mockResolvedValue({
                 isReachable: false,
-                hasContainerRuntime: true,
+                hasContainerEngine: true,
                 targetId: undefined,
             });
             jest.mocked(vscode.window.createStatusBarItem).mockImplementation(
@@ -252,7 +252,7 @@ describe('TargetManager', () => {
             );
             jest.mocked(containersManager.getBoardState).mockResolvedValue({
                 isReachable: false,
-                hasContainerRuntime: true,
+                hasContainerEngine: true,
                 targetId: target1.id,
             });
             jest.mocked(vscode.window.createStatusBarItem).mockImplementation(
@@ -264,7 +264,7 @@ describe('TargetManager', () => {
             );
             jest.mocked(containersManager.getBoardState).mockResolvedValue({
                 isReachable: true,
-                hasContainerRuntime: true,
+                hasContainerEngine: true,
                 targetId: target2.id,
             });
 
@@ -294,7 +294,7 @@ describe('TargetManager', () => {
             );
             jest.mocked(containersManager.getBoardState).mockResolvedValue({
                 isReachable: true,
-                hasContainerRuntime: true,
+                hasContainerEngine: true,
                 targetId: target.id,
             });
             jest.mocked(vscode.window.createStatusBarItem).mockImplementation(

@@ -4,7 +4,7 @@ import { TargetTreeSubsystemItem } from './targetTreeSubsystemItem';
 import { TargetTreeBoardItem } from './targetTreeBoardItem';
 import * as vscode from 'vscode';
 import * as manifest from '../manifest';
-import { ContainersManager } from './containersManager';
+import { BoardState, ContainersManager } from './containersManager';
 import { ContainerItem } from '../util/types';
 import { Target } from './target';
 import { mock, MockProxy } from 'jest-mock-extended';
@@ -84,9 +84,9 @@ describe('TargetTreeDataProvider', () => {
     const onDataUpdateEmitter = new vscode.EventEmitter<void>();
 
     beforeEach(() => {
-        const boardState = {
+        const boardState: BoardState = {
             isReachable: true,
-            hasContainerRuntime: true,
+            hasContainerEngine: true,
             targetId: target.id,
         };
         context = mock<vscode.ExtensionContext>({ subscriptions: [] });
@@ -180,7 +180,7 @@ describe('TargetTreeDataProvider', () => {
             targetStoreMock.getTargets.mockReturnValue([]);
             containersManagerMock.getBoardState.mockResolvedValueOnce({
                 isReachable: false,
-                hasContainerRuntime: true,
+                hasContainerEngine: true,
                 targetId: target.id,
             });
 

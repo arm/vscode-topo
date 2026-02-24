@@ -225,9 +225,9 @@ export function BoardDashboard({
         errorMessage =
             'No board found. Please ensure the board is running and accessible.';
     } else {
-        if (!boardState.hasContainerRuntime) {
+        if (!boardState.hasContainerEngine) {
             errorMessage =
-                'No container runtime found. Please ensure the container runtime of the board is installed and running.';
+                'No container engine found. Please ensure the container engine of the board is installed and running.';
         }
     }
     if (errorMessage) {

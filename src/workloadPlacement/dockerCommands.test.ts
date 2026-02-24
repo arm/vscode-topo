@@ -28,42 +28,6 @@ describe('DockerCommands', () => {
         dockerCommands = new DockerCommands();
     });
 
-    describe('isContainerRuntimeOn', () => {
-        it('returns true when docker info stdout contains Server Version and no stderr', async () => {
-            execMock.mockResolvedValueOnce({
-                stdout: 'Server Version: 20.10',
-                stderr: '',
-            });
-
-            const res = await dockerCommands.isContainerRuntimeOn('user@host');
-
-            expect(res).toBe(true);
-            expect(execMock).toHaveBeenCalledWith(
-                "ssh user@host 'docker info'",
-            );
-        });
-
-        it('returns false and logs when exec throws', async () => {
-            execMock.mockRejectedValueOnce(makeDockerError('', 'Boom'));
-
-            const res = await dockerCommands.isContainerRuntimeOn('user@host');
-
-            expect(res).toBe(false);
-            expect(logger.error).toHaveBeenCalled();
-        });
-
-        it('returns false when stderr non-empty', async () => {
-            execMock.mockResolvedValueOnce({
-                stdout: '',
-                stderr: 'some error',
-            });
-
-            const res = await dockerCommands.isContainerRuntimeOn('user@host');
-
-            expect(res).toBe(false);
-        });
-    });
-
     describe('getCurrentContext', () => {
         it('returns trimmed context name on success', async () => {
             execMock.mockResolvedValueOnce({ stdout: 'default\n', stderr: '' });

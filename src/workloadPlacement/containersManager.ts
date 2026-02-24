@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { logger } from '../util/logger';
-import { BoardConnectionChecker } from '../util/boardConnectionChecker';
 import { Deferred } from '../util/deferred';
 import type {
     ContainerItem,
@@ -10,10 +9,11 @@ import type {
 } from '../util/types';
 import type { ContainerCommands } from './containerCommands';
 import { TargetStore } from './targetStore';
+import type { TopoCli } from '../topoCli';
 
 export interface BoardState {
     isReachable: boolean;
-    hasContainerRuntime: boolean;
+    hasContainerEngine: boolean;
     targetId: string | undefined;
 }
 
@@ -28,7 +28,7 @@ export class ContainersManager implements vscode.Disposable {
     public readonly onDataUpdate = this._onDataUpdate.event;
     private readonly defaultBoardState: BoardState = {
         isReachable: false,
-        hasContainerRuntime: false,
+        hasContainerEngine: false,
         targetId: undefined,
     };
     private refreshTimer: NodeJS.Timeout | undefined;
@@ -39,7 +39,7 @@ export class ContainersManager implements vscode.Disposable {
     private disposables: vscode.Disposable[] = [];
 
     constructor(
-        private readonly boardConnectionChecker: BoardConnectionChecker,
+        private readonly topoCli: TopoCli,
         private readonly containerCommands: ContainerCommands,
         private readonly targetStore: TargetStore,
     ) {
@@ -53,7 +53,7 @@ export class ContainersManager implements vscode.Disposable {
 
     private get isBoardAvailable(): boolean {
         return (
-            this.boardState.isReachable && this.boardState.hasContainerRuntime
+            this.boardState.isReachable && this.boardState.hasContainerEngine
         );
     }
 
@@ -89,26 +89,32 @@ export class ContainersManager implements vscode.Disposable {
         if (!target) {
             return {
                 isReachable: false,
-                hasContainerRuntime: false,
+                hasContainerEngine: false,
                 targetId: undefined,
             };
         }
-        const isBoardReachable =
-            await this.boardConnectionChecker.isBoardSshPortOpen(target.host);
-        if (!isBoardReachable) {
+
+        try {
+            const health = await this.topoCli.health(target.ssh);
+            return {
+                isReachable: health.Target.Connectivity.Healthy,
+                hasContainerEngine:
+                    health.Target.Dependencies.find(
+                        (v) => v.Name === 'Container Engine',
+                    )?.Healthy ?? false,
+                targetId: target.id,
+            };
+        } catch (err) {
+            logger.error(
+                `Failed to check board health for target ${target.id}`,
+                err,
+            );
             return {
                 isReachable: false,
-                hasContainerRuntime: false,
+                hasContainerEngine: false,
                 targetId: target.id,
             };
         }
-        const isBoardContainerRuntimeOn =
-            await this.containerCommands.isContainerRuntimeOn(target.ssh);
-        return {
-            isReachable: isBoardReachable,
-            hasContainerRuntime: isBoardContainerRuntimeOn,
-            targetId: target.id,
-        };
     }
 
     public async getContainersData(): Promise<ContainerItem[]> {

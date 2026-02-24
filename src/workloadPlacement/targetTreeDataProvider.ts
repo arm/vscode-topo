@@ -84,8 +84,7 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
                     const connectionReady =
                         selected && target.id === boardState.targetId;
                     const targetReady =
-                        boardState.isReachable &&
-                        boardState.hasContainerRuntime;
+                        boardState.isReachable && boardState.hasContainerEngine;
                     return new TargetTreeBoardItem(
                         target,
                         selected,

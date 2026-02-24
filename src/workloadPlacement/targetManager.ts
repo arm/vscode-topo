@@ -92,7 +92,7 @@ export class TargetManager {
             const boardState = await this.containersManager.getBoardState();
             const connectionReady = target.id === boardState.targetId;
             const targetReady =
-                boardState.isReachable && boardState.hasContainerRuntime;
+                boardState.isReachable && boardState.hasContainerEngine;
             const targetTreeIcon = getTreeItemIcon(
                 true,
                 connectionReady,

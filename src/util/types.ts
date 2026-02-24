@@ -134,6 +134,24 @@ export interface ServiceCreationDescription extends ServiceDescription {
     errors: string[];
 }
 
+export interface HealthCheckDependency {
+    Name: string;
+    Healthy: boolean;
+    Value: string;
+}
+
+export interface HealthCheckResult {
+    Host: {
+        Dependencies: HealthCheckDependency[];
+    };
+    Target: {
+        IsLocalHost: boolean;
+        Connectivity: HealthCheckDependency;
+        Dependencies: HealthCheckDependency[];
+        SubsystemDriver: HealthCheckDependency;
+    };
+}
+
 export type MessagePoster = {
     postMessage(message: unknown): void | Thenable<boolean>;
 };
