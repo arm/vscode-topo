@@ -1,8 +1,24 @@
+export interface HostProcessor {
+    model: string;
+    cores: number;
+    features: string[];
+}
+
+export interface RemoteprocCPU {
+    name: string;
+}
+
+export interface TargetDescription {
+    hostProcessor: HostProcessor[];
+    remoteprocCPU: RemoteprocCPU[];
+}
+
 export interface TargetItem {
     id: string;
     ssh: string;
     user?: string;
     host: string;
+    targetDescription?: TargetDescription;
 }
 
 /**

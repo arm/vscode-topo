@@ -5,8 +5,7 @@ import { TargetTreeBoardItem } from './targetTreeBoardItem';
 import * as vscode from 'vscode';
 import * as manifest from '../manifest';
 import { BoardState, ContainersManager } from './containersManager';
-import { ContainerItem } from '../util/types';
-import { Target } from './target';
+import { ContainerItem, TargetItem } from '../util/types';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { TargetStore } from './targetStore';
 
@@ -28,7 +27,16 @@ describe('TargetTreeDataProvider', () => {
     let context: MockProxy<vscode.ExtensionContext>;
     let containersManagerMock: MockProxy<ContainersManager>;
     let targetStoreMock: MockProxy<TargetStore>;
-    const target = new Target('topo', 'user@topo.local');
+    const target: TargetItem = {
+        id: 'topo',
+        ssh: 'user@topo.local',
+        user: 'user',
+        host: 'topo.local',
+        targetDescription: {
+            hostProcessor: [],
+            remoteprocCPU: [],
+        },
+    };
 
     const mockContainers: ContainerItem[] = [
         {

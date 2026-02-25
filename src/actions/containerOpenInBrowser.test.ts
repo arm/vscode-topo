@@ -1,5 +1,4 @@
-import { Target } from '../workloadPlacement/target';
-import { ContainerItem } from '../util/types';
+import { ContainerItem, TargetItem } from '../util/types';
 import { ContainerOpenInBrowser } from './containerOpenInBrowser';
 import * as vscode from 'vscode';
 import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
@@ -10,7 +9,16 @@ jest.mock('../util/logger');
 describe('ContainerOpenInBrowser', () => {
     let context: MockProxy<vscode.ExtensionContext>;
     const registerCommandMock = jest.mocked(vscode.commands.registerCommand);
-    const target = new Target('topo', 'user@topo.local');
+    const target: TargetItem = {
+        id: 'topo',
+        ssh: 'user@topo.local',
+        user: 'user',
+        host: 'topo.local',
+        targetDescription: {
+            hostProcessor: [],
+            remoteprocCPU: [],
+        },
+    };
 
     beforeEach(() => {
         jest.clearAllMocks();

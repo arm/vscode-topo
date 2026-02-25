@@ -1,9 +1,18 @@
 import * as vscode from 'vscode';
 import { TargetTreeBoardItem } from './targetTreeBoardItem';
-import { Target } from './target';
+import { TargetItem } from '../util/types';
 
 describe('TargetTreeBoardItem', () => {
-    const baseTarget = new Target('t-1', 'root@host.local');
+    const baseTarget: TargetItem = {
+        id: 't-1',
+        ssh: 'root@host.local',
+        user: 'root',
+        host: 'host.local',
+        targetDescription: {
+            hostProcessor: [],
+            remoteprocCPU: [],
+        },
+    };
 
     it('sets basic fields (id, label, description)', () => {
         const item = new TargetTreeBoardItem(baseTarget, false, false, true);

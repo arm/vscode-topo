@@ -38,6 +38,10 @@ describe('assertTargetTreeContainerItem', () => {
                 host: 'test-host',
                 id: 'abc123',
                 ssh: 'root@test-host',
+                targetDescription: {
+                    hostProcessor: [],
+                    remoteprocCPU: [],
+                },
             },
         };
         const instanceLike = new TargetTreeContainerItem(containerItem);

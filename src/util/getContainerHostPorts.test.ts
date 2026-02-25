@@ -1,9 +1,17 @@
 import { getContainerHostPorts } from './getContainerHostPorts';
-import { Target } from '../workloadPlacement/target';
-import type { ContainerItem } from './types';
+import type { ContainerItem, TargetItem } from './types';
 
 const makeContainer = (ports: ContainerItem['ports']): ContainerItem => {
-    const target = new Target('topo', 'user@topo.local');
+    const target: TargetItem = {
+        id: 'topo',
+        ssh: 'user@topo.local',
+        user: 'user',
+        host: 'topo.local',
+        targetDescription: {
+            hostProcessor: [],
+            remoteprocCPU: [],
+        },
+    };
     return {
         id: 'abc123',
         name: 'my-container',

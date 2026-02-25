@@ -1,4 +1,7 @@
 import * as vscode from 'vscode';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
 import { TargetTreeDataProvider } from './targetTreeDataProvider';
 import * as manifest from '../manifest';
 import { Target } from './target';
@@ -6,6 +9,7 @@ import { TargetStore } from './targetStore';
 import { logger } from '../util/logger';
 import { ContainersManager } from './containersManager';
 import { getTreeItemIcon } from './targetTreeBoardItem';
+import type { TopoCli } from '../topoCli';
 
 export class TargetManager {
     public static readonly viewId = `${manifest.PACKAGE_NAME}.target-manager`;
@@ -21,7 +25,23 @@ export class TargetManager {
         private readonly targetTreeDataProvider: TargetTreeDataProvider,
         private readonly targetStore: TargetStore,
         private readonly containersManager: ContainersManager,
+        private readonly topoCli: TopoCli,
     ) {}
+
+    private async getTargetDescription(
+        ssh: string,
+    ): Promise<string | undefined> {
+        const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'topo-target-'));
+        try {
+            const descriptionPath = await this.topoCli.describe(tmpDir, ssh);
+            return fs.readFileSync(descriptionPath, 'utf8');
+        } catch (error) {
+            logger.warn(`Failed to get target description for ${ssh}`, error);
+            return undefined;
+        } finally {
+            fs.rmSync(tmpDir, { recursive: true, force: true });
+        }
+    }
 
     public async activate() {
         this.statusBarItem = vscode.window.createStatusBarItem(
@@ -70,7 +90,13 @@ export class TargetManager {
             return;
         }
 
-        const newTarget = new Target(id, ssh);
+        const targetDescription = await this.getTargetDescription(ssh);
+        if (targetDescription === undefined) {
+            const errorMsg = `Failed to get target description for ${ssh}`;
+            logger.warn(errorMsg);
+        }
+
+        const newTarget = new Target(id, ssh, targetDescription);
 
         try {
             await this.targetStore.addTarget(newTarget);

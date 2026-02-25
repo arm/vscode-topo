@@ -1,7 +1,12 @@
 import * as path from 'path';
 import * as childProcess from 'child_process';
 import * as vscode from 'vscode';
-import { TopoCli, CloneRemoteSource, CloneLocalSource } from './topoCli';
+import {
+    TopoCli,
+    CloneRemoteSource,
+    CloneLocalSource,
+    targetDescriptionFileName,
+} from './topoCli';
 import {
     ProjectDescription,
     TemplateDescription,
@@ -96,6 +101,38 @@ describe('TopoCli', () => {
         };
         execSyncMock.mockReturnValue(JSON.stringify(list));
         expect(topoCli.getProject('p')).toEqual(list);
+    });
+
+    it('describe resolves and runs topo describe with --target in provided cwd', async () => {
+        execMock.mockImplementation((_bin, _cargs, _options, cb) => {
+            cb!(null, '', '');
+            return cp;
+        });
+
+        const outputDirectory = '/fake/workspace';
+        const target = 'user@topo.local';
+
+        await expect(topoCli.describe(outputDirectory, target)).resolves.toBe(
+            path.join(outputDirectory, targetDescriptionFileName),
+        );
+
+        expect(execMock).toHaveBeenCalledWith(
+            topoCli.getBinaryPath(),
+            ['describe', '--target', target],
+            { cwd: outputDirectory, env: {} },
+            expect.any(Function),
+        );
+    });
+
+    it('describe rejects when topo describe fails', async () => {
+        execMock.mockImplementation((_bin, _args, _options, cb) => {
+            cb!(new Error('fail'), '', 'err');
+            return cp;
+        });
+
+        await expect(
+            topoCli.describe('/tmp/out', 'user@topo.local'),
+        ).rejects.toThrow('Failed to describe target: fail');
     });
 
     it('init resolves promise on success', async () => {

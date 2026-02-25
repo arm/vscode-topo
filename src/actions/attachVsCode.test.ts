@@ -3,8 +3,7 @@ import { AttachVsCode } from './attachVsCode';
 import { exec } from '../util/exec';
 import { BOARD_HOST_RUNTIME } from '../manifest';
 import { DockerCommands } from '../workloadPlacement/dockerCommands';
-import { Target } from '../workloadPlacement/target';
-import { ContainerItem } from '../util/types';
+import { ContainerItem, TargetItem } from '../util/types';
 import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
 import { TopoError } from '../errors/topoError';
 import { mock, MockProxy } from 'jest-mock-extended';
@@ -27,7 +26,16 @@ describe('attachVsCode', () => {
     let attachVsCode: AttachVsCode;
     const registerCommandMock = jest.mocked(vscode.commands.registerCommand);
     const dockerCommands = new DockerCommands();
-    const target = new Target('topo', 'user@topo.local');
+    const target: TargetItem = {
+        id: 'topo',
+        ssh: 'user@topo.local',
+        user: 'user',
+        host: 'topo.local',
+        targetDescription: {
+            hostProcessor: [],
+            remoteprocCPU: [],
+        },
+    };
     const containerItem: ContainerItem = {
         id: 'abc123',
         name: 'my-container',

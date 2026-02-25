@@ -35,6 +35,7 @@ export default defineConfig((config: ConfigEnv) => {
                 external: [
                     'vscode',
                     'fs',
+                    'os',
                     'path',
                     'child_process',
                     'util',

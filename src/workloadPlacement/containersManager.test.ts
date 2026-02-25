@@ -1,9 +1,8 @@
 import { ContainersManager } from './containersManager';
-import { ContainerItem, DockerPsItem } from '../util/types';
+import { ContainerItem, DockerPsItem, TargetItem } from '../util/types';
 import * as manifest from '../manifest';
 import { exec } from '../util/exec';
 import { DockerCommands } from './dockerCommands';
-import { Target } from './target';
 import * as vscode from 'vscode';
 import { TargetStore } from './targetStore';
 import { mock } from 'jest-mock-extended';
@@ -90,7 +89,16 @@ const defaultInfoOutput = {
     stderr: '',
 };
 const execMock = exec as jest.Mock;
-const target = new Target('topo', 'user@topo.local');
+const target: TargetItem = {
+    id: 'topo',
+    ssh: 'user@topo.local',
+    user: 'user',
+    host: 'topo.local',
+    targetDescription: {
+        hostProcessor: [],
+        remoteprocCPU: [],
+    },
+};
 const topoCli = mock<TopoCli>();
 topoCli.health.mockResolvedValue({
     Host: { Dependencies: [] },
@@ -491,7 +499,16 @@ describe('ContainersManager', () => {
     });
 
     it('updates when targetStore onChanged fires (re-queries selected target)', async () => {
-        const newTarget = new Target('other-id', 'bob@other.local');
+        const newTarget: TargetItem = {
+            id: 'other-id',
+            ssh: 'bob@other.local',
+            user: 'bob',
+            host: 'other.local',
+            targetDescription: {
+                hostProcessor: [],
+                remoteprocCPU: [],
+            },
+        };
         execMock.mockImplementation(async (command: string) => {
             switch (command) {
                 case `ssh ${target.ssh} 'docker info'`:
@@ -502,7 +519,7 @@ describe('ContainersManager', () => {
                     throw Error(`Unexpected command: ${command}`);
             }
         });
-        let selectedTarget: Target | undefined = target;
+        let selectedTarget: TargetItem | undefined = target;
         const onChangeEmitter = new vscode.EventEmitter<void>();
         const targetStore = mock<TargetStore>();
         targetStore.onChanged.mockImplementation(onChangeEmitter.event);

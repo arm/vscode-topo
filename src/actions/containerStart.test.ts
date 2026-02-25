@@ -1,12 +1,11 @@
 import { BOARD_HOST_RUNTIME } from '../manifest';
 import * as vscode from 'vscode';
 import { ContainerStart } from './containerStart';
-import { Target } from '../workloadPlacement/target';
 import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
 import { TopoError } from '../errors/topoError';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { ContainersManager } from '../workloadPlacement/containersManager';
-import { ContainerItem } from '../util/types';
+import { ContainerItem, TargetItem } from '../util/types';
 
 describe('ContainerStart', () => {
     let context: MockProxy<vscode.ExtensionContext>;
@@ -15,7 +14,16 @@ describe('ContainerStart', () => {
         | { command: string; callback: (...args: unknown[]) => void }
         | undefined;
     const registerCommandMock = jest.mocked(vscode.commands.registerCommand);
-    const target = new Target('topo', 'user@topo.local');
+    const target: TargetItem = {
+        id: 'topo',
+        ssh: 'user@topo.local',
+        user: 'user',
+        host: 'topo.local',
+        targetDescription: {
+            hostProcessor: [],
+            remoteprocCPU: [],
+        },
+    };
     const container: ContainerItem = {
         id: 'abc123',
         name: 'my-container',
