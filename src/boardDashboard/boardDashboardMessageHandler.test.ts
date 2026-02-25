@@ -7,9 +7,7 @@ import type {
     BoardState,
     ContainersManager,
 } from '../workloadPlacement/containersManager';
-import type { ContainerItem } from '../util/types';
-import { Target } from '../workloadPlacement/target';
-import { MessagePoster } from '../util/types';
+import type { ContainerItem, MessagePoster, TargetItem } from '../util/types';
 import { mock } from 'jest-mock-extended';
 import type { TargetStore } from '../workloadPlacement/targetStore';
 import { ContainerOpenInBrowser } from '../actions/containerOpenInBrowser';
@@ -25,7 +23,16 @@ describe('BoardDashboardMessageHandler', () => {
     const postMessage = jest.fn(async () => true);
     const messagePoster: MessagePoster = { postMessage };
 
-    const target = new Target('topo', 'user@topo.local');
+    const target: TargetItem = {
+        id: 'topo',
+        ssh: 'user@topo.local',
+        user: 'user',
+        host: 'topo.local',
+        targetDescription: {
+            hostProcessor: [],
+            remoteprocCPU: [],
+        },
+    };
     const boardState: BoardState = {
         isReachable: true,
         hasContainerEngine: true,

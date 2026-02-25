@@ -1,11 +1,19 @@
 import * as vscode from 'vscode';
 import { TargetTreeContainerItem } from './targetTreeContainerItem';
-import { Target } from './target';
 import { BOARD_AMBIENT_RUNTIME } from '../manifest';
-import { ContainerItem } from '../util/types';
+import { ContainerItem, TargetItem } from '../util/types';
 
 describe('TargetTreeContainerItem', () => {
-    const target = new Target('topo', 'user@topo.local');
+    const target: TargetItem = {
+        id: 'topo',
+        ssh: 'user@topo.local',
+        user: 'user',
+        host: 'topo.local',
+        targetDescription: {
+            hostProcessor: [],
+            remoteprocCPU: [],
+        },
+    };
     it('should set label (image), description (name - uptime), tooltip, contextValue, command, and iconPath', () => {
         const container: ContainerItem = {
             id: 'id123',

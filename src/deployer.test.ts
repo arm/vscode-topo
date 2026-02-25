@@ -1,7 +1,7 @@
 import { Deployer } from './deployer';
 import { spawn } from 'child_process';
 import path from 'path';
-import { Target } from './workloadPlacement/target';
+import { TargetItem } from './util/types';
 import { TargetStore } from './workloadPlacement/targetStore';
 import { mock } from 'jest-mock-extended';
 import { TopoCli } from './topoCli';
@@ -44,7 +44,16 @@ jest.mock('fs', () => ({
 describe('Deployer', () => {
     let deployer: Deployer;
     const composeFilePath: string = '/tmp/compose.topo.yaml';
-    const target = new Target('test-target', 'user@host');
+    const target: TargetItem = {
+        id: 'test-target',
+        ssh: 'user@host',
+        user: 'user',
+        host: 'host',
+        targetDescription: {
+            hostProcessor: [],
+            remoteprocCPU: [],
+        },
+    };
     const topoCli = mock<TopoCli>();
     const targetStore = mock<TargetStore>();
 

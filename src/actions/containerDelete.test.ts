@@ -1,8 +1,7 @@
 import { BOARD_HOST_RUNTIME } from '../manifest';
 import * as vscode from 'vscode';
 import { ContainerDelete } from './containerDelete';
-import { Target } from '../workloadPlacement/target';
-import { ContainerItem } from '../util/types';
+import { ContainerItem, TargetItem } from '../util/types';
 import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
 import { TopoError } from '../errors/topoError';
 import { mock, MockProxy } from 'jest-mock-extended';
@@ -16,7 +15,16 @@ describe('ContainerDelete', () => {
         | undefined;
     const registerCommandMock = jest.mocked(vscode.commands.registerCommand);
 
-    const target = new Target('topo', 'user@topo.local');
+    const target: TargetItem = {
+        id: 'topo',
+        ssh: 'user@topo.local',
+        user: 'user',
+        host: 'topo.local',
+        targetDescription: {
+            hostProcessor: [],
+            remoteprocCPU: [],
+        },
+    };
     const container: ContainerItem = {
         id: 'abc123',
         name: 'my-container',

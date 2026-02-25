@@ -77,6 +77,7 @@ export async function activate(
         targetTreeDataProvider,
         targetStore,
         containersManager,
+        topoCli,
     );
     const boardDashboardMessageHandler = new BoardDashboardMessageHandler(
         containersManager,

@@ -26,6 +26,8 @@ export interface CloneLocalSource {
 
 export type CloneSource = CloneRemoteSource | CloneLocalSource;
 
+export const targetDescriptionFileName = 'target-description.yaml';
+
 /**
  * Encapsulates operations against the topo-cli binary.
  */
@@ -125,6 +127,44 @@ export class TopoCli {
         const cmd = ['get-project', composeFilepath];
         const out = childProcess.execFileSync(bin, cmd, { encoding: 'utf8' });
         return JSON.parse(out);
+    }
+
+    /**
+     * Runs topo describe for a target and writes target-description.yaml
+     * in the provided working directory.
+     */
+    public describe(
+        workingDirectory: string,
+        sshTarget: string,
+    ): Promise<string> {
+        const bin = this.getBinaryPath();
+        return new Promise((resolve, reject) => {
+            const cmd = ['describe', '--target', sshTarget];
+            childProcess.execFile(
+                bin,
+                cmd,
+                {
+                    env: this.getProcessEnv(),
+                    cwd: workingDirectory,
+                },
+                (error, _stdout) => {
+                    if (error) {
+                        reject(
+                            new Error(
+                                `Failed to describe target: ${error.message}`,
+                                { cause: error },
+                            ),
+                        );
+                        return;
+                    }
+                    const targetDescriptionFilePath = path.join(
+                        workingDirectory,
+                        targetDescriptionFileName,
+                    );
+                    resolve(targetDescriptionFilePath);
+                },
+            );
+        });
     }
 
     /** Runs the binary to initialize a project. */

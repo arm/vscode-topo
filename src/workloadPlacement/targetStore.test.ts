@@ -6,6 +6,17 @@ import { mock, MockProxy } from 'jest-mock-extended';
 
 jest.mock('../util/logger');
 
+const yamlTargetDescription = `host:
+    - model: Cortex-A55
+      cores: 2
+      features:
+        - fp
+        - asimd
+        - evtstrm
+        - aes
+remoteprocs:
+    - name: imx-rproc`;
+
 const waitImmediate = async () => {
     await Promise.resolve();
     await Promise.resolve();
@@ -113,7 +124,11 @@ describe('TargetStore', () => {
     it('adds a target successfully and persists it', async () => {
         const { context } = createMockContext();
         const store = TargetStore.getInstance(context);
-        const t = new Target('t-success', 'success@example.com');
+        const t = new Target(
+            't-success',
+            'success@example.com',
+            yamlTargetDescription,
+        );
 
         const addTargetOperation = store.addTarget(t);
 
@@ -131,7 +146,11 @@ describe('TargetStore', () => {
         const { context, globalState } = createMockContext();
         globalState.update.mockRejectedValue(new Error('persist-fail'));
         const store = TargetStore.getInstance(context);
-        const t = new Target('t-fail', 'fail@example.com');
+        const t = new Target(
+            't-fail',
+            'fail@example.com',
+            yamlTargetDescription,
+        );
 
         const addTargetOperation = store.addTarget(t);
 
@@ -144,7 +163,7 @@ describe('TargetStore', () => {
         const { context } = createMockContext();
         const store = TargetStore.getInstance(context);
 
-        const t = new Target('t1', 'alice@example.com');
+        const t = new Target('t1', 'alice@example.com', yamlTargetDescription);
         await store.addTarget(t);
 
         const targets = store.getTargets();
@@ -160,7 +179,7 @@ describe('TargetStore', () => {
     it('stores selected target and fires onChanged when setSelected is called', async () => {
         const { context } = createMockContext();
         const store = TargetStore.getInstance(context);
-        const t = new Target('t2', 'bob@example.com');
+        const t = new Target('t2', 'bob@example.com', yamlTargetDescription);
         await store.addTarget(t);
         const cb = jest.fn();
         store.onChanged(cb);
@@ -175,7 +194,7 @@ describe('TargetStore', () => {
         const { context } = createMockContext();
         const store = TargetStore.getInstance(context);
 
-        const t = new Target('t3', 'carol@example.com');
+        const t = new Target('t3', 'carol@example.com', yamlTargetDescription);
         await store.addTarget(t);
         await store.setSelected('t3');
 
@@ -208,7 +227,9 @@ describe('TargetStore', () => {
     it('deactivates the store, disposing resources and clearing the singleton', async () => {
         const { context } = createMockContext();
         const store = TargetStore.getInstance(context);
-        await store.addTarget(new Target('td', 'd@example.com'));
+        await store.addTarget(
+            new Target('td', 'd@example.com', yamlTargetDescription),
+        );
         const cb = jest.fn();
         store.onChanged(cb);
 
@@ -221,8 +242,8 @@ describe('TargetStore', () => {
     it('removes a non-selected target without changing selection', async () => {
         const { context } = createMockContext();
         const store = TargetStore.getInstance(context);
-        const t1 = new Target('t-a', 'a@example.com');
-        const t2 = new Target('t-b', 'b@example.com');
+        const t1 = new Target('t-a', 'a@example.com', yamlTargetDescription);
+        const t2 = new Target('t-b', 'b@example.com', yamlTargetDescription);
         await store.addTarget(t1);
         await store.addTarget(t2);
         await store.setSelected('t-a');
@@ -239,9 +260,13 @@ describe('TargetStore', () => {
     it('removes the selected target and falls back to the first remaining target', async () => {
         const { context } = createMockContext();
         const store = TargetStore.getInstance(context);
-        const t1 = new Target('t-1', 'one@example.com');
-        const t2 = new Target('t-2', 'two@example.com');
-        const t3 = new Target('t-3', 'three@example.com');
+        const t1 = new Target('t-1', 'one@example.com', yamlTargetDescription);
+        const t2 = new Target('t-2', 'two@example.com', yamlTargetDescription);
+        const t3 = new Target(
+            't-3',
+            'three@example.com',
+            yamlTargetDescription,
+        );
         await store.addTarget(t1);
         await store.addTarget(t2);
         await store.addTarget(t3);
@@ -259,7 +284,11 @@ describe('TargetStore', () => {
     it('removes the only selected target and clears selection when none remain', async () => {
         const { context } = createMockContext();
         const store = TargetStore.getInstance(context);
-        const lone = new Target('only', 'only@example.com');
+        const lone = new Target(
+            'only',
+            'only@example.com',
+            yamlTargetDescription,
+        );
         await store.addTarget(lone);
         await store.setSelected('only');
 

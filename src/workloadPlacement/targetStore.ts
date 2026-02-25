@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { logger } from '../util/logger';
 import debounce from 'lodash.debounce';
 import { Target } from './target';
+import { TargetItem } from '../util/types';
 
 type GlobalStoreKeys = 'targets';
 type WorkspaceStoreKeys = 'selectedTarget';
@@ -68,7 +69,7 @@ export class TargetStore {
         this._onChanged.fire();
     }
 
-    public getTargets(): Target[] {
+    public getTargets(): TargetItem[] {
         const targets = this.loadTargets();
         return [...targets.values()];
     }
@@ -82,7 +83,7 @@ export class TargetStore {
         await this.saveTargets(targets);
     }
 
-    public async getSelectedTarget(): Promise<Target | undefined> {
+    public async getSelectedTarget(): Promise<TargetItem | undefined> {
         const targets = this.getTargets();
         return targets.find((target) => target.id === this.selected);
     }
