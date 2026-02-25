@@ -373,6 +373,7 @@
         "@types/jest": "^29.5.14",
         "@types/js-yaml": "^4.0.9",
         "@types/lodash.debounce": "^4.0.9",
+        "@types/lodash.isplainobject": "^4.0.7",
         "@types/mocha": "^10.0.10",
         "@types/node": "20.x",
         "@types/react": "^19.2.7",
@@ -408,6 +409,7 @@
     "dependencies": {
         "js-yaml": "^4.1.1",
         "lodash.debounce": "^4.0.8",
+        "lodash.isplainobject": "^4.0.6",
         "vscode-uri": "^3.1.0"
     },
     "repository": {
