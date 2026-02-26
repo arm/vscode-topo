@@ -1,6 +1,11 @@
+import { hasContainerEngine, isBoardReachable } from '../src/util/boardState';
 import { getContainerHostPorts } from '../src/util/getContainerHostPorts';
-import { ContainerItem, MessagePoster, TargetItem } from '../src/util/types';
-import type { BoardState } from '../src/workloadPlacement/containersManager';
+import {
+    BoardState,
+    ContainerItem,
+    MessagePoster,
+    TargetItem,
+} from '../src/util/types';
 
 export interface BoardDashboardProps {
     target: TargetItem;
@@ -221,11 +226,11 @@ export function BoardDashboard({
     messagePoster,
 }: BoardDashboardProps) {
     let errorMessage: string | undefined = undefined;
-    if (!boardState.isReachable) {
+    if (!isBoardReachable(boardState)) {
         errorMessage =
             'No board found. Please ensure the board is running and accessible.';
     } else {
-        if (!boardState.hasContainerEngine) {
+        if (!hasContainerEngine(boardState)) {
             errorMessage =
                 'No container engine found. Please ensure the container engine of the board is installed and running.';
         }

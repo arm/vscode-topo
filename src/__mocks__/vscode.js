@@ -166,6 +166,9 @@ const workspace = {
     onDidChangeWorkspaceFolders: jest.fn(() => ({ dispose: jest.fn() })),
     onDidSaveTextDocument: new EventEmitter().event,
     openTextDocument: jest.fn(),
+    registerTextDocumentContentProvider: jest.fn(() => ({
+        dispose: jest.fn(),
+    })),
     workspaceFolders: undefined,
     getWorkspaceFolder: jest.fn(),
     updateWorkspaceFolders: jest.fn(),

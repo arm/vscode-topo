@@ -6,15 +6,27 @@ import { TargetStore } from './targetStore';
 import { TargetTreeBoardItem } from './targetTreeBoardItem';
 import { TargetTreeSubsystemItem } from './targetTreeSubsystemItem';
 import { logger } from '../util/logger';
+import { isTargetReady } from '../util/boardState';
 
 export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
     public static readonly selectTargetCommand = `${manifest.PACKAGE_NAME}.selectTarget`;
     public static readonly removeTargetCommand = `${manifest.PACKAGE_NAME}.removeTarget`;
+    public static readonly inspectBoardHealthCommand = `${manifest.PACKAGE_NAME}.inspectBoardHealth`;
+    public static readonly inspectBoardHealthScheme = `${manifest.PACKAGE_NAME}-inspect-board-health`;
 
     private _onDidChangeTreeData = new vscode.EventEmitter<
         vscode.TreeItem | undefined
     >();
     public readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
+    private readonly inspectHealthDocuments = new Map<string, string>();
+    private readonly inspectHealthContentProvider: vscode.TextDocumentContentProvider =
+        {
+            provideTextDocumentContent: (uri: vscode.Uri): string => {
+                return (
+                    this.inspectHealthDocuments.get(uri.toString()) ?? 'null'
+                );
+            },
+        };
 
     constructor(
         private readonly context: vscode.ExtensionContext,
@@ -38,6 +50,14 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
             vscode.commands.registerCommand(
                 TargetTreeDataProvider.removeTargetCommand,
                 (node: unknown) => this.removeTarget(node),
+            ),
+            vscode.commands.registerCommand(
+                TargetTreeDataProvider.inspectBoardHealthCommand,
+                (node: unknown) => this.inspectHealth(node),
+            ),
+            vscode.workspace.registerTextDocumentContentProvider(
+                TargetTreeDataProvider.inspectBoardHealthScheme,
+                this.inspectHealthContentProvider,
             ),
             onTargetStoreChanged,
             onContainersManagerDataUpdate,
@@ -71,6 +91,34 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
         }
     }
 
+    private async inspectHealth(treeNode: unknown): Promise<void> {
+        if (!(treeNode instanceof TargetTreeBoardItem)) {
+            const errMsg = `Invalid target type for inspect health: expected TargetTreeBoardItem but received:`;
+            logger.error(errMsg, treeNode);
+            return;
+        }
+
+        if (!treeNode.contextValue?.includes('Selected')) {
+            const errMsg = `Invalid target for inspect health: expected selected TargetTreeBoardItem but received:`;
+            logger.error(errMsg, treeNode);
+            return;
+        }
+
+        const boardState = await this.containersManager.getBoardState();
+        const content = JSON.stringify(boardState.health ?? null, null, 4);
+        const safeTargetId = treeNode.targetId.replace(/[^a-zA-Z0-9._-]/g, '_');
+        const documentUri = vscode.Uri.from({
+            scheme: TargetTreeDataProvider.inspectBoardHealthScheme,
+            path: `/${safeTargetId}-health-${Date.now()}.json`,
+        });
+
+        this.inspectHealthDocuments.clear();
+        this.inspectHealthDocuments.set(documentUri.toString(), content);
+
+        const document = await vscode.workspace.openTextDocument(documentUri);
+        await vscode.window.showTextDocument(document, { preview: true });
+    }
+
     public async getChildren(
         element?: vscode.TreeItem,
     ): Promise<vscode.TreeItem[]> {
@@ -83,13 +131,11 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
                     const selected = target.id === selectedTarget?.id;
                     const connectionReady =
                         selected && target.id === boardState.targetId;
-                    const targetReady =
-                        boardState.isReachable && boardState.hasContainerEngine;
                     return new TargetTreeBoardItem(
                         target,
                         selected,
                         connectionReady,
-                        targetReady,
+                        isTargetReady(boardState),
                     );
                 });
             const sortedBoardTreeItems = boardTreeItems.sort((a, b) =>

@@ -3,11 +3,13 @@ import { BoardDashboardMessageHandler } from './boardDashboardMessageHandler';
 import { logger } from '../util/logger';
 import { showAndLogError } from '../util/showAndLogError';
 import { TopoError } from '../errors/topoError';
+import type { ContainersManager } from '../workloadPlacement/containersManager';
 import type {
     BoardState,
-    ContainersManager,
-} from '../workloadPlacement/containersManager';
-import type { ContainerItem, MessagePoster, TargetItem } from '../util/types';
+    ContainerItem,
+    MessagePoster,
+    TargetItem,
+} from '../util/types';
 import { mock } from 'jest-mock-extended';
 import type { TargetStore } from '../workloadPlacement/targetStore';
 import { ContainerOpenInBrowser } from '../actions/containerOpenInBrowser';
@@ -34,8 +36,7 @@ describe('BoardDashboardMessageHandler', () => {
         },
     };
     const boardState: BoardState = {
-        isReachable: true,
-        hasContainerEngine: true,
+        health: undefined,
         targetId: target.id,
     };
 

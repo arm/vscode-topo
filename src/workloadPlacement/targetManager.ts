@@ -10,6 +10,7 @@ import { logger } from '../util/logger';
 import { ContainersManager } from './containersManager';
 import { getTreeItemIcon } from './targetTreeBoardItem';
 import type { TopoCli } from '../topoCli';
+import { isTargetReady } from '../util/boardState';
 
 export class TargetManager {
     public static readonly viewId = `${manifest.PACKAGE_NAME}.target-manager`;
@@ -117,12 +118,10 @@ export class TargetManager {
         if (target) {
             const boardState = await this.containersManager.getBoardState();
             const connectionReady = target.id === boardState.targetId;
-            const targetReady =
-                boardState.isReachable && boardState.hasContainerEngine;
             const targetTreeIcon = getTreeItemIcon(
                 true,
                 connectionReady,
-                targetReady,
+                isTargetReady(boardState),
             );
             const iconId = targetTreeIcon?.id || 'pass-filled';
             this.statusBarItem.text = `$(${iconId}) ${target.id}`;

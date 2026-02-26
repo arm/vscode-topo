@@ -4,8 +4,8 @@ import { TargetTreeSubsystemItem } from './targetTreeSubsystemItem';
 import { TargetTreeBoardItem } from './targetTreeBoardItem';
 import * as vscode from 'vscode';
 import * as manifest from '../manifest';
-import { BoardState, ContainersManager } from './containersManager';
-import { ContainerItem, TargetItem } from '../util/types';
+import { ContainersManager } from './containersManager';
+import { BoardState, ContainerItem, TargetItem } from '../util/types';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { TargetStore } from './targetStore';
 
@@ -35,6 +35,26 @@ describe('TargetTreeDataProvider', () => {
         targetDescription: {
             hostProcessor: [],
             remoteprocCPU: [],
+        },
+    };
+    const boardHealth = {
+        IsLocalHost: false,
+        Connectivity: {
+            Name: 'Connectivity',
+            Healthy: true,
+            Value: 'ok',
+        },
+        Dependencies: [
+            {
+                Name: 'Podman',
+                Healthy: true,
+                Value: 'present',
+            },
+        ],
+        SubsystemDriver: {
+            Name: 'SubsystemDriver',
+            Healthy: true,
+            Value: 'ready',
         },
     };
 
@@ -93,8 +113,7 @@ describe('TargetTreeDataProvider', () => {
 
     beforeEach(() => {
         const boardState: BoardState = {
-            isReachable: true,
-            hasContainerEngine: true,
+            health: boardHealth,
             targetId: target.id,
         };
         context = mock<vscode.ExtensionContext>({ subscriptions: [] });
@@ -128,6 +147,16 @@ describe('TargetTreeDataProvider', () => {
                 TargetTreeDataProvider.selectTargetCommand,
                 expect.any(Function),
             );
+            expect(vscode.commands.registerCommand).toHaveBeenCalledWith(
+                TargetTreeDataProvider.inspectBoardHealthCommand,
+                expect.any(Function),
+            );
+            expect(
+                vscode.workspace.registerTextDocumentContentProvider,
+            ).toHaveBeenCalledWith(
+                TargetTreeDataProvider.inspectBoardHealthScheme,
+                expect.any(Object),
+            );
             expect(context.subscriptions.length).toBeGreaterThan(0);
         });
     });
@@ -149,6 +178,27 @@ describe('TargetTreeDataProvider', () => {
             );
             expect((boardChildren[1] as TargetTreeSubsystemItem).group).toBe(
                 'Ambient',
+            );
+        });
+
+        it('marks selected board as not ready when health is undefined', async () => {
+            targetStoreMock.getTargets.mockReturnValue([target]);
+            targetStoreMock.getSelectedTarget.mockResolvedValue(target);
+            containersManagerMock.getBoardState.mockResolvedValueOnce({
+                health: undefined,
+                targetId: target.id,
+            });
+
+            const rootChildren = await provider.getChildren();
+
+            expect(rootChildren).toHaveLength(1);
+            const boardItem = rootChildren[0] as TargetTreeBoardItem;
+            expect(boardItem.contextValue).toContain('Board');
+            expect(boardItem.contextValue).toContain('Selected');
+            expect(boardItem.contextValue).toContain('ConnectionReady');
+            expect(boardItem.contextValue).not.toContain('TargetReady');
+            expect(boardItem.collapsibleState).toBe(
+                vscode.TreeItemCollapsibleState.None,
             );
         });
 
@@ -187,8 +237,7 @@ describe('TargetTreeDataProvider', () => {
         it('returns empty array when there are no targets', async () => {
             targetStoreMock.getTargets.mockReturnValue([]);
             containersManagerMock.getBoardState.mockResolvedValueOnce({
-                isReachable: false,
-                hasContainerEngine: true,
+                health: undefined,
                 targetId: target.id,
             });
 
@@ -278,6 +327,63 @@ describe('TargetTreeDataProvider', () => {
             );
 
             expect(vscode.window.showErrorMessage).toHaveBeenCalled();
+        });
+    });
+
+    describe('inspectHealth command', () => {
+        it('opens a readonly health JSON virtual document for selected board', async () => {
+            await provider.activate();
+            const boardItem = new TargetTreeBoardItem(target, true, true, true);
+            const textDocument = mock<vscode.TextDocument>();
+            jest.mocked(
+                vscode.workspace.openTextDocument,
+            ).mockResolvedValueOnce(textDocument);
+
+            await executeCommand(
+                TargetTreeDataProvider.inspectBoardHealthCommand,
+                boardItem,
+            );
+
+            const providerRegistration = jest.mocked(
+                vscode.workspace.registerTextDocumentContentProvider,
+            ).mock.calls[0];
+            const contentProvider = providerRegistration[1];
+            const uri = jest.mocked(vscode.workspace.openTextDocument).mock
+                .calls[0][0];
+            const content = await Promise.resolve(
+                contentProvider.provideTextDocumentContent(
+                    uri as vscode.Uri,
+                    mock<vscode.CancellationToken>(),
+                ),
+            );
+
+            expect((uri as vscode.Uri).scheme).toBe(
+                TargetTreeDataProvider.inspectBoardHealthScheme,
+            );
+            expect(content).toBeDefined();
+            expect(JSON.parse(content!)).toEqual(boardHealth);
+            expect(vscode.window.showTextDocument).toHaveBeenCalledWith(
+                textDocument,
+                { preview: true },
+            );
+        });
+
+        it('does not open health document for non-selected board', async () => {
+            await provider.activate();
+            const boardItem = new TargetTreeBoardItem(
+                target,
+                false,
+                false,
+                false,
+            );
+
+            await executeCommand(
+                TargetTreeDataProvider.inspectBoardHealthCommand,
+                boardItem,
+            );
+
+            expect(vscode.workspace.openTextDocument).not.toHaveBeenCalled();
+            expect(vscode.window.showTextDocument).not.toHaveBeenCalled();
         });
     });
 });

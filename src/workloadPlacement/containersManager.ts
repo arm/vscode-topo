@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { logger } from '../util/logger';
 import { Deferred } from '../util/deferred';
 import type {
+    BoardState,
     ContainerItem,
     DockerPorts,
     DockerPsItem,
@@ -10,12 +11,7 @@ import type {
 import type { ContainerCommands } from './containerCommands';
 import { TargetStore } from './targetStore';
 import type { TopoCli } from '../topoCli';
-
-export interface BoardState {
-    isReachable: boolean;
-    hasContainerEngine: boolean;
-    targetId: string | undefined;
-}
+import { isTargetReady } from '../util/boardState';
 
 const refreshInterval = 3000;
 
@@ -27,8 +23,7 @@ export class ContainersManager implements vscode.Disposable {
     private readonly _onDataUpdate = new vscode.EventEmitter<void>();
     public readonly onDataUpdate = this._onDataUpdate.event;
     private readonly defaultBoardState: BoardState = {
-        isReachable: false,
-        hasContainerEngine: false,
+        health: undefined,
         targetId: undefined,
     };
     private refreshTimer: NodeJS.Timeout | undefined;
@@ -49,12 +44,6 @@ export class ContainersManager implements vscode.Disposable {
             });
         });
         this.disposables.push(this._onDataUpdate, onChangedDisposable);
-    }
-
-    private get isBoardAvailable(): boolean {
-        return (
-            this.boardState.isReachable && this.boardState.hasContainerEngine
-        );
     }
 
     public async activate(): Promise<void> {
@@ -88,8 +77,7 @@ export class ContainersManager implements vscode.Disposable {
         const target = this.target;
         if (!target) {
             return {
-                isReachable: false,
-                hasContainerEngine: false,
+                health: undefined,
                 targetId: undefined,
             };
         }
@@ -97,11 +85,7 @@ export class ContainersManager implements vscode.Disposable {
         try {
             const health = await this.topoCli.health(target.ssh);
             return {
-                isReachable: health.Target.Connectivity.Healthy,
-                hasContainerEngine:
-                    health.Target.Dependencies.find(
-                        (v) => v.Name === 'Container Engine',
-                    )?.Healthy ?? false,
+                health: health.Target,
                 targetId: target.id,
             };
         } catch (err) {
@@ -110,8 +94,7 @@ export class ContainersManager implements vscode.Disposable {
                 err,
             );
             return {
-                isReachable: false,
-                hasContainerEngine: false,
+                health: undefined,
                 targetId: target.id,
             };
         }
@@ -236,7 +219,7 @@ export class ContainersManager implements vscode.Disposable {
         const refresh = async () => {
             if (this.shouldAutoRefresh) {
                 await this.loadBoardState();
-                if (this.isBoardAvailable) {
+                if (isTargetReady(this.boardState)) {
                     await this.loadContainersData();
                 }
                 this._onDataUpdate.fire();

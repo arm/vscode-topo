@@ -121,6 +121,11 @@
                 "category": "Arm Topo"
             },
             {
+                "command": "topo.inspectBoardHealth",
+                "title": "Inspect Health",
+                "category": "Arm Topo"
+            },
+            {
                 "command": "topo.openSerial",
                 "title": "Open UART",
                 "icon": "$(console)",
@@ -237,6 +242,10 @@
                     "when": "false"
                 },
                 {
+                    "command": "topo.inspectBoardHealth",
+                    "when": "false"
+                },
+                {
                     "command": "topo.stopContainer",
                     "when": "false"
                 },
@@ -278,6 +287,11 @@
                 {
                     "command": "topo.openBoardDashboard",
                     "when": "view === topo.target-manager && viewItem =~ /Board/ && viewItem =~ /Selected/ && viewItem=~ /ConnectionReady/ && viewItem=~ /TargetReady/",
+                    "group": "topo/2_actions"
+                },
+                {
+                    "command": "topo.inspectBoardHealth",
+                    "when": "view === topo.target-manager && viewItem =~ /Board/ && viewItem =~ /Selected/",
                     "group": "topo/2_actions"
                 },
                 {
