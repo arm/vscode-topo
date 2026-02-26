@@ -18,7 +18,6 @@ describe('SubsystemSection', () => {
         services = [
             {
                 name: 'project1',
-                errors: [],
                 build: {
                     context: './project1',
                 },
@@ -28,7 +27,6 @@ describe('SubsystemSection', () => {
             },
             {
                 name: 'project2',
-                errors: [],
                 build: {
                     context: './project2',
                 },
@@ -42,13 +40,6 @@ describe('SubsystemSection', () => {
     it('renders correctly', () => {
         const { container } = renderComponent();
         expect(container).toMatchSnapshot();
-    });
-
-    it('shows warning icon if service has errors', () => {
-        services[0].errors = ['Some error'];
-        renderComponent();
-        expect(screen.getByTitle('Some error')).toBeInTheDocument();
-        expect(screen.getByText('⚠️')).toBeInTheDocument();
     });
 
     it('renders no table if subsystemServices is empty', () => {
