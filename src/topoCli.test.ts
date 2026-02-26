@@ -230,7 +230,11 @@ describe('TopoCli', () => {
                         Value: 'docker',
                     },
                 ],
-                Connectivity: { Name: 'Connected', Healthy: true, Value: '' },
+                Connectivity: {
+                    Name: 'Connected',
+                    Healthy: true,
+                    Value: '',
+                },
                 SubsystemDriver: {
                     Name: 'Subsystem Driver (remoteproc)',
                     Healthy: true,
@@ -275,7 +279,9 @@ describe('TopoCli', () => {
             Object.defineProperty(process, 'platform', { value: 'win32' });
         });
         afterAll(() => {
-            Object.defineProperty(process, 'platform', { value: origPlatform });
+            Object.defineProperty(process, 'platform', {
+                value: origPlatform,
+            });
         });
 
         it('always returns the .exe variant on win32', () => {

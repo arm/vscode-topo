@@ -6,10 +6,10 @@ export class TargetTreeBoardItem extends vscode.TreeItem {
     public readonly targetId: string;
 
     constructor(
-        target: TargetItem,
-        selected: boolean,
-        connectionReady: boolean,
-        targetReady: boolean,
+        public readonly target: TargetItem,
+        public readonly selected: boolean,
+        public readonly connectionReady: boolean,
+        public readonly targetReady: boolean,
     ) {
         super(target.id, vscode.TreeItemCollapsibleState.Expanded);
         this.id = target.id;

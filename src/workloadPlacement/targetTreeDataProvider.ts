@@ -145,9 +145,14 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
         }
 
         if (element instanceof TargetTreeBoardItem) {
-            const hostSubsystem = new TargetTreeSubsystemItem('Host');
-            const ambientSubsystem = new TargetTreeSubsystemItem('Ambient');
-            return [hostSubsystem, ambientSubsystem];
+            const remoteprocCpus =
+                element.target.targetDescription?.remoteprocCPU.map(
+                    (rp) => rp.name,
+                ) || [];
+            const subsystemNames = ['Host', ...remoteprocCpus];
+            return subsystemNames.map(
+                (name) => new TargetTreeSubsystemItem(name),
+            );
         }
 
         if (!(element instanceof TargetTreeSubsystemItem)) {
@@ -158,7 +163,8 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
         const subsystemContainers = containers.filter((item) =>
             element.group === 'Host'
                 ? item.runtime === manifest.BOARD_HOST_RUNTIME
-                : item.runtime === manifest.BOARD_AMBIENT_RUNTIME,
+                : item.runtime === manifest.BOARD_REMOTEPROC_RUNTIME &&
+                  item.annotations?.['remoteproc.name'] === element.group,
         );
         const subsystemTreeItems = subsystemContainers.map(
             (info) => new TargetTreeContainerItem(info),

@@ -33,7 +33,7 @@ export class Target implements TargetItem {
             );
         }
         throw new Error(
-            'Invalid stored target: expected an object with id and ssh properties',
+            'Invalid stored target: expected an object describing a Target',
         );
     }
 

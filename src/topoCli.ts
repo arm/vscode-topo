@@ -1,7 +1,6 @@
 import * as path from 'path';
 import * as childProcess from 'child_process';
 import {
-    ConfigMetadata,
     HealthCheckResult,
     ProjectDescription,
     TemplateDescription,
@@ -110,15 +109,6 @@ export class TopoCli {
         );
         const templates = JSON.parse(out);
         return templates;
-    }
-
-    /** Lists config metadata (via get-config-metadata). */
-    public getConfigMetadata(): ConfigMetadata {
-        const bin = this.getBinaryPath();
-        const out = childProcess.execFileSync(bin, ['get-config-metadata'], {
-            encoding: 'utf8',
-        });
-        return JSON.parse(out);
     }
 
     /** Return project (via get-project). */

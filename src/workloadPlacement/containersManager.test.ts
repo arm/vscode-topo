@@ -24,7 +24,7 @@ const webServerPortInfo = {
         { HostIp: '::', HostPort: '8080' },
     ],
 };
-const ambientAnnotations = { 'remoteproc.name': 'imx-rproc' };
+const remoteprocAnnotations = { 'remoteproc.name': 'imx-rproc' };
 const mockContainers: DockerPsItem[] = [
     {
         ID: 'id1',
@@ -70,8 +70,8 @@ const defaultInspectOutput = {
             Id: mockContainers[1].ID,
             NetworkSettings: { Ports: {} },
             HostConfig: {
-                Runtime: manifest.BOARD_AMBIENT_RUNTIME,
-                Annotations: ambientAnnotations,
+                Runtime: manifest.BOARD_REMOTEPROC_RUNTIME,
+                Annotations: remoteprocAnnotations,
             },
         }),
     ].join('\n'),
@@ -175,7 +175,7 @@ describe('ContainersManager', () => {
             memUsage: '50MiB / 1GiB',
             target,
         };
-        const ambientContainer: ContainerItem = {
+        const remoteprocContainer: ContainerItem = {
             id: mockContainers[1].ID,
             name: mockContainers[1].Names,
             image: mockContainers[1].Image,
@@ -184,14 +184,14 @@ describe('ContainersManager', () => {
             labels: mockContainers[1].Labels,
             runningFor: mockContainers[1].RunningFor,
             createdAt: mockContainers[1].CreatedAt,
-            runtime: manifest.BOARD_AMBIENT_RUNTIME,
-            annotations: ambientAnnotations,
+            runtime: manifest.BOARD_REMOTEPROC_RUNTIME,
+            annotations: remoteprocAnnotations,
             ports: {},
             cpuUsage: '0.0%',
             memUsage: '0B / 1GiB',
             target,
         };
-        const expectedContainers = [hostContainer, ambientContainer];
+        const expectedContainers = [hostContainer, remoteprocContainer];
         expect(result).toStrictEqual(expectedContainers);
     });
 

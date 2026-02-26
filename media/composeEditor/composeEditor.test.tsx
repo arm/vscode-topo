@@ -7,8 +7,7 @@ import {
 } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { ComposeEditor } from './composeEditor';
-import { ProjectDescription, ConfigMetadata } from '../../src/util/types';
-import * as manifest from '../../src/manifest';
+import { ProjectDescription } from '../../src/util/types';
 
 describe('ComposeEditor', () => {
     const project: ProjectDescription = {
@@ -22,22 +21,7 @@ describe('ComposeEditor', () => {
             },
         },
     };
-    const configMetadata: ConfigMetadata = {
-        boards: [
-            {
-                id: 'NXP i.MX 93',
-                subsystems: [
-                    {
-                        id: 'Ambient',
-                        runtime: manifest.BOARD_AMBIENT_RUNTIME,
-                        annotations: {
-                            'remoteproc.mcu': 'imx-rproc',
-                        },
-                    },
-                ],
-            },
-        ],
-    };
+    const subsystems = ['Host', 'imx-rproc'];
 
     let messagePoster: { postMessage: jest.Mock };
 
@@ -50,7 +34,7 @@ describe('ComposeEditor', () => {
             <ComposeEditor
                 messagePoster={messagePoster}
                 project={project}
-                configMetadata={configMetadata}
+                subsystems={subsystems}
                 {...customProps}
             />,
         );
@@ -58,7 +42,7 @@ describe('ComposeEditor', () => {
 
     it('renders correctly with initial compose file content', () => {
         renderComposeEditor();
-        expect(screen.getByText('Ambient')).toBeInTheDocument();
+        expect(screen.getByText('imx-rproc')).toBeInTheDocument();
         expect(screen.getByText('Deploy')).toBeInTheDocument();
     });
 

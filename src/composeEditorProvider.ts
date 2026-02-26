@@ -154,9 +154,9 @@ export class ComposeEditorProvider implements vscode.CustomTextEditorProvider {
         panel: vscode.WebviewPanel,
         document: vscode.TextDocument,
     ): vscode.Disposable {
-        return vscode.workspace.onDidChangeTextDocument((e) => {
+        return vscode.workspace.onDidChangeTextDocument(async (e) => {
             if (e.document.uri.toString() === document.uri.toString()) {
-                this.messageHandler.renderComposeEditor(
+                await this.messageHandler.renderComposeEditor(
                     panel.webview,
                     document,
                 );

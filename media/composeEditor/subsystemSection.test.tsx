@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
-import * as manifest from '../../src/manifest';
 import '@testing-library/jest-dom';
 import { SubsystemSection } from './subsystemSection';
 import { ServiceCreationDescription } from '../../src/util/types';
+import { BOARD_REMOTEPROC_RUNTIME } from '../../src/manifest';
 
 describe('SubsystemSection', () => {
     let services: ServiceCreationDescription[];
@@ -24,7 +24,7 @@ describe('SubsystemSection', () => {
                 },
                 containerName: 'container1',
                 annotations: {},
-                runtime: manifest.BOARD_AMBIENT_RUNTIME,
+                runtime: BOARD_REMOTEPROC_RUNTIME,
             },
             {
                 name: 'project2',
@@ -34,7 +34,7 @@ describe('SubsystemSection', () => {
                 },
                 containerName: 'container2',
                 annotations: {},
-                runtime: manifest.BOARD_AMBIENT_RUNTIME,
+                runtime: BOARD_REMOTEPROC_RUNTIME,
             },
         ];
     });

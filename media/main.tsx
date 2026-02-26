@@ -3,7 +3,7 @@
 /// <reference path="./vscode-webview.d.ts" />
 
 import ReactDOM from 'react-dom/client';
-import { ConfigMetadata, ProjectDescription } from '../src/util/types';
+import { ProjectDescription } from '../src/util/types';
 import { ComposeEditor } from './composeEditor/composeEditor';
 import './main.css';
 import { BoardDashboard } from './boardDashboard';
@@ -22,7 +22,7 @@ function handleMessage(event: MessageEvent) {
     }
 
     const message = event.data;
-    const configMetadata = message.configMetadata as ConfigMetadata;
+    const subsystems = message.subsystems as string[];
     const project = message.project as ProjectDescription;
     switch (message.type) {
         case 'render-compose-editor':
@@ -39,7 +39,7 @@ function handleMessage(event: MessageEvent) {
                 <ComposeEditor
                     messagePoster={vscode}
                     project={project}
-                    configMetadata={configMetadata}
+                    subsystems={subsystems}
                 />,
             );
             break;
@@ -61,6 +61,7 @@ function handleMessage(event: MessageEvent) {
                     containersData={message.containersData}
                     boardState={message.boardState}
                     messagePoster={vscode}
+                    subsystems={message.subsystems || ['Host']}
                 />,
             );
             break;

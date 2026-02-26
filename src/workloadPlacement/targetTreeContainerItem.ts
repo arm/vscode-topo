@@ -1,10 +1,9 @@
 import * as vscode from 'vscode';
-import { BOARD_HOST_RUNTIME } from '../manifest';
+import { BOARD_HOST_RUNTIME, BOARD_REMOTEPROC_RUNTIME } from '../manifest';
 import { ContainerItem } from '../util/types';
 
 /** Represents an individual container in the target tree view. */
 export class TargetTreeContainerItem extends vscode.TreeItem {
-    public readonly subsystem: string;
     public readonly contextValue: string;
     public readonly state: string;
     public readonly name: string;
@@ -13,9 +12,18 @@ export class TargetTreeContainerItem extends vscode.TreeItem {
         super(containerItem.image, vscode.TreeItemCollapsibleState.None);
         this.description = `${containerItem.name} - ${containerItem.runningFor}`;
         this.tooltip = `ID: ${containerItem.id}\nImage: ${containerItem.image}\nName: ${containerItem.name}\nStatus: ${containerItem.status}\nLabels: ${containerItem.labels}\nUptime: ${containerItem.runningFor}\n`;
-        this.subsystem =
-            containerItem.runtime === BOARD_HOST_RUNTIME ? 'Host' : 'Ambient';
-        this.contextValue = `service ${containerItem.state} ${this.subsystem}`;
+        let subsystemCategory: string | undefined;
+        if (containerItem.runtime === BOARD_HOST_RUNTIME) {
+            subsystemCategory = 'Host';
+        }
+        if (containerItem.runtime === BOARD_REMOTEPROC_RUNTIME) {
+            subsystemCategory = 'Remoteproc';
+        }
+        const contextValues = ['service', containerItem.state];
+        if (subsystemCategory) {
+            contextValues.push(subsystemCategory);
+        }
+        this.contextValue = contextValues.join(' ');
         this.iconPath = TargetTreeContainerItem.getIconForState(
             containerItem.state,
         );

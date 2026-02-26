@@ -1,3 +1,4 @@
+import { BOARD_HOST_RUNTIME, BOARD_REMOTEPROC_RUNTIME } from '../src/manifest';
 import { hasContainerEngine, isBoardReachable } from '../src/util/boardState';
 import { getContainerHostPorts } from '../src/util/getContainerHostPorts';
 import {
@@ -12,19 +13,28 @@ export interface BoardDashboardProps {
     containersData: ContainerItem[];
     boardState: BoardState;
     messagePoster: MessagePoster;
+    subsystems: string[];
 }
 
-function splitContainersByRuntime(containers: ContainerItem[]) {
-    const host: ContainerItem[] = [];
-    const ambient: ContainerItem[] = [];
-    containers.forEach((c) => {
-        if (!c.runtime || c.runtime === 'runc') {
-            host.push(c);
-        } else {
-            ambient.push(c);
+function splitContainersBySubsystem(
+    containers: ContainerItem[],
+    subsystems: string[],
+) {
+    const groups: Record<string, ContainerItem[]> = { Host: [] };
+
+    for (const c of containers) {
+        if (c.runtime === undefined || c.runtime === BOARD_HOST_RUNTIME) {
+            groups['Host'].push(c);
+        } else if (c.runtime === BOARD_REMOTEPROC_RUNTIME) {
+            const subsystem = c.annotations?.['remoteproc.name'];
+            if (subsystem && subsystems.includes(subsystem)) {
+                groups[subsystem] ??= [];
+                groups[subsystem].push(c);
+            }
         }
-    });
-    return { host, ambient };
+    }
+
+    return groups;
 }
 
 function StateIcon({ state }: { state: string }) {
@@ -224,6 +234,7 @@ export function BoardDashboard({
     containersData,
     boardState,
     messagePoster,
+    subsystems,
 }: BoardDashboardProps) {
     let errorMessage: string | undefined = undefined;
     if (!isBoardReachable(boardState)) {
@@ -245,39 +256,40 @@ export function BoardDashboard({
             </div>
         );
     }
-    const { host, ambient } = splitContainersByRuntime(containersData);
+    const containerGroups = splitContainersBySubsystem(
+        containersData,
+        subsystems,
+    );
 
     return (
         <div className="board-dashboard">
             <h1>Board Dashboard: {target.id}</h1>
-            <div className="section-group">
-                <h3>
-                    Host
-                    <button
-                        title="Attach via SSH"
-                        className="action-btn ssh-attach-btn"
-                        onClick={() => {
-                            messagePoster.postMessage({ type: 'attach-ssh' });
-                        }}
-                        style={{ marginLeft: 4 }}
-                    >
-                        <span className="codicon codicon-terminal ssh-attach-icon" />
-                    </button>
-                </h3>
-                <ContainerTable
-                    containers={host}
-                    messagePoster={messagePoster}
-                    subsystem="Host"
-                />
-            </div>
-            <div className="section-group">
-                <h3>Ambient</h3>
-                <ContainerTable
-                    containers={ambient}
-                    messagePoster={messagePoster}
-                    subsystem="Ambient"
-                />
-            </div>
+            {subsystems.map((subsystem) => (
+                <div key={subsystem} className="section-group">
+                    <h3>
+                        {subsystem}
+                        {subsystem === 'Host' && (
+                            <button
+                                title="Attach via SSH"
+                                className="action-btn ssh-attach-btn"
+                                onClick={() => {
+                                    messagePoster.postMessage({
+                                        type: 'attach-ssh',
+                                    });
+                                }}
+                                style={{ marginLeft: 4 }}
+                            >
+                                <span className="codicon codicon-terminal ssh-attach-icon" />
+                            </button>
+                        )}
+                    </h3>
+                    <ContainerTable
+                        containers={containerGroups[subsystem] || []}
+                        messagePoster={messagePoster}
+                        subsystem={subsystem}
+                    />
+                </div>
+            ))}
         </div>
     );
 }

@@ -32,7 +32,7 @@ describe('BoardDashboardMessageHandler', () => {
         host: 'topo.local',
         targetDescription: {
             hostProcessor: [],
-            remoteprocCPU: [],
+            remoteprocCPU: [{ name: 'imx-rproc' }],
         },
     };
     const boardState: BoardState = {
@@ -101,6 +101,7 @@ describe('BoardDashboardMessageHandler', () => {
                 boardState,
                 containersData: [containerA],
                 target,
+                subsystems: ['Host', 'imx-rproc'],
             });
         });
 

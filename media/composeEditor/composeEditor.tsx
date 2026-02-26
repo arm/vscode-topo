@@ -1,64 +1,56 @@
 import React from 'react';
 import { SubsystemSection } from './subsystemSection';
 import {
-    Subsystem,
     ProjectDescription,
     ServiceCreationDescription,
-    ConfigMetadata,
     MessagePoster,
-    subsystems,
 } from '../../src/util/types';
+import {
+    BOARD_REMOTEPROC_RUNTIME,
+    BOARD_HOST_RUNTIME,
+} from '../../src/manifest';
 
 interface ComposeEditorProps {
     messagePoster: MessagePoster;
     project: ProjectDescription;
-    configMetadata: ConfigMetadata;
+    subsystems: string[];
 }
-
-// hardcoded board for demo purposes
-const board = 'NXP i.MX 93';
 
 const getSubsystemServices = (
     project: ProjectDescription,
-    subsystem: Subsystem,
-    configMetadata: ConfigMetadata,
-    board: string,
+    subsystem: string,
 ): ServiceCreationDescription[] => {
-    const boardSubsystems =
-        configMetadata.boards.find((b) => b.id === board)?.subsystems || [];
-    const subsystemInfo = boardSubsystems.find((s) => s.id === subsystem);
-
-    if (!subsystemInfo) {
-        // Host subsystem does not have a runtime, so we return all services
-        if (subsystem === 'Host') {
-            return Object.entries(project.services)
-                .filter(([, service]) => service.runtime === undefined)
-                .map(([serviceName, service]) => ({
-                    ...service,
-                    name: serviceName,
-                    errors: [],
-                }));
-        } else {
-            return [];
-        }
-    }
-
-    return (
-        Object.entries(project.services)
-            // TODO match annotations
-            .filter(([, service]) => service.runtime === subsystemInfo.runtime)
+    if (subsystem === 'Host') {
+        return Object.entries(project.services)
+            .filter(
+                ([, service]) =>
+                    service.runtime === undefined ||
+                    service.runtime === BOARD_HOST_RUNTIME,
+            )
             .map(([serviceName, service]) => ({
                 ...service,
                 name: serviceName,
                 errors: [],
-            }))
-    );
+            }));
+    }
+
+    return Object.entries(project.services)
+        .filter(
+            ([, service]) =>
+                service.runtime === BOARD_REMOTEPROC_RUNTIME &&
+                service.annotations?.['remoteproc.name'] === subsystem,
+        )
+        .map(([serviceName, service]) => ({
+            ...service,
+            name: serviceName,
+            errors: [],
+        }));
 };
 
 export const ComposeEditor: React.FC<ComposeEditorProps> = ({
     messagePoster,
     project,
-    configMetadata,
+    subsystems,
 }) => {
     const [isDeploying, setIsDeploying] = React.useState(false);
 
@@ -83,8 +75,6 @@ export const ComposeEditor: React.FC<ComposeEditorProps> = ({
                 const subsystemServices = getSubsystemServices(
                     project,
                     subsystem,
-                    configMetadata,
-                    board,
                 );
                 return (
                     <SubsystemSection

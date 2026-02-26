@@ -2,14 +2,13 @@ import * as vscode from 'vscode';
 import { logger } from '../util/logger';
 import { showAndLogError } from '../util/showAndLogError';
 import { ContainersManager } from '../workloadPlacement/containersManager';
-import type { ContainerItem } from '../util/types';
+import type { ContainerItem, MessagePoster } from '../util/types';
 import { ContainerOpenInBrowser } from '../actions/containerOpenInBrowser';
 import { AttachVsCode } from '../actions/attachVsCode';
 import { AttachShell } from '../actions/attachShell';
 import { TargetStore } from '../workloadPlacement/targetStore';
 import { isTopoError } from '../errors/topoError';
 import { isPlainObject } from '../util/isPlainObject';
-import { MessagePoster } from '../util/types';
 
 type StartContainerMessage = { type: 'start-container'; containerId: string };
 type StopContainerMessage = { type: 'stop-container'; containerId: string };
@@ -87,11 +86,15 @@ export class BoardDashboardMessageHandler {
             logger.error('No target selected, cannot render board dashboard');
             return;
         }
+        const remoteprocCpus =
+            target?.targetDescription?.remoteprocCPU.map((rp) => rp.name) || [];
+        const subsystems = ['Host', ...remoteprocCpus];
         await messagePoster.postMessage({
             type: 'render-board-dashboard',
             boardState,
             containersData,
             target,
+            subsystems,
         });
     }
 
