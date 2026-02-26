@@ -8,6 +8,7 @@ import { ContainersManager } from './containersManager';
 import { BoardState, ContainerItem, TargetItem } from '../util/types';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { TargetStore } from './targetStore';
+import { TopoCli } from '../topoCli';
 
 jest.mock('../util/logger');
 
@@ -34,7 +35,7 @@ describe('TargetTreeDataProvider', () => {
         host: 'topo.local',
         targetDescription: {
             hostProcessor: [],
-            remoteprocCPU: [],
+            remoteprocCPU: [{ name: 'imx-rproc' }, { name: 'other-rproc' }],
         },
     };
     const boardHealth = {
@@ -67,8 +68,10 @@ describe('TargetTreeDataProvider', () => {
             status: 'Up 4 days',
             labels: 'foo=bar',
             runningFor: '1h',
-            runtime: manifest.BOARD_AMBIENT_RUNTIME,
-            annotations: {},
+            runtime: manifest.BOARD_REMOTEPROC_RUNTIME,
+            annotations: {
+                'remoteproc.name': 'imx-rproc',
+            },
             createdAt: '',
             ports: {},
             cpuUsage: '0.0%',
@@ -99,8 +102,10 @@ describe('TargetTreeDataProvider', () => {
             status: 'Up 1 hour',
             labels: 'abc=def',
             runningFor: '30m',
-            runtime: manifest.BOARD_AMBIENT_RUNTIME,
-            annotations: {},
+            runtime: manifest.BOARD_REMOTEPROC_RUNTIME,
+            annotations: {
+                'remoteproc.name': 'imx-rproc',
+            },
             createdAt: '',
             ports: {},
             cpuUsage: '0.0%',
@@ -130,6 +135,10 @@ describe('TargetTreeDataProvider', () => {
         targetStoreMock = mock<TargetStore>();
         targetStoreMock.getSelectedTarget.mockResolvedValue(target);
         targetStoreMock.onChanged.mockImplementation(onChangedEmitter.event);
+        const topoCliMock = mock<TopoCli>();
+        topoCliMock.describe.mockResolvedValue(
+            '/tmp/t1/target-description.yaml',
+        );
         provider = new TargetTreeDataProvider(
             context,
             containersManagerMock,
@@ -162,22 +171,26 @@ describe('TargetTreeDataProvider', () => {
     });
 
     describe('getChildren', () => {
-        it('returns Board at root and Host/Ambient as its children', async () => {
+        it('returns Board at root and dynamic subsystems as its children', async () => {
             targetStoreMock.getTargets.mockReturnValue([target]);
-            const rootChildren = await provider.getChildren();
-            expect(rootChildren).toHaveLength(1);
-            expect(rootChildren[0].label).toBe('topo');
 
+            const rootChildren = await provider.getChildren();
             const boardChildren = await provider.getChildren(rootChildren[0]);
 
-            expect(boardChildren).toHaveLength(2);
+            expect(rootChildren).toHaveLength(1);
+            expect(rootChildren[0].label).toBe('topo');
+            expect(boardChildren).toHaveLength(3);
             expect(boardChildren[0]).toBeInstanceOf(TargetTreeSubsystemItem);
             expect(boardChildren[1]).toBeInstanceOf(TargetTreeSubsystemItem);
+            expect(boardChildren[2]).toBeInstanceOf(TargetTreeSubsystemItem);
             expect((boardChildren[0] as TargetTreeSubsystemItem).group).toBe(
                 'Host',
             );
             expect((boardChildren[1] as TargetTreeSubsystemItem).group).toBe(
-                'Ambient',
+                'imx-rproc',
+            );
+            expect((boardChildren[2] as TargetTreeSubsystemItem).group).toBe(
+                'other-rproc',
             );
         });
 
@@ -202,34 +215,37 @@ describe('TargetTreeDataProvider', () => {
             );
         });
 
-        it('returns containers for Host and Ambient groups', async () => {
+        it('returns containers for Host and remoteproc groups', async () => {
             const hostGroup = new TargetTreeSubsystemItem('Host');
             const hostChildren = await provider.getChildren(hostGroup);
+            const remoteprocGroup = new TargetTreeSubsystemItem('imx-rproc');
+            const otherRprocGroup = new TargetTreeSubsystemItem('other-rproc');
+
+            const imxRprocChildren =
+                await provider.getChildren(remoteprocGroup);
+            const otherRprocChildren =
+                await provider.getChildren(otherRprocGroup);
+
             expect(hostChildren).toHaveLength(1);
             expect(hostChildren[0]).toBeInstanceOf(TargetTreeContainerItem);
             expect((hostChildren[0] as TargetTreeContainerItem).name).toBe(
                 'cont2',
             );
-            const ambientGroup = new TargetTreeSubsystemItem('Ambient');
-
-            const ambientChildren = await provider.getChildren(ambientGroup);
-
-            expect(ambientChildren).toHaveLength(2);
-            expect(ambientChildren[0]).toBeInstanceOf(TargetTreeContainerItem);
+            expect(imxRprocChildren).toHaveLength(2);
+            expect(imxRprocChildren[0]).toBeInstanceOf(TargetTreeContainerItem);
             expect(
-                ambientChildren.map((c) => (c as TargetTreeContainerItem).name),
+                imxRprocChildren.map(
+                    (c) => (c as TargetTreeContainerItem).name,
+                ),
             ).toEqual(expect.arrayContaining(['cont1', 'cont3']));
-            const sortedNames = ambientChildren.map(
-                (c) => (c as TargetTreeContainerItem).name,
-            );
-            expect(sortedNames).toEqual(['cont1', 'cont3']);
+            expect(otherRprocChildren).toHaveLength(0);
         });
 
         it('handles parsing error in getContainersData gracefully', async () => {
             containersManagerMock.getContainersData.mockResolvedValueOnce([]);
-            const ambientGroup = new TargetTreeSubsystemItem('Ambient');
+            const remoteprocGroup = new TargetTreeSubsystemItem('imx-rproc');
 
-            const children = await provider.getChildren(ambientGroup);
+            const children = await provider.getChildren(remoteprocGroup);
 
             expect(children).toEqual([]);
         });

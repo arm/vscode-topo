@@ -11,4 +11,11 @@ describe('TargetTreeSubsystemItem', () => {
             vscode.TreeItemCollapsibleState.Collapsed,
         );
     });
+
+    it('should accept dynamic subsystem names', () => {
+        const item = new TargetTreeSubsystemItem('imx-rproc');
+        expect(item.label).toBe('imx-rproc');
+        expect(item.contextValue).toBe('Subsystem imx-rproc');
+        expect(item.group).toBe('imx-rproc');
+    });
 });

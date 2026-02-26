@@ -1,8 +1,8 @@
 import React from 'react';
-import { ServiceCreationDescription, Subsystem } from '../../src/util/types';
+import { ServiceCreationDescription } from '../../src/util/types';
 
 export interface SubsystemSectionProps {
-    readonly title: Subsystem;
+    readonly title: string;
     readonly subsystemServices: ServiceCreationDescription[];
 }
 

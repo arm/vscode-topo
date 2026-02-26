@@ -1,14 +1,14 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { ComposeEditorProvider } from './composeEditorProvider';
-import { ConfigMetadata, ProjectDescription } from './util/types';
-import * as manifest from './manifest';
+import { ProjectDescription, TargetItem } from './util/types';
 import { ComposeEditorMessageHandler } from './composeEditorMessageHandler';
 import { Deploy } from './actions/deploy';
 import { logger } from './util/logger';
 import { showAndLogError } from './util/showAndLogError';
 import { TopoCli } from './topoCli';
 import { mock, MockProxy } from 'jest-mock-extended';
+import { TargetStore } from './workloadPlacement/targetStore';
 
 jest.mock('./util/logger');
 jest.mock('./util/showAndLogError', () => ({
@@ -19,21 +19,15 @@ const waitImmediate = () =>
     new Promise<void>((resolve) => setTimeout(() => resolve(), 0));
 
 describe('ComposeEditorProvider', () => {
-    const configMetadata: ConfigMetadata = {
-        boards: [
-            {
-                id: 'NXP i.MX 93',
-                subsystems: [
-                    {
-                        id: 'Ambient',
-                        runtime: manifest.BOARD_AMBIENT_RUNTIME,
-                        annotations: {
-                            'remoteproc.mcu': 'imx-rproc',
-                        },
-                    },
-                ],
-            },
-        ],
+    const target: TargetItem = {
+        id: 'topo',
+        ssh: 'user@topo.local',
+        user: 'user',
+        host: 'topo.local',
+        targetDescription: {
+            hostProcessor: [],
+            remoteprocCPU: [{ name: 'imx-rproc' }],
+        },
     };
 
     const composeFolder = '/ext';
@@ -84,6 +78,7 @@ describe('ComposeEditorProvider', () => {
     let webviewPanel: vscode.WebviewPanel;
     let topoCli: MockProxy<TopoCli>;
     let deploy: MockProxy<Deploy>;
+    let targetStore: MockProxy<TargetStore>;
     let composeEditorMessageHandler: ComposeEditorMessageHandler;
 
     beforeEach(() => {
@@ -114,11 +109,13 @@ describe('ComposeEditorProvider', () => {
         };
         topoCli = mock<TopoCli>();
         topoCli.getProject.mockReturnValue(project);
-        topoCli.getConfigMetadata.mockReturnValue(configMetadata);
         deploy = mock<Deploy>();
+        targetStore = mock<TargetStore>();
+        targetStore.getSelectedTarget.mockResolvedValue(target);
         composeEditorMessageHandler = new ComposeEditorMessageHandler(
             topoCli,
             deploy,
+            targetStore,
         );
     });
 
@@ -158,10 +155,12 @@ describe('ComposeEditorProvider', () => {
             type: 'compose-editor-webview-ready',
         });
 
+        await waitImmediate();
+
         expect(post).toHaveBeenCalledWith({
             type: 'render-compose-editor',
             project,
-            configMetadata,
+            subsystems: ['Host', 'imx-rproc'],
         });
     });
 

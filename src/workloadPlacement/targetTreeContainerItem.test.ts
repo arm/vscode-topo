@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { TargetTreeContainerItem } from './targetTreeContainerItem';
-import { BOARD_AMBIENT_RUNTIME } from '../manifest';
+import { BOARD_REMOTEPROC_RUNTIME } from '../manifest';
 import { ContainerItem, TargetItem } from '../util/types';
 
 describe('TargetTreeContainerItem', () => {
@@ -23,7 +23,7 @@ describe('TargetTreeContainerItem', () => {
             status: 'Up',
             labels: 'label1=value1',
             runningFor: '10m',
-            runtime: BOARD_AMBIENT_RUNTIME,
+            runtime: BOARD_REMOTEPROC_RUNTIME,
             annotations: {},
             createdAt: '',
             ports: { '80/tcp': [{ HostIp: '0.0.0.0', HostPort: '8080' }] },
@@ -39,8 +39,7 @@ describe('TargetTreeContainerItem', () => {
         expect(item.tooltip).toContain('my-container');
         expect(item.tooltip).toContain('label1=value1');
         expect(item.tooltip).toContain('10m');
-        expect(item.subsystem).toBe('Ambient');
-        expect(item.contextValue).toBe('service running Ambient');
+        expect(item.contextValue).toBe('service running Remoteproc');
 
         // Check iconPath for running status
         expect(item.iconPath).toBeInstanceOf(vscode.ThemeIcon);
@@ -61,7 +60,7 @@ describe('TargetTreeContainerItem', () => {
             status: 'Exited (0) 2 days ago',
             labels: '',
             runningFor: '',
-            runtime: BOARD_AMBIENT_RUNTIME,
+            runtime: BOARD_REMOTEPROC_RUNTIME,
             annotations: {},
             createdAt: '',
             ports: {},

@@ -52,6 +52,7 @@ export async function activate(
     const composeEditorMessageHandler = new ComposeEditorMessageHandler(
         topoCli,
         deploy,
+        targetStore,
     );
     const composeEditorProvider = new ComposeEditorProvider(
         context,

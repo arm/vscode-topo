@@ -6,6 +6,7 @@ import { isPlainObject } from './util/isPlainObject';
 import { MessagePoster } from './util/types';
 import { showAndLogError } from './util/showAndLogError';
 import { TopoCli } from './topoCli';
+import { TargetStore } from './workloadPlacement/targetStore';
 
 type ShowQuickPickMessage = { type: 'show-quick-pick'; items: string[] };
 type CreateQuickPickMessage = {
@@ -76,18 +77,22 @@ export class ComposeEditorMessageHandler {
     constructor(
         private readonly topoCli: TopoCli,
         private readonly deploy: Deploy,
+        private readonly targetStore: TargetStore,
     ) {}
 
-    public renderComposeEditor(
+    public async renderComposeEditor(
         messagePoster: MessagePoster,
         document: vscode.TextDocument,
-    ): void {
+    ): Promise<void> {
         const project = this.topoCli.getProject(document.uri.fsPath);
-        const configMetadata = this.topoCli.getConfigMetadata();
+        const target = await this.targetStore.getSelectedTarget();
+        const remoteprocCpus =
+            target?.targetDescription?.remoteprocCPU.map((rp) => rp.name) || [];
+        const subsystemNames = ['Host', ...remoteprocCpus];
         messagePoster.postMessage({
             type: 'render-compose-editor',
             project,
-            configMetadata,
+            subsystems: subsystemNames,
         });
     }
 
@@ -189,7 +194,7 @@ export class ComposeEditorMessageHandler {
                     return;
 
                 case 'compose-editor-webview-ready':
-                    this.renderComposeEditor(messagePoster, document);
+                    await this.renderComposeEditor(messagePoster, document);
                     return;
             }
         } catch (err) {

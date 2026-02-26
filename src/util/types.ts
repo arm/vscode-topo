@@ -105,30 +105,12 @@ export interface ContainerItem {
     target: TargetItem;
 }
 
-export const subsystems = ['Host', 'Ambient'] as const;
-export type Subsystem = (typeof subsystems)[number];
-
 export interface TemplateDescription {
     id: string;
     url: string;
-    subsystem: Subsystem;
+    subsystem: string;
     ports: string[];
     description: string;
-}
-
-export interface SubsystemInfo {
-    id: Subsystem;
-    runtime: string;
-    annotations: Record<string, string>;
-}
-
-export interface BoardInfo {
-    id: string;
-    subsystems: SubsystemInfo[];
-}
-
-export interface ConfigMetadata {
-    boards: BoardInfo[];
 }
 
 export interface ServiceDescription {
