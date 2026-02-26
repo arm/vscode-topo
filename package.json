@@ -126,6 +126,11 @@
                 "category": "Arm Topo"
             },
             {
+                "command": "topo.inspectHostHealth",
+                "title": "Inspect Host Health",
+                "category": "Arm Topo"
+            },
+            {
                 "command": "topo.openSerial",
                 "title": "Open UART",
                 "icon": "$(console)",

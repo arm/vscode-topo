@@ -23,6 +23,7 @@ import { OpenBoardDashboard } from './actions/openBoardDashboard';
 import { TargetStore } from './workloadPlacement/targetStore';
 import { ProjectClone } from './projectClone';
 import { Deploy } from './actions/deploy';
+import { HostHealth } from './actions/hostHealth';
 
 export async function activate(
     context: vscode.ExtensionContext,
@@ -100,6 +101,7 @@ export async function activate(
         boardDashboardProvider,
     );
     const openSerial = new OpenSerial(context);
+    const health = new HostHealth(context, topoCli);
     context.subscriptions.push(targetStore);
     await topoCli.activate();
     context.subscriptions.push(topoCli);
@@ -120,4 +122,6 @@ export async function activate(
     containerDelete.activate();
     openBoardDashboard.activate();
     openSerial.activate();
+    health.activate();
+    health.checkHostDependencyHealth();
 }
