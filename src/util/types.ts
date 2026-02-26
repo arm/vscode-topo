@@ -173,3 +173,8 @@ export type MessagePoster = {
 };
 
 export type Mutable<T> = { -readonly [P in keyof T]: T[P] };
+
+export interface BoardState {
+    health: HealthCheckResult['Target'] | undefined;
+    targetId: string | undefined;
+}

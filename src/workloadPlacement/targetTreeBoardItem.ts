@@ -7,33 +7,29 @@ export class TargetTreeBoardItem extends vscode.TreeItem {
 
     constructor(
         target: TargetItem,
-        public readonly selected: boolean,
-        public readonly connectionReady: boolean,
-        public readonly targetReady: boolean,
+        selected: boolean,
+        connectionReady: boolean,
+        targetReady: boolean,
     ) {
         super(target.id, vscode.TreeItemCollapsibleState.Expanded);
         this.id = target.id;
         this.description = target.ssh;
-        this.iconPath = getTreeItemIcon(
-            this.selected,
-            this.connectionReady,
-            this.targetReady,
-        );
+        this.iconPath = getTreeItemIcon(selected, connectionReady, targetReady);
         const contextValues = ['Board'];
-        if (this.selected) {
+        if (selected) {
             contextValues.push('Selected');
         }
-        if (this.connectionReady) {
+        if (connectionReady) {
             contextValues.push('ConnectionReady');
         }
-        if (this.targetReady) {
+        if (targetReady) {
             contextValues.push('TargetReady');
         }
         this.contextValue = contextValues.join(' ');
         this.collapsibleState = getTargetTreeItemState(
-            this.selected,
-            this.connectionReady,
-            this.targetReady,
+            selected,
+            connectionReady,
+            targetReady,
         );
         this.targetId = target.id;
     }

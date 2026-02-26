@@ -41,6 +41,21 @@ const targetDescription = {
     ],
 };
 
+const healthyBoard = {
+    IsLocalHost: false,
+    Connectivity: {
+        Healthy: true,
+        Name: 'Connectivity',
+        Value: '',
+    },
+    Dependencies: [{ Healthy: true, Name: 'Container Engine', Value: '' }],
+    SubsystemDriver: {
+        Healthy: true,
+        Name: 'Subsystem Driver',
+        Value: '',
+    },
+};
+
 const waitImmediate = () =>
     new Promise<void>((resolve) => setTimeout(() => resolve(), 0));
 
@@ -58,8 +73,7 @@ const createTargetManager = () => {
     const containersManager: MockProxy<ContainersManager> =
         mock<ContainersManager>();
     containersManager.getBoardState.mockResolvedValue({
-        isReachable: false,
-        hasContainerEngine: false,
+        health: undefined,
         targetId: undefined,
     });
     containersManager.onDataUpdate.mockImplementation(
@@ -284,8 +298,7 @@ describe('TargetManager', () => {
                 target,
             );
             jest.mocked(containersManager.getBoardState).mockResolvedValue({
-                isReachable: true,
-                hasContainerEngine: true,
+                health: undefined,
                 targetId: undefined,
             });
             jest.mocked(vscode.window.createStatusBarItem).mockImplementation(
@@ -312,8 +325,7 @@ describe('TargetManager', () => {
                 undefined,
             );
             jest.mocked(containersManager.getBoardState).mockResolvedValue({
-                isReachable: false,
-                hasContainerEngine: true,
+                health: undefined,
                 targetId: undefined,
             });
             jest.mocked(vscode.window.createStatusBarItem).mockImplementation(
@@ -355,8 +367,7 @@ describe('TargetManager', () => {
                 target1,
             );
             jest.mocked(containersManager.getBoardState).mockResolvedValue({
-                isReachable: false,
-                hasContainerEngine: true,
+                health: healthyBoard,
                 targetId: target1.id,
             });
             jest.mocked(vscode.window.createStatusBarItem).mockImplementation(
@@ -367,8 +378,7 @@ describe('TargetManager', () => {
                 target2,
             );
             jest.mocked(containersManager.getBoardState).mockResolvedValue({
-                isReachable: true,
-                hasContainerEngine: true,
+                health: healthyBoard,
                 targetId: target2.id,
             });
 
@@ -403,8 +413,7 @@ describe('TargetManager', () => {
                 target,
             );
             jest.mocked(containersManager.getBoardState).mockResolvedValue({
-                isReachable: true,
-                hasContainerEngine: true,
+                health: healthyBoard,
                 targetId: target.id,
             });
             jest.mocked(vscode.window.createStatusBarItem).mockImplementation(
