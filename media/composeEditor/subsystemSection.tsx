@@ -25,14 +25,6 @@ export const SubsystemSection: React.FC<SubsystemSectionProps> = ({
                             <tr key={i}>
                                 <td>
                                     <input value={service.name} readOnly />
-                                    {service.errors.length > 0 && (
-                                        <span
-                                            className="warning-icon"
-                                            title={service.errors[0]}
-                                        >
-                                            ⚠️
-                                        </span>
-                                    )}
                                 </td>
                             </tr>
                         ))}

@@ -129,7 +129,6 @@ export interface ProjectDescription {
 
 export interface ServiceCreationDescription extends ServiceDescription {
     name: string;
-    errors: string[];
 }
 
 export interface HealthCheckDependency {

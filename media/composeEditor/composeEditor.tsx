@@ -30,7 +30,6 @@ const getSubsystemServices = (
             .map(([serviceName, service]) => ({
                 ...service,
                 name: serviceName,
-                errors: [],
             }));
     }
 
@@ -43,7 +42,6 @@ const getSubsystemServices = (
         .map(([serviceName, service]) => ({
             ...service,
             name: serviceName,
-            errors: [],
         }));
 };
 
