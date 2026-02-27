@@ -2,6 +2,7 @@ import {
     array,
     boolean,
     Infer,
+    nullable,
     optional,
     record,
     string,
@@ -12,7 +13,7 @@ import {
 export const templateSchema = type({
     id: string(),
     description: string(),
-    features: array(string()),
+    features: nullable(array(string())),
     url: string(),
     ref: string(),
 });
