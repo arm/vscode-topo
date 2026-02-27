@@ -1,3 +1,5 @@
+import { HealthCheckResult, ServiceDescription } from '../topoCliSchema';
+
 export interface HostProcessor {
     model: string;
     cores: number;
@@ -105,48 +107,8 @@ export interface ContainerItem {
     target: TargetItem;
 }
 
-export interface TemplateDescription {
-    id: string;
-    url: string;
-    subsystem: string;
-    ports: string[];
-    description: string;
-}
-
-export interface ServiceDescription {
-    build: {
-        context: string;
-    };
-    containerName: string;
-    runtime?: string;
-    annotations?: Record<string, string>;
-}
-
-export interface ProjectDescription {
-    name: string;
-    services: Record<string, ServiceDescription>;
-}
-
 export interface ServiceCreationDescription extends ServiceDescription {
     name: string;
-}
-
-export interface HealthCheckDependency {
-    Name: string;
-    Healthy: boolean;
-    Value: string;
-}
-
-export interface HealthCheckResult {
-    Host: {
-        Dependencies: HealthCheckDependency[];
-    };
-    Target: {
-        IsLocalHost: boolean;
-        Connectivity: HealthCheckDependency;
-        Dependencies: HealthCheckDependency[];
-        SubsystemDriver: HealthCheckDependency;
-    };
 }
 
 export type MessagePoster = {

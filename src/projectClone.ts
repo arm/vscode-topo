@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import { TopoCli } from './topoCli';
 import * as path from 'path';
 import { getErrorMessage } from './util/getErrorMessage';
-import { TemplateDescription } from './util/types';
+import { TemplateDescription } from './topoCliSchema';
 
 const getLocalSourcePath = async (): Promise<string | undefined> => {
     const cloneSourceUri = await vscode.window.showOpenDialog({

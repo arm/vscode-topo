@@ -3,7 +3,7 @@ import { PACKAGE_NAME } from '../manifest';
 import { TopoCli } from '../topoCli';
 import { logger } from '../util/logger';
 import { showAndLogError } from '../util/showAndLogError';
-import { HealthCheckResult } from '../util/types';
+import { HealthCheckResult } from '../topoCliSchema';
 
 const hostHealthTarget = 'localhost';
 const inspectHostHealthAction: vscode.MessageItem = {

@@ -5,7 +5,7 @@ import { ProjectClone } from './projectClone';
 import { mutable } from './util/mutable';
 import { TopoCli } from './topoCli';
 import { mock, MockProxy } from 'jest-mock-extended';
-import { TemplateDescription } from './util/types';
+import { TemplateDescription } from './topoCliSchema';
 
 const waitImmediate = () =>
     new Promise<void>((resolve) => setTimeout(() => resolve(), 0));
@@ -401,17 +401,17 @@ describe('ProjectClone', () => {
             {
                 id: 'template-alpha',
                 url: '/templates/template-alpha',
-                subsystem: 'Host',
-                ports: [],
                 description: 'Template Apple description. Apple is a fruit.',
+                ref: 'r',
+                features: [],
             },
             {
                 id: 'template-banana',
                 url: '/templates/template-banana',
-                subsystem: 'Ambient',
-                ports: ['8080'],
                 description:
                     'Template Cabbage description. Cabbage is a vegetable.',
+                ref: 'r',
+                features: [],
             },
         ];
 

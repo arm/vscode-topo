@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { HostHealth } from './hostHealth';
 import { TopoCli } from '../topoCli';
-import { HealthCheckResult } from '../util/types';
+import { HealthCheckResult } from '../topoCliSchema';
 
 jest.mock('../util/logger');
 

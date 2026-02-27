@@ -1,7 +1,6 @@
 import React from 'react';
 import { SubsystemSection } from './subsystemSection';
 import {
-    ProjectDescription,
     ServiceCreationDescription,
     MessagePoster,
 } from '../../src/util/types';
@@ -9,6 +8,7 @@ import {
     BOARD_REMOTEPROC_RUNTIME,
     BOARD_HOST_RUNTIME,
 } from '../../src/manifest';
+import { ProjectDescription } from '../../src/topoCliSchema';
 
 interface ComposeEditorProps {
     messagePoster: MessagePoster;

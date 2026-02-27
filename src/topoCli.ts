@@ -1,12 +1,16 @@
 import * as path from 'path';
 import * as childProcess from 'child_process';
-import {
-    HealthCheckResult,
-    ProjectDescription,
-    TemplateDescription,
-} from './util/types';
 import * as vscode from 'vscode';
 import * as manifest from './manifest';
+import {
+    HealthCheckResult,
+    healthCheckResultSchema,
+    ProjectDescription,
+    projectDescriptionSchema,
+    TemplateDescription,
+    templateSchema,
+} from './topoCliSchema';
+import { array, assert } from 'superstruct';
 
 export interface TopoCliVersion {
     version: string;
@@ -108,6 +112,7 @@ export class TopoCli {
             },
         );
         const templates = JSON.parse(out);
+        assert(templates, array(templateSchema));
         return templates;
     }
 
@@ -116,7 +121,9 @@ export class TopoCli {
         const bin = this.getBinaryPath();
         const cmd = ['get-project', composeFilepath];
         const out = childProcess.execFileSync(bin, cmd, { encoding: 'utf8' });
-        return JSON.parse(out);
+        const project = JSON.parse(out);
+        assert(project, projectDescriptionSchema);
+        return project;
     }
 
     /**
@@ -213,6 +220,8 @@ export class TopoCli {
                 }
             });
         });
-        return JSON.parse(promise);
+        const result = JSON.parse(promise);
+        assert(result, healthCheckResultSchema);
+        return result;
     }
 }
