@@ -234,7 +234,7 @@ describe('TopoCli', () => {
         const want: HealthCheckResult = {
             Host: { Dependencies: [] },
             Target: {
-                IsLocalHost: false,
+                IsLocalhost: false,
                 Dependencies: [
                     {
                         Name: 'Container Engine',

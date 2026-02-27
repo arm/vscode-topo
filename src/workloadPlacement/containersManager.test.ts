@@ -103,7 +103,7 @@ const topoCli = mock<TopoCli>();
 topoCli.health.mockResolvedValue({
     Host: { Dependencies: [] },
     Target: {
-        IsLocalHost: false,
+        IsLocalhost: false,
         Dependencies: [
             {
                 Name: 'Container Engine',

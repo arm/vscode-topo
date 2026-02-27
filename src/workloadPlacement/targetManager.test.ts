@@ -42,7 +42,7 @@ const targetDescription = {
 };
 
 const healthyBoard = {
-    IsLocalHost: false,
+    IsLocalhost: false,
     Connectivity: {
         Healthy: true,
         Name: 'Connectivity',

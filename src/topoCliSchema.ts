@@ -33,7 +33,7 @@ export const healthCheckResultSchema = type({
         Dependencies: array(healthCheckDependencySchema),
     }),
     Target: type({
-        IsLocalHost: boolean(),
+        IsLocalhost: boolean(),
         Connectivity: healthCheckDependencySchema,
         SubsystemDriver: healthCheckDependencySchema,
         Dependencies: array(healthCheckDependencySchema),

@@ -39,7 +39,7 @@ describe('TargetTreeDataProvider', () => {
         },
     };
     const boardHealth = {
-        IsLocalHost: false,
+        IsLocalhost: false,
         Connectivity: {
             Name: 'Connectivity',
             Healthy: true,

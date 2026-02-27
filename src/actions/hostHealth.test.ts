@@ -60,7 +60,7 @@ describe('HostHealth', () => {
         const healthResult: HealthCheckResult = {
             Host: hostHealth,
             Target: {
-                IsLocalHost: true,
+                IsLocalhost: true,
                 Dependencies: [],
                 Connectivity: {
                     Name: 'Connectivity',
