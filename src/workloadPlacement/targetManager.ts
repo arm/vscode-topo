@@ -85,7 +85,8 @@ export class TargetManager {
 
         const id = await vscode.window.showInputBox({
             title: 'Enter a unique id for the target',
-            placeHolder: ssh,
+            placeHolder: 'target-id',
+            value: ssh,
         });
         if (!id?.trim()) {
             return;
