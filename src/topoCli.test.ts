@@ -7,15 +7,15 @@ import {
     CloneLocalSource,
     targetDescriptionFileName,
 } from './topoCli';
-import {
-    ProjectDescription,
-    TemplateDescription,
-    Mutable,
-    HealthCheckResult,
-} from './util/types';
+import { Mutable } from './util/types';
 import * as manifest from './manifest';
 import { ChildProcessWithoutNullStreams } from 'child_process';
 import { mock } from 'jest-mock-extended';
+import {
+    HealthCheckResult,
+    ProjectDescription,
+    TemplateDescription,
+} from './topoCliSchema';
 
 jest.mock('child_process');
 jest.mock('fs');
@@ -73,9 +73,9 @@ describe('TopoCli', () => {
             {
                 id: 't',
                 url: 'u',
-                subsystem: 'Host',
-                ports: ['8080:80'],
+                features: [],
                 description: 'catty template description',
+                ref: 'r',
             },
         ];
         execSyncMock.mockReturnValue(JSON.stringify(list));
@@ -85,6 +85,12 @@ describe('TopoCli', () => {
             ['templates', '-o', 'json'],
             { encoding: 'utf8' },
         );
+    });
+
+    it('listTemplates throws error on invalid JSON output', () => {
+        execSyncMock.mockReturnValue('invalid json');
+
+        expect(() => topoCli.listTemplates()).toThrow();
     });
 
     it('getProject parses JSON output', () => {
@@ -101,6 +107,12 @@ describe('TopoCli', () => {
         };
         execSyncMock.mockReturnValue(JSON.stringify(list));
         expect(topoCli.getProject('p')).toEqual(list);
+    });
+
+    it('getProject throws error on invalid JSON output', () => {
+        execSyncMock.mockReturnValue('invalid json');
+
+        expect(() => topoCli.getProject('p')).toThrow();
     });
 
     it('describe resolves and runs topo describe with --target in provided cwd', async () => {
@@ -257,7 +269,7 @@ describe('TopoCli', () => {
         );
     });
 
-    it('health throws error on invalid JSON output', async () => {
+    it('health throws error when JSON output is invalid', async () => {
         execMock.mockImplementation((_bin, _cargs, _options, cb) => {
             cb!(null, 'invalid json', '');
             return cp;

@@ -3,10 +3,10 @@
 /// <reference path="./vscode-webview.d.ts" />
 
 import ReactDOM from 'react-dom/client';
-import { ProjectDescription } from '../src/util/types';
 import { ComposeEditor } from './composeEditor/composeEditor';
 import './main.css';
 import { BoardDashboard } from './boardDashboard';
+import { ProjectDescription } from '../src/topoCliSchema';
 
 const vscode = acquireVsCodeApi();
 

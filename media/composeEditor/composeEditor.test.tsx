@@ -7,7 +7,7 @@ import {
 } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { ComposeEditor } from './composeEditor';
-import { ProjectDescription } from '../../src/util/types';
+import { ProjectDescription } from '../../src/topoCliSchema';
 
 describe('ComposeEditor', () => {
     const project: ProjectDescription = {

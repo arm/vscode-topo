@@ -1,14 +1,15 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { ComposeEditorProvider } from './composeEditorProvider';
-import { ProjectDescription, TargetItem } from './util/types';
 import { ComposeEditorMessageHandler } from './composeEditorMessageHandler';
 import { Deploy } from './actions/deploy';
 import { logger } from './util/logger';
 import { showAndLogError } from './util/showAndLogError';
 import { TopoCli } from './topoCli';
 import { mock, MockProxy } from 'jest-mock-extended';
+import { ProjectDescription } from './topoCliSchema';
 import { TargetStore } from './workloadPlacement/targetStore';
+import { TargetItem } from './util/types';
 
 jest.mock('./util/logger');
 jest.mock('./util/showAndLogError', () => ({
