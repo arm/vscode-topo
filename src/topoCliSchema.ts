@@ -43,10 +43,12 @@ export const healthCheckResultSchema = type({
 export type HealthCheckResult = Infer<typeof healthCheckResultSchema>;
 
 const serviceDescriptionSchema = type({
-    build: type({
-        context: string(),
-    }),
-    containerName: string(),
+    build: optional(
+        type({
+            context: string(),
+        }),
+    ),
+    containerName: optional(string()),
     runtime: optional(string()),
     annotations: optional(record(string(), string())),
 });
