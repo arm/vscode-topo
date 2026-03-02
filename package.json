@@ -336,7 +336,7 @@
                 },
                 {
                     "command": "topo.openSerial",
-                    "when": "view === topo.target-manager && viewItem =~ /Subsystem/",
+                    "when": "view === topo.target-manager && viewItem =~ /^Subsystem /",
                     "group": "inline"
                 }
             ],

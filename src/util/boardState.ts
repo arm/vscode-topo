@@ -15,10 +15,5 @@ export function isBoardReachable(boardState: BoardState): boolean {
 }
 
 export function isTargetReady(boardState: BoardState): boolean {
-    return (
-        isBoardReachable(boardState) &&
-        hasContainerEngine(boardState) &&
-        (boardState.health?.Dependencies.every((v) => v.Healthy) ?? false) &&
-        (boardState.health?.SubsystemDriver.Healthy ?? false)
-    );
+    return isBoardReachable(boardState) && hasContainerEngine(boardState);
 }

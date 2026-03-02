@@ -9,6 +9,9 @@ import { BoardState, ContainerItem, TargetItem } from '../util/types';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { TargetStore } from './targetStore';
 import { TopoCli } from '../topoCli';
+import { TargetTreeDependencyGroupItem } from './targetTreeDependencyGroupItem';
+import { TargetTreeSubsystemGroupItem } from './targetTreeSubsystemGroupItem';
+import { HealthCheckDependency } from '../topoCliSchema';
 
 jest.mock('../util/logger');
 
@@ -171,27 +174,57 @@ describe('TargetTreeDataProvider', () => {
     });
 
     describe('getChildren', () => {
-        it('returns Board at root and dynamic subsystems as its children', async () => {
+        it('returns Board at root and Dependencies/Subsystems as its children', async () => {
             targetStoreMock.getTargets.mockReturnValue([target]);
 
             const rootChildren = await provider.getChildren();
             const boardChildren = await provider.getChildren(rootChildren[0]);
 
-            expect(rootChildren).toHaveLength(1);
-            expect(rootChildren[0].label).toBe('topo');
-            expect(boardChildren).toHaveLength(3);
-            expect(boardChildren[0]).toBeInstanceOf(TargetTreeSubsystemItem);
-            expect(boardChildren[1]).toBeInstanceOf(TargetTreeSubsystemItem);
-            expect(boardChildren[2]).toBeInstanceOf(TargetTreeSubsystemItem);
-            expect((boardChildren[0] as TargetTreeSubsystemItem).group).toBe(
-                'Host',
+            expect(boardChildren).toHaveLength(2);
+            expect(boardChildren[0]).toBeInstanceOf(
+                TargetTreeDependencyGroupItem,
             );
-            expect((boardChildren[1] as TargetTreeSubsystemItem).group).toBe(
-                'imx-rproc',
+            expect(boardChildren[1]).toBeInstanceOf(
+                TargetTreeSubsystemGroupItem,
             );
-            expect((boardChildren[2] as TargetTreeSubsystemItem).group).toBe(
-                'other-rproc',
+            expect(boardChildren[0].label).toBe('Dependencies');
+            expect(boardChildren[1].label).toBe('Subsystems');
+        });
+
+        it('returns dependency items for Dependencies group', async () => {
+            const subsystemDriverHealth = mock<HealthCheckDependency>({
+                Name: 'rproc-driver',
+            });
+            const dependencies = [
+                mock<HealthCheckDependency>({
+                    Name: 'Container Engine',
+                }),
+                mock<HealthCheckDependency>({
+                    Name: 'Some Dependency',
+                }),
+            ];
+            const boardState = mock<BoardState>({
+                targetId: target.id,
+                health: {
+                    Dependencies: dependencies,
+                    SubsystemDriver: subsystemDriverHealth,
+                },
+            });
+            containersManagerMock.getBoardState.mockResolvedValue(boardState);
+            targetStoreMock.getTargets.mockReturnValue([target]);
+            const rootChildren = await provider.getChildren();
+            const boardChildren = await provider.getChildren(rootChildren[0]);
+            const dependenciesGroup = boardChildren.find(
+                (v) => v instanceof TargetTreeDependencyGroupItem,
             );
+
+            const got = await provider.getChildren(dependenciesGroup);
+
+            expect(got.map((item) => item.label)).toEqual([
+                dependencies[0].Name,
+                subsystemDriverHealth.Name,
+                dependencies[1].Name,
+            ]);
         });
 
         it('marks selected board as not ready when health is undefined', async () => {
