@@ -1,5 +1,3 @@
-[![Maintainability](https://qlty.sh/badges/8e1f1697-168c-4a5d-ad72-a9f3ff78f42f/maintainability.png)](https://qlty.sh/gh/Arm-Debug/projects/vscode-topo) [![Code Coverage](https://qlty.sh/badges/8e1f1697-168c-4a5d-ad72-a9f3ff78f42f/test_coverage.png)](https://qlty.sh/gh/Arm-Debug/projects/vscode-topo)
-
 # vscode-topo
 
 A Visual Studio Code extension for managing and editing a Topo project with ease and visualize the services running on a board.
