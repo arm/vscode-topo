@@ -7,6 +7,18 @@ import { TargetTreeBoardItem } from './targetTreeBoardItem';
 import { TargetTreeSubsystemItem } from './targetTreeSubsystemItem';
 import { logger } from '../util/logger';
 import { isTargetReady } from '../util/boardState';
+import { TargetTreeDependencyGroupItem } from './targetTreeDependencyGroupItem';
+import { TargetTreeSubsystemGroupItem } from './targetTreeSubsystemGroupItem';
+import { TargetTreeDependencyItem } from './targetTreeDependencyItem';
+import { HealthCheckDependency } from '../topoCliSchema';
+
+function sortDependenciesByName(
+    deps: HealthCheckDependency[],
+): HealthCheckDependency[] {
+    return deps.sort((a, b) =>
+        a.Name.localeCompare(b.Name, undefined, { sensitivity: 'base' }),
+    );
+}
 
 export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
     public static readonly selectTargetCommand = `${manifest.PACKAGE_NAME}.selectTarget`;
@@ -145,6 +157,32 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
         }
 
         if (element instanceof TargetTreeBoardItem) {
+            const boardState = await this.containersManager.getBoardState();
+            if (boardState.health === undefined) {
+                return [];
+            }
+
+            const dependencies = [...boardState.health.Dependencies];
+            if (element.target.targetDescription?.remoteprocCPU.length) {
+                dependencies.push(boardState.health.SubsystemDriver);
+            }
+
+            const dependenciesGroup = new TargetTreeDependencyGroupItem(
+                dependencies,
+            );
+            const subsystemsGroup = new TargetTreeSubsystemGroupItem(
+                element.target,
+            );
+            return [dependenciesGroup, subsystemsGroup];
+        }
+
+        if (element instanceof TargetTreeDependencyGroupItem) {
+            return sortDependenciesByName(element.dependencies).map(
+                (d) => new TargetTreeDependencyItem(d),
+            );
+        }
+
+        if (element instanceof TargetTreeSubsystemGroupItem) {
             const remoteprocCpus =
                 element.target.targetDescription?.remoteprocCPU.map(
                     (rp) => rp.name,
