@@ -36,6 +36,7 @@ jobs:
             enable-code-climate: false
             package-manager: 'npm'
             download-script-name: download-tools.sh
+            unit-tests-script: 'run test:ci'
             enable-ksc-next-preview: false
             test-on-self-hosted-ubuntu-only: false
             is-platform-specific: true
