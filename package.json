@@ -373,6 +373,7 @@
         "watch-tests": "tsc -p . -w --outDir out",
         "lint": "npm run prettier-check && npm run eslint-check && npm run tsc-check",
         "test": "jest --passWithNoTests --coverage",
+        "test:ci": "npm run download && npm run test",
         "build:extension": "vite build --mode extension",
         "build:webview": "vite build --mode webview",
         "build": "npm run build:extension && npm run build:webview",
