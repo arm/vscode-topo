@@ -373,7 +373,6 @@
         "watch-tests": "tsc -p . -w --outDir out",
         "lint": "npm run prettier-check && npm run eslint-check && npm run tsc-check",
         "test": "jest --passWithNoTests --coverage",
-        "test:ci": "npm run download && npm run test",
         "build:extension": "vite build --mode extension",
         "build:webview": "vite build --mode webview",
         "build": "npm run build:extension && npm run build:webview",
@@ -383,7 +382,8 @@
         "download": "ts-node scripts/download.ts",
         "prettier-check": "prettier -c .",
         "eslint-check": "eslint .",
-        "tsc-check": "tsc --noEmit -p tsconfig.json"
+        "tsc-check": "tsc --noEmit -p tsconfig.json",
+        "postinstall": "npm run download -- --ci"
     },
     "devDependencies": {
         "@eclipse-cdt-cloud/vscode-serial-monitor": "^2.0.0",
