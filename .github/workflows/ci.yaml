@@ -26,8 +26,8 @@ jobs:
         name: Build and verify
         uses: arm-debug/vscode-workflows/.github/workflows/build-and-verify.yml@v5.5.0
         secrets:
-            EXTENSIONS_REPO_ACCESS_APP_ID: ${{ secrets.ML_REPO_ACCESS_APP_ID }}
-            EXTENSIONS_REPO_ACCESS_PRIVATE_KEY: ${{ secrets.ML_REPO_ACCESS_PRIVATE_KEY }}
+            EXTENSIONS_REPO_ACCESS_APP_ID: ${{ secrets.TOPO_ACCESS_APP_ID }}
+            EXTENSIONS_REPO_ACCESS_PRIVATE_KEY: ${{ secrets.TOPO_ACCESS_APP_PRIVATE_KEY }}
             GH_PACKAGES_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
             ARM_ARTIFACTORY_PASSWORD: 'UNUSED'
             KSC_NEXT_PREVIEW_APP_SECRET: 'UNUSED'
@@ -36,7 +36,6 @@ jobs:
             enable-code-climate: false
             package-manager: 'npm'
             download-script-name: download-tools.sh
-            unit-tests-script: 'run test:ci'
             enable-ksc-next-preview: false
             test-on-self-hosted-ubuntu-only: false
             is-platform-specific: true
