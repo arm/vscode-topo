@@ -44,7 +44,7 @@ Follow these steps to build and package the extension locally:
     npm install
     ```
 
-3. Download the `topo-cli` binary:
+3. Download the `topo` binary:
     ```bash
     npm run download
     ```
@@ -75,12 +75,12 @@ Execute unit tests and generate coverage report:
 npm test
 ```
 
-### Access the `topo-cli` binary
+### Access the `topo` binary
 
-When the extension is loaded the `topo-cli` binary path is added to the `PATH` and can be directly accessed from the VS Code terminal:
+When the extension is loaded the `topo` binary path is added to the `PATH` and can be directly accessed from the VS Code terminal:
 
 ```bash
-topo-cli
+topo
 ```
 
 ## License
