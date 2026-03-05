@@ -32,7 +32,7 @@ export type CloneSource = CloneRemoteSource | CloneLocalSource;
 export const targetDescriptionFileName = 'target-description.yaml';
 
 /**
- * Encapsulates operations against the topo-cli binary.
+ * Encapsulates operations against the topo binary.
  */
 export class TopoCli {
     constructor(
@@ -69,7 +69,7 @@ export class TopoCli {
     }
 
     /**
-     * Returns the file system path to the topo-cli binary.
+     * Returns the file system path to the topo binary.
      * On Windows, always appends the .exe extension.
      */
     public getBinaryPath(): string {
