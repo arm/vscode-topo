@@ -7,8 +7,8 @@ describe('TargetTreeDependencyItem', () => {
     it('sets label and description', () => {
         const item = new TargetTreeDependencyItem(
             mock<HealthCheckDependency>({
-                Name: 'Container Engine',
-                Value: 'docker',
+                name: 'Container Engine',
+                value: 'docker',
             }),
         );
 
@@ -19,7 +19,7 @@ describe('TargetTreeDependencyItem', () => {
     it('sets icon and context value for healthy dependency', () => {
         const item = new TargetTreeDependencyItem(
             mock<HealthCheckDependency>({
-                Healthy: true,
+                healthy: true,
             }),
         );
 
@@ -31,7 +31,7 @@ describe('TargetTreeDependencyItem', () => {
     it('sets icon and context value for unhealthy dependency', () => {
         const item = new TargetTreeDependencyItem(
             mock<HealthCheckDependency>({
-                Healthy: false,
+                healthy: false,
             }),
         );
 

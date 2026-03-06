@@ -399,14 +399,14 @@ describe('ProjectClone', () => {
     describe('cloneTemplateProject', () => {
         const templateList: TemplateDescription[] = [
             {
-                id: 'template-alpha',
+                name: 'template-alpha',
                 url: '/templates/template-alpha',
                 description: 'Template Apple description. Apple is a fruit.',
                 ref: 'r',
                 features: [],
             },
             {
-                id: 'template-banana',
+                name: 'template-banana',
                 url: '/templates/template-banana',
                 description:
                     'Template Cabbage description. Cabbage is a vegetable.',
@@ -416,7 +416,7 @@ describe('ProjectClone', () => {
         ];
 
         const templateQuickPickItems = templateList.map((template) => ({
-            label: template.id,
+            label: template.name,
             detail: getFirstSentence(template.description),
             template,
         }));

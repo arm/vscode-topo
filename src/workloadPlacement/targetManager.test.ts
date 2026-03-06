@@ -42,17 +42,17 @@ const targetDescription = {
 };
 
 const healthyBoard = {
-    IsLocalhost: false,
-    Connectivity: {
-        Healthy: true,
-        Name: 'Connectivity',
-        Value: '',
+    isLocalhost: false,
+    connectivity: {
+        healthy: true,
+        name: 'Connectivity',
+        value: '',
     },
-    Dependencies: [{ Healthy: true, Name: 'Container Engine', Value: '' }],
-    SubsystemDriver: {
-        Healthy: true,
-        Name: 'Subsystem Driver',
-        Value: '',
+    dependencies: [{ healthy: true, name: 'Container Engine', value: '' }],
+    subsystemDriver: {
+        healthy: true,
+        name: 'Subsystem Driver',
+        value: '',
     },
 };
 

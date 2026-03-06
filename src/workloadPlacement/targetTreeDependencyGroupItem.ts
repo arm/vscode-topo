@@ -38,7 +38,7 @@ export class TargetTreeDependencyGroupItem extends vscode.TreeItem {
 
         const healthy =
             dependencies.length > 0 &&
-            dependencies.every((dependency) => dependency.Healthy);
+            dependencies.every((dependency) => dependency.healthy);
         this.iconPath = getDependencyGroupIcon(healthy);
     }
 }

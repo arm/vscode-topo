@@ -85,7 +85,7 @@ export class ContainersManager implements vscode.Disposable {
         try {
             const health = await this.topoCli.health(target.ssh);
             return {
-                health: health.Target,
+                health: health.target,
                 targetId: target.id,
             };
         } catch (err) {

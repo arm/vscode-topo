@@ -16,7 +16,7 @@ function sortDependenciesByName(
     deps: HealthCheckDependency[],
 ): HealthCheckDependency[] {
     return deps.sort((a, b) =>
-        a.Name.localeCompare(b.Name, undefined, { sensitivity: 'base' }),
+        a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
     );
 }
 
@@ -162,9 +162,9 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
                 return [];
             }
 
-            const dependencies = [...boardState.health.Dependencies];
+            const dependencies = [...boardState.health.dependencies];
             if (element.target.targetDescription?.remoteprocCPU.length) {
-                dependencies.push(boardState.health.SubsystemDriver);
+                dependencies.push(boardState.health.subsystemDriver);
             }
 
             const dependenciesGroup = new TargetTreeDependencyGroupItem(

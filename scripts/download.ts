@@ -263,10 +263,10 @@ const version = section.version.replace(/^v/, '');
 
 // --- Determine asset name ---------------------------------------------------
 const assetMapping: Record<string, string> = {
-    'linux-x64': `topo_${version}_linux_amd64.tar.gz`,
-    'linux-arm64': `topo_${version}_linux_arm64.tar.gz`,
-    'darwin-arm64': `topo_${version}_darwin_arm64.tar.gz`,
-    'win32-x64': `topo_${version}_windows_amd64.zip`,
+    'linux-x64': `topo_linux_amd64.tar.gz`,
+    'linux-arm64': `topo_linux_arm64.tar.gz`,
+    'darwin-arm64': `topo_darwin_arm64.tar.gz`,
+    'win32-x64': `topo_windows_amd64.zip`,
 };
 const isWin = target.startsWith('win32');
 const topoFilename = isWin ? `${manifest.TOPO_CLI_WINDOWS}` : manifest.TOPO_CLI;
