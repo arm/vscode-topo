@@ -34,7 +34,7 @@ describe('listTemplates', () => {
         for (const template of templates) {
             expect(template).toEqual(
                 expect.objectContaining({
-                    id: expect.any(String),
+                    name: expect.any(String),
                     description: expect.any(String),
                     url: expect.any(String),
                     ref: expect.any(String),
@@ -57,22 +57,22 @@ describe('health', () => {
         const health = await topoCli.health('localhost');
 
         expect(health).toEqual({
-            Host: {
-                Dependencies: expect.any(Array),
+            host: {
+                dependencies: expect.any(Array),
             },
-            Target: expect.objectContaining({
-                IsLocalhost: true,
-                Dependencies: expect.any(Array),
-                Connectivity: expect.any(Object),
-                SubsystemDriver: expect.any(Object),
+            target: expect.objectContaining({
+                isLocalhost: true,
+                dependencies: expect.any(Array),
+                connectivity: expect.any(Object),
+                subsystemDriver: expect.any(Object),
             }),
         });
     });
 
-    it('fails when target is unreachable', async () => {
-        await expect(topoCli.health('unreachable-host')).rejects.toThrow(
-            'ssh probe failed',
-        );
+    it('succeeds when target is unreachable', async () => {
+        const health = await topoCli.health('unreachable-target');
+
+        expect(health.target.connectivity.healthy).toBe(false);
     });
 });
 

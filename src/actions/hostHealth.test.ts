@@ -49,28 +49,28 @@ describe('HostHealth', () => {
 
     it('opens a readonly host health virtual document', async () => {
         const hostHealth = {
-            Dependencies: [
+            dependencies: [
                 {
-                    Name: 'Container Engine',
-                    Healthy: true,
-                    Value: 'docker',
+                    name: 'Container Engine',
+                    healthy: true,
+                    value: 'docker',
                 },
             ],
         };
         const healthResult: HealthCheckResult = {
-            Host: hostHealth,
-            Target: {
-                IsLocalhost: true,
-                Dependencies: [],
-                Connectivity: {
-                    Name: 'Connectivity',
-                    Healthy: true,
-                    Value: 'ok',
+            host: hostHealth,
+            target: {
+                isLocalhost: true,
+                dependencies: [],
+                connectivity: {
+                    name: 'Connectivity',
+                    healthy: true,
+                    value: 'ok',
                 },
-                SubsystemDriver: {
-                    Name: 'Subsystem Driver',
-                    Healthy: true,
-                    Value: 'ready',
+                subsystemDriver: {
+                    name: 'Subsystem Driver',
+                    healthy: true,
+                    value: 'ready',
                 },
             },
         };
@@ -122,12 +122,12 @@ describe('HostHealth', () => {
     it('shows warning when startup host dependencies are unhealthy', async () => {
         topoCli.health.mockResolvedValue(
             mock<HealthCheckResult>({
-                Host: {
-                    Dependencies: [
+                host: {
+                    dependencies: [
                         {
-                            Name: 'SSH',
-                            Healthy: false,
-                            Value: 'missing',
+                            name: 'SSH',
+                            healthy: false,
+                            value: 'missing',
                         },
                     ],
                 },
@@ -155,12 +155,12 @@ describe('HostHealth', () => {
     it('does not warn when startup blocking host dependencies are healthy', async () => {
         topoCli.health.mockResolvedValue(
             mock<HealthCheckResult>({
-                Host: {
-                    Dependencies: [
+                host: {
+                    dependencies: [
                         {
-                            Name: 'SSH',
-                            Healthy: true,
-                            Value: 'ok',
+                            name: 'SSH',
+                            healthy: true,
+                            value: 'ok',
                         },
                     ],
                 },

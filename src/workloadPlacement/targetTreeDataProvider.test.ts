@@ -42,23 +42,23 @@ describe('TargetTreeDataProvider', () => {
         },
     };
     const boardHealth = {
-        IsLocalhost: false,
-        Connectivity: {
-            Name: 'Connectivity',
-            Healthy: true,
-            Value: 'ok',
+        isLocalhost: false,
+        connectivity: {
+            name: 'Connectivity',
+            healthy: true,
+            value: 'ok',
         },
-        Dependencies: [
+        dependencies: [
             {
-                Name: 'Podman',
-                Healthy: true,
-                Value: 'present',
+                name: 'Podman',
+                healthy: true,
+                value: 'present',
             },
         ],
-        SubsystemDriver: {
-            Name: 'SubsystemDriver',
-            Healthy: true,
-            Value: 'ready',
+        subsystemDriver: {
+            name: 'SubsystemDriver',
+            healthy: true,
+            value: 'ready',
         },
     };
 
@@ -193,21 +193,21 @@ describe('TargetTreeDataProvider', () => {
 
         it('returns dependency items for Dependencies group', async () => {
             const subsystemDriverHealth = mock<HealthCheckDependency>({
-                Name: 'rproc-driver',
+                name: 'rproc-driver',
             });
             const dependencies = [
                 mock<HealthCheckDependency>({
-                    Name: 'Container Engine',
+                    name: 'Container Engine',
                 }),
                 mock<HealthCheckDependency>({
-                    Name: 'Some Dependency',
+                    name: 'Some Dependency',
                 }),
             ];
             const boardState = mock<BoardState>({
                 targetId: target.id,
                 health: {
-                    Dependencies: dependencies,
-                    SubsystemDriver: subsystemDriverHealth,
+                    dependencies: dependencies,
+                    subsystemDriver: subsystemDriverHealth,
                 },
             });
             containersManagerMock.getBoardState.mockResolvedValue(boardState);
@@ -221,9 +221,9 @@ describe('TargetTreeDataProvider', () => {
             const got = await provider.getChildren(dependenciesGroup);
 
             expect(got.map((item) => item.label)).toEqual([
-                dependencies[0].Name,
-                subsystemDriverHealth.Name,
-                dependencies[1].Name,
+                dependencies[0].name,
+                subsystemDriverHealth.name,
+                dependencies[1].name,
             ]);
         });
 

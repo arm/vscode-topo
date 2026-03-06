@@ -141,11 +141,11 @@ export class ProjectClone {
         if (!selectedTemplate) {
             return;
         }
-        const cloneSourceString = `template:${selectedTemplate.id}`;
+        const cloneSourceString = `template:${selectedTemplate.name}`;
         await this.cloneWithSource(
             workspacePath,
             cloneSourceString,
-            selectedTemplate.id,
+            selectedTemplate.name,
         );
     }
 
@@ -243,7 +243,7 @@ export class ProjectClone {
     > => {
         const templates = this.topoCli.listTemplates();
         const templateItems = templates.map((template) => ({
-            label: template.id,
+            label: template.name,
             detail: getFirstSentence(template.description),
             template,
         }));

@@ -101,21 +101,21 @@ const target: TargetItem = {
 };
 const topoCli = mock<TopoCli>();
 topoCli.health.mockResolvedValue({
-    Host: { Dependencies: [] },
-    Target: {
-        IsLocalhost: false,
-        Dependencies: [
+    host: { dependencies: [] },
+    target: {
+        isLocalhost: false,
+        dependencies: [
             {
-                Name: 'Container Engine',
-                Healthy: true,
-                Value: 'docker',
+                name: 'Container Engine',
+                healthy: true,
+                value: 'docker',
             },
         ],
-        Connectivity: { Name: 'Connected', Healthy: true, Value: '' },
-        SubsystemDriver: {
-            Name: 'Subsystem Driver (remoteproc)',
-            Healthy: true,
-            Value: 'driver-x',
+        connectivity: { name: 'Connected', healthy: true, value: '' },
+        subsystemDriver: {
+            name: 'Subsystem Driver (remoteproc)',
+            healthy: true,
+            value: 'driver-x',
         },
     },
 });

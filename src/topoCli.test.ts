@@ -71,7 +71,7 @@ describe('TopoCli', () => {
     it('listTemplates parses JSON output', () => {
         const list: TemplateDescription[] = [
             {
-                id: 't',
+                name: 't',
                 url: 'u',
                 features: [],
                 description: 'catty template description',
@@ -232,25 +232,25 @@ describe('TopoCli', () => {
 
     it('health parses JSON output', async () => {
         const want: HealthCheckResult = {
-            Host: { Dependencies: [] },
-            Target: {
-                IsLocalhost: false,
-                Dependencies: [
+            host: { dependencies: [] },
+            target: {
+                isLocalhost: false,
+                dependencies: [
                     {
-                        Name: 'Container Engine',
-                        Healthy: true,
-                        Value: 'docker',
+                        name: 'Container Engine',
+                        healthy: true,
+                        value: 'docker',
                     },
                 ],
-                Connectivity: {
-                    Name: 'Connected',
-                    Healthy: true,
-                    Value: '',
+                connectivity: {
+                    name: 'Connected',
+                    healthy: true,
+                    value: '',
                 },
-                SubsystemDriver: {
-                    Name: 'Subsystem Driver (remoteproc)',
-                    Healthy: true,
-                    Value: 'driver-x',
+                subsystemDriver: {
+                    name: 'Subsystem Driver (remoteproc)',
+                    healthy: true,
+                    value: 'driver-x',
                 },
             },
         };

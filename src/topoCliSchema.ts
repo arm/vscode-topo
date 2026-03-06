@@ -11,7 +11,7 @@ import {
 } from 'superstruct';
 
 export const templateSchema = type({
-    id: string(),
+    name: string(),
     description: string(),
     features: nullable(array(string())),
     url: string(),
@@ -21,22 +21,22 @@ export const templateSchema = type({
 export type TemplateDescription = Infer<typeof templateSchema>;
 
 const healthCheckDependencySchema = type({
-    Name: trimmed(string()),
-    Healthy: boolean(),
-    Value: trimmed(string()),
+    name: trimmed(string()),
+    healthy: boolean(),
+    value: trimmed(string()),
 });
 
 export type HealthCheckDependency = Infer<typeof healthCheckDependencySchema>;
 
 export const healthCheckResultSchema = type({
-    Host: type({
-        Dependencies: array(healthCheckDependencySchema),
+    host: type({
+        dependencies: array(healthCheckDependencySchema),
     }),
-    Target: type({
-        IsLocalhost: boolean(),
-        Connectivity: healthCheckDependencySchema,
-        SubsystemDriver: healthCheckDependencySchema,
-        Dependencies: array(healthCheckDependencySchema),
+    target: type({
+        isLocalhost: boolean(),
+        connectivity: healthCheckDependencySchema,
+        subsystemDriver: healthCheckDependencySchema,
+        dependencies: array(healthCheckDependencySchema),
     }),
 });
 

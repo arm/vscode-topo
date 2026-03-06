@@ -51,9 +51,9 @@ export class HostHealth {
             return;
         }
 
-        const unhealthyDependencies = health.Host.Dependencies.filter(
-            (v) => !v.Healthy,
-        ).map((dependency) => dependency.Name);
+        const unhealthyDependencies = health.host.dependencies
+            .filter((v) => !v.healthy)
+            .map((dependency) => dependency.name);
         if (unhealthyDependencies.length === 0) {
             return;
         }
@@ -78,7 +78,7 @@ export class HostHealth {
             return;
         }
 
-        const content = JSON.stringify(health?.Host ?? null, null, 4);
+        const content = JSON.stringify(health?.host ?? null, null, 4);
         const documentUri = vscode.Uri.from({
             scheme: HostHealth.inspectHostHealthScheme,
             path: `/host-health-${Date.now()}.json`,

@@ -5,13 +5,13 @@ export function hasContainerEngine(boardState: BoardState): boolean {
         return false;
     }
 
-    return boardState.health.Dependencies.some(
-        (v) => v.Name === 'Container Engine' && v.Healthy,
+    return boardState.health.dependencies.some(
+        (v) => v.name === 'Container Engine' && v.healthy,
     );
 }
 
 export function isBoardReachable(boardState: BoardState): boolean {
-    return boardState.health?.Connectivity.Healthy ?? false;
+    return boardState.health?.connectivity.healthy ?? false;
 }
 
 export function isTargetReady(boardState: BoardState): boolean {
