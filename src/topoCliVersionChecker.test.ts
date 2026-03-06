@@ -65,4 +65,19 @@ describe('TopoCliVersionChecker', () => {
             expect.stringContaining('expected version not specified'),
         );
     });
+
+    it('handles v-prefixed versions in package.json', () => {
+        topoCli.getVersion.mockReturnValue({
+            version: '1.2.3',
+            commit: 'abcd',
+        });
+        jest.mocked(fs.readFileSync).mockReturnValue(
+            JSON.stringify({ [manifest.TOPO_CLI]: { version: 'v1.2.3' } }),
+        );
+        const checker = new TopoCliVersionChecker(topoCli, extensionPath);
+
+        const result = checker.checkTopoCliVersion();
+
+        expect(result).toBe(true);
+    });
 });

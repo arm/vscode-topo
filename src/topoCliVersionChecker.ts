@@ -27,7 +27,8 @@ export class TopoCliVersionChecker {
         const pkgPath = path.join(this.extensionPath, 'package.json');
         const text = fs.readFileSync(pkgPath, 'utf8');
         const pkg = JSON.parse(text);
-        return pkg[manifest.TOPO_CLI]?.version;
+        const versionStr = pkg[manifest.TOPO_CLI]?.version ?? '';
+        return versionStr.startsWith('v') ? versionStr.slice(1) : versionStr;
     }
 
     private verifyVersion(): void {
