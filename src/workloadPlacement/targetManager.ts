@@ -8,9 +8,9 @@ import { Target } from './target';
 import { TargetStore } from './targetStore';
 import { logger } from '../util/logger';
 import { ContainersManager } from './containersManager';
-import { getTreeItemIcon } from './targetTreeBoardItem';
+import { getTreeItemIcon } from './targetTreeTargetItem';
 import type { TopoCli } from '../topoCli';
-import { isTargetReady } from '../util/boardState';
+import { isTargetReady } from '../util/targetState';
 
 export class TargetManager {
     public static readonly viewId = `${manifest.PACKAGE_NAME}.target-manager`;
@@ -117,12 +117,12 @@ export class TargetManager {
         }
         const target = await this.targetStore.getSelectedTarget();
         if (target) {
-            const boardState = await this.containersManager.getBoardState();
-            const connectionReady = target.id === boardState.targetId;
+            const targetState = await this.containersManager.getTargetState();
+            const connectionReady = target.id === targetState.targetId;
             const targetTreeIcon = getTreeItemIcon(
                 true,
                 connectionReady,
-                isTargetReady(boardState),
+                isTargetReady(targetState),
             );
             const iconId = targetTreeIcon?.id || 'pass-filled';
             this.statusBarItem.text = `$(${iconId}) ${target.id}`;

@@ -1,14 +1,14 @@
 import * as vscode from 'vscode';
-import { BoardDashboardMessageHandler } from './boardDashboardMessageHandler';
+import { TargetDashboardMessageHandler } from './targetDashboardMessageHandler';
 import { ContainersManager } from '../workloadPlacement/containersManager';
 import { PACKAGE_NAME } from '../manifest';
 
-export class BoardDashboardProvider {
-    public static readonly viewType = `${PACKAGE_NAME}.boardDashboard`;
+export class TargetDashboardProvider {
+    public static readonly viewType = `${PACKAGE_NAME}.targetDashboard`;
 
     constructor(
         private readonly context: vscode.ExtensionContext,
-        private readonly messageHandler: BoardDashboardMessageHandler,
+        private readonly messageHandler: TargetDashboardMessageHandler,
         private readonly containersManager: ContainersManager,
     ) {}
 
@@ -16,8 +16,8 @@ export class BoardDashboardProvider {
 
     public showDashboard(): void {
         const webviewPanel = vscode.window.createWebviewPanel(
-            BoardDashboardProvider.viewType,
-            'Board Dashboard',
+            TargetDashboardProvider.viewType,
+            'Target Dashboard',
             vscode.ViewColumn.One,
             {
                 enableScripts: true,
@@ -29,7 +29,7 @@ export class BoardDashboardProvider {
         );
 
         const dataUpdateDisposable = this.containersManager.onDataUpdate(() => {
-            this.messageHandler.renderBoardDashboard(webviewPanel.webview);
+            this.messageHandler.renderTargetDashboard(webviewPanel.webview);
         });
 
         const onMessageReceiveDisposable =
@@ -57,10 +57,10 @@ export class BoardDashboardProvider {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="${styleUri}" rel="stylesheet">
   <link href="https://microsoft.github.io/vscode-codicons/dist/codicon.css" rel="stylesheet" />
-  <title>Board Dashboard</title>
+  <title>Target Dashboard</title>
 </head>
 <body>
-  <div id="board-dashboard"></div>
+  <div id="target-dashboard"></div>
   <script src="${scriptUri}"></script>
 </body>
 </html>`;

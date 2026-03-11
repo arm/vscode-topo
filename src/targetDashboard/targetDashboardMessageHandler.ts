@@ -20,11 +20,11 @@ type OpenContainerInBrowserMessage = {
 type AttachVsCodeMessage = { type: 'attach-vscode'; containerId: string };
 type AttachShellMessage = { type: 'attach-shell'; containerId: string };
 type AttachSshMessage = { type: 'attach-ssh' };
-type BoardDashboardWebviewReadyMessage = {
-    type: 'board-dashboard-webview-ready';
+type TargetDashboardWebviewReadyMessage = {
+    type: 'target-dashboard-webview-ready';
 };
 
-type BoardDashboardWebviewMessage =
+type TargetDashboardWebviewMessage =
     | StartContainerMessage
     | StopContainerMessage
     | DeleteContainerMessage
@@ -32,11 +32,11 @@ type BoardDashboardWebviewMessage =
     | AttachVsCodeMessage
     | AttachShellMessage
     | AttachSshMessage
-    | BoardDashboardWebviewReadyMessage;
+    | TargetDashboardWebviewReadyMessage;
 
-function parseBoardDashboardWebviewMessage(
+function parseTargetDashboardWebviewMessage(
     value: unknown,
-): BoardDashboardWebviewMessage {
+): TargetDashboardWebviewMessage {
     if (!isPlainObject(value) || typeof value.type !== 'string') {
         throw new Error(
             'Invalid webview message: expected an object with a string "type" property',
@@ -59,7 +59,7 @@ function parseBoardDashboardWebviewMessage(
         }
 
         case 'attach-ssh':
-        case 'board-dashboard-webview-ready':
+        case 'target-dashboard-webview-ready':
             return { type: value.type };
 
         default:
@@ -67,7 +67,7 @@ function parseBoardDashboardWebviewMessage(
     }
 }
 
-export class BoardDashboardMessageHandler {
+export class TargetDashboardMessageHandler {
     constructor(
         private readonly containersManager: ContainersManager,
         private readonly targetStore: TargetStore,
@@ -76,22 +76,22 @@ export class BoardDashboardMessageHandler {
         private readonly attachShell: AttachShell,
     ) {}
 
-    public async renderBoardDashboard(
+    public async renderTargetDashboard(
         messagePoster: MessagePoster,
     ): Promise<void> {
         const containersData = await this.containersManager.getContainersData();
-        const boardState = await this.containersManager.getBoardState();
+        const targetState = await this.containersManager.getTargetState();
         const target = await this.targetStore.getSelectedTarget();
         if (!target) {
-            logger.error('No target selected, cannot render board dashboard');
+            logger.error('No target selected, cannot render target dashboard');
             return;
         }
         const remoteprocCpus =
             target?.targetDescription?.remoteprocCPU.map((rp) => rp.name) || [];
         const subsystems = ['Host', ...remoteprocCpus];
         await messagePoster.postMessage({
-            type: 'render-board-dashboard',
-            boardState,
+            type: 'render-target-dashboard',
+            targetState,
             containersData,
             target,
             subsystems,
@@ -127,7 +127,7 @@ export class BoardDashboardMessageHandler {
         }
 
         logger.info(`Container ${containerId} started successfully`);
-        await this.renderBoardDashboard(messagePoster);
+        await this.renderTargetDashboard(messagePoster);
     }
 
     private async handleStopContainer(
@@ -148,7 +148,7 @@ export class BoardDashboardMessageHandler {
         }
 
         logger.info(`Container ${containerId} stopped successfully`);
-        await this.renderBoardDashboard(messagePoster);
+        await this.renderTargetDashboard(messagePoster);
     }
 
     private async handleDeleteContainer(
@@ -169,7 +169,7 @@ export class BoardDashboardMessageHandler {
         }
 
         logger.info(`Container ${containerId} deleted successfully`);
-        await this.renderBoardDashboard(messagePoster);
+        await this.renderTargetDashboard(messagePoster);
     }
 
     private async handleOpenContainerInBrowser(
@@ -212,17 +212,17 @@ export class BoardDashboardMessageHandler {
             await this.attachShell.attachSSH();
         } catch (err: unknown) {
             if (isTopoError(err) && err.code === 'DOCKER') {
-                showAndLogError('Failed to attach SSH to the board', err);
+                showAndLogError('Failed to attach SSH to the target', err);
                 return;
             }
             throw err;
         }
     }
 
-    private async handleBoardDashboardWebviewReady(
+    private async handleTargetDashboardWebviewReady(
         messagePoster: MessagePoster,
     ): Promise<void> {
-        await this.renderBoardDashboard(messagePoster);
+        await this.renderTargetDashboard(messagePoster);
     }
 
     /**
@@ -233,7 +233,7 @@ export class BoardDashboardMessageHandler {
         e: unknown,
     ): Promise<void> {
         try {
-            const message = parseBoardDashboardWebviewMessage(e);
+            const message = parseTargetDashboardWebviewMessage(e);
             switch (message.type) {
                 case 'start-container':
                     await this.handleStartContainer(
@@ -274,13 +274,13 @@ export class BoardDashboardMessageHandler {
                     await this.handleAttachSsh();
                     return;
 
-                case 'board-dashboard-webview-ready':
-                    await this.handleBoardDashboardWebviewReady(messagePoster);
+                case 'target-dashboard-webview-ready':
+                    await this.handleTargetDashboardWebviewReady(messagePoster);
                     return;
             }
         } catch (err: unknown) {
             showAndLogError(
-                'Unexpected error handling message from board dashboard webview',
+                'Unexpected error handling message from target dashboard webview',
                 err,
             );
         }

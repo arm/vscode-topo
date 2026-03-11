@@ -1,15 +1,15 @@
 import * as vscode from 'vscode';
 import { ComposeEditorProvider } from './composeEditorProvider';
 import { TopoCli } from './topoCli';
-import { OnBoardTopoConsoleOpener } from './onboardTopoConsoleOpener';
+import { OnTargetTopoConsoleOpener } from './onTargetTopoConsoleOpener';
 import { ProjectInit } from './projectInit';
 import { TopoCliVersionChecker } from './topoCliVersionChecker';
 import { TargetManager } from './workloadPlacement/targetManager';
 import { TargetTreeDataProvider } from './workloadPlacement/targetTreeDataProvider';
 import { ContainersManager } from './workloadPlacement/containersManager';
 import { Deployer } from './deployer';
-import { BoardDashboardMessageHandler } from './boardDashboard/boardDashboardMessageHandler';
-import { BoardDashboardProvider } from './boardDashboard/boardDashboardProvider';
+import { TargetDashboardMessageHandler } from './targetDashboard/targetDashboardMessageHandler';
+import { TargetDashboardProvider } from './targetDashboard/targetDashboardProvider';
 import { ComposeEditorMessageHandler } from './composeEditorMessageHandler';
 import { ContainerStart } from './actions/containerStart';
 import { ContainerStop } from './actions/containerStop';
@@ -19,7 +19,7 @@ import { AttachShell } from './actions/attachShell';
 import { ContainerDelete } from './actions/containerDelete';
 import { OpenSerial } from './actions/openSerial';
 import { DockerCommands } from './workloadPlacement/dockerCommands';
-import { OpenBoardDashboard } from './actions/openBoardDashboard';
+import { OpenTargetDashboard } from './actions/openTargetDashboard';
 import { TargetStore } from './workloadPlacement/targetStore';
 import { ProjectClone } from './projectClone';
 import { Deploy } from './actions/deploy';
@@ -43,7 +43,7 @@ export async function activate(
 
     const targetStore = TargetStore.getInstance(context);
     const deployer = new Deployer(topoCli, targetStore);
-    const onBoardTopoConsoleOpener = new OnBoardTopoConsoleOpener(
+    const onTargetTopoConsoleOpener = new OnTargetTopoConsoleOpener(
         context,
         targetStore,
     );
@@ -81,31 +81,31 @@ export async function activate(
         containersManager,
         topoCli,
     );
-    const boardDashboardMessageHandler = new BoardDashboardMessageHandler(
+    const targetDashboardMessageHandler = new TargetDashboardMessageHandler(
         containersManager,
         targetStore,
         containerOpenInBrowser,
         attachVsCode,
         attachShell,
     );
-    const boardDashboardProvider = new BoardDashboardProvider(
+    const targetDashboardProvider = new TargetDashboardProvider(
         context,
-        boardDashboardMessageHandler,
+        targetDashboardMessageHandler,
         containersManager,
     );
     const containerStart = new ContainerStart(context, containersManager);
     const containerStop = new ContainerStop(context, containersManager);
     const containerDelete = new ContainerDelete(context, containersManager);
-    const openBoardDashboard = new OpenBoardDashboard(
+    const openTargetDashboard = new OpenTargetDashboard(
         context,
-        boardDashboardProvider,
+        targetDashboardProvider,
     );
     const openSerial = new OpenSerial(context);
     const health = new HostHealth(context, topoCli);
     context.subscriptions.push(targetStore);
     await topoCli.activate();
     context.subscriptions.push(topoCli);
-    await onBoardTopoConsoleOpener.activate();
+    await onTargetTopoConsoleOpener.activate();
     await projectInit.activate();
     await projectClone.activate();
     deploy.activate();
@@ -116,11 +116,11 @@ export async function activate(
     await containersManager.activate();
     await targetTreeDataProvider.activate();
     await targetManager.activate();
-    await boardDashboardProvider.activate();
+    await targetDashboardProvider.activate();
     containerStart.activate();
     await containerStop.activate();
     containerDelete.activate();
-    openBoardDashboard.activate();
+    openTargetDashboard.activate();
     openSerial.activate();
     health.activate();
     health.checkHostDependencyHealth();

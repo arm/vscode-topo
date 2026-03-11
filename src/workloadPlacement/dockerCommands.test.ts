@@ -59,13 +59,13 @@ describe('DockerCommands', () => {
     describe('getContexts', () => {
         it('parses contexts list', async () => {
             execMock.mockResolvedValueOnce({
-                stdout: 'default\nboard\n',
+                stdout: 'default\ntarget\n',
                 stderr: '',
             });
 
             const list = await dockerCommands.getContexts();
 
-            expect(list).toEqual(['default', 'board']);
+            expect(list).toEqual(['default', 'target']);
             expect(execMock).toHaveBeenCalledWith(
                 "docker context ls --format '{{.Name}}'",
             );
@@ -92,10 +92,10 @@ describe('DockerCommands', () => {
         it('invokes docker context use', async () => {
             execMock.mockResolvedValueOnce({ stdout: '', stderr: '' });
 
-            await dockerCommands.useContext('board-ctx');
+            await dockerCommands.useContext('target-ctx');
 
             expect(execMock).toHaveBeenCalledWith(
-                'docker context use board-ctx',
+                'docker context use target-ctx',
             );
         });
     });
@@ -103,11 +103,11 @@ describe('DockerCommands', () => {
     describe('ensureContext', () => {
         it('does nothing when context exists', async () => {
             execMock.mockResolvedValueOnce({
-                stdout: 'a\nboard-ctx\n',
+                stdout: 'a\ntarget-ctx\n',
                 stderr: '',
             });
 
-            await dockerCommands.ensureContext('board-ctx', 'user@host');
+            await dockerCommands.ensureContext('target-ctx', 'user@host');
 
             expect(execMock).toHaveBeenCalledTimes(1);
         });
@@ -117,11 +117,11 @@ describe('DockerCommands', () => {
                 .mockResolvedValueOnce({ stdout: 'default\n', stderr: '' })
                 .mockResolvedValueOnce({ stdout: '', stderr: '' });
 
-            await dockerCommands.ensureContext('board-ctx', 'user@host');
+            await dockerCommands.ensureContext('target-ctx', 'user@host');
 
             expect(execMock).toHaveBeenCalledTimes(2);
             expect(execMock.mock.calls[1][0]).toContain(
-                `docker context create board-ctx`,
+                `docker context create target-ctx`,
             );
         });
 
@@ -129,7 +129,7 @@ describe('DockerCommands', () => {
             execMock.mockRejectedValueOnce(new Error('list-fail'));
 
             const ensureContextOperation = dockerCommands.ensureContext(
-                'board-ctx',
+                'target-ctx',
                 'user@host',
             );
 
@@ -152,7 +152,7 @@ describe('DockerCommands', () => {
 
             const res = await dockerCommands.executeWithContext(
                 () => op(),
-                'board-ctx',
+                'target-ctx',
                 0,
             );
 
@@ -160,7 +160,7 @@ describe('DockerCommands', () => {
             // first call shows 'docker context show' then use then restore
             expect(execMock.mock.calls[0][0]).toBe('docker context show');
             expect(execMock.mock.calls[1][0]).toBe(
-                'docker context use board-ctx',
+                'docker context use target-ctx',
             );
             expect(execMock.mock.calls[2][0]).toBe('docker context use orig');
         });
@@ -178,7 +178,7 @@ describe('DockerCommands', () => {
             const op = jest.fn().mockRejectedValue(new Error('op-fail'));
 
             const executeWithContextOperation =
-                dockerCommands.executeWithContext(() => op(), 'board-ctx', 0);
+                dockerCommands.executeWithContext(() => op(), 'target-ctx', 0);
 
             await expect(executeWithContextOperation).rejects.toThrow(
                 'op-fail',

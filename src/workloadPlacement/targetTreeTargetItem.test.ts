@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
-import { TargetTreeBoardItem } from './targetTreeBoardItem';
+import { TargetTreeTargetItem } from './targetTreeTargetItem';
 import { TargetItem } from '../util/types';
 
-describe('TargetTreeBoardItem', () => {
+describe('TargetTreeTargetItem', () => {
     const baseTarget: TargetItem = {
         id: 't-1',
         ssh: 'root@host.local',
@@ -15,19 +15,19 @@ describe('TargetTreeBoardItem', () => {
     };
 
     it('sets basic fields (id, label, description)', () => {
-        const item = new TargetTreeBoardItem(baseTarget, false, false, true);
+        const item = new TargetTreeTargetItem(baseTarget, false, false, true);
 
         expect(item.id).toBe(baseTarget.id);
         expect(item.label).toBe(baseTarget.id);
         expect(item.description).toBe(baseTarget.ssh);
         expect(item.displayName).toBe(baseTarget.id);
-        expect(item.contextValue).toContain('Board');
+        expect(item.contextValue).toContain('Target');
     });
 
     it('shows loading icon and Selected context when selected but not connectionReady', () => {
-        const item = new TargetTreeBoardItem(baseTarget, true, false, true);
+        const item = new TargetTreeTargetItem(baseTarget, true, false, true);
 
-        expect(item.contextValue).toContain('Board');
+        expect(item.contextValue).toContain('Target');
         expect(item.contextValue).toContain('Selected');
         expect(item.contextValue).not.toContain('ConnectionReady');
         expect(item.contextValue).toContain('TargetReady');
@@ -42,9 +42,9 @@ describe('TargetTreeBoardItem', () => {
     });
 
     it('shows error icon and ConnectionReady context when connectionReady true but targetReady false', () => {
-        const item = new TargetTreeBoardItem(baseTarget, true, true, false);
+        const item = new TargetTreeTargetItem(baseTarget, true, true, false);
 
-        expect(item.contextValue).toContain('Board');
+        expect(item.contextValue).toContain('Target');
         expect(item.contextValue).toContain('Selected');
         expect(item.contextValue).toContain('ConnectionReady');
         expect(item.contextValue).not.toContain('TargetReady');
@@ -62,9 +62,9 @@ describe('TargetTreeBoardItem', () => {
     });
 
     it('has no special contexts or icon when not selected and targetReady true', () => {
-        const item = new TargetTreeBoardItem(baseTarget, false, false, true);
+        const item = new TargetTreeTargetItem(baseTarget, false, false, true);
 
-        expect(item.contextValue).toContain('Board');
+        expect(item.contextValue).toContain('Target');
         expect(item.contextValue).not.toContain('Selected');
         expect(item.contextValue).not.toContain('ConnectionReady');
         expect(item.contextValue).toContain('TargetReady');
@@ -75,9 +75,9 @@ describe('TargetTreeBoardItem', () => {
     });
 
     it('is expanded when selected, connectionReady and targetReady', () => {
-        const item = new TargetTreeBoardItem(baseTarget, true, true, true);
+        const item = new TargetTreeTargetItem(baseTarget, true, true, true);
 
-        expect(item.contextValue).toContain('Board');
+        expect(item.contextValue).toContain('Target');
         expect(item.contextValue).toContain('Selected');
         expect(item.contextValue).toContain('ConnectionReady');
         expect(item.contextValue).toContain('TargetReady');

@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
-import { OnBoardTopoConsoleOpener } from './onboardTopoConsoleOpener';
+import { OnTargetTopoConsoleOpener } from './onTargetTopoConsoleOpener';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { TargetStore } from './workloadPlacement/targetStore';
 import { TargetItem } from './util/types';
 
-describe('OnBoardTopoConsoleOpener', () => {
+describe('OnTargetTopoConsoleOpener', () => {
     let context: MockProxy<vscode.ExtensionContext>;
     let commandHandler:
         | { command: string; callback: (...args: unknown[]) => void }
@@ -21,16 +21,16 @@ describe('OnBoardTopoConsoleOpener', () => {
         },
     };
 
-    const activateOnBoardTopoConsoleOpener = (
+    const activateOnTargetTopoConsoleOpener = (
         context: vscode.ExtensionContext,
         targetStore: TargetStore,
     ) => {
-        const onBoardTopoConsoleOpener = new OnBoardTopoConsoleOpener(
+        const onTargetTopoConsoleOpener = new OnTargetTopoConsoleOpener(
             context,
             targetStore,
         );
-        onBoardTopoConsoleOpener.activate();
-        return onBoardTopoConsoleOpener;
+        onTargetTopoConsoleOpener.activate();
+        return onTargetTopoConsoleOpener;
     };
 
     beforeEach(() => {
@@ -48,7 +48,7 @@ describe('OnBoardTopoConsoleOpener', () => {
             async (command, ...args) => {
                 if (
                     command ===
-                        OnBoardTopoConsoleOpener.openTopoConsoleCommand &&
+                        OnTargetTopoConsoleOpener.openTopoConsoleCommand &&
                     commandHandler
                 ) {
                     return commandHandler.callback(...args);
@@ -63,19 +63,19 @@ describe('OnBoardTopoConsoleOpener', () => {
     });
 
     it('registers the openTopoConsole command', () => {
-        activateOnBoardTopoConsoleOpener(context, targetStore);
+        activateOnTargetTopoConsoleOpener(context, targetStore);
         expect(vscode.commands.registerCommand).toHaveBeenCalledWith(
-            OnBoardTopoConsoleOpener.openTopoConsoleCommand,
+            OnTargetTopoConsoleOpener.openTopoConsoleCommand,
             expect.any(Function),
         );
     });
 
-    it('opens the on-board Topo console URL in the browser', async () => {
+    it('opens the on-target Topo console URL in the browser', async () => {
         jest.mocked(vscode.env.openExternal).mockResolvedValue(true);
-        activateOnBoardTopoConsoleOpener(context, targetStore);
+        activateOnTargetTopoConsoleOpener(context, targetStore);
 
         await vscode.commands.executeCommand(
-            OnBoardTopoConsoleOpener.openTopoConsoleCommand,
+            OnTargetTopoConsoleOpener.openTopoConsoleCommand,
         );
 
         expect(vscode.env.openExternal).toHaveBeenCalledWith(
@@ -88,14 +88,14 @@ describe('OnBoardTopoConsoleOpener', () => {
         jest.mocked(vscode.env.openExternal).mockRejectedValue(
             new Error('fail'),
         );
-        activateOnBoardTopoConsoleOpener(context, targetStore);
+        activateOnTargetTopoConsoleOpener(context, targetStore);
 
         await vscode.commands.executeCommand(
-            OnBoardTopoConsoleOpener.openTopoConsoleCommand,
+            OnTargetTopoConsoleOpener.openTopoConsoleCommand,
         );
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-            expect.stringContaining('Failed to open board console'),
+            expect.stringContaining('Failed to open target console'),
         );
     });
 });

@@ -1,6 +1,6 @@
 # vscode-topo
 
-A Visual Studio Code extension for managing and editing a Topo project with ease and visualize the services running on a board.
+A Visual Studio Code extension for managing and editing a Topo project with ease and visualize the services running on a target.
 
 ## Features
 
@@ -19,7 +19,7 @@ A Visual Studio Code extension for managing and editing a Topo project with ease
 2. Open a `compose.topo.yaml` file to launch the compose editor.
 3. Use the form to add or remove services.
 4. Use the deploy button
-5. Access the target-manager view to visualize the board services
+5. Access the target-manager view to visualize the target services
 
 ## Building from Source
 

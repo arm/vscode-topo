@@ -13,7 +13,7 @@ body {
 }
 
 .compose-editor,
-.board-dashboard {
+.target-dashboard {
     display: flex;
     flex-direction: column;
     gap: 32px;
@@ -25,20 +25,20 @@ body {
 }
 
 .compose-editor .error-banner,
-.board-dashboard .error-banner {
+.target-dashboard .error-banner {
     color: red;
     margin-bottom: 1em;
 }
 
-.board-dashboard h1 {
+.target-dashboard h1 {
     font-size: 24px;
     margin-bottom: 4px;
 }
 
 .compose-editor h2,
 .compose-editor h3,
-.board-dashboard h2,
-.board-dashboard h3 {
+.target-dashboard h2,
+.target-dashboard h3 {
     padding: 0;
     margin: 0;
     margin-bottom: 10px;
@@ -132,7 +132,7 @@ input:focus {
 }
 
 .compose-editor th,
-.board-dashboard th {
+.target-dashboard th {
     text-align: left;
 }
 
@@ -141,7 +141,7 @@ input:focus {
 }
 
 .compose-editor td,
-.board-dashboard td {
+.target-dashboard td {
     position: relative;
 }
 
@@ -170,64 +170,64 @@ input:focus {
     border-bottom: none;
 }
 
-.board-dashboard tr .state-icon {
+.target-dashboard tr .state-icon {
     display: table-cell;
     width: 16px;
     height: 16px;
     vertical-align: middle;
 }
 
-.board-dashboard tr .state-icon > span {
+.target-dashboard tr .state-icon > span {
     vertical-align: middle;
     display: inline-block;
     position: relative;
 }
 
-.board-dashboard tr.running {
+.target-dashboard tr.running {
     font-weight: 700;
 }
 
-.board-dashboard tr.not-running {
+.target-dashboard tr.not-running {
     font-weight: 300;
 }
 
-.board-dashboard tr.running .state-icon > span {
+.target-dashboard tr.running .state-icon > span {
     color: var(--vscode-terminal-ansiGreen);
 }
 
-.board-dashboard tr.not-running .state-icon > span {
+.target-dashboard tr.not-running .state-icon > span {
     color: var(--vscode-terminal-ansiWhite);
 }
 
-.board-dashboard th {
+.target-dashboard th {
     margin: 0 5px;
 }
 
-.board-dashboard th.container-state {
+.target-dashboard th.container-state {
     width: 20px;
 }
 
-.board-dashboard th.container-name {
+.target-dashboard th.container-name {
     max-width: 260px;
 }
 
-.board-dashboard th.container-image {
+.target-dashboard th.container-image {
     max-width: 260px;
 }
 
-.board-dashboard th.container-last-started {
+.target-dashboard th.container-last-started {
     max-width: 120px;
 }
 
-.board-dashboard th.container-ports {
+.target-dashboard th.container-ports {
     width: 80px;
 }
 
-.board-dashboard th.container-actions {
+.target-dashboard th.container-actions {
     width: 100px;
 }
 
-.board-dashboard .action-btn {
+.target-dashboard .action-btn {
     background: none;
     border: none;
     cursor: pointer;
@@ -239,28 +239,28 @@ input:focus {
     vertical-align: bottom;
 }
 
-.board-dashboard .action-btn .codicon-debug-stop {
+.target-dashboard .action-btn .codicon-debug-stop {
     color: rgb(244, 135, 113);
     font-size: 18px;
 }
 
-.board-dashboard .action-btn .codicon-debug-start {
+.target-dashboard .action-btn .codicon-debug-start {
     color: rgb(137, 209, 133);
     font-size: 18px;
 }
 
-.board-dashboard .action-btn .codicon-trash {
+.target-dashboard .action-btn .codicon-trash {
     color: rgb(244, 135, 113);
     font-size: 18px;
 }
 
-.board-dashboard .container-port-item {
+.target-dashboard .container-port-item {
     display: flex;
     align-items: center;
     gap: 4px;
 }
 
-.board-dashboard .container-port-link-btn {
+.target-dashboard .container-port-link-btn {
     margin-left: 4px;
     padding: 0;
     border: none;
@@ -268,7 +268,7 @@ input:focus {
     cursor: pointer;
 }
 
-.board-dashboard .container-port-link-icon.codicon[class*='codicon-'] {
+.target-dashboard .container-port-link-icon.codicon[class*='codicon-'] {
     color: #fff;
     font-size: 12px;
     line-height: 1;
@@ -276,8 +276,8 @@ input:focus {
     vertical-align: middle;
 }
 
-.board-dashboard .no-access-message span,
-.board-dashboard .no-containers-message span {
+.target-dashboard .no-access-message span,
+.target-dashboard .no-containers-message span {
     vertical-align: bottom;
     margin-right: 2px;
     color: #d35400;

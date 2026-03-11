@@ -3,10 +3,10 @@ import { TargetTreeContainerItem } from './targetTreeContainerItem';
 import { ContainersManager } from './containersManager';
 import * as manifest from '../manifest';
 import { TargetStore } from './targetStore';
-import { TargetTreeBoardItem } from './targetTreeBoardItem';
+import { TargetTreeTargetItem } from './targetTreeTargetItem';
 import { TargetTreeSubsystemItem } from './targetTreeSubsystemItem';
 import { logger } from '../util/logger';
-import { isTargetReady } from '../util/boardState';
+import { isTargetReady } from '../util/targetState';
 import { TargetTreeDependencyGroupItem } from './targetTreeDependencyGroupItem';
 import { TargetTreeSubsystemGroupItem } from './targetTreeSubsystemGroupItem';
 import { TargetTreeDependencyItem } from './targetTreeDependencyItem';
@@ -23,8 +23,8 @@ function sortDependenciesByName(
 export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
     public static readonly selectTargetCommand = `${manifest.PACKAGE_NAME}.selectTarget`;
     public static readonly removeTargetCommand = `${manifest.PACKAGE_NAME}.removeTarget`;
-    public static readonly inspectBoardHealthCommand = `${manifest.PACKAGE_NAME}.inspectBoardHealth`;
-    public static readonly inspectBoardHealthScheme = `${manifest.PACKAGE_NAME}-inspect-board-health`;
+    public static readonly inspectTargetHealthCommand = `${manifest.PACKAGE_NAME}.inspectTargetHealth`;
+    public static readonly inspectTargetHealthScheme = `${manifest.PACKAGE_NAME}-inspect-target-health`;
 
     private _onDidChangeTreeData = new vscode.EventEmitter<
         vscode.TreeItem | undefined
@@ -64,11 +64,11 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
                 (node: unknown) => this.removeTarget(node),
             ),
             vscode.commands.registerCommand(
-                TargetTreeDataProvider.inspectBoardHealthCommand,
+                TargetTreeDataProvider.inspectTargetHealthCommand,
                 (node: unknown) => this.inspectHealth(node),
             ),
             vscode.workspace.registerTextDocumentContentProvider(
-                TargetTreeDataProvider.inspectBoardHealthScheme,
+                TargetTreeDataProvider.inspectTargetHealthScheme,
                 this.inspectHealthContentProvider,
             ),
             onTargetStoreChanged,
@@ -78,8 +78,8 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
     }
 
     private async selectTarget(treeNode: unknown): Promise<void> {
-        if (!(treeNode instanceof TargetTreeBoardItem)) {
-            const errMsg = `Invalid target type for select: expected TargetTreeBoardItem but received:`;
+        if (!(treeNode instanceof TargetTreeTargetItem)) {
+            const errMsg = `Invalid target type for select: expected TargetTreeTargetItem but received:`;
             logger.error(errMsg, treeNode);
             return;
         }
@@ -87,8 +87,8 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
     }
 
     private async removeTarget(treeNode: unknown): Promise<void> {
-        if (!(treeNode instanceof TargetTreeBoardItem)) {
-            const errMsg = `Invalid target type for remove: expected TargetTreeBoardItem but received:`;
+        if (!(treeNode instanceof TargetTreeTargetItem)) {
+            const errMsg = `Invalid target type for remove: expected TargetTreeTargetItem but received:`;
             logger.error(errMsg, treeNode);
             return;
         }
@@ -104,23 +104,23 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
     }
 
     private async inspectHealth(treeNode: unknown): Promise<void> {
-        if (!(treeNode instanceof TargetTreeBoardItem)) {
-            const errMsg = `Invalid target type for inspect health: expected TargetTreeBoardItem but received:`;
+        if (!(treeNode instanceof TargetTreeTargetItem)) {
+            const errMsg = `Invalid target type for inspect health: expected TargetTreeTargetItem but received:`;
             logger.error(errMsg, treeNode);
             return;
         }
 
         if (!treeNode.contextValue?.includes('Selected')) {
-            const errMsg = `Invalid target for inspect health: expected selected TargetTreeBoardItem but received:`;
+            const errMsg = `Invalid target for inspect health: expected selected TargetTreeTargetItem but received:`;
             logger.error(errMsg, treeNode);
             return;
         }
 
-        const boardState = await this.containersManager.getBoardState();
-        const content = JSON.stringify(boardState.health ?? null, null, 4);
+        const targetState = await this.containersManager.getTargetState();
+        const content = JSON.stringify(targetState.health ?? null, null, 4);
         const safeTargetId = treeNode.targetId.replace(/[^a-zA-Z0-9._-]/g, '_');
         const documentUri = vscode.Uri.from({
-            scheme: TargetTreeDataProvider.inspectBoardHealthScheme,
+            scheme: TargetTreeDataProvider.inspectTargetHealthScheme,
             path: `/${safeTargetId}-health-${Date.now()}.json`,
         });
 
@@ -135,36 +135,36 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
         element?: vscode.TreeItem,
     ): Promise<vscode.TreeItem[]> {
         if (!element) {
-            const boardState = await this.containersManager.getBoardState();
+            const targetState = await this.containersManager.getTargetState();
             const selectedTarget = await this.targetStore.getSelectedTarget();
-            const boardTreeItems = this.targetStore
+            const targetTreeItems = this.targetStore
                 .getTargets()
                 .map((target) => {
                     const selected = target.id === selectedTarget?.id;
                     const connectionReady =
-                        selected && target.id === boardState.targetId;
-                    return new TargetTreeBoardItem(
+                        selected && target.id === targetState.targetId;
+                    return new TargetTreeTargetItem(
                         target,
                         selected,
                         connectionReady,
-                        isTargetReady(boardState),
+                        isTargetReady(targetState),
                     );
                 });
-            const sortedBoardTreeItems = boardTreeItems.sort((a, b) =>
+            const sortedTargetTreeItems = targetTreeItems.sort((a, b) =>
                 a.displayName.localeCompare(b.displayName),
             );
-            return sortedBoardTreeItems;
+            return sortedTargetTreeItems;
         }
 
-        if (element instanceof TargetTreeBoardItem) {
-            const boardState = await this.containersManager.getBoardState();
-            if (boardState.health === undefined) {
+        if (element instanceof TargetTreeTargetItem) {
+            const targetState = await this.containersManager.getTargetState();
+            if (targetState.health === undefined) {
                 return [];
             }
 
-            const dependencies = [...boardState.health.dependencies];
+            const dependencies = [...targetState.health.dependencies];
             if (element.target.targetDescription?.remoteprocCPU.length) {
-                dependencies.push(boardState.health.subsystemDriver);
+                dependencies.push(targetState.health.subsystemDriver);
             }
 
             const dependenciesGroup = new TargetTreeDependencyGroupItem(

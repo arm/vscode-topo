@@ -5,13 +5,13 @@
 import ReactDOM from 'react-dom/client';
 import { ComposeEditor } from './composeEditor/composeEditor';
 import './main.css';
-import { BoardDashboard } from './boardDashboard';
+import { TargetDashboard } from './targetDashboard';
 import { ProjectDescription } from '../src/topoCliSchema';
 
 const vscode = acquireVsCodeApi();
 
 let composeEditorRoot: ReactDOM.Root | null = null;
-let boardDashboardRoot: ReactDOM.Root | null = null;
+let targetDashboardRoot: ReactDOM.Root | null = null;
 const messageQueue: MessageEvent[] = [];
 let domReady = false;
 
@@ -43,23 +43,23 @@ function handleMessage(event: MessageEvent) {
                 />,
             );
             break;
-        case 'render-board-dashboard':
-            if (!boardDashboardRoot) {
-                const boardDashboardContainer =
-                    document.getElementById('board-dashboard');
-                if (!boardDashboardContainer) {
-                    console.error('Board dashboard container not found!');
+        case 'render-target-dashboard':
+            if (!targetDashboardRoot) {
+                const targetDashboardContainer =
+                    document.getElementById('target-dashboard');
+                if (!targetDashboardContainer) {
+                    console.error('Target dashboard container not found!');
                     return;
                 }
-                boardDashboardRoot = ReactDOM.createRoot(
-                    boardDashboardContainer,
+                targetDashboardRoot = ReactDOM.createRoot(
+                    targetDashboardContainer,
                 );
             }
-            boardDashboardRoot.render(
-                <BoardDashboard
+            targetDashboardRoot.render(
+                <TargetDashboard
                     target={message.target}
                     containersData={message.containersData}
-                    boardState={message.boardState}
+                    targetState={message.targetState}
                     messagePoster={vscode}
                     subsystems={message.subsystems || ['Host']}
                 />,
@@ -75,8 +75,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('compose-editor')) {
         vscode.postMessage({ type: 'compose-editor-webview-ready' });
     }
-    if (document.getElementById('board-dashboard')) {
-        vscode.postMessage({ type: 'board-dashboard-webview-ready' });
+    if (document.getElementById('target-dashboard')) {
+        vscode.postMessage({ type: 'target-dashboard-webview-ready' });
     }
     // Process any queued messages
     while (messageQueue.length > 0) {

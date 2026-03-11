@@ -1,11 +1,11 @@
 import * as vscode from 'vscode';
-import { BoardDashboardMessageHandler } from './boardDashboardMessageHandler';
+import { TargetDashboardMessageHandler } from './targetDashboardMessageHandler';
 import { logger } from '../util/logger';
 import { showAndLogError } from '../util/showAndLogError';
 import { TopoError } from '../errors/topoError';
 import type { ContainersManager } from '../workloadPlacement/containersManager';
 import type {
-    BoardState,
+    TargetState,
     ContainerItem,
     MessagePoster,
     TargetItem,
@@ -21,7 +21,7 @@ jest.mock('../util/showAndLogError', () => ({
     showAndLogError: jest.fn(),
 }));
 
-describe('BoardDashboardMessageHandler', () => {
+describe('TargetDashboardMessageHandler', () => {
     const postMessage = jest.fn(async () => true);
     const messagePoster: MessagePoster = { postMessage };
 
@@ -35,7 +35,7 @@ describe('BoardDashboardMessageHandler', () => {
             remoteprocCPU: [{ name: 'imx-rproc' }],
         },
     };
-    const boardState: BoardState = {
+    const targetState: TargetState = {
         health: undefined,
         targetId: target.id,
     };
@@ -69,13 +69,13 @@ describe('BoardDashboardMessageHandler', () => {
     const attachVsCode = mock<AttachVsCode>();
     const attachShell = mock<AttachShell>();
 
-    let handler: BoardDashboardMessageHandler;
+    let handler: TargetDashboardMessageHandler;
 
     beforeEach(() => {
         jest.resetAllMocks();
 
         containersManager.getContainersData.mockResolvedValue([containerA]);
-        containersManager.getBoardState.mockResolvedValue(boardState);
+        containersManager.getTargetState.mockResolvedValue(targetState);
 
         targetStore.getSelectedTarget.mockResolvedValue(target);
 
@@ -83,7 +83,7 @@ describe('BoardDashboardMessageHandler', () => {
             'success',
         );
 
-        handler = new BoardDashboardMessageHandler(
+        handler = new TargetDashboardMessageHandler(
             containersManager,
             targetStore,
             containerOpenInBrowser,
@@ -92,13 +92,13 @@ describe('BoardDashboardMessageHandler', () => {
         );
     });
 
-    describe('renderBoardDashboard', () => {
-        it('posts render-board-dashboard message when a target is selected', async () => {
-            await handler.renderBoardDashboard(messagePoster);
+    describe('renderTargetDashboard', () => {
+        it('posts render-target-dashboard message when a target is selected', async () => {
+            await handler.renderTargetDashboard(messagePoster);
 
             expect(messagePoster.postMessage).toHaveBeenCalledWith({
-                type: 'render-board-dashboard',
-                boardState,
+                type: 'render-target-dashboard',
+                targetState,
                 containersData: [containerA],
                 target,
                 subsystems: ['Host', 'imx-rproc'],
@@ -108,10 +108,10 @@ describe('BoardDashboardMessageHandler', () => {
         it('logs an error and does not post when no target is selected', async () => {
             targetStore.getSelectedTarget.mockResolvedValueOnce(undefined);
 
-            await handler.renderBoardDashboard(messagePoster);
+            await handler.renderTargetDashboard(messagePoster);
 
             expect(logger.error).toHaveBeenCalledWith(
-                'No target selected, cannot render board dashboard',
+                'No target selected, cannot render target dashboard',
             );
             expect(messagePoster.postMessage).not.toHaveBeenCalled();
         });
@@ -133,7 +133,7 @@ describe('BoardDashboardMessageHandler', () => {
                 );
                 expect(messagePoster.postMessage).toHaveBeenCalledWith(
                     expect.objectContaining({
-                        type: 'render-board-dashboard',
+                        type: 'render-target-dashboard',
                     }),
                 );
             });
@@ -166,7 +166,7 @@ describe('BoardDashboardMessageHandler', () => {
                 });
 
                 expect(showAndLogError).toHaveBeenCalledWith(
-                    'Unexpected error handling message from board dashboard webview',
+                    'Unexpected error handling message from target dashboard webview',
                     err,
                 );
                 expect(messagePoster.postMessage).not.toHaveBeenCalled();
@@ -188,7 +188,7 @@ describe('BoardDashboardMessageHandler', () => {
                 );
                 expect(messagePoster.postMessage).toHaveBeenCalledWith(
                     expect.objectContaining({
-                        type: 'render-board-dashboard',
+                        type: 'render-target-dashboard',
                     }),
                 );
             });
@@ -222,7 +222,7 @@ describe('BoardDashboardMessageHandler', () => {
                 });
 
                 expect(showAndLogError).toHaveBeenCalledWith(
-                    'Unexpected error handling message from board dashboard webview',
+                    'Unexpected error handling message from target dashboard webview',
                     err,
                 );
                 expect(messagePoster.postMessage).not.toHaveBeenCalled();
@@ -244,7 +244,7 @@ describe('BoardDashboardMessageHandler', () => {
                 );
                 expect(messagePoster.postMessage).toHaveBeenCalledWith(
                     expect.objectContaining({
-                        type: 'render-board-dashboard',
+                        type: 'render-target-dashboard',
                     }),
                 );
             });
@@ -278,7 +278,7 @@ describe('BoardDashboardMessageHandler', () => {
                 });
 
                 expect(showAndLogError).toHaveBeenCalledWith(
-                    'Unexpected error handling message from board dashboard webview',
+                    'Unexpected error handling message from target dashboard webview',
                     err,
                 );
             });
@@ -296,7 +296,7 @@ describe('BoardDashboardMessageHandler', () => {
                 });
 
                 expect(showAndLogError).toHaveBeenCalledWith(
-                    'Unexpected error handling message from board dashboard webview',
+                    'Unexpected error handling message from target dashboard webview',
                     new Error('Container with ID a not found'),
                 );
                 expect(
@@ -372,7 +372,7 @@ describe('BoardDashboardMessageHandler', () => {
                 });
 
                 expect(showAndLogError).toHaveBeenCalledWith(
-                    'Unexpected error handling message from board dashboard webview',
+                    'Unexpected error handling message from target dashboard webview',
                     new Error('Container with ID a not found'),
                 );
                 expect(attachVsCode.attachVsCode).not.toHaveBeenCalled();
@@ -391,7 +391,7 @@ describe('BoardDashboardMessageHandler', () => {
                 });
 
                 expect(showAndLogError).toHaveBeenCalledWith(
-                    'Unexpected error handling message from board dashboard webview',
+                    'Unexpected error handling message from target dashboard webview',
                     err,
                 );
             });
@@ -442,7 +442,7 @@ describe('BoardDashboardMessageHandler', () => {
                 });
 
                 expect(showAndLogError).toHaveBeenCalledWith(
-                    'Unexpected error handling message from board dashboard webview',
+                    'Unexpected error handling message from target dashboard webview',
                     new Error('Container with ID a not found'),
                 );
                 expect(attachShell.attachShell).not.toHaveBeenCalled();
@@ -468,7 +468,7 @@ describe('BoardDashboardMessageHandler', () => {
                 });
 
                 expect(showAndLogError).toHaveBeenCalledWith(
-                    'Failed to attach SSH to the board',
+                    'Failed to attach SSH to the target',
                     dockerErr,
                 );
             });
@@ -482,20 +482,20 @@ describe('BoardDashboardMessageHandler', () => {
                 });
 
                 expect(showAndLogError).toHaveBeenCalledWith(
-                    'Unexpected error handling message from board dashboard webview',
+                    'Unexpected error handling message from target dashboard webview',
                     err,
                 );
             });
         });
 
-        it('re-renders when board-dashboard-webview-ready', async () => {
+        it('re-renders when target-dashboard-webview-ready', async () => {
             await handler.handleMessage(messagePoster, {
-                type: 'board-dashboard-webview-ready',
+                type: 'target-dashboard-webview-ready',
             });
 
             expect(messagePoster.postMessage).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    type: 'render-board-dashboard',
+                    type: 'render-target-dashboard',
                 }),
             );
         });
@@ -506,7 +506,7 @@ describe('BoardDashboardMessageHandler', () => {
             });
 
             expect(showAndLogError).toHaveBeenCalledWith(
-                'Unexpected error handling message from board dashboard webview',
+                'Unexpected error handling message from target dashboard webview',
                 new Error('Unknown message type: nope'),
             );
         });
@@ -515,7 +515,7 @@ describe('BoardDashboardMessageHandler', () => {
             await handler.handleMessage(messagePoster, undefined);
 
             expect(showAndLogError).toHaveBeenCalledWith(
-                'Unexpected error handling message from board dashboard webview',
+                'Unexpected error handling message from target dashboard webview',
                 expect.anything(),
             );
         });

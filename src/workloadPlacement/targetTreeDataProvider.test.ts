@@ -1,11 +1,11 @@
 import { TargetTreeDataProvider } from './targetTreeDataProvider';
 import { TargetTreeContainerItem } from './targetTreeContainerItem';
 import { TargetTreeSubsystemItem } from './targetTreeSubsystemItem';
-import { TargetTreeBoardItem } from './targetTreeBoardItem';
+import { TargetTreeTargetItem } from './targetTreeTargetItem';
 import * as vscode from 'vscode';
 import * as manifest from '../manifest';
 import { ContainersManager } from './containersManager';
-import { BoardState, ContainerItem, TargetItem } from '../util/types';
+import { TargetState, ContainerItem, TargetItem } from '../util/types';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { TargetStore } from './targetStore';
 import { TopoCli } from '../topoCli';
@@ -41,7 +41,7 @@ describe('TargetTreeDataProvider', () => {
             remoteprocCPU: [{ name: 'imx-rproc' }, { name: 'other-rproc' }],
         },
     };
-    const boardHealth = {
+    const targetHealth = {
         isLocalhost: false,
         connectivity: {
             name: 'Connectivity',
@@ -120,8 +120,8 @@ describe('TargetTreeDataProvider', () => {
     const onDataUpdateEmitter = new vscode.EventEmitter<void>();
 
     beforeEach(() => {
-        const boardState: BoardState = {
-            health: boardHealth,
+        const targetState: TargetState = {
+            health: targetHealth,
             targetId: target.id,
         };
         context = mock<vscode.ExtensionContext>({ subscriptions: [] });
@@ -130,7 +130,7 @@ describe('TargetTreeDataProvider', () => {
         containersManagerMock.getContainersData.mockResolvedValue(
             mockContainers,
         );
-        containersManagerMock.getBoardState.mockResolvedValue(boardState);
+        containersManagerMock.getTargetState.mockResolvedValue(targetState);
         containersManagerMock.onDataUpdate.mockImplementation(
             onDataUpdateEmitter.event,
         );
@@ -160,13 +160,13 @@ describe('TargetTreeDataProvider', () => {
                 expect.any(Function),
             );
             expect(vscode.commands.registerCommand).toHaveBeenCalledWith(
-                TargetTreeDataProvider.inspectBoardHealthCommand,
+                TargetTreeDataProvider.inspectTargetHealthCommand,
                 expect.any(Function),
             );
             expect(
                 vscode.workspace.registerTextDocumentContentProvider,
             ).toHaveBeenCalledWith(
-                TargetTreeDataProvider.inspectBoardHealthScheme,
+                TargetTreeDataProvider.inspectTargetHealthScheme,
                 expect.any(Object),
             );
             expect(context.subscriptions.length).toBeGreaterThan(0);
@@ -174,21 +174,21 @@ describe('TargetTreeDataProvider', () => {
     });
 
     describe('getChildren', () => {
-        it('returns Board at root and Dependencies/Subsystems as its children', async () => {
+        it('returns Target at root and Dependencies/Subsystems as its children', async () => {
             targetStoreMock.getTargets.mockReturnValue([target]);
 
             const rootChildren = await provider.getChildren();
-            const boardChildren = await provider.getChildren(rootChildren[0]);
+            const targetChildren = await provider.getChildren(rootChildren[0]);
 
-            expect(boardChildren).toHaveLength(2);
-            expect(boardChildren[0]).toBeInstanceOf(
+            expect(targetChildren).toHaveLength(2);
+            expect(targetChildren[0]).toBeInstanceOf(
                 TargetTreeDependencyGroupItem,
             );
-            expect(boardChildren[1]).toBeInstanceOf(
+            expect(targetChildren[1]).toBeInstanceOf(
                 TargetTreeSubsystemGroupItem,
             );
-            expect(boardChildren[0].label).toBe('Dependencies');
-            expect(boardChildren[1].label).toBe('Subsystems');
+            expect(targetChildren[0].label).toBe('Dependencies');
+            expect(targetChildren[1].label).toBe('Subsystems');
         });
 
         it('returns dependency items for Dependencies group', async () => {
@@ -203,18 +203,18 @@ describe('TargetTreeDataProvider', () => {
                     name: 'Some Dependency',
                 }),
             ];
-            const boardState = mock<BoardState>({
+            const targetState = mock<TargetState>({
                 targetId: target.id,
                 health: {
                     dependencies: dependencies,
                     subsystemDriver: subsystemDriverHealth,
                 },
             });
-            containersManagerMock.getBoardState.mockResolvedValue(boardState);
+            containersManagerMock.getTargetState.mockResolvedValue(targetState);
             targetStoreMock.getTargets.mockReturnValue([target]);
             const rootChildren = await provider.getChildren();
-            const boardChildren = await provider.getChildren(rootChildren[0]);
-            const dependenciesGroup = boardChildren.find(
+            const targetChildren = await provider.getChildren(rootChildren[0]);
+            const dependenciesGroup = targetChildren.find(
                 (v) => v instanceof TargetTreeDependencyGroupItem,
             );
 
@@ -227,10 +227,10 @@ describe('TargetTreeDataProvider', () => {
             ]);
         });
 
-        it('marks selected board as not ready when health is undefined', async () => {
+        it('marks selected target as not ready when health is undefined', async () => {
             targetStoreMock.getTargets.mockReturnValue([target]);
             targetStoreMock.getSelectedTarget.mockResolvedValue(target);
-            containersManagerMock.getBoardState.mockResolvedValueOnce({
+            containersManagerMock.getTargetState.mockResolvedValueOnce({
                 health: undefined,
                 targetId: target.id,
             });
@@ -238,12 +238,12 @@ describe('TargetTreeDataProvider', () => {
             const rootChildren = await provider.getChildren();
 
             expect(rootChildren).toHaveLength(1);
-            const boardItem = rootChildren[0] as TargetTreeBoardItem;
-            expect(boardItem.contextValue).toContain('Board');
-            expect(boardItem.contextValue).toContain('Selected');
-            expect(boardItem.contextValue).toContain('ConnectionReady');
-            expect(boardItem.contextValue).not.toContain('TargetReady');
-            expect(boardItem.collapsibleState).toBe(
+            const targetItem = rootChildren[0] as TargetTreeTargetItem;
+            expect(targetItem.contextValue).toContain('Target');
+            expect(targetItem.contextValue).toContain('Selected');
+            expect(targetItem.contextValue).toContain('ConnectionReady');
+            expect(targetItem.contextValue).not.toContain('TargetReady');
+            expect(targetItem.collapsibleState).toBe(
                 vscode.TreeItemCollapsibleState.None,
             );
         });
@@ -285,7 +285,7 @@ describe('TargetTreeDataProvider', () => {
 
         it('returns empty array when there are no targets', async () => {
             targetStoreMock.getTargets.mockReturnValue([]);
-            containersManagerMock.getBoardState.mockResolvedValueOnce({
+            containersManagerMock.getTargetState.mockResolvedValueOnce({
                 health: undefined,
                 targetId: target.id,
             });
@@ -318,19 +318,24 @@ describe('TargetTreeDataProvider', () => {
     });
 
     describe('selectTarget command', () => {
-        it('invokes targetStore.setSelected when select command is executed with a board item', async () => {
+        it('invokes targetStore.setSelected when select command is executed with a target item', async () => {
             await provider.activate();
-            const boardItem = new TargetTreeBoardItem(target, true, true, true);
+            const targetItem = new TargetTreeTargetItem(
+                target,
+                true,
+                true,
+                true,
+            );
 
             await executeCommand(
                 TargetTreeDataProvider.selectTargetCommand,
-                boardItem,
+                targetItem,
             );
 
             expect(targetStoreMock.setSelected).toHaveBeenCalledWith(target.id);
         });
 
-        it('does not call setSelected when select command is executed with a non-board item', async () => {
+        it('does not call setSelected when select command is executed with a non-target item', async () => {
             await provider.activate();
 
             await executeCommand(TargetTreeDataProvider.selectTargetCommand);
@@ -340,14 +345,19 @@ describe('TargetTreeDataProvider', () => {
     });
 
     describe('removeTarget command', () => {
-        it('invokes targetStore.deleteTarget when remove command is executed with a board item', async () => {
-            const boardItem = new TargetTreeBoardItem(target, true, true, true);
+        it('invokes targetStore.deleteTarget when remove command is executed with a target item', async () => {
+            const targetItem = new TargetTreeTargetItem(
+                target,
+                true,
+                true,
+                true,
+            );
             targetStoreMock.getTargets.mockReturnValue([target]);
             await provider.activate();
 
             await executeCommand(
                 TargetTreeDataProvider.removeTargetCommand,
-                boardItem,
+                targetItem,
             );
 
             expect(targetStoreMock.deleteTarget).toHaveBeenCalledWith(
@@ -355,7 +365,7 @@ describe('TargetTreeDataProvider', () => {
             );
         });
 
-        it('does not call deleteTarget when remove command is executed with a non-board item', async () => {
+        it('does not call deleteTarget when remove command is executed with a non-target item', async () => {
             await provider.activate();
 
             await executeCommand(TargetTreeDataProvider.removeTargetCommand);
@@ -364,7 +374,12 @@ describe('TargetTreeDataProvider', () => {
         });
 
         it('shows an error when deleteTarget fails', async () => {
-            const boardItem = new TargetTreeBoardItem(target, true, true, true);
+            const targetItem = new TargetTreeTargetItem(
+                target,
+                true,
+                true,
+                true,
+            );
             targetStoreMock.deleteTarget.mockRejectedValue(
                 new Error('Target not found'),
             );
@@ -372,7 +387,7 @@ describe('TargetTreeDataProvider', () => {
 
             await executeCommand(
                 TargetTreeDataProvider.removeTargetCommand,
-                boardItem,
+                targetItem,
             );
 
             expect(vscode.window.showErrorMessage).toHaveBeenCalled();
@@ -380,17 +395,22 @@ describe('TargetTreeDataProvider', () => {
     });
 
     describe('inspectHealth command', () => {
-        it('opens a readonly health JSON virtual document for selected board', async () => {
+        it('opens a readonly health JSON virtual document for selected target', async () => {
             await provider.activate();
-            const boardItem = new TargetTreeBoardItem(target, true, true, true);
+            const targetItem = new TargetTreeTargetItem(
+                target,
+                true,
+                true,
+                true,
+            );
             const textDocument = mock<vscode.TextDocument>();
             jest.mocked(
                 vscode.workspace.openTextDocument,
             ).mockResolvedValueOnce(textDocument);
 
             await executeCommand(
-                TargetTreeDataProvider.inspectBoardHealthCommand,
-                boardItem,
+                TargetTreeDataProvider.inspectTargetHealthCommand,
+                targetItem,
             );
 
             const providerRegistration = jest.mocked(
@@ -407,19 +427,19 @@ describe('TargetTreeDataProvider', () => {
             );
 
             expect((uri as vscode.Uri).scheme).toBe(
-                TargetTreeDataProvider.inspectBoardHealthScheme,
+                TargetTreeDataProvider.inspectTargetHealthScheme,
             );
             expect(content).toBeDefined();
-            expect(JSON.parse(content!)).toEqual(boardHealth);
+            expect(JSON.parse(content!)).toEqual(targetHealth);
             expect(vscode.window.showTextDocument).toHaveBeenCalledWith(
                 textDocument,
                 { preview: true },
             );
         });
 
-        it('does not open health document for non-selected board', async () => {
+        it('does not open health document for non-selected target', async () => {
             await provider.activate();
-            const boardItem = new TargetTreeBoardItem(
+            const targetItem = new TargetTreeTargetItem(
                 target,
                 false,
                 false,
@@ -427,8 +447,8 @@ describe('TargetTreeDataProvider', () => {
             );
 
             await executeCommand(
-                TargetTreeDataProvider.inspectBoardHealthCommand,
-                boardItem,
+                TargetTreeDataProvider.inspectTargetHealthCommand,
+                targetItem,
             );
 
             expect(vscode.workspace.openTextDocument).not.toHaveBeenCalled();

@@ -13,12 +13,12 @@ export interface DockerError extends Error {
 type DockerInspectOutput = Partial<DockerInspectItem>;
 
 /**
- * Generates a SSH URI based on the board's SSH connection string.
- * @param boardSshConnection - The SSH connection string of the board.
+ * Generates a SSH URI based on the target's SSH connection string.
+ * @param targetSshConnection - The SSH connection string of the target.
  * @returns The SSH URI.
  */
-const getSshUri = (boardSshConnection: string): string => {
-    return `ssh://${boardSshConnection}`;
+const getSshUri = (targetSshConnection: string): string => {
+    return `ssh://${targetSshConnection}`;
 };
 
 /**
@@ -95,11 +95,11 @@ export class DockerCommands implements ContainerCommands {
     }
 
     /**
-     * Ensures the Docker context is set for the board.
+     * Ensures the Docker context is set for the target.
      */
     public async ensureContext(
         contextName: string,
-        boardSshConnection: string,
+        targetSshConnection: string,
     ): Promise<void> {
         const cmd1 = `docker context ls --format '{{.Name}}'`;
         const warnMsg1 = `Warnings emitted when listing Docker contexts`;
@@ -108,7 +108,7 @@ export class DockerCommands implements ContainerCommands {
         if (contexts.includes(contextName)) {
             return;
         }
-        const cmd2 = `docker context create ${contextName} --docker host=${getSshUri(boardSshConnection)}`;
+        const cmd2 = `docker context create ${contextName} --docker host=${getSshUri(targetSshConnection)}`;
         const warnMsg2 = `Warnings emitted when creating Docker context ${contextName}`;
         await runDockerCmd(cmd2, warnMsg2);
     }
@@ -135,9 +135,9 @@ export class DockerCommands implements ContainerCommands {
     }
 
     public async getContainers(
-        boardSshConnection: string,
+        targetSshConnection: string,
     ): Promise<DockerPsItem[]> {
-        const cmd = `docker --host ${getSshUri(boardSshConnection)} ps -a --format "{{json .}}"`;
+        const cmd = `docker --host ${getSshUri(targetSshConnection)} ps -a --format "{{json .}}"`;
         const warnMsg = `Warnings emitted when listing containers`;
         const stdout = await runDockerCmd(cmd, warnMsg);
         const lines = stdout
@@ -153,13 +153,13 @@ export class DockerCommands implements ContainerCommands {
 
     public async inspectContainers(
         containerIds: string[],
-        boardSshConnection: string,
+        targetSshConnection: string,
     ): Promise<DockerInspectItem[]> {
         if (containerIds.length === 0) {
             return [];
         }
         const ids = containerIds.join(' ');
-        const cmd = `docker --host ${getSshUri(boardSshConnection)} inspect ${ids} --format '{{json .}}'`;
+        const cmd = `docker --host ${getSshUri(targetSshConnection)} inspect ${ids} --format '{{json .}}'`;
         const warnMsg = `Warnings emitted when inspecting containers ${containerIds.join(', ')}`;
         const isErrorAWarning = (err: string): boolean => {
             const lines = err
@@ -211,13 +211,13 @@ export class DockerCommands implements ContainerCommands {
 
     public async containerStats(
         containerIds: string[],
-        boardSshConnection: string,
+        targetSshConnection: string,
     ): Promise<string> {
         if (containerIds.length === 0) {
             return '';
         }
         const ids = containerIds.join(' ');
-        const cmd = `docker --host ${getSshUri(boardSshConnection)} stats ${ids} --no-stream --no-trunc --format '{{.ID}};{{.CPUPerc}};{{.MemUsage}}'`;
+        const cmd = `docker --host ${getSshUri(targetSshConnection)} stats ${ids} --no-stream --no-trunc --format '{{.ID}};{{.CPUPerc}};{{.MemUsage}}'`;
         const warnMsg = `Warnings emitted when getting container stats for container ${containerIds.join(', ')}`;
         const isErrorAWarning = (err: string): boolean => {
             const lines = err
@@ -233,35 +233,35 @@ export class DockerCommands implements ContainerCommands {
 
     public async stopContainer(
         containerId: string,
-        boardSshConnection: string,
+        targetSshConnection: string,
     ): Promise<void> {
-        const cmd = `docker --host ${getSshUri(boardSshConnection)} stop ${containerId}`;
+        const cmd = `docker --host ${getSshUri(targetSshConnection)} stop ${containerId}`;
         const warnMsg = `Warnings emitted when stopping container ${containerId}`;
         await runDockerCmd(cmd, warnMsg);
     }
 
     public async startContainer(
         containerId: string,
-        boardSshConnection: string,
+        targetSshConnection: string,
     ): Promise<void> {
-        const cmd = `docker --host ${getSshUri(boardSshConnection)} start ${containerId}`;
+        const cmd = `docker --host ${getSshUri(targetSshConnection)} start ${containerId}`;
         const warnMsg = `Warnings emitted when starting container ${containerId}`;
         await runDockerCmd(cmd, warnMsg);
     }
 
     public async deleteContainer(
         containerId: string,
-        boardSshConnection: string,
+        targetSshConnection: string,
     ): Promise<void> {
-        const cmd = `docker --host ${getSshUri(boardSshConnection)} rm -f ${containerId}`;
+        const cmd = `docker --host ${getSshUri(targetSshConnection)} rm -f ${containerId}`;
         const warnMsg = `Warnings emitted when deleting container ${containerId}`;
         await runDockerCmd(cmd, warnMsg);
     }
 
     public getAttachShellCommand(
         containerId: string,
-        boardSshConnection: string,
+        targetSshConnection: string,
     ): string {
-        return `docker --host ${getSshUri(boardSshConnection)} exec -it ${containerId} sh`;
+        return `docker --host ${getSshUri(targetSshConnection)} exec -it ${containerId} sh`;
     }
 }
