@@ -66,7 +66,7 @@
             },
             {
                 "command": "topo.openTopoConsole",
-                "title": "Open on-board Topo console",
+                "title": "Open on-target Topo console",
                 "category": "Arm Topo"
             },
             {
@@ -116,12 +116,12 @@
                 "category": "Arm Topo"
             },
             {
-                "command": "topo.openBoardDashboard",
-                "title": "Open Board Dashboard",
+                "command": "topo.openTargetDashboard",
+                "title": "Open Target Dashboard",
                 "category": "Arm Topo"
             },
             {
-                "command": "topo.inspectBoardHealth",
+                "command": "topo.inspectTargetHealth",
                 "title": "Inspect Health",
                 "category": "Arm Topo"
             },
@@ -243,11 +243,11 @@
                     "when": "false"
                 },
                 {
-                    "command": "topo.openBoardDashboard",
+                    "command": "topo.openTargetDashboard",
                     "when": "false"
                 },
                 {
-                    "command": "topo.inspectBoardHealth",
+                    "command": "topo.inspectTargetHealth",
                     "when": "false"
                 },
                 {
@@ -286,22 +286,22 @@
             "view/item/context": [
                 {
                     "command": "topo.selectTarget",
-                    "when": "view == topo.target-manager && viewItem =~ /Board/",
+                    "when": "view == topo.target-manager && viewItem =~ /Target/",
                     "group": "topo/1_select"
                 },
                 {
-                    "command": "topo.openBoardDashboard",
-                    "when": "view === topo.target-manager && viewItem =~ /Board/ && viewItem =~ /Selected/ && viewItem=~ /ConnectionReady/ && viewItem=~ /TargetReady/",
+                    "command": "topo.openTargetDashboard",
+                    "when": "view === topo.target-manager && viewItem =~ /Target/ && viewItem =~ /Selected/ && viewItem=~ /ConnectionReady/ && viewItem=~ /TargetReady/",
                     "group": "topo/2_actions"
                 },
                 {
-                    "command": "topo.inspectBoardHealth",
-                    "when": "view === topo.target-manager && viewItem =~ /Board/ && viewItem =~ /Selected/",
+                    "command": "topo.inspectTargetHealth",
+                    "when": "view === topo.target-manager && viewItem =~ /Target/ && viewItem =~ /Selected/",
                     "group": "topo/2_actions"
                 },
                 {
                     "command": "topo.removeTarget",
-                    "when": "view == topo.target-manager && viewItem =~ /Board/",
+                    "when": "view == topo.target-manager && viewItem =~ /Target/",
                     "group": "topo/3_cleanup"
                 },
                 {

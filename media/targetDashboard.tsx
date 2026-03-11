@@ -1,17 +1,17 @@
 import { BOARD_HOST_RUNTIME, BOARD_REMOTEPROC_RUNTIME } from '../src/manifest';
-import { hasContainerEngine, isBoardReachable } from '../src/util/boardState';
+import { hasContainerEngine, isTargetReachable } from '../src/util/targetState';
 import { getContainerHostPorts } from '../src/util/getContainerHostPorts';
 import {
-    BoardState,
+    TargetState,
     ContainerItem,
     MessagePoster,
     TargetItem,
 } from '../src/util/types';
 
-export interface BoardDashboardProps {
+export interface TargetDashboardProps {
     target: TargetItem;
     containersData: ContainerItem[];
-    boardState: BoardState;
+    targetState: TargetState;
     messagePoster: MessagePoster;
     subsystems: string[];
 }
@@ -229,26 +229,26 @@ function ContainerTable({
     );
 }
 
-export function BoardDashboard({
+export function TargetDashboard({
     target,
     containersData,
-    boardState,
+    targetState,
     messagePoster,
     subsystems,
-}: BoardDashboardProps) {
+}: TargetDashboardProps) {
     let errorMessage: string | undefined = undefined;
-    if (!isBoardReachable(boardState)) {
+    if (!isTargetReachable(targetState)) {
         errorMessage =
-            'No board found. Please ensure the board is running and accessible.';
+            'No target found. Please ensure the target is running and accessible.';
     } else {
-        if (!hasContainerEngine(boardState)) {
+        if (!hasContainerEngine(targetState)) {
             errorMessage =
-                'No container engine found. Please ensure the container engine of the board is installed and running.';
+                'No container engine found. Please ensure the container engine of the target is installed and running.';
         }
     }
     if (errorMessage) {
         return (
-            <div className="board-dashboard">
+            <div className="target-dashboard">
                 <div className="no-access-message">
                     <span className="codicon codicon-error" />
                     <span>{errorMessage}</span>
@@ -262,8 +262,8 @@ export function BoardDashboard({
     );
 
     return (
-        <div className="board-dashboard">
-            <h1>Board Dashboard: {target.id}</h1>
+        <div className="target-dashboard">
+            <h1>Target Dashboard: {target.id}</h1>
             {subsystems.map((subsystem) => (
                 <div key={subsystem} className="section-group">
                     <h3>

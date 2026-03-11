@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import type { TargetItem } from '../util/types';
 
-/** Represents a board */
-export class TargetTreeBoardItem extends vscode.TreeItem {
+/** Represents a target */
+export class TargetTreeTargetItem extends vscode.TreeItem {
     public readonly targetId: string;
 
     constructor(
@@ -15,7 +15,7 @@ export class TargetTreeBoardItem extends vscode.TreeItem {
         this.id = target.id;
         this.description = target.ssh;
         this.iconPath = getTreeItemIcon(selected, connectionReady, targetReady);
-        const contextValues = ['Board'];
+        const contextValues = ['Target'];
         if (selected) {
             contextValues.push('Selected');
         }

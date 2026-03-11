@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { logger } from '../util/logger';
 import { Deferred } from '../util/deferred';
 import type {
-    BoardState,
+    TargetState,
     ContainerItem,
     DockerPorts,
     DockerPsItem,
@@ -11,25 +11,25 @@ import type {
 import type { ContainerCommands } from './containerCommands';
 import { TargetStore } from './targetStore';
 import type { TopoCli } from '../topoCli';
-import { isTargetReady } from '../util/boardState';
+import { isTargetReady } from '../util/targetState';
 
 const refreshInterval = 3000;
 
 export class ContainersManager implements vscode.Disposable {
     private containersDataDeferred: Deferred<void> | undefined = undefined;
-    private boardStateDeferred: Deferred<void> | undefined = undefined;
+    private targetStateDeferred: Deferred<void> | undefined = undefined;
     private containersDataInitialised = false;
-    private boardStateInitialised = false;
+    private targetStateInitialised = false;
     private readonly _onDataUpdate = new vscode.EventEmitter<void>();
     public readonly onDataUpdate = this._onDataUpdate.event;
-    private readonly defaultBoardState: BoardState = {
+    private readonly defaultTargetState: TargetState = {
         health: undefined,
         targetId: undefined,
     };
     private refreshTimer: NodeJS.Timeout | undefined;
     private shouldAutoRefresh = false;
     private containersData: ContainerItem[] = [];
-    private boardState: BoardState = this.defaultBoardState;
+    private targetState: TargetState = this.defaultTargetState;
     private target: TargetItem | undefined;
     private disposables: vscode.Disposable[] = [];
 
@@ -68,12 +68,12 @@ export class ContainersManager implements vscode.Disposable {
         this.target = undefined;
         this.containersData = [];
         this.containersDataInitialised = false;
-        this.boardState = this.defaultBoardState;
-        this.boardStateInitialised = false;
+        this.targetState = this.defaultTargetState;
+        this.targetStateInitialised = false;
         this._onDataUpdate.fire();
     }
 
-    private async getBoardStateInfo(): Promise<BoardState> {
+    private async getTargetStateInfo(): Promise<TargetState> {
         const target = this.target;
         if (!target) {
             return {
@@ -90,7 +90,7 @@ export class ContainersManager implements vscode.Disposable {
             };
         } catch (err) {
             logger.error(
-                `Failed to check board health for target ${target.id}`,
+                `Failed to check target health for target ${target.id}`,
                 err,
             );
             return {
@@ -126,30 +126,30 @@ export class ContainersManager implements vscode.Disposable {
         return this.containersDataDeferred.promise;
     }
 
-    public async getBoardState(): Promise<BoardState> {
-        if (!this.boardStateInitialised) {
-            await this.loadBoardState();
+    public async getTargetState(): Promise<TargetState> {
+        if (!this.targetStateInitialised) {
+            await this.loadTargetState();
         }
-        return this.boardState;
+        return this.targetState;
     }
 
-    private loadBoardState(): Promise<void> {
-        if (this.boardStateDeferred) {
-            return this.boardStateDeferred.promise;
+    private loadTargetState(): Promise<void> {
+        if (this.targetStateDeferred) {
+            return this.targetStateDeferred.promise;
         }
-        this.boardStateDeferred = new Deferred<void>();
+        this.targetStateDeferred = new Deferred<void>();
         (async () => {
             try {
-                this.boardState = await this.getBoardStateInfo();
-                this.boardStateInitialised = true;
-                this.boardStateDeferred?.resolve();
+                this.targetState = await this.getTargetStateInfo();
+                this.targetStateInitialised = true;
+                this.targetStateDeferred?.resolve();
             } catch (err) {
-                this.boardStateDeferred?.reject(err);
+                this.targetStateDeferred?.reject(err);
             } finally {
-                this.boardStateDeferred = undefined;
+                this.targetStateDeferred = undefined;
             }
         })();
-        return this.boardStateDeferred.promise;
+        return this.targetStateDeferred.promise;
     }
 
     private async getContainersInfo(): Promise<ContainerItem[]> {
@@ -218,8 +218,8 @@ export class ContainersManager implements vscode.Disposable {
         this.shouldAutoRefresh = true;
         const refresh = async () => {
             if (this.shouldAutoRefresh) {
-                await this.loadBoardState();
-                if (isTargetReady(this.boardState)) {
+                await this.loadTargetState();
+                if (isTargetReady(this.targetState)) {
                     await this.loadContainersData();
                 }
                 this._onDataUpdate.fire();

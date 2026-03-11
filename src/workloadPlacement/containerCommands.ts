@@ -6,7 +6,7 @@ export interface ContainerCommands {
     getContexts(): Promise<string[]>;
     ensureContext(
         contextName: string,
-        boardSshConnection: string,
+        targetSshConnection: string,
     ): Promise<void>;
     executeWithContext<T>(
         operation: () => Thenable<T> | T,
@@ -15,27 +15,27 @@ export interface ContainerCommands {
     ): Promise<T>;
     startContainer(
         containerId: string,
-        boardSshConnection: string,
+        targetSshConnection: string,
     ): Promise<void>;
     stopContainer(
         containerId: string,
-        boardSshConnection: string,
+        targetSshConnection: string,
     ): Promise<void>;
     deleteContainer(
         containerId: string,
-        boardSshConnection: string,
+        targetSshConnection: string,
     ): Promise<void>;
-    getContainers(boardSshConnection: string): Promise<DockerPsItem[]>;
+    getContainers(targetSshConnection: string): Promise<DockerPsItem[]>;
     inspectContainers(
         containerIds: string[],
-        boardSshConnection: string,
+        targetSshConnection: string,
     ): Promise<DockerInspectItem[]>;
     containerStats(
         containerIds: string[],
-        boardSshConnection: string,
+        targetSshConnection: string,
     ): Promise<string>;
     getAttachShellCommand(
         containerId: string,
-        boardSshConnection: string,
+        targetSshConnection: string,
     ): string;
 }

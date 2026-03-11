@@ -41,7 +41,7 @@ const targetDescription = {
     ],
 };
 
-const healthyBoard = {
+const healthyTarget = {
     isLocalhost: false,
     connectivity: {
         healthy: true,
@@ -72,7 +72,7 @@ const createTargetManager = () => {
 
     const containersManager: MockProxy<ContainersManager> =
         mock<ContainersManager>();
-    containersManager.getBoardState.mockResolvedValue({
+    containersManager.getTargetState.mockResolvedValue({
         health: undefined,
         targetId: undefined,
     });
@@ -297,7 +297,7 @@ describe('TargetManager', () => {
             jest.mocked(targetStore.getSelectedTarget).mockResolvedValue(
                 target,
             );
-            jest.mocked(containersManager.getBoardState).mockResolvedValue({
+            jest.mocked(containersManager.getTargetState).mockResolvedValue({
                 health: undefined,
                 targetId: undefined,
             });
@@ -324,7 +324,7 @@ describe('TargetManager', () => {
             jest.mocked(targetStore.getSelectedTarget).mockResolvedValue(
                 undefined,
             );
-            jest.mocked(containersManager.getBoardState).mockResolvedValue({
+            jest.mocked(containersManager.getTargetState).mockResolvedValue({
                 health: undefined,
                 targetId: undefined,
             });
@@ -366,8 +366,8 @@ describe('TargetManager', () => {
             jest.mocked(targetStore.getSelectedTarget).mockResolvedValue(
                 target1,
             );
-            jest.mocked(containersManager.getBoardState).mockResolvedValue({
-                health: healthyBoard,
+            jest.mocked(containersManager.getTargetState).mockResolvedValue({
+                health: healthyTarget,
                 targetId: target1.id,
             });
             jest.mocked(vscode.window.createStatusBarItem).mockImplementation(
@@ -377,8 +377,8 @@ describe('TargetManager', () => {
             jest.mocked(targetStore.getSelectedTarget).mockResolvedValue(
                 target2,
             );
-            jest.mocked(containersManager.getBoardState).mockResolvedValue({
-                health: healthyBoard,
+            jest.mocked(containersManager.getTargetState).mockResolvedValue({
+                health: healthyTarget,
                 targetId: target2.id,
             });
 
@@ -412,8 +412,8 @@ describe('TargetManager', () => {
             jest.mocked(targetStore.getSelectedTarget).mockResolvedValue(
                 target,
             );
-            jest.mocked(containersManager.getBoardState).mockResolvedValue({
-                health: healthyBoard,
+            jest.mocked(containersManager.getTargetState).mockResolvedValue({
+                health: healthyTarget,
                 targetId: target.id,
             });
             jest.mocked(vscode.window.createStatusBarItem).mockImplementation(
@@ -421,7 +421,7 @@ describe('TargetManager', () => {
             );
             await targetManager.activate();
             const error = new Error('boom');
-            jest.mocked(containersManager.getBoardState).mockRejectedValue(
+            jest.mocked(containersManager.getTargetState).mockRejectedValue(
                 error,
             );
 
