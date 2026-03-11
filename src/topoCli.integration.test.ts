@@ -50,10 +50,6 @@ describe('listTemplates', () => {
 
 describe('health', () => {
     it('parses health check result correctly', async () => {
-        if (process.platform !== 'linux') {
-            return;
-        }
-
         const health = await topoCli.health('localhost');
 
         expect(health).toEqual({
