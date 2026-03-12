@@ -24,6 +24,7 @@ import { TargetStore } from './workloadPlacement/targetStore';
 import { ProjectClone } from './projectClone';
 import { Deploy } from './actions/deploy';
 import { HostHealth } from './actions/hostHealth';
+import { SetupKeys } from './actions/setupKeys';
 
 export async function activate(
     context: vscode.ExtensionContext,
@@ -102,6 +103,7 @@ export async function activate(
     );
     const openSerial = new OpenSerial(context);
     const health = new HostHealth(context, topoCli);
+    const setupKeys = new SetupKeys(context, targetStore);
     context.subscriptions.push(targetStore);
     await topoCli.activate();
     context.subscriptions.push(topoCli);
@@ -123,5 +125,6 @@ export async function activate(
     openTargetDashboard.activate();
     openSerial.activate();
     health.activate();
+    setupKeys.activate();
     health.checkHostDependencyHealth();
 }
