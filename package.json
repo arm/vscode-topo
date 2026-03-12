@@ -126,6 +126,11 @@
                 "category": "Arm Topo"
             },
             {
+                "command": "topo.setupKeys",
+                "title": "Setup Keys",
+                "category": "Arm Topo"
+            },
+            {
                 "command": "topo.inspectHostHealth",
                 "title": "Inspect Host Health",
                 "category": "Arm Topo"
@@ -251,6 +256,10 @@
                     "when": "false"
                 },
                 {
+                    "command": "topo.setupKeys",
+                    "when": "false"
+                },
+                {
                     "command": "topo.stopContainer",
                     "when": "false"
                 },
@@ -296,6 +305,11 @@
                 },
                 {
                     "command": "topo.inspectTargetHealth",
+                    "when": "view === topo.target-manager && viewItem =~ /Target/ && viewItem =~ /Selected/",
+                    "group": "topo/2_actions"
+                },
+                {
+                    "command": "topo.setupKeys",
                     "when": "view === topo.target-manager && viewItem =~ /Target/ && viewItem =~ /Selected/",
                     "group": "topo/2_actions"
                 },
