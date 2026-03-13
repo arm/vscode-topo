@@ -11,6 +11,7 @@ import { ContainersManager } from './containersManager';
 import { getTreeItemIcon } from './targetTreeTargetItem';
 import type { TopoCli } from '../topoCli';
 import { isTargetReady } from '../util/targetState';
+import { TargetItem } from '../util/types';
 
 export class TargetManager {
     public static readonly viewId = `${manifest.PACKAGE_NAME}.target-manager`;
@@ -55,7 +56,7 @@ export class TargetManager {
             treeDataProvider: this.targetTreeDataProvider,
             showCollapseAll: true,
         });
-        await this.safeUpdateStatusBar();
+        await this.refreshTargetVisualisation();
 
         this.context.subscriptions.push(
             this.statusBarItem,
@@ -67,9 +68,9 @@ export class TargetManager {
                 TargetManager.addTargetCommand,
                 () => this.addTarget(),
             ),
-            this.targetStore.onChanged(() => this.safeUpdateStatusBar()),
+            this.targetStore.onChanged(() => this.refreshTargetVisualisation()),
             this.containersManager.onDataUpdate(() =>
-                this.safeUpdateStatusBar(),
+                this.refreshTargetVisualisation(),
             ),
         );
     }
@@ -111,33 +112,69 @@ export class TargetManager {
         await this.targetStore.setSelected(newTarget.id);
     }
 
-    protected async updateStatusBar(): Promise<void> {
+    protected async updateStatusBar(
+        selectedTarget: TargetItem | undefined,
+    ): Promise<void> {
         if (!this.statusBarItem) {
             return;
         }
-        const target = await this.targetStore.getSelectedTarget();
-        if (target) {
+        if (selectedTarget) {
             const targetState = await this.containersManager.getTargetState();
-            const connectionReady = target.id === targetState.targetId;
+            const connectionReady = selectedTarget.id === targetState.targetId;
             const targetTreeIcon = getTreeItemIcon(
                 true,
                 connectionReady,
                 isTargetReady(targetState),
             );
             const iconId = targetTreeIcon?.id || 'pass-filled';
-            this.statusBarItem.text = `$(${iconId}) ${target.id}`;
-            this.statusBarItem.tooltip = `Connection String: ${target.ssh}`;
+            this.statusBarItem.text = `$(${iconId}) ${selectedTarget.id}`;
+            this.statusBarItem.tooltip = `Connection String: ${selectedTarget.ssh}`;
             this.statusBarItem.show();
         } else {
             this.statusBarItem.hide();
         }
     }
 
-    protected async safeUpdateStatusBar(): Promise<void> {
+    private async updateTargetDescription(
+        selectedTarget: TargetItem | undefined,
+    ): Promise<void> {
+        if (!selectedTarget || selectedTarget.targetDescription !== undefined) {
+            return;
+        }
+
+        const targetState = await this.containersManager.getTargetState();
+        if (!isTargetReady(targetState)) {
+            return;
+        }
+
+        const targetDescription = await this.getTargetDescription(
+            selectedTarget.ssh,
+        );
+        if (targetDescription === undefined) {
+            return;
+        }
+
+        const updatedTarget = new Target(
+            selectedTarget.id,
+            selectedTarget.ssh,
+            targetDescription,
+        );
+
+        await this.targetStore.updateTarget(updatedTarget);
+    }
+
+    private async refreshTargetVisualisation(): Promise<void> {
+        const selectedTarget = await this.targetStore.getSelectedTarget();
         try {
-            await this.updateStatusBar();
+            await this.updateStatusBar(selectedTarget);
         } catch (error) {
             logger.error(`Failed to update target manager status bar`, error);
+        }
+
+        try {
+            await this.updateTargetDescription(selectedTarget);
+        } catch (error) {
+            logger.warn(`Failed to update target description`, error);
         }
     }
 }

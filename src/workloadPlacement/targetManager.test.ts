@@ -166,6 +166,39 @@ describe('TargetManager', () => {
             );
             expect(context.subscriptions.length).toBeGreaterThan(0);
         });
+
+        it('backfills target description when missing', async () => {
+            const target: TargetItem = {
+                id: 'test',
+                ssh: 'root@localhost',
+                user: 'root',
+                host: 'localhost',
+            };
+            const { targetManager, targetStore, containersManager, topoCli } =
+                createTargetManager();
+            const tmpDir = '/tmp/topo-target-1234';
+            const yamlDescriptionPath = path.join(
+                tmpDir,
+                'target-description.yaml',
+            );
+            topoCli.describe.mockResolvedValue(yamlDescriptionPath);
+            jest.mocked(targetStore.getSelectedTarget).mockResolvedValue(
+                target,
+            );
+            jest.mocked(containersManager.getTargetState).mockResolvedValue({
+                health: healthyTarget,
+                targetId: target.id,
+            });
+
+            await targetManager.activate();
+
+            expect(targetStore.updateTarget).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    id: target.id,
+                    targetDescription,
+                }),
+            );
+        });
     });
 
     describe('target addition', () => {
