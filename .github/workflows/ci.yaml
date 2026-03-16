@@ -7,54 +7,71 @@ on:
     pull_request:
         branches:
             - main
-    workflow_dispatch:
-        inputs:
-            release-type:
-                type: choice
-                description: A new version is published with the corresponding version bump if not set to None.
-                options:
-                    - 'None'
-                    - 'Pre-release'
-                    - 'Patch'
-                    - 'Minor'
-                    - 'Major'
-                default: 'None'
-    merge_group:
+
+env:
+    NODE_VERSION: 20.x
 
 jobs:
-    build-and-verify:
-        name: Build and verify
-        uses: arm-debug/vscode-workflows/.github/workflows/build-and-verify.yml@v5.5.0
-        secrets:
-            EXTENSIONS_REPO_ACCESS_APP_ID: ${{ secrets.TOPO_ACCESS_APP_ID }}
-            EXTENSIONS_REPO_ACCESS_PRIVATE_KEY: ${{ secrets.TOPO_ACCESS_APP_PRIVATE_KEY }}
-            GH_PACKAGES_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
-            ARM_ARTIFACTORY_PASSWORD: 'UNUSED'
-            KSC_NEXT_PREVIEW_APP_SECRET: 'UNUSED'
-            KSC_NEXT_PREVIEW_APP_ID: 'UNUSED'
-        with:
-            enable-code-climate: false
-            package-manager: 'npm'
-            download-script-name: download-tools.sh
-            enable-ksc-next-preview: false
-            test-on-self-hosted-ubuntu-only: false
-            is-platform-specific: true
-            excluded-platforms: '["win32-arm64","darwin-x64"]'
-            release-type: ${{ inputs.release-type || 'None' }}
-    release-and-publish:
-        name: Release and publish
-        needs: build-and-verify
-        uses: arm-debug/vscode-workflows/.github/workflows/release-and-publish.yml@v5.5.0
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.release-type != 'None' && github.ref == 'refs/heads/main' }}
-        secrets:
-            OPEN_VSX_TOKEN: 'UNUSED'
-            VS_MARKETPLACE_TOKEN: 'UNUSED'
-            EXTENSIONS_REPO_ACCESS_APP_ID: ${{ secrets.ML_REPO_ACCESS_APP_ID }}
-            EXTENSIONS_REPO_ACCESS_PRIVATE_KEY: ${{ secrets.ML_REPO_ACCESS_PRIVATE_KEY }}
-            NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            FACADE_REPOSITORY_TOKEN: ${{ secrets.ARM_SOFTWARE_TOKEN }}
-        with:
-            api-types-registry-url: https://npm.pkg.github.com
-            facade-repository: Arm-software/vscode-environment-manager
-            release-type: ${{ inputs.release-type }}
-            internal: true
+    configure-ci:
+        name: Configure CI
+        runs-on: ubuntu-latest
+        steps:
+            - id: get-app-token
+              uses: getsentry/action-github-app-token@d4b5da6c5e37703f8c3b3e43abb5705b46e159cc
+              with:
+                  app_id: ${{ secrets.TOPO_ACCESS_APP_ID }}
+                  private_key: ${{ secrets.TOPO_ACCESS_APP_PRIVATE_KEY }}
+            - uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e
+            - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+              with:
+                  node-version: ${{ env.NODE_VERSION }}
+                  registry-url: https://npm.pkg.github.com
+                  always-auth: true
+            - name: Install dependencies
+              env:
+                  GITHUB_TOKEN: ${{ steps.get-app-token.outputs.token }}
+                  NODE_AUTH_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
+              run: npm ci
+            - name: Lint
+              run: npm run lint
+            - name: Build
+              run: npm run build
+
+    test:
+        needs: configure-ci
+        runs-on: ${{ matrix.os }}
+        strategy:
+            matrix:
+                os:
+                    - ubuntu-latest
+                    - windows-latest
+        steps:
+            - id: get-app-token
+              uses: getsentry/action-github-app-token@d4b5da6c5e37703f8c3b3e43abb5705b46e159cc
+              with:
+                  app_id: ${{ secrets.TOPO_ACCESS_APP_ID }}
+                  private_key: ${{ secrets.TOPO_ACCESS_APP_PRIVATE_KEY }}
+            - uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e
+            - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+              with:
+                  node-version: ${{ env.NODE_VERSION }}
+                  registry-url: https://npm.pkg.github.com
+                  always-auth: true
+            - name: Install NPM dependencies
+              run: npm ci
+              env:
+                  GITHUB_TOKEN: ${{ steps.get-app-token.outputs.token }}
+                  NODE_AUTH_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
+            - name: Download other dependencies
+              run: npm run download
+              env:
+                  GITHUB_TOKEN: ${{ steps.get-app-token.outputs.token }}
+            - name: Store npm-debug.log
+              if: always()
+              uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+              with:
+                  name: npm-errors-${{ matrix.os }}
+                  path: ./npm-debug.log
+                  if-no-files-found: ignore
+            - name: Unit Test
+              run: npm run test

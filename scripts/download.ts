@@ -213,20 +213,6 @@ const parsedArgs = yargs(process.argv.slice(2))
         default: process.env.GITHUB_TOKEN,
         defaultDescription: 'GITHUB_TOKEN env var',
     })
-    .option('ci', {
-        description: 'Only download if running in CI environment',
-        type: 'boolean',
-        default: false,
-    })
-    .check((argv) => {
-        if (argv.ci && !process.env.CI) {
-            console.log(
-                '→ Skipping download since not running in CI environment. Use `npm run download` to download locally.',
-            );
-            process.exit(0);
-        }
-        return true;
-    })
     .check((argv) => {
         if (!argv.token) {
             throw new Error(
