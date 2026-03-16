@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { BOARD_HOST_RUNTIME, BOARD_REMOTEPROC_RUNTIME } from '../manifest';
+import { TARGET_HOST_RUNTIME, TARGET_REMOTEPROC_RUNTIME } from '../manifest';
 import { ContainerItem } from '../util/types';
 
 /** Represents an individual container in the target tree view. */
@@ -13,10 +13,10 @@ export class TargetTreeContainerItem extends vscode.TreeItem {
         this.description = `${containerItem.name} - ${containerItem.runningFor}`;
         this.tooltip = `ID: ${containerItem.id}\nImage: ${containerItem.image}\nName: ${containerItem.name}\nStatus: ${containerItem.status}\nLabels: ${containerItem.labels}\nUptime: ${containerItem.runningFor}\n`;
         let subsystemCategory: string | undefined;
-        if (containerItem.runtime === BOARD_HOST_RUNTIME) {
+        if (containerItem.runtime === TARGET_HOST_RUNTIME) {
             subsystemCategory = 'Host';
         }
-        if (containerItem.runtime === BOARD_REMOTEPROC_RUNTIME) {
+        if (containerItem.runtime === TARGET_REMOTEPROC_RUNTIME) {
             subsystemCategory = 'Remoteproc';
         }
         const contextValues = ['service', containerItem.state];

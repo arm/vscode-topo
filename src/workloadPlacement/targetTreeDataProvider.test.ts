@@ -70,7 +70,7 @@ describe('TargetTreeDataProvider', () => {
             status: 'Up 4 days',
             labels: 'foo=bar',
             runningFor: '1h',
-            runtime: manifest.BOARD_REMOTEPROC_RUNTIME,
+            runtime: manifest.TARGET_REMOTEPROC_RUNTIME,
             annotations: {
                 'remoteproc.name': 'imx-rproc',
             },
@@ -88,7 +88,7 @@ describe('TargetTreeDataProvider', () => {
             status: 'Exited (0) 2 hours ago',
             labels: 'baz=qux',
             runningFor: '2h',
-            runtime: manifest.BOARD_HOST_RUNTIME,
+            runtime: manifest.TARGET_HOST_RUNTIME,
             annotations: {},
             createdAt: '',
             ports: {},
@@ -104,7 +104,7 @@ describe('TargetTreeDataProvider', () => {
             status: 'Up 1 hour',
             labels: 'abc=def',
             runningFor: '30m',
-            runtime: manifest.BOARD_REMOTEPROC_RUNTIME,
+            runtime: manifest.TARGET_REMOTEPROC_RUNTIME,
             annotations: {
                 'remoteproc.name': 'imx-rproc',
             },

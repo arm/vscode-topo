@@ -1,4 +1,4 @@
-import { BOARD_HOST_RUNTIME } from '../manifest';
+import { TARGET_HOST_RUNTIME } from '../manifest';
 import * as vscode from 'vscode';
 import { ContainerDelete } from './containerDelete';
 import { ContainerItem, TargetItem } from '../util/types';
@@ -33,7 +33,7 @@ describe('ContainerDelete', () => {
         status: 'Up',
         labels: '',
         runningFor: '',
-        runtime: BOARD_HOST_RUNTIME,
+        runtime: TARGET_HOST_RUNTIME,
         annotations: {},
         createdAt: '',
         ports: {},

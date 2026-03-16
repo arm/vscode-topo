@@ -1,4 +1,4 @@
-import { BOARD_HOST_RUNTIME } from '../manifest';
+import { TARGET_HOST_RUNTIME } from '../manifest';
 import * as vscode from 'vscode';
 import { ContainerStart } from './containerStart';
 import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
@@ -32,7 +32,7 @@ describe('ContainerStart', () => {
         status: 'Up',
         labels: '',
         runningFor: '',
-        runtime: BOARD_HOST_RUNTIME,
+        runtime: TARGET_HOST_RUNTIME,
         annotations: {},
         createdAt: '',
         ports: {},

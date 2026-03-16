@@ -200,8 +200,8 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
         const containers = await this.containersManager.getContainersData();
         const subsystemContainers = containers.filter((item) =>
             element.group === 'Host'
-                ? item.runtime === manifest.BOARD_HOST_RUNTIME
-                : item.runtime === manifest.BOARD_REMOTEPROC_RUNTIME &&
+                ? item.runtime === manifest.TARGET_HOST_RUNTIME
+                : item.runtime === manifest.TARGET_REMOTEPROC_RUNTIME &&
                   item.annotations?.['remoteproc.name'] === element.group,
         );
         const subsystemTreeItems = subsystemContainers.map(
