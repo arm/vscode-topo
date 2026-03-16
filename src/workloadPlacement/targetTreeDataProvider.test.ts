@@ -8,7 +8,6 @@ import { ContainersManager } from './containersManager';
 import { TargetState, ContainerItem, TargetItem } from '../util/types';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { TargetStore } from './targetStore';
-import { TopoCli } from '../topoCli';
 import { TargetTreeDependencyGroupItem } from './targetTreeDependencyGroupItem';
 import { TargetTreeSubsystemGroupItem } from './targetTreeSubsystemGroupItem';
 import { HealthCheckDependency } from '../topoCliSchema';
@@ -138,10 +137,6 @@ describe('TargetTreeDataProvider', () => {
         targetStoreMock = mock<TargetStore>();
         targetStoreMock.getSelectedTarget.mockResolvedValue(target);
         targetStoreMock.onChanged.mockImplementation(onChangedEmitter.event);
-        const topoCliMock = mock<TopoCli>();
-        topoCliMock.describe.mockResolvedValue(
-            '/tmp/t1/target-description.yaml',
-        );
         provider = new TargetTreeDataProvider(
             context,
             containersManagerMock,
