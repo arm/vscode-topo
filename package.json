@@ -147,18 +147,6 @@
                 "category": "Arm Topo"
             }
         ],
-        "customEditors": [
-            {
-                "viewType": "topo.composeEditor",
-                "displayName": "Compose Editor",
-                "priority": "option",
-                "selector": [
-                    {
-                        "filenamePattern": "compose{,.*}.yaml"
-                    }
-                ]
-            }
-        ],
         "viewsContainers": {
             "activitybar": [
                 {
@@ -195,14 +183,14 @@
                     "command": "topo.showPreviewToSide",
                     "alt": "topo.showPreview",
                     "group": "navigation",
-                    "when": "resourceFilename =~ /compose(\\..*)?\\.yaml$/ && activeCustomEditorId != 'topo.composeEditor'"
+                    "when": "resourceFilename =~ /compose(\\..*)?\\.yaml$/ && activeCustomEditorId != 'topo.composeEditor' && config.topo.experimentalFeatures"
                 }
             ],
             "editor/title/context": [
                 {
                     "command": "topo.showPreview",
                     "group": "1_open",
-                    "when": "resourceFilename =~ /compose(\\..*)?\\.yaml$/ && activeCustomEditorId != 'topo.composeEditor'"
+                    "when": "resourceFilename =~ /compose(\\..*)?\\.yaml$/ && activeCustomEditorId != 'topo.composeEditor' && config.topo.experimentalFeatures"
                 },
                 {
                     "command": "topo.deploy.context",
@@ -214,7 +202,7 @@
                 {
                     "command": "topo.showPreview",
                     "group": "navigation@1",
-                    "when": "resourceFilename =~ /compose(\\..*)?\\.yaml$/ && activeCustomEditorId != 'topo.composeEditor'"
+                    "when": "resourceFilename =~ /compose(\\..*)?\\.yaml$/ && activeCustomEditorId != 'topo.composeEditor' && config.topo.experimentalFeatures"
                 },
                 {
                     "command": "topo.deploy.context",
@@ -304,7 +292,7 @@
                 },
                 {
                     "command": "topo.openTargetDashboard",
-                    "when": "view === topo.target-manager && viewItem =~ /Target/ && viewItem =~ /Selected/ && viewItem=~ /ConnectionReady/ && viewItem=~ /TargetReady/",
+                    "when": "view === topo.target-manager && viewItem =~ /Target/ && viewItem =~ /Selected/ && viewItem=~ /ConnectionReady/ && viewItem=~ /TargetReady/ && config.topo.experimentalFeatures",
                     "group": "topo/2_actions"
                 },
                 {
@@ -380,6 +368,11 @@
                     ],
                     "default": "warn",
                     "description": "Specify the logging verbosity of the Topo extension"
+                },
+                "topo.experimentalFeatures": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enable experimental features"
                 }
             }
         }
