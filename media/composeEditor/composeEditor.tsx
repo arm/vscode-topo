@@ -5,8 +5,8 @@ import {
     MessagePoster,
 } from '../../src/util/types';
 import {
-    BOARD_REMOTEPROC_RUNTIME,
-    BOARD_HOST_RUNTIME,
+    TARGET_REMOTEPROC_RUNTIME,
+    TARGET_HOST_RUNTIME,
 } from '../../src/manifest';
 import { ProjectDescription } from '../../src/topoCliSchema';
 
@@ -25,7 +25,7 @@ const getSubsystemServices = (
             .filter(
                 ([, service]) =>
                     service.runtime === undefined ||
-                    service.runtime === BOARD_HOST_RUNTIME,
+                    service.runtime === TARGET_HOST_RUNTIME,
             )
             .map(([serviceName, service]) => ({
                 ...service,
@@ -36,7 +36,7 @@ const getSubsystemServices = (
     return Object.entries(project.services)
         .filter(
             ([, service]) =>
-                service.runtime === BOARD_REMOTEPROC_RUNTIME &&
+                service.runtime === TARGET_REMOTEPROC_RUNTIME &&
                 service.annotations?.['remoteproc.name'] === subsystem,
         )
         .map(([serviceName, service]) => ({

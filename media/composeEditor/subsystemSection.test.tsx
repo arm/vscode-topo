@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { SubsystemSection } from './subsystemSection';
 import { ServiceCreationDescription } from '../../src/util/types';
-import { BOARD_REMOTEPROC_RUNTIME } from '../../src/manifest';
+import { TARGET_REMOTEPROC_RUNTIME } from '../../src/manifest';
 
 describe('SubsystemSection', () => {
     let services: ServiceCreationDescription[];
@@ -23,7 +23,7 @@ describe('SubsystemSection', () => {
                 },
                 containerName: 'container1',
                 annotations: {},
-                runtime: BOARD_REMOTEPROC_RUNTIME,
+                runtime: TARGET_REMOTEPROC_RUNTIME,
             },
             {
                 name: 'project2',
@@ -32,7 +32,7 @@ describe('SubsystemSection', () => {
                 },
                 containerName: 'container2',
                 annotations: {},
-                runtime: BOARD_REMOTEPROC_RUNTIME,
+                runtime: TARGET_REMOTEPROC_RUNTIME,
             },
         ];
     });

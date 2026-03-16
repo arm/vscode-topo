@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { TargetTreeContainerItem } from './targetTreeContainerItem';
-import { BOARD_REMOTEPROC_RUNTIME } from '../manifest';
+import { TARGET_REMOTEPROC_RUNTIME } from '../manifest';
 import { ContainerItem, TargetItem } from '../util/types';
 
 describe('TargetTreeContainerItem', () => {
@@ -23,7 +23,7 @@ describe('TargetTreeContainerItem', () => {
             status: 'Up',
             labels: 'label1=value1',
             runningFor: '10m',
-            runtime: BOARD_REMOTEPROC_RUNTIME,
+            runtime: TARGET_REMOTEPROC_RUNTIME,
             annotations: {},
             createdAt: '',
             ports: { '80/tcp': [{ HostIp: '0.0.0.0', HostPort: '8080' }] },
@@ -60,7 +60,7 @@ describe('TargetTreeContainerItem', () => {
             status: 'Exited (0) 2 days ago',
             labels: '',
             runningFor: '',
-            runtime: BOARD_REMOTEPROC_RUNTIME,
+            runtime: TARGET_REMOTEPROC_RUNTIME,
             annotations: {},
             createdAt: '',
             ports: {},

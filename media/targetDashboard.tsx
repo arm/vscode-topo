@@ -1,4 +1,7 @@
-import { BOARD_HOST_RUNTIME, BOARD_REMOTEPROC_RUNTIME } from '../src/manifest';
+import {
+    TARGET_HOST_RUNTIME,
+    TARGET_REMOTEPROC_RUNTIME,
+} from '../src/manifest';
 import { hasContainerEngine, isTargetReachable } from '../src/util/targetState';
 import { getContainerHostPorts } from '../src/util/getContainerHostPorts';
 import {
@@ -23,9 +26,9 @@ function splitContainersBySubsystem(
     const groups: Record<string, ContainerItem[]> = { Host: [] };
 
     for (const c of containers) {
-        if (c.runtime === undefined || c.runtime === BOARD_HOST_RUNTIME) {
+        if (c.runtime === undefined || c.runtime === TARGET_HOST_RUNTIME) {
             groups['Host'].push(c);
-        } else if (c.runtime === BOARD_REMOTEPROC_RUNTIME) {
+        } else if (c.runtime === TARGET_REMOTEPROC_RUNTIME) {
             const subsystem = c.annotations?.['remoteproc.name'];
             if (subsystem && subsystems.includes(subsystem)) {
                 groups[subsystem] ??= [];

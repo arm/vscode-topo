@@ -89,10 +89,7 @@ export class ContainersManager implements vscode.Disposable {
                 targetId: target.id,
             };
         } catch (err) {
-            logger.error(
-                `Failed to check target health for target ${target.id}`,
-                err,
-            );
+            logger.error(`Failed to check health for target ${target.id}`, err);
             return {
                 health: undefined,
                 targetId: target.id,

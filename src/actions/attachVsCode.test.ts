@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { AttachVsCode } from './attachVsCode';
 import { exec } from '../util/exec';
-import { BOARD_HOST_RUNTIME } from '../manifest';
+import { TARGET_HOST_RUNTIME } from '../manifest';
 import { DockerCommands } from '../workloadPlacement/dockerCommands';
 import { ContainerItem, TargetItem } from '../util/types';
 import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
@@ -44,7 +44,7 @@ describe('attachVsCode', () => {
         status: 'Up',
         labels: '',
         runningFor: '',
-        runtime: BOARD_HOST_RUNTIME,
+        runtime: TARGET_HOST_RUNTIME,
         annotations: {},
         createdAt: '',
         ports: {},
