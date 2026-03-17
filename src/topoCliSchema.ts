@@ -1,6 +1,7 @@
 import {
     array,
     boolean,
+    enums,
     Infer,
     nullable,
     optional,
@@ -20,10 +21,13 @@ export const templateSchema = type({
 
 export type TemplateDescription = Infer<typeof templateSchema>;
 
-const healthCheckDependencySchema = type({
+const healthCheckStatusSchema = enums(['ok', 'warning', 'error']);
+
+export const healthCheckDependencySchema = type({
     name: trimmed(string()),
-    healthy: boolean(),
+    status: healthCheckStatusSchema,
     value: trimmed(string()),
+    fix: optional(trimmed(string())),
 });
 
 export type HealthCheckDependency = Infer<typeof healthCheckDependencySchema>;

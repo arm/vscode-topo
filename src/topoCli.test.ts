@@ -11,6 +11,7 @@ import { Mutable } from './util/types';
 import * as manifest from './manifest';
 import { ChildProcessWithoutNullStreams } from 'child_process';
 import { mock } from 'jest-mock-extended';
+import { Writable } from 'stream';
 import {
     HealthCheckResult,
     ProjectDescription,
@@ -46,6 +47,7 @@ describe('TopoCli', () => {
         jest.clearAllMocks();
         topoCli = new TopoCli(ext, env);
         cp = mock<ChildProcessWithoutNullStreams>();
+        cp.stdin = mock<Writable>() as ChildProcessWithoutNullStreams['stdin'];
     });
 
     it('getBinaryPath builds correct path', () => {
@@ -238,28 +240,51 @@ describe('TopoCli', () => {
                 dependencies: [
                     {
                         name: 'Container Engine',
-                        healthy: true,
+                        status: 'ok',
                         value: 'docker',
                     },
                 ],
                 connectivity: {
                     name: 'Connected',
-                    healthy: true,
+                    status: 'ok',
                     value: '',
                 },
                 subsystemDriver: {
                     name: 'Subsystem Driver (remoteproc)',
-                    healthy: true,
+                    status: 'ok',
+                    value: 'driver-x',
+                },
+            },
+        };
+        const cliResponse: HealthCheckResult = {
+            host: { dependencies: [] },
+            target: {
+                isLocalhost: false,
+                dependencies: [
+                    {
+                        name: 'Container Engine',
+                        status: 'ok',
+                        value: 'docker',
+                    },
+                ],
+                connectivity: {
+                    name: 'Connected',
+                    status: 'ok',
+                    value: '',
+                },
+                subsystemDriver: {
+                    name: 'Subsystem Driver (remoteproc)',
+                    status: 'ok',
                     value: 'driver-x',
                 },
             },
         };
         execMock.mockImplementation((_bin, _cargs, _options, cb) => {
-            cb!(null, JSON.stringify(want), '');
+            cb!(null, JSON.stringify(cliResponse), '');
             return cp;
         });
 
-        expect(topoCli.health('hostname')).resolves.toEqual(want);
+        await expect(topoCli.health('hostname')).resolves.toMatchObject(want);
         expect(execMock).toHaveBeenCalledTimes(1);
         expect(execMock).toHaveBeenCalledWith(
             topoCli.getBinaryPath(),
@@ -271,9 +296,13 @@ describe('TopoCli', () => {
                 '-o',
                 'json',
             ],
-            expect.any(Object),
+            {
+                env: {},
+                windowsHide: true,
+            },
             expect.any(Function),
         );
+        expect(cp.stdin.end).toHaveBeenCalledTimes(1);
     });
 
     it('health throws error when JSON output is invalid', async () => {

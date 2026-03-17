@@ -107,14 +107,14 @@ topoCli.health.mockResolvedValue({
         dependencies: [
             {
                 name: 'Container Engine',
-                healthy: true,
+                status: 'ok',
                 value: 'docker',
             },
         ],
-        connectivity: { name: 'Connected', healthy: true, value: '' },
+        connectivity: { name: 'Connected', status: 'ok', value: '' },
         subsystemDriver: {
             name: 'Subsystem Driver (remoteproc)',
-            healthy: true,
+            status: 'ok',
             value: 'driver-x',
         },
     },

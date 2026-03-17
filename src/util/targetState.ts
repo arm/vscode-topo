@@ -1,4 +1,5 @@
 import { TargetState } from './types';
+import { HealthCheckDependency } from '../topoCliSchema';
 
 export function hasContainerEngine(targetState: TargetState): boolean {
     if (!targetState.health) {
@@ -6,12 +7,13 @@ export function hasContainerEngine(targetState: TargetState): boolean {
     }
 
     return targetState.health.dependencies.some(
-        (v) => v.name === 'Container Engine' && v.healthy,
+        (v: HealthCheckDependency) =>
+            v.name === 'Container Engine' && v.status === 'ok',
     );
 }
 
 export function isTargetReachable(targetState: TargetState): boolean {
-    return targetState.health?.connectivity.healthy ?? false;
+    return targetState.health?.connectivity.status === 'ok';
 }
 
 export function isTargetReady(targetState: TargetState): boolean {

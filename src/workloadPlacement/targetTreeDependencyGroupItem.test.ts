@@ -4,7 +4,7 @@ import { TargetTreeDependencyGroupItem } from './targetTreeDependencyGroupItem';
 describe('TargetTreeDependencyGroupItem', () => {
     it('uses a neutral icon when all entries are healthy', () => {
         const item = new TargetTreeDependencyGroupItem([
-            { name: 'Container Engine', healthy: true, value: 'docker' },
+            { name: 'Container Engine', status: 'ok', value: 'docker' },
         ]);
 
         expect(item.label).toBe('Dependencies');
@@ -19,8 +19,8 @@ describe('TargetTreeDependencyGroupItem', () => {
 
     it('uses a warning icon if at least one entry is not healthy', () => {
         const item = new TargetTreeDependencyGroupItem([
-            { name: 'Container Engine', healthy: true, value: 'docker' },
-            { name: 'Subsystem Driver', healthy: false, value: 'missing' },
+            { name: 'Container Engine', status: 'ok', value: 'docker' },
+            { name: 'Subsystem Driver', status: 'error', value: 'missing' },
         ]);
 
         const icon = item.iconPath as vscode.ThemeIcon;
