@@ -210,7 +210,14 @@ export class TopoCli {
 
     public async health(sshTarget: string): Promise<HealthCheckResult> {
         const bin = this.getBinaryPath();
-        const cmd = ['health', '--target', sshTarget, '-o', 'json'];
+        const cmd = [
+            'health',
+            '--target',
+            sshTarget,
+            '--accept-new-host-keys',
+            '-o',
+            'json',
+        ];
         const promise = await new Promise<string>((resolve, reject) => {
             childProcess.execFile(bin, cmd, {}, (error, stdout, stderr) => {
                 if (error) {
