@@ -263,7 +263,14 @@ describe('TopoCli', () => {
         expect(execMock).toHaveBeenCalledTimes(1);
         expect(execMock).toHaveBeenCalledWith(
             topoCli.getBinaryPath(),
-            ['health', '--target', 'hostname', '-o', 'json'],
+            [
+                'health',
+                '--target',
+                'hostname',
+                '--accept-new-host-keys',
+                '-o',
+                'json',
+            ],
             expect.any(Object),
             expect.any(Function),
         );
