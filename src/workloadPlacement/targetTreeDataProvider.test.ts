@@ -10,7 +10,7 @@ import { mock, MockProxy } from 'jest-mock-extended';
 import { TargetStore } from './targetStore';
 import { TargetTreeDependencyGroupItem } from './targetTreeDependencyGroupItem';
 import { TargetTreeSubsystemGroupItem } from './targetTreeSubsystemGroupItem';
-import { HealthCheckDependency } from '../topoCliSchema';
+import { HealthCheckDependency, HealthCheckResult } from '../topoCliSchema';
 
 jest.mock('../util/logger');
 
@@ -40,23 +40,23 @@ describe('TargetTreeDataProvider', () => {
             remoteprocCPU: [{ name: 'imx-rproc' }, { name: 'other-rproc' }],
         },
     };
-    const targetHealth = {
+    const targetHealth: HealthCheckResult['target'] = {
         isLocalhost: false,
         connectivity: {
             name: 'Connectivity',
-            healthy: true,
+            status: 'ok',
             value: 'ok',
         },
         dependencies: [
             {
                 name: 'Podman',
-                healthy: true,
+                status: 'ok',
                 value: 'present',
             },
         ],
         subsystemDriver: {
             name: 'SubsystemDriver',
-            healthy: true,
+            status: 'ok',
             value: 'ready',
         },
     };

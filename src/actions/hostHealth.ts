@@ -52,7 +52,7 @@ export class HostHealth {
         }
 
         const unhealthyDependencies = health.host.dependencies
-            .filter((v) => !v.healthy)
+            .filter((v) => v.status !== 'ok')
             .map((dependency) => dependency.name);
         if (unhealthyDependencies.length === 0) {
             return;

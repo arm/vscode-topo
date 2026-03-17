@@ -48,11 +48,11 @@ describe('HostHealth', () => {
     });
 
     it('opens a readonly host health virtual document', async () => {
-        const hostHealth = {
+        const hostHealth: HealthCheckResult['host'] = {
             dependencies: [
                 {
                     name: 'Container Engine',
-                    healthy: true,
+                    status: 'ok',
                     value: 'docker',
                 },
             ],
@@ -64,12 +64,12 @@ describe('HostHealth', () => {
                 dependencies: [],
                 connectivity: {
                     name: 'Connectivity',
-                    healthy: true,
+                    status: 'ok',
                     value: 'ok',
                 },
                 subsystemDriver: {
                     name: 'Subsystem Driver',
-                    healthy: true,
+                    status: 'ok',
                     value: 'ready',
                 },
             },
@@ -126,7 +126,7 @@ describe('HostHealth', () => {
                     dependencies: [
                         {
                             name: 'SSH',
-                            healthy: false,
+                            status: 'error',
                             value: 'missing',
                         },
                     ],
@@ -159,7 +159,7 @@ describe('HostHealth', () => {
                     dependencies: [
                         {
                             name: 'SSH',
-                            healthy: true,
+                            status: 'ok',
                             value: 'ok',
                         },
                     ],

@@ -219,13 +219,22 @@ export class TopoCli {
             'json',
         ];
         const promise = await new Promise<string>((resolve, reject) => {
-            childProcess.execFile(bin, cmd, {}, (error, stdout, stderr) => {
-                if (error) {
-                    reject(new Error(stderr || error.message));
-                } else {
-                    resolve(stdout);
-                }
-            });
+            const child = childProcess.execFile(
+                bin,
+                cmd,
+                {
+                    env: this.getProcessEnv(),
+                    windowsHide: true,
+                },
+                (error, stdout, stderr) => {
+                    if (error) {
+                        reject(new Error(stderr || error.message));
+                    } else {
+                        resolve(stdout);
+                    }
+                },
+            );
+            child.stdin?.end();
         });
         const result = JSON.parse(promise);
         assert(result, healthCheckResultSchema);

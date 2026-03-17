@@ -19,7 +19,7 @@ describe('TargetTreeDependencyItem', () => {
     it('sets icon and context value for healthy dependency', () => {
         const item = new TargetTreeDependencyItem(
             mock<HealthCheckDependency>({
-                healthy: true,
+                status: 'ok',
             }),
         );
 
@@ -31,7 +31,7 @@ describe('TargetTreeDependencyItem', () => {
     it('sets icon and context value for unhealthy dependency', () => {
         const item = new TargetTreeDependencyItem(
             mock<HealthCheckDependency>({
-                healthy: false,
+                status: 'error',
             }),
         );
 

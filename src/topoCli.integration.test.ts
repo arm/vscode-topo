@@ -11,7 +11,9 @@ const topoCli = new TopoCli(
     {} as vscode.EnvironmentVariableCollection,
 );
 
-jest.setTimeout(15_000);
+// The real `topo health localhost` integration path can take longer on
+// Windows CI runners because it probes the local host environment.
+jest.setTimeout(process.platform === 'win32' ? 30_000 : 15_000);
 
 describe('getVersion', () => {
     it('parses output', async () => {
@@ -68,7 +70,7 @@ describe('health', () => {
     it('succeeds when target is unreachable', async () => {
         const health = await topoCli.health('unreachable-target');
 
-        expect(health.target.connectivity.healthy).toBe(false);
+        expect(health.target.connectivity.status).toBe('error');
     });
 });
 

@@ -5,10 +5,11 @@ import { HealthCheckDependency } from '../topoCliSchema';
 export class TargetTreeDependencyItem extends vscode.TreeItem {
     constructor(dependency: HealthCheckDependency) {
         super(dependency.name, vscode.TreeItemCollapsibleState.None);
-        const status = dependency.healthy ? 'Healthy' : 'Unhealthy';
+        const healthy = dependency.status === 'ok';
+        const status = healthy ? 'Healthy' : 'Unhealthy';
         this.description = dependency.value;
         this.tooltip = `Status: ${status}\nValue: ${dependency.value ?? '-'}`;
         this.contextValue = `Dependency ${status}`;
-        this.iconPath = getDependencyItemIcon(dependency.healthy);
+        this.iconPath = getDependencyItemIcon(healthy);
     }
 }

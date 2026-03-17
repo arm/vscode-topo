@@ -7,6 +7,7 @@ import { ContainersManager } from './containersManager';
 import { TargetItem } from '../util/types';
 import { mock, MockProxy } from 'jest-mock-extended';
 import type { TopoCli } from '../topoCli';
+import type { HealthCheckResult } from '../topoCliSchema';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -41,16 +42,16 @@ const targetDescription = {
     ],
 };
 
-const healthyTarget = {
+const healthyTarget: HealthCheckResult['target'] = {
     isLocalhost: false,
     connectivity: {
-        healthy: true,
+        status: 'ok',
         name: 'Connectivity',
         value: '',
     },
-    dependencies: [{ healthy: true, name: 'Container Engine', value: '' }],
+    dependencies: [{ status: 'ok', name: 'Container Engine', value: '' }],
     subsystemDriver: {
-        healthy: true,
+        status: 'ok',
         name: 'Subsystem Driver',
         value: '',
     },
