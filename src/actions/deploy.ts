@@ -1,15 +1,85 @@
 import * as vscode from 'vscode';
 import { logger } from '../util/logger';
-import { Deployer } from '../deployer';
 import * as manifest from '../manifest';
 import { getErrorMessage } from '../util/getErrorMessage';
+import path from 'path';
+import { TargetItem } from '../util/types';
+import { TargetStore } from '../workloadPlacement/targetStore';
+
+const viewLogsItem: vscode.MessageItem = {
+    title: 'View Logs',
+};
+
+const executeDeployTask = async (
+    composeFilePath: string,
+    target: TargetItem,
+): Promise<vscode.Disposable> => {
+    const cwd = path.dirname(composeFilePath);
+    const shellExecution = new vscode.ShellExecution(
+        'topo',
+        ['deploy', '--target', target.ssh],
+        {
+            cwd,
+        },
+    );
+    const workspace = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(cwd));
+    const taskScope = workspace ?? vscode.TaskScope.Workspace;
+    const taskDefinition: vscode.TaskDefinition = {
+        type: 'shell',
+        taskId: `${manifest.PACKAGE_NAME} deploy`,
+    };
+    const task = new vscode.Task(
+        taskDefinition,
+        taskScope,
+        `Deploy to ${target.id}`,
+        manifest.DISPLAY_NAME,
+        shellExecution,
+    );
+    task.presentationOptions = {
+        reveal: vscode.TaskRevealKind.Always,
+        echo: true,
+        focus: true,
+        showReuseMessage: true,
+        clear: true,
+    };
+    const taskExecution = await vscode.tasks.executeTask(task);
+    const taskEndDisposable = vscode.tasks.onDidEndTaskProcess(async (e) => {
+        if (e.execution !== taskExecution) {
+            return;
+        }
+
+        taskEndDisposable.dispose();
+
+        if (e.exitCode === 0) {
+            vscode.window.showInformationMessage(
+                `Deployment to ${target.id} completed successfully.`,
+            );
+        } else {
+            const terminal = vscode.window.terminals.find(
+                (t) => t.name === task.name,
+            );
+            const actions: vscode.MessageItem[] = [];
+            if (terminal) {
+                actions.push(viewLogsItem);
+            }
+            const choice = await vscode.window.showErrorMessage(
+                `Deployment to ${target.id} failed with exit code ${e.exitCode}.`,
+                ...actions,
+            );
+            if (choice?.title === viewLogsItem.title) {
+                terminal?.show();
+            }
+        }
+    });
+    return taskEndDisposable;
+};
 
 export class Deploy {
     public static readonly deployCommand = `${manifest.PACKAGE_NAME}.deploy.context`;
 
     constructor(
         private readonly context: vscode.ExtensionContext,
-        private readonly deployer: Deployer,
+        private readonly targetStore: TargetStore,
     ) {}
 
     public activate(): void {
@@ -37,73 +107,14 @@ export class Deploy {
     }
 
     public async deploy(composeFilePath: string): Promise<void> {
-        await vscode.window.withProgress(
-            {
-                location: vscode.ProgressLocation.Notification,
-                title: 'Deploying...',
-                cancellable: true,
-            },
-            async (_progress, token) => {
-                token.onCancellationRequested(() => {
-                    try {
-                        this.deployer.stop();
-                    } catch (err) {
-                        logger.error(
-                            'An error happened while trying to stop deployment',
-                            err,
-                        );
-                    }
-                });
-                return new Promise<void>((resolve, reject) => {
-                    const disposables: vscode.Disposable[] = [];
-                    const cleanup = () =>
-                        disposables.forEach((d) => d.dispose());
-                    disposables.push(
-                        this.deployer.onStdoutData((data) => {
-                            logger.info(data);
-                        }),
-                        this.deployer.onStderrData((data) => {
-                            logger.error(data);
-                        }),
-                        this.deployer.onExit((code) => {
-                            cleanup();
-                            if (
-                                token.isCancellationRequested &&
-                                (code === null || code === 0)
-                            ) {
-                                logger.info('Deployment cancelled');
-                                resolve();
-                                return;
-                            }
-                            if (code === 0) {
-                                resolve();
-                            } else {
-                                reject(
-                                    new Error(
-                                        `Deploy operation exited with code ${code}`,
-                                    ),
-                                );
-                            }
-                        }),
-                        this.deployer.onError((err: Error) => {
-                            cleanup();
-                            const errorMsg = token.isCancellationRequested
-                                ? 'Deployment error after cancellation'
-                                : 'Deployment error';
-                            logger.error(errorMsg, err);
-                            reject(err);
-                        }),
-                    );
-                    this.deployer
-                        .start(composeFilePath)
-                        .then(() => logger.show())
-                        .catch((err: Error) => {
-                            cleanup();
-                            logger.error('Failed to start deployment', err);
-                            reject(err);
-                        });
-                });
-            },
-        );
+        const target = await this.targetStore.getSelectedTarget();
+        if (!target) {
+            throw new Error(
+                'No target selected. Please select a target before deploying.',
+            );
+        }
+
+        const deployTask = await executeDeployTask(composeFilePath, target);
+        this.context.subscriptions.push(deployTask);
     }
 }
