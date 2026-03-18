@@ -1,10 +1,11 @@
 import path from 'path';
 import os from 'os';
 import * as vscode from 'vscode';
-import { logger } from '../util/logger';
 import { Deploy } from './deploy';
-import { Deployer } from '../deployer';
 import { mock, MockProxy } from 'jest-mock-extended';
+import { TargetStore } from '../workloadPlacement/targetStore';
+import { TargetItem } from '../util/types';
+import { mutable } from '../util/mutable';
 
 jest.mock('../util/logger');
 
@@ -17,44 +18,42 @@ describe('Deploy', () => {
         path.join(os.tmpdir(), 'compose.yaml'),
     );
     const composeFilePath = composeFileUri.fsPath;
-    let deployer: MockProxy<Deployer>;
-    let stdoutDataEmitter: vscode.EventEmitter<Buffer>;
-    let stderrDataEmitter: vscode.EventEmitter<Buffer>;
-    let exitEmitter: vscode.EventEmitter<number | null>;
-    let errorEmitter: vscode.EventEmitter<Error>;
+    const deployTask: vscode.Task = expect.objectContaining({
+        execution: expect.objectContaining({
+            executablePath: 'topo',
+            executionArgs: expect.arrayContaining([
+                'deploy',
+                '--target',
+                'topo.local',
+            ]),
+            options: {
+                cwd: path.dirname(composeFilePath),
+            },
+        }),
+    });
+    const target: TargetItem = {
+        id: 'topo',
+        ssh: 'topo.local',
+        host: 'topo.local',
+        targetDescription: {
+            hostProcessor: [],
+            remoteprocCPU: [],
+        },
+    };
+    let targetStore: MockProxy<TargetStore>;
     let context: MockProxy<vscode.ExtensionContext>;
     let deployHandler: ((resource?: vscode.Uri) => Promise<void>) | undefined;
     let registerSpy: jest.SpyInstance;
-    let token: vscode.CancellationToken;
-    const cancellationEventEmitter = new vscode.EventEmitter<void>();
+    const taskExec: vscode.TaskExecution = {
+        task: {} as vscode.Task,
+        terminate: jest.fn(),
+    };
 
     beforeEach(() => {
         context = mock<vscode.ExtensionContext>({ subscriptions: [] });
-        stderrDataEmitter = new vscode.EventEmitter<Buffer>();
-        stdoutDataEmitter = new vscode.EventEmitter<Buffer>();
-        exitEmitter = new vscode.EventEmitter<number | null>();
-        errorEmitter = new vscode.EventEmitter<Error>();
-        deployer = mock<Deployer>();
-        deployer.start.mockResolvedValue(undefined);
-        deployer.onStdoutData.mockImplementation(stdoutDataEmitter.event);
-        deployer.onStderrData.mockImplementation(stderrDataEmitter.event);
-        deployer.onExit.mockImplementation(exitEmitter.event);
-        deployer.onError.mockImplementation(errorEmitter.event);
-        deploy = new Deploy(context, deployer);
-        token = {
-            onCancellationRequested: cancellationEventEmitter.event,
-            isCancellationRequested: false,
-        };
-        jest.mocked(vscode.window.withProgress).mockImplementation(
-            async (_opts, cb) => {
-                await cb(
-                    {
-                        report: jest.fn(),
-                    },
-                    token,
-                );
-            },
-        );
+        targetStore = mock<TargetStore>();
+        targetStore.getSelectedTarget.mockResolvedValue(target);
+        deploy = new Deploy(context, targetStore);
         registerSpy = jest
             .spyOn(vscode.commands, 'registerCommand')
             .mockImplementation(
@@ -80,120 +79,51 @@ describe('Deploy', () => {
         expect(context.subscriptions.length).toBeGreaterThan(0);
     });
 
+    it('fails with no target selected', async () => {
+        targetStore.getSelectedTarget.mockResolvedValueOnce(undefined);
+
+        const deployOperation = deploy.deploy(composeFilePath);
+
+        await expect(deployOperation).rejects.toThrow('No target selected');
+    });
+
     it('handles successful deploy operation', async () => {
-        const deployOperation = deploy.deploy(composeFilePath);
-        // process would fire an exit event after being stopped
-        exitEmitter.fire(0);
+        deploy.deploy(composeFilePath);
         await waitImmediate();
 
-        expect(deployer.start).toHaveBeenCalledWith(composeFilePath);
-        await expect(deployOperation).resolves.toBeUndefined();
-    });
-
-    it('handles deploy cancellation', async () => {
-        const deployOperation = deploy.deploy(composeFilePath);
-        // simulate cancellation
-        token.isCancellationRequested = true;
-        cancellationEventEmitter.fire();
-        // process would exit with code null (cancelled by SIGTERM)
-        exitEmitter.fire(null);
-        await waitImmediate();
-
-        expect(deployer.start).toHaveBeenCalledWith(composeFilePath);
-        expect(deployer.stop).toHaveBeenCalled();
-        await expect(deployOperation).resolves.toBeUndefined();
-    });
-
-    it('handles error on deploy cancellation', async () => {
-        const deployOperation = deploy.deploy(composeFilePath);
-        const deployOperationAssertion = expect(
-            deployOperation,
-        ).rejects.toThrow('Deploy operation exited with code 1');
-
-        // simulate cancellation
-        token.isCancellationRequested = true;
-        cancellationEventEmitter.fire();
-        // process would exit with error code 1
-        exitEmitter.fire(1);
-        await waitImmediate();
-
-        expect(deployer.start).toHaveBeenCalledWith(composeFilePath);
-        expect(deployer.stop).toHaveBeenCalled();
-        await deployOperationAssertion;
-    });
-
-    it('handles deploy process errors', async () => {
-        const error = new Error('deploy-fail');
-        deployer.start.mockRejectedValueOnce(error);
-
-        const deployOperation = deploy.deploy(composeFilePath);
-        const deployOperationAssertion =
-            expect(deployOperation).rejects.toThrow('deploy-fail');
-        await waitImmediate();
-
-        expect(deployer.start).toHaveBeenCalledWith(composeFilePath);
-        expect(logger.error).toHaveBeenCalledWith(
-            'Failed to start deployment',
-            error,
+        expect(jest.mocked(vscode.tasks.executeTask)).toHaveBeenCalledWith(
+            deployTask,
         );
-        await deployOperationAssertion;
     });
 
-    it('handles other deploy errors', async () => {
-        const deployOperation = deploy.deploy(composeFilePath);
-        const deployOperationAssertion =
-            expect(deployOperation).rejects.toThrow('Simulated error');
-        // simulate cancellation explicitly
-        errorEmitter.fire(new Error('Simulated error'));
+    it('handles task failure', async () => {
+        const onDidEndTaskProcessEmitter =
+            new vscode.EventEmitter<vscode.TaskProcessEndEvent>();
+        mutable(vscode.tasks).onDidEndTaskProcess =
+            onDidEndTaskProcessEmitter.event;
+        jest.mocked(vscode.tasks.executeTask).mockResolvedValueOnce(taskExec);
+
+        await deploy.deploy(composeFilePath);
+        onDidEndTaskProcessEmitter.fire({
+            execution: taskExec,
+            exitCode: 1,
+        });
         await waitImmediate();
 
-        expect(deployer.start).toHaveBeenCalledWith(composeFilePath);
-        await deployOperationAssertion;
-    });
-
-    it('logs stdout and stderr and shows output channel during deploy', async () => {
-        const deployOperation = deploy.deploy(composeFilePath);
-        const stdoutData = Buffer.from('hello stdout');
-        const stderrData = Buffer.from('hello stderr');
-        // Simulate stdout and stderr events
-        stdoutDataEmitter.fire(stdoutData);
-        stderrDataEmitter.fire(stderrData);
-        // Simulate successful exit
-        exitEmitter.fire(0);
-        await waitImmediate();
-
-        await expect(deployOperation).resolves.toBeUndefined();
-        expect(logger.show).toHaveBeenCalled();
-        expect(logger.info).toHaveBeenCalledWith(stdoutData);
-        expect(logger.error).toHaveBeenCalledWith(stderrData);
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
+            'Deployment to topo failed with exit code 1.',
+        );
     });
 
     it('invokes handler when command called', async () => {
         deploy.activate();
 
         const op = deployHandler!(composeFileUri);
-        exitEmitter.fire(0);
         await waitImmediate();
 
         await expect(op).resolves.toBeUndefined();
-        expect(deployer.start).toHaveBeenCalledWith(composeFilePath);
-    });
-
-    it('logs and shows error when deploy command fails', async () => {
-        const error = new Error('deploy-command-fail');
-        deployer.start.mockRejectedValueOnce(error);
-        deploy.activate();
-
-        deployHandler!(composeFileUri);
-        await waitImmediate();
-
-        expect(deployer.start).toHaveBeenCalledWith(composeFilePath);
-        expect(logger.error).toHaveBeenCalledWith(
-            'Error executing deploy command',
-            error,
-        );
-        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-            expect.stringContaining('Error executing deploy command'),
+        expect(jest.mocked(vscode.tasks.executeTask)).toHaveBeenCalledWith(
+            deployTask,
         );
     });
 });

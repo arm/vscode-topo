@@ -7,7 +7,6 @@ import { TopoCliVersionChecker } from './topoCliVersionChecker';
 import { TargetManager } from './workloadPlacement/targetManager';
 import { TargetTreeDataProvider } from './workloadPlacement/targetTreeDataProvider';
 import { ContainersManager } from './workloadPlacement/containersManager';
-import { Deployer } from './deployer';
 import { TargetDashboardMessageHandler } from './targetDashboard/targetDashboardMessageHandler';
 import { TargetDashboardProvider } from './targetDashboard/targetDashboardProvider';
 import { ComposeEditorMessageHandler } from './composeEditorMessageHandler';
@@ -43,14 +42,13 @@ export async function activate(
     }
 
     const targetStore = TargetStore.getInstance(context);
-    const deployer = new Deployer(topoCli, targetStore);
     const onTargetTopoConsoleOpener = new OnTargetTopoConsoleOpener(
         context,
         targetStore,
     );
     const projectInit = new ProjectInit(context, topoCli);
     const projectClone = new ProjectClone(context, topoCli);
-    const deploy = new Deploy(context, deployer);
+    const deploy = new Deploy(context, targetStore);
     const composeEditorMessageHandler = new ComposeEditorMessageHandler(
         topoCli,
         deploy,
