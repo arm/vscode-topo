@@ -65,11 +65,17 @@ export class ContainersManager implements vscode.Disposable {
 
     private unsetTarget(): void {
         this.stopAutoRefresh();
+        const containersDataDeferred = this.containersDataDeferred;
+        const targetStateDeferred = this.targetStateDeferred;
+        this.containersDataDeferred = undefined;
+        this.targetStateDeferred = undefined;
         this.target = undefined;
         this.containersData = [];
         this.containersDataInitialised = false;
         this.targetState = this.defaultTargetState;
         this.targetStateInitialised = false;
+        containersDataDeferred?.resolve();
+        targetStateDeferred?.resolve();
         this._onDataUpdate.fire();
     }
 
@@ -108,19 +114,32 @@ export class ContainersManager implements vscode.Disposable {
         if (this.containersDataDeferred) {
             return this.containersDataDeferred.promise;
         }
-        this.containersDataDeferred = new Deferred<void>();
+        const deferred = new Deferred<void>();
+        this.containersDataDeferred = deferred;
         (async () => {
             try {
-                this.containersData = await this.getContainersInfo();
+                const containersData = await this.getContainersInfo();
+                if (this.containersDataDeferred !== deferred) {
+                    deferred.resolve();
+                    return;
+                }
+
+                this.containersData = containersData;
                 this.containersDataInitialised = true;
-                this.containersDataDeferred?.resolve();
+                deferred.resolve();
             } catch (err) {
-                this.containersDataDeferred?.reject(err);
+                if (this.containersDataDeferred === deferred) {
+                    deferred.reject(err);
+                } else {
+                    deferred.resolve();
+                }
             } finally {
-                this.containersDataDeferred = undefined;
+                if (this.containersDataDeferred === deferred) {
+                    this.containersDataDeferred = undefined;
+                }
             }
         })();
-        return this.containersDataDeferred.promise;
+        return deferred.promise;
     }
 
     public async getTargetState(): Promise<TargetState> {
@@ -134,19 +153,32 @@ export class ContainersManager implements vscode.Disposable {
         if (this.targetStateDeferred) {
             return this.targetStateDeferred.promise;
         }
-        this.targetStateDeferred = new Deferred<void>();
+        const deferred = new Deferred<void>();
+        this.targetStateDeferred = deferred;
         (async () => {
             try {
-                this.targetState = await this.getTargetStateInfo();
+                const targetState = await this.getTargetStateInfo();
+                if (this.targetStateDeferred !== deferred) {
+                    deferred.resolve();
+                    return;
+                }
+
+                this.targetState = targetState;
                 this.targetStateInitialised = true;
-                this.targetStateDeferred?.resolve();
+                deferred.resolve();
             } catch (err) {
-                this.targetStateDeferred?.reject(err);
+                if (this.targetStateDeferred === deferred) {
+                    deferred.reject(err);
+                } else {
+                    deferred.resolve();
+                }
             } finally {
-                this.targetStateDeferred = undefined;
+                if (this.targetStateDeferred === deferred) {
+                    this.targetStateDeferred = undefined;
+                }
             }
         })();
-        return this.targetStateDeferred.promise;
+        return deferred.promise;
     }
 
     private async getContainersInfo(): Promise<ContainerItem[]> {
