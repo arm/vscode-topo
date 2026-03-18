@@ -391,6 +391,7 @@
         "watch:webview": "vite build --mode webview --watch --minify=false",
         "watch": "npm-run-all --parallel watch:extension watch:webview",
         "download": "ts-node scripts/download.ts",
+        "calculate-new-version": "ts-node scripts/calculate-new-version.ts",
         "prettier-check": "prettier -c .",
         "eslint-check": "eslint .",
         "tsc-check": "tsc --noEmit -p tsconfig.json"
