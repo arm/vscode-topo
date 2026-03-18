@@ -7,6 +7,8 @@ import * as vscode from 'vscode';
 import { TargetStore } from './targetStore';
 import { mock } from 'jest-mock-extended';
 import { TopoCli } from '../topoCli';
+import { Deferred } from '../util/deferred';
+import type { ContainerCommands } from './containerCommands';
 
 const waitImmediate = async () => {
     await Promise.resolve();
@@ -545,5 +547,83 @@ describe('ContainersManager', () => {
         expect(
             targetStore.getSelectedTarget.mock.calls.length,
         ).toBeGreaterThanOrEqual(2);
+    });
+
+    it('ignores stale container loads after selected target changes', async () => {
+        const newTarget: TargetItem = {
+            id: 'other-id',
+            ssh: 'bob@other.local',
+            user: 'bob',
+            host: 'other.local',
+            targetDescription: {
+                hostProcessor: [],
+                remoteprocCPU: [],
+            },
+        };
+        const pendingOldContainers = new Deferred<DockerPsItem[]>();
+        let selectedTarget: TargetItem | undefined = target;
+        const onChangeEmitter = new vscode.EventEmitter<void>();
+        const targetStore = mock<TargetStore>();
+        targetStore.onChanged.mockImplementation(onChangeEmitter.event);
+        targetStore.getSelectedTarget.mockImplementation(
+            async () => selectedTarget,
+        );
+        const containerCommands = mock<ContainerCommands>();
+        containerCommands.getContainers.mockImplementation(
+            async (targetSshConnection: string) =>
+                targetSshConnection === target.ssh
+                    ? pendingOldContainers.promise
+                    : [],
+        );
+        containerCommands.inspectContainers.mockResolvedValue([]);
+        containerCommands.containerStats.mockResolvedValue('');
+        topoCli.health.mockImplementation(async (ssh: string) => ({
+            host: { dependencies: [] },
+            target: {
+                isLocalhost: false,
+                dependencies: [
+                    {
+                        name: 'Container Engine',
+                        value: 'docker',
+                        status: 'ok',
+                    },
+                ],
+                connectivity: {
+                    name: 'Connected',
+                    value: '',
+                    status: ssh === newTarget.ssh ? 'ok' : 'error',
+                },
+                subsystemDriver: {
+                    name: 'Subsystem Driver (remoteproc)',
+                    value: 'driver-x',
+                    status: 'ok',
+                },
+            },
+        }));
+        const manager = new ContainersManager(
+            topoCli,
+            containerCommands,
+            targetStore,
+        );
+        await manager.activate();
+
+        const staleLoad = manager.getContainersData();
+        await waitImmediate();
+        selectedTarget = newTarget;
+        onChangeEmitter.fire();
+        await waitImmediate();
+        pendingOldContainers.resolve(mockContainers);
+        await staleLoad;
+        await waitImmediate();
+
+        expect(containerCommands.getContainers).toHaveBeenCalledWith(
+            target.ssh,
+        );
+        expect(containerCommands.getContainers).toHaveBeenCalledWith(
+            newTarget.ssh,
+        );
+
+        const result = await manager.getContainersData();
+        expect(result).toEqual([]);
     });
 });
