@@ -1,12 +1,7 @@
 import * as path from 'path';
 import * as childProcess from 'child_process';
 import * as vscode from 'vscode';
-import {
-    TopoCli,
-    CloneRemoteSource,
-    CloneLocalSource,
-    targetDescriptionFileName,
-} from './topoCli';
+import { TopoCli, targetDescriptionFileName } from './topoCli';
 import { Mutable } from './util/types';
 import * as manifest from './manifest';
 import { ChildProcessWithoutNullStreams } from 'child_process';
@@ -203,33 +198,6 @@ describe('TopoCli', () => {
             { cwd: '/fake/project', env: expect.any(Object), detached: true },
         );
         expect(result).toBe(fakeProc);
-    });
-
-    it('builds clone command for git source', () => {
-        const src: CloneRemoteSource = {
-            type: 'git',
-            url: 'https://example.com/repo.git',
-        };
-
-        const cmd = topoCli.getCloneCommand('/tmp/myproj', src);
-
-        const expected =
-            'topo clone /tmp/myproj git:https://example.com/repo.git'.split(
-                ' ',
-            );
-        expect(cmd).toEqual(expected);
-    });
-
-    it('builds clone command for local source', () => {
-        const src: CloneLocalSource = {
-            type: 'local',
-            path: '/path/to/source',
-        };
-
-        const cmd = topoCli.getCloneCommand('myproject', src);
-
-        const expected = 'topo clone myproject dir:/path/to/source'.split(' ');
-        expect(cmd).toEqual(expected);
     });
 
     it('health parses JSON output', async () => {

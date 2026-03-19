@@ -24,10 +24,24 @@ export interface CloneRemoteSource {
 
 export interface CloneLocalSource {
     path: string;
-    type: 'local';
+    type: 'dir';
 }
 
-export type CloneSource = CloneRemoteSource | CloneLocalSource;
+export interface CloneTemplateSource {
+    template: string;
+    type: 'template';
+}
+
+export interface CloneRawSource {
+    value: string;
+    type?: never;
+}
+
+export type CloneSource =
+    | CloneRemoteSource
+    | CloneLocalSource
+    | CloneTemplateSource
+    | CloneRawSource;
 
 export const targetDescriptionFileName = 'target-description.yaml';
 
@@ -199,13 +213,6 @@ export class TopoCli {
             env: this.getProcessEnv(),
             detached: true,
         });
-    }
-
-    public getCloneCommand(projectPath: string, source: CloneSource): string[] {
-        const sourceStr =
-            source.type === 'git' ? `git:${source.url}` : `dir:${source.path}`;
-        const cmd = ['topo', 'clone', projectPath, sourceStr];
-        return cmd;
     }
 
     public async health(sshTarget: string): Promise<HealthCheckResult> {
