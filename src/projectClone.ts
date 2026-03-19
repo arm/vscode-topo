@@ -140,7 +140,8 @@ const getCloneCommandFromSourceString = (
     cloneSourceString: string,
 ): string[] => {
     const projectPath = path.join(workspacePath, projectName);
-    return ['topo', 'clone', projectPath, cloneSourceString];
+
+    return ['topo', 'clone', cloneSourceString, projectPath];
 };
 
 const getCloneSourceString = (cloneSource: CloneSource): string => {
