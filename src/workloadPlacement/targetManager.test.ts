@@ -172,7 +172,6 @@ describe('TargetManager', () => {
             const target: TargetItem = {
                 id: 'test',
                 ssh: 'root@localhost',
-                user: 'root',
                 host: 'localhost',
             };
             const { targetManager, targetStore, containersManager, topoCli } =
@@ -196,7 +195,7 @@ describe('TargetManager', () => {
             expect(targetStore.updateTarget).toHaveBeenCalledWith(
                 expect.objectContaining({
                     id: target.id,
-                    targetDescription,
+                    description: targetDescription,
                 }),
             );
         });
@@ -238,7 +237,7 @@ describe('TargetManager', () => {
             const created = jest.mocked(targetStore.addTarget).mock.calls[0][0];
             expect(created).toBeDefined();
             expect(created.id).toBe('My target');
-            expect(created.targetDescription).toEqual(targetDescription);
+            expect(created.description).toEqual(targetDescription);
             expect(targetStore.setSelected).toHaveBeenCalledWith('My target');
         });
 
@@ -322,9 +321,8 @@ describe('TargetManager', () => {
             const target: TargetItem = {
                 id: 'test',
                 ssh: 'root@localhost',
-                user: 'root',
                 host: 'localhost',
-                targetDescription: emptyTargetDescription,
+                description: emptyTargetDescription,
             };
             const { targetManager, targetStore, containersManager } =
                 createTargetManager();
@@ -380,16 +378,14 @@ describe('TargetManager', () => {
             const target1: TargetItem = {
                 id: 'test',
                 ssh: 'root@localhost',
-                user: 'root',
                 host: 'localhost',
-                targetDescription: emptyTargetDescription,
+                description: emptyTargetDescription,
             };
             const target2: TargetItem = {
                 id: 'test2',
                 ssh: 'root@other-host',
-                user: 'root',
                 host: 'other-host',
-                targetDescription: emptyTargetDescription,
+                description: emptyTargetDescription,
             };
             const {
                 targetManager,
@@ -433,9 +429,8 @@ describe('TargetManager', () => {
             const target: TargetItem = {
                 id: 'test',
                 ssh: 'root@localhost',
-                user: 'root',
                 host: 'localhost',
-                targetDescription: emptyTargetDescription,
+                description: emptyTargetDescription,
             };
             const {
                 targetManager,

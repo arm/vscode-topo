@@ -33,9 +33,8 @@ describe('TargetTreeDataProvider', () => {
     const target: TargetItem = {
         id: 'topo',
         ssh: 'user@topo.local',
-        user: 'user',
         host: 'topo.local',
-        targetDescription: {
+        description: {
             hostProcessor: [],
             remoteprocCPU: [{ name: 'imx-rproc' }, { name: 'other-rproc' }],
         },

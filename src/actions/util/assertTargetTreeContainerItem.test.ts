@@ -38,7 +38,7 @@ describe('assertTargetTreeContainerItem', () => {
                 host: 'test-host',
                 id: 'abc123',
                 ssh: 'root@test-host',
-                targetDescription: {
+                description: {
                     hostProcessor: [],
                     remoteprocCPU: [],
                 },

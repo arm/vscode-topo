@@ -7,9 +7,8 @@ describe('TargetTreeContainerItem', () => {
     const target: TargetItem = {
         id: 'topo',
         ssh: 'user@topo.local',
-        user: 'user',
         host: 'topo.local',
-        targetDescription: {
+        description: {
             hostProcessor: [],
             remoteprocCPU: [],
         },
