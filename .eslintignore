@@ -3,3 +3,4 @@ dist/
 coverage/
 *.config.js
 out/
+test-workspace/
