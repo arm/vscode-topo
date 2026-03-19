@@ -170,8 +170,8 @@ describe('ProjectClone', () => {
                 'topo',
                 [
                     'clone',
-                    path.join(workspaceUri.fsPath, 'repo'),
                     'git:https://example.com/repo.git',
+                    path.join(workspaceUri.fsPath, 'repo'),
                 ],
                 { cwd: workspaceUri.fsPath },
             );
@@ -206,8 +206,8 @@ describe('ProjectClone', () => {
                 'topo',
                 [
                     'clone',
-                    path.join(workspaceUri.fsPath, 'repo'),
                     'git:git@example.com:repo.git',
+                    path.join(workspaceUri.fsPath, 'repo'),
                 ],
                 { cwd: workspaceUri.fsPath },
             );
@@ -243,8 +243,8 @@ describe('ProjectClone', () => {
                 'topo',
                 [
                     'clone',
-                    path.join(destinationUri.fsPath, 'repo'),
                     'https://example.com/repo.git',
+                    path.join(destinationUri.fsPath, 'repo'),
                 ],
                 { cwd: destinationUri.fsPath },
             );
@@ -378,8 +378,8 @@ describe('ProjectClone', () => {
                 'topo',
                 [
                     'clone',
-                    path.join(workspaceUri.fsPath, 'myproj'),
                     `dir:${localTemplateUri.fsPath}`,
+                    path.join(workspaceUri.fsPath, 'myproj'),
                 ],
                 { cwd: workspaceUri.fsPath },
             );
@@ -554,8 +554,8 @@ describe('ProjectClone', () => {
                 'topo',
                 [
                     'clone',
-                    path.join(workspaceUri.fsPath, 'myproj'),
                     'template:template-alpha',
+                    path.join(workspaceUri.fsPath, 'myproj'),
                 ],
                 { cwd: workspaceUri.fsPath },
             );
