@@ -10,6 +10,8 @@ import { showAndLogError } from './util/showAndLogError';
 type CloneResult = {
     success: boolean;
 };
+type CloneBuildArgs = Record<string, string>;
+
 const assertWorkspacePath = (): string => {
     const workspacePath = getWorkspacePath();
     if (!workspacePath) {
@@ -138,10 +140,14 @@ const getCloneCommandFromSourceString = (
     workspacePath: string,
     projectName: string,
     cloneSourceString: string,
+    cloneBuildArgs: CloneBuildArgs = {},
 ): string[] => {
     const projectPath = path.join(workspacePath, projectName);
+    const buildArgs = Object.entries(cloneBuildArgs).map(
+        ([key, value]) => `${key}=${value}`,
+    );
 
-    return ['topo', 'clone', cloneSourceString, projectPath];
+    return ['topo', 'clone', cloneSourceString, projectPath, ...buildArgs];
 };
 
 const getCloneSourceString = (cloneSource: CloneSource): string => {
@@ -161,6 +167,7 @@ const cloneWithSource = async (
     workspacePath: string,
     cloneSource: CloneSource,
     defaultProjectName: string,
+    cloneBuildArgs: CloneBuildArgs = {},
 ): Promise<CloneResult> => {
     const projectName = await vscode.window.showInputBox({
         prompt: 'Enter the project name',
@@ -169,12 +176,12 @@ const cloneWithSource = async (
     if (!projectName) {
         return { success: false };
     }
-
     const cloneSourceString = getCloneSourceString(cloneSource);
     const cloneCommand = getCloneCommandFromSourceString(
         workspacePath,
         projectName,
         cloneSourceString,
+        cloneBuildArgs,
     );
     const taskName = `Clone ${projectName}`;
     const cloneSucceeded = await executeCloneTask(
@@ -262,6 +269,7 @@ export class ProjectClone {
     public async cloneProjectFromSource(
         workspacePath: string,
         cloneSource: CloneSource,
+        cloneBuildArgs: CloneBuildArgs = {},
     ): Promise<boolean> {
         const defaultProjectName =
             getDefaultProjectNameFromSourceString(cloneSource);
@@ -269,6 +277,7 @@ export class ProjectClone {
             workspacePath,
             cloneSource,
             defaultProjectName,
+            cloneBuildArgs,
         );
         return cloneResult.success;
     }
@@ -279,10 +288,14 @@ export class ProjectClone {
         if (!selectedTemplate) {
             return;
         }
-        await this.cloneProjectFromSource(workspacePath, {
-            type: 'template',
-            template: selectedTemplate.name,
-        });
+        await this.cloneProjectFromSource(
+            workspacePath,
+            {
+                type: 'template',
+                template: selectedTemplate.name,
+            },
+            {},
+        );
     }
 
     private async cloneLocalProject(): Promise<void> {
@@ -291,10 +304,14 @@ export class ProjectClone {
         if (!cloneSourcePath) {
             return;
         }
-        await this.cloneProjectFromSource(workspacePath, {
-            type: 'dir',
-            path: cloneSourcePath,
-        });
+        await this.cloneProjectFromSource(
+            workspacePath,
+            {
+                type: 'dir',
+                path: cloneSourcePath,
+            },
+            {},
+        );
     }
 
     private async cloneRemoteProject(): Promise<void> {
@@ -305,9 +322,13 @@ export class ProjectClone {
         if (!cloneSourceRemoteUrl) {
             return;
         }
-        await this.cloneProjectFromSource(workspacePath, {
-            type: 'git',
-            url: cloneSourceRemoteUrl,
-        });
+        await this.cloneProjectFromSource(
+            workspacePath,
+            {
+                type: 'git',
+                url: cloneSourceRemoteUrl,
+            },
+            {},
+        );
     }
 }

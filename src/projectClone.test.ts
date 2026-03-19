@@ -225,6 +225,39 @@ describe('ProjectClone', () => {
             );
         });
 
+        it('passes arbitrary clone options through to topo clone', async () => {
+            mutable(vscode.workspace).workspaceFolders = workspaceFolders;
+            jest.mocked(vscode.workspace).getWorkspaceFolder.mockReturnValue(
+                workspaceFolders[0],
+            );
+            jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
+            mockTaskEnd(taskExec, 0);
+            jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
+                'repo',
+            );
+
+            await projectClone.cloneProjectFromSource(
+                workspaceFolders[0].uri.fsPath,
+                {
+                    value: 'https://example.com/repo.git',
+                },
+                {
+                    model: 'some-huggingface-id',
+                },
+            );
+
+            expect(vscode.ShellExecution).toHaveBeenCalledWith(
+                'topo',
+                [
+                    'clone',
+                    'https://example.com/repo.git',
+                    path.join(workspaceUri.fsPath, 'repo'),
+                    'model=some-huggingface-id',
+                ],
+                { cwd: workspaceUri.fsPath },
+            );
+        });
+
         it('creates a clone task for an explicit destination outside the workspace', async () => {
             jest.mocked(vscode.workspace).getWorkspaceFolder.mockReturnValue(
                 undefined,
