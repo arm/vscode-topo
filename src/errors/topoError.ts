@@ -1,4 +1,4 @@
-export type TopoErrorCode = 'DOCKER' | `CLONE`;
+export type TopoErrorCode = 'DOCKER' | 'CLONE';
 
 export class TopoError extends Error {
     constructor(

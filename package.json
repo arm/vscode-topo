@@ -13,6 +13,7 @@
         "Other"
     ],
     "activationEvents": [
+        "onUri",
         "onLanguage:yaml",
         "onCommand:topo.openEditor",
         "onView:topo.composeEditor"
