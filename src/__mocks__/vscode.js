@@ -121,6 +121,7 @@ const window = {
     withProgress: jest.fn(),
     registerTreeDataProvider: jest.fn(),
     registerCustomEditorProvider: jest.fn(),
+    registerUriHandler: jest.fn(),
     terminals: [],
     createTerminal: jest.fn(() => ({
         sendText: jest.fn(),
