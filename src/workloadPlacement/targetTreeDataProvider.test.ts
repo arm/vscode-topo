@@ -189,13 +189,16 @@ describe('TargetTreeDataProvider', () => {
         it('returns dependency items for Dependencies group', async () => {
             const subsystemDriverHealth = mock<HealthCheckDependency>({
                 name: 'rproc-driver',
+                status: 'ok',
             });
             const dependencies = [
                 mock<HealthCheckDependency>({
                     name: 'Container Engine',
+                    status: 'ok',
                 }),
                 mock<HealthCheckDependency>({
                     name: 'Some Dependency',
+                    status: 'ok',
                 }),
             ];
             const targetState = mock<TargetState>({

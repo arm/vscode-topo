@@ -1,15 +1,41 @@
 import * as vscode from 'vscode';
-import { getDependencyItemIcon } from './targetTreeDependencyGroupItem';
-import { HealthCheckDependency } from '../topoCliSchema';
+import { HealthCheckDependency, HealthCheckStatus } from '../topoCliSchema';
+
+export const getDependencyItemIcon = (
+    status: HealthCheckStatus,
+): vscode.ThemeIcon => {
+    if (status === 'ok') {
+        return new vscode.ThemeIcon(
+            'check',
+            new vscode.ThemeColor('testing.iconPassed'),
+        );
+    }
+
+    if (status === 'warning') {
+        return new vscode.ThemeIcon(
+            'warning',
+            new vscode.ThemeColor('testing.iconQueued'),
+        );
+    }
+
+    return new vscode.ThemeIcon(
+        'close',
+        new vscode.ThemeColor('testing.iconFailed'),
+    );
+};
+
+const capitalizeFirstLetter = (s: string) => {
+    return s.charAt(0).toUpperCase() + s.slice(1);
+};
 
 export class TargetTreeDependencyItem extends vscode.TreeItem {
     constructor(dependency: HealthCheckDependency) {
         super(dependency.name, vscode.TreeItemCollapsibleState.None);
-        const healthy = dependency.status === 'ok';
-        const status = healthy ? 'Healthy' : 'Unhealthy';
         this.description = dependency.value;
-        this.tooltip = `Status: ${status}\nValue: ${dependency.value ?? '-'}`;
-        this.contextValue = `Dependency ${status}`;
-        this.iconPath = getDependencyItemIcon(healthy);
+
+        const statusCapitalized = capitalizeFirstLetter(dependency.status);
+        this.tooltip = `Status: ${statusCapitalized}\nValue: ${dependency.value ?? '-'}`;
+        this.contextValue = `Dependency ${statusCapitalized}`;
+        this.iconPath = getDependencyItemIcon(dependency.status);
     }
 }

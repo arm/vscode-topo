@@ -17,13 +17,24 @@ describe('TargetTreeDependencyGroupItem', () => {
         expect(icon.color).toBeUndefined();
     });
 
-    it('uses a warning icon if at least one entry is not healthy', () => {
+    it('uses a warning icon if at least one entry has a warning', () => {
         const item = new TargetTreeDependencyGroupItem([
             { name: 'Container Engine', status: 'ok', value: 'docker' },
-            { name: 'Subsystem Driver', status: 'error', value: 'missing' },
+            { name: 'Something Else', status: 'warning', value: 'foobar' },
         ]);
 
         const icon = item.iconPath as vscode.ThemeIcon;
         expect(icon.id).toBe('warning');
+    });
+
+    it('uses an error icon if at least one entry has an error', () => {
+        const item = new TargetTreeDependencyGroupItem([
+            { name: 'Container Engine', status: 'ok', value: 'docker' },
+            { name: 'Something Else', status: 'warning', value: 'foobar' },
+            { name: 'Subsystem Driver', status: 'error', value: 'missing' },
+        ]);
+
+        const icon = item.iconPath as vscode.ThemeIcon;
+        expect(icon.id).toBe('close');
     });
 });

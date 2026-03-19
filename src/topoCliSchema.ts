@@ -23,6 +23,8 @@ export type TemplateDescription = Infer<typeof templateSchema>;
 
 const healthCheckStatusSchema = enums(['ok', 'warning', 'error']);
 
+export type HealthCheckStatus = Infer<typeof healthCheckStatusSchema>;
+
 export const healthCheckDependencySchema = type({
     name: trimmed(string()),
     status: healthCheckStatusSchema,
