@@ -29,7 +29,7 @@ Follow these steps to build and package the extension locally:
 
 ### Prerequisites
 
-- Node.js (^20.0.0)
+- Node.js (^22.0.0)
 - npm (^10.0.0)
 - VS Code Extension Manager (vsce) for packaging (`npm install -g vsce`)
 

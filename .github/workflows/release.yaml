@@ -15,7 +15,7 @@ on:
                 default: 'None'
 
 env:
-    NODE_VERSION: 20.x
+    NODE_VERSION: 22.x
     PRE_RELEASE_FLAG: ${{ inputs.release-type == 'Pre-release' && '--pre-release' || '' }}
 
 jobs:
