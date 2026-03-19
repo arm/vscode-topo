@@ -35,7 +35,7 @@ describe('Deploy', () => {
         id: 'topo',
         ssh: 'topo.local',
         host: 'topo.local',
-        targetDescription: {
+        description: {
             hostProcessor: [],
             remoteprocCPU: [],
         },

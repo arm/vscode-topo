@@ -94,9 +94,8 @@ const execMock = exec as jest.Mock;
 const target: TargetItem = {
     id: 'topo',
     ssh: 'user@topo.local',
-    user: 'user',
     host: 'topo.local',
-    targetDescription: {
+    description: {
         hostProcessor: [],
         remoteprocCPU: [],
     },
@@ -504,9 +503,8 @@ describe('ContainersManager', () => {
         const newTarget: TargetItem = {
             id: 'other-id',
             ssh: 'bob@other.local',
-            user: 'bob',
             host: 'other.local',
-            targetDescription: {
+            description: {
                 hostProcessor: [],
                 remoteprocCPU: [],
             },
@@ -553,9 +551,8 @@ describe('ContainersManager', () => {
         const newTarget: TargetItem = {
             id: 'other-id',
             ssh: 'bob@other.local',
-            user: 'bob',
             host: 'other.local',
-            targetDescription: {
+            description: {
                 hostProcessor: [],
                 remoteprocCPU: [],
             },

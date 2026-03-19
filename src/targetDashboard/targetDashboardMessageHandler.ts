@@ -87,7 +87,7 @@ export class TargetDashboardMessageHandler {
             return;
         }
         const remoteprocCpus =
-            target?.targetDescription?.remoteprocCPU.map((rp) => rp.name) || [];
+            target?.description?.remoteprocCPU.map((rp) => rp.name) || [];
         const subsystems = ['Host', ...remoteprocCpus];
         await messagePoster.postMessage({
             type: 'render-target-dashboard',

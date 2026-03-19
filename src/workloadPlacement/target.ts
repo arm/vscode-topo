@@ -41,7 +41,7 @@ export class Target implements TargetItem {
     public readonly host: string;
     public readonly id: string;
     public readonly ssh: string;
-    public readonly targetDescription: TargetDescription | undefined;
+    public readonly description: TargetDescription | undefined;
 
     constructor(
         id: string,
@@ -51,9 +51,7 @@ export class Target implements TargetItem {
         this.id = id.toString().trim();
         this.ssh = ssh.toString().trim();
         if (yamlTargetDescription) {
-            this.targetDescription = parseTargetDescription(
-                yamlTargetDescription,
-            );
+            this.description = parseTargetDescription(yamlTargetDescription);
         }
 
         if (!this.id) {

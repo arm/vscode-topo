@@ -18,9 +18,8 @@ export interface TargetDescription {
 export interface TargetItem {
     id: string;
     ssh: string;
-    user?: string;
     host: string;
-    targetDescription?: TargetDescription;
+    description?: TargetDescription;
 }
 
 /**

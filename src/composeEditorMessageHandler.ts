@@ -87,7 +87,7 @@ export class ComposeEditorMessageHandler {
         const project = this.topoCli.getProject(document.uri.fsPath);
         const target = await this.targetStore.getSelectedTarget();
         const remoteprocCpus =
-            target?.targetDescription?.remoteprocCPU.map((rp) => rp.name) || [];
+            target?.description?.remoteprocCPU.map((rp) => rp.name) || [];
         const subsystemNames = ['Host', ...remoteprocCpus];
         messagePoster.postMessage({
             type: 'render-compose-editor',

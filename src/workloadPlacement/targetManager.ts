@@ -138,7 +138,7 @@ export class TargetManager {
     private async updateTargetDescription(
         selectedTarget: TargetItem | undefined,
     ): Promise<void> {
-        if (!selectedTarget || selectedTarget.targetDescription !== undefined) {
+        if (!selectedTarget || selectedTarget.description !== undefined) {
             return;
         }
 

@@ -49,7 +49,7 @@ describe('Target', () => {
         expect(t.ssh).toBe('bob@host.com');
         expect(t.user).toBe('bob');
         expect(t.host).toBe('host.com');
-        expect(t.targetDescription).toEqual(targetDescription);
+        expect(t.description).toEqual(targetDescription);
     });
 
     it('returns stored id, ssh and targetDescription via toJSON', () => {
@@ -94,7 +94,7 @@ describe('Target', () => {
         expect(t).toBeInstanceOf(Target);
         expect(t.id).toBe('id7');
         expect(t.ssh).toBe('eva@xyz');
-        expect(t.targetDescription).toEqual(targetDescription);
+        expect(t.description).toEqual(targetDescription);
         expect(t.user).toBe('eva');
         expect(t.host).toBe('xyz');
     });
