@@ -1,31 +1,29 @@
 import * as vscode from 'vscode';
-import { HealthCheckDependency } from '../topoCliSchema';
+import { HealthCheckDependency, HealthCheckStatus } from '../topoCliSchema';
+import { getDependencyItemIcon } from './targetTreeDependencyItem';
 
-export const getDependencyGroupIcon = (healthy: boolean): vscode.ThemeIcon => {
-    if (healthy) {
+const getDependencyGroupIcon = (
+    status: HealthCheckStatus,
+): vscode.ThemeIcon => {
+    if (status === 'ok') {
         return new vscode.ThemeIcon('library');
     }
 
-    return new vscode.ThemeIcon(
-        'warning',
-        new vscode.ThemeColor('testing.iconFailed'),
-    );
+    return getDependencyItemIcon(status);
 };
 
-export const getDependencyItemIcon = (
-    healthy: boolean,
-): vscode.ThemeIcon | undefined => {
-    if (healthy) {
-        return new vscode.ThemeIcon(
-            'check',
-            new vscode.ThemeColor('testing.iconPassed'),
-        );
-    }
-
-    return new vscode.ThemeIcon(
-        'warning',
-        new vscode.ThemeColor('testing.iconFailed'),
-    );
+const getWorstDependencyStatus = (
+    dependencies: HealthCheckDependency[],
+): HealthCheckStatus => {
+    return dependencies.reduce((acc: HealthCheckStatus, dependency) => {
+        if (dependency.status === 'error') {
+            return 'error';
+        }
+        if (dependency.status === 'warning' && acc !== 'error') {
+            return 'warning';
+        }
+        return acc;
+    }, 'ok');
 };
 
 export class TargetTreeDependencyGroupItem extends vscode.TreeItem {
@@ -36,9 +34,7 @@ export class TargetTreeDependencyGroupItem extends vscode.TreeItem {
         this.contextValue = 'Dependencies';
         this.dependencies = dependencies;
 
-        const healthy =
-            dependencies.length > 0 &&
-            dependencies.every((dependency) => dependency.status === 'ok');
-        this.iconPath = getDependencyGroupIcon(healthy);
+        const status = getWorstDependencyStatus(dependencies);
+        this.iconPath = getDependencyGroupIcon(status);
     }
 }

@@ -9,6 +9,7 @@ describe('TargetTreeDependencyItem', () => {
             mock<HealthCheckDependency>({
                 name: 'Container Engine',
                 value: 'docker',
+                status: 'ok',
             }),
         );
 
@@ -16,7 +17,7 @@ describe('TargetTreeDependencyItem', () => {
         expect(item.description).toBe('docker');
     });
 
-    it('sets icon and context value for healthy dependency', () => {
+    it('sets icon and context value for an ok dependency', () => {
         const item = new TargetTreeDependencyItem(
             mock<HealthCheckDependency>({
                 status: 'ok',
@@ -25,10 +26,22 @@ describe('TargetTreeDependencyItem', () => {
 
         const icon = item.iconPath as vscode.ThemeIcon;
         expect(icon.id).toBe('check');
-        expect(item.contextValue).toBe('Dependency Healthy');
+        expect(item.contextValue).toBe('Dependency Ok');
     });
 
-    it('sets icon and context value for unhealthy dependency', () => {
+    it('sets icon and context value for a dependency with a warning', () => {
+        const item = new TargetTreeDependencyItem(
+            mock<HealthCheckDependency>({
+                status: 'warning',
+            }),
+        );
+
+        const icon = item.iconPath as vscode.ThemeIcon;
+        expect(icon.id).toBe('warning');
+        expect(item.contextValue).toBe('Dependency Warning');
+    });
+
+    it('sets icon and context value for a dependency with an error', () => {
         const item = new TargetTreeDependencyItem(
             mock<HealthCheckDependency>({
                 status: 'error',
@@ -36,7 +49,7 @@ describe('TargetTreeDependencyItem', () => {
         );
 
         const icon = item.iconPath as vscode.ThemeIcon;
-        expect(icon.id).toBe('warning');
-        expect(item.contextValue).toBe('Dependency Unhealthy');
+        expect(icon.id).toBe('close');
+        expect(item.contextValue).toBe('Dependency Error');
     });
 });
