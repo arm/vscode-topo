@@ -623,4 +623,100 @@ describe('ContainersManager', () => {
         const result = await manager.getContainersData();
         expect(result).toEqual([]);
     });
+
+    it('refreshes the newly selected target after target change', async () => {
+        const newTarget: TargetItem = {
+            id: 'other-id',
+            ssh: 'bob@other.local',
+            host: 'other.local',
+        };
+        let selectedTarget: TargetItem | undefined = target;
+        const onChangeEmitter = new vscode.EventEmitter<void>();
+        const targetStore = mock<TargetStore>();
+        targetStore.onChanged.mockImplementation(onChangeEmitter.event);
+        targetStore.getSelectedTarget.mockImplementation(
+            async () => selectedTarget,
+        );
+
+        const pendingOldHealth = new Deferred<
+            Awaited<ReturnType<TopoCli['health']>>
+        >();
+        topoCli.health.mockImplementation(async (ssh: string) => {
+            if (ssh === target.ssh) {
+                return pendingOldHealth.promise;
+            }
+
+            return {
+                host: { dependencies: [] },
+                target: {
+                    isLocalhost: false,
+                    dependencies: [
+                        {
+                            name: 'Container Engine',
+                            status: 'ok',
+                            value: 'docker',
+                        },
+                    ],
+                    connectivity: {
+                        name: 'Connected',
+                        status: 'ok',
+                        value: '',
+                    },
+                    subsystemDriver: {
+                        name: 'Subsystem Driver (remoteproc)',
+                        status: 'ok',
+                        value: 'driver-x',
+                    },
+                },
+            };
+        });
+
+        const containerCommands = mock<ContainerCommands>();
+        containerCommands.getContainers.mockResolvedValue([]);
+        containerCommands.inspectContainers.mockResolvedValue([]);
+        containerCommands.containerStats.mockResolvedValue('');
+
+        const manager = new ContainersManager(
+            topoCli,
+            containerCommands,
+            targetStore,
+        );
+
+        const activation = manager.activate();
+        await waitImmediate();
+        selectedTarget = newTarget;
+
+        onChangeEmitter.fire();
+        await waitImmediate();
+
+        pendingOldHealth.resolve({
+            host: { dependencies: [] },
+            target: {
+                isLocalhost: false,
+                dependencies: [
+                    {
+                        name: 'Container Engine',
+                        status: 'ok',
+                        value: 'docker',
+                    },
+                ],
+                connectivity: { name: 'Connected', status: 'ok', value: '' },
+                subsystemDriver: {
+                    name: 'Subsystem Driver (remoteproc)',
+                    status: 'ok',
+                    value: 'driver-x',
+                },
+            },
+        });
+        await activation;
+        await waitImmediate();
+
+        topoCli.health.mockClear();
+
+        await jest.advanceTimersByTimeAsync(9000);
+
+        expect(topoCli.health).toHaveBeenCalled();
+        expect(topoCli.health).toHaveBeenCalledWith(newTarget.ssh);
+        expect(topoCli.health).not.toHaveBeenCalledWith(target.ssh);
+    });
 });
