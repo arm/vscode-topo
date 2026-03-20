@@ -27,7 +27,7 @@ export class ContainersManager implements vscode.Disposable {
         targetId: undefined,
     };
     private refreshTimer: NodeJS.Timeout | undefined;
-    private shouldAutoRefresh = false;
+    private refreshSession: symbol | undefined;
     private containersData: ContainerItem[] = [];
     private targetState: TargetState = this.defaultTargetState;
     private target: TargetItem | undefined;
@@ -241,25 +241,36 @@ export class ContainersManager implements vscode.Disposable {
     }
 
     public async startAutoRefresh(): Promise<void> {
-        if (this.refreshTimer) {
+        if (this.refreshSession) {
             return;
         }
-        this.shouldAutoRefresh = true;
+        const refreshSession = Symbol('refreshSession');
+        this.refreshSession = refreshSession;
         const refresh = async () => {
-            if (this.shouldAutoRefresh) {
-                await this.loadTargetState();
-                if (isTargetReady(this.targetState)) {
-                    await this.loadContainersData();
-                }
-                this._onDataUpdate.fire();
-                this.refreshTimer = setTimeout(refresh, refreshInterval);
+            if (this.refreshSession !== refreshSession) {
+                return;
             }
+
+            await this.loadTargetState();
+            if (this.refreshSession !== refreshSession) {
+                return;
+            }
+
+            if (isTargetReady(this.targetState)) {
+                await this.loadContainersData();
+                if (this.refreshSession !== refreshSession) {
+                    return;
+                }
+            }
+
+            this._onDataUpdate.fire();
+            this.refreshTimer = setTimeout(refresh, refreshInterval);
         };
         await refresh();
     }
 
     public stopAutoRefresh(): void {
-        this.shouldAutoRefresh = false;
+        this.refreshSession = undefined;
         if (this.refreshTimer) {
             clearTimeout(this.refreshTimer);
             this.refreshTimer = undefined;
