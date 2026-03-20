@@ -9,6 +9,7 @@ import type {
     ContainerItem,
     MessagePoster,
     TargetItem,
+    TargetDescription,
 } from '../util/types';
 import { mock } from 'jest-mock-extended';
 import type { TargetStore } from '../workloadPlacement/targetStore';
@@ -29,10 +30,10 @@ describe('TargetDashboardMessageHandler', () => {
         id: 'topo',
         ssh: 'user@topo.local',
         host: 'topo.local',
-        description: {
-            hostProcessor: [],
-            remoteprocCPU: [{ name: 'imx-rproc' }],
-        },
+    };
+    const targetDescription: TargetDescription = {
+        hostProcessor: [],
+        remoteprocCPU: [{ name: 'imx-rproc' }],
     };
     const targetState: TargetState = {
         health: undefined,
@@ -77,6 +78,9 @@ describe('TargetDashboardMessageHandler', () => {
         containersManager.getTargetState.mockResolvedValue(targetState);
 
         targetStore.getSelectedTarget.mockResolvedValue(target);
+        targetStore.getSelectedTargetDescription.mockResolvedValue(
+            targetDescription,
+        );
 
         containerOpenInBrowser.openContainerInBrowser.mockResolvedValue(
             'success',

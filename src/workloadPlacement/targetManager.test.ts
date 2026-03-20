@@ -8,39 +8,8 @@ import { TargetItem } from '../util/types';
 import { mock, MockProxy } from 'jest-mock-extended';
 import type { TopoCli } from '../topoCli';
 import type { HealthCheckResult } from '../topoCliSchema';
-import * as fs from 'fs';
-import * as os from 'os';
-import * as path from 'path';
 
 jest.mock('../util/logger');
-jest.mock('fs');
-jest.mock('os');
-
-const yamlTargetDescription = `host:
-    - model: Cortex-A55
-      cores: 2
-      features:
-        - fp
-        - asimd
-        - evtstrm
-        - aes
-remoteprocs:
-    - name: imx-rproc`;
-
-const targetDescription = {
-    hostProcessor: [
-        {
-            model: 'Cortex-A55',
-            cores: 2,
-            features: ['fp', 'asimd', 'evtstrm', 'aes'],
-        },
-    ],
-    remoteprocCPU: [
-        {
-            name: 'imx-rproc',
-        },
-    ],
-};
 
 const healthyTarget: HealthCheckResult['target'] = {
     isLocalhost: false,
@@ -86,7 +55,6 @@ const createTargetManager = () => {
         targetTreeDataProvider,
         targetStore,
         containersManager,
-        topoCli,
     );
     return {
         onChangeEmitter,
@@ -133,18 +101,10 @@ const mockedStatusBarItemCreation: typeof vscode.window.createStatusBarItem = ((
     return statusBarItem;
 }) as unknown as typeof vscode.window.createStatusBarItem;
 
-const emptyTargetDescription = {
-    hostProcessor: [],
-    remoteprocCPU: [],
-};
-
 describe('TargetManager', () => {
     beforeEach(() => {
         statusBarItems = [];
         jest.clearAllMocks();
-        jest.mocked(os.tmpdir).mockReturnValue('/tmp');
-        jest.mocked(fs.mkdtempSync).mockReturnValue('/tmp/topo-target-1234');
-        jest.mocked(fs.readFileSync).mockReturnValue(yamlTargetDescription);
     });
 
     describe('activation', () => {
@@ -167,38 +127,6 @@ describe('TargetManager', () => {
             );
             expect(context.subscriptions.length).toBeGreaterThan(0);
         });
-
-        it('backfills target description when missing', async () => {
-            const target: TargetItem = {
-                id: 'test',
-                ssh: 'root@localhost',
-                host: 'localhost',
-            };
-            const { targetManager, targetStore, containersManager, topoCli } =
-                createTargetManager();
-            const tmpDir = '/tmp/topo-target-1234';
-            const yamlDescriptionPath = path.join(
-                tmpDir,
-                'target-description.yaml',
-            );
-            topoCli.describe.mockResolvedValue(yamlDescriptionPath);
-            jest.mocked(targetStore.getSelectedTarget).mockResolvedValue(
-                target,
-            );
-            jest.mocked(containersManager.getTargetState).mockResolvedValue({
-                health: healthyTarget,
-                targetId: target.id,
-            });
-
-            await targetManager.activate();
-
-            expect(targetStore.updateTarget).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    id: target.id,
-                    description: targetDescription,
-                }),
-            );
-        });
     });
 
     describe('target addition', () => {
@@ -206,30 +134,11 @@ describe('TargetManager', () => {
             jest.mocked(vscode.window.showInputBox)
                 .mockResolvedValueOnce('root@192.0.2.1')
                 .mockResolvedValueOnce('My target');
-            const { targetStore, targetManager, topoCli } =
-                createTargetManager();
-            const tmpDir = '/tmp/topo-target-1234';
-            const yamlDescriptionPath = path.join(
-                tmpDir,
-                'target-description.yaml',
-            );
-            topoCli.describe.mockResolvedValue(yamlDescriptionPath);
+            const { targetStore, targetManager } = createTargetManager();
+
             await targetManager.activate();
 
             await executeCommand(TargetManager.addTargetCommand);
-
-            expect(topoCli.describe).toHaveBeenCalledWith(
-                tmpDir,
-                'root@192.0.2.1',
-            );
-            expect(fs.readFileSync).toHaveBeenCalledWith(
-                yamlDescriptionPath,
-                'utf8',
-            );
-            expect(fs.rmSync).toHaveBeenCalledWith(tmpDir, {
-                recursive: true,
-                force: true,
-            });
 
             expect(
                 jest.mocked(targetStore.addTarget).mock.calls.length,
@@ -237,7 +146,6 @@ describe('TargetManager', () => {
             const created = jest.mocked(targetStore.addTarget).mock.calls[0][0];
             expect(created).toBeDefined();
             expect(created.id).toBe('My target');
-            expect(created.description).toEqual(targetDescription);
             expect(targetStore.setSelected).toHaveBeenCalledWith('My target');
         });
 
@@ -252,28 +160,6 @@ describe('TargetManager', () => {
 
             expect(targetStore.addTarget).not.toHaveBeenCalled();
             expect(targetStore.setSelected).not.toHaveBeenCalled();
-        });
-
-        it('adds target when topoCli.describe fails', async () => {
-            jest.mocked(vscode.window.showInputBox)
-                .mockResolvedValueOnce('root@192.0.2.1')
-                .mockResolvedValueOnce('My target');
-            const { targetStore, targetManager, topoCli } =
-                createTargetManager();
-            const error = new Error('describe failed');
-            topoCli.describe.mockRejectedValueOnce(error);
-            await targetManager.activate();
-
-            await executeCommand(TargetManager.addTargetCommand);
-
-            expect(topoCli.describe).toHaveBeenCalled();
-            expect(logger.warn).toHaveBeenCalledWith(
-                expect.stringContaining(
-                    'Failed to get target description for root@192.0.2.1',
-                ),
-            );
-            expect(targetStore.addTarget).toHaveBeenCalled();
-            expect(targetStore.setSelected).toHaveBeenCalled();
         });
 
         it('does nothing when id input is cancelled', async () => {
@@ -322,7 +208,6 @@ describe('TargetManager', () => {
                 id: 'test',
                 ssh: 'root@localhost',
                 host: 'localhost',
-                description: emptyTargetDescription,
             };
             const { targetManager, targetStore, containersManager } =
                 createTargetManager();
@@ -379,13 +264,11 @@ describe('TargetManager', () => {
                 id: 'test',
                 ssh: 'root@localhost',
                 host: 'localhost',
-                description: emptyTargetDescription,
             };
             const target2: TargetItem = {
                 id: 'test2',
                 ssh: 'root@other-host',
                 host: 'other-host',
-                description: emptyTargetDescription,
             };
             const {
                 targetManager,
@@ -430,7 +313,6 @@ describe('TargetManager', () => {
                 id: 'test',
                 ssh: 'root@localhost',
                 host: 'localhost',
-                description: emptyTargetDescription,
             };
             const {
                 targetManager,

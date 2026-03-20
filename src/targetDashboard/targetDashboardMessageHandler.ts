@@ -79,15 +79,19 @@ export class TargetDashboardMessageHandler {
     public async renderTargetDashboard(
         messagePoster: MessagePoster,
     ): Promise<void> {
-        const containersData = await this.containersManager.getContainersData();
-        const targetState = await this.containersManager.getTargetState();
-        const target = await this.targetStore.getSelectedTarget();
+        const [target, targetDescription, targetState, containersData] =
+            await Promise.all([
+                this.targetStore.getSelectedTarget(),
+                this.targetStore.getSelectedTargetDescription(),
+                this.containersManager.getTargetState(),
+                this.containersManager.getContainersData(),
+            ]);
         if (!target) {
             logger.error('No target selected, cannot render target dashboard');
             return;
         }
         const remoteprocCpus =
-            target?.description?.remoteprocCPU.map((rp) => rp.name) || [];
+            targetDescription?.remoteprocCPU.map((rp) => rp.name) || [];
         const subsystems = ['Host', ...remoteprocCpus];
         await messagePoster.postMessage({
             type: 'render-target-dashboard',

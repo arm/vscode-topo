@@ -15,10 +15,6 @@ describe('OnTargetTopoConsoleOpener', () => {
         id: 'topo',
         ssh: 'topo.local',
         host: 'topo.local',
-        description: {
-            hostProcessor: [],
-            remoteprocCPU: [],
-        },
     };
 
     const activateOnTargetTopoConsoleOpener = (

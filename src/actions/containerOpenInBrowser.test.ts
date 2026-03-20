@@ -13,10 +13,6 @@ describe('ContainerOpenInBrowser', () => {
         id: 'topo',
         ssh: 'user@topo.local',
         host: 'topo.local',
-        description: {
-            hostProcessor: [],
-            remoteprocCPU: [],
-        },
     };
 
     beforeEach(() => {

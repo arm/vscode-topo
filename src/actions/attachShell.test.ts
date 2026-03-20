@@ -15,10 +15,6 @@ describe('AttachShell', () => {
         id: 'topo',
         ssh: 'user@topo.local',
         host: 'topo.local',
-        description: {
-            hostProcessor: [],
-            remoteprocCPU: [],
-        },
     };
     const targetStore = mock<TargetStore>();
     let context: MockProxy<vscode.ExtensionContext>;

@@ -30,10 +30,6 @@ describe('attachVsCode', () => {
         id: 'topo',
         ssh: 'user@topo.local',
         host: 'topo.local',
-        description: {
-            hostProcessor: [],
-            remoteprocCPU: [],
-        },
     };
     const containerItem: ContainerItem = {
         id: 'abc123',

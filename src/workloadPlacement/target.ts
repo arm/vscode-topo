@@ -1,5 +1,4 @@
 import { TargetDescription, TargetItem } from '../util/types';
-import { parseTargetDescription } from '../util/parseTargetDescription';
 
 export class Target implements TargetItem {
     public static from(obj: unknown): Target {
@@ -26,11 +25,7 @@ export class Target implements TargetItem {
                     'Invalid stored target: expected property "targetDescription" of type undefined or string',
                 );
             }
-            return new Target(
-                maybeTarget.id,
-                maybeTarget.ssh,
-                maybeTarget.targetDescription,
-            );
+            return new Target(maybeTarget.id, maybeTarget.ssh);
         }
         throw new Error(
             'Invalid stored target: expected an object describing a Target',
@@ -43,16 +38,9 @@ export class Target implements TargetItem {
     public readonly ssh: string;
     public readonly description: TargetDescription | undefined;
 
-    constructor(
-        id: string,
-        ssh: string,
-        private readonly yamlTargetDescription?: string,
-    ) {
+    constructor(id: string, ssh: string) {
         this.id = id.toString().trim();
         this.ssh = ssh.toString().trim();
-        if (yamlTargetDescription) {
-            this.description = parseTargetDescription(yamlTargetDescription);
-        }
 
         if (!this.id) {
             throw new TypeError('Target id must be a non-empty string');
@@ -85,7 +73,6 @@ export class Target implements TargetItem {
         return {
             id: this.id,
             ssh: this.ssh,
-            targetDescription: this.yamlTargetDescription,
         };
     }
 }

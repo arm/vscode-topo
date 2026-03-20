@@ -6,10 +6,6 @@ const makeContainer = (ports: ContainerItem['ports']): ContainerItem => {
         id: 'topo',
         ssh: 'user@topo.local',
         host: 'topo.local',
-        description: {
-            hostProcessor: [],
-            remoteprocCPU: [],
-        },
     };
     return {
         id: 'abc123',

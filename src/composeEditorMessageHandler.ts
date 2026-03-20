@@ -85,9 +85,10 @@ export class ComposeEditorMessageHandler {
         document: vscode.TextDocument,
     ): Promise<void> {
         const project = this.topoCli.getProject(document.uri.fsPath);
-        const target = await this.targetStore.getSelectedTarget();
+        const description =
+            await this.targetStore.getSelectedTargetDescription();
         const remoteprocCpus =
-            target?.description?.remoteprocCPU.map((rp) => rp.name) || [];
+            description?.remoteprocCPU.map((rp) => rp.name) || [];
         const subsystemNames = ['Host', ...remoteprocCpus];
         messagePoster.postMessage({
             type: 'render-compose-editor',
