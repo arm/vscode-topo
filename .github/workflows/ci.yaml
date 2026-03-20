@@ -13,8 +13,8 @@ env:
     NODE_VERSION: 22.x
 
 jobs:
-    configure-ci:
-        name: Configure CI
+    build:
+        name: Build
         runs-on: ubuntu-latest
         steps:
             - id: get-app-token
@@ -39,7 +39,7 @@ jobs:
               run: npm run build
 
     test:
-        needs: configure-ci
+        needs: build
         runs-on: ${{ matrix.os }}
         strategy:
             matrix:
@@ -85,7 +85,7 @@ jobs:
         name: Publish Coverage
         needs:
             - test
-            - configure-ci
+            - build
         runs-on: [self-hosted, self-hosted-ubuntu-latest, x64, aws-debug-prod]
         steps:
             - uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e
