@@ -18,10 +18,6 @@ describe('ContainerStop', () => {
         id: 'topo',
         ssh: 'user@topo.local',
         host: 'topo.local',
-        description: {
-            hostProcessor: [],
-            remoteprocCPU: [],
-        },
     };
     const container: ContainerItem = {
         id: 'abc123',

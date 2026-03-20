@@ -7,10 +7,6 @@ describe('TargetTreeTargetItem', () => {
         id: 't-1',
         ssh: 'root@host.local',
         host: 'host.local',
-        description: {
-            hostProcessor: [],
-            remoteprocCPU: [],
-        },
     };
 
     it('sets basic fields (id, label, description)', () => {

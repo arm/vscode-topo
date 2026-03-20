@@ -35,10 +35,6 @@ describe('Deploy', () => {
         id: 'topo',
         ssh: 'topo.local',
         host: 'topo.local',
-        description: {
-            hostProcessor: [],
-            remoteprocCPU: [],
-        },
     };
     let targetStore: MockProxy<TargetStore>;
     let context: MockProxy<vscode.ExtensionContext>;

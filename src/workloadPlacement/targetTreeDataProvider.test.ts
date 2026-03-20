@@ -5,7 +5,12 @@ import { TargetTreeTargetItem } from './targetTreeTargetItem';
 import * as vscode from 'vscode';
 import * as manifest from '../manifest';
 import { ContainersManager } from './containersManager';
-import { TargetState, ContainerItem, TargetItem } from '../util/types';
+import {
+    TargetState,
+    ContainerItem,
+    TargetItem,
+    TargetDescription,
+} from '../util/types';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { TargetStore } from './targetStore';
 import { TargetTreeDependencyGroupItem } from './targetTreeDependencyGroupItem';
@@ -34,10 +39,10 @@ describe('TargetTreeDataProvider', () => {
         id: 'topo',
         ssh: 'user@topo.local',
         host: 'topo.local',
-        description: {
-            hostProcessor: [],
-            remoteprocCPU: [{ name: 'imx-rproc' }, { name: 'other-rproc' }],
-        },
+    };
+    const targetDescription: TargetDescription = {
+        hostProcessor: [],
+        remoteprocCPU: [{ name: 'imx-rproc' }, { name: 'other-rproc' }],
     };
     const targetHealth: HealthCheckResult['target'] = {
         isLocalhost: false,
@@ -135,6 +140,9 @@ describe('TargetTreeDataProvider', () => {
 
         targetStoreMock = mock<TargetStore>();
         targetStoreMock.getSelectedTarget.mockResolvedValue(target);
+        targetStoreMock.getSelectedTargetDescription.mockResolvedValue(
+            targetDescription,
+        );
         targetStoreMock.onChanged.mockImplementation(onChangedEmitter.event);
         provider = new TargetTreeDataProvider(
             context,

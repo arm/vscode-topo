@@ -95,10 +95,6 @@ const target: TargetItem = {
     id: 'topo',
     ssh: 'user@topo.local',
     host: 'topo.local',
-    description: {
-        hostProcessor: [],
-        remoteprocCPU: [],
-    },
 };
 const topoCli = mock<TopoCli>();
 topoCli.health.mockResolvedValue({
@@ -504,10 +500,6 @@ describe('ContainersManager', () => {
             id: 'other-id',
             ssh: 'bob@other.local',
             host: 'other.local',
-            description: {
-                hostProcessor: [],
-                remoteprocCPU: [],
-            },
         };
         execMock.mockImplementation(async (command: string) => {
             switch (command) {
@@ -552,10 +544,6 @@ describe('ContainersManager', () => {
             id: 'other-id',
             ssh: 'bob@other.local',
             host: 'other.local',
-            description: {
-                hostProcessor: [],
-                remoteprocCPU: [],
-            },
         };
         const pendingOldContainers = new Deferred<DockerPsItem[]>();
         let selectedTarget: TargetItem | undefined = target;

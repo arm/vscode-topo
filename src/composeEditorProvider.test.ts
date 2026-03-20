@@ -9,7 +9,7 @@ import { TopoCli } from './topoCli';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { ProjectDescription } from './topoCliSchema';
 import { TargetStore } from './workloadPlacement/targetStore';
-import { TargetItem } from './util/types';
+import { TargetDescription, TargetItem } from './util/types';
 
 jest.mock('./util/logger');
 jest.mock('./util/showAndLogError', () => ({
@@ -24,10 +24,10 @@ describe('ComposeEditorProvider', () => {
         id: 'topo',
         ssh: 'user@topo.local',
         host: 'topo.local',
-        description: {
-            hostProcessor: [],
-            remoteprocCPU: [{ name: 'imx-rproc' }],
-        },
+    };
+    const targetDescription: TargetDescription = {
+        hostProcessor: [],
+        remoteprocCPU: [{ name: 'imx-rproc' }],
     };
 
     const composeFolder = '/ext';
@@ -112,6 +112,9 @@ describe('ComposeEditorProvider', () => {
         deploy = mock<Deploy>();
         targetStore = mock<TargetStore>();
         targetStore.getSelectedTarget.mockResolvedValue(target);
+        targetStore.getSelectedTargetDescription.mockResolvedValue(
+            targetDescription,
+        );
         composeEditorMessageHandler = new ComposeEditorMessageHandler(
             topoCli,
             deploy,

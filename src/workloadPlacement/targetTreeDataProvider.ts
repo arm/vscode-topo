@@ -157,13 +157,16 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
         }
 
         if (element instanceof TargetTreeTargetItem) {
-            const targetState = await this.containersManager.getTargetState();
+            const [targetState, selectedTargetDescription] = await Promise.all([
+                this.containersManager.getTargetState(),
+                this.targetStore.getSelectedTargetDescription(),
+            ]);
             if (targetState.health === undefined) {
                 return [];
             }
 
             const dependencies = [...targetState.health.dependencies];
-            if (element.target.description?.remoteprocCPU.length) {
+            if (selectedTargetDescription?.remoteprocCPU.length) {
                 dependencies.push(targetState.health.subsystemDriver);
             }
 
@@ -183,10 +186,10 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
         }
 
         if (element instanceof TargetTreeSubsystemGroupItem) {
+            const targetDescription =
+                await this.targetStore.getSelectedTargetDescription();
             const remoteprocCpus =
-                element.target.description?.remoteprocCPU.map(
-                    (rp) => rp.name,
-                ) || [];
+                targetDescription?.remoteprocCPU.map((rp) => rp.name) || [];
             const subsystemNames = ['Host', ...remoteprocCpus];
             return subsystemNames.map(
                 (name) => new TargetTreeSubsystemItem(name),

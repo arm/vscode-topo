@@ -42,7 +42,7 @@ export async function activate(
         return;
     }
 
-    const targetStore = TargetStore.getInstance(context);
+    const targetStore = TargetStore.getInstance(context, topoCli);
     const onTargetTopoConsoleOpener = new OnTargetTopoConsoleOpener(
         context,
         targetStore,
@@ -79,7 +79,6 @@ export async function activate(
         targetTreeDataProvider,
         targetStore,
         containersManager,
-        topoCli,
     );
     const targetDashboardMessageHandler = new TargetDashboardMessageHandler(
         containersManager,

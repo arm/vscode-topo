@@ -15,10 +15,6 @@ describe('SetupKeys', () => {
         id: 'topo',
         ssh: 'user@topo.local',
         host: 'topo.local',
-        description: {
-            hostProcessor: [],
-            remoteprocCPU: [],
-        },
     };
     const waitImmediate = () =>
         new Promise<void>((resolve) => setTimeout(() => resolve(), 0));
