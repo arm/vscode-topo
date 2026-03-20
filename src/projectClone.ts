@@ -12,6 +12,12 @@ type CloneResult = {
 };
 type CloneBuildArgs = Record<string, string>;
 
+export const getFirstSentence = (text: string): string => {
+    const trimmed = text.trim();
+    const match = trimmed.match(/^.*?[.!?](?=\s|$)/);
+    return (match ? match[0] : trimmed).trim();
+};
+
 const assertWorkspacePath = (): string => {
     const workspacePath = getWorkspacePath();
     if (!workspacePath) {
@@ -122,18 +128,6 @@ const getDefaultProjectNameFromSourceString = (
         case undefined:
             return getDefaultProjectNameFromUrl(cloneSource.value);
     }
-};
-
-const getFirstSentence = (text?: string): string | undefined => {
-    if (!text) {
-        return undefined;
-    }
-    const trimmed = text.trim();
-    if (!trimmed) {
-        return undefined;
-    }
-    const match = trimmed.match(/^.*?[.!?](?=\s|$)/);
-    return (match ? match[0] : trimmed).trim();
 };
 
 const getCloneCommandFromSourceString = (

@@ -1,7 +1,7 @@
 import path from 'path';
 import * as vscode from 'vscode';
 import * as manifest from './manifest';
-import { ProjectClone } from './projectClone';
+import { getFirstSentence, ProjectClone } from './projectClone';
 import { mutable } from './util/mutable';
 import { TopoCli } from './topoCli';
 import { mock, MockProxy } from 'jest-mock-extended';
@@ -11,18 +11,6 @@ import { showAndLogError } from './util/showAndLogError';
 jest.mock('./util/showAndLogError', () => ({
     showAndLogError: jest.fn(),
 }));
-
-const getFirstSentence = (text?: string): string | undefined => {
-    if (!text) {
-        return undefined;
-    }
-    const trimmed = text.trim();
-    if (!trimmed) {
-        return undefined;
-    }
-    const match = trimmed.match(/^.*?[.!?](?=\s|$)/);
-    return (match ? match[0] : trimmed).trim();
-};
 
 const executeCommand = async function (command: string, ...args: unknown[]) {
     const registeredCommands = jest.mocked(vscode.commands.registerCommand).mock
