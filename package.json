@@ -391,8 +391,8 @@
         "watch:extension": "vite build --mode extension --watch --minify=false",
         "watch:webview": "vite build --mode webview --watch --minify=false",
         "watch": "npm-run-all --parallel watch:extension watch:webview",
-        "download": "ts-node scripts/download.ts",
-        "calculate-new-version": "ts-node scripts/calculate-new-version.ts",
+        "download": "node --no-warnings --experimental-strip-types scripts/download.ts",
+        "calculate-new-version": "node --no-warnings --experimental-strip-types scripts/calculate-new-version.ts",
         "prettier-check": "prettier -c .",
         "eslint-check": "eslint .",
         "tsc-check": "tsc --noEmit -p tsconfig.json"
@@ -433,10 +433,10 @@
         "tar": "^7.5.2",
         "ts-jest": "^29.3.2",
         "ts-loader": "^9.5.2",
-        "ts-node": "^10.9.2",
         "typescript": "^5.8.2",
         "vite": "^6.3.4",
-        "vite-tsconfig-paths": "^5.1.4"
+        "vite-tsconfig-paths": "^5.1.4",
+        "yargs": "^17.7.2"
     },
     "dependencies": {
         "js-yaml": "^4.1.1",

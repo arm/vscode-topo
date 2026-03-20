@@ -1,12 +1,10 @@
-#!npx ts-node
-
 import fs from 'fs';
 import path from 'path';
 import nodeOs from 'os';
 import yargs from 'yargs';
 import extract from 'extract-zip';
-import * as manifest from '../src/manifest';
 import * as tar from 'tar';
+import * as manifest from '../src/manifest.ts';
 
 const DOWNLOAD_TARGETS = [
     'win32-x64',
@@ -133,6 +131,7 @@ const parsedArgs = yargs(process.argv.slice(2))
         choices: DOWNLOAD_TARGETS,
         default: `${nodeOs.platform()}-${nodeOs.arch()}`,
     })
+    .help('h')
     .version(false)
     .strict()
     .command('$0', 'Downloads the tool for the given architecture and OS')
@@ -148,11 +147,10 @@ if (!fs.existsSync(pkgPath)) {
 }
 const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
 
-const key = manifest.TOPO_CLI;
-const section = pkg[key];
+const section = pkg[manifest.TOPO_CLI];
 if (!section || typeof section.version !== 'string') {
     console.error(
-        `✖ package.json must have a top-level "${key}" object with a string "version" property.`,
+        `✖ package.json must have a top-level "${manifest.TOPO_CLI}" object with a string "version" property.`,
     );
     process.exit(1);
 }
