@@ -7,10 +7,59 @@ import { getWorkspacePath } from './util/getWorkspacePath';
 import { isTopoError, TopoError } from './errors/topoError';
 import { showAndLogError } from './util/showAndLogError';
 
-type CloneResult = {
-    success: boolean;
-};
+type CloneResult =
+    | {
+          success: true;
+          repositoryPath: string;
+      }
+    | {
+          success: false;
+      };
 type CloneBuildArgs = Record<string, string>;
+
+const postCloneAction = async (repositoryPath: string) => {
+    let message = 'Would you like to open the cloned repository?';
+    const open = 'Open';
+    const openNewWindow = 'Open in New Window';
+    const choices = [open, openNewWindow];
+
+    const addToWorkspace = 'Add to Workspace';
+    if (vscode.workspace.workspaceFolders) {
+        message =
+            'Would you like to open the cloned repository, or add it to the current workspace?';
+        choices.push(addToWorkspace);
+    }
+
+    const selection = await vscode.window.showInformationMessage(
+        message,
+        { modal: true },
+        ...choices,
+    );
+    const uri = vscode.Uri.file(repositoryPath);
+
+    switch (selection) {
+        case open:
+            vscode.commands.executeCommand('vscode.openFolder', uri, {
+                forceReuseWindow: true,
+            });
+            return;
+        case addToWorkspace:
+            vscode.workspace.updateWorkspaceFolders(
+                vscode.workspace.workspaceFolders!.length,
+                0,
+                { uri },
+            );
+            return;
+        case openNewWindow:
+            vscode.commands.executeCommand('vscode.openFolder', uri, {
+                forceNewWindow: true,
+            });
+            return;
+        case undefined:
+        default:
+            return;
+    }
+};
 
 export const getFirstSentence = (text: string): string => {
     const trimmed = text.trim();
@@ -170,6 +219,7 @@ const cloneWithSource = async (
     if (!projectName) {
         return { success: false };
     }
+    const repositoryPath = path.join(workspacePath, projectName);
     const cloneSourceString = getCloneSourceString(cloneSource);
     const cloneCommand = getCloneCommandFromSourceString(
         workspacePath,
@@ -186,7 +236,7 @@ const cloneWithSource = async (
     if (!cloneSucceeded) {
         return { success: false };
     }
-    return { success: true };
+    return { success: true, repositoryPath };
 };
 
 const getTemplateOfChoice = async (
@@ -273,6 +323,9 @@ export class ProjectClone {
             defaultProjectName,
             cloneBuildArgs,
         );
+        if (cloneResult.success) {
+            await postCloneAction(cloneResult.repositoryPath);
+        }
         return cloneResult.success;
     }
 
