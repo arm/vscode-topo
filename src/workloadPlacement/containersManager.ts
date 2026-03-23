@@ -142,6 +142,10 @@ export class ContainersManager implements vscode.Disposable {
         return deferred.promise;
     }
 
+    public getTargetStateSnapshot(): TargetState {
+        return this.targetState;
+    }
+
     public async getTargetState(): Promise<TargetState> {
         if (!this.targetStateInitialised) {
             await this.loadTargetState();

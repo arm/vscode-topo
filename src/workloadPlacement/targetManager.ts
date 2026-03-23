@@ -86,14 +86,12 @@ export class TargetManager {
         await this.targetStore.setSelected(newTarget.id);
     }
 
-    protected async updateStatusBar(
-        selectedTarget: TargetItem | undefined,
-    ): Promise<void> {
+    protected updateStatusBar(selectedTarget: TargetItem | undefined): void {
         if (!this.statusBarItem) {
             return;
         }
         if (selectedTarget) {
-            const targetState = await this.containersManager.getTargetState();
+            const targetState = this.containersManager.getTargetStateSnapshot();
             const connectionReady = selectedTarget.id === targetState.targetId;
             const targetTreeIcon = getTreeItemIcon(
                 true,
@@ -111,10 +109,6 @@ export class TargetManager {
 
     private async refreshTargetVisualisation(): Promise<void> {
         const selectedTarget = await this.targetStore.getSelectedTarget();
-        try {
-            await this.updateStatusBar(selectedTarget);
-        } catch (error) {
-            logger.error(`Failed to update target manager status bar`, error);
-        }
+        this.updateStatusBar(selectedTarget);
     }
 }
