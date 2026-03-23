@@ -16,6 +16,7 @@ import type { TargetStore } from '../workloadPlacement/targetStore';
 import { ContainerOpenInBrowser } from '../actions/containerOpenInBrowser';
 import { AttachVsCode } from '../actions/attachVsCode';
 import { AttachShell } from '../actions/attachShell';
+import { TargetDescriptionStore } from '../workloadPlacement/targetDescriptionStore';
 
 jest.mock('../util/logger');
 jest.mock('../util/showAndLogError', () => ({
@@ -68,6 +69,7 @@ describe('TargetDashboardMessageHandler', () => {
     const containerOpenInBrowser = mock<ContainerOpenInBrowser>();
     const attachVsCode = mock<AttachVsCode>();
     const attachShell = mock<AttachShell>();
+    const targetDescriptionStore = mock<TargetDescriptionStore>();
 
     let handler: TargetDashboardMessageHandler;
 
@@ -78,7 +80,7 @@ describe('TargetDashboardMessageHandler', () => {
         containersManager.getTargetState.mockResolvedValue(targetState);
 
         targetStore.getSelectedTarget.mockResolvedValue(target);
-        targetStore.getSelectedTargetDescription.mockResolvedValue(
+        targetDescriptionStore.getDescription.mockResolvedValue(
             targetDescription,
         );
 
@@ -89,6 +91,7 @@ describe('TargetDashboardMessageHandler', () => {
         handler = new TargetDashboardMessageHandler(
             containersManager,
             targetStore,
+            targetDescriptionStore,
             containerOpenInBrowser,
             attachVsCode,
             attachShell,

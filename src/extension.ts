@@ -25,6 +25,7 @@ import { Deploy } from './actions/deploy';
 import { HostHealth } from './actions/hostHealth';
 import { ProtocolHandler } from './protocolHandler';
 import { SetupKeys } from './actions/setupKeys';
+import { TargetDescriptionStore } from './workloadPlacement/targetDescriptionStore';
 
 export async function activate(
     context: vscode.ExtensionContext,
@@ -42,7 +43,8 @@ export async function activate(
         return;
     }
 
-    const targetStore = TargetStore.getInstance(context, topoCli);
+    const targetStore = TargetStore.getInstance(context);
+    const targetDescriptionStore = new TargetDescriptionStore(topoCli);
     const onTargetTopoConsoleOpener = new OnTargetTopoConsoleOpener(
         context,
         targetStore,
@@ -54,6 +56,7 @@ export async function activate(
         topoCli,
         deploy,
         targetStore,
+        targetDescriptionStore,
     );
     const composeEditorProvider = new ComposeEditorProvider(
         context,
@@ -73,6 +76,7 @@ export async function activate(
         context,
         containersManager,
         targetStore,
+        targetDescriptionStore,
     );
     const targetManager = new TargetManager(
         context,
@@ -83,6 +87,7 @@ export async function activate(
     const targetDashboardMessageHandler = new TargetDashboardMessageHandler(
         containersManager,
         targetStore,
+        targetDescriptionStore,
         containerOpenInBrowser,
         attachVsCode,
         attachShell,
