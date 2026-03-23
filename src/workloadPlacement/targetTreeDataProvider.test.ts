@@ -182,6 +182,14 @@ describe('TargetTreeDataProvider', () => {
     describe('getChildren', () => {
         it('returns Target at root and Dependencies/Subsystems as its children', async () => {
             targetStoreMock.getTargets.mockReturnValue([target]);
+            containersManagerMock.getTargetStateSnapshot.mockReturnValue({
+                health: undefined,
+                targetId: target.id,
+            });
+            containersManagerMock.getTargetState.mockResolvedValue({
+                health: targetHealth,
+                targetId: target.id,
+            });
 
             const rootChildren = await provider.getChildren();
             const targetChildren = await provider.getChildren(rootChildren[0]);
@@ -221,6 +229,10 @@ describe('TargetTreeDataProvider', () => {
             });
             containersManagerMock.getTargetState.mockResolvedValue(targetState);
             targetStoreMock.getTargets.mockReturnValue([target]);
+            containersManagerMock.getTargetStateSnapshot.mockReturnValue({
+                health: targetState.health,
+                targetId: target.id,
+            });
             const rootChildren = await provider.getChildren();
             const targetChildren = await provider.getChildren(rootChildren[0]);
             const dependenciesGroup = targetChildren.find(
@@ -239,7 +251,7 @@ describe('TargetTreeDataProvider', () => {
         it('marks selected target as not ready when health is undefined', async () => {
             targetStoreMock.getTargets.mockReturnValue([target]);
             targetStoreMock.getSelectedTarget.mockResolvedValue(target);
-            containersManagerMock.getTargetState.mockResolvedValueOnce({
+            containersManagerMock.getTargetStateSnapshot.mockReturnValue({
                 health: undefined,
                 targetId: target.id,
             });

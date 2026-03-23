@@ -214,7 +214,9 @@ describe('TargetManager', () => {
             jest.mocked(targetStore.getSelectedTarget).mockResolvedValue(
                 target,
             );
-            jest.mocked(containersManager.getTargetState).mockResolvedValue({
+            jest.mocked(
+                containersManager.getTargetStateSnapshot,
+            ).mockReturnValue({
                 health: undefined,
                 targetId: undefined,
             });
@@ -241,7 +243,9 @@ describe('TargetManager', () => {
             jest.mocked(targetStore.getSelectedTarget).mockResolvedValue(
                 undefined,
             );
-            jest.mocked(containersManager.getTargetState).mockResolvedValue({
+            jest.mocked(
+                containersManager.getTargetStateSnapshot,
+            ).mockReturnValue({
                 health: undefined,
                 targetId: undefined,
             });
@@ -279,7 +283,9 @@ describe('TargetManager', () => {
             jest.mocked(targetStore.getSelectedTarget).mockResolvedValue(
                 target1,
             );
-            jest.mocked(containersManager.getTargetState).mockResolvedValue({
+            jest.mocked(
+                containersManager.getTargetStateSnapshot,
+            ).mockReturnValue({
                 health: healthyTarget,
                 targetId: target1.id,
             });
@@ -290,7 +296,9 @@ describe('TargetManager', () => {
             jest.mocked(targetStore.getSelectedTarget).mockResolvedValue(
                 target2,
             );
-            jest.mocked(containersManager.getTargetState).mockResolvedValue({
+            jest.mocked(
+                containersManager.getTargetStateSnapshot,
+            ).mockReturnValue({
                 health: healthyTarget,
                 targetId: target2.id,
             });
@@ -306,51 +314,6 @@ describe('TargetManager', () => {
             );
             expect(statusBarItem.show).toHaveBeenCalledTimes(2);
             expect(statusBarItem.hide).not.toHaveBeenCalled();
-        });
-
-        it('logs an error if updating the status bar fails. Status bar stays unchanged', async () => {
-            const target: TargetItem = {
-                id: 'test',
-                ssh: 'root@localhost',
-                host: 'localhost',
-            };
-            const {
-                targetManager,
-                targetStore,
-                containersManager,
-                onDataUpdateEmitter,
-            } = createTargetManager();
-            jest.mocked(targetStore.getSelectedTarget).mockResolvedValue(
-                target,
-            );
-            jest.mocked(containersManager.getTargetState).mockResolvedValue({
-                health: healthyTarget,
-                targetId: target.id,
-            });
-            jest.mocked(vscode.window.createStatusBarItem).mockImplementation(
-                mockedStatusBarItemCreation,
-            );
-            await targetManager.activate();
-            const error = new Error('boom');
-            jest.mocked(containersManager.getTargetState).mockRejectedValue(
-                error,
-            );
-
-            onDataUpdateEmitter.fire();
-            await waitImmediate();
-
-            expect(vscode.window.createStatusBarItem).toHaveBeenCalledTimes(1);
-            const statusBarItem = statusBarItems[0];
-            expect(statusBarItem.text).toBe(`$(pass-filled) ${target.id}`);
-            expect(statusBarItem.tooltip).toBe(
-                'Connection String: root@localhost',
-            );
-            expect(statusBarItem.show).toHaveBeenCalledTimes(1);
-            expect(statusBarItem.hide).not.toHaveBeenCalled();
-            expect(logger.error).toHaveBeenCalledWith(
-                'Failed to update target manager status bar',
-                error,
-            );
         });
     });
 });
