@@ -13,7 +13,7 @@ const topoCli = new TopoCli(
 
 // The real `topo health localhost` integration path can take longer on
 // Windows CI runners because it probes the local host environment.
-jest.setTimeout(process.platform === 'win32' ? 30_000 : 15_000);
+jest.setTimeout(process.platform === 'win32' ? 60_000 : 15_000);
 
 describe('getVersion', () => {
     it('parses output', async () => {
