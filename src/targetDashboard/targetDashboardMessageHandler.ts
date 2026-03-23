@@ -9,6 +9,7 @@ import { AttachShell } from '../actions/attachShell';
 import { TargetStore } from '../workloadPlacement/targetStore';
 import { isTopoError } from '../errors/topoError';
 import { isPlainObject } from '../util/isPlainObject';
+import { TargetDescriptionStore } from '../workloadPlacement/targetDescriptionStore';
 
 type StartContainerMessage = { type: 'start-container'; containerId: string };
 type StopContainerMessage = { type: 'stop-container'; containerId: string };
@@ -71,6 +72,7 @@ export class TargetDashboardMessageHandler {
     constructor(
         private readonly containersManager: ContainersManager,
         private readonly targetStore: TargetStore,
+        private readonly targetDescriptionStore: TargetDescriptionStore,
         private readonly containerOpenInBrowser: ContainerOpenInBrowser,
         private readonly attachVsCode: AttachVsCode,
         private readonly attachShell: AttachShell,
@@ -79,17 +81,18 @@ export class TargetDashboardMessageHandler {
     public async renderTargetDashboard(
         messagePoster: MessagePoster,
     ): Promise<void> {
-        const [target, targetDescription, targetState, containersData] =
-            await Promise.all([
-                this.targetStore.getSelectedTarget(),
-                this.targetStore.getSelectedTargetDescription(),
-                this.containersManager.getTargetState(),
-                this.containersManager.getContainersData(),
-            ]);
+        const target = await this.targetStore.getSelectedTarget();
         if (!target) {
             logger.error('No target selected, cannot render target dashboard');
             return;
         }
+        const [targetDescription, targetState, containersData] =
+            await Promise.all([
+                this.targetDescriptionStore.getDescription(target),
+                this.containersManager.getTargetState(),
+                this.containersManager.getContainersData(),
+            ]);
+
         const remoteprocCpus =
             targetDescription?.remoteprocCPU.map((rp) => rp.name) || [];
         const subsystems = ['Host', ...remoteprocCpus];

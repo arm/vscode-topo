@@ -11,6 +11,7 @@ import { TargetTreeDependencyGroupItem } from './targetTreeDependencyGroupItem';
 import { TargetTreeSubsystemGroupItem } from './targetTreeSubsystemGroupItem';
 import { TargetTreeDependencyItem } from './targetTreeDependencyItem';
 import { HealthCheckDependency } from '../topoCliSchema';
+import { TargetDescriptionStore } from './targetDescriptionStore';
 
 function sortDependenciesByName(
     deps: HealthCheckDependency[],
@@ -44,6 +45,7 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
         private readonly context: vscode.ExtensionContext,
         private readonly containersManager: ContainersManager,
         private readonly targetStore: TargetStore,
+        private readonly targetDescriptionStore: TargetDescriptionStore,
     ) {}
 
     public async activate(): Promise<void> {
@@ -157,9 +159,13 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
         }
 
         if (element instanceof TargetTreeTargetItem) {
+            const target = await this.targetStore.getSelectedTarget();
+            if (!target) {
+                return [];
+            }
             const [targetState, selectedTargetDescription] = await Promise.all([
                 this.containersManager.getTargetState(),
-                this.targetStore.getSelectedTargetDescription(),
+                this.targetDescriptionStore.getDescription(target),
             ]);
             if (targetState.health === undefined) {
                 return [];
@@ -186,8 +192,12 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
         }
 
         if (element instanceof TargetTreeSubsystemGroupItem) {
+            const target = await this.targetStore.getSelectedTarget();
+            if (!target) {
+                return [];
+            }
             const targetDescription =
-                await this.targetStore.getSelectedTargetDescription();
+                await this.targetDescriptionStore.getDescription(target);
             const remoteprocCpus =
                 targetDescription?.remoteprocCPU.map((rp) => rp.name) || [];
             const subsystemNames = ['Host', ...remoteprocCpus];

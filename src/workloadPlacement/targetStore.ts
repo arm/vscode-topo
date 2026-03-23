@@ -2,31 +2,22 @@ import * as vscode from 'vscode';
 import { logger } from '../util/logger';
 import debounce from 'lodash.debounce';
 import { Target } from './target';
-import { TargetDescription, TargetItem } from '../util/types';
-import { TopoCli } from '../topoCli';
-import { Deferred } from '../util/deferred';
-import { TargetDescriptionStore } from './targetDescriptionStore';
+import { TargetItem } from '../util/types';
 
 type GlobalStoreKeys = 'targets';
 type WorkspaceStoreKeys = 'selectedTarget';
 
 export class TargetStore {
     private static instance: TargetStore | undefined;
-    private selectedTargetDescription:
-        | Deferred<TargetDescription | undefined>
-        | undefined;
 
-    public static getInstance(
-        context?: vscode.ExtensionContext,
-        topoCli?: TopoCli,
-    ): TargetStore {
+    public static getInstance(context?: vscode.ExtensionContext): TargetStore {
         if (!TargetStore.instance) {
-            if (!context || !topoCli) {
+            if (!context) {
                 throw new Error(
-                    'TargetStore not initialized. Context and TopoCli are required when initializing the TargetStore.',
+                    'TargetStore not initialized. Context is required when initializing the TargetStore.',
                 );
             }
-            TargetStore.instance = new TargetStore(context, topoCli);
+            TargetStore.instance = new TargetStore(context);
         }
         return TargetStore.instance;
     }
@@ -35,13 +26,8 @@ export class TargetStore {
         new vscode.EventEmitter<void>();
     public readonly onChanged: vscode.Event<void> = this._onChanged.event;
     private disposables: vscode.Disposable[] = [];
-    private readonly descriptionStore: TargetDescriptionStore;
 
-    private constructor(
-        protected context: vscode.ExtensionContext,
-        topoCli: TopoCli,
-    ) {
-        this.descriptionStore = new TargetDescriptionStore(topoCli);
+    private constructor(protected context: vscode.ExtensionContext) {
         const pattern = new vscode.RelativePattern(
             this.context.globalStorageUri,
             'targets-update.signal',
@@ -79,8 +65,6 @@ export class TargetStore {
     }
 
     public async setSelected(id: string | undefined): Promise<void> {
-        this.selectedTargetDescription?.resolve(undefined);
-        this.selectedTargetDescription = undefined;
         await this.setWorkspace('selectedTarget', id);
         this._onChanged.fire();
     }
@@ -112,15 +96,6 @@ export class TargetStore {
     public async getSelectedTarget(): Promise<TargetItem | undefined> {
         const targets = this.getTargets();
         return targets.find((target) => target.id === this.selected);
-    }
-
-    public async getSelectedTargetDescription(): Promise<
-        TargetDescription | undefined
-    > {
-        const selectedTarget = await this.getSelectedTarget();
-        return selectedTarget
-            ? this.descriptionStore.getTargetDescription(selectedTarget)
-            : undefined;
     }
 
     public async deleteTarget(targetId: string): Promise<void> {

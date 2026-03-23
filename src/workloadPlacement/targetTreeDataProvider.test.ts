@@ -16,6 +16,7 @@ import { TargetStore } from './targetStore';
 import { TargetTreeDependencyGroupItem } from './targetTreeDependencyGroupItem';
 import { TargetTreeSubsystemGroupItem } from './targetTreeSubsystemGroupItem';
 import { HealthCheckDependency, HealthCheckResult } from '../topoCliSchema';
+import { TargetDescriptionStore } from './targetDescriptionStore';
 
 jest.mock('../util/logger');
 
@@ -35,6 +36,7 @@ describe('TargetTreeDataProvider', () => {
     let context: MockProxy<vscode.ExtensionContext>;
     let containersManagerMock: MockProxy<ContainersManager>;
     let targetStoreMock: MockProxy<TargetStore>;
+    let targetDescriptionStoreMock: MockProxy<TargetDescriptionStore>;
     const target: TargetItem = {
         id: 'topo',
         ssh: 'user@topo.local',
@@ -140,7 +142,8 @@ describe('TargetTreeDataProvider', () => {
 
         targetStoreMock = mock<TargetStore>();
         targetStoreMock.getSelectedTarget.mockResolvedValue(target);
-        targetStoreMock.getSelectedTargetDescription.mockResolvedValue(
+        targetDescriptionStoreMock = mock<TargetDescriptionStore>();
+        targetDescriptionStoreMock.getDescription.mockResolvedValue(
             targetDescription,
         );
         targetStoreMock.onChanged.mockImplementation(onChangedEmitter.event);
@@ -148,6 +151,7 @@ describe('TargetTreeDataProvider', () => {
             context,
             containersManagerMock,
             targetStoreMock,
+            targetDescriptionStoreMock,
         );
         jest.clearAllTimers();
         jest.clearAllMocks();

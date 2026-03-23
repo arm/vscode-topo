@@ -10,6 +10,7 @@ import { mock, MockProxy } from 'jest-mock-extended';
 import { ProjectDescription } from './topoCliSchema';
 import { TargetStore } from './workloadPlacement/targetStore';
 import { TargetDescription, TargetItem } from './util/types';
+import { TargetDescriptionStore } from './workloadPlacement/targetDescriptionStore';
 
 jest.mock('./util/logger');
 jest.mock('./util/showAndLogError', () => ({
@@ -79,6 +80,7 @@ describe('ComposeEditorProvider', () => {
     let topoCli: MockProxy<TopoCli>;
     let deploy: MockProxy<Deploy>;
     let targetStore: MockProxy<TargetStore>;
+    let targetDescriptionStore: MockProxy<TargetDescriptionStore>;
     let composeEditorMessageHandler: ComposeEditorMessageHandler;
 
     beforeEach(() => {
@@ -112,13 +114,15 @@ describe('ComposeEditorProvider', () => {
         deploy = mock<Deploy>();
         targetStore = mock<TargetStore>();
         targetStore.getSelectedTarget.mockResolvedValue(target);
-        targetStore.getSelectedTargetDescription.mockResolvedValue(
+        targetDescriptionStore = mock<TargetDescriptionStore>();
+        targetDescriptionStore.getDescription.mockResolvedValue(
             targetDescription,
         );
         composeEditorMessageHandler = new ComposeEditorMessageHandler(
             topoCli,
             deploy,
             targetStore,
+            targetDescriptionStore,
         );
     });
 

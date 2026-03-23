@@ -7,6 +7,7 @@ import { MessagePoster } from './util/types';
 import { showAndLogError } from './util/showAndLogError';
 import { TopoCli } from './topoCli';
 import { TargetStore } from './workloadPlacement/targetStore';
+import { TargetDescriptionStore } from './workloadPlacement/targetDescriptionStore';
 
 type ShowQuickPickMessage = { type: 'show-quick-pick'; items: string[] };
 type CreateQuickPickMessage = {
@@ -78,6 +79,7 @@ export class ComposeEditorMessageHandler {
         private readonly topoCli: TopoCli,
         private readonly deploy: Deploy,
         private readonly targetStore: TargetStore,
+        private readonly targetDescriptionStore: TargetDescriptionStore,
     ) {}
 
     public async renderComposeEditor(
@@ -85,8 +87,10 @@ export class ComposeEditorMessageHandler {
         document: vscode.TextDocument,
     ): Promise<void> {
         const project = this.topoCli.getProject(document.uri.fsPath);
-        const description =
-            await this.targetStore.getSelectedTargetDescription();
+        const target = await this.targetStore.getSelectedTarget();
+        const description = target
+            ? await this.targetDescriptionStore.getDescription(target)
+            : undefined;
         const remoteprocCpus =
             description?.remoteprocCPU.map((rp) => rp.name) || [];
         const subsystemNames = ['Host', ...remoteprocCpus];
