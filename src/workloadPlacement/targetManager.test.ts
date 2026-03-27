@@ -44,7 +44,7 @@ const createTargetManager = () => {
         mock<ContainersManager>();
     containersManager.getTargetState.mockResolvedValue({
         health: undefined,
-        targetId: undefined,
+        targetSsh: undefined,
     });
     containersManager.onDataUpdate.mockImplementation(
         onDataUpdateEmitter.event,
@@ -130,10 +130,11 @@ describe('TargetManager', () => {
     });
 
     describe('target addition', () => {
-        it('handles addTargetCommand: prompts for ssh and name, stores and selects new target', async () => {
-            jest.mocked(vscode.window.showInputBox)
-                .mockResolvedValueOnce('root@192.0.2.1')
-                .mockResolvedValueOnce('My target');
+        it('handles addTargetCommand: prompts for ssh, stores and selects new target', async () => {
+            const targetSsh = 'root@192.0.2.1';
+            jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
+                targetSsh,
+            );
             const { targetStore, targetManager } = createTargetManager();
 
             await targetManager.activate();
@@ -145,8 +146,7 @@ describe('TargetManager', () => {
             ).toBeGreaterThanOrEqual(1);
             const created = jest.mocked(targetStore.addTarget).mock.calls[0][0];
             expect(created).toBeDefined();
-            expect(created.id).toBe('My target');
-            expect(targetStore.setSelected).toHaveBeenCalledWith('My target');
+            expect(targetStore.setSelected).toHaveBeenCalledWith(targetSsh);
         });
 
         it('does nothing when ssh input is cancelled', async () => {
@@ -162,23 +162,10 @@ describe('TargetManager', () => {
             expect(targetStore.setSelected).not.toHaveBeenCalled();
         });
 
-        it('does nothing when id input is cancelled', async () => {
-            jest.mocked(vscode.window.showInputBox)
-                .mockResolvedValueOnce('root@192.0.2.1')
-                .mockResolvedValueOnce(undefined);
-            const { targetStore, targetManager } = createTargetManager();
-            await targetManager.activate();
-
-            await executeCommand(TargetManager.addTargetCommand);
-
-            expect(targetStore.addTarget).not.toHaveBeenCalled();
-            expect(targetStore.setSelected).not.toHaveBeenCalled();
-        });
-
         it('shows error when targetStore.addTarget fails', async () => {
-            jest.mocked(vscode.window.showInputBox)
-                .mockResolvedValueOnce('root@192.0.2.1')
-                .mockResolvedValueOnce('My target');
+            jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
+                'root@192.0.2.1',
+            );
             const { targetTreeDataProvider, targetStore, targetManager } =
                 createTargetManager();
             const error = new Error('boom');
@@ -205,7 +192,6 @@ describe('TargetManager', () => {
     describe('status bar', () => {
         it('shows an item in the status bar with the currently selected target', async () => {
             const target: TargetItem = {
-                id: 'test',
                 ssh: 'root@localhost',
                 host: 'localhost',
             };
@@ -218,7 +204,7 @@ describe('TargetManager', () => {
                 containersManager.getTargetStateSnapshot,
             ).mockReturnValue({
                 health: undefined,
-                targetId: undefined,
+                targetSsh: undefined,
             });
             jest.mocked(vscode.window.createStatusBarItem).mockImplementation(
                 mockedStatusBarItemCreation,
@@ -229,7 +215,7 @@ describe('TargetManager', () => {
             expect(vscode.window.createStatusBarItem).toHaveBeenCalledTimes(1);
             const statusBarItem = statusBarItems[0];
             expect(statusBarItem.command).toBe(TargetManager.FocusViewCommand);
-            expect(statusBarItem.text).toBe(`$(loading~spin) ${target.id}`);
+            expect(statusBarItem.text).toBe(`$(loading~spin) ${target.ssh}`);
             expect(statusBarItem.tooltip).toBe(
                 'Connection String: root@localhost',
             );
@@ -247,7 +233,7 @@ describe('TargetManager', () => {
                 containersManager.getTargetStateSnapshot,
             ).mockReturnValue({
                 health: undefined,
-                targetId: undefined,
+                targetSsh: undefined,
             });
             jest.mocked(vscode.window.createStatusBarItem).mockImplementation(
                 mockedStatusBarItemCreation,
@@ -265,12 +251,10 @@ describe('TargetManager', () => {
 
         it('changes the item in the status bar when the currently selected target changes', async () => {
             const target1: TargetItem = {
-                id: 'test',
                 ssh: 'root@localhost',
                 host: 'localhost',
             };
             const target2: TargetItem = {
-                id: 'test2',
                 ssh: 'root@other-host',
                 host: 'other-host',
             };
@@ -287,7 +271,7 @@ describe('TargetManager', () => {
                 containersManager.getTargetStateSnapshot,
             ).mockReturnValue({
                 health: healthyTarget,
-                targetId: target1.id,
+                targetSsh: target1.ssh,
             });
             jest.mocked(vscode.window.createStatusBarItem).mockImplementation(
                 mockedStatusBarItemCreation,
@@ -300,7 +284,7 @@ describe('TargetManager', () => {
                 containersManager.getTargetStateSnapshot,
             ).mockReturnValue({
                 health: healthyTarget,
-                targetId: target2.id,
+                targetSsh: target2.ssh,
             });
 
             onChangeEmitter.fire();
@@ -308,7 +292,7 @@ describe('TargetManager', () => {
 
             expect(vscode.window.createStatusBarItem).toHaveBeenCalledTimes(1);
             const statusBarItem = statusBarItems[0];
-            expect(statusBarItem.text).toBe(`$(pass-filled) ${target2.id}`);
+            expect(statusBarItem.text).toBe(`$(pass-filled) ${target2.ssh}`);
             expect(statusBarItem.tooltip).toBe(
                 'Connection String: root@other-host',
             );

@@ -24,7 +24,7 @@ export class ContainersManager implements vscode.Disposable {
     public readonly onDataUpdate = this._onDataUpdate.event;
     private readonly defaultTargetState: TargetState = {
         health: undefined,
-        targetId: undefined,
+        targetSsh: undefined,
     };
     private refreshTimer: NodeJS.Timeout | undefined;
     private refreshSession: symbol | undefined;
@@ -84,7 +84,7 @@ export class ContainersManager implements vscode.Disposable {
         if (!target) {
             return {
                 health: undefined,
-                targetId: undefined,
+                targetSsh: undefined,
             };
         }
 
@@ -92,13 +92,16 @@ export class ContainersManager implements vscode.Disposable {
             const health = await this.topoCli.health(target.ssh);
             return {
                 health: health.target,
-                targetId: target.id,
+                targetSsh: target.ssh,
             };
         } catch (err) {
-            logger.error(`Failed to check health for target ${target.id}`, err);
+            logger.error(
+                `Failed to check health for target ${target.ssh}`,
+                err,
+            );
             return {
                 health: undefined,
-                targetId: target.id,
+                targetSsh: target.ssh,
             };
         }
     }

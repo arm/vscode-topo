@@ -89,7 +89,7 @@ export class ComposeEditorMessageHandler {
         const project = this.topoCli.getProject(document.uri.fsPath);
         const target = await this.targetStore.getSelectedTarget();
         const description = target
-            ? await this.targetDescriptionStore.getDescription(target)
+            ? await this.targetDescriptionStore.getDescription(target.ssh)
             : undefined;
         const remoteprocCpus =
             description?.remoteprocCPU.map((rp) => rp.name) || [];

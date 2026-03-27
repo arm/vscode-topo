@@ -12,7 +12,6 @@ describe('SetupKeys', () => {
     let context: MockProxy<vscode.ExtensionContext>;
     let targetStore: MockProxy<TargetStore>;
     const target: TargetItem = {
-        id: 'topo',
         ssh: 'user@topo.local',
         host: 'topo.local',
     };
@@ -78,7 +77,7 @@ describe('SetupKeys', () => {
         ]);
         expect(vscode.tasks.executeTask).toHaveBeenCalled();
         expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
-            `Keys were set up on target ${target.id}.`,
+            `Keys were set up on target ${target.ssh}.`,
         );
     });
 
@@ -150,7 +149,7 @@ describe('SetupKeys', () => {
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
             expect.stringContaining(
-                `Failed to set up keys on target ${target.id}. setup-keys failed with exit code 1`,
+                `Failed to set up keys on target ${target.ssh}. setup-keys failed with exit code 1`,
             ),
         );
     });

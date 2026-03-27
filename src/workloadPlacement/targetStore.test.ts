@@ -113,25 +113,25 @@ describe('TargetStore', () => {
     it('adds a target successfully and persists it', async () => {
         const { context } = createMockContext();
         const store = TargetStore.getInstance(context);
-        const t = new Target('t-success', 'success@example.com');
+        const t = new Target('success@example.com');
 
         const addTargetOperation = store.addTarget(t);
 
         await expect(addTargetOperation).resolves.toBeUndefined();
         const targets = store.getTargets();
-        expect(targets.some((x) => x.id === 't-success')).toBe(true);
+        expect(targets.some((x) => x.ssh === t.ssh)).toBe(true);
         const raw = context.globalState.get('targets') as string | undefined;
         expect(typeof raw).toBe('string');
         const parsed = JSON.parse(raw || '{}');
-        expect(parsed['t-success']).toBeDefined();
-        expect(parsed['t-success'].ssh).toBe('success@example.com');
+        expect(parsed[t.ssh]).toBeDefined();
+        expect(parsed[t.ssh].ssh).toBe(t.ssh);
     });
 
     it('throws an error when addTarget fails', async () => {
         const { context, globalState } = createMockContext();
         globalState.update.mockRejectedValue(new Error('persist-fail'));
         const store = TargetStore.getInstance(context);
-        const t = new Target('t-fail', 'fail@example.com');
+        const t = new Target('fail@example.com');
 
         const addTargetOperation = store.addTarget(t);
 
@@ -144,30 +144,32 @@ describe('TargetStore', () => {
         const { context } = createMockContext();
         const store = TargetStore.getInstance(context);
 
-        const t = new Target('t1', 'alice@example.com');
+        const t = new Target('alice@example.com');
         await store.addTarget(t);
 
         const targets = store.getTargets();
-        expect(targets.some((x) => x.id === 't1')).toBe(true);
+        expect(targets.some((x) => x.ssh === t.ssh)).toBe(true);
 
         const raw = context.globalState.get('targets') as string | undefined;
         expect(typeof raw).toBe('string');
         const parsed = JSON.parse(raw || '{}');
-        expect(parsed.t1).toBeDefined();
-        expect(parsed.t1.ssh).toBe('alice@example.com');
+        expect(parsed[t.ssh]).toBeDefined();
+        expect(parsed[t.ssh].ssh).toBe(t.ssh);
     });
 
     it('stores selected target and fires onChanged when setSelected is called', async () => {
         const { context } = createMockContext();
         const store = TargetStore.getInstance(context);
-        const t = new Target('t2', 'bob@example.com');
+        const t = new Target('bob@example.com');
         await store.addTarget(t);
         const cb = jest.fn();
         store.onChanged(cb);
 
-        await store.setSelected('t2');
+        await store.setSelected('bob@example.com');
 
-        expect(context.workspaceState.get('selectedTarget')).toBe('t2');
+        expect(context.workspaceState.get('selectedTarget')).toBe(
+            'bob@example.com',
+        );
         expect(cb).toHaveBeenCalled();
     });
 
@@ -175,13 +177,12 @@ describe('TargetStore', () => {
         const { context } = createMockContext();
         const store = TargetStore.getInstance(context);
 
-        const t = new Target('t3', 'carol@example.com');
+        const t = new Target('carol@example.com');
         await store.addTarget(t);
-        await store.setSelected('t3');
+        await store.setSelected('carol@example.com');
 
         const selected = await store.getSelectedTarget();
         expect(selected).toBeDefined();
-        expect(selected?.id).toBe('t3');
         expect(selected?.ssh).toBe('carol@example.com');
     });
 
@@ -208,7 +209,7 @@ describe('TargetStore', () => {
     it('deactivates the store, disposing resources and clearing the singleton', async () => {
         const { context } = createMockContext();
         const store = TargetStore.getInstance(context);
-        await store.addTarget(new Target('td', 'd@example.com'));
+        await store.addTarget(new Target('d@example.com'));
         const cb = jest.fn();
         store.onChanged(cb);
 
@@ -221,49 +222,48 @@ describe('TargetStore', () => {
     it('removes a non-selected target without changing selection', async () => {
         const { context } = createMockContext();
         const store = TargetStore.getInstance(context);
-        const t1 = new Target('t-a', 'a@example.com');
-        const t2 = new Target('t-b', 'b@example.com');
+        const t1 = new Target('a@example.com');
+        const t2 = new Target('b@example.com');
         await store.addTarget(t1);
         await store.addTarget(t2);
-        await store.setSelected('t-a');
+        await store.setSelected(t1.ssh);
 
-        await store.deleteTarget('t-b');
+        await store.deleteTarget(t2.ssh);
 
         const targets = store.getTargets();
-        expect(targets.some((t) => t.id === 't-b')).toBe(false);
+        expect(targets.some((t) => t.ssh === t2.ssh)).toBe(false);
         const selected = await store.getSelectedTarget();
         expect(selected).toBeDefined();
-        expect(selected?.id).toBe('t-a');
     });
 
     it('removes the selected target and falls back to the first remaining target', async () => {
         const { context } = createMockContext();
         const store = TargetStore.getInstance(context);
-        const t1 = new Target('t-1', 'one@example.com');
-        const t2 = new Target('t-2', 'two@example.com');
-        const t3 = new Target('t-3', 'three@example.com');
+        const t1 = new Target('one@example.com');
+        const t2 = new Target('two@example.com');
+        const t3 = new Target('three@example.com');
         await store.addTarget(t1);
         await store.addTarget(t2);
         await store.addTarget(t3);
-        await store.setSelected('t-2');
+        await store.setSelected(t2.ssh);
 
-        await store.deleteTarget('t-2');
+        await store.deleteTarget(t2.ssh);
 
         const targets = store.getTargets();
-        expect(targets.some((t) => t.id === 't-2')).toBe(false);
+        expect(targets.some((t) => t.ssh === t2.ssh)).toBe(false);
         const selected = await store.getSelectedTarget();
         expect(selected).toBeDefined();
-        expect(selected?.id).toBe('t-1');
+        expect(selected?.ssh).toBe(t1.ssh);
     });
 
     it('removes the only selected target and clears selection when none remain', async () => {
         const { context } = createMockContext();
         const store = TargetStore.getInstance(context);
-        const lone = new Target('only', 'only@example.com');
+        const lone = new Target('only@example.com');
         await store.addTarget(lone);
-        await store.setSelected('only');
+        await store.setSelected(lone.ssh);
 
-        await store.deleteTarget('only');
+        await store.deleteTarget(lone.ssh);
 
         const targets = store.getTargets();
         expect(targets.length).toBe(0);

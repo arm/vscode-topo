@@ -3,7 +3,7 @@ import { TopoCli } from '../topoCli';
 import { getTargetDescription } from '../util/getTargetDescription';
 import { TargetDescriptionStore } from './targetDescriptionStore';
 import { mock } from 'jest-mock-extended';
-import { TargetDescription, TargetItem } from '../util/types';
+import { TargetDescription } from '../util/types';
 
 jest.mock('fs');
 jest.mock('../util/getTargetDescription');
@@ -32,33 +32,19 @@ describe('TargetDescriptionStore', () => {
         jest.mocked(getTargetDescription).mockResolvedValue(targetDescription);
         const store = new TargetDescriptionStore(topoCli);
 
-        const description = await store.getDescription({
-            id: 'test',
-            ssh: 'user@host',
-            host: 'host',
-        });
+        const description = await store.getDescription('user@host');
 
         expect(description).toEqual(targetDescription);
     });
 
     it('should only allow each target description to be fetched once', async () => {
         const store = new TargetDescriptionStore(topoCli);
-        const target: TargetItem = {
-            id: 'test',
-            ssh: 'user@host',
-            host: 'host',
-        };
-        const target2: TargetItem = {
-            id: 'test2',
-            ssh: 'user@host2',
-            host: 'host2',
-        };
 
         await Promise.all([
-            store.getDescription(target),
-            store.getDescription(target2),
-            store.getDescription(target),
-            store.getDescription(target2),
+            store.getDescription('user@host'),
+            store.getDescription('user@host2'),
+            store.getDescription('user@host'),
+            store.getDescription('user@host2'),
         ]);
 
         expect(getTargetDescription).toHaveBeenCalledTimes(2);

@@ -22,14 +22,12 @@ export class SetupKeys {
     }
 
     private async setupKeys(treeNode: unknown): Promise<void> {
-        let targetId: string | undefined;
         let ssh: string | undefined;
 
         if (treeNode instanceof TargetTreeTargetItem) {
             if (!treeNode.contextValue?.includes('Selected')) {
                 return;
             }
-            targetId = treeNode.targetId;
             ssh = treeNode.target.ssh;
         } else {
             const selectedTarget = await this.targetStore.getSelectedTarget();
@@ -40,27 +38,23 @@ export class SetupKeys {
                 );
                 return;
             }
-            targetId = selectedTarget.id;
             ssh = selectedTarget.ssh;
         }
-        if (!targetId || !ssh) {
+        if (!ssh) {
             return;
         }
 
         try {
-            await this.runSetupKeysTask(targetId, ssh);
+            await this.runSetupKeysTask(ssh);
             vscode.window.showInformationMessage(
-                `Keys were set up on target ${targetId}.`,
+                `Keys were set up on target ${ssh}.`,
             );
         } catch (err) {
-            showAndLogError(`Failed to set up keys on target ${targetId}`, err);
+            showAndLogError(`Failed to set up keys on target ${ssh}`, err);
         }
     }
 
-    private async runSetupKeysTask(
-        targetId: string,
-        sshTarget: string,
-    ): Promise<void> {
+    private async runSetupKeysTask(sshTarget: string): Promise<void> {
         const setupKeysCommand = ['topo', 'setup-keys', '--target', sshTarget];
         const [cmd, ...cmdArgs] = setupKeysCommand;
         const shellExecution = new vscode.ShellExecution(cmd, cmdArgs);
@@ -71,7 +65,7 @@ export class SetupKeys {
         const task = new vscode.Task(
             taskDefinition,
             vscode.TaskScope.Workspace,
-            `Setup keys on ${targetId}`,
+            `Setup keys on ${sshTarget}`,
             PACKAGE_NAME,
             shellExecution,
         );

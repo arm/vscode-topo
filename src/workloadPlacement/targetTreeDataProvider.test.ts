@@ -38,7 +38,6 @@ describe('TargetTreeDataProvider', () => {
     let targetStoreMock: MockProxy<TargetStore>;
     let targetDescriptionStoreMock: MockProxy<TargetDescriptionStore>;
     const target: TargetItem = {
-        id: 'topo',
         ssh: 'user@topo.local',
         host: 'topo.local',
     };
@@ -127,7 +126,7 @@ describe('TargetTreeDataProvider', () => {
     beforeEach(() => {
         const targetState: TargetState = {
             health: targetHealth,
-            targetId: target.id,
+            targetSsh: target.ssh,
         };
         context = mock<vscode.ExtensionContext>({ subscriptions: [] });
 
@@ -184,11 +183,11 @@ describe('TargetTreeDataProvider', () => {
             targetStoreMock.getTargets.mockReturnValue([target]);
             containersManagerMock.getTargetStateSnapshot.mockReturnValue({
                 health: undefined,
-                targetId: target.id,
+                targetSsh: target.ssh,
             });
             containersManagerMock.getTargetState.mockResolvedValue({
                 health: targetHealth,
-                targetId: target.id,
+                targetSsh: target.ssh,
             });
 
             const rootChildren = await provider.getChildren();
@@ -221,7 +220,7 @@ describe('TargetTreeDataProvider', () => {
                 }),
             ];
             const targetState = mock<TargetState>({
-                targetId: target.id,
+                targetSsh: target.ssh,
                 health: {
                     dependencies: dependencies,
                     subsystemDriver: subsystemDriverHealth,
@@ -231,7 +230,7 @@ describe('TargetTreeDataProvider', () => {
             targetStoreMock.getTargets.mockReturnValue([target]);
             containersManagerMock.getTargetStateSnapshot.mockReturnValue({
                 health: targetState.health,
-                targetId: target.id,
+                targetSsh: target.ssh,
             });
             const rootChildren = await provider.getChildren();
             const targetChildren = await provider.getChildren(rootChildren[0]);
@@ -253,7 +252,7 @@ describe('TargetTreeDataProvider', () => {
             targetStoreMock.getSelectedTarget.mockResolvedValue(target);
             containersManagerMock.getTargetStateSnapshot.mockReturnValue({
                 health: undefined,
-                targetId: target.id,
+                targetSsh: target.ssh,
             });
 
             const rootChildren = await provider.getChildren();
@@ -308,7 +307,7 @@ describe('TargetTreeDataProvider', () => {
             targetStoreMock.getTargets.mockReturnValue([]);
             containersManagerMock.getTargetState.mockResolvedValueOnce({
                 health: undefined,
-                targetId: target.id,
+                targetSsh: target.ssh,
             });
 
             const rootChildren = await provider.getChildren();
@@ -353,7 +352,9 @@ describe('TargetTreeDataProvider', () => {
                 targetItem,
             );
 
-            expect(targetStoreMock.setSelected).toHaveBeenCalledWith(target.id);
+            expect(targetStoreMock.setSelected).toHaveBeenCalledWith(
+                target.ssh,
+            );
         });
 
         it('does not call setSelected when select command is executed with a non-target item', async () => {
@@ -382,7 +383,7 @@ describe('TargetTreeDataProvider', () => {
             );
 
             expect(targetStoreMock.deleteTarget).toHaveBeenCalledWith(
-                target.id,
+                target.ssh,
             );
         });
 

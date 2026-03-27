@@ -1,4 +1,4 @@
-import { TargetDescription, TargetItem } from '../util/types';
+import { TargetItem } from '../util/types';
 
 export class Target implements TargetItem {
     public static from(obj: unknown): Target {
@@ -7,25 +7,12 @@ export class Target implements TargetItem {
         }
         if (obj && typeof obj === 'object') {
             const maybeTarget = obj as Record<string, unknown>;
-            if (typeof maybeTarget.id !== 'string') {
-                throw new Error(
-                    'Invalid stored target: expected property "id" of type string',
-                );
-            }
             if (typeof maybeTarget.ssh !== 'string') {
                 throw new Error(
                     'Invalid stored target: expected property "ssh" of type string',
                 );
             }
-            if (
-                maybeTarget.targetDescription !== undefined &&
-                typeof maybeTarget.targetDescription !== 'string'
-            ) {
-                throw new Error(
-                    'Invalid stored target: expected property "targetDescription" of type undefined or string',
-                );
-            }
-            return new Target(maybeTarget.id, maybeTarget.ssh);
+            return new Target(maybeTarget.ssh);
         }
         throw new Error(
             'Invalid stored target: expected an object describing a Target',
@@ -34,17 +21,11 @@ export class Target implements TargetItem {
 
     public readonly user?: string;
     public readonly host: string;
-    public readonly id: string;
     public readonly ssh: string;
-    public readonly description: TargetDescription | undefined;
 
-    constructor(id: string, ssh: string) {
-        this.id = id.toString().trim();
+    constructor(ssh: string) {
         this.ssh = ssh.toString().trim();
 
-        if (!this.id) {
-            throw new TypeError('Target id must be a non-empty string');
-        }
         if (!this.ssh) {
             throw new TypeError('Target ssh must be a non-empty string');
         }
@@ -71,7 +52,6 @@ export class Target implements TargetItem {
 
     public toJSON() {
         return {
-            id: this.id,
             ssh: this.ssh,
         };
     }

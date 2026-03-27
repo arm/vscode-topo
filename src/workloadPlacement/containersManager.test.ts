@@ -93,7 +93,6 @@ const defaultInfoOutput = {
 };
 const execMock = exec as jest.Mock;
 const target: TargetItem = {
-    id: 'topo',
     ssh: 'user@topo.local',
     host: 'topo.local',
 };
@@ -391,11 +390,11 @@ describe('ContainersManager', () => {
         await activation;
         await expect(targetStatePromise).resolves.toEqual({
             health: loadedHealth.target,
-            targetId: target.id,
+            targetSsh: target.ssh,
         });
         expect(manager.getTargetStateSnapshot()).toEqual({
             health: loadedHealth.target,
-            targetId: target.id,
+            targetSsh: target.ssh,
         });
     });
 
@@ -416,7 +415,7 @@ describe('ContainersManager', () => {
         await manager.activate();
         await expect(manager.getTargetState()).resolves.toEqual({
             health: loadedHealth.target,
-            targetId: target.id,
+            targetSsh: target.ssh,
         });
 
         selectedTarget = undefined;
@@ -558,7 +557,6 @@ describe('ContainersManager', () => {
 
     it('updates when targetStore onChanged fires (re-queries selected target)', async () => {
         const newTarget: TargetItem = {
-            id: 'other-id',
             ssh: 'bob@other.local',
             host: 'other.local',
         };
@@ -598,7 +596,6 @@ describe('ContainersManager', () => {
 
     it('ignores stale container loads after selected target changes', async () => {
         const newTarget: TargetItem = {
-            id: 'other-id',
             ssh: 'bob@other.local',
             host: 'other.local',
         };
@@ -667,7 +664,6 @@ describe('ContainersManager', () => {
 
     it('refreshes the newly selected target after target change', async () => {
         const newTarget: TargetItem = {
-            id: 'other-id',
             ssh: 'bob@other.local',
             host: 'other.local',
         };

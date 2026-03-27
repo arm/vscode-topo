@@ -12,7 +12,6 @@ describe('AttachShell', () => {
     const registerCommandMock = jest.mocked(vscode.commands.registerCommand);
     const dockerCommands = new DockerCommands();
     const target: TargetItem = {
-        id: 'topo',
         ssh: 'user@topo.local',
         host: 'topo.local',
     };
