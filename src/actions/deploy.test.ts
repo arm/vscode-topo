@@ -32,7 +32,6 @@ describe('Deploy', () => {
         }),
     });
     const target: TargetItem = {
-        id: 'topo',
         ssh: 'topo.local',
         host: 'topo.local',
     };
@@ -107,7 +106,7 @@ describe('Deploy', () => {
         await waitImmediate();
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-            'Deployment to topo failed with exit code 1.',
+            'Deployment to topo.local failed with exit code 1.',
         );
     });
 

@@ -5,7 +5,6 @@ import { ContainerItem, TargetItem } from '../util/types';
 
 describe('TargetTreeContainerItem', () => {
     const target: TargetItem = {
-        id: 'topo',
         ssh: 'user@topo.local',
         host: 'topo.local',
     };

@@ -64,16 +64,7 @@ export class TargetManager {
             return;
         }
 
-        const id = await vscode.window.showInputBox({
-            title: 'Enter a unique id for the target',
-            placeHolder: 'target-id',
-            value: ssh,
-        });
-        if (!id?.trim()) {
-            return;
-        }
-
-        const newTarget = new Target(id, ssh);
+        const newTarget = new Target(ssh);
 
         try {
             await this.targetStore.addTarget(newTarget);
@@ -83,7 +74,7 @@ export class TargetManager {
             vscode.window.showWarningMessage(errorMsg);
             return;
         }
-        await this.targetStore.setSelected(newTarget.id);
+        await this.targetStore.setSelected(newTarget.ssh);
     }
 
     protected updateStatusBar(selectedTarget: TargetItem | undefined): void {
@@ -92,14 +83,15 @@ export class TargetManager {
         }
         if (selectedTarget) {
             const targetState = this.containersManager.getTargetStateSnapshot();
-            const connectionReady = selectedTarget.id === targetState.targetId;
+            const connectionReady =
+                selectedTarget.ssh === targetState.targetSsh;
             const targetTreeIcon = getTreeItemIcon(
                 true,
                 connectionReady,
                 isTargetReady(targetState),
             );
             const iconId = targetTreeIcon?.id || 'pass-filled';
-            this.statusBarItem.text = `$(${iconId}) ${selectedTarget.id}`;
+            this.statusBarItem.text = `$(${iconId}) ${selectedTarget.ssh}`;
             this.statusBarItem.tooltip = `Connection String: ${selectedTarget.ssh}`;
             this.statusBarItem.show();
         } else {

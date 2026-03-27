@@ -36,7 +36,6 @@ describe('assertTargetTreeContainerItem', () => {
             memUsage: '',
             target: {
                 host: 'test-host',
-                id: 'abc123',
                 ssh: 'root@test-host',
             },
         };

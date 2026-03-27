@@ -12,7 +12,6 @@ describe('OnTargetTopoConsoleOpener', () => {
     const targetUrl = 'http://topo.local';
     let targetStore: MockProxy<TargetStore>;
     const target: TargetItem = {
-        id: 'topo',
         ssh: 'topo.local',
         host: 'topo.local',
     };

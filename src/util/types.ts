@@ -16,7 +16,6 @@ export interface TargetDescription {
 }
 
 export interface TargetItem {
-    id: string;
     ssh: string;
     host: string;
 }
@@ -117,5 +116,5 @@ export type Mutable<T> = { -readonly [P in keyof T]: T[P] };
 
 export interface TargetState {
     health: HealthCheckResult['target'] | undefined;
-    targetId: string | undefined;
+    targetSsh: string | undefined;
 }

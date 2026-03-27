@@ -1,5 +1,5 @@
 import { TopoCli } from '../topoCli';
-import { TargetDescription, TargetItem } from '../util/types';
+import { TargetDescription } from '../util/types';
 
 import { Deferred } from '../util/deferred';
 import { getTargetDescription } from '../util/getTargetDescription';
@@ -10,19 +10,19 @@ export class TargetDescriptionStore {
     constructor(private topoCli: TopoCli) {}
 
     public async getDescription(
-        target: TargetItem,
+        targetSsh: string,
     ): Promise<TargetDescription | undefined> {
-        const existing = this.cache.get(target.id);
+        const existing = this.cache.get(targetSsh);
         if (existing) {
             return existing.promise;
         }
 
         const deferred = new Deferred<TargetDescription | undefined>();
-        this.cache.set(target.id, deferred);
+        this.cache.set(targetSsh, deferred);
         (async () => {
             const description = await getTargetDescription(
                 this.topoCli,
-                target.ssh,
+                targetSsh,
             );
             deferred.resolve(description);
         })();

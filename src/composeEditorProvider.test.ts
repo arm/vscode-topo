@@ -22,7 +22,6 @@ const waitImmediate = () =>
 
 describe('ComposeEditorProvider', () => {
     const target: TargetItem = {
-        id: 'topo',
         ssh: 'user@topo.local',
         host: 'topo.local',
     };

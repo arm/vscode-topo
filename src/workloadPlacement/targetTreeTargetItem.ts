@@ -3,17 +3,14 @@ import type { TargetItem } from '../util/types';
 
 /** Represents a target */
 export class TargetTreeTargetItem extends vscode.TreeItem {
-    public readonly targetId: string;
-
     constructor(
         public readonly target: TargetItem,
         public readonly selected: boolean,
         public readonly connectionReady: boolean,
         public readonly targetReady: boolean,
     ) {
-        super(target.id, vscode.TreeItemCollapsibleState.Expanded);
-        this.id = target.id;
-        this.description = target.ssh;
+        super(target.ssh, vscode.TreeItemCollapsibleState.Expanded);
+        this.id = target.ssh;
         this.iconPath = getTreeItemIcon(selected, connectionReady, targetReady);
         const contextValues = ['Target'];
         if (selected) {
@@ -31,7 +28,6 @@ export class TargetTreeTargetItem extends vscode.TreeItem {
             connectionReady,
             targetReady,
         );
-        this.targetId = target.id;
     }
 
     public get displayName(): string {

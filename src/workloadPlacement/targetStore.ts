@@ -76,37 +76,37 @@ export class TargetStore {
 
     public async addTarget(target: Target): Promise<void> {
         const targets = this.loadTargets();
-        if (targets.has(target.id)) {
-            throw new Error(`Target with id "${target.id}" already exists`);
+        if (targets.has(target.ssh)) {
+            throw new Error(`Target "${target.ssh}" already exists`);
         }
-        targets.set(target.id, target);
+        targets.set(target.ssh, target);
         await this.saveTargets(targets);
     }
 
     public async updateTarget(target: Target): Promise<void> {
         const targets = this.loadTargets();
-        if (!targets.has(target.id)) {
-            throw new Error(`Target with id "${target.id}" does not exist`);
+        if (!targets.has(target.ssh)) {
+            throw new Error(`Target "${target.ssh}" does not exist`);
         }
-        targets.set(target.id, target);
+        targets.set(target.ssh, target);
         await this.saveTargets(targets);
         this._onChanged.fire();
     }
 
     public async getSelectedTarget(): Promise<TargetItem | undefined> {
         const targets = this.getTargets();
-        return targets.find((target) => target.id === this.selected);
+        return targets.find((target) => target.ssh === this.selected);
     }
 
-    public async deleteTarget(targetId: string): Promise<void> {
+    public async deleteTarget(ssh: string): Promise<void> {
         const targets = this.loadTargets();
-        if (!targets.has(targetId)) {
-            throw new Error(`Target with id "${targetId}" does not exist`);
+        if (!targets.has(ssh)) {
+            throw new Error(`Target "${ssh}" does not exist`);
         }
-        targets.delete(targetId);
+        targets.delete(ssh);
         await this.saveTargets(targets);
         const currentSelected = this.selected;
-        if (currentSelected === targetId) {
+        if (currentSelected === ssh) {
             const remaining = [...targets.keys()];
             const newSelected = remaining.length
                 ? remaining.sort((a, b) => a.localeCompare(b))[0]

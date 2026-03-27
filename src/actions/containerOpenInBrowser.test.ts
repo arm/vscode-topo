@@ -10,7 +10,6 @@ describe('ContainerOpenInBrowser', () => {
     let context: MockProxy<vscode.ExtensionContext>;
     const registerCommandMock = jest.mocked(vscode.commands.registerCommand);
     const target: TargetItem = {
-        id: 'topo',
         ssh: 'user@topo.local',
         host: 'topo.local',
     };

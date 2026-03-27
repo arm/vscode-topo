@@ -4,7 +4,6 @@ import { TargetItem } from '../util/types';
 
 describe('TargetTreeTargetItem', () => {
     const baseTarget: TargetItem = {
-        id: 't-1',
         ssh: 'root@host.local',
         host: 'host.local',
     };
@@ -12,10 +11,9 @@ describe('TargetTreeTargetItem', () => {
     it('sets basic fields (id, label, description)', () => {
         const item = new TargetTreeTargetItem(baseTarget, false, false, true);
 
-        expect(item.id).toBe(baseTarget.id);
-        expect(item.label).toBe(baseTarget.id);
-        expect(item.description).toBe(baseTarget.ssh);
-        expect(item.displayName).toBe(baseTarget.id);
+        expect(item.id).toBe(baseTarget.ssh);
+        expect(item.label).toBe(baseTarget.ssh);
+        expect(item.displayName).toBe(baseTarget.ssh);
         expect(item.contextValue).toContain('Target');
     });
 

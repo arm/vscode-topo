@@ -85,7 +85,7 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
             logger.error(errMsg, treeNode);
             return;
         }
-        await this.targetStore.setSelected(treeNode.targetId);
+        await this.targetStore.setSelected(treeNode.target.ssh);
     }
 
     private async removeTarget(treeNode: unknown): Promise<void> {
@@ -95,7 +95,7 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
             return;
         }
         try {
-            await this.targetStore.deleteTarget(treeNode.targetId);
+            await this.targetStore.deleteTarget(treeNode.target.ssh);
         } catch (err) {
             const errorMessage = `Failed to remove target`;
             vscode.window.showErrorMessage(errorMessage);
@@ -120,10 +120,13 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
 
         const targetState = await this.containersManager.getTargetState();
         const content = JSON.stringify(targetState.health ?? null, null, 4);
-        const safeTargetId = treeNode.targetId.replace(/[^a-zA-Z0-9._-]/g, '_');
+        const safeTargetSsh = treeNode.target.ssh.replace(
+            /[^a-zA-Z0-9._-]/g,
+            '_',
+        );
         const documentUri = vscode.Uri.from({
             scheme: TargetTreeDataProvider.inspectTargetHealthScheme,
-            path: `/${safeTargetId}-health-${Date.now()}.json`,
+            path: `/${safeTargetSsh}-health-${Date.now()}.json`,
         });
 
         this.inspectHealthDocuments.clear();
@@ -142,8 +145,9 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
             const targetTreeItems = this.targetStore
                 .getTargets()
                 .map((target) => {
-                    const selected = target.id === selectedTarget?.id;
-                    const connectionReady = target.id === targetState.targetId;
+                    const selected = target.ssh === selectedTarget?.ssh;
+                    const connectionReady =
+                        target.ssh === targetState.targetSsh;
                     return new TargetTreeTargetItem(
                         target,
                         selected,
@@ -164,7 +168,7 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
             }
             const [targetState, selectedTargetDescription] = await Promise.all([
                 this.containersManager.getTargetState(),
-                this.targetDescriptionStore.getDescription(target),
+                this.targetDescriptionStore.getDescription(target.ssh),
             ]);
             if (targetState.health === undefined) {
                 return [];
@@ -196,7 +200,7 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
                 return [];
             }
             const targetDescription =
-                await this.targetDescriptionStore.getDescription(target);
+                await this.targetDescriptionStore.getDescription(target.ssh);
             const remoteprocCpus =
                 targetDescription?.remoteprocCPU.map((rp) => rp.name) || [];
             const subsystemNames = ['Host', ...remoteprocCpus];

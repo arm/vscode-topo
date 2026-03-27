@@ -88,7 +88,7 @@ export class TargetDashboardMessageHandler {
         }
         const [targetDescription, targetState, containersData] =
             await Promise.all([
-                this.targetDescriptionStore.getDescription(target),
+                this.targetDescriptionStore.getDescription(target.ssh),
                 this.containersManager.getTargetState(),
                 this.containersManager.getContainersData(),
             ]);

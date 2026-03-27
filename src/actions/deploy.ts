@@ -31,7 +31,7 @@ const executeDeployTask = async (
     const task = new vscode.Task(
         taskDefinition,
         taskScope,
-        `Deploy to ${target.id}`,
+        `Deploy to ${target.ssh}`,
         manifest.DISPLAY_NAME,
         shellExecution,
     );
@@ -52,7 +52,7 @@ const executeDeployTask = async (
 
         if (e.exitCode === 0) {
             vscode.window.showInformationMessage(
-                `Deployment to ${target.id} completed successfully.`,
+                `Deployment to ${target.ssh} completed successfully.`,
             );
         } else {
             const terminal = vscode.window.terminals.find(
@@ -63,7 +63,7 @@ const executeDeployTask = async (
                 actions.push(viewLogsItem);
             }
             const choice = await vscode.window.showErrorMessage(
-                `Deployment to ${target.id} failed with exit code ${e.exitCode}.`,
+                `Deployment to ${target.ssh} failed with exit code ${e.exitCode}.`,
                 ...actions,
             );
             if (choice?.title === viewLogsItem.title) {

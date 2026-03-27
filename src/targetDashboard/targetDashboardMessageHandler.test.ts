@@ -28,7 +28,6 @@ describe('TargetDashboardMessageHandler', () => {
     const messagePoster: MessagePoster = { postMessage };
 
     const target: TargetItem = {
-        id: 'topo',
         ssh: 'user@topo.local',
         host: 'topo.local',
     };
@@ -38,7 +37,7 @@ describe('TargetDashboardMessageHandler', () => {
     };
     const targetState: TargetState = {
         health: undefined,
-        targetId: target.id,
+        targetSsh: target.ssh,
     };
 
     const containerA: ContainerItem = {
