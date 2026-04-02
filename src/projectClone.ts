@@ -24,7 +24,7 @@ const postCloneAction = async (repositoryPath: string) => {
     const choices = [open, openNewWindow];
 
     const addToWorkspace = 'Add to Workspace';
-    if (vscode.workspace.workspaceFolders) {
+    if (vscode.workspace.workspaceFolders?.length) {
         message =
             'Would you like to open the cloned repository, or add it to the current workspace?';
         choices.push(addToWorkspace);
