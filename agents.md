@@ -1,5 +1,3 @@
-<conventions>
-
 ## Coding Conventions
 
 ### Core Philosophy
@@ -73,4 +71,18 @@ Organizing code well makes it easy to navigate, maintain, and extend. A logical 
 
 - **Minimize external dependencies**: If a dependency is essential, prioritize those that are well-established, widely used, actively maintained, and have a proven track record of stability.
 
-</conventions>
+## Environment
+
+- **Use the required Node.js version**: Work with Node.js `^22.0.0`.
+
+- **Use the required npm version**: Work with npm `^10.0.0`.
+
+## Repository Workflow
+
+- **Build after code changes**: Use `npm run build` to compile the extension and webview bundles.
+
+- **Run tests before finishing**: Use `npm test` to execute the unit test suite and generate coverage.
+
+- **Run the full lint suite**: Use `npm run lint` so Prettier checks, ESLint, and TypeScript validation all pass together.
+
+- **Format changed files before finishing**: Use `npx prettier -w <paths>` on the files you edited.
