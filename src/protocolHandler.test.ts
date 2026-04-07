@@ -86,15 +86,11 @@ describe('ProtocolHandler', () => {
         );
 
         expect(vscode.window.showOpenDialog).not.toHaveBeenCalled();
-        expect(vscode.ShellExecution).toHaveBeenCalledWith(
-            'topo',
-            [
-                'clone',
-                'git:https://example.com/repo.git',
-                path.join(workspaceUri.fsPath, 'repo'),
-            ],
-            { cwd: workspaceUri.fsPath },
-        );
+        expect(vscode.ShellExecution).toHaveBeenCalledWith('topo', [
+            'clone',
+            'git:https://example.com/repo.git',
+            path.join(workspaceUri.fsPath, 'repo'),
+        ]);
         expect(vscode.commands.executeCommand).not.toHaveBeenCalled();
     });
 
@@ -121,15 +117,11 @@ describe('ProtocolHandler', () => {
             canSelectMany: false,
             openLabel: 'Select Destination Folder',
         });
-        expect(vscode.ShellExecution).toHaveBeenCalledWith(
-            'topo',
-            [
-                'clone',
-                'git:https://example.com/repo.git',
-                path.join(destinationUri.fsPath, 'repo'),
-            ],
-            { cwd: destinationUri.fsPath },
-        );
+        expect(vscode.ShellExecution).toHaveBeenCalledWith('topo', [
+            'clone',
+            'git:https://example.com/repo.git',
+            path.join(destinationUri.fsPath, 'repo'),
+        ]);
     });
 
     it('returns early when destination folder selection is cancelled', async () => {
@@ -188,16 +180,12 @@ describe('ProtocolHandler', () => {
             ),
         );
 
-        expect(vscode.ShellExecution).toHaveBeenCalledWith(
-            'topo',
-            [
-                'clone',
-                'https://example.com/repo.git',
-                path.join(workspaceUri.fsPath, 'repo'),
-                'model=some-huggingface-id',
-            ],
-            { cwd: workspaceUri.fsPath },
-        );
+        expect(vscode.ShellExecution).toHaveBeenCalledWith('topo', [
+            'clone',
+            'https://example.com/repo.git',
+            path.join(workspaceUri.fsPath, 'repo'),
+            'model=some-huggingface-id',
+        ]);
     });
 
     it('parses HTML-escaped ampersands in query params', async () => {
@@ -218,18 +206,14 @@ describe('ProtocolHandler', () => {
             }),
         );
 
-        expect(vscode.ShellExecution).toHaveBeenCalledWith(
-            'topo',
-            [
-                'clone',
-                'https://example.com/repo.git',
-                path.join(workspaceUri.fsPath, 'repo'),
-                'model=some-huggingface-id',
-                'param=v1',
-                'another=val',
-            ],
-            { cwd: workspaceUri.fsPath },
-        );
+        expect(vscode.ShellExecution).toHaveBeenCalledWith('topo', [
+            'clone',
+            'https://example.com/repo.git',
+            path.join(workspaceUri.fsPath, 'repo'),
+            'model=some-huggingface-id',
+            'param=v1',
+            'another=val',
+        ]);
     });
 
     it('runs a topo clone task for bare github urls', async () => {
@@ -249,15 +233,11 @@ describe('ProtocolHandler', () => {
             ),
         );
 
-        expect(vscode.ShellExecution).toHaveBeenCalledWith(
-            'topo',
-            [
-                'clone',
-                'https://github.com/Arm-Examples/topo-lightbulb-moment',
-                path.join(workspaceUri.fsPath, 'topo-lightbulb-moment'),
-            ],
-            { cwd: workspaceUri.fsPath },
-        );
+        expect(vscode.ShellExecution).toHaveBeenCalledWith('topo', [
+            'clone',
+            'https://github.com/Arm-Examples/topo-lightbulb-moment',
+            path.join(workspaceUri.fsPath, 'topo-lightbulb-moment'),
+        ]);
     });
 
     it('does not attempt clone when source is missing', async () => {
@@ -313,15 +293,11 @@ describe('ProtocolHandler', () => {
             ),
         );
 
-        expect(vscode.ShellExecution).toHaveBeenCalledWith(
-            'topo',
-            [
-                'clone',
-                'https://github.com/Arm-Examples/topo-lightbulb-moment',
-                path.join(workspaceUri.fsPath, 'repo'),
-                `param=v2`,
-            ],
-            { cwd: workspaceUri.fsPath },
-        );
+        expect(vscode.ShellExecution).toHaveBeenCalledWith('topo', [
+            'clone',
+            'https://github.com/Arm-Examples/topo-lightbulb-moment',
+            path.join(workspaceUri.fsPath, 'repo'),
+            `param=v2`,
+        ]);
     });
 });
