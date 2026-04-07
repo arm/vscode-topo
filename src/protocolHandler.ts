@@ -1,26 +1,9 @@
 import * as vscode from 'vscode';
 import { ProjectClone } from './projectClone';
 import { logger } from './util/logger';
-import { getWorkspacePath } from './util/getWorkspacePath';
 import { parseCloneSourceString } from './util/parseSourceCloneString';
 import { isTopoError } from './errors/topoError';
 import { showAndLogError } from './util/showAndLogError';
-
-const getCloneDestinationPath = async (): Promise<string | undefined> => {
-    const workspacePath = getWorkspacePath();
-    if (workspacePath) {
-        return workspacePath;
-    }
-
-    const selectedFolder = await vscode.window.showOpenDialog({
-        canSelectFiles: false,
-        canSelectFolders: true,
-        canSelectMany: false,
-        openLabel: 'Select Destination Folder',
-    });
-
-    return selectedFolder?.[0]?.fsPath;
-};
 
 /**
  * VS Code URI handler for Topo deep links.
@@ -78,19 +61,13 @@ export class ProtocolHandler implements vscode.UriHandler {
             return;
         }
 
-        const workspacePath = await getCloneDestinationPath();
-        if (!workspacePath) {
-            logger.info(
-                `Clone cancelled: no destination folder selected for URI ${uri.toString()}`,
-            );
-            return;
-        }
-
-        await this.projectClone.cloneProjectFromSource(
-            workspacePath,
+        const cloneStarted = await this.projectClone.cloneProjectFromSource(
             cloneSource,
             cloneBuildArgs,
         );
+        if (!cloneStarted) {
+            logger.info(`Clone cancelled for URI ${uri.toString()}`);
+        }
     }
 
     private parseQuery(query: string): Record<string, string> {

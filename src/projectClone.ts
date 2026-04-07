@@ -3,9 +3,9 @@ import * as vscode from 'vscode';
 import { CloneSource, TopoCli } from './topoCli';
 import * as path from 'path';
 import { TemplateDescription } from './topoCliSchema';
-import { getWorkspacePath } from './util/getWorkspacePath';
 import { isTopoError, TopoError } from './errors/topoError';
 import { showAndLogError } from './util/showAndLogError';
+import { getCloneDestinationPath } from './util/getCloneDestinationPath';
 
 type CloneResult =
     | {
@@ -67,17 +67,6 @@ export const getFirstSentence = (text: string): string => {
     return (match ? match[0] : trimmed).trim();
 };
 
-const assertWorkspacePath = (): string => {
-    const workspacePath = getWorkspacePath();
-    if (!workspacePath) {
-        throw new TopoError(
-            'CLONE',
-            'No workspace folder is open. Please open a folder to clone the project into.',
-        );
-    }
-    return workspacePath;
-};
-
 const getLocalSourcePath = async (): Promise<string | undefined> => {
     const cloneSourceUri = await vscode.window.showOpenDialog({
         canSelectFiles: false,
@@ -93,23 +82,19 @@ const getLocalSourcePath = async (): Promise<string | undefined> => {
 
 const executeCloneTask = async (
     cloneCommand: string[],
-    workspacePath: string,
     taskName: string,
 ): Promise<boolean> => {
     const cmd = cloneCommand[0];
     const cmdArgs = cloneCommand.slice(1);
     const shellExecution = new vscode.ShellExecution(cmd, cmdArgs);
-    const workspace = vscode.workspace.getWorkspaceFolder(
-        vscode.Uri.file(workspacePath),
-    );
-    const taskScope = workspace ?? vscode.TaskScope.Workspace;
+    const scope = vscode.TaskScope.Global;
     const taskDefinition: vscode.TaskDefinition = {
         type: 'shell',
         taskId: `${manifest.PACKAGE_NAME} clone`,
     };
     const task = new vscode.Task(
         taskDefinition,
-        taskScope,
+        scope,
         taskName,
         manifest.DISPLAY_NAME,
         shellExecution,
@@ -205,7 +190,6 @@ const getCloneSourceString = (cloneSource: CloneSource): string => {
 };
 
 const cloneWithSource = async (
-    workspacePath: string,
     cloneSource: CloneSource,
     defaultProjectName: string,
     cloneBuildArgs: CloneBuildArgs = {},
@@ -217,6 +201,10 @@ const cloneWithSource = async (
     if (!projectName) {
         return { success: false };
     }
+    const workspacePath = await getCloneDestinationPath();
+    if (!workspacePath) {
+        return { success: false };
+    }
     const repositoryPath = path.join(workspacePath, projectName);
     const cloneSourceString = getCloneSourceString(cloneSource);
     const cloneCommand = getCloneCommandFromSourceString(
@@ -226,11 +214,7 @@ const cloneWithSource = async (
         cloneBuildArgs,
     );
     const taskName = `Clone ${projectName}`;
-    const cloneSucceeded = await executeCloneTask(
-        cloneCommand,
-        workspacePath,
-        taskName,
-    );
+    const cloneSucceeded = await executeCloneTask(cloneCommand, taskName);
     if (!cloneSucceeded) {
         return { success: false };
     }
@@ -309,14 +293,12 @@ export class ProjectClone {
     }
 
     public async cloneProjectFromSource(
-        workspacePath: string,
         cloneSource: CloneSource,
         cloneBuildArgs: CloneBuildArgs = {},
     ): Promise<boolean> {
         const defaultProjectName =
             getDefaultProjectNameFromSourceString(cloneSource);
         const cloneResult = await cloneWithSource(
-            workspacePath,
             cloneSource,
             defaultProjectName,
             cloneBuildArgs,
@@ -328,13 +310,11 @@ export class ProjectClone {
     }
 
     private async cloneTemplateProject(): Promise<void> {
-        const workspacePath = assertWorkspacePath();
         const selectedTemplate = await getTemplateOfChoice(this.topoCli);
         if (!selectedTemplate) {
             return;
         }
         await this.cloneProjectFromSource(
-            workspacePath,
             {
                 type: 'template',
                 template: selectedTemplate.name,
@@ -344,13 +324,11 @@ export class ProjectClone {
     }
 
     private async cloneLocalProject(): Promise<void> {
-        const workspacePath = assertWorkspacePath();
         const cloneSourcePath = await getLocalSourcePath();
         if (!cloneSourcePath) {
             return;
         }
         await this.cloneProjectFromSource(
-            workspacePath,
             {
                 type: 'dir',
                 path: cloneSourcePath,
@@ -360,7 +338,6 @@ export class ProjectClone {
     }
 
     private async cloneRemoteProject(): Promise<void> {
-        const workspacePath = assertWorkspacePath();
         const cloneSourceRemoteUrl = await vscode.window.showInputBox({
             prompt: 'Enter the git URL to clone from',
         });
@@ -368,7 +345,6 @@ export class ProjectClone {
             return;
         }
         await this.cloneProjectFromSource(
-            workspacePath,
             {
                 type: 'git',
                 url: cloneSourceRemoteUrl,
