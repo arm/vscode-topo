@@ -88,18 +88,36 @@ describe('ProjectClone', () => {
     });
 
     describe('cloneRemoteProject', () => {
-        it('shows error when no workspace folder open', async () => {
-            const errMsg =
-                'No workspace folder is open. Please open a folder to clone the project into.';
+        it('prompts for a destination folder when no workspace folder is open', async () => {
+            jest.mocked(vscode.window.showOpenDialog).mockResolvedValueOnce([
+                destinationUri,
+            ]);
+            jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
+            mockTaskEnd(taskExec, 0);
+            jest.mocked(vscode.window.showInputBox)
+                .mockResolvedValueOnce('https://example.com/repo.git')
+                .mockResolvedValueOnce('repo');
+
             await executeCommand(ProjectClone.remoteCloneCommand);
 
-            expect(showAndLogError).toHaveBeenCalledWith(
-                'Failed to clone project',
-                expect.objectContaining({
-                    code: 'CLONE',
-                    message: errMsg,
-                }),
-            );
+            expect(vscode.window.showInputBox).toHaveBeenNthCalledWith(1, {
+                prompt: 'Enter the git URL to clone from',
+            });
+            expect(vscode.window.showInputBox).toHaveBeenNthCalledWith(2, {
+                prompt: 'Enter the project name',
+                value: 'repo',
+            });
+            expect(vscode.window.showOpenDialog).toHaveBeenCalledWith({
+                canSelectFiles: false,
+                canSelectFolders: true,
+                canSelectMany: false,
+                openLabel: 'Select Destination Folder',
+            });
+            expect(vscode.ShellExecution).toHaveBeenCalledWith('topo', [
+                'clone',
+                'git:https://example.com/repo.git',
+                path.join(destinationUri.fsPath, 'repo'),
+            ]);
         });
 
         it('return early when no clone url provided', async () => {
@@ -116,9 +134,6 @@ describe('ProjectClone', () => {
 
         it('shows error when invalid clone url provided', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-            jest.mocked(vscode.workspace).getWorkspaceFolder.mockReturnValue(
-                workspaceFolders[0],
-            );
             jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
             jest.mocked(vscode.window.showInputBox)
                 .mockResolvedValueOnce('not-a-valid-url')
@@ -138,10 +153,23 @@ describe('ProjectClone', () => {
         });
 
         it('returns early when no project name provided', async () => {
-            mutable(vscode.workspace).workspaceFolders = workspaceFolders;
+            mutable(vscode.workspace).workspaceFolders = [];
             jest.mocked(vscode.window.showInputBox)
                 .mockResolvedValueOnce('https://example.com/repo.git')
                 .mockResolvedValueOnce(undefined);
+
+            await executeCommand(ProjectClone.remoteCloneCommand);
+
+            expect(vscode.window.showOpenDialog).not.toHaveBeenCalled();
+            expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
+            expect(vscode.tasks.executeTask).not.toHaveBeenCalled();
+        });
+
+        it('returns early when destination folder selection is cancelled', async () => {
+            mutable(vscode.workspace).workspaceFolders = [];
+            jest.mocked(vscode.window.showInputBox)
+                .mockResolvedValueOnce('https://example.com/repo.git')
+                .mockResolvedValueOnce('repo');
 
             await executeCommand(ProjectClone.remoteCloneCommand);
 
@@ -217,9 +245,6 @@ describe('ProjectClone', () => {
 
         it('passes arbitrary clone options through to topo clone', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-            jest.mocked(vscode.workspace).getWorkspaceFolder.mockReturnValue(
-                workspaceFolders[0],
-            );
             jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
             mockTaskEnd(taskExec, 0);
             jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
@@ -227,7 +252,6 @@ describe('ProjectClone', () => {
             );
 
             await projectClone.cloneProjectFromSource(
-                workspaceFolders[0].uri.fsPath,
                 {
                     value: 'https://example.com/repo.git',
                 },
@@ -245,16 +269,16 @@ describe('ProjectClone', () => {
         });
 
         it('creates a clone task for an explicit destination outside the workspace', async () => {
-            jest.mocked(vscode.workspace).getWorkspaceFolder.mockReturnValue(
-                undefined,
-            );
+            jest.mocked(vscode.window.showOpenDialog).mockResolvedValueOnce([
+                destinationUri,
+            ]);
             jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
             mockTaskEnd(taskExec, 0);
             jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
                 'repo',
             );
 
-            await projectClone.cloneProjectFromSource(destinationUri.fsPath, {
+            await projectClone.cloneProjectFromSource({
                 value: 'https://example.com/repo.git',
             });
 
@@ -265,7 +289,7 @@ describe('ProjectClone', () => {
             ]);
             expect(vscode.Task).toHaveBeenCalledWith(
                 { type: 'shell', taskId: `${manifest.PACKAGE_NAME} clone` },
-                vscode.TaskScope.Workspace,
+                expect.anything(),
                 'Clone repo',
                 manifest.DISPLAY_NAME,
                 expect.any(vscode.ShellExecution),
@@ -274,9 +298,6 @@ describe('ProjectClone', () => {
 
         it('rethrows when executeTask throws', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-            jest.mocked(vscode.workspace).getWorkspaceFolder.mockReturnValue(
-                workspaceFolders[0],
-            );
             jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
             jest.mocked(vscode.window.showInputBox)
                 .mockResolvedValueOnce('https://example.com/repo.git')
@@ -294,9 +315,6 @@ describe('ProjectClone', () => {
 
         it("doesn't show error when task ends successfully", async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-            jest.mocked(vscode.workspace).getWorkspaceFolder.mockReturnValue(
-                workspaceFolders[0],
-            );
             jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
             jest.mocked(vscode.window.showInputBox)
                 .mockResolvedValueOnce('https://example.com/repo.git')
@@ -310,9 +328,6 @@ describe('ProjectClone', () => {
 
         it('shows error when task ends with non-zero exit code', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-            jest.mocked(vscode.workspace).getWorkspaceFolder.mockReturnValue(
-                workspaceFolders[0],
-            );
             jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
             jest.mocked(vscode.window.showInputBox)
                 .mockResolvedValueOnce('https://example.com/repo.git')
@@ -332,18 +347,35 @@ describe('ProjectClone', () => {
     });
 
     describe('cloneLocalProject', () => {
-        it('shows error when no workspace folder open', async () => {
-            const errMsg =
-                'No workspace folder is open. Please open a folder to clone the project into.';
+        it('prompts for a destination folder when no workspace folder is open', async () => {
+            jest.mocked(vscode.window.showOpenDialog)
+                .mockResolvedValueOnce([localTemplateUri])
+                .mockResolvedValueOnce([destinationUri]);
+            jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
+            mockTaskEnd(taskExec, 0);
+            jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
+                'myproj',
+            );
+
             await executeCommand(ProjectClone.localCloneCommand);
 
-            expect(showAndLogError).toHaveBeenCalledWith(
-                'Failed to clone project',
-                expect.objectContaining({
-                    code: 'CLONE',
-                    message: errMsg,
-                }),
-            );
+            expect(vscode.window.showOpenDialog).toHaveBeenNthCalledWith(1, {
+                canSelectFiles: false,
+                canSelectFolders: true,
+                canSelectMany: false,
+                openLabel: 'Select Project to Clone',
+            });
+            expect(vscode.window.showOpenDialog).toHaveBeenNthCalledWith(2, {
+                canSelectFiles: false,
+                canSelectFolders: true,
+                canSelectMany: false,
+                openLabel: 'Select Destination Folder',
+            });
+            expect(vscode.ShellExecution).toHaveBeenCalledWith('topo', [
+                'clone',
+                `dir:${localTemplateUri.fsPath}`,
+                path.join(destinationUri.fsPath, 'myproj'),
+            ]);
         });
 
         it('returns early when no folder selected', async () => {
@@ -411,9 +443,6 @@ describe('ProjectClone', () => {
 
         it('rethrows when executeTask throws', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-            jest.mocked(vscode.workspace).getWorkspaceFolder.mockReturnValue(
-                workspaceFolders[0],
-            );
             jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
             jest.mocked(vscode.window.showOpenDialog).mockResolvedValueOnce([
                 localTemplateUri,
@@ -434,9 +463,6 @@ describe('ProjectClone', () => {
 
         it('shows error when task ends with non-zero exit code', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-            jest.mocked(vscode.workspace).getWorkspaceFolder.mockReturnValue(
-                workspaceFolders[0],
-            );
             jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
             jest.mocked(vscode.window.showOpenDialog).mockResolvedValueOnce([
                 localTemplateUri,
@@ -486,18 +512,33 @@ describe('ProjectClone', () => {
 
         const showQuickPickItemMock = jest.mocked(vscode.window.showQuickPick);
 
-        it('shows error when no workspace folder open', async () => {
-            const errMsg =
-                'No workspace folder is open. Please open a folder to clone the project into.';
+        it('prompts for a destination folder when no workspace folder is open', async () => {
+            topoCli.listTemplates.mockReturnValue(templateList);
+            jest.mocked(vscode.window.showOpenDialog).mockResolvedValueOnce([
+                destinationUri,
+            ]);
+            jest.mocked(showQuickPickItemMock).mockResolvedValueOnce(
+                templateQuickPickItems[0],
+            );
+            jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
+            mockTaskEnd(taskExec, 0);
+            jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
+                'myproj',
+            );
+
             await executeCommand(ProjectClone.templateCloneCommand);
 
-            expect(showAndLogError).toHaveBeenCalledWith(
-                'Failed to clone project',
-                expect.objectContaining({
-                    code: 'CLONE',
-                    message: errMsg,
-                }),
-            );
+            expect(vscode.window.showOpenDialog).toHaveBeenCalledWith({
+                canSelectFiles: false,
+                canSelectFolders: true,
+                canSelectMany: false,
+                openLabel: 'Select Destination Folder',
+            });
+            expect(vscode.ShellExecution).toHaveBeenCalledWith('topo', [
+                'clone',
+                'template:template-alpha',
+                path.join(destinationUri.fsPath, 'myproj'),
+            ]);
         });
 
         it('returns early when no template selected', async () => {
@@ -577,9 +618,6 @@ describe('ProjectClone', () => {
         it('rethrows when executeTask throws', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
             topoCli.listTemplates.mockReturnValue(templateList);
-            jest.mocked(vscode.workspace).getWorkspaceFolder.mockReturnValue(
-                workspaceFolders[0],
-            );
             jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
             showQuickPickItemMock.mockResolvedValueOnce(
                 templateQuickPickItems[0],
@@ -601,9 +639,6 @@ describe('ProjectClone', () => {
         it('shows error when task ends with non-zero exit code', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
             topoCli.listTemplates.mockReturnValue(templateList);
-            jest.mocked(vscode.workspace).getWorkspaceFolder.mockReturnValue(
-                workspaceFolders[0],
-            );
             jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
             showQuickPickItemMock.mockResolvedValueOnce(
                 templateQuickPickItems[0],
@@ -629,9 +664,6 @@ describe('ProjectClone', () => {
     describe('postCloneAction', () => {
         it('prompts for a post-clone action after starting the clone task', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-            jest.mocked(vscode.workspace).getWorkspaceFolder.mockReturnValue(
-                workspaceFolders[0],
-            );
             jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
             mockTaskEnd(taskExec, 0);
             jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
@@ -640,7 +672,6 @@ describe('ProjectClone', () => {
             showInformationMessageMock.mockResolvedValueOnce(undefined);
 
             await projectClone.cloneProjectFromSource(
-                workspaceFolders[0].uri.fsPath,
                 { type: 'git', url: 'https://example.com/repo.git' },
                 {},
             );
@@ -656,9 +687,6 @@ describe('ProjectClone', () => {
 
         it('opens the cloned repository in the current window when user selects Open', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-            jest.mocked(vscode.workspace).getWorkspaceFolder.mockReturnValue(
-                workspaceFolders[0],
-            );
             jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
             mockTaskEnd(taskExec, 0);
             jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
@@ -666,7 +694,6 @@ describe('ProjectClone', () => {
             );
             showInformationMessageMock.mockResolvedValueOnce('Open');
             await projectClone.cloneProjectFromSource(
-                workspaceFolders[0].uri.fsPath,
                 { type: 'git', url: 'https://example.com/repo.git' },
                 {},
             );
@@ -680,9 +707,6 @@ describe('ProjectClone', () => {
 
         it('opens the cloned repository in a new window when user selects Open in New Window', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-            jest.mocked(vscode.workspace).getWorkspaceFolder.mockReturnValue(
-                workspaceFolders[0],
-            );
             jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
             mockTaskEnd(taskExec, 0);
             jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
@@ -692,7 +716,6 @@ describe('ProjectClone', () => {
                 'Open in New Window',
             );
             await projectClone.cloneProjectFromSource(
-                workspaceFolders[0].uri.fsPath,
                 { type: 'git', url: 'https://example.com/repo.git' },
                 {},
             );
@@ -706,9 +729,6 @@ describe('ProjectClone', () => {
 
         it('adds the cloned repository to the current workspace when user selects Add to Workspace', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-            jest.mocked(vscode.workspace).getWorkspaceFolder.mockReturnValue(
-                workspaceFolders[0],
-            );
             jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
             mockTaskEnd(taskExec, 0);
             jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
@@ -719,7 +739,6 @@ describe('ProjectClone', () => {
             );
 
             await projectClone.cloneProjectFromSource(
-                workspaceFolders[0].uri.fsPath,
                 { type: 'git', url: 'https://example.com/repo.git' },
                 {},
             );
@@ -733,9 +752,6 @@ describe('ProjectClone', () => {
 
         it('does not prompt for a post-clone action when the clone task ends with a non-zero exit code', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-            jest.mocked(vscode.workspace).getWorkspaceFolder.mockReturnValue(
-                workspaceFolders[0],
-            );
             jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
             mockTaskEnd(taskExec, 1);
             jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
@@ -744,7 +760,6 @@ describe('ProjectClone', () => {
 
             await expect(
                 projectClone.cloneProjectFromSource(
-                    workspaceFolders[0].uri.fsPath,
                     { type: 'git', url: 'https://example.com/repo.git' },
                     {},
                 ),
@@ -758,9 +773,6 @@ describe('ProjectClone', () => {
 
         it('does not prompt for a post-clone action when the clone task fails to start', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-            jest.mocked(vscode.workspace).getWorkspaceFolder.mockReturnValue(
-                workspaceFolders[0],
-            );
             jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
             jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
                 'repo',
@@ -771,7 +783,6 @@ describe('ProjectClone', () => {
 
             await expect(
                 projectClone.cloneProjectFromSource(
-                    workspaceFolders[0].uri.fsPath,
                     { type: 'git', url: 'https://example.com/repo.git' },
                     {},
                 ),

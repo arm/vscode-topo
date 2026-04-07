@@ -69,7 +69,7 @@ const CodeAction = jest.fn();
 // Enums
 const ShellQuoting = { Escape: 'Escape' };
 const StatusBarAlignment = { Left: 1, Right: 2 };
-const TaskScope = { Workspace: 'Workspace' };
+const TaskScope = { Global: 1, Workspace: 2 };
 const ViewColumn = {
     Active: -1,
     Beside: -2,
@@ -115,6 +115,7 @@ const window = {
     showWarningMessage: jest.fn(),
     showErrorMessage: jest.fn(),
     showOpenDialog: jest.fn(),
+    showWorkspaceFolderPick: jest.fn(),
     showQuickPick: jest.fn(),
     createQuickPick: jest.fn(),
     showInputBox: jest.fn(),

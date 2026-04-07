@@ -72,9 +72,6 @@ describe('ProtocolHandler', () => {
 
     it('runs a topo clone task for explicit git sources', async () => {
         mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-        jest.mocked(vscode.workspace).getWorkspaceFolder.mockReturnValue(
-            workspaceFolders[0],
-        );
         jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
         mockTaskEnd(taskExec, 0);
         jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
@@ -124,28 +121,8 @@ describe('ProtocolHandler', () => {
         ]);
     });
 
-    it('returns early when destination folder selection is cancelled', async () => {
-        jest.mocked(vscode.window.showOpenDialog).mockResolvedValueOnce(
-            undefined,
-        );
-
-        await protocolHandler.handleUri(
-            vscode.Uri.parse(
-                'vscode://arm.topo/clone?source=git:https://example.com/repo.git',
-            ),
-        );
-
-        expect(vscode.window.showInputBox).not.toHaveBeenCalled();
-        expect(vscode.ShellExecution).not.toHaveBeenCalled();
-        expect(vscode.tasks.executeTask).not.toHaveBeenCalled();
-        expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
-    });
-
     it('shows an error when the clone task fails', async () => {
         mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-        jest.mocked(vscode.workspace).getWorkspaceFolder.mockReturnValue(
-            workspaceFolders[0],
-        );
         jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
         mockTaskEnd(taskExec, 1);
         jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
@@ -167,9 +144,6 @@ describe('ProtocolHandler', () => {
 
     it('forwards arbitrary query params as clone options', async () => {
         mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-        jest.mocked(vscode.workspace).getWorkspaceFolder.mockReturnValue(
-            workspaceFolders[0],
-        );
         jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
         mockTaskEnd(taskExec, 0);
         jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
@@ -190,9 +164,6 @@ describe('ProtocolHandler', () => {
 
     it('parses HTML-escaped ampersands in query params', async () => {
         mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-        jest.mocked(vscode.workspace).getWorkspaceFolder.mockReturnValue(
-            workspaceFolders[0],
-        );
         jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
         mockTaskEnd(taskExec, 0);
         jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
@@ -218,9 +189,6 @@ describe('ProtocolHandler', () => {
 
     it('runs a topo clone task for bare github urls', async () => {
         mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-        jest.mocked(vscode.workspace).getWorkspaceFolder.mockReturnValue(
-            workspaceFolders[0],
-        );
         jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
         mockTaskEnd(taskExec, 0);
         jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
@@ -280,9 +248,6 @@ describe('ProtocolHandler', () => {
 
     it('forwards repeated query params as array clone options', async () => {
         mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-        jest.mocked(vscode.workspace).getWorkspaceFolder.mockReturnValue(
-            workspaceFolders[0],
-        );
         jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
         mockTaskEnd(taskExec, 0);
         jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
