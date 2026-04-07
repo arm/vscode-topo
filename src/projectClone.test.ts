@@ -163,15 +163,11 @@ describe('ProjectClone', () => {
 
             await executeCommand(ProjectClone.remoteCloneCommand);
 
-            expect(vscode.ShellExecution).toHaveBeenCalledWith(
-                'topo',
-                [
-                    'clone',
-                    'git:https://example.com/repo.git',
-                    path.join(workspaceUri.fsPath, 'repo'),
-                ],
-                { cwd: workspaceUri.fsPath },
-            );
+            expect(vscode.ShellExecution).toHaveBeenCalledWith('topo', [
+                'clone',
+                'git:https://example.com/repo.git',
+                path.join(workspaceUri.fsPath, 'repo'),
+            ]);
             expect(vscode.Task).toHaveBeenCalledWith(
                 { type: 'shell', taskId: `${manifest.PACKAGE_NAME} clone` },
                 expect.anything(),
@@ -200,15 +196,11 @@ describe('ProjectClone', () => {
 
             await executeCommand(ProjectClone.remoteCloneCommand);
 
-            expect(vscode.ShellExecution).toHaveBeenCalledWith(
-                'topo',
-                [
-                    'clone',
-                    'git:git@example.com:repo.git',
-                    path.join(workspaceUri.fsPath, 'repo'),
-                ],
-                { cwd: workspaceUri.fsPath },
-            );
+            expect(vscode.ShellExecution).toHaveBeenCalledWith('topo', [
+                'clone',
+                'git:git@example.com:repo.git',
+                path.join(workspaceUri.fsPath, 'repo'),
+            ]);
             expect(vscode.Task).toHaveBeenCalledWith(
                 { type: 'shell', taskId: `${manifest.PACKAGE_NAME} clone` },
                 expect.anything(),
@@ -244,16 +236,12 @@ describe('ProjectClone', () => {
                 },
             );
 
-            expect(vscode.ShellExecution).toHaveBeenCalledWith(
-                'topo',
-                [
-                    'clone',
-                    'https://example.com/repo.git',
-                    path.join(workspaceUri.fsPath, 'repo'),
-                    'model=some-huggingface-id',
-                ],
-                { cwd: workspaceUri.fsPath },
-            );
+            expect(vscode.ShellExecution).toHaveBeenCalledWith('topo', [
+                'clone',
+                'https://example.com/repo.git',
+                path.join(workspaceUri.fsPath, 'repo'),
+                'model=some-huggingface-id',
+            ]);
         });
 
         it('creates a clone task for an explicit destination outside the workspace', async () => {
@@ -270,15 +258,11 @@ describe('ProjectClone', () => {
                 value: 'https://example.com/repo.git',
             });
 
-            expect(vscode.ShellExecution).toHaveBeenCalledWith(
-                'topo',
-                [
-                    'clone',
-                    'https://example.com/repo.git',
-                    path.join(destinationUri.fsPath, 'repo'),
-                ],
-                { cwd: destinationUri.fsPath },
-            );
+            expect(vscode.ShellExecution).toHaveBeenCalledWith('topo', [
+                'clone',
+                'https://example.com/repo.git',
+                path.join(destinationUri.fsPath, 'repo'),
+            ]);
             expect(vscode.Task).toHaveBeenCalledWith(
                 { type: 'shell', taskId: `${manifest.PACKAGE_NAME} clone` },
                 vscode.TaskScope.Workspace,
@@ -406,15 +390,11 @@ describe('ProjectClone', () => {
 
             await executeCommand(ProjectClone.localCloneCommand);
 
-            expect(vscode.ShellExecution).toHaveBeenCalledWith(
-                'topo',
-                [
-                    'clone',
-                    `dir:${localTemplateUri.fsPath}`,
-                    path.join(workspaceUri.fsPath, 'myproj'),
-                ],
-                { cwd: workspaceUri.fsPath },
-            );
+            expect(vscode.ShellExecution).toHaveBeenCalledWith('topo', [
+                'clone',
+                `dir:${localTemplateUri.fsPath}`,
+                path.join(workspaceUri.fsPath, 'myproj'),
+            ]);
             expect(vscode.Task).toHaveBeenCalledWith(
                 { type: 'shell', taskId: `${manifest.PACKAGE_NAME} clone` },
                 expect.anything(),
@@ -575,15 +555,11 @@ describe('ProjectClone', () => {
                 prompt: 'Enter the project name',
                 value: templateQuickPickItems[0].label,
             });
-            expect(vscode.ShellExecution).toHaveBeenCalledWith(
-                'topo',
-                [
-                    'clone',
-                    'template:template-alpha',
-                    path.join(workspaceUri.fsPath, 'myproj'),
-                ],
-                { cwd: workspaceUri.fsPath },
-            );
+            expect(vscode.ShellExecution).toHaveBeenCalledWith('topo', [
+                'clone',
+                'template:template-alpha',
+                path.join(workspaceUri.fsPath, 'myproj'),
+            ]);
             expect(vscode.Task).toHaveBeenCalledWith(
                 { type: 'shell', taskId: `${manifest.PACKAGE_NAME} clone` },
                 expect.anything(),

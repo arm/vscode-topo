@@ -98,9 +98,7 @@ const executeCloneTask = async (
 ): Promise<boolean> => {
     const cmd = cloneCommand[0];
     const cmdArgs = cloneCommand.slice(1);
-    const shellExecution = new vscode.ShellExecution(cmd, cmdArgs, {
-        cwd: workspacePath,
-    });
+    const shellExecution = new vscode.ShellExecution(cmd, cmdArgs);
     const workspace = vscode.workspace.getWorkspaceFolder(
         vscode.Uri.file(workspacePath),
     );
