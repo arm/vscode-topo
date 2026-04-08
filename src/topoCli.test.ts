@@ -76,6 +76,26 @@ describe('TopoCli', () => {
             },
         ];
         execSyncMock.mockReturnValue(JSON.stringify(list));
+        expect(topoCli.listTemplates('me@example.com')).toEqual(list);
+        expect(execSyncMock).toHaveBeenCalledWith(
+            path.join(ext, 'resources', manifest.TOPO_CLI),
+            ['templates', '--target', 'me@example.com', '-o', 'json'],
+            { encoding: 'utf8' },
+        );
+    });
+
+    it('listTemplates omits --target when no ssh target is provided', () => {
+        const list: TemplateDescription[] = [
+            {
+                name: 't',
+                url: 'u',
+                features: [],
+                description: 'catty template description',
+                ref: 'r',
+            },
+        ];
+        execSyncMock.mockReturnValue(JSON.stringify(list));
+
         expect(topoCli.listTemplates()).toEqual(list);
         expect(execSyncMock).toHaveBeenCalledWith(
             path.join(ext, 'resources', manifest.TOPO_CLI),
@@ -87,7 +107,7 @@ describe('TopoCli', () => {
     it('listTemplates throws error on invalid JSON output', () => {
         execSyncMock.mockReturnValue('invalid json');
 
-        expect(() => topoCli.listTemplates()).toThrow();
+        expect(() => topoCli.listTemplates('me@example.com')).toThrow();
     });
 
     it('getProject parses JSON output', () => {

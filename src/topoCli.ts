@@ -116,15 +116,16 @@ export class TopoCli {
     }
 
     /** Lists templates (via templates). */
-    public listTemplates(): TemplateDescription[] {
+    public listTemplates(sshTarget?: string): TemplateDescription[] {
         const bin = this.getBinaryPath();
-        const out = childProcess.execFileSync(
-            bin,
-            ['templates', '-o', 'json'],
-            {
-                encoding: 'utf8',
-            },
-        );
+        const cmd = ['templates'];
+        if (sshTarget) {
+            cmd.push('--target', sshTarget);
+        }
+        cmd.push('-o', 'json');
+        const out = childProcess.execFileSync(bin, cmd, {
+            encoding: 'utf8',
+        });
         const templates = JSON.parse(out);
         assert(templates, array(templateSchema));
         return templates;

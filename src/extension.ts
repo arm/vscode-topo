@@ -50,7 +50,7 @@ export async function activate(
         targetStore,
     );
     const projectInit = new ProjectInit(context, topoCli);
-    const projectClone = new ProjectClone(context, topoCli);
+    const projectClone = new ProjectClone(context, topoCli, targetStore);
     const deploy = new Deploy(context, targetStore);
     const composeEditorMessageHandler = new ComposeEditorMessageHandler(
         topoCli,
