@@ -7,6 +7,7 @@ import { TopoCli } from './topoCli';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { TemplateDescription } from './topoCliSchema';
 import { showAndLogError } from './util/showAndLogError';
+import { TargetStore } from './workloadPlacement/targetStore';
 
 jest.mock('./util/showAndLogError', () => ({
     showAndLogError: jest.fn(),
@@ -51,6 +52,7 @@ type ShowInformationMessageWithStrings = (
 describe('ProjectClone', () => {
     let projectClone: ProjectClone;
     const topoCli = mock<TopoCli>();
+    const targetStore = mock<TargetStore>();
     let context: MockProxy<vscode.ExtensionContext>;
     const taskExec: vscode.TaskExecution = {
         task: {
@@ -78,7 +80,7 @@ describe('ProjectClone', () => {
         context = mock<vscode.ExtensionContext>({
             subscriptions: subscriptions,
         });
-        projectClone = new ProjectClone(context, topoCli);
+        projectClone = new ProjectClone(context, topoCli, targetStore);
         await projectClone.activate();
     });
 
@@ -570,6 +572,10 @@ describe('ProjectClone', () => {
 
         it('creates task and runs clone command for template selection', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
+            targetStore.getSelectedTarget.mockResolvedValue({
+                ssh: 'me@example.com',
+                host: 'example.com',
+            });
             topoCli.listTemplates.mockReturnValue(templateList);
             jest.mocked(vscode.workspace).getWorkspaceFolder.mockReturnValue(
                 workspaceFolders[0],
@@ -585,6 +591,10 @@ describe('ProjectClone', () => {
             showInformationMessageMock.mockResolvedValueOnce(undefined);
 
             await executeCommand(ProjectClone.templateCloneCommand);
+
+            expect(topoCli.listTemplates).toHaveBeenCalledWith(
+                'me@example.com',
+            );
 
             expect(vscode.window.showQuickPick).toHaveBeenCalledWith(
                 templateQuickPickItems,
@@ -617,6 +627,10 @@ describe('ProjectClone', () => {
 
         it('rethrows when executeTask throws', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
+            targetStore.getSelectedTarget.mockResolvedValue({
+                ssh: 'me@example.com',
+                host: 'example.com',
+            });
             topoCli.listTemplates.mockReturnValue(templateList);
             jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
             showQuickPickItemMock.mockResolvedValueOnce(
@@ -636,8 +650,27 @@ describe('ProjectClone', () => {
             expect(showAndLogError).not.toHaveBeenCalled();
         });
 
+        it('lists templates without a target when none is selected', async () => {
+            mutable(vscode.workspace).workspaceFolders = workspaceFolders;
+            targetStore.getSelectedTarget.mockResolvedValue(undefined);
+            topoCli.listTemplates.mockReturnValue(templateList);
+            jest.mocked(vscode.window.showQuickPick).mockResolvedValueOnce(
+                undefined,
+            );
+
+            await executeCommand(ProjectClone.templateCloneCommand);
+
+            expect(topoCli.listTemplates).toHaveBeenCalledWith(undefined);
+            expect(showAndLogError).not.toHaveBeenCalled();
+            expect(vscode.tasks.executeTask).not.toHaveBeenCalled();
+        });
+
         it('shows error when task ends with non-zero exit code', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
+            targetStore.getSelectedTarget.mockResolvedValue({
+                ssh: 'me@example.com',
+                host: 'example.com',
+            });
             topoCli.listTemplates.mockReturnValue(templateList);
             jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
             showQuickPickItemMock.mockResolvedValueOnce(

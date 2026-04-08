@@ -6,6 +6,7 @@ import { ProtocolHandler } from './protocolHandler';
 import { TopoCli } from './topoCli';
 import { mutable } from './util/mutable';
 import * as showAndLogErrorModule from './util/showAndLogError';
+import { TargetStore } from './workloadPlacement/targetStore';
 
 const showAndLogErrorSpy = jest
     .spyOn(showAndLogErrorModule, 'showAndLogError')
@@ -37,6 +38,7 @@ describe('ProtocolHandler', () => {
     let protocolHandler: ProtocolHandler;
     let context: MockProxy<vscode.ExtensionContext>;
     const topoCli = mock<TopoCli>();
+    const targetStore = mock<TargetStore>();
     const taskExec: vscode.TaskExecution = {
         task: {
             definition: { type: 'shell', taskId: 'topo clone' },
@@ -56,7 +58,7 @@ describe('ProtocolHandler', () => {
         context = mock<vscode.ExtensionContext>({
             subscriptions,
         });
-        projectClone = new ProjectClone(context, topoCli);
+        projectClone = new ProjectClone(context, topoCli, targetStore);
         protocolHandler = new ProtocolHandler(projectClone);
         mutable(vscode.workspace).workspaceFolders = undefined;
     });

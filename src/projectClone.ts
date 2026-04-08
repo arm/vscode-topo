@@ -5,6 +5,7 @@ import * as path from 'path';
 import { TemplateDescription } from './topoCliSchema';
 import { isTopoError, TopoError } from './errors/topoError';
 import { showAndLogError } from './util/showAndLogError';
+import { TargetStore } from './workloadPlacement/targetStore';
 import { getCloneDestinationPath } from './util/getCloneDestinationPath';
 
 type CloneResult =
@@ -223,8 +224,9 @@ const cloneWithSource = async (
 
 const getTemplateOfChoice = async (
     topoCli: TopoCli,
+    sshTarget?: string,
 ): Promise<TemplateDescription | undefined> => {
-    const templates = topoCli.listTemplates();
+    const templates = topoCli.listTemplates(sshTarget);
     const templateItems = templates.map((template) => ({
         label: template.name,
         detail: getFirstSentence(template.description),
@@ -252,6 +254,7 @@ export class ProjectClone {
     constructor(
         private readonly context: vscode.ExtensionContext,
         private readonly topoCli: TopoCli,
+        private readonly targetStore: TargetStore,
     ) {}
 
     private wrapCloneCommandWithCloneErrorHandling(
@@ -310,7 +313,11 @@ export class ProjectClone {
     }
 
     private async cloneTemplateProject(): Promise<void> {
-        const selectedTemplate = await getTemplateOfChoice(this.topoCli);
+        const selectedTarget = await this.targetStore.getSelectedTarget();
+        const selectedTemplate = await getTemplateOfChoice(
+            this.topoCli,
+            selectedTarget?.ssh,
+        );
         if (!selectedTemplate) {
             return;
         }

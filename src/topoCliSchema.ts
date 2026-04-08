@@ -11,12 +11,15 @@ import {
     type,
 } from 'superstruct';
 
+const templateCompatibilitySchema = enums(['supported', 'unsupported']);
+
 export const templateSchema = type({
     name: string(),
     description: string(),
     features: nullable(array(string())),
     url: string(),
     ref: string(),
+    compatibility: optional(templateCompatibilitySchema),
 });
 
 export type TemplateDescription = Infer<typeof templateSchema>;
