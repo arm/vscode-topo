@@ -74,29 +74,3 @@ jobs:
                   if-no-files-found: ignore
             - name: Unit Test
               run: npm run test
-            - name: Upload coverage report artifact
-              if: matrix.os == 'ubuntu-latest'
-              uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
-              with:
-                  name: unit-test-coverage
-                  path: ./coverage
-                  if-no-files-found: error
-    publish-coverage:
-        name: Publish Coverage
-        needs:
-            - test
-            - build
-        runs-on: [self-hosted, self-hosted-ubuntu-latest, x64, aws-debug-prod]
-        steps:
-            - uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e
-            - name: Download coverage reports from artifacts
-              uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
-              with:
-                  name: unit-test-coverage
-                  path: coverage
-            - name: Publish coverage report to Qlty
-              uses: qltysh/qlty-action/coverage@v2.2.0
-              with:
-                  token: ${{ secrets.QLTY_COVERAGE_TOKEN }}
-                  files: coverage/lcov.info
-                  skip-errors: false
