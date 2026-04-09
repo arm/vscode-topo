@@ -35,7 +35,7 @@ jobs:
               with:
                   app_id: ${{ secrets.TOPO_ACCESS_APP_ID }}
                   private_key: ${{ secrets.TOPO_ACCESS_APP_PRIVATE_KEY }}
-            - uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e
+            - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
             - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
               with:
                   node-version: ${{ env.NODE_VERSION }}
@@ -92,7 +92,7 @@ jobs:
               with:
                   app_id: ${{ secrets.TOPO_ACCESS_APP_ID }}
                   private_key: ${{ secrets.TOPO_ACCESS_APP_PRIVATE_KEY }}
-            - uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e
+            - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
             - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
               with:
                   node-version: ${{ env.NODE_VERSION }}
@@ -134,7 +134,7 @@ jobs:
         outputs:
             release_commit: ${{ inputs.release-type == 'Pre-release' && github.sha || steps.commit-version.outputs.release_commit }}
         steps:
-            - uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e
+            - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
             - name: Download version bump patch
               uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
               with:
