@@ -52,18 +52,11 @@ export class TopoCli {
     constructor(
         private readonly extensionPath: string,
         private readonly env: vscode.EnvironmentVariableCollection,
-        private readonly defaultSshTarget?: string,
     ) {}
 
     public async activate(): Promise<void> {
         const sep = process.platform === 'win32' ? ';' : ':';
         this.env.prepend('PATH', this.getBinaryFolder() + sep);
-        if (this.defaultSshTarget) {
-            this.env.replace(
-                manifest.TOPO_TARGET_ENV_VAR,
-                this.defaultSshTarget,
-            );
-        }
     }
 
     public dispose(): void {
@@ -75,11 +68,7 @@ export class TopoCli {
     }
 
     private getProcessEnv(): NodeJS.ProcessEnv {
-        const env: NodeJS.ProcessEnv = { ...process.env };
-        if (this.defaultSshTarget) {
-            env[manifest.TOPO_TARGET_ENV_VAR] = this.defaultSshTarget;
-        }
-        return env;
+        return { ...process.env };
     }
 
     /**
