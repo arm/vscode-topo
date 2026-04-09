@@ -1,0 +1,61 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      release-type:
+        type: choice
+        description: A new version is published with the corresponding version bump if not set to None.
+        options:
+          - 'None'
+          - 'Pre-release'
+          - 'Patch'
+          - 'Minor'
+          - 'Major'
+        default: 'None'
+  merge_group:
+
+jobs:
+  build-and-verify:
+    name: Build and verify
+    uses: arm-debug/vscode-workflows/.github/workflows/build-and-verify.yml@v5.0.0
+    secrets:
+      EXTENSIONS_REPO_ACCESS_APP_ID: ${{ secrets.ML_REPO_ACCESS_APP_ID }}
+      EXTENSIONS_REPO_ACCESS_PRIVATE_KEY: ${{ secrets.ML_REPO_ACCESS_PRIVATE_KEY }}
+      QLTY_COVERAGE_TOKEN: ${{secrets.QLTY_COVERAGE_TOKEN}}
+      GH_PACKAGES_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
+      ARM_ARTIFACTORY_PASSWORD: "UNUSED"
+      KSC_NEXT_PREVIEW_APP_SECRET: "UNUSED"
+      KSC_NEXT_PREVIEW_APP_ID:  "UNUSED"
+    with:
+      enable-code-climate: true
+      package-manager: 'npm'
+      download-script-name: download-tools.sh
+      enable-ksc-next-preview: false
+      test-on-self-hosted-ubuntu-only: false
+      is-platform-specific: true
+      excluded-platforms: '["win32-arm64","darwin-x64"]'
+      release-type: ${{ inputs.release-type }}
+  release-and-publish:
+    name: Release and publish
+    needs: build-and-verify
+    uses: arm-debug/vscode-workflows/.github/workflows/release-and-publish.yml@v5.0.0
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.release-type != 'None' && github.ref == 'refs/heads/main' }}
+    secrets:
+      OPEN_VSX_TOKEN: "UNUSED"
+      VS_MARKETPLACE_TOKEN: "UNUSED"
+      EXTENSIONS_REPO_ACCESS_APP_ID: ${{ secrets.ML_REPO_ACCESS_APP_ID }}
+      EXTENSIONS_REPO_ACCESS_PRIVATE_KEY: ${{ secrets.ML_REPO_ACCESS_PRIVATE_KEY }}
+      NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      FACADE_REPOSITORY_TOKEN: ${{ secrets.ARM_SOFTWARE_TOKEN }}
+    with:
+      api-types-registry-url: https://npm.pkg.github.com
+      facade-repository: Arm-software/vscode-environment-manager
+      release-type: ${{ inputs.release-type }}
+      internal: true

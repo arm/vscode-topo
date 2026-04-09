@@ -1,0 +1,71 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`SubsystemSection renders correctly 1`] = `
+<div>
+  <div
+    class="section-group"
+  >
+    <h3>
+      Host
+    </h3>
+    <table
+      class="services-table"
+    >
+      <thead>
+        <tr>
+          <th
+            class="service-name"
+          >
+            Service Name
+          </th>
+          <th
+            class="service-actions"
+          >
+            Actions
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <input
+              readonly=""
+              value="project1"
+            />
+          </td>
+          <td>
+            <button
+              class="remove-button"
+              type="button"
+            >
+              Remove
+            </button>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <input
+              readonly=""
+              value="project2"
+            />
+          </td>
+          <td>
+            <button
+              class="remove-button"
+              type="button"
+            >
+              Remove
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <button
+      class="add-service-button"
+      type="button"
+    >
+      Add Service
+    </button>
+  </div>
+</div>
+`;

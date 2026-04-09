@@ -1,0 +1,8 @@
+out
+dist
+node_modules
+.vscode-test/
+*.vsix
+coverage
+test-workspace/example-project
+resources

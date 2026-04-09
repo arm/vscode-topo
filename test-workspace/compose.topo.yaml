@@ -1,0 +1,8 @@
+name: example-project
+services:
+  cortexa-welcome:
+    build:
+      context: ./example-project/cortexa-welcome
+    ports:
+      - "8080:80"
+    platform: linux/arm64
