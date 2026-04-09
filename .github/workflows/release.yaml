@@ -100,7 +100,7 @@ jobs:
                   always-auth: true
             - name: Download version bump patch
               if: needs.prepare-version.outputs.version
-              uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+              uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
               with:
                   name: new-version-patch
                   path: ~/patches
@@ -136,7 +136,7 @@ jobs:
         steps:
             - uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e
             - name: Download version bump patch
-              uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+              uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
               with:
                   name: new-version-patch
                   path: ~/patches
@@ -170,7 +170,7 @@ jobs:
         permissions:
             contents: write
         steps:
-            - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+            - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
               with:
                   path: artifacts
             - name: Release
@@ -189,7 +189,7 @@ jobs:
         if: needs.prepare-version.outputs.version && github.ref == 'refs/heads/main'
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+            - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
               with:
                   pattern: vsix-package-*
                   merge-multiple: true
