@@ -1,0 +1,308 @@
+{
+  "name": "topo",
+  "displayName": "Arm Topo",
+  "publisher": "arm",
+  "description": "",
+  "version": "0.0.0",
+  "engines": {
+    "vscode": "^1.99.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onLanguage:yaml",
+    "onCommand:topo.openEditor",
+    "onView:topo.composeEditor"
+  ],
+  "main": "./dist/extension.js",
+  "topo-cli": {
+    "version": "0.0.0-20250804153026"
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "topo.showSource",
+        "title": "Show Source",
+        "category": "Arm Topo",
+        "icon": "$(go-to-file)"
+      },
+      {
+        "command": "topo.showPreviewToSide",
+        "title": "Open Preview to the Side",
+        "category": "Arm Topo",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "topo.showPreview",
+        "title": "Open Preview",
+        "category": "Arm Topo",
+        "icon": {
+          "light": "./media/preview-light.svg",
+          "dark": "./media/preview-dark.svg"
+        }
+      },
+      {
+        "command": "topo.initProject",
+        "title": "Initialize Project",
+        "category": "Arm Topo"
+      },
+      {
+        "command": "topo.openTopoConsole",
+        "title": "Open on-board Topo console",
+        "category": "Arm Topo"
+      },
+      {
+        "command": "topo.generateMakefile",
+        "title": "Generate Makefile",
+        "category": "Arm Topo"
+      },
+      {
+        "command": "topo.generateMakefile.context",
+        "title": "Generate Makefile",
+        "category": "Arm Topo"
+      },
+      {
+        "command": "containerExplorer.attachVscode",
+        "title": "Attach VS Code",
+        "category": "Arm Topo"
+      },
+      {
+        "command": "containerExplorer.attachShell",
+        "title": "Attach Shell",
+        "category": "Arm Topo"
+      },
+      {
+        "command": "containerExplorer.openInBrowser",
+        "title": "Open in Browser",
+        "category": "Arm Topo"
+      },
+      {
+        "command": "containerExplorer.startContainer",
+        "title": "Start",
+        "category": "Arm Topo"
+      },
+      {
+        "command": "containerExplorer.stopContainer",
+        "title": "Stop",
+        "category": "Arm Topo"
+      },
+      {
+        "command": "containerExplorer.deleteContainer",
+        "title": "Delete",
+        "category": "Arm Topo"
+      },
+      {
+        "command": "topo.openBoardDashboard",
+        "title": "Open Board Dashboard",
+        "category": "Arm Topo"
+      },
+      {
+        "command": "containerExplorer.openSerial",
+        "title": "Open UART",
+        "icon": "$(console)",
+        "category": "Arm Topo"
+      }
+    ],
+    "customEditors": [
+      {
+        "viewType": "topo.composeEditor",
+        "displayName": "Compose Editor",
+        "selector": [
+          {
+            "filenamePattern": "compose.topo{,.*}.yaml",
+            "priority": "option"
+          }
+        ]
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "topo",
+          "title": "Topo",
+          "icon": "$(chip)"
+        }
+      ]
+    },
+    "views": {
+      "topo": [
+        {
+          "id": "containerExplorer",
+          "icon": "$(symbol-folder)",
+          "name": "Board Services"
+        }
+      ]
+    },
+    "menus": {
+      "editor/title": [
+        {
+          "command": "topo.showSource",
+          "when": "activeWebviewPanelId == 'topo.composeEditor'",
+          "group": "navigation"
+        },
+        {
+          "command": "topo.showPreviewToSide",
+          "alt": "topo.showPreview",
+          "group": "navigation",
+          "when": "resourceFilename =~ /compose\\.topo(\\..*)?\\.yaml$/ && activeCustomEditorId != 'topo.composeEditor'"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "command": "topo.showPreview",
+          "group": "1_open",
+          "when": "resourceFilename =~ /compose\\.topo(\\..*)?\\.yaml$/ && activeCustomEditorId != 'topo.composeEditor'"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "topo.showPreview",
+          "group": "navigation@1",
+          "when": "resourceFilename =~ /compose\\.topo(\\..*)?\\.yaml$/ && activeCustomEditorId != 'topo.composeEditor'"
+        },
+        {
+          "command": "topo.generateMakefile.context",
+          "when": "resourceFilename =~ /compose\\.topo(\\..*)?\\.yaml$/",
+          "group": "topo"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "topo.showSource",
+          "when": "false"
+        },
+        {
+          "command": "topo.showPreviewToSide",
+          "when": "false"
+        },
+        {
+          "command": "topo.showPreview",
+          "when": "false"
+        },
+        {
+          "command": "topo.generateMakefile",
+          "when": "false"
+        },
+        {
+          "command": "topo.generateMakefile.context",
+          "when": "false"
+        },
+        {
+          "command": "containerExplorer.stopContainer",
+          "when": "false"
+        },
+        {
+          "command": "containerExplorer.attachVscode",
+          "when": "false"
+        },
+        {
+          "command": "containerExplorer.attachShell",
+          "when": "false"
+        },
+        {
+          "command": "containerExplorer.openInBrowser",
+          "when": "false"
+        }
+    ],
+      "view/item/context": [
+        {
+          "command": "containerExplorer.attachVscode",
+          "when": "view === containerExplorer && viewItem =~ /running/ && viewItem =~ /Host/",
+          "group": "topo/attach@1"
+        },
+        {
+          "command": "containerExplorer.attachShell",
+          "when": "view === containerExplorer && viewItem =~ /running/ && viewItem =~ /Host/",
+          "group": "topo/attach@1"
+        },
+        {
+          "command": "containerExplorer.openInBrowser",
+          "when": "view === containerExplorer && viewItem =~ /running/ && viewItem =~ /Host/",
+          "group": "topo/attach@1"
+        },
+        {
+          "command": "containerExplorer.startContainer",
+          "when": "view === containerExplorer && viewItem =~ /exited/",
+          "group": "topo/manage@1"
+        },
+        {
+          "command": "containerExplorer.stopContainer",
+          "when": "view === containerExplorer && viewItem =~ /running/",
+          "group": "topo/manage@1"
+        },
+        {
+          "command": "containerExplorer.deleteContainer",
+          "when": "view === containerExplorer",
+          "group": "topo/manage@2"
+        },
+        {
+          "command": "containerExplorer.openSerial",
+          "when": "view === containerExplorer && viewItem =~ /Subsystem/",
+          "group": "inline"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "package": "npm run build && vsce package",
+    "clean": "git clean -f -x ./node_modules ./dist ./resources ./coverage",
+    "build-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "lint": "eslint .",
+    "test": "jest --passWithNoTests --coverage",
+    "build:extension": "vite build --mode extension",
+    "build:webview": "vite build --mode webview",
+    "build": "npm run build:extension && npm run build:webview",
+    "watch:extension": "vite build --mode extension --watch --minify=false",
+    "watch:webview": "vite build --mode webview --watch --minify=false",
+    "watch": "npm-run-all --parallel watch:extension watch:webview",
+    "download": "ts-node scripts/download.ts"
+  },
+  "devDependencies": {
+    "@eclipse-cdt-cloud/vscode-serial-monitor": "^2.0.0",
+    "@eslint/eslintrc": "^3.3.1",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@types/jest": "^29.5.14",
+    "@types/js-yaml": "^4.0.9",
+    "@types/lodash.debounce": "^4.0.9",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "20.x",
+    "@types/react": "^19.1.3",
+    "@types/react-dom": "^19.1.3",
+    "@types/vscode": "^1.99.1",
+    "@typescript-eslint/eslint-plugin": "^8.34.0",
+    "@typescript-eslint/parser": "^8.34.0",
+    "@vitejs/plugin-react": "^4.4.1",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1",
+    "eslint": "^8.57.1",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "npm-run-all": "^4.1.5",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "rollup-plugin-copy": "^3.5.0",
+    "ts-jest": "^29.3.2",
+    "ts-loader": "^9.5.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.2",
+    "vite": "^6.3.4",
+    "vite-tsconfig-paths": "^5.1.4",
+    "vsce": "^2.15.0"
+  },
+  "dependencies": {
+    "lodash.debounce": "^4.0.8",
+    "vscode-uri": "^3.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Arm-Debug/topo.git"
+  },
+  "extensionDependencies": [
+    "eclipse-cdt.serial-monitor"
+  ]
+}

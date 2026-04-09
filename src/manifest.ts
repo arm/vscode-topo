@@ -1,0 +1,13 @@
+export const REGISTRY_NAME = 'arm';
+export const PACKAGE_NAME = 'topo';
+export const DISPLAY_NAME = 'Arm Topo';
+export const CONFIG_LOGGING_VERBOSITY = 'loggingVerbosity';
+export const DEFAULT_LOGGING_VERBOSITY = 'info';
+export const BOARD_REMOTE_USER = 'root';
+export const BOARD_HOSTNAME = 'topo.local';
+export const BOARD_SSH_CONNECTION = `${BOARD_REMOTE_USER}@${BOARD_HOSTNAME}`;
+export const BOARD_HOST_URL = `http://${BOARD_HOSTNAME}`;
+export const BOARD_DOCKER_CONTEXT = 'topo';
+export const BOARD_DEFAULT_COMPOSE_FILE = 'compose.topo.yaml';
+export const BOARD_AMBIENT_RUNTIME = 'io.containerd.remoteproc.v1';
+export const BOARD_HOST_RUNTIME = 'runc';
