@@ -70,3 +70,7 @@ export const projectDescriptionSchema = type({
 });
 
 export type ProjectDescription = Infer<typeof projectDescriptionSchema>;
+
+export const candidateTargetSchema = array(string());
+
+export type CandidateTargetList = Infer<typeof candidateTargetSchema>;

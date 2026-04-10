@@ -5,6 +5,8 @@ import * as fs from 'fs';
 import * as os from 'os';
 import { ProjectDescription } from './topoCliSchema';
 
+const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'topo-integration-'));
+
 const extensionPath = path.resolve(__dirname, '..');
 const topoCli = new TopoCli(
     extensionPath,
@@ -14,6 +16,10 @@ const topoCli = new TopoCli(
 // The real `topo health localhost` integration path can take longer on
 // Windows CI runners because it probes the local host environment.
 jest.setTimeout(process.platform === 'win32' ? 60_000 : 15_000);
+
+afterAll(() => {
+    fs.rmSync(tmpRoot, { recursive: true, force: true });
+});
 
 describe('getVersion', () => {
     it('parses output', async () => {
@@ -71,6 +77,44 @@ describe('health', () => {
         const health = await topoCli.health('unreachable-target');
 
         expect(health.target.connectivity.status).toBe('error');
+    });
+});
+
+describe('listCandidateTargets', () => {
+    function createSshConfig(content: string): string {
+        const dir = fs.mkdtempSync(path.join(tmpRoot, 'ssh-config-'));
+        const filePath = path.join(dir, 'config');
+        fs.writeFileSync(filePath, content, 'utf8');
+        return filePath;
+    }
+
+    it('returns host entries from an SSH config file', () => {
+        const configPath = createSshConfig(`
+Host myserver
+    HostName 192.168.1.100
+    User root
+
+Host dev-box
+    HostName 10.0.0.5
+    User admin
+`);
+        const hosts = topoCli.listCandidateTargets(configPath);
+
+        expect(hosts).toContain('myserver');
+        expect(hosts).toContain('dev-box');
+    });
+
+    it('returns an empty array for an empty SSH config', () => {
+        const configPath = createSshConfig('');
+        const hosts = topoCli.listCandidateTargets(configPath);
+
+        expect(hosts).toEqual([]);
+    });
+
+    it('returns an empty array when the config file does not exist', () => {
+        const hosts = topoCli.listCandidateTargets('/nonexistent/path/config');
+
+        expect(hosts).toEqual([]);
     });
 });
 

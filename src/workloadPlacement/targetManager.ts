@@ -1,3 +1,6 @@
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
 import * as vscode from 'vscode';
 import { TargetTreeDataProvider } from './targetTreeDataProvider';
 import * as manifest from '../manifest';
@@ -8,6 +11,7 @@ import { ContainersManager } from './containersManager';
 import { getTreeItemIcon } from './targetTreeTargetItem';
 import { isTargetReady } from '../util/targetState';
 import { TargetItem } from '../util/types';
+import { TopoCli } from '../topoCli';
 
 export class TargetManager {
     public static readonly viewId = `${manifest.PACKAGE_NAME}.target-manager`;
@@ -18,11 +22,15 @@ export class TargetManager {
 
     private statusBarItem: vscode.StatusBarItem | undefined;
 
+    private static readonly configureSshTargetsLabel =
+        '$(gear) Configure SSH targets';
+
     constructor(
         private readonly context: vscode.ExtensionContext,
         private readonly targetTreeDataProvider: TargetTreeDataProvider,
         private readonly targetStore: TargetStore,
         private readonly containersManager: ContainersManager,
+        private readonly topoCli: TopoCli,
     ) {}
 
     public async activate() {
@@ -56,10 +64,7 @@ export class TargetManager {
     }
 
     private async addTarget(): Promise<Target | undefined> {
-        const ssh = await vscode.window.showInputBox({
-            title: 'Enter a connection string for the target',
-            placeHolder: 'root@192.168.1.1',
-        });
+        const ssh = await this.promptForSshTarget();
         if (!ssh?.trim()) {
             return;
         }
@@ -75,6 +80,72 @@ export class TargetManager {
             return;
         }
         await this.targetStore.setSelected(newTarget.ssh);
+    }
+
+    private async promptForSshTarget(): Promise<string | undefined> {
+        const sshHosts = this.getSshHostsFromConfig();
+        if (sshHosts.length === 0) {
+            return vscode.window.showInputBox({
+                title: 'Enter a connection string for the target',
+                placeHolder: 'root@192.168.1.1',
+            });
+        }
+
+        const existingTargets = new Set(
+            this.targetStore.getTargets().map((t) => t.ssh),
+        );
+        const availableHosts = sshHosts.filter(
+            (host) => !existingTargets.has(host),
+        );
+
+        const hostItems: vscode.QuickPickItem[] = availableHosts.map(
+            (host) => ({ label: host }),
+        );
+        const configureItem: vscode.QuickPickItem = {
+            label: TargetManager.configureSshTargetsLabel,
+            description: '~/.ssh/config',
+            kind: vscode.QuickPickItemKind.Default,
+        };
+        const items: vscode.QuickPickItem[] = [
+            ...hostItems,
+            { label: '', kind: vscode.QuickPickItemKind.Separator },
+            configureItem,
+        ];
+
+        const picked = await vscode.window.showQuickPick(items, {
+            title: 'Select an SSH host',
+            placeHolder: 'root@192.168.1.1',
+        });
+
+        if (!picked) {
+            return undefined;
+        }
+
+        if (picked === configureItem) {
+            const sshConfigPath = path.join(os.homedir(), '.ssh', 'config');
+            if (fs.existsSync(sshConfigPath)) {
+                await vscode.window.showTextDocument(
+                    vscode.Uri.file(sshConfigPath),
+                );
+            } else {
+                vscode.window.showWarningMessage(
+                    `SSH config not found at ${sshConfigPath}`,
+                );
+            }
+            return undefined;
+        }
+
+        return picked.label;
+    }
+
+    private getSshHostsFromConfig(): string[] {
+        try {
+            const sshConfigPath = path.join(os.homedir(), '.ssh', 'config');
+            return this.topoCli.listCandidateTargets(sshConfigPath);
+        } catch (error) {
+            logger.debug('Failed to list SSH hosts from config', error);
+            return [];
+        }
     }
 
     protected updateStatusBar(selectedTarget: TargetItem | undefined): void {

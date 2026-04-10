@@ -1,3 +1,4 @@
+import * as fs from 'fs';
 import * as vscode from 'vscode';
 import { TargetManager } from './targetManager';
 import { TargetTreeDataProvider } from './targetTreeDataProvider';
@@ -9,6 +10,7 @@ import { mock, MockProxy } from 'jest-mock-extended';
 import type { TopoCli } from '../topoCli';
 import type { HealthCheckResult } from '../topoCliSchema';
 
+jest.mock('fs');
 jest.mock('../util/logger');
 
 const healthyTarget: HealthCheckResult['target'] = {
@@ -50,11 +52,13 @@ const createTargetManager = () => {
         onDataUpdateEmitter.event,
     );
     const topoCli: MockProxy<TopoCli> = mock<TopoCli>();
+    topoCli.listCandidateTargets.mockReturnValue([]);
     const targetManager = new TargetManager(
         context,
         targetTreeDataProvider,
         targetStore,
         containersManager,
+        topoCli,
     );
     return {
         onChangeEmitter,
@@ -160,6 +164,117 @@ describe('TargetManager', () => {
 
             expect(targetStore.addTarget).not.toHaveBeenCalled();
             expect(targetStore.setSelected).not.toHaveBeenCalled();
+        });
+
+        it('shows SSH hosts from config as quick pick items, excluding existing targets', async () => {
+            const { targetStore, targetManager, topoCli } =
+                createTargetManager();
+            topoCli.listCandidateTargets.mockReturnValue([
+                'myserver',
+                'dev-box',
+                'existing-host',
+            ]);
+            targetStore.getTargets.mockReturnValue([
+                { ssh: 'existing-host', host: 'existing-host' },
+            ]);
+            jest.mocked(vscode.window.showQuickPick).mockResolvedValueOnce({
+                label: 'myserver',
+            });
+            await targetManager.activate();
+
+            await executeCommand(TargetManager.addTargetCommand);
+
+            const quickPickItems = jest.mocked(vscode.window.showQuickPick).mock
+                .calls[0][0] as vscode.QuickPickItem[];
+            const labels = quickPickItems.map((item) => item.label);
+            expect(labels).toContain('myserver');
+            expect(labels).toContain('dev-box');
+            expect(labels).not.toContain('existing-host');
+            expect(labels).toContain('$(gear) Configure SSH targets');
+            expect(targetStore.addTarget).toHaveBeenCalled();
+            expect(targetStore.setSelected).toHaveBeenCalledWith('myserver');
+        });
+
+        it('opens SSH config in editor when "Configure SSH targets" is selected and file exists', async () => {
+            const { targetStore, targetManager, topoCli } =
+                createTargetManager();
+            topoCli.listCandidateTargets.mockReturnValue(['myserver']);
+            targetStore.getTargets.mockReturnValue([]);
+            jest.mocked(fs.existsSync).mockReturnValue(true);
+            jest.mocked(vscode.window.showQuickPick).mockImplementation(
+                async (items) => {
+                    const arr = items as vscode.QuickPickItem[];
+                    return arr.find((i) =>
+                        i.label.includes('Configure SSH targets'),
+                    );
+                },
+            );
+            await targetManager.activate();
+
+            await executeCommand(TargetManager.addTargetCommand);
+
+            expect(vscode.window.showTextDocument).toHaveBeenCalledWith(
+                expect.objectContaining({ scheme: 'file' }),
+            );
+            expect(targetStore.addTarget).not.toHaveBeenCalled();
+        });
+
+        it('shows warning when "Configure SSH targets" is selected but file does not exist', async () => {
+            const { targetStore, targetManager, topoCli } =
+                createTargetManager();
+            topoCli.listCandidateTargets.mockReturnValue(['myserver']);
+            targetStore.getTargets.mockReturnValue([]);
+            jest.mocked(fs.existsSync).mockReturnValue(false);
+            jest.mocked(vscode.window.showQuickPick).mockImplementation(
+                async (items) => {
+                    const arr = items as vscode.QuickPickItem[];
+                    return arr.find((i) =>
+                        i.label.includes('Configure SSH targets'),
+                    );
+                },
+            );
+            await targetManager.activate();
+
+            await executeCommand(TargetManager.addTargetCommand);
+
+            expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
+                expect.stringContaining('SSH config not found'),
+            );
+            expect(vscode.window.showTextDocument).not.toHaveBeenCalled();
+            expect(targetStore.addTarget).not.toHaveBeenCalled();
+        });
+
+        it('does nothing when quick pick is cancelled', async () => {
+            const { targetStore, targetManager, topoCli } =
+                createTargetManager();
+            topoCli.listCandidateTargets.mockReturnValue(['myserver']);
+            targetStore.getTargets.mockReturnValue([]);
+            jest.mocked(vscode.window.showQuickPick).mockResolvedValueOnce(
+                undefined,
+            );
+            await targetManager.activate();
+
+            await executeCommand(TargetManager.addTargetCommand);
+
+            expect(targetStore.addTarget).not.toHaveBeenCalled();
+        });
+
+        it('falls back to input box when listCandidateTargets throws', async () => {
+            const { targetStore, targetManager, topoCli } =
+                createTargetManager();
+            topoCli.listCandidateTargets.mockImplementation(() => {
+                throw new Error('no ssh config');
+            });
+            jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
+                'root@192.0.2.1',
+            );
+            await targetManager.activate();
+
+            await executeCommand(TargetManager.addTargetCommand);
+
+            expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
+            expect(vscode.window.showInputBox).toHaveBeenCalled();
+            expect(targetStore.addTarget).toHaveBeenCalled();
         });
 
         it('shows error when targetStore.addTarget fails', async () => {

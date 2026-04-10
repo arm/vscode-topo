@@ -83,6 +83,7 @@ export async function activate(
         targetTreeDataProvider,
         targetStore,
         containersManager,
+        topoCli,
     );
     const targetDashboardMessageHandler = new TargetDashboardMessageHandler(
         containersManager,

@@ -220,6 +220,36 @@ describe('TopoCli', () => {
         expect(result).toBe(fakeProc);
     });
 
+    it('listCandidateTargets parses JSON output', () => {
+        const hosts = ['myserver', 'dev-box'];
+        execSyncMock.mockReturnValue(JSON.stringify(hosts));
+
+        expect(topoCli.listCandidateTargets('/home/user/.ssh/config')).toEqual(
+            hosts,
+        );
+        expect(execSyncMock).toHaveBeenCalledWith(
+            path.join(ext, 'resources', manifest.TOPO_CLI),
+            ['list-candidate-targets', '/home/user/.ssh/config'],
+            { encoding: 'utf8' },
+        );
+    });
+
+    it('listCandidateTargets returns empty array for empty config', () => {
+        execSyncMock.mockReturnValue('[]');
+
+        expect(topoCli.listCandidateTargets('/home/user/.ssh/config')).toEqual(
+            [],
+        );
+    });
+
+    it('listCandidateTargets throws on invalid JSON output', () => {
+        execSyncMock.mockReturnValue('invalid json');
+
+        expect(() =>
+            topoCli.listCandidateTargets('/home/user/.ssh/config'),
+        ).toThrow();
+    });
+
     it('health parses JSON output', async () => {
         const want: HealthCheckResult = {
             host: { dependencies: [] },

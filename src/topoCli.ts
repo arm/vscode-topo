@@ -3,6 +3,8 @@ import * as childProcess from 'child_process';
 import * as vscode from 'vscode';
 import * as manifest from './manifest';
 import {
+    CandidateTargetList,
+    candidateTargetSchema,
     HealthCheckResult,
     healthCheckResultSchema,
     ProjectDescription,
@@ -203,6 +205,18 @@ export class TopoCli {
             env: this.getProcessEnv(),
             detached: true,
         });
+    }
+
+    /** Lists SSH host entries from the given SSH config file. */
+    public listCandidateTargets(sshConfigPath: string): CandidateTargetList {
+        const bin = this.getBinaryPath();
+        const cmd = ['list-candidate-targets', sshConfigPath];
+        const out = childProcess.execFileSync(bin, cmd, {
+            encoding: 'utf8',
+        });
+        const hosts = JSON.parse(out);
+        assert(hosts, candidateTargetSchema);
+        return hosts;
     }
 
     public async health(sshTarget: string): Promise<HealthCheckResult> {
