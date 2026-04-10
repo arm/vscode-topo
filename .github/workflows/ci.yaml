@@ -23,7 +23,7 @@ jobs:
                   app_id: ${{ secrets.TOPO_ACCESS_APP_ID }}
                   private_key: ${{ secrets.TOPO_ACCESS_APP_PRIVATE_KEY }}
             - uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e
-            - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+            - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
               with:
                   node-version: ${{ env.NODE_VERSION }}
             - name: Install dependencies
@@ -50,7 +50,7 @@ jobs:
                   app_id: ${{ secrets.TOPO_ACCESS_APP_ID }}
                   private_key: ${{ secrets.TOPO_ACCESS_APP_PRIVATE_KEY }}
             - uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e
-            - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+            - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
               with:
                   node-version: ${{ env.NODE_VERSION }}
             - name: Install NPM dependencies
