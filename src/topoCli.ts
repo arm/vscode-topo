@@ -27,21 +27,12 @@ export interface CloneLocalSource {
     type: 'dir';
 }
 
-export interface CloneTemplateSource {
-    template: string;
-    type: 'template';
-}
-
 export interface CloneRawSource {
     value: string;
     type?: never;
 }
 
-export type CloneSource =
-    | CloneRemoteSource
-    | CloneLocalSource
-    | CloneTemplateSource
-    | CloneRawSource;
+export type CloneSource = CloneRemoteSource | CloneLocalSource | CloneRawSource;
 
 export const targetDescriptionFileName = 'target-description.yaml';
 
