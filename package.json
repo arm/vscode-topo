@@ -137,12 +137,6 @@
                 "category": "Arm Topo"
             },
             {
-                "command": "topo.openSerial",
-                "title": "Open UART",
-                "icon": "$(console)",
-                "category": "Arm Topo"
-            },
-            {
                 "command": "topo.deploy.context",
                 "title": "Topo Deploy",
                 "category": "Arm Topo"
@@ -265,10 +259,6 @@
                     "when": "false"
                 },
                 {
-                    "command": "topo.openSerial",
-                    "when": "false"
-                },
-                {
                     "command": "topo.attachVsCode",
                     "when": "false"
                 },
@@ -340,11 +330,6 @@
                     "command": "topo.deleteContainer",
                     "when": "view === topo.target-manager && viewItem =~ /service/",
                     "group": "topo/manage@2"
-                },
-                {
-                    "command": "topo.openSerial",
-                    "when": "view === topo.target-manager && viewItem =~ /^Subsystem /",
-                    "group": "inline"
                 }
             ],
             "view/title": [
@@ -398,7 +383,6 @@
         "tsc-check": "tsc --noEmit -p tsconfig.json"
     },
     "devDependencies": {
-        "@eclipse-cdt-cloud/vscode-serial-monitor": "^2.0.0",
         "@eslint/eslintrc": "^3.3.1",
         "@testing-library/jest-dom": "^6.6.3",
         "@testing-library/react": "^16.3.0",
@@ -448,8 +432,5 @@
     "repository": {
         "type": "git",
         "url": "https://github.com/Arm/vscode-topo.git"
-    },
-    "extensionDependencies": [
-        "eclipse-cdt.serial-monitor"
-    ]
+    }
 }
