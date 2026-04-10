@@ -16,7 +16,6 @@ import { ContainerOpenInBrowser } from './actions/containerOpenInBrowser';
 import { AttachVsCode } from './actions/attachVsCode';
 import { AttachShell } from './actions/attachShell';
 import { ContainerDelete } from './actions/containerDelete';
-import { OpenSerial } from './actions/openSerial';
 import { DockerCommands } from './workloadPlacement/dockerCommands';
 import { OpenTargetDashboard } from './actions/openTargetDashboard';
 import { TargetStore } from './workloadPlacement/targetStore';
@@ -104,7 +103,6 @@ export async function activate(
         context,
         targetDashboardProvider,
     );
-    const openSerial = new OpenSerial(context);
     const health = new HostHealth(context, topoCli);
     const protocolHandler = new ProtocolHandler(projectClone);
 
@@ -129,7 +127,6 @@ export async function activate(
     await containerStop.activate();
     containerDelete.activate();
     openTargetDashboard.activate();
-    openSerial.activate();
     health.activate();
     setupKeys.activate();
     health.checkHostDependencyHealth();

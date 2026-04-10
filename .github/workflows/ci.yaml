@@ -31,7 +31,6 @@ jobs:
             - name: Install dependencies
               env:
                   GITHUB_TOKEN: ${{ steps.get-app-token.outputs.token }}
-                  NODE_AUTH_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
               run: npm ci
             - name: Lint
               run: npm run lint
