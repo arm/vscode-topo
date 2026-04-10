@@ -431,6 +431,6 @@
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/Arm-Debug/vscode-topo.git"
+        "url": "https://github.com/Arm/vscode-topo.git"
     }
 }
