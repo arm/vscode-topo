@@ -39,13 +39,10 @@ jobs:
             - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
               with:
                   node-version: ${{ env.NODE_VERSION }}
-                  registry-url: https://npm.pkg.github.com
-                  always-auth: true
             - name: Install NPM dependencies
               run: npm ci
               env:
                   GITHUB_TOKEN: ${{ steps.get-app-token.outputs.token }}
-                  NODE_AUTH_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
             - name: Calculate Version
               id: calculate-version
               env:
@@ -96,8 +93,6 @@ jobs:
             - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
               with:
                   node-version: ${{ env.NODE_VERSION }}
-                  registry-url: https://npm.pkg.github.com
-                  always-auth: true
             - name: Download version bump patch
               if: needs.prepare-version.outputs.version
               uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
@@ -110,7 +105,6 @@ jobs:
             - name: Install NPM dependencies
               env:
                   GITHUB_TOKEN: ${{ steps.get-app-token.outputs.token }}
-                  NODE_AUTH_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
               run: npm ci
             - name: Download other dependencies
               run: npm run download
