@@ -13,6 +13,29 @@ import { isTargetReady } from '../util/targetState';
 import { TargetItem } from '../util/types';
 import { TopoCli } from '../topoCli';
 
+function buildQuickPickItems(
+    availableHosts: string[],
+    filter: string,
+    configureItem: vscode.QuickPickItem,
+): vscode.QuickPickItem[] {
+    const hostItems: vscode.QuickPickItem[] = availableHosts.map((host) => ({
+        label: host,
+    }));
+    const trimmed = filter.trim();
+    const isNovelEntry =
+        trimmed.length > 0 &&
+        !availableHosts.some((h) => h.toLowerCase() === trimmed.toLowerCase());
+    const manualItem: vscode.QuickPickItem | undefined = isNovelEntry
+        ? { label: trimmed, description: 'Add new SSH target' }
+        : undefined;
+    return [
+        ...(manualItem ? [manualItem] : []),
+        ...hostItems,
+        { label: '', kind: vscode.QuickPickItemKind.Separator },
+        configureItem,
+    ];
+}
+
 export class TargetManager {
     public static readonly viewId = `${manifest.PACKAGE_NAME}.target-manager`;
     public static readonly refreshCommand = `${manifest.PACKAGE_NAME}.refresh`;
@@ -82,15 +105,8 @@ export class TargetManager {
         await this.targetStore.setSelected(newTarget.ssh);
     }
 
-    private async promptForSshTarget(): Promise<string | undefined> {
+    private promptForSshTarget(): Promise<string | undefined> {
         const sshHosts = this.getSshHostsFromConfig();
-        if (sshHosts.length === 0) {
-            return vscode.window.showInputBox({
-                title: 'Enter a connection string for the target',
-                placeHolder: 'root@192.168.1.1',
-            });
-        }
-
         const existingTargets = new Set(
             this.targetStore.getTargets().map((t) => t.ssh),
         );
@@ -98,44 +114,68 @@ export class TargetManager {
             (host) => !existingTargets.has(host),
         );
 
-        const hostItems: vscode.QuickPickItem[] = availableHosts.map(
-            (host) => ({ label: host }),
-        );
         const configureItem: vscode.QuickPickItem = {
             label: TargetManager.configureSshTargetsLabel,
             description: '~/.ssh/config',
-            kind: vscode.QuickPickItemKind.Default,
+            alwaysShow: true,
         };
-        const items: vscode.QuickPickItem[] = [
-            ...hostItems,
-            { label: '', kind: vscode.QuickPickItemKind.Separator },
-            configureItem,
-        ];
 
-        const picked = await vscode.window.showQuickPick(items, {
-            title: 'Select an SSH host',
-            placeHolder: 'root@192.168.1.1',
+        const quickPick = vscode.window.createQuickPick();
+        quickPick.title = 'Add new target';
+        quickPick.placeholder =
+            'Select a host or type a connection string (e.g. root@192.168.1.1)';
+        quickPick.items = buildQuickPickItems(
+            availableHosts,
+            '',
+            configureItem,
+        );
+
+        quickPick.onDidChangeValue((value) => {
+            quickPick.items = buildQuickPickItems(
+                availableHosts,
+                value,
+                configureItem,
+            );
         });
 
-        if (!picked) {
-            return undefined;
-        }
+        return new Promise<string | undefined>((resolve) => {
+            let accepted = false;
+            quickPick.onDidAccept(async () => {
+                accepted = true;
+                const selected = quickPick.selectedItems[0];
+                quickPick.hide();
+                if (!selected) {
+                    resolve(undefined);
+                    return;
+                }
+                if (selected === configureItem) {
+                    await this.openSshConfig();
+                    resolve(undefined);
+                    return;
+                }
+                resolve(selected.label);
+            });
+            quickPick.onDidHide(() => {
+                quickPick.dispose();
+                if (!accepted) {
+                    resolve(undefined);
+                }
+            });
+            quickPick.show();
+        });
+    }
 
-        if (picked === configureItem) {
-            const sshConfigPath = path.join(os.homedir(), '.ssh', 'config');
-            if (fs.existsSync(sshConfigPath)) {
-                await vscode.window.showTextDocument(
-                    vscode.Uri.file(sshConfigPath),
-                );
-            } else {
-                vscode.window.showWarningMessage(
-                    `SSH config not found at ${sshConfigPath}`,
-                );
-            }
-            return undefined;
+    private async openSshConfig(): Promise<void> {
+        const sshConfigPath = path.join(os.homedir(), '.ssh', 'config');
+        if (fs.existsSync(sshConfigPath)) {
+            await vscode.window.showTextDocument(
+                vscode.Uri.file(sshConfigPath),
+            );
+        } else {
+            vscode.window.showWarningMessage(
+                `SSH config not found at ${sshConfigPath}`,
+            );
         }
-
-        return picked.label;
     }
 
     private getSshHostsFromConfig(): string[] {
