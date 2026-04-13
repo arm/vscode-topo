@@ -154,8 +154,6 @@ const getDefaultProjectNameFromSourceString = (
     switch (cloneSource.type) {
         case 'dir':
             return path.basename(cloneSource.path);
-        case 'template':
-            return cloneSource.template;
         case 'git':
             return getDefaultProjectNameFromUrl(cloneSource.url);
         case undefined:
@@ -181,8 +179,6 @@ const getCloneSourceString = (cloneSource: CloneSource): string => {
     switch (cloneSource.type) {
         case 'dir':
             return `dir:${cloneSource.path}`;
-        case 'template':
-            return `template:${cloneSource.template}`;
         case 'git':
             return `git:${cloneSource.url}`;
         case undefined:
@@ -323,8 +319,8 @@ export class ProjectClone {
         }
         await this.cloneProjectFromSource(
             {
-                type: 'template',
-                template: selectedTemplate.name,
+                type: 'git',
+                url: selectedTemplate.url,
             },
             {},
         );

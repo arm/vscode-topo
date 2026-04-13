@@ -11,7 +11,7 @@ import { showAndLogError } from './util/showAndLogError';
  * Currently supports cloning via:
  * - `vscode://arm.topo/clone?source=<clone-source>&<option>=<value>...`
  *
- * `source` is required and uses the same format as `topo clone` (e.g. `git:https://...`, `template:...`, or a bare git URL).
+ * `source` is required and uses the same format as `topo clone` (e.g. `git:https://...` or a bare git URL).
  * Additional query parameters are forwarded to `topo clone` as `key=value` arguments.
  */
 export class ProtocolHandler implements vscode.UriHandler {

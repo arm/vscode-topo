@@ -491,14 +491,14 @@ describe('ProjectClone', () => {
         const templateList: TemplateDescription[] = [
             {
                 name: 'template-alpha',
-                url: '/templates/template-alpha',
+                url: 'https://example.com/templates/template-alpha.git',
                 description: 'Template Apple description. Apple is a fruit.',
                 ref: 'r',
                 features: [],
             },
             {
                 name: 'template-banana',
-                url: '/templates/template-banana',
+                url: 'https://example.com/templates/template-banana.git',
                 description:
                     'Template Cabbage description. Cabbage is a vegetable.',
                 ref: 'r',
@@ -538,7 +538,7 @@ describe('ProjectClone', () => {
             });
             expect(vscode.ShellExecution).toHaveBeenCalledWith('topo', [
                 'clone',
-                'template:template-alpha',
+                'git:https://example.com/templates/template-alpha.git',
                 path.join(destinationUri.fsPath, 'myproj'),
             ]);
         });
@@ -604,11 +604,11 @@ describe('ProjectClone', () => {
             );
             expect(vscode.window.showInputBox).toHaveBeenCalledWith({
                 prompt: 'Enter the project name',
-                value: templateQuickPickItems[0].label,
+                value: 'template-alpha',
             });
             expect(vscode.ShellExecution).toHaveBeenCalledWith('topo', [
                 'clone',
-                'template:template-alpha',
+                'git:https://example.com/templates/template-alpha.git',
                 path.join(workspaceUri.fsPath, 'myproj'),
             ]);
             expect(vscode.Task).toHaveBeenCalledWith(
