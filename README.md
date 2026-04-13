@@ -129,4 +129,4 @@ To submit feedback or report issues, please use [GitHub Issues](https://github.c
 
 ## License
 
-[MIT](LICENSE)
+[Apache 2.0](LICENSE)
