@@ -5,8 +5,6 @@ import * as fs from 'fs';
 import * as os from 'os';
 import { ProjectDescription } from './topoCliSchema';
 
-const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'topo-integration-'));
-
 const extensionPath = path.resolve(__dirname, '..');
 const topoCli = new TopoCli(
     extensionPath,
@@ -16,10 +14,6 @@ const topoCli = new TopoCli(
 // The real `topo health localhost` integration path can take longer on
 // Windows CI runners because it probes the local host environment.
 jest.setTimeout(process.platform === 'win32' ? 60_000 : 15_000);
-
-afterAll(() => {
-    fs.rmSync(tmpRoot, { recursive: true, force: true });
-});
 
 describe('getVersion', () => {
     it('parses output', async () => {

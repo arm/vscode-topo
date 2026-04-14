@@ -105,7 +105,8 @@ export class TargetManager {
     }
 
     private promptForSshTarget(): Promise<string | undefined> {
-        const sshHosts = this.getSshHostsFromConfig();
+        const sshConfigPath = path.join(os.homedir(), '.ssh', 'config');
+        const sshHosts = getHosts(sshConfigPath);
         const existingTargets = new Set(
             this.targetStore.getTargets().map((t) => t.ssh),
         );
@@ -174,16 +175,6 @@ export class TargetManager {
             vscode.window.showWarningMessage(
                 `SSH config not found at ${sshConfigPath}`,
             );
-        }
-    }
-
-    private getSshHostsFromConfig(): string[] {
-        try {
-            const sshConfigPath = path.join(os.homedir(), '.ssh', 'config');
-            return getHosts(sshConfigPath);
-        } catch (error) {
-            logger.debug('Failed to list SSH hosts from config', error);
-            return [];
         }
     }
 
