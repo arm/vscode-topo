@@ -139,11 +139,7 @@ describe('buildQuickPickItems', () => {
     });
 
     it('does not prepend manual entry when filter matches a host (case-insensitive)', () => {
-        const items = buildQuickPickItems(
-            ['Host-A'],
-            'host-a',
-            configureItem,
-        );
+        const items = buildQuickPickItems(['Host-A'], 'host-a', configureItem);
 
         expect(items[0]).toEqual({ label: 'Host-A' });
     });
@@ -155,11 +151,7 @@ describe('buildQuickPickItems', () => {
     });
 
     it('trims whitespace from the filter for the manual entry label', () => {
-        const items = buildQuickPickItems(
-            [],
-            '  my-host  ',
-            configureItem,
-        );
+        const items = buildQuickPickItems([], '  my-host  ', configureItem);
 
         expect(items[0]).toEqual({
             label: 'my-host',
