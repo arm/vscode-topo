@@ -139,30 +139,24 @@ export class TargetManager {
         });
 
         return new Promise<string | undefined>((resolve) => {
-            let accepted = false;
             quickPick.onDidAccept(async () => {
-                accepted = true;
                 const selected = quickPick.selectedItems[0];
                 quickPick.hide();
-                if (!selected) {
-                    resolve(undefined);
-                    return;
-                }
                 if (selected === configureItem) {
                     await this.openSshConfig();
                     resolve(undefined);
                     return;
                 }
-                resolve(selected.label);
+
+                resolve(selected?.label);
             });
+
             quickPick.onDidHide(() => {
-                quickPick.dispose();
-                if (!accepted) {
-                    resolve(undefined);
-                }
+                resolve(undefined);
             });
+
             quickPick.show();
-        });
+        }).finally(() => quickPick.dispose());
     }
 
     private async openSshConfig(): Promise<void> {
