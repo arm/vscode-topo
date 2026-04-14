@@ -36,16 +36,13 @@ jobs:
                   app_id: ${{ secrets.TOPO_ACCESS_APP_ID }}
                   private_key: ${{ secrets.TOPO_ACCESS_APP_PRIVATE_KEY }}
             - uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e
-            - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+            - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
               with:
                   node-version: ${{ env.NODE_VERSION }}
-                  registry-url: https://npm.pkg.github.com
-                  always-auth: true
             - name: Install NPM dependencies
               run: npm ci
               env:
                   GITHUB_TOKEN: ${{ steps.get-app-token.outputs.token }}
-                  NODE_AUTH_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
             - name: Calculate Version
               id: calculate-version
               env:
@@ -67,7 +64,7 @@ jobs:
               run: git diff > new-version.patch
             - name: Store version bump patch
               if: steps.calculate-version.outputs.version
-              uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+              uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
               with:
                   name: new-version-patch
                   path: ./new-version.patch
@@ -93,11 +90,9 @@ jobs:
                   app_id: ${{ secrets.TOPO_ACCESS_APP_ID }}
                   private_key: ${{ secrets.TOPO_ACCESS_APP_PRIVATE_KEY }}
             - uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e
-            - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+            - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
               with:
                   node-version: ${{ env.NODE_VERSION }}
-                  registry-url: https://npm.pkg.github.com
-                  always-auth: true
             - name: Download version bump patch
               if: needs.prepare-version.outputs.version
               uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
@@ -110,14 +105,13 @@ jobs:
             - name: Install NPM dependencies
               env:
                   GITHUB_TOKEN: ${{ steps.get-app-token.outputs.token }}
-                  NODE_AUTH_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
               run: npm ci
             - name: Download other dependencies
               run: npm run download
             - name: Package VSIX
               run: npm run package -- --target ${{ matrix.platform }} $PRE_RELEASE_FLAG
             - name: Upload VSIX
-              uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+              uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
               with:
                   name: vsix-package-${{ matrix.platform }}
                   path: ./*${{ matrix.platform }}*.vsix
@@ -174,7 +168,7 @@ jobs:
               with:
                   path: artifacts
             - name: Release
-              uses: softprops/action-gh-release@6da8fa9354ddfdc4aeace5fc48d7f679b5214090
+              uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda
               with:
                   files: artifacts/*/*.vsix
                   tag_name: v${{ needs.prepare-version.outputs.version }}
@@ -194,7 +188,7 @@ jobs:
                   pattern: vsix-package-*
                   merge-multiple: true
                   path: artifacts
-            - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+            - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
               with:
                   node-version: ${{ env.NODE_VERSION }}
             - name: Publish to VS Code Marketplace

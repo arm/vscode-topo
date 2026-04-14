@@ -23,8 +23,6 @@ export const parseCloneSourceString = (
     switch (sourceType) {
         case 'dir':
             return { type: 'dir', path: value };
-        case 'template':
-            return { type: 'template', template: value };
         case 'git':
             return { type: 'git', url: value };
         default:

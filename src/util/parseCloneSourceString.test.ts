@@ -10,13 +10,6 @@ describe('parseCloneSourceString', () => {
         });
     });
 
-    it('parses template clone sources', () => {
-        expect(parseCloneSourceString('template:hello-world')).toEqual({
-            type: 'template',
-            template: 'hello-world',
-        });
-    });
-
     it('parses dir clone sources', () => {
         expect(parseCloneSourceString('dir:/tmp/project')).toEqual({
             type: 'dir',
@@ -66,6 +59,12 @@ describe('parseCloneSourceString', () => {
             expect.objectContaining({
                 code: 'CLONE',
                 message: 'Invalid type: foo',
+            }),
+        );
+        expect(() => parseCloneSourceString('template:hello-world')).toThrow(
+            expect.objectContaining({
+                code: 'CLONE',
+                message: 'Invalid type: template',
             }),
         );
     });

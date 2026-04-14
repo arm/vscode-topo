@@ -35,7 +35,7 @@ Follow these steps to build and package the extension locally:
 
 1. Clone the repository:
     ```bash
-    git clone https://github.com/Arm-Debug/vscode-topo.git
+    git clone https://github.com/Arm/vscode-topo.git
     cd vscode-topo
     ```
 2. Install dependencies:
