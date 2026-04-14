@@ -104,14 +104,12 @@ const createTargetManager = () => {
         onDataUpdateEmitter.event,
     );
     const topoCli: MockProxy<TopoCli> = mock<TopoCli>();
-    topoCli.listCandidateTargets.mockReturnValue([]);
     targetStore.getTargets.mockReturnValue([]);
     const targetManager = new TargetManager(
         context,
         targetTreeDataProvider,
         targetStore,
         containersManager,
-        topoCli,
     );
     return {
         onChangeEmitter,
@@ -394,9 +392,9 @@ describe('TargetManager', () => {
             expect(mockQuickPick.show).toHaveBeenCalled();
 
             simulateType('root@192.0.2.1');
-            simulateAccept(mockQuickPick.items.find(
-                (i) => i.label === 'root@192.0.2.1',
-            )!);
+            simulateAccept(
+                mockQuickPick.items.find((i) => i.label === 'root@192.0.2.1')!,
+            );
             await commandPromise;
 
             expect(targetStore.addTarget).toHaveBeenCalled();
@@ -421,9 +419,9 @@ describe('TargetManager', () => {
                 TargetManager.addTargetCommand,
             );
             simulateType('root@192.0.2.1');
-            simulateAccept(mockQuickPick.items.find(
-                (i) => i.label === 'root@192.0.2.1',
-            )!);
+            simulateAccept(
+                mockQuickPick.items.find((i) => i.label === 'root@192.0.2.1')!,
+            );
             await commandPromise;
 
             expect(jest.mocked(targetStore.addTarget)).toHaveBeenCalled();

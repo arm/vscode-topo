@@ -1,0 +1,59 @@
+import { Directive, Line, LineType, parse as parseSSHConfig } from 'ssh-config';
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
+import { logger } from './logger';
+
+export const topoSshConfigDir = path.join(os.homedir(), '.ssh', 'topo_config');
+export const topoSshConfigGlob = path.join(topoSshConfigDir, '*.conf');
+
+function isDirective(line: Line): line is Directive {
+    return line.type === LineType.DIRECTIVE;
+}
+
+function flattenValue(value: Directive['value']): string[] {
+    if (typeof value === 'string') {
+        return [value];
+    } else {
+        return value.map((v) => v.val);
+    }
+}
+
+export function getHosts(file: string): string[] {
+    const hosts = new Set<string>();
+    const queue: string[] = [file];
+    const visited = new Set<string>();
+
+    while (queue.length > 0) {
+        const currentFile = queue.shift()!;
+        if (visited.has(currentFile)) {
+            continue;
+        }
+        visited.add(currentFile);
+
+        if (!fs.existsSync(currentFile)) {
+            continue;
+        }
+
+        const content = fs.readFileSync(currentFile, 'utf8');
+        const config = parseSSHConfig(content);
+        for (const line of config) {
+            if (!isDirective(line)) {
+                continue;
+            }
+
+            const directive = line.param.toLowerCase();
+            if (directive === 'include') {
+                for (const value of flattenValue(line.value)) {
+                    logger.error(value);
+                }
+            } else if (directive === 'host') {
+                for (const value of flattenValue(line.value)) {
+                    hosts.add(value);
+                }
+            }
+        }
+    }
+
+    return Array.from(hosts);
+}

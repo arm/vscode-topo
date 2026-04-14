@@ -11,7 +11,7 @@ import { ContainersManager } from './containersManager';
 import { getTreeItemIcon } from './targetTreeTargetItem';
 import { isTargetReady } from '../util/targetState';
 import { TargetItem } from '../util/types';
-import { TopoCli } from '../topoCli';
+import { getHosts } from '../util/ssh';
 
 function buildQuickPickItems(
     availableHosts: string[],
@@ -53,7 +53,6 @@ export class TargetManager {
         private readonly targetTreeDataProvider: TargetTreeDataProvider,
         private readonly targetStore: TargetStore,
         private readonly containersManager: ContainersManager,
-        private readonly topoCli: TopoCli,
     ) {}
 
     public async activate() {
@@ -181,7 +180,7 @@ export class TargetManager {
     private getSshHostsFromConfig(): string[] {
         try {
             const sshConfigPath = path.join(os.homedir(), '.ssh', 'config');
-            return this.topoCli.listCandidateTargets(sshConfigPath);
+            return getHosts(sshConfigPath);
         } catch (error) {
             logger.debug('Failed to list SSH hosts from config', error);
             return [];
