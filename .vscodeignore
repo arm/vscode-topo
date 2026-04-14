@@ -22,3 +22,6 @@ jest.config.js
 tsconfig.eslint.json
 tsconfig.json
 .eslintignore
+.nvmrc
+.prettierignore
+agents.md
