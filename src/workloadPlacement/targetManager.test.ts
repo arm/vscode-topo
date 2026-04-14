@@ -190,12 +190,7 @@ describe('TargetManager', () => {
             jest.mocked(vscode.window.createQuickPick).mockReturnValue(
                 mockQuickPick as unknown as vscode.QuickPick<vscode.QuickPickItem>,
             );
-            const { targetStore, targetManager, topoCli } =
-                createTargetManager();
-            topoCli.listCandidateTargets.mockReturnValue([
-                'myserver',
-                'dev-box',
-            ]);
+            const { targetStore, targetManager } = createTargetManager();
             targetStore.getTargets.mockReturnValue([]);
             await targetManager.activate();
 
@@ -214,13 +209,7 @@ describe('TargetManager', () => {
             jest.mocked(vscode.window.createQuickPick).mockReturnValue(
                 mockQuickPick as unknown as vscode.QuickPick<vscode.QuickPickItem>,
             );
-            const { targetStore, targetManager, topoCli } =
-                createTargetManager();
-            topoCli.listCandidateTargets.mockReturnValue([
-                'myserver',
-                'dev-box',
-                'existing-host',
-            ]);
+            const { targetStore, targetManager } = createTargetManager();
             targetStore.getTargets.mockReturnValue([
                 { ssh: 'existing-host', host: 'existing-host' },
             ]);
@@ -245,9 +234,7 @@ describe('TargetManager', () => {
             jest.mocked(vscode.window.createQuickPick).mockReturnValue(
                 mockQuickPick as unknown as vscode.QuickPick<vscode.QuickPickItem>,
             );
-            const { targetStore, targetManager, topoCli } =
-                createTargetManager();
-            topoCli.listCandidateTargets.mockReturnValue(['myserver']);
+            const { targetStore, targetManager } = createTargetManager();
             targetStore.getTargets.mockReturnValue([]);
             await targetManager.activate();
 
@@ -278,8 +265,7 @@ describe('TargetManager', () => {
             jest.mocked(vscode.window.createQuickPick).mockReturnValue(
                 mockQuickPick as unknown as vscode.QuickPick<vscode.QuickPickItem>,
             );
-            const { targetManager, topoCli } = createTargetManager();
-            topoCli.listCandidateTargets.mockReturnValue(['myserver']);
+            const { targetManager } = createTargetManager();
             await targetManager.activate();
 
             const commandPromise = executeCommand(
@@ -302,9 +288,7 @@ describe('TargetManager', () => {
             jest.mocked(vscode.window.createQuickPick).mockReturnValue(
                 mockQuickPick as unknown as vscode.QuickPick<vscode.QuickPickItem>,
             );
-            const { targetStore, targetManager, topoCli } =
-                createTargetManager();
-            topoCli.listCandidateTargets.mockReturnValue(['myserver']);
+            const { targetStore, targetManager } = createTargetManager();
             targetStore.getTargets.mockReturnValue([]);
             await targetManager.activate();
 
@@ -322,9 +306,7 @@ describe('TargetManager', () => {
             jest.mocked(vscode.window.createQuickPick).mockReturnValue(
                 mockQuickPick as unknown as vscode.QuickPick<vscode.QuickPickItem>,
             );
-            const { targetStore, targetManager, topoCli } =
-                createTargetManager();
-            topoCli.listCandidateTargets.mockReturnValue(['myserver']);
+            const { targetStore, targetManager } = createTargetManager();
             targetStore.getTargets.mockReturnValue([]);
             jest.mocked(fs.existsSync).mockReturnValue(true);
             await targetManager.activate();
@@ -349,9 +331,7 @@ describe('TargetManager', () => {
             jest.mocked(vscode.window.createQuickPick).mockReturnValue(
                 mockQuickPick as unknown as vscode.QuickPick<vscode.QuickPickItem>,
             );
-            const { targetStore, targetManager, topoCli } =
-                createTargetManager();
-            topoCli.listCandidateTargets.mockReturnValue(['myserver']);
+            const { targetStore, targetManager } = createTargetManager();
             targetStore.getTargets.mockReturnValue([]);
             jest.mocked(fs.existsSync).mockReturnValue(false);
             await targetManager.activate();
@@ -378,11 +358,7 @@ describe('TargetManager', () => {
             jest.mocked(vscode.window.createQuickPick).mockReturnValue(
                 mockQuickPick as unknown as vscode.QuickPick<vscode.QuickPickItem>,
             );
-            const { targetStore, targetManager, topoCli } =
-                createTargetManager();
-            topoCli.listCandidateTargets.mockImplementation(() => {
-                throw new Error('no ssh config');
-            });
+            const { targetStore, targetManager } = createTargetManager();
             await targetManager.activate();
 
             const commandPromise = executeCommand(

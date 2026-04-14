@@ -19,6 +19,11 @@ function flattenValue(value: Directive['value']): string[] {
     }
 }
 
+function resolveInclude(value: string): string[] {
+    const resolved = path.resolve(os.homedir(), '.ssh', value);
+    return fs.globSync(resolved);
+}
+
 export function getHosts(file: string): string[] {
     const hosts = new Set<string>();
     const queue: string[] = [file];
@@ -45,7 +50,14 @@ export function getHosts(file: string): string[] {
             const directive = line.param.toLowerCase();
             if (directive === 'include') {
                 for (const value of flattenValue(line.value)) {
-                    logger.error(value);
+                    for (const includedFile of resolveInclude(value)) {
+                        logger.info(
+                            `Including SSH config file: ${includedFile}`,
+                            line,
+                            currentFile,
+                        );
+                        queue.push(includedFile);
+                    }
                 }
             } else if (directive === 'host') {
                 for (const value of flattenValue(line.value)) {
