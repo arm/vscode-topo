@@ -13,7 +13,7 @@ import { isTargetReady } from '../util/targetState';
 import { TargetItem } from '../util/types';
 import { getHosts } from '../util/ssh';
 
-function buildQuickPickItems(
+export function buildQuickPickItems(
     availableHosts: string[],
     filter: string,
     configureItem: vscode.QuickPickItem,
