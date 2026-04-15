@@ -106,7 +106,11 @@ const LogLevel = {
 };
 const window = {
     activeColorTheme: { kind: 1 },
-    createStatusBarItem: jest.fn(() => ({ show: jest.fn(), hide: jest.fn() })),
+    createStatusBarItem: jest.fn(() => ({
+        show: jest.fn(),
+        hide: jest.fn(),
+        dispose: jest.fn(),
+    })),
     createWebviewPanel: jest.fn(),
     registerWebviewPanelSerializer: jest.fn(),
     registerWebviewViewProvider: jest.fn(),
@@ -121,8 +125,8 @@ const window = {
     showInputBox: jest.fn(),
     withProgress: jest.fn(),
     registerTreeDataProvider: jest.fn(),
-    registerCustomEditorProvider: jest.fn(),
-    registerUriHandler: jest.fn(),
+    registerCustomEditorProvider: jest.fn(() => ({ dispose: jest.fn() })),
+    registerUriHandler: jest.fn(() => ({ dispose: jest.fn() })),
     terminals: [],
     createTerminal: jest.fn(() => ({
         sendText: jest.fn(),
@@ -131,6 +135,7 @@ const window = {
     createTreeView: jest.fn(() => ({
         onDidExpandElement: new EventEmitter().event,
         onDidCollapseElement: new EventEmitter().event,
+        dispose: jest.fn(),
     })),
     state: { focused: true },
     createOutputChannel: jest.fn(() => ({
