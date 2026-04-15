@@ -92,4 +92,18 @@ describe('getHosts', () => {
 
         expect(hosts).toEqual(['ok']);
     });
+
+    it('ignores hosts containing wildcard characters', async () => {
+        const file = writeSSH('config', [
+            'Host *.co.uk',
+            'Host 192.168.0.?',
+            'Host !*.dialup.example.com',
+            'Host ok',
+            'Host !ok',
+        ]);
+
+        const hosts = await getHosts(file);
+
+        expect(hosts).toEqual(['ok']);
+    });
 });

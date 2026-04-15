@@ -3,12 +3,17 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import { logger } from './logger';
+import { is } from 'superstruct';
 
 const sshDir = path.join(os.homedir(), '.ssh');
 export const defaultSshConfigPath = path.join(sshDir, 'config');
 
 function isDirective(line: Line): line is Directive {
     return line.type === LineType.DIRECTIVE;
+}
+
+function isPlainHost(host: string): boolean {
+    return !/[?*!]/.test(host);
 }
 
 function flattenValue(value: Directive['value']): string[] {
@@ -61,7 +66,9 @@ export async function getHosts(file: string): Promise<string[]> {
                 }
             } else if (directive === 'host') {
                 for (const value of flattenValue(line.value)) {
-                    hosts.add(value);
+                    if (isPlainHost(value)) {
+                        hosts.add(value);
+                    }
                 }
             }
         }
