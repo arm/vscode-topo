@@ -5,12 +5,14 @@ import { ProjectClone } from './projectClone';
 import { ProtocolHandler } from './protocolHandler';
 import { TopoCli } from './topoCli';
 import { mutable } from './util/mutable';
-import * as showAndLogErrorModule from './util/showAndLogError';
+import { showAndLogError } from './util/showAndLogError';
 import { TargetStore } from './workloadPlacement/targetStore';
 
-const showAndLogErrorSpy = jest
-    .spyOn(showAndLogErrorModule, 'showAndLogError')
-    .mockImplementation(() => {});
+jest.mock('./util/showAndLogError', () => ({
+    showAndLogError: jest.fn(),
+}));
+
+const showAndLogErrorSpy = jest.mocked(showAndLogError);
 
 const subscriptions: vscode.Disposable[] = [];
 const workspacePath = path.join('home', 'workspace');
