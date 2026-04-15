@@ -1,13 +1,8 @@
-# vscode-topo
+# Arm Topo
 
-A Visual Studio Code extension for managing and editing a Topo project with ease and visualize the services running on a target.
+The Arm® Topo extension for Visual Studio Code provides a graphical interface for managing [Topo](https://github.com/Arm/topo) projects. Use the extension to edit compose files visually, manage remote targets, deploy services, and monitor running containers — all from within VS Code.
 
-## Features
-
-- Custom editor for `compose.topo.yaml` files
-- Visual form-based editing and YAML synchronization
-- Dynamic target management
-- Subsystem-aware service grouping
+This extension is [free to use](LICENSE) and can be installed from the VS Code Marketplace or from a `.vsix` package.
 
 ## Requirements
 
@@ -15,76 +10,123 @@ A Visual Studio Code extension for managing and editing a Topo project with ease
 
 ## Getting Started
 
-1. Install the extension from the VSIX or VS Code Marketplace.
-2. Open a `compose.topo.yaml` file to launch the compose editor.
-3. Use the form to add or remove services.
-4. Use the deploy button
-5. Access the target-manager view to visualize the target services
+1. Install the extension from the VS Code Marketplace or a `.vsix` package.
+2. Add a target from the **Targets** view in the activity bar.
+3. Configure a target, making sure all the dependencies are set up correctly.
+4. Deploy your services to the target.
 
-## Building from Source
+## Target Management
 
-Follow these steps to build and package the extension locally:
+The **Targets** view appears in the activity bar and lets you manage remote devices where services are deployed.
 
-### Prerequisites
+### Add a Target
 
-- Node.js (^22.0.0)
-- npm (^10.0.0)
-- VS Code Extension Manager (vsce) for packaging (`npm install -g vsce`)
+Click the **+** button in the Targets view title bar and enter an SSH connection string (for example `root@192.168.1.1`). The extension automatically selects the first target you add.
 
-### Setup
+### Target Tree
 
-1. Clone the repository:
-    ```bash
-    git clone https://github.com/Arm/vscode-topo.git
-    cd vscode-topo
-    ```
-2. Install dependencies:
+Each target in the tree shows:
 
-    ```bash
-    npm install
-    ```
+| Item                 | Description                                                           |
+| -------------------- | --------------------------------------------------------------------- |
+| **Subsystem groups** | Host and any remote processor subsystems detected on the target.      |
+| **Services**         | Running or stopped containers under each subsystem, with state icons. |
+| **Dependencies**     | Connectivity, driver, and target dependency health checks.            |
 
-3. Download the `topo` binary:
-    ```bash
-    npm run download
-    ```
+### Target Actions
 
-### Build
+Right-click a target in the tree to access these actions:
 
-Compile the extension and webview bundles:
+| Command            | Description                                                     |
+| ------------------ | --------------------------------------------------------------- |
+| **Select Target**  | Make the target active for deployments and actions.             |
+| **Remove Target**  | Delete the target from the configuration.                       |
+| **Inspect Health** | Run a health check and display the JSON results.                |
+| **Setup Keys**     | Configure SSH key-based authentication for passwordless access. |
 
-```bash
-npm run build
+## Container Actions
+
+Right-click a service in the Targets tree to manage individual containers:
+
+| Command             | Description                                                              |
+| ------------------- | ------------------------------------------------------------------------ |
+| **Start**           | Start a stopped container.                                               |
+| **Stop**            | Stop a running container.                                                |
+| **Delete**          | Remove a container.                                                      |
+| **Attach Shell**    | Open a VS Code terminal connected to the container.                      |
+| **Attach VS Code**  | Open the container in a VS Code Remote Containers session.               |
+| **Open in Browser** | Open the service in the default browser (auto-detects common web ports). |
+
+## Deploy
+
+Deploy a compose file to the selected target. You can trigger a deployment from:
+
+- The **deploy button** in the compose editor.
+- Right-clicking a compose YAML file in the Explorer or editor tab and selecting **Topo Deploy**.
+
+The extension runs `topo deploy --target <ssh>` in a task terminal and reports success or failure.
+
+## Project Management
+
+### Initialize a Project
+
+Use the **Arm Topo: Initialize Project** command from the Command Palette to create a new Topo project in the current workspace.
+
+### Clone a Project
+
+Three clone commands are available from the Command Palette:
+
+| Command                              | Description                                 |
+| ------------------------------------ | ------------------------------------------- |
+| **Arm Topo: Clone Remote Project**   | Clone from a Git repository.                |
+| **Arm Topo: Clone Template Project** | Clone from a curated list of Arm templates. |
+| **Arm Topo: Clone Local Project**    | Clone from a local directory.               |
+
+After cloning, the extension offers to open the project in the current window, a new window, or add it to the workspace.
+
+### Protocol Handler
+
+The extension supports a URI scheme for cloning projects from external links:
+
+```
+vscode://arm.topo/clone?source=git:https://github.com/example/repo
 ```
 
-### Package
+## Host Health Check
 
-Generate a .vsix package for distribution:
+On startup, the extension checks that host dependencies (Docker, SSH) are available. If any are missing or unhealthy, a warning notification is shown.
 
-```bash
-npm run package
-```
+Use the **Arm Topo: Inspect Host Health** command to view a detailed health report.
 
-(This requires `vsce` to be installed globally.)
+## Commands
 
-### Run Tests
+All commands are under the **Arm Topo** category. Commands available from the Command Palette:
 
-Execute unit tests and generate coverage report:
+| Command                            | Description                                     |
+| ---------------------------------- | ----------------------------------------------- |
+| `Arm Topo: Initialize Project`     | Initialize a new Topo project in the workspace. |
+| `Arm Topo: Clone Remote Project`   | Clone a project from a Git repository.          |
+| `Arm Topo: Clone Template Project` | Clone a project from an Arm template.           |
+| `Arm Topo: Clone Local Project`    | Clone a project from a local directory.         |
+| `Arm Topo: Inspect Host Health`    | Display host dependency health report.          |
 
-```bash
-npm test
-```
+Additional commands are available through the Targets tree view context menus and the compose editor title bar (see sections above).
 
-### Access the `topo` binary
+## Settings
 
-When the extension is loaded the `topo` binary path is added to the `PATH` and can be directly accessed from the VS Code terminal:
+| Setting                     | Type                                            | Default | Description                                                                             |
+| --------------------------- | ----------------------------------------------- | ------- | --------------------------------------------------------------------------------------- |
+| `topo.loggingVerbosity`     | `off` \| `error` \| `warn` \| `info` \| `debug` | `warn`  | Control the logging verbosity of the extension.                                         |
+| `topo.experimentalFeatures` | `boolean`                                       | `false` | Enable experimental features such as the Target Dashboard and compose preview commands. |
 
-```bash
-topo
-```
+## Development
+
+See the [Development Guide](docs/development.md) for instructions on building, testing, and packaging the extension from source.
+
+## Submit Feedback or Report Issues
+
+To submit feedback or report issues, please use [GitHub Issues](https://github.com/Arm/vscode-topo/issues) in the extension repository.
 
 ## License
 
-[MIT](LICENSE)
-
----
+[Apache 2.0](LICENSE)
