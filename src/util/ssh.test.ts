@@ -26,62 +26,70 @@ function writeSSH(relativePath: string, lines: string[]): string {
 }
 
 describe('getHosts', () => {
-    it('parses hosts from a single file', () => {
+    it('parses hosts from a single file', async () => {
         const file = writeSSH('config', ['Host foo', 'Host bar']);
 
-        expect(getHosts(file)).toEqual(['foo', 'bar']);
+        const hosts = await getHosts(file);
+
+        expect(hosts).toEqual(['foo', 'bar']);
     });
 
-    it('deduplicates hosts', () => {
+    it('deduplicates hosts', async () => {
         const file = writeSSH('config', ['Host foo', 'Host bar', 'Host foo']);
 
-        expect(getHosts(file)).toEqual(['foo', 'bar']);
+        const hosts = await getHosts(file);
+
+        expect(hosts).toEqual(['foo', 'bar']);
     });
 
-    it('follows Include with a relative path', () => {
+    it('follows Include with a relative path', async () => {
         writeSSH('extra.conf', ['Host from-include']);
         const file = writeSSH('config', ['Include extra.conf', 'Host main']);
 
-        const hosts = getHosts(file).sort();
+        const hosts = await getHosts(file);
 
-        expect(hosts).toEqual(['from-include', 'main']);
+        expect(hosts).toEqual(['main', 'from-include']);
     });
 
-    it('follows Include with an absolute path', () => {
+    it('follows Include with an absolute path', async () => {
         const includedPath = writeSSH('abs.conf', ['Host absolute']);
         const file = writeSSH('config', [
             `Include ${includedPath}`,
             'Host main',
         ]);
 
-        const hosts = getHosts(file).sort();
+        const hosts = await getHosts(file);
 
-        expect(hosts).toEqual(['absolute', 'main']);
+        expect(hosts).toEqual(['main', 'absolute']);
     });
 
-    it('follows Include with a glob pattern', () => {
+    it('follows Include with a glob pattern', async () => {
         writeSSH('conf.d/a.conf', ['Host alpha']);
         writeSSH('conf.d/b.conf', ['Host beta']);
         const file = writeSSH('config', ['Include conf.d/*.conf', 'Host main']);
 
-        const hosts = getHosts(file);
+        const hosts = await getHosts(file);
 
         expect(hosts).toEqual(['main', 'alpha', 'beta']);
     });
 
-    it('does not visit the same file twice (cycle protection)', () => {
-        const configPath = path.join(sshDir, 'config');
+    it('does not visit the same file twice (cycle protection)', async () => {
+        const file = path.join(sshDir, 'config');
         writeSSH('config', ['Include config', 'Host solo']);
 
-        expect(getHosts(configPath)).toEqual(['solo']);
+        const hosts = await getHosts(file);
+
+        expect(hosts).toEqual(['solo']);
     });
 
-    it('skips non-existent included files gracefully', () => {
+    it('skips non-existent included files gracefully', async () => {
         const file = writeSSH('config', [
             'Include nonexistent.conf',
             'Host ok',
         ]);
 
-        expect(getHosts(file)).toEqual(['ok']);
+        const hosts = await getHosts(file);
+
+        expect(hosts).toEqual(['ok']);
     });
 });

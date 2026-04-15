@@ -1,6 +1,4 @@
 import * as fs from 'fs';
-import * as os from 'os';
-import * as path from 'path';
 import * as vscode from 'vscode';
 import { TargetTreeDataProvider } from './targetTreeDataProvider';
 import * as manifest from '../manifest';
@@ -104,8 +102,8 @@ export class TargetManager {
         await this.targetStore.setSelected(newTarget.ssh);
     }
 
-    private promptForSshTarget(): Promise<string | undefined> {
-        const sshHosts = getHosts(defaultSshConfigPath);
+    private async promptForSshTarget(): Promise<string | undefined> {
+        const sshHosts = await getHosts(defaultSshConfigPath);
         const existingTargets = new Set(
             this.targetStore.getTargets().map((t) => t.ssh),
         );

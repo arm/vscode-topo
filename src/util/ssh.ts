@@ -24,7 +24,7 @@ function resolveInclude(value: string): string[] {
     return fs.globSync(resolved);
 }
 
-export function getHosts(file: string): string[] {
+export async function getHosts(file: string): Promise<string[]> {
     const hosts = new Set<string>();
     const queue: string[] = [file];
     const visited = new Set<string>();
@@ -40,7 +40,7 @@ export function getHosts(file: string): string[] {
             continue;
         }
 
-        const content = fs.readFileSync(currentFile, 'utf8');
+        const content = await fs.promises.readFile(currentFile, 'utf8');
         const config = parseSSHConfig(content);
         for (const line of config) {
             if (!isDirective(line)) {
