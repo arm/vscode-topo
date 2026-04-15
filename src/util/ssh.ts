@@ -4,8 +4,8 @@ import path from 'path';
 import os from 'os';
 import { logger } from './logger';
 
-export const topoSshConfigDir = path.join(os.homedir(), '.ssh', 'topo_config');
-export const topoSshConfigGlob = path.join(topoSshConfigDir, '*.conf');
+const sshDir = path.join(os.homedir(), '.ssh');
+export const defaultSshConfigPath = path.join(sshDir, 'config');
 
 function isDirective(line: Line): line is Directive {
     return line.type === LineType.DIRECTIVE;

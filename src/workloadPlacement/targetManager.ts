@@ -11,7 +11,7 @@ import { ContainersManager } from './containersManager';
 import { getTreeItemIcon } from './targetTreeTargetItem';
 import { isTargetReady } from '../util/targetState';
 import { TargetItem } from '../util/types';
-import { getHosts } from '../util/ssh';
+import { defaultSshConfigPath, getHosts } from '../util/ssh';
 
 export function buildQuickPickItems(
     availableHosts: string[],
@@ -105,8 +105,7 @@ export class TargetManager {
     }
 
     private promptForSshTarget(): Promise<string | undefined> {
-        const sshConfigPath = path.join(os.homedir(), '.ssh', 'config');
-        const sshHosts = getHosts(sshConfigPath);
+        const sshHosts = getHosts(defaultSshConfigPath);
         const existingTargets = new Set(
             this.targetStore.getTargets().map((t) => t.ssh),
         );
@@ -160,14 +159,13 @@ export class TargetManager {
     }
 
     private async openSshConfig(): Promise<void> {
-        const sshConfigPath = path.join(os.homedir(), '.ssh', 'config');
-        if (fs.existsSync(sshConfigPath)) {
+        if (fs.existsSync(defaultSshConfigPath)) {
             await vscode.window.showTextDocument(
-                vscode.Uri.file(sshConfigPath),
+                vscode.Uri.file(defaultSshConfigPath),
             );
         } else {
             vscode.window.showWarningMessage(
-                `SSH config not found at ${sshConfigPath}`,
+                `SSH config not found at ${defaultSshConfigPath}`,
             );
         }
     }
