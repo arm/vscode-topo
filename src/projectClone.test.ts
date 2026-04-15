@@ -1,4 +1,4 @@
-import path from 'path';
+import path from 'node:path';
 import * as vscode from 'vscode';
 import * as manifest from './manifest';
 import { getFirstSentence, ProjectClone } from './projectClone';

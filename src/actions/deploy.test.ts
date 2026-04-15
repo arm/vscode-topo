@@ -1,5 +1,5 @@
-import path from 'path';
-import os from 'os';
+import path from 'node:path';
+import os from 'node:os';
 import * as vscode from 'vscode';
 import { Deploy } from './deploy';
 import { mock, MockProxy } from 'jest-mock-extended';

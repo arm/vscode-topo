@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { logger } from '../util/logger';
 import * as manifest from '../manifest';
 import { getErrorMessage } from '../util/getErrorMessage';
-import path from 'path';
+import path from 'node:path';
 import { TargetItem } from '../util/types';
 import { TargetStore } from '../workloadPlacement/targetStore';
 

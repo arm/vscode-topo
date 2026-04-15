@@ -3,8 +3,8 @@ import { BuildEnvironmentOptions, ConfigEnv, defineConfig } from 'vite';
 import tsconfigPaths from 'vite-tsconfig-paths';
 import react from '@vitejs/plugin-react';
 import copy from 'rollup-plugin-copy';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -34,12 +34,12 @@ export default defineConfig((config: ConfigEnv) => {
             rollupOptions: {
                 external: [
                     'vscode',
-                    'fs',
-                    'os',
-                    'path',
-                    'child_process',
-                    'util',
-                    'net',
+                    'node:fs',
+                    'node:os',
+                    'node:path',
+                    'node:child_process',
+                    'node:util',
+                    'node:net',
                 ],
                 output: {
                     exports: 'named',

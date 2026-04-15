@@ -1,3 +1,5 @@
+const { builtinModules } = require('module');
+
 module.exports = {
     root: true,
     env: {
@@ -54,6 +56,13 @@ module.exports = {
                 'no-throw-literal': 'warn',
                 semi: 'warn',
                 'eol-last': ['error', 'always'],
+                'no-restricted-imports': [
+                    'error',
+                    ...builtinModules.map((mod) => ({
+                        name: mod,
+                        message: `Use 'node:${mod}' instead.`,
+                    })),
+                ],
                 'react/jsx-uses-react': 'off',
                 'react/react-in-jsx-scope': 'off',
                 'react/prop-types': 'off',

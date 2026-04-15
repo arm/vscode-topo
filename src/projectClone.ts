@@ -1,7 +1,7 @@
 import * as manifest from './manifest';
 import * as vscode from 'vscode';
 import { CloneSource, TopoCli } from './topoCli';
-import * as path from 'path';
+import * as path from 'node:path';
 import { TemplateDescription } from './topoCliSchema';
 import { isTopoError, TopoError } from './errors/topoError';
 import { showAndLogError } from './util/showAndLogError';
