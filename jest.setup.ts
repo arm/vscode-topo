@@ -1,4 +1,3 @@
-/// <reference types="jest" />
 import { TextEncoder, TextDecoder } from 'util';
 
 global.fetch = jest.fn();
