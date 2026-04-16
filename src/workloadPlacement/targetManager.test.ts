@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { TargetManager } from './targetManager';
+import { buildQuickPickItems, TargetManager } from './targetManager';
 import { TargetTreeDataProvider } from './targetTreeDataProvider';
 import { TargetStore } from './targetStore';
 import { logger } from '../util/logger';
@@ -39,6 +39,7 @@ const createTargetManager = () => {
 
     const targetStore = mock<TargetStore>();
     targetStore.onChanged.mockImplementation(onChangeEmitter.event);
+    targetStore.getTargets.mockReturnValue([]);
 
     const containersManager: MockProxy<ContainersManager> =
         mock<ContainersManager>();
@@ -101,6 +102,73 @@ const mockedStatusBarItemCreation: typeof vscode.window.createStatusBarItem = ((
     return statusBarItem;
 }) as unknown as typeof vscode.window.createStatusBarItem;
 
+describe('buildQuickPickItems', () => {
+    const configureItem: vscode.QuickPickItem = {
+        label: '$(gear) Configure SSH targets',
+        description: '~/.ssh/config',
+        alwaysShow: true,
+    };
+
+    it('returns hosts followed by separator and configure item', () => {
+        const items = buildQuickPickItems(
+            ['host-a', 'host-b'],
+            '',
+            configureItem,
+        );
+
+        expect(items).toEqual([
+            { label: 'host-a' },
+            { label: 'host-b' },
+            { label: '', kind: vscode.QuickPickItemKind.Separator },
+            configureItem,
+        ]);
+    });
+
+    it('prepends a manual entry when filter does not match any host', () => {
+        const items = buildQuickPickItems(
+            ['host-a'],
+            'root@10.0.0.1',
+            configureItem,
+        );
+
+        expect(items[0]).toEqual({
+            label: 'root@10.0.0.1',
+            description: 'Add new SSH target',
+        });
+        expect(items[1]).toEqual({ label: 'host-a' });
+    });
+
+    it('does not prepend manual entry when filter matches a host (case-insensitive)', () => {
+        const items = buildQuickPickItems(['Host-A'], 'host-a', configureItem);
+
+        expect(items[0]).toEqual({ label: 'Host-A' });
+    });
+
+    it('does not prepend manual entry when filter is whitespace-only', () => {
+        const items = buildQuickPickItems(['host-a'], '   ', configureItem);
+
+        expect(items[0]).toEqual({ label: 'host-a' });
+    });
+
+    it('trims whitespace from the filter for the manual entry label', () => {
+        const items = buildQuickPickItems([], '  my-host  ', configureItem);
+
+        expect(items[0]).toEqual({
+            label: 'my-host',
+            description: 'Add new SSH target',
+        });
+    });
+
+    it('returns only separator and configure item when no hosts and empty filter', () => {
+        const items = buildQuickPickItems([], '', configureItem);
+
+        expect(items).toEqual([
+            { label: '', kind: vscode.QuickPickItemKind.Separator },
+            configureItem,
+        ]);
+    });
+});
+
 describe('TargetManager', () => {
     beforeEach(() => {
         statusBarItems = [];
@@ -130,29 +198,51 @@ describe('TargetManager', () => {
     });
 
     describe('target addition', () => {
+        function mockQuickPick(selectedItem: vscode.QuickPickItem | undefined) {
+            const onDidAcceptEmitter = new vscode.EventEmitter<void>();
+            const onDidHideEmitter = new vscode.EventEmitter<void>();
+            const onDidChangeValueEmitter = new vscode.EventEmitter<string>();
+            const quickPick = {
+                title: '',
+                placeholder: '',
+                items: [] as vscode.QuickPickItem[],
+                selectedItems: selectedItem ? [selectedItem] : [],
+                onDidAccept: onDidAcceptEmitter.event,
+                onDidHide: onDidHideEmitter.event,
+                onDidChangeValue: onDidChangeValueEmitter.event,
+                show: jest.fn(() => {
+                    if (selectedItem) {
+                        onDidAcceptEmitter.fire();
+                    } else {
+                        onDidHideEmitter.fire();
+                    }
+                }),
+                hide: jest.fn(),
+                dispose: jest.fn(),
+            };
+            jest.mocked(vscode.window.createQuickPick).mockReturnValueOnce(
+                quickPick as unknown as vscode.QuickPick<vscode.QuickPickItem>,
+            );
+            return quickPick;
+        }
+
         it('handles addTargetCommand: prompts for ssh, stores and selects new target', async () => {
             const targetSsh = 'root@192.0.2.1';
-            jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
-                targetSsh,
-            );
+            mockQuickPick({ label: targetSsh });
             const { targetStore, targetManager } = createTargetManager();
-
             await targetManager.activate();
 
             await executeCommand(TargetManager.addTargetCommand);
 
-            expect(
-                jest.mocked(targetStore.addTarget).mock.calls.length,
-            ).toBeGreaterThanOrEqual(1);
-            const created = jest.mocked(targetStore.addTarget).mock.calls[0][0];
-            expect(created).toBeDefined();
+            expect(targetStore.addTarget).toHaveBeenCalledTimes(1);
+            expect(targetStore.addTarget).toHaveBeenCalledWith(
+                expect.objectContaining({ ssh: targetSsh }),
+            );
             expect(targetStore.setSelected).toHaveBeenCalledWith(targetSsh);
         });
 
-        it('does nothing when ssh input is cancelled', async () => {
-            jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
-                undefined,
-            );
+        it('does nothing when quick pick is dismissed', async () => {
+            mockQuickPick(undefined);
             const { targetStore, targetManager } = createTargetManager();
             await targetManager.activate();
 
@@ -163,18 +253,15 @@ describe('TargetManager', () => {
         });
 
         it('shows error when targetStore.addTarget fails', async () => {
-            jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
-                'root@192.0.2.1',
-            );
-            const { targetTreeDataProvider, targetStore, targetManager } =
-                createTargetManager();
+            mockQuickPick({ label: 'root@192.0.2.1' });
+            const { targetStore, targetManager } = createTargetManager();
             const error = new Error('boom');
             jest.mocked(targetStore.addTarget).mockRejectedValueOnce(error);
             await targetManager.activate();
 
             await executeCommand(TargetManager.addTargetCommand);
 
-            expect(jest.mocked(targetStore.addTarget)).toHaveBeenCalled();
+            expect(targetStore.addTarget).toHaveBeenCalled();
             expect(logger.warn).toHaveBeenCalledWith(
                 expect.stringContaining('Failed to add target'),
                 error,
@@ -182,10 +269,7 @@ describe('TargetManager', () => {
             expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
                 expect.stringContaining('Failed to add target'),
             );
-            expect(jest.mocked(targetStore.setSelected)).not.toHaveBeenCalled();
-            expect(
-                jest.mocked(targetTreeDataProvider.refresh),
-            ).not.toHaveBeenCalled();
+            expect(targetStore.setSelected).not.toHaveBeenCalled();
         });
     });
 

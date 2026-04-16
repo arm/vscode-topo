@@ -1,3 +1,4 @@
+import * as fs from 'fs';
 import * as vscode from 'vscode';
 import { TargetTreeDataProvider } from './targetTreeDataProvider';
 import * as manifest from '../manifest';
@@ -8,6 +9,30 @@ import { ContainersManager } from './containersManager';
 import { getTreeItemIcon } from './targetTreeTargetItem';
 import { isTargetReady } from '../util/targetState';
 import { TargetItem } from '../util/types';
+import { defaultSshConfigPath, getHosts } from '../util/ssh';
+
+export function buildQuickPickItems(
+    availableHosts: string[],
+    filter: string,
+    configureItem: vscode.QuickPickItem,
+): vscode.QuickPickItem[] {
+    const hostItems: vscode.QuickPickItem[] = availableHosts.map((host) => ({
+        label: host,
+    }));
+    const trimmed = filter.trim();
+    const isNovelEntry =
+        trimmed.length > 0 &&
+        !availableHosts.some((h) => h.toLowerCase() === trimmed.toLowerCase());
+    const manualItem: vscode.QuickPickItem | undefined = isNovelEntry
+        ? { label: trimmed, description: 'Add new SSH target' }
+        : undefined;
+    return [
+        ...(manualItem ? [manualItem] : []),
+        ...hostItems,
+        { label: '', kind: vscode.QuickPickItemKind.Separator },
+        configureItem,
+    ];
+}
 
 export class TargetManager {
     public static readonly viewId = `${manifest.PACKAGE_NAME}.target-manager`;
@@ -17,6 +42,9 @@ export class TargetManager {
     public static readonly statusPriority = 100;
 
     private statusBarItem: vscode.StatusBarItem | undefined;
+
+    private static readonly configureSshTargetsLabel =
+        '$(gear) Configure SSH targets';
 
     constructor(
         private readonly context: vscode.ExtensionContext,
@@ -56,10 +84,7 @@ export class TargetManager {
     }
 
     private async addTarget(): Promise<Target | undefined> {
-        const ssh = await vscode.window.showInputBox({
-            title: 'Enter a connection string for the target',
-            placeHolder: 'root@192.168.1.1',
-        });
+        const ssh = await this.promptForSshTarget();
         if (!ssh?.trim()) {
             return;
         }
@@ -75,6 +100,72 @@ export class TargetManager {
             return;
         }
         await this.targetStore.setSelected(newTarget.ssh);
+    }
+
+    private async promptForSshTarget(): Promise<string | undefined> {
+        const sshHosts = await getHosts(defaultSshConfigPath);
+        const existingTargets = new Set(
+            this.targetStore.getTargets().map((t) => t.ssh),
+        );
+        const availableHosts = sshHosts.filter(
+            (host) => !existingTargets.has(host),
+        );
+
+        const configureItem: vscode.QuickPickItem = {
+            label: TargetManager.configureSshTargetsLabel,
+            description: '~/.ssh/config',
+            alwaysShow: true,
+        };
+
+        const quickPick = vscode.window.createQuickPick();
+        quickPick.title = 'Add new target';
+        quickPick.placeholder =
+            'Select a host or type a connection string (e.g. root@192.168.1.1)';
+        quickPick.items = buildQuickPickItems(
+            availableHosts,
+            '',
+            configureItem,
+        );
+
+        quickPick.onDidChangeValue((value) => {
+            quickPick.items = buildQuickPickItems(
+                availableHosts,
+                value,
+                configureItem,
+            );
+        });
+
+        return new Promise<string | undefined>((resolve) => {
+            quickPick.onDidAccept(async () => {
+                const selected = quickPick.selectedItems[0];
+                quickPick.hide();
+                if (selected === configureItem) {
+                    await this.openSshConfig();
+                    resolve(undefined);
+                    return;
+                }
+
+                resolve(selected?.label);
+            });
+
+            quickPick.onDidHide(() => {
+                resolve(undefined);
+            });
+
+            quickPick.show();
+        }).finally(() => quickPick.dispose());
+    }
+
+    private async openSshConfig(): Promise<void> {
+        if (fs.existsSync(defaultSshConfigPath)) {
+            await vscode.window.showTextDocument(
+                vscode.Uri.file(defaultSshConfigPath),
+            );
+        } else {
+            vscode.window.showWarningMessage(
+                `SSH config not found at ${defaultSshConfigPath}`,
+            );
+        }
     }
 
     protected updateStatusBar(selectedTarget: TargetItem | undefined): void {
