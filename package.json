@@ -21,7 +21,7 @@
     ],
     "main": "./dist/extension.js",
     "topo": {
-        "version": "v4.0.0"
+        "version": "v4.1.0"
     },
     "contributes": {
         "commands": [

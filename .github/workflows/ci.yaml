@@ -26,6 +26,7 @@ jobs:
             - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
               with:
                   node-version: ${{ env.NODE_VERSION }}
+                  cache: npm
             - name: Install dependencies
               env:
                   GITHUB_TOKEN: ${{ steps.get-app-token.outputs.token }}
@@ -53,6 +54,7 @@ jobs:
             - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
               with:
                   node-version: ${{ env.NODE_VERSION }}
+                  cache: npm
             - name: Install NPM dependencies
               run: npm ci
               env:
