@@ -3,7 +3,6 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import { logger } from './logger';
-import { is } from 'superstruct';
 
 const sshDir = path.join(os.homedir(), '.ssh');
 export const defaultSshConfigPath = path.join(sshDir, 'config');
