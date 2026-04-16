@@ -58,10 +58,16 @@ module.exports = {
                 'eol-last': ['error', 'always'],
                 'no-restricted-imports': [
                     'error',
-                    ...builtinModules.map((mod) => ({
-                        name: mod,
-                        message: `Use 'node:${mod}' instead.`,
-                    })),
+                    ...builtinModules
+                        .filter(
+                            (mod) =>
+                                !mod.startsWith('_') &&
+                                !mod.startsWith('node:'),
+                        )
+                        .map((mod) => ({
+                            name: mod,
+                            message: `Use 'node:${mod}' instead.`,
+                        })),
                 ],
                 'react/jsx-uses-react': 'off',
                 'react/react-in-jsx-scope': 'off',
