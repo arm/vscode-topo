@@ -2,32 +2,34 @@ import * as vscode from 'vscode';
 import { mock } from 'jest-mock-extended';
 import { activate } from './extension';
 
+jest.mock('child_process');
 jest.mock('./util/logger');
 jest.mock('./topoCliVersionChecker', () => {
     return {
         TopoCliVersionChecker: jest.fn().mockImplementation(() => ({
-            checkTopoCliVersion: jest.fn(() => Promise.resolve(true)),
+            checkTopoCliVersion: jest.fn(() => true),
         })),
     };
 });
 
 describe('extension activation', () => {
+    let subscriptions: vscode.Disposable[];
+
     beforeEach(() => {
         jest.useFakeTimers();
+        subscriptions = [];
     });
 
-    afterEach(async () => {
-        try {
-            jest.runOnlyPendingTimers();
-        } finally {
-            jest.clearAllTimers();
-            jest.useRealTimers();
-            jest.resetAllMocks();
+    afterEach(() => {
+        for (const sub of subscriptions) {
+            sub.dispose();
         }
+        jest.clearAllTimers();
+        jest.useRealTimers();
+        jest.resetAllMocks();
     });
 
     it('registers commands and prepares disposables', async () => {
-        const subscriptions: vscode.Disposable[] = [];
         const extensionPath = '/fake/extension/path';
         const environmentVariableCollection =
             mock<vscode.EnvironmentVariableCollection>();
