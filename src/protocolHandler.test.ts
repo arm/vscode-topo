@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import path from 'path';
+import path from 'node:path';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { ProjectClone } from './projectClone';
 import { ProtocolHandler } from './protocolHandler';

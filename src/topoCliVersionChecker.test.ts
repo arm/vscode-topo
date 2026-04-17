@@ -1,11 +1,11 @@
 import * as vscode from 'vscode';
 import { TopoCliVersionChecker } from './topoCliVersionChecker';
 import { TopoCli } from './topoCli';
-import * as fs from 'fs';
+import * as fs from 'node:fs';
 import * as manifest from './manifest';
 import { mock, MockProxy } from 'jest-mock-extended';
 
-jest.mock('fs', () => ({
+jest.mock('node:fs', () => ({
     readFileSync: jest.fn(),
 }));
 

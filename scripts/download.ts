@@ -1,6 +1,6 @@
-import fs from 'fs';
-import path from 'path';
-import nodeOs from 'os';
+import fs from 'node:fs';
+import path from 'node:path';
+import nodeOs from 'node:os';
 import yargs from 'yargs';
 import extract from 'extract-zip';
 import * as tar from 'tar';

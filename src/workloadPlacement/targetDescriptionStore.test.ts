@@ -1,11 +1,11 @@
-import fs from 'fs';
+import fs from 'node:fs';
 import { TopoCli } from '../topoCli';
 import { getTargetDescription } from '../util/getTargetDescription';
 import { TargetDescriptionStore } from './targetDescriptionStore';
 import { mock } from 'jest-mock-extended';
 import { TargetDescription } from '../util/types';
 
-jest.mock('fs');
+jest.mock('node:fs');
 jest.mock('../util/getTargetDescription');
 
 const mockTmpDir = '/tmp/topo-target-12345';

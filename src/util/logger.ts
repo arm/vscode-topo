@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as manifest from '../manifest';
-import * as util from 'util';
+import * as util from 'node:util';
 
 export enum Verbosity {
     off = 0,

@@ -1,21 +1,21 @@
-import * as path from 'path';
-import * as childProcess from 'child_process';
+import * as path from 'node:path';
+import * as childProcess from 'node:child_process';
 import * as vscode from 'vscode';
 import { TopoCli, targetDescriptionFileName } from './topoCli';
 import { Mutable } from './util/types';
 import * as manifest from './manifest';
-import { ChildProcessWithoutNullStreams } from 'child_process';
+import { ChildProcessWithoutNullStreams } from 'node:child_process';
 import { mock } from 'jest-mock-extended';
-import { Writable } from 'stream';
+import { Writable } from 'node:stream';
 import {
     HealthCheckResult,
     ProjectDescription,
     TemplateDescription,
 } from './topoCliSchema';
 
-jest.mock('child_process');
-jest.mock('fs');
-jest.mock('process');
+jest.mock('node:child_process');
+jest.mock('node:fs');
+jest.mock('node:process');
 
 const execSyncMock = jest.mocked(childProcess.execFileSync);
 const execMock = jest.mocked(childProcess.execFile);

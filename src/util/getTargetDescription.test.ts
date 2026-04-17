@@ -1,4 +1,4 @@
-import fs from 'fs';
+import fs from 'node:fs';
 import { mock } from 'jest-mock-extended';
 import { TopoCli } from '../topoCli';
 import { logger } from './logger';
@@ -6,7 +6,7 @@ import { parseTargetDescription } from './parseTargetDescription';
 import { getTargetDescription } from './getTargetDescription';
 import type { TargetDescription } from './types';
 
-jest.mock('fs');
+jest.mock('node:fs');
 jest.mock('./logger');
 jest.mock('./parseTargetDescription');
 

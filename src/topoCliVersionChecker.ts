@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { TopoCli } from './topoCli';
-import path from 'path';
-import * as fs from 'fs';
+import path from 'node:path';
+import * as fs from 'node:fs';
 import * as manifest from './manifest';
 
 export class TopoCliVersionChecker {

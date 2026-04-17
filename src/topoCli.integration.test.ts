@@ -1,8 +1,8 @@
-import * as path from 'path';
+import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { TopoCli } from './topoCli';
-import * as fs from 'fs';
-import * as os from 'os';
+import * as fs from 'node:fs';
+import * as os from 'node:os';
 import { ProjectDescription } from './topoCliSchema';
 
 const extensionPath = path.resolve(__dirname, '..');
