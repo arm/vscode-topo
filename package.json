@@ -399,8 +399,8 @@
         "@types/react-dom": "^19.2.3",
         "@types/tar": "^6.1.13",
         "@types/vscode": "^1.99.1",
-        "@typescript-eslint/eslint-plugin": "^8.34.0",
-        "@typescript-eslint/parser": "^8.34.0",
+        "@typescript-eslint/eslint-plugin": "^8.58.2",
+        "@typescript-eslint/parser": "^8.58.2",
         "@vitejs/plugin-react": "^4.4.1",
         "@vscode/test-cli": "^0.0.12",
         "@vscode/test-electron": "^2.4.1",
@@ -419,7 +419,7 @@
         "rollup-plugin-copy": "^3.5.0",
         "tar": "^7.5.2",
         "ts-loader": "^9.5.2",
-        "typescript": "^5.8.2",
+        "typescript": "^6.0.2",
         "vite": "^6.3.4",
         "vite-tsconfig-paths": "^5.1.4",
         "yargs": "^18.0.0"
@@ -431,6 +431,11 @@
         "ssh-config": "^5.1.0",
         "superstruct": "^2.0.2",
         "vscode-uri": "^3.1.0"
+    },
+    "overrides": {
+        "jest-mock-extended": {
+            "typescript": "$typescript"
+        }
     },
     "repository": {
         "type": "git",
