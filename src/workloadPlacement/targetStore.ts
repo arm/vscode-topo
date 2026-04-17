@@ -3,6 +3,7 @@ import { logger } from '../util/logger';
 import debounce from 'lodash.debounce';
 import { Target } from './target';
 import { TargetItem } from '../util/types';
+import { getHosts, topoSshConfigPath } from '../util/ssh';
 
 type GlobalStoreKeys = 'targets';
 type WorkspaceStoreKeys = 'selectedTarget';
@@ -44,6 +45,32 @@ export class TargetStore {
             }
         });
         this.disposables.push(watcher, this._onChanged);
+
+        this.loadInitialTargetsInBackground();
+    }
+
+    protected async loadInitialTargetsInBackground(): Promise<void> {
+        const existingTargets = this.loadTargets();
+        const newTargets = (await getHosts(topoSshConfigPath)).filter(
+            (v) => !existingTargets.has(v),
+        );
+
+        if (newTargets.length === 0) {
+            return;
+        }
+
+        for (const ssh of newTargets) {
+            try {
+                await this.addTarget(new Target(ssh));
+            } catch (err) {
+                logger.error(
+                    `Failed to add target "${ssh}" from topo SSH config`,
+                    err,
+                );
+            }
+        }
+
+        this._onChanged.fire();
     }
 
     // Debounced function to publish a change to other VS Code instances
@@ -81,16 +108,6 @@ export class TargetStore {
         }
         targets.set(target.ssh, target);
         await this.saveTargets(targets);
-    }
-
-    public async updateTarget(target: Target): Promise<void> {
-        const targets = this.loadTargets();
-        if (!targets.has(target.ssh)) {
-            throw new Error(`Target "${target.ssh}" does not exist`);
-        }
-        targets.set(target.ssh, target);
-        await this.saveTargets(targets);
-        this._onChanged.fire();
     }
 
     public async getSelectedTarget(): Promise<TargetItem | undefined> {

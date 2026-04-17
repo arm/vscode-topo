@@ -3,12 +3,30 @@ import { TargetStore } from './targetStore';
 import { Target } from './target';
 import { mutable } from '../util/mutable';
 import { mock, MockProxy } from 'jest-mock-extended';
+import { getHosts, topoSshConfigPath } from '../util/ssh';
 
 jest.mock('../util/logger');
+jest.mock('../util/ssh', () => {
+    const actual = jest.requireActual('../util/ssh');
+    return {
+        ...actual,
+        getHosts: jest.fn(async () => []),
+    };
+});
 
 const waitImmediate = async () => {
     await Promise.resolve();
     await Promise.resolve();
+};
+
+const waitFor = async (predicate: () => boolean) => {
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+        if (predicate()) {
+            return;
+        }
+
+        await waitImmediate();
+    }
 };
 
 function createMockContext(): {
@@ -95,6 +113,7 @@ describe('TargetStore', () => {
             active: true,
         };
         jest.clearAllMocks();
+        jest.mocked(getHosts).mockResolvedValue([]);
     });
 
     afterEach(() => {
@@ -125,6 +144,26 @@ describe('TargetStore', () => {
         const parsed = JSON.parse(raw || '{}');
         expect(parsed[t.ssh]).toBeDefined();
         expect(parsed[t.ssh].ssh).toBe(t.ssh);
+    });
+
+    it('loads initial targets from the topo SSH config on construction', async () => {
+        jest.mocked(getHosts).mockResolvedValueOnce([
+            'alpha@example.com',
+            'beta@example.com',
+        ]);
+        const { context } = createMockContext();
+
+        const store = TargetStore.getInstance(context);
+        const onChangedSpy = jest.fn();
+        store.onChanged(onChangedSpy);
+
+        await waitFor(() => onChangedSpy.mock.calls.length > 0);
+        expect(getHosts).toHaveBeenCalledWith(topoSshConfigPath);
+        expect(store.getTargets().map((target) => target.ssh)).toEqual([
+            'alpha@example.com',
+            'beta@example.com',
+        ]);
+        expect(onChangedSpy).toHaveBeenCalledTimes(1);
     });
 
     it('throws an error when addTarget fails', async () => {
