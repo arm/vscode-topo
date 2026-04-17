@@ -11,7 +11,9 @@ type WorkspaceStoreKeys = 'selectedTarget';
 export class TargetStore {
     private static instance: TargetStore | undefined;
 
-    public static getInstance(context?: vscode.ExtensionContext): TargetStore {
+    public static async getInstance(
+        context?: vscode.ExtensionContext,
+    ): Promise<TargetStore> {
         if (!TargetStore.instance) {
             if (!context) {
                 throw new Error(
@@ -19,6 +21,7 @@ export class TargetStore {
                 );
             }
             TargetStore.instance = new TargetStore(context);
+            await TargetStore.instance.initialize();
         }
         return TargetStore.instance;
     }
@@ -45,21 +48,17 @@ export class TargetStore {
             }
         });
         this.disposables.push(watcher, this._onChanged);
-
-        this.loadInitialTargetsInBackground();
     }
 
-    protected async loadInitialTargetsInBackground(): Promise<void> {
+    protected async initialize(): Promise<void> {
         const existingTargets = this.loadTargets();
-        const newTargets = (await getHosts(topoSshConfigPath)).filter(
-            (v) => !existingTargets.has(v),
-        );
-
-        if (newTargets.length === 0) {
-            return;
-        }
+        const newTargets = await getHosts(topoSshConfigPath);
 
         for (const ssh of newTargets) {
+            if (existingTargets.has(ssh)) {
+                continue;
+            }
+
             try {
                 await this.addTarget(new Target(ssh));
             } catch (err) {
@@ -69,8 +68,6 @@ export class TargetStore {
                 );
             }
         }
-
-        this._onChanged.fire();
     }
 
     // Debounced function to publish a change to other VS Code instances

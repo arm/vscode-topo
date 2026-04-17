@@ -42,7 +42,7 @@ export async function activate(
         return;
     }
 
-    const targetStore = TargetStore.getInstance(context);
+    const targetStore = await TargetStore.getInstance(context);
     const targetDescriptionStore = new TargetDescriptionStore(topoCli);
     const onTargetTopoConsoleOpener = new OnTargetTopoConsoleOpener(
         context,
