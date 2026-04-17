@@ -9,8 +9,9 @@ import {
     projectDescriptionSchema,
     TemplateDescription,
     templateSchema,
+    topoLogEntrySchema,
 } from './topoCliSchema';
-import { array, assert } from 'superstruct';
+import { array, assert, is } from 'superstruct';
 import { TopoError, TopoLogEntry } from './errors/topoError';
 
 export interface TopoCliVersion {
@@ -46,21 +47,11 @@ export function parseTopoLogEntries(output: string): TopoLogEntry[] {
         }
         try {
             const parsed: unknown = JSON.parse(trimmed);
-            if (
-                typeof parsed === 'object' &&
-                parsed !== null &&
-                'time' in parsed &&
-                'level' in parsed &&
-                'msg' in parsed &&
-                typeof (parsed as Record<string, unknown>).time === 'string' &&
-                typeof (parsed as Record<string, unknown>).level === 'string' &&
-                typeof (parsed as Record<string, unknown>).msg === 'string'
-            ) {
-                const entry = parsed as Record<string, string>;
+            if (is(parsed, topoLogEntrySchema)) {
                 entries.push({
-                    time: entry.time,
-                    level: entry.level,
-                    msg: entry.msg,
+                    time: parsed.time,
+                    level: parsed.level,
+                    msg: parsed.msg,
                 });
             }
         } catch {

@@ -70,3 +70,9 @@ export const projectDescriptionSchema = type({
 });
 
 export type ProjectDescription = Infer<typeof projectDescriptionSchema>;
+
+export const topoLogEntrySchema = type({
+    time: string(),
+    level: string(),
+    msg: string(),
+});
