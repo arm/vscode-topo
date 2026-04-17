@@ -260,7 +260,10 @@ export class ProjectClone {
             try {
                 await commandHandler.call(this);
             } catch (error: unknown) {
-                if (!isTopoError(error) || error.code !== 'CLONE') {
+                if (
+                    !isTopoError(error) ||
+                    (error.code !== 'CLONE' && error.code !== 'CLI')
+                ) {
                     throw error;
                 }
                 showAndLogError('Failed to clone project', error);

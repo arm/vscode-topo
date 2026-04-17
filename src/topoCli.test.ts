@@ -1,12 +1,18 @@
 import * as path from 'node:path';
 import * as childProcess from 'node:child_process';
 import * as vscode from 'vscode';
-import { TopoCli, targetDescriptionFileName } from './topoCli';
+import {
+    TopoCli,
+    targetDescriptionFileName,
+    parseTopoError,
+    parseTopoLogEntries,
+} from './topoCli';
 import { Mutable } from './util/types';
 import * as manifest from './manifest';
 import { ChildProcessWithoutNullStreams } from 'node:child_process';
 import { mock } from 'jest-mock-extended';
 import { Writable } from 'node:stream';
+import { TopoError } from './errors/topoError';
 import {
     HealthCheckResult,
     ProjectDescription,
@@ -108,6 +114,84 @@ describe('TopoCli', () => {
         execSyncMock.mockReturnValue('invalid json');
 
         expect(() => topoCli.listTemplates('me@example.com')).toThrow();
+    });
+
+    it('listTemplates throws TopoError when stderr contains structured log entries', () => {
+        const stderrOutput = [
+            '{"time":"2026-04-16T15:14:48Z","level":"ERROR","msg":"collecting CPU info: \\"lscpu\\" not found"}',
+            '{"time":"2026-04-16T15:14:49Z","level":"ERROR","msg":"connection lost"}',
+        ].join('\n');
+        const execError = Object.assign(new Error('Command failed'), {
+            stderr: stderrOutput,
+        });
+        execSyncMock.mockImplementation(() => {
+            throw execError;
+        });
+
+        expect.assertions(6);
+        try {
+            topoCli.listTemplates('me@example.com');
+        } catch (error) {
+            expect(error).toBeInstanceOf(TopoError);
+            const cliError = error as TopoError;
+            expect(cliError.logEntries).toHaveLength(2);
+            expect(cliError.logEntries[0].msg).toBe(
+                'collecting CPU info: "lscpu" not found',
+            );
+            expect(cliError.logEntries[1].msg).toBe('connection lost');
+            expect(cliError.message).toBe(
+                'collecting CPU info: "lscpu" not found; connection lost',
+            );
+            expect(cliError.cause).toBe(execError);
+        }
+    });
+
+    it('listTemplates rethrows original error when stderr has no structured log entries', () => {
+        const execError = Object.assign(new Error('Command failed'), {
+            stderr: 'plain error text',
+        });
+        execSyncMock.mockImplementation(() => {
+            throw execError;
+        });
+
+        expect(() => topoCli.listTemplates()).toThrow(execError);
+    });
+
+    it('listTemplates rethrows original error when stderr contains only non-ERROR log entries', () => {
+        const stderrOutput =
+            '{"time":"2026-04-16T15:00:00Z","level":"INFO","msg":"starting up"}';
+        const execError = Object.assign(new Error('Command failed'), {
+            stderr: stderrOutput,
+        });
+        execSyncMock.mockImplementation(() => {
+            throw execError;
+        });
+
+        expect(() => topoCli.listTemplates()).toThrow(execError);
+    });
+
+    it('listTemplates throws TopoError with only ERROR messages when stderr has mixed log levels', () => {
+        const stderrOutput = [
+            '{"time":"2026-04-16T15:00:00Z","level":"INFO","msg":"starting up"}',
+            '{"time":"2026-04-16T15:00:01Z","level":"ERROR","msg":"disk full"}',
+            '{"time":"2026-04-16T15:00:02Z","level":"WARN","msg":"retrying"}',
+        ].join('\n');
+        const execError = Object.assign(new Error('Command failed'), {
+            stderr: stderrOutput,
+        });
+        execSyncMock.mockImplementation(() => {
+            throw execError;
+        });
+
+        expect.assertions(3);
+        try {
+            topoCli.listTemplates();
+        } catch (error) {
+            expect(error).toBeInstanceOf(TopoError);
+            const cliError = error as TopoError;
+            expect(cliError.logEntries).toHaveLength(3);
+            expect(cliError.message).toBe('disk full');
+        }
     });
 
     it('getProject parses JSON output', () => {
@@ -323,5 +407,157 @@ describe('TopoCli', () => {
         it('always returns the .exe variant on win32', () => {
             expect(topoCli.getBinaryPath()).toBe(topoCliPath);
         });
+    });
+});
+
+describe('parseStructuredError', () => {
+    it('returns error with parsed entries when stderr contains structured logs', () => {
+        const stderr = [
+            '{"time":"2026-04-16T15:14:48Z","level":"ERROR","msg":"lscpu not found"}',
+            '{"time":"2026-04-16T15:14:49Z","level":"ERROR","msg":"connection lost"}',
+        ].join('\n');
+        const original = Object.assign(new Error('Command failed'), {
+            stderr,
+        });
+
+        const result = parseTopoError(original);
+
+        expect(result).toBeInstanceOf(TopoError);
+        expect(result!.logEntries).toHaveLength(2);
+        expect(result!.message).toBe('lscpu not found; connection lost');
+        expect(result!.cause).toBe(original);
+    });
+
+    it('returns error with only ERROR messages when stderr has mixed levels', () => {
+        const stderr = [
+            '{"time":"2026-04-16T15:00:00Z","level":"INFO","msg":"starting up"}',
+            '{"time":"2026-04-16T15:00:01Z","level":"ERROR","msg":"disk full"}',
+            '{"time":"2026-04-16T15:00:02Z","level":"WARN","msg":"retrying"}',
+        ].join('\n');
+        const original = Object.assign(new Error('Command failed'), {
+            stderr,
+        });
+
+        const result = parseTopoError(original);
+
+        expect(result).toBeInstanceOf(TopoError);
+        expect(result!.message).toBe('disk full');
+        expect(result!.logEntries).toHaveLength(3);
+    });
+
+    it('returns undefined when stderr has only non-ERROR entries', () => {
+        const stderr =
+            '{"time":"2026-04-16T15:00:00Z","level":"INFO","msg":"starting up"}';
+        const original = Object.assign(new Error('Command failed'), {
+            stderr,
+        });
+
+        expect(parseTopoError(original)).toBeUndefined();
+    });
+
+    it('returns undefined when stderr has no structured logs', () => {
+        const original = Object.assign(new Error('Command failed'), {
+            stderr: 'plain error text',
+        });
+
+        expect(parseTopoError(original)).toBeUndefined();
+    });
+
+    it('returns undefined for plain error message', () => {
+        expect(parseTopoError(new Error('some message'))).toBeUndefined();
+    });
+
+    it('returns undefined for non-Error values', () => {
+        expect(parseTopoError('string error')).toBeUndefined();
+    });
+});
+
+describe('parseTopoLogEntries', () => {
+    it('parses a single structured log line', () => {
+        const input =
+            '{"time":"2026-04-16T15:14:48.476234895+01:00","level":"ERROR","msg":"collecting CPU info: \\"lscpu\\" not found on remote target\'s $PATH"}';
+
+        const entries = parseTopoLogEntries(input);
+
+        expect(entries).toEqual([
+            {
+                time: '2026-04-16T15:14:48.476234895+01:00',
+                level: 'ERROR',
+                msg: 'collecting CPU info: "lscpu" not found on remote target\'s $PATH',
+            },
+        ]);
+    });
+
+    it('parses multiple structured log lines', () => {
+        const input = [
+            '{"time":"2026-04-16T15:00:00Z","level":"INFO","msg":"starting"}',
+            '{"time":"2026-04-16T15:00:01Z","level":"ERROR","msg":"disk full"}',
+            '{"time":"2026-04-16T15:00:02Z","level":"ERROR","msg":"aborting"}',
+        ].join('\n');
+
+        const entries = parseTopoLogEntries(input);
+
+        expect(entries).toHaveLength(3);
+        expect(entries[0].level).toBe('INFO');
+        expect(entries[1].msg).toBe('disk full');
+        expect(entries[2].msg).toBe('aborting');
+    });
+
+    it('skips non-JSON lines', () => {
+        const input = [
+            'some plain text',
+            '{"time":"2026-04-16T15:00:00Z","level":"ERROR","msg":"real error"}',
+            'another plain line',
+        ].join('\n');
+
+        const entries = parseTopoLogEntries(input);
+
+        expect(entries).toEqual([
+            {
+                time: '2026-04-16T15:00:00Z',
+                level: 'ERROR',
+                msg: 'real error',
+            },
+        ]);
+    });
+
+    it('skips JSON objects missing required fields', () => {
+        const input = [
+            '{"time":"2026-04-16T15:00:00Z","level":"ERROR"}',
+            '{"time":"2026-04-16T15:00:00Z","msg":"no level"}',
+            '{"level":"ERROR","msg":"no time"}',
+            '{"unrelated":"json"}',
+        ].join('\n');
+
+        const entries = parseTopoLogEntries(input);
+
+        expect(entries).toEqual([]);
+    });
+
+    it('skips entries where fields are not strings', () => {
+        const input = '{"time":123,"level":"ERROR","msg":"bad time"}';
+
+        const entries = parseTopoLogEntries(input);
+
+        expect(entries).toEqual([]);
+    });
+
+    it('returns empty array for empty input', () => {
+        expect(parseTopoLogEntries('')).toEqual([]);
+    });
+
+    it('returns empty array for whitespace-only input', () => {
+        expect(parseTopoLogEntries('  \n  \n  ')).toEqual([]);
+    });
+
+    it('ignores extra fields in log entries', () => {
+        const input =
+            '{"time":"2026-04-16T15:00:00Z","level":"ERROR","msg":"fail","extra":"data"}';
+
+        const entries = parseTopoLogEntries(input);
+
+        expect(entries).toEqual([
+            { time: '2026-04-16T15:00:00Z', level: 'ERROR', msg: 'fail' },
+        ]);
     });
 });

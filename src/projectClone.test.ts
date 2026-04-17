@@ -514,6 +514,56 @@ describe('ProjectClone', () => {
 
         const showQuickPickItemMock = jest.mocked(vscode.window.showQuickPick);
 
+        it('propagates non-TopoError from listTemplates', async () => {
+            mutable(vscode.workspace).workspaceFolders = workspaceFolders;
+            topoCli.listTemplates.mockImplementation(() => {
+                throw new Error('command failed');
+            });
+
+            await expect(
+                executeCommand(ProjectClone.templateCloneCommand),
+            ).rejects.toThrow('command failed');
+
+            expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
+            expect(vscode.tasks.executeTask).not.toHaveBeenCalled();
+        });
+
+        it('shows structured error detail when listTemplates throws TopoError', async () => {
+            mutable(vscode.workspace).workspaceFolders = workspaceFolders;
+            const { TopoError } = await import('./errors/topoError');
+            const logEntries = [
+                {
+                    time: '2026-04-16T15:14:48Z',
+                    level: 'ERROR',
+                    msg: 'lscpu not found',
+                },
+                {
+                    time: '2026-04-16T15:14:49Z',
+                    level: 'INFO',
+                    msg: 'some info',
+                },
+                {
+                    time: '2026-04-16T15:14:50Z',
+                    level: 'ERROR',
+                    msg: 'connection lost',
+                },
+            ];
+            topoCli.listTemplates.mockImplementation(() => {
+                throw new TopoError('CLI', 'lscpu not found; connection lost', {
+                    logEntries,
+                });
+            });
+
+            await executeCommand(ProjectClone.templateCloneCommand);
+
+            expect(showAndLogError).toHaveBeenCalledWith(
+                'Failed to clone project',
+                expect.any(TopoError),
+            );
+            expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
+            expect(vscode.tasks.executeTask).not.toHaveBeenCalled();
+        });
+
         it('prompts for a destination folder when no workspace folder is open', async () => {
             topoCli.listTemplates.mockReturnValue(templateList);
             jest.mocked(vscode.window.showOpenDialog).mockResolvedValueOnce([
