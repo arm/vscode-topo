@@ -8,6 +8,7 @@ import { mock, MockProxy } from 'jest-mock-extended';
 import { TemplateDescription } from './topoCliSchema';
 import { showAndLogError } from './util/showAndLogError';
 import { TargetStore } from './workloadPlacement/targetStore';
+import { TopoError } from './errors/topoError';
 
 jest.mock('./util/showAndLogError', () => ({
     showAndLogError: jest.fn(),
@@ -530,7 +531,6 @@ describe('ProjectClone', () => {
 
         it('shows structured error detail when listTemplates throws TopoError', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-            const { TopoError } = await import('./errors/topoError');
             const logEntries = [
                 {
                     time: '2026-04-16T15:14:48Z',
