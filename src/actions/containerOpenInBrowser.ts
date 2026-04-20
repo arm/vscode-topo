@@ -53,7 +53,7 @@ export class ContainerOpenInBrowser {
             return 'no-web-ports';
         }
         const target = item.target;
-        const url = `http://${target.host}:${openWebPort}`;
+        const url = `http://${target.ssh}:${openWebPort}`;
         await vscode.env.openExternal(vscode.Uri.parse(url));
         return 'success';
     }

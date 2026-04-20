@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { AttachVsCode } from './attachVsCode';
+import { AttachVsCode, getDockerContextName } from './attachVsCode';
 import { exec } from '../util/exec';
 import { TARGET_HOST_RUNTIME } from '../manifest';
 import { DockerCommands } from '../workloadPlacement/dockerCommands';
@@ -28,7 +28,6 @@ describe('attachVsCode', () => {
     const dockerCommands = new DockerCommands();
     const target: TargetItem = {
         ssh: 'user@topo.local',
-        host: 'topo.local',
     };
     const containerItem: ContainerItem = {
         id: 'abc123',
@@ -47,7 +46,7 @@ describe('attachVsCode', () => {
         target,
     };
     const treeItem = new TargetTreeContainerItem(containerItem);
-    const dockerContext = 'topo.local';
+    const dockerContext = getDockerContextName(target.ssh);
 
     beforeEach(() => {
         execMock = jest.mocked(exec);
@@ -78,7 +77,7 @@ describe('attachVsCode', () => {
                 return { stdout: 'default\n', stderr: '' };
             }
             if (command === "docker context ls --format '{{.Name}}'") {
-                return { stdout: 'default\ntopo.local\n', stderr: '' };
+                return { stdout: `default\n${dockerContext}\n`, stderr: '' };
             }
             if (command === `docker context use ${dockerContext}`) {
                 return { stdout: `${dockerContext}\n`, stderr: '' };

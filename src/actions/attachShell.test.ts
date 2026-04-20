@@ -13,7 +13,6 @@ describe('AttachShell', () => {
     const dockerCommands = new DockerCommands();
     const target: TargetItem = {
         ssh: 'user@topo.local',
-        host: 'topo.local',
     };
     const targetStore = mock<TargetStore>();
     let context: MockProxy<vscode.ExtensionContext>;

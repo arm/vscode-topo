@@ -2,10 +2,13 @@ import * as vscode from 'vscode';
 import { ContainerItem } from '../util/types';
 import { ContainerCommands } from '../workloadPlacement/containerCommands';
 import * as manifest from '../manifest';
-import { getDockerContextName } from '../util/dockerContext';
 import { assertTargetTreeContainerItem } from './util/assertTargetTreeContainerItem';
 import { isTopoError } from '../errors/topoError';
 import { showAndLogError } from '../util/showAndLogError';
+
+export function getDockerContextName(ssh: string): string {
+    return ssh.replace(/[^a-zA-Z0-9_.+-]/g, '-');
+}
 
 export class AttachVsCode {
     public static readonly attachVsCodeCommand = `${manifest.PACKAGE_NAME}.attachVsCode`;
@@ -45,7 +48,7 @@ export class AttachVsCode {
                 item.id,
             );
         };
-        const dockerContext = getDockerContextName(item.target);
+        const dockerContext = getDockerContextName(item.target.ssh);
         await this.containerCommands.ensureContext(
             dockerContext,
             item.target.ssh,

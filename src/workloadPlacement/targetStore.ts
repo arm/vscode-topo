@@ -1,11 +1,18 @@
 import * as vscode from 'vscode';
 import { logger } from '../util/logger';
 import debounce from 'lodash.debounce';
-import { Target } from './target';
 import { TargetItem } from '../util/types';
+import { string, type, assert, record } from 'superstruct';
 
 type GlobalStoreKeys = 'targets';
 type WorkspaceStoreKeys = 'selectedTarget';
+
+const serializedTargetsSchema = record(
+    string(),
+    type({
+        ssh: string(),
+    }),
+);
 
 export class TargetStore {
     private static instance: TargetStore | undefined;
@@ -74,7 +81,7 @@ export class TargetStore {
         return [...targets.values()];
     }
 
-    public async addTarget(target: Target): Promise<void> {
+    public async addTarget(target: TargetItem): Promise<void> {
         const targets = this.loadTargets();
         if (targets.has(target.ssh)) {
             throw new Error(`Target "${target.ssh}" already exists`);
@@ -83,7 +90,7 @@ export class TargetStore {
         await this.saveTargets(targets);
     }
 
-    public async updateTarget(target: Target): Promise<void> {
+    public async updateTarget(target: TargetItem): Promise<void> {
         const targets = this.loadTargets();
         if (!targets.has(target.ssh)) {
             throw new Error(`Target "${target.ssh}" does not exist`);
@@ -115,26 +122,12 @@ export class TargetStore {
         }
     }
 
-    protected loadTargets(): Map<string, Target> {
+    protected loadTargets(): Map<string, TargetItem> {
         try {
-            const targets = this.getGlobal('targets');
-            const parsed = targets ? JSON.parse(targets) : {};
-            const rawEntries = Object.entries(parsed);
-            const entries: [string, Target][] = [];
-            for (const [k, v] of rawEntries) {
-                try {
-                    entries.push([
-                        k,
-                        Target.from(v as Record<string, unknown>),
-                    ]);
-                } catch (err) {
-                    throw new Error(
-                        `Failed to parse target entry for key "${k}"`,
-                        { cause: err },
-                    );
-                }
-            }
-            return new Map(entries);
+            const rawTargets = this.getGlobal('targets');
+            const targets = rawTargets ? JSON.parse(rawTargets) : {};
+            assert(targets, serializedTargetsSchema);
+            return new Map(Object.entries(targets));
         } catch (err) {
             const errorMsg = 'Failed to load targets';
             logger.error(errorMsg, err);
@@ -142,12 +135,11 @@ export class TargetStore {
         }
     }
 
-    protected async saveTargets(targets: Map<string, Target>): Promise<void> {
-        const plain: Record<string, unknown> = {};
-        for (const [k, v] of targets.entries()) {
-            plain[k] = v.toJSON();
-        }
-        await this.setGlobal('targets', JSON.stringify(plain));
+    protected async saveTargets(
+        targets: Map<string, TargetItem>,
+    ): Promise<void> {
+        const json = JSON.stringify(Object.fromEntries(targets));
+        await this.setGlobal('targets', json);
     }
 
     protected getGlobal(key: GlobalStoreKeys): string | undefined {

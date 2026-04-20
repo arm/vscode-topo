@@ -11,7 +11,6 @@ describe('ContainerOpenInBrowser', () => {
     const registerCommandMock = jest.mocked(vscode.commands.registerCommand);
     const target: TargetItem = {
         ssh: 'user@topo.local',
-        host: 'topo.local',
     };
 
     beforeEach(() => {
@@ -45,7 +44,7 @@ describe('ContainerOpenInBrowser', () => {
 
         await openInBrowser(treeItem);
 
-        const url = `http://${target.host}:8080`;
+        const url = `http://${target.ssh}:8080`;
         expect(vscode.env.openExternal).toHaveBeenCalledWith(
             vscode.Uri.parse(url),
         );

@@ -17,7 +17,6 @@ export interface TargetDescription {
 
 export interface TargetItem {
     ssh: string;
-    host: string;
 }
 
 /**

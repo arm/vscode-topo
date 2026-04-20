@@ -94,7 +94,6 @@ const defaultInfoOutput = {
 const execMock = exec as jest.Mock;
 const target: TargetItem = {
     ssh: 'user@topo.local',
-    host: 'topo.local',
 };
 const loadedHealth: HealthCheckResult = {
     host: { dependencies: [] },
@@ -558,7 +557,6 @@ describe('ContainersManager', () => {
     it('updates when targetStore onChanged fires (re-queries selected target)', async () => {
         const newTarget: TargetItem = {
             ssh: 'bob@other.local',
-            host: 'other.local',
         };
         execMock.mockImplementation(async (command: string) => {
             switch (command) {
@@ -597,7 +595,6 @@ describe('ContainersManager', () => {
     it('ignores stale container loads after selected target changes', async () => {
         const newTarget: TargetItem = {
             ssh: 'bob@other.local',
-            host: 'other.local',
         };
         const pendingOldContainers = new Deferred<DockerPsItem[]>();
         let selectedTarget: TargetItem | undefined = target;
@@ -665,7 +662,6 @@ describe('ContainersManager', () => {
     it('refreshes the newly selected target after target change', async () => {
         const newTarget: TargetItem = {
             ssh: 'bob@other.local',
-            host: 'other.local',
         };
         let selectedTarget: TargetItem | undefined = target;
         const onChangeEmitter = new vscode.EventEmitter<void>();

@@ -13,7 +13,6 @@ describe('SetupKeys', () => {
     let targetStore: MockProxy<TargetStore>;
     const target: TargetItem = {
         ssh: 'user@topo.local',
-        host: 'topo.local',
     };
     const waitImmediate = () =>
         new Promise<void>((resolve) => setTimeout(() => resolve(), 0));

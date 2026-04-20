@@ -277,7 +277,6 @@ describe('TargetManager', () => {
         it('shows an item in the status bar with the currently selected target', async () => {
             const target: TargetItem = {
                 ssh: 'root@localhost',
-                host: 'localhost',
             };
             const { targetManager, targetStore, containersManager } =
                 createTargetManager();
@@ -336,11 +335,9 @@ describe('TargetManager', () => {
         it('changes the item in the status bar when the currently selected target changes', async () => {
             const target1: TargetItem = {
                 ssh: 'root@localhost',
-                host: 'localhost',
             };
             const target2: TargetItem = {
                 ssh: 'root@other-host',
-                host: 'other-host',
             };
             const {
                 targetManager,

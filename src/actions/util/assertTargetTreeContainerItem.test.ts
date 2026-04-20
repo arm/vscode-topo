@@ -35,7 +35,6 @@ describe('assertTargetTreeContainerItem', () => {
             cpuUsage: '',
             memUsage: '',
             target: {
-                host: 'test-host',
                 ssh: 'root@test-host',
             },
         };

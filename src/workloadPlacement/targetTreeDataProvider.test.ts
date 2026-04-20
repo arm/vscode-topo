@@ -39,7 +39,6 @@ describe('TargetTreeDataProvider', () => {
     let targetDescriptionStoreMock: MockProxy<TargetDescriptionStore>;
     const target: TargetItem = {
         ssh: 'user@topo.local',
-        host: 'topo.local',
     };
     const targetDescription: TargetDescription = {
         hostProcessor: [],
