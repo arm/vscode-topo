@@ -47,7 +47,7 @@ const createTargetManager = () => {
         health: undefined,
         targetSsh: undefined,
     });
-    containersManager.getTargetState.mockResolvedValue({
+    containersManager.getTargetStateSnapshot.mockReturnValue({
         health: undefined,
         targetSsh: undefined,
     });
