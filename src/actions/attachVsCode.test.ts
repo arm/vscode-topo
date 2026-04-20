@@ -20,6 +20,26 @@ async function executeCommand(command: string, ...args: unknown[]) {
     await handler(...args);
 }
 
+describe('getDockerContextName', () => {
+    it('keeps docker context characters that are already valid', () => {
+        expect(getDockerContextName('user.name+dev-1_2')).toBe(
+            'user.name+dev-1_2',
+        );
+    });
+
+    it('replaces invalid separators with hyphens', () => {
+        expect(getDockerContextName('user@topo.local:22/path')).toBe(
+            'user-topo.local-22-path',
+        );
+    });
+
+    it('replaces each invalid character individually', () => {
+        expect(getDockerContextName('user@@topo.local')).toBe(
+            'user--topo.local',
+        );
+    });
+});
+
 describe('attachVsCode', () => {
     let execMock: jest.Mock;
     let context: MockProxy<vscode.ExtensionContext>;
