@@ -41,7 +41,7 @@ export async function activate(
         return;
     }
 
-    const targetStore = TargetStore.getInstance(context);
+    const targetStore = new TargetStore(context);
     const targetDescriptionStore = new TargetDescriptionStore(topoCli);
     const projectInit = new ProjectInit(context, topoCli);
     const projectClone = new ProjectClone(context, topoCli, targetStore);
