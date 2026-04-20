@@ -9,7 +9,7 @@ import { ContainersManager } from './containersManager';
 import { getTreeItemIcon } from './targetTreeTargetItem';
 import { isTargetReady } from '../util/targetState';
 import { TargetItem } from '../util/types';
-import { defaultSshConfigPath, getHosts } from '../util/ssh';
+import { defaultSshConfigPath, getHosts, topoSshConfigPath } from '../util/ssh';
 
 export function buildQuickPickItems(
     availableHosts: string[],
@@ -44,7 +44,7 @@ export class TargetManager {
     private statusBarItem: vscode.StatusBarItem | undefined;
 
     private static readonly configureSshTargetsLabel =
-        '$(gear) Configure SSH targets';
+        '$(gear) Configure Topo SSH targets';
 
     constructor(
         private readonly context: vscode.ExtensionContext,
@@ -113,7 +113,7 @@ export class TargetManager {
 
         const configureItem: vscode.QuickPickItem = {
             label: TargetManager.configureSshTargetsLabel,
-            description: '~/.ssh/config',
+            description: topoSshConfigPath,
             alwaysShow: true,
         };
 
@@ -157,13 +157,13 @@ export class TargetManager {
     }
 
     private async openSshConfig(): Promise<void> {
-        if (fs.existsSync(defaultSshConfigPath)) {
+        if (fs.existsSync(topoSshConfigPath)) {
             await vscode.window.showTextDocument(
-                vscode.Uri.file(defaultSshConfigPath),
+                vscode.Uri.file(topoSshConfigPath),
             );
         } else {
             vscode.window.showWarningMessage(
-                `SSH config not found at ${defaultSshConfigPath}`,
+                `SSH config not found at ${topoSshConfigPath}`,
             );
         }
     }
