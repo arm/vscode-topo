@@ -23,6 +23,10 @@ jest.mock('node:child_process');
 jest.mock('node:fs');
 jest.mock('node:process');
 
+function errorWithStderr(stderr: string): Error & { stderr: string } {
+    return Object.assign(new Error('Command failed'), { stderr });
+}
+
 const execSyncMock = jest.mocked(childProcess.execFileSync);
 const execMock = jest.mocked(childProcess.execFile);
 const spawnMock = jest.mocked(childProcess.spawn);
@@ -121,9 +125,7 @@ describe('TopoCli', () => {
             '{"time":"2026-04-16T15:14:48Z","level":"ERROR","msg":"collecting CPU info: \\"lscpu\\" not found"}',
             '{"time":"2026-04-16T15:14:49Z","level":"ERROR","msg":"connection lost"}',
         ].join('\n');
-        const execError = Object.assign(new Error('Command failed'), {
-            stderr: stderrOutput,
-        });
+        const execError = errorWithStderr(stderrOutput);
         execSyncMock.mockImplementation(() => {
             throw execError;
         });
@@ -147,9 +149,7 @@ describe('TopoCli', () => {
     });
 
     it('listTemplates rethrows original error when stderr has no structured log entries', () => {
-        const execError = Object.assign(new Error('Command failed'), {
-            stderr: 'plain error text',
-        });
+        const execError = errorWithStderr('plain error text');
         execSyncMock.mockImplementation(() => {
             throw execError;
         });
@@ -160,9 +160,7 @@ describe('TopoCli', () => {
     it('listTemplates rethrows original error when stderr contains only non-ERROR log entries', () => {
         const stderrOutput =
             '{"time":"2026-04-16T15:00:00Z","level":"INFO","msg":"starting up"}';
-        const execError = Object.assign(new Error('Command failed'), {
-            stderr: stderrOutput,
-        });
+        const execError = errorWithStderr(stderrOutput);
         execSyncMock.mockImplementation(() => {
             throw execError;
         });
@@ -176,9 +174,7 @@ describe('TopoCli', () => {
             '{"time":"2026-04-16T15:00:01Z","level":"ERROR","msg":"disk full"}',
             '{"time":"2026-04-16T15:00:02Z","level":"WARN","msg":"retrying"}',
         ].join('\n');
-        const execError = Object.assign(new Error('Command failed'), {
-            stderr: stderrOutput,
-        });
+        const execError = errorWithStderr(stderrOutput);
         execSyncMock.mockImplementation(() => {
             throw execError;
         });
@@ -416,9 +412,7 @@ describe('parseStructuredError', () => {
             '{"time":"2026-04-16T15:14:48Z","level":"ERROR","msg":"lscpu not found"}',
             '{"time":"2026-04-16T15:14:49Z","level":"ERROR","msg":"connection lost"}',
         ].join('\n');
-        const original = Object.assign(new Error('Command failed'), {
-            stderr,
-        });
+        const original = errorWithStderr(stderr);
 
         const result = parseTopoError(original);
 
@@ -434,9 +428,7 @@ describe('parseStructuredError', () => {
             '{"time":"2026-04-16T15:00:01Z","level":"ERROR","msg":"disk full"}',
             '{"time":"2026-04-16T15:00:02Z","level":"WARN","msg":"retrying"}',
         ].join('\n');
-        const original = Object.assign(new Error('Command failed'), {
-            stderr,
-        });
+        const original = errorWithStderr(stderr);
 
         const result = parseTopoError(original);
 
@@ -448,17 +440,13 @@ describe('parseStructuredError', () => {
     it('returns undefined when stderr has only non-ERROR entries', () => {
         const stderr =
             '{"time":"2026-04-16T15:00:00Z","level":"INFO","msg":"starting up"}';
-        const original = Object.assign(new Error('Command failed'), {
-            stderr,
-        });
+        const original = errorWithStderr(stderr);
 
         expect(parseTopoError(original)).toBeUndefined();
     });
 
     it('returns undefined when stderr has no structured logs', () => {
-        const original = Object.assign(new Error('Command failed'), {
-            stderr: 'plain error text',
-        });
+        const original = errorWithStderr('plain error text');
 
         expect(parseTopoError(original)).toBeUndefined();
     });
