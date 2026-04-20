@@ -8,26 +8,12 @@ type GlobalStoreKeys = 'targets';
 type WorkspaceStoreKeys = 'selectedTarget';
 
 export class TargetStore {
-    private static instance: TargetStore | undefined;
-
-    public static getInstance(context?: vscode.ExtensionContext): TargetStore {
-        if (!TargetStore.instance) {
-            if (!context) {
-                throw new Error(
-                    'TargetStore not initialized. Context is required when initializing the TargetStore.',
-                );
-            }
-            TargetStore.instance = new TargetStore(context);
-        }
-        return TargetStore.instance;
-    }
-
     private _onChanged: vscode.EventEmitter<void> =
         new vscode.EventEmitter<void>();
     public readonly onChanged: vscode.Event<void> = this._onChanged.event;
     private disposables: vscode.Disposable[] = [];
 
-    private constructor(protected context: vscode.ExtensionContext) {
+    constructor(protected context: vscode.ExtensionContext) {
         const pattern = new vscode.RelativePattern(
             this.context.globalStorageUri,
             'targets-update.signal',
@@ -204,6 +190,5 @@ export class TargetStore {
             }
         }
         this.disposables = [];
-        TargetStore.instance = undefined;
     }
 }
