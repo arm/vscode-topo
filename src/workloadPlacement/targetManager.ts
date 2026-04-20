@@ -1,4 +1,3 @@
-import * as fs from 'node:fs';
 import * as vscode from 'vscode';
 import { TargetTreeDataProvider } from './targetTreeDataProvider';
 import * as manifest from '../manifest';
@@ -9,12 +8,11 @@ import { ContainersManager } from './containersManager';
 import { getTreeItemIcon } from './targetTreeTargetItem';
 import { isTargetReady } from '../util/targetState';
 import { TargetItem } from '../util/types';
-import { defaultSshConfigPath, getHosts, topoSshConfigPath } from '../util/ssh';
+import { defaultSshConfigPath, getHosts } from '../util/ssh';
 
 export function buildQuickPickItems(
     availableHosts: string[],
     filter: string,
-    configureItem: vscode.QuickPickItem,
 ): vscode.QuickPickItem[] {
     const hostItems: vscode.QuickPickItem[] = availableHosts.map((host) => ({
         label: host,
@@ -30,7 +28,6 @@ export function buildQuickPickItems(
         ...(manualItem ? [manualItem] : []),
         ...hostItems,
         { label: '', kind: vscode.QuickPickItemKind.Separator },
-        configureItem,
     ];
 }
 
@@ -42,9 +39,6 @@ export class TargetManager {
     public static readonly statusPriority = 100;
 
     private statusBarItem: vscode.StatusBarItem | undefined;
-
-    private static readonly configureSshTargetsLabel =
-        '$(gear) Configure Topo SSH targets';
 
     constructor(
         private readonly context: vscode.ExtensionContext,
@@ -111,40 +105,20 @@ export class TargetManager {
             (host) => !existingTargets.has(host),
         );
 
-        const configureItem: vscode.QuickPickItem = {
-            label: TargetManager.configureSshTargetsLabel,
-            description: topoSshConfigPath,
-            alwaysShow: true,
-        };
-
         const quickPick = vscode.window.createQuickPick();
         quickPick.title = 'Add new target';
         quickPick.placeholder =
             'Select a host or type a connection string (e.g. root@192.168.1.1)';
-        quickPick.items = buildQuickPickItems(
-            availableHosts,
-            '',
-            configureItem,
-        );
+        quickPick.items = buildQuickPickItems(availableHosts, '');
 
         quickPick.onDidChangeValue((value) => {
-            quickPick.items = buildQuickPickItems(
-                availableHosts,
-                value,
-                configureItem,
-            );
+            quickPick.items = buildQuickPickItems(availableHosts, value);
         });
 
         return new Promise<string | undefined>((resolve) => {
             quickPick.onDidAccept(async () => {
                 const selected = quickPick.selectedItems[0];
                 quickPick.hide();
-                if (selected === configureItem) {
-                    await this.openSshConfig();
-                    resolve(undefined);
-                    return;
-                }
-
                 resolve(selected?.label);
             });
 
@@ -154,18 +128,6 @@ export class TargetManager {
 
             quickPick.show();
         }).finally(() => quickPick.dispose());
-    }
-
-    private async openSshConfig(): Promise<void> {
-        if (fs.existsSync(topoSshConfigPath)) {
-            await vscode.window.showTextDocument(
-                vscode.Uri.file(topoSshConfigPath),
-            );
-        } else {
-            vscode.window.showWarningMessage(
-                `SSH config not found at ${topoSshConfigPath}`,
-            );
-        }
     }
 
     protected updateStatusBar(selectedTarget: TargetItem | undefined): void {
