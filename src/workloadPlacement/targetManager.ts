@@ -24,11 +24,7 @@ export function buildQuickPickItems(
     const manualItem: vscode.QuickPickItem | undefined = isNovelEntry
         ? { label: trimmed, description: 'Add new SSH target' }
         : undefined;
-    return [
-        ...(manualItem ? [manualItem] : []),
-        ...hostItems,
-        { label: '', kind: vscode.QuickPickItemKind.Separator },
-    ];
+    return [...(manualItem ? [manualItem] : []), ...hostItems];
 }
 
 export class TargetManager {

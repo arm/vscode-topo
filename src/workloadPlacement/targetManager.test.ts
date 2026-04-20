@@ -103,14 +103,10 @@ const mockedStatusBarItemCreation: typeof vscode.window.createStatusBarItem = ((
 }) as unknown as typeof vscode.window.createStatusBarItem;
 
 describe('buildQuickPickItems', () => {
-    it('returns hosts followed by separator and configure item', () => {
+    it('returns hosts', () => {
         const items = buildQuickPickItems(['host-a', 'host-b'], '');
 
-        expect(items).toEqual([
-            { label: 'host-a' },
-            { label: 'host-b' },
-            { label: '', kind: vscode.QuickPickItemKind.Separator },
-        ]);
+        expect(items).toEqual([{ label: 'host-a' }, { label: 'host-b' }]);
     });
 
     it('prepends a manual entry when filter does not match any host', () => {
@@ -144,12 +140,10 @@ describe('buildQuickPickItems', () => {
         });
     });
 
-    it('returns only separator and configure item when no hosts and empty filter', () => {
+    it('returns nothing when no hosts and empty filter', () => {
         const items = buildQuickPickItems([], '');
 
-        expect(items).toEqual([
-            { label: '', kind: vscode.QuickPickItemKind.Separator },
-        ]);
+        expect(items).toEqual([]);
     });
 });
 
