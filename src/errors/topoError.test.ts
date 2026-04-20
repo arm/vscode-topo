@@ -1,4 +1,4 @@
-import { TopoError, isTopoError } from './topoError';
+import { TopoError } from './topoError';
 
 describe('TopoError', () => {
     it('stores code, message, and log entries', () => {
@@ -30,23 +30,5 @@ describe('TopoError', () => {
         const error = new TopoError('CLI', 'wrapper', { cause });
 
         expect(error.cause).toBe(cause);
-    });
-});
-
-describe('isTopoError', () => {
-    it('returns true for TopoError instances', () => {
-        const error = new TopoError('CLI', 'test');
-
-        expect(isTopoError(error)).toBe(true);
-    });
-
-    it('returns false for plain Error instances', () => {
-        expect(isTopoError(new Error('test'))).toBe(false);
-    });
-
-    it('returns false for non-error values', () => {
-        expect(isTopoError('string')).toBe(false);
-        expect(isTopoError(null)).toBe(false);
-        expect(isTopoError(undefined)).toBe(false);
     });
 });
