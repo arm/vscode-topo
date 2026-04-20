@@ -13,6 +13,7 @@ import {
 } from './topoCliSchema';
 import { array, assert, is } from 'superstruct';
 import { TopoError, TopoLogEntry } from './errors/topoError';
+import { getErrorMessage } from './util/getErrorMessage';
 
 export interface TopoCliVersion {
     version: string;
@@ -61,12 +62,16 @@ export function parseTopoLogEntries(output: string): TopoLogEntry[] {
     return entries;
 }
 
+function hasStderr(error: unknown): error is Error & { stderr: string } {
+    return (
+        error instanceof Error &&
+        'stderr' in error &&
+        typeof error.stderr === 'string'
+    );
+}
+
 export function parseTopoError(error: unknown): TopoError | undefined {
-    const stderr =
-        error instanceof Error
-            ? ((error as NodeJS.ErrnoException & { stderr?: string }).stderr ??
-              error.message)
-            : String(error);
+    const stderr = hasStderr(error) ? error.stderr : getErrorMessage(error);
     const logEntries = parseTopoLogEntries(stderr);
     const errorMessages = logEntries
         .filter((entry) => entry.level === 'ERROR')
