@@ -81,33 +81,14 @@ async function executeCommand(command: string, ...args: unknown[]) {
 }
 
 describe('buildQuickPickItems', () => {
-    const configureItem: vscode.QuickPickItem = {
-        label: '$(gear) Configure SSH targets',
-        description: '~/.ssh/config',
-        alwaysShow: true,
-    };
+    it('returns hosts', () => {
+        const items = buildQuickPickItems(['host-a', 'host-b'], '');
 
-    it('returns hosts followed by separator and configure item', () => {
-        const items = buildQuickPickItems(
-            ['host-a', 'host-b'],
-            '',
-            configureItem,
-        );
-
-        expect(items).toEqual([
-            { label: 'host-a' },
-            { label: 'host-b' },
-            { label: '', kind: vscode.QuickPickItemKind.Separator },
-            configureItem,
-        ]);
+        expect(items).toEqual([{ label: 'host-a' }, { label: 'host-b' }]);
     });
 
     it('prepends a manual entry when filter does not match any host', () => {
-        const items = buildQuickPickItems(
-            ['host-a'],
-            'root@10.0.0.1',
-            configureItem,
-        );
+        const items = buildQuickPickItems(['host-a'], 'root@10.0.0.1');
 
         expect(items[0]).toEqual({
             label: 'root@10.0.0.1',
@@ -117,19 +98,19 @@ describe('buildQuickPickItems', () => {
     });
 
     it('does not prepend manual entry when filter matches a host (case-insensitive)', () => {
-        const items = buildQuickPickItems(['Host-A'], 'host-a', configureItem);
+        const items = buildQuickPickItems(['Host-A'], 'host-a');
 
         expect(items[0]).toEqual({ label: 'Host-A' });
     });
 
     it('does not prepend manual entry when filter is whitespace-only', () => {
-        const items = buildQuickPickItems(['host-a'], '   ', configureItem);
+        const items = buildQuickPickItems(['host-a'], '   ');
 
         expect(items[0]).toEqual({ label: 'host-a' });
     });
 
     it('trims whitespace from the filter for the manual entry label', () => {
-        const items = buildQuickPickItems([], '  my-host  ', configureItem);
+        const items = buildQuickPickItems([], '  my-host  ');
 
         expect(items[0]).toEqual({
             label: 'my-host',
@@ -137,13 +118,10 @@ describe('buildQuickPickItems', () => {
         });
     });
 
-    it('returns only separator and configure item when no hosts and empty filter', () => {
-        const items = buildQuickPickItems([], '', configureItem);
+    it('returns nothing when no hosts and empty filter', () => {
+        const items = buildQuickPickItems([], '');
 
-        expect(items).toEqual([
-            { label: '', kind: vscode.QuickPickItemKind.Separator },
-            configureItem,
-        ]);
+        expect(items).toEqual([]);
     });
 });
 

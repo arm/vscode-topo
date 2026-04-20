@@ -1,6 +1,4 @@
 /// <reference types="vscode" />
-// eslint-disable-next-line @typescript-eslint/triple-slash-reference
-/// <reference path="./vscode-webview.d.ts" />
 
 import ReactDOM from 'react-dom/client';
 import { ComposeEditor } from './composeEditor/composeEditor';
