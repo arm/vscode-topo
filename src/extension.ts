@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import { ComposeEditorProvider } from './composeEditorProvider';
 import { TopoCli } from './topoCli';
-import { OnTargetTopoConsoleOpener } from './onTargetTopoConsoleOpener';
 import { ProjectInit } from './projectInit';
 import { TopoCliVersionChecker } from './topoCliVersionChecker';
 import { TargetManager } from './workloadPlacement/targetManager';
@@ -44,10 +43,6 @@ export async function activate(
 
     const targetStore = new TargetStore(context);
     const targetDescriptionStore = new TargetDescriptionStore(topoCli);
-    const onTargetTopoConsoleOpener = new OnTargetTopoConsoleOpener(
-        context,
-        targetStore,
-    );
     const projectInit = new ProjectInit(context, topoCli);
     const projectClone = new ProjectClone(context, topoCli, targetStore);
     const deploy = new Deploy(context, targetStore);
@@ -111,7 +106,6 @@ export async function activate(
     context.subscriptions.push(targetStore);
     await topoCli.activate();
     context.subscriptions.push(topoCli);
-    await onTargetTopoConsoleOpener.activate();
     await projectInit.activate();
     await projectClone.activate();
     deploy.activate();

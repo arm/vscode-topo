@@ -67,11 +67,6 @@
                 "category": "Arm Topo"
             },
             {
-                "command": "topo.openTopoConsole",
-                "title": "Open on-target Topo console",
-                "category": "Arm Topo"
-            },
-            {
                 "command": "topo.attachVsCode",
                 "title": "Attach VS Code",
                 "category": "Arm Topo"
@@ -233,10 +228,6 @@
                 },
                 {
                     "command": "topo.openTargetDashboard",
-                    "when": "false"
-                },
-                {
-                    "command": "topo.openTopoConsole",
                     "when": "false"
                 },
                 {
