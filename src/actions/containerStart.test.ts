@@ -102,11 +102,11 @@ describe('ContainerStart', () => {
         );
     });
 
-    it('re-throws non-WrappedError errors from startContainer', async () => {
+    it('re-throws generic error errors from startContainer', async () => {
         const containersManager: MockProxy<ContainersManager> =
             mock<ContainersManager>();
         containersManager.startContainer.mockRejectedValue(
-            new Error('non-WrappedError'),
+            new Error('generic error'),
         );
         const containerStart = new ContainerStart(context, containersManager);
         containerStart.activate();
@@ -116,6 +116,6 @@ describe('ContainerStart', () => {
                 ContainerStart.startContainerCommand,
                 treeItem,
             ),
-        ).rejects.toThrow('non-WrappedError');
+        ).rejects.toThrow('generic error');
     });
 });

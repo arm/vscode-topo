@@ -106,11 +106,11 @@ describe('ContainerDelete', () => {
         );
     });
 
-    it('re-throws non-WrappedError errors from deleteContainer', async () => {
+    it('re-throws generic errors from deleteContainer', async () => {
         const containersManager: MockProxy<ContainersManager> =
             mock<ContainersManager>();
         containersManager.deleteContainer.mockRejectedValue(
-            new Error('non-WrappedError'),
+            new Error('generic error'),
         );
         const containerDelete = new ContainerDelete(context, containersManager);
         containerDelete.activate();
@@ -120,6 +120,6 @@ describe('ContainerDelete', () => {
                 ContainerDelete.deleteContainerCommand,
                 treeItem,
             ),
-        ).rejects.toThrow('non-WrappedError');
+        ).rejects.toThrow('generic error');
     });
 });

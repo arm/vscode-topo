@@ -217,7 +217,7 @@ describe('TargetDashboardMessageHandler', () => {
                 expect(messagePoster.postMessage).not.toHaveBeenCalled();
             });
 
-            it('shows an unexpected error when stop-container throws a non-WrappedError', async () => {
+            it('shows an unexpected error when stop-container throws a generic error', async () => {
                 const err = new Error('boom');
                 containersManager.stopContainer.mockRejectedValueOnce(err);
 
@@ -273,7 +273,7 @@ describe('TargetDashboardMessageHandler', () => {
                 expect(messagePoster.postMessage).not.toHaveBeenCalled();
             });
 
-            it('shows an unexpected error when delete-container throws a non-WrappedError', async () => {
+            it('shows an unexpected error when delete-container throws a generic error', async () => {
                 const err = new Error('boom');
                 containersManager.deleteContainer.mockRejectedValueOnce(err);
 
@@ -383,7 +383,7 @@ describe('TargetDashboardMessageHandler', () => {
                 expect(attachVsCode.attachVsCode).not.toHaveBeenCalled();
             });
 
-            it('shows an unexpected error when attach-vscode throws a non-WrappedError', async () => {
+            it('shows an unexpected error when attach-vscode throws a generic error', async () => {
                 containersManager.getContainersData.mockResolvedValueOnce([
                     containerA,
                 ]);
@@ -478,7 +478,7 @@ describe('TargetDashboardMessageHandler', () => {
                 );
             });
 
-            it('shows an unexpected error when attach-ssh throws a non-WrappedError', async () => {
+            it('shows an unexpected error when attach-ssh throws a generic error', async () => {
                 const err = new Error('boom');
                 attachShell.attachSSH.mockRejectedValueOnce(err);
 
