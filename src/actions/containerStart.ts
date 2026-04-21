@@ -3,7 +3,7 @@ import { ContainersManager } from '../workloadPlacement/containersManager';
 import * as manifest from '../manifest';
 import { assertTargetTreeContainerItem } from './util/assertTargetTreeContainerItem';
 import { showAndLogError } from '../util/showAndLogError';
-import { isTopoError } from '../errors/topoError';
+import { isWrappedError } from '../errors/wrappedError';
 
 export class ContainerStart {
     public static readonly startContainerCommand = `${manifest.PACKAGE_NAME}.startContainer`;
@@ -31,7 +31,7 @@ export class ContainerStart {
                 treeNode.containerItem.id,
             );
         } catch (err: unknown) {
-            if (isTopoError(err) && err.code === 'DOCKER') {
+            if (isWrappedError(err, ['DOCKER'])) {
                 const userError = `Failed to start the container ${treeNode.containerItem.id}`;
                 showAndLogError(userError, err);
                 return;

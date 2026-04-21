@@ -1,4 +1,4 @@
-import { TopoError } from '../errors/topoError';
+import { WrappedError } from '../errors/wrappedError';
 import { exec, ExecResult } from '../util/exec';
 import { logger } from '../util/logger';
 import type { DockerInspectItem, DockerPsItem } from '../util/types';
@@ -34,7 +34,7 @@ const isDockerError = (err: unknown): err is DockerError => {
 };
 
 /**
- * Helper to run docker commands, convert errors to TopoError when appropriate,
+ * Helper to run docker commands, convert errors to WrappedError when appropriate,
  * and log any stderr output as warnings.
  * @param cmd - The docker command to run.
  * @param warnMsg - The message to log if there is any stderr output.
@@ -56,7 +56,7 @@ const runDockerCmd = async (
                 logger.warn(warnMsg, stderr);
                 return err.stdout.toString().trim();
             }
-            throw new TopoError('DOCKER', stderr, { cause: err });
+            throw new WrappedError('DOCKER', stderr, { cause: err });
         } else {
             throw err;
         }

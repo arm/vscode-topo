@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import { ContainerStop } from './containerStop';
 import { ContainerItem, TargetItem } from '../util/types';
 import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
-import { TopoError } from '../errors/topoError';
+import { WrappedError } from '../errors/wrappedError';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { ContainersManager } from '../workloadPlacement/containersManager';
 
@@ -76,11 +76,11 @@ describe('ContainerStop', () => {
         expect(containersManager.stopContainer).toHaveBeenCalledWith('abc123');
     });
 
-    it('shows error message if stopContainer throws a TopoError', async () => {
+    it('shows error message if stopContainer throws a WrappedError', async () => {
         const containersManager: MockProxy<ContainersManager> =
             mock<ContainersManager>();
         containersManager.stopContainer.mockRejectedValue(
-            new TopoError('DOCKER', 'fail'),
+            new WrappedError('DOCKER', 'fail'),
         );
         const containerStop = new ContainerStop(context, containersManager);
         await containerStop.activate();
@@ -97,11 +97,11 @@ describe('ContainerStop', () => {
         );
     });
 
-    it('re-throw non-TopoError errors from stopContainer', async () => {
+    it('re-throw generic error errors from stopContainer', async () => {
         const containersManager: MockProxy<ContainersManager> =
             mock<ContainersManager>();
         containersManager.stopContainer.mockRejectedValue(
-            new Error('non-TopoError'),
+            new Error('generic error'),
         );
         const containerStop = new ContainerStop(context, containersManager);
         await containerStop.activate();
@@ -111,6 +111,6 @@ describe('ContainerStop', () => {
                 ContainerStop.stopContainerCommand,
                 treeItem,
             ),
-        ).rejects.toThrow('non-TopoError');
+        ).rejects.toThrow('generic error');
     });
 });

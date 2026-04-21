@@ -3,7 +3,7 @@ import { ContainersManager } from '../workloadPlacement/containersManager';
 import * as manifest from '../manifest';
 import { assertTargetTreeContainerItem } from './util/assertTargetTreeContainerItem';
 import { showAndLogError } from '../util/showAndLogError';
-import { isTopoError } from '../errors/topoError';
+import { isWrappedError } from '../errors/wrappedError';
 
 export class ContainerDelete {
     public static readonly deleteContainerCommand = `${manifest.PACKAGE_NAME}.deleteContainer`;
@@ -31,7 +31,7 @@ export class ContainerDelete {
                 treeNode.containerItem.id,
             );
         } catch (err: unknown) {
-            if (isTopoError(err) && err.code === 'DOCKER') {
+            if (isWrappedError(err, ['DOCKER'])) {
                 const userError = `Failed to delete the container ${treeNode.containerItem.id}`;
                 showAndLogError(userError, err);
                 return;
