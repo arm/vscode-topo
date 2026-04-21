@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import { ContainerDelete } from './containerDelete';
 import { ContainerItem, TargetItem } from '../util/types';
 import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
-import { TopoError } from '../errors/topoError';
+import { WrappedError } from '../errors/wrappedError';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { ContainersManager } from '../workloadPlacement/containersManager';
 
@@ -85,11 +85,11 @@ describe('ContainerDelete', () => {
         );
     });
 
-    it('shows error message if deleteContainer throws a TopoError', async () => {
+    it('shows error message if deleteContainer throws a WrappedError', async () => {
         const containersManager: MockProxy<ContainersManager> =
             mock<ContainersManager>();
         containersManager.deleteContainer.mockRejectedValue(
-            new TopoError('DOCKER', 'fail'),
+            new WrappedError('DOCKER', 'fail'),
         );
         const containerDelete = new ContainerDelete(context, containersManager);
         containerDelete.activate();
@@ -106,11 +106,11 @@ describe('ContainerDelete', () => {
         );
     });
 
-    it('re-throws non-TopoError errors from deleteContainer', async () => {
+    it('re-throws non-WrappedError errors from deleteContainer', async () => {
         const containersManager: MockProxy<ContainersManager> =
             mock<ContainersManager>();
         containersManager.deleteContainer.mockRejectedValue(
-            new Error('non-TopoError'),
+            new Error('non-WrappedError'),
         );
         const containerDelete = new ContainerDelete(context, containersManager);
         containerDelete.activate();
@@ -120,6 +120,6 @@ describe('ContainerDelete', () => {
                 ContainerDelete.deleteContainerCommand,
                 treeItem,
             ),
-        ).rejects.toThrow('non-TopoError');
+        ).rejects.toThrow('non-WrappedError');
     });
 });

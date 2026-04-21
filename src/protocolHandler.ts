@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { ProjectClone } from './projectClone';
 import { logger } from './util/logger';
 import { parseCloneSourceString } from './util/parseSourceCloneString';
-import { isTopoError } from './errors/topoError';
+import { isWrappedError } from './errors/wrappedError';
 import { showAndLogError } from './util/showAndLogError';
 
 /**
@@ -30,7 +30,7 @@ export class ProtocolHandler implements vscode.UriHandler {
                 try {
                     await this.handleCloneRequest(uri, data);
                 } catch (error: unknown) {
-                    if (!isTopoError(error) || error.code !== 'CLONE') {
+                    if (!isWrappedError(error, ['CLONE'])) {
                         throw error;
                     }
                     showAndLogError('Failed to clone project', error);

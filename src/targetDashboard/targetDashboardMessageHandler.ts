@@ -7,7 +7,7 @@ import { ContainerOpenInBrowser } from '../actions/containerOpenInBrowser';
 import { AttachVsCode } from '../actions/attachVsCode';
 import { AttachShell } from '../actions/attachShell';
 import { TargetStore } from '../workloadPlacement/targetStore';
-import { isTopoError } from '../errors/topoError';
+import { isWrappedError } from '../errors/wrappedError';
 import { isPlainObject } from '../util/isPlainObject';
 import { TargetDescriptionStore } from '../workloadPlacement/targetDescriptionStore';
 
@@ -123,7 +123,7 @@ export class TargetDashboardMessageHandler {
         try {
             await this.containersManager.startContainer(containerId);
         } catch (err: unknown) {
-            if (isTopoError(err) && err.code === 'DOCKER') {
+            if (isWrappedError(err, ['DOCKER'])) {
                 showAndLogError(
                     `Failed to start the container ${containerId}`,
                     err,
@@ -144,7 +144,7 @@ export class TargetDashboardMessageHandler {
         try {
             await this.containersManager.stopContainer(containerId);
         } catch (err: unknown) {
-            if (isTopoError(err) && err.code === 'DOCKER') {
+            if (isWrappedError(err, ['DOCKER'])) {
                 showAndLogError(
                     `Failed to stop the container ${containerId}`,
                     err,
@@ -165,7 +165,7 @@ export class TargetDashboardMessageHandler {
         try {
             await this.containersManager.deleteContainer(containerId);
         } catch (err: unknown) {
-            if (isTopoError(err) && err.code === 'DOCKER') {
+            if (isWrappedError(err, ['DOCKER'])) {
                 showAndLogError(
                     `Failed to delete the container ${containerId}`,
                     err,
@@ -198,7 +198,7 @@ export class TargetDashboardMessageHandler {
         try {
             await this.attachVsCode.attachVsCode(container);
         } catch (err: unknown) {
-            if (isTopoError(err) && err.code === 'DOCKER') {
+            if (isWrappedError(err, ['DOCKER'])) {
                 showAndLogError(
                     `Failed to attach VS Code to the container ${containerId}`,
                     err,
@@ -218,7 +218,7 @@ export class TargetDashboardMessageHandler {
         try {
             await this.attachShell.attachSSH();
         } catch (err: unknown) {
-            if (isTopoError(err) && err.code === 'DOCKER') {
+            if (isWrappedError(err, ['DOCKER'])) {
                 showAndLogError('Failed to attach SSH to the target', err);
                 return;
             }

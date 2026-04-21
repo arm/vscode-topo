@@ -4,7 +4,7 @@ import { ContainerCommands } from '../workloadPlacement/containerCommands';
 import * as manifest from '../manifest';
 import { getDockerContextName } from '../util/dockerContext';
 import { assertTargetTreeContainerItem } from './util/assertTargetTreeContainerItem';
-import { isTopoError } from '../errors/topoError';
+import { isWrappedError } from '../errors/wrappedError';
 import { showAndLogError } from '../util/showAndLogError';
 
 export class AttachVsCode {
@@ -29,7 +29,7 @@ export class AttachVsCode {
         try {
             await this.attachVsCode(treeNode.containerItem);
         } catch (err: unknown) {
-            if (isTopoError(err) && err.code === 'DOCKER') {
+            if (isWrappedError(err, ['DOCKER'])) {
                 const userError = `Failed to attach VS Code to the container ${treeNode.containerItem.id}`;
                 showAndLogError(userError, err);
                 return;

@@ -5,7 +5,7 @@ import { TARGET_HOST_RUNTIME } from '../manifest';
 import { DockerCommands } from '../workloadPlacement/dockerCommands';
 import { ContainerItem, TargetItem } from '../util/types';
 import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
-import { TopoError } from '../errors/topoError';
+import { WrappedError } from '../errors/wrappedError';
 import { mock, MockProxy } from 'jest-mock-extended';
 
 jest.mock('../util/exec', () => ({
@@ -161,7 +161,7 @@ describe('attachVsCode', () => {
     it('shows an error if the attachVsCode command fails', async () => {
         await attachVsCode.activate();
         execMock.mockImplementation(async () => {
-            throw new TopoError('DOCKER', 'fail');
+            throw new WrappedError('DOCKER', 'fail');
         });
 
         const commandExecution = executeCommand(
