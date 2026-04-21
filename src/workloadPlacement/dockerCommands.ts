@@ -20,20 +20,10 @@ const splitLines = (stdout: string): string[] => {
     return stdout.split(/\r?\n/).filter((l) => l);
 };
 
-/**
- * Generates a SSH URI based on the target's SSH connection string.
- * @param targetSshConnection - The SSH connection string of the target.
- * @returns The SSH URI.
- */
 const getSshUri = (targetSshConnection: string): string => {
     return `ssh://${targetSshConnection}`;
 };
 
-/**
- * Checks if the error is a Docker-related error.
- * @param err the error to check
- * @returns true if it's a Docker error, false otherwise
- */
 const isDockerError = (err: unknown): err is DockerError => {
     if (!(err instanceof Error)) {
         return false;
@@ -99,9 +89,6 @@ export class DockerCommands implements ContainerCommands {
         );
     }
 
-    /**
-     * Ensures the Docker context is set for the target.
-     */
     public async ensureContext(
         contextName: string,
         targetSshConnection: string,
