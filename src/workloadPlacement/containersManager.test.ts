@@ -355,7 +355,7 @@ describe('ContainersManager', () => {
         const containerCommands = mock<ContainerCommands>();
         containerCommands.getContainers.mockResolvedValue([]);
         containerCommands.inspectContainers.mockResolvedValue([]);
-        containerCommands.containerStats.mockResolvedValue('');
+        containerCommands.containerStats.mockResolvedValue([]);
         const manager = createContainersManager(targetStore, containerCommands);
 
         const activation = manager.activate();
@@ -378,7 +378,7 @@ describe('ContainersManager', () => {
         const containerCommands = mock<ContainerCommands>();
         containerCommands.getContainers.mockResolvedValue([]);
         containerCommands.inspectContainers.mockResolvedValue([]);
-        containerCommands.containerStats.mockResolvedValue('');
+        containerCommands.containerStats.mockResolvedValue([]);
         const manager = createContainersManager(targetStore, containerCommands);
 
         const activation = manager.activate();
@@ -409,7 +409,7 @@ describe('ContainersManager', () => {
         const containerCommands = mock<ContainerCommands>();
         containerCommands.getContainers.mockResolvedValue([]);
         containerCommands.inspectContainers.mockResolvedValue([]);
-        containerCommands.containerStats.mockResolvedValue('');
+        containerCommands.containerStats.mockResolvedValue([]);
         const manager = createContainersManager(targetStore, containerCommands);
 
         await manager.activate();
@@ -615,7 +615,7 @@ describe('ContainersManager', () => {
                     : [],
         );
         containerCommands.inspectContainers.mockResolvedValue([]);
-        containerCommands.containerStats.mockResolvedValue('');
+        containerCommands.containerStats.mockResolvedValue([]);
         topoCli.health.mockImplementation(async (ssh: string) => ({
             host: { dependencies: [] },
             target: {
@@ -709,7 +709,7 @@ describe('ContainersManager', () => {
         const containerCommands = mock<ContainerCommands>();
         containerCommands.getContainers.mockResolvedValue([]);
         containerCommands.inspectContainers.mockResolvedValue([]);
-        containerCommands.containerStats.mockResolvedValue('');
+        containerCommands.containerStats.mockResolvedValue([]);
 
         const manager = new ContainersManager(
             topoCli,

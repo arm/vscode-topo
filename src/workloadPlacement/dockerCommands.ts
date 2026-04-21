@@ -152,8 +152,8 @@ export class DockerCommands implements ContainerCommands {
         };
         const stdout = await runDockerCmd(cmd, warnMsg, isErrorAWarning);
         const lines = splitLines(stdout);
-        const acc: DockerInspectItem[] = [];
 
+        const inspectItems: DockerInspectItem[] = [];
         for (const line of lines) {
             let parsed: DockerInspectOutput;
             try {
@@ -172,18 +172,16 @@ export class DockerCommands implements ContainerCommands {
             const ports = parsed.NetworkSettings?.Ports || {};
             const runtime = parsed.HostConfig?.Runtime || '';
             const annotations = parsed.HostConfig?.Annotations || {};
-            const element = {
+            inspectItems.push({
                 Id: parsed.Id,
                 NetworkSettings: { Ports: ports },
                 HostConfig: {
                     Runtime: runtime,
                     Annotations: annotations,
                 },
-            };
-            acc.push(element);
+            });
         }
-
-        return acc;
+        return inspectItems;
     }
 
     public async containerStats(
