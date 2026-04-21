@@ -3,7 +3,7 @@ export type WrappedErrorCode = 'DOCKER' | 'CLONE';
 export class WrappedError extends Error {
     constructor(
         public readonly code: WrappedErrorCode,
-        message?: string,
+        message: string,
         options?: ErrorOptions,
     ) {
         super(message, options);
