@@ -293,7 +293,7 @@ describe('DockerCommands', () => {
             const statsItem: DockerStatsItem = {
                 ID: 'a',
                 CPUPerc: '10%',
-                MemPerc: '10%',
+                MemUsage: '10%',
             };
             execMock.mockResolvedValueOnce({
                 stdout: `${JSON.stringify(statsItem)}\n`,
@@ -312,7 +312,7 @@ describe('DockerCommands', () => {
             const statsItem: DockerStatsItem = {
                 ID: 'b',
                 CPUPerc: '10%',
-                MemPerc: '10%',
+                MemUsage: '10%',
             };
             const err = makeDockerError(
                 JSON.stringify(statsItem),

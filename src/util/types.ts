@@ -73,7 +73,7 @@ export interface DockerInspectItem {
 export interface DockerStatsItem {
     ID: string;
     CPUPerc: string;
-    MemPerc: string;
+    MemUsage: string;
 }
 
 /**

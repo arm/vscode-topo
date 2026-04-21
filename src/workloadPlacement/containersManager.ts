@@ -23,7 +23,7 @@ function createContainerItem(
     target: TargetItem,
 ): ContainerItem {
     const cpuUsage = stats?.CPUPerc || '';
-    const memUsage = stats?.MemPerc || '';
+    const memUsage = stats?.MemUsage || '';
     const runtime = inspect?.HostConfig.Runtime || '';
     const annotations = inspect?.HostConfig.Annotations || {};
     const ports = inspect?.NetworkSettings.Ports || {};
