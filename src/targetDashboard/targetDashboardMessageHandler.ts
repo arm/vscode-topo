@@ -124,11 +124,10 @@ export class TargetDashboardMessageHandler {
             await this.containersManager.startContainer(containerId);
         } catch (err: unknown) {
             if (isWrappedError(err, ['DOCKER'])) {
-                showAndLogError(
+                return showAndLogError(
                     `Failed to start the container ${containerId}`,
                     err,
                 );
-                return;
             }
             throw err;
         }
@@ -145,11 +144,10 @@ export class TargetDashboardMessageHandler {
             await this.containersManager.stopContainer(containerId);
         } catch (err: unknown) {
             if (isWrappedError(err, ['DOCKER'])) {
-                showAndLogError(
+                return showAndLogError(
                     `Failed to stop the container ${containerId}`,
                     err,
                 );
-                return;
             }
             throw err;
         }
@@ -166,11 +164,10 @@ export class TargetDashboardMessageHandler {
             await this.containersManager.deleteContainer(containerId);
         } catch (err: unknown) {
             if (isWrappedError(err, ['DOCKER'])) {
-                showAndLogError(
+                return showAndLogError(
                     `Failed to delete the container ${containerId}`,
                     err,
                 );
-                return;
             }
             throw err;
         }
@@ -199,11 +196,10 @@ export class TargetDashboardMessageHandler {
             await this.attachVsCode.attachVsCode(container);
         } catch (err: unknown) {
             if (isWrappedError(err, ['DOCKER'])) {
-                showAndLogError(
+                return showAndLogError(
                     `Failed to attach VS Code to the container ${containerId}`,
                     err,
                 );
-                return;
             }
             throw err;
         }
@@ -219,8 +215,10 @@ export class TargetDashboardMessageHandler {
             await this.attachShell.attachSSH();
         } catch (err: unknown) {
             if (isWrappedError(err, ['DOCKER'])) {
-                showAndLogError('Failed to attach SSH to the target', err);
-                return;
+                return showAndLogError(
+                    'Failed to attach SSH to the target',
+                    err,
+                );
             }
             throw err;
         }
