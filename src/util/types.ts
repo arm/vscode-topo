@@ -70,6 +70,12 @@ export interface DockerInspectItem {
     };
 }
 
+export interface DockerStatsItem {
+    ID: string;
+    CPUPerc: string;
+    MemPerc: string;
+}
+
 /**
  * Represents a Docker container item.
  *

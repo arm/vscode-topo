@@ -4,9 +4,10 @@ import { Deferred } from '../util/deferred';
 import type {
     TargetState,
     ContainerItem,
-    DockerPorts,
     DockerPsItem,
     TargetItem,
+    DockerInspectItem,
+    DockerStatsItem,
 } from '../util/types';
 import type { ContainerCommands } from './containerCommands';
 import { TargetStore } from './targetStore';
@@ -14,6 +15,35 @@ import type { TopoCli } from '../topoCli';
 import { isTargetReady } from '../util/targetState';
 
 const refreshInterval = 3000;
+
+function createContainerItem(
+    item: DockerPsItem,
+    inspect: DockerInspectItem | undefined,
+    stats: DockerStatsItem | undefined,
+    target: TargetItem,
+): ContainerItem {
+    const cpuUsage = stats?.CPUPerc || '';
+    const memUsage = stats?.MemPerc || '';
+    const runtime = inspect?.HostConfig.Runtime || '';
+    const annotations = inspect?.HostConfig.Annotations || {};
+    const ports = inspect?.NetworkSettings.Ports || {};
+    return {
+        id: item.ID,
+        name: item.Names,
+        image: item.Image,
+        state: item.State,
+        status: item.Status,
+        labels: item.Labels,
+        runningFor: item.RunningFor,
+        createdAt: item.CreatedAt,
+        runtime,
+        annotations,
+        ports,
+        cpuUsage,
+        memUsage,
+        target,
+    };
+}
 
 export class ContainersManager implements vscode.Disposable {
     private containersDataDeferred: Deferred<void> | undefined = undefined;
@@ -189,56 +219,39 @@ export class ContainersManager implements vscode.Disposable {
     }
 
     private async getContainersInfo(): Promise<ContainerItem[]> {
+        const target = this.target;
+        if (!target) {
+            return [];
+        }
+
         try {
-            const target = this.target;
-            if (!target) {
-                return [];
-            }
             const items = await this.containerCommands.getContainers(
                 target.ssh,
             );
             const ids = items.map((item) => item.ID);
-            const inspectOutput =
-                await this.containerCommands.inspectContainers(ids, target.ssh);
-            const statsOutput = await this.containerCommands.containerStats(
-                ids,
-                target.ssh,
-            );
-            const statsLines = statsOutput.trim().split(/\r?\n/);
-            const parsedStatsLines = statsLines.map((line) => line.split(';'));
-            const containersData = items.reduce<ContainerItem[]>(
-                (acc, item) => {
-                    const containerInspectElement = inspectOutput.find(
-                        (inspectElement) =>
-                            inspectElement.Id.slice(0, 12) === item.ID,
-                    );
-                    const containerStatsLine = parsedStatsLines.find(
-                        (stat) => stat[0].slice(0, 12) === item.ID,
-                    );
-                    const cpuUsage = containerStatsLine?.[1] || '';
-                    const memUsage = containerStatsLine?.[2] || '';
-                    const runtime =
-                        containerInspectElement?.HostConfig.Runtime || '';
-                    const annotations =
-                        containerInspectElement?.HostConfig.Annotations || {};
-                    const ports =
-                        containerInspectElement?.NetworkSettings.Ports || {};
-                    acc.push(
-                        this.createContainerItem(
-                            item,
-                            runtime,
-                            annotations,
-                            ports,
-                            cpuUsage,
-                            memUsage,
-                            target,
-                        ),
-                    );
-                    return acc;
-                },
-                [],
-            );
-            return containersData;
+            const [inspectOutput, statsOutput] = await Promise.all([
+                this.containerCommands.inspectContainers(ids, target.ssh),
+                this.containerCommands.containerStats(ids, target.ssh),
+            ]);
+
+            const containers: ContainerItem[] = [];
+            for (const item of items) {
+                const inspect = inspectOutput.find((el) =>
+                    el.Id.startsWith(item.ID),
+                );
+                const stats = statsOutput.find((el) =>
+                    el.ID.startsWith(item.ID),
+                );
+                const container = createContainerItem(
+                    item,
+                    inspect,
+                    stats,
+                    target,
+                );
+
+                containers.push(container);
+            }
+            return containers;
         } catch (err: unknown) {
             const errorMsg =
                 err instanceof Error ? err.message : 'Unknown error';
@@ -312,33 +325,6 @@ export class ContainersManager implements vscode.Disposable {
             );
         }
         return this.containerCommands.deleteContainer(containerId, target.ssh);
-    }
-
-    private createContainerItem(
-        item: DockerPsItem,
-        runtime: string,
-        annotations: Record<string, string>,
-        ports: DockerPorts,
-        cpuUsage: string,
-        memUsage: string,
-        target: TargetItem,
-    ): ContainerItem {
-        return {
-            id: item.ID,
-            name: item.Names,
-            image: item.Image,
-            state: item.State,
-            status: item.Status,
-            labels: item.Labels,
-            runningFor: item.RunningFor,
-            createdAt: item.CreatedAt,
-            runtime,
-            annotations,
-            ports,
-            cpuUsage,
-            memUsage,
-            target,
-        };
     }
 
     public dispose(): void {

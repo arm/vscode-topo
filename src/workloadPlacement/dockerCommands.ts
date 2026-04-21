@@ -1,7 +1,11 @@
 import { TopoError } from '../errors/topoError';
 import { exec, ExecResult } from '../util/exec';
 import { logger } from '../util/logger';
-import type { DockerInspectItem, DockerPsItem } from '../util/types';
+import type {
+    DockerInspectItem,
+    DockerPsItem,
+    DockerStatsItem,
+} from '../util/types';
 import type { ContainerCommands } from './containerCommands';
 import { getErrorMessage } from '../util/getErrorMessage';
 
@@ -11,6 +15,10 @@ export interface DockerError extends Error {
 }
 
 type DockerInspectOutput = Partial<DockerInspectItem>;
+
+const splitLines = (stdout: string): string[] => {
+    return stdout.split(/\r?\n/).filter((l) => l);
+};
 
 /**
  * Generates a SSH URI based on the target's SSH connection string.
@@ -80,10 +88,7 @@ export class DockerCommands implements ContainerCommands {
         const cmd = `docker context ls --format '{{.Name}}'`;
         const warnMsg = `Warnings emitted when listing Docker contexts`;
         const stdout = await runDockerCmd(cmd, warnMsg);
-        return stdout
-            .trim()
-            .split(/\r?\n/)
-            .filter((c) => c);
+        return splitLines(stdout);
     }
 
     public async useContext(contextName: string): Promise<void> {
@@ -103,8 +108,8 @@ export class DockerCommands implements ContainerCommands {
     ): Promise<void> {
         const cmd1 = `docker context ls --format '{{.Name}}'`;
         const warnMsg1 = `Warnings emitted when listing Docker contexts`;
-        const stdout1 = await runDockerCmd(cmd1, warnMsg1);
-        const contexts = stdout1.split(/\r?\n/).filter((c) => c);
+        const stdout = await runDockerCmd(cmd1, warnMsg1);
+        const contexts = splitLines(stdout);
         if (contexts.includes(contextName)) {
             return;
         }
@@ -140,15 +145,8 @@ export class DockerCommands implements ContainerCommands {
         const cmd = `docker --host ${getSshUri(targetSshConnection)} ps -a --format "{{json .}}"`;
         const warnMsg = `Warnings emitted when listing containers`;
         const stdout = await runDockerCmd(cmd, warnMsg);
-        const lines = stdout
-            .trim()
-            .split(/\r?\n/)
-            .filter((l) => l);
-        if (lines.length === 0) {
-            return [];
-        }
-        const items: DockerPsItem[] = lines.map((l) => JSON.parse(l));
-        return items;
+        const lines = splitLines(stdout);
+        return lines.map((l) => JSON.parse(l));
     }
 
     public async inspectContainers(
@@ -162,23 +160,14 @@ export class DockerCommands implements ContainerCommands {
         const cmd = `docker --host ${getSshUri(targetSshConnection)} inspect ${ids} --format '{{json .}}'`;
         const warnMsg = `Warnings emitted when inspecting containers ${containerIds.join(', ')}`;
         const isErrorAWarning = (err: string): boolean => {
-            const lines = err
-                .split(/\r?\n/)
-                .map((line) => line.trim())
-                .filter((line) => line !== '');
-            return lines.every((line) =>
-                line.startsWith('Error: No such object:'),
-            );
+            const lines = splitLines(err);
+            return lines.every((l) => l.startsWith('Error: No such object:'));
         };
         const stdout = await runDockerCmd(cmd, warnMsg, isErrorAWarning);
-        const lines = stdout
-            .trim()
-            .split(/\r?\n/)
-            .filter((l) => l);
-        if (lines.length === 0) {
-            return [];
-        }
-        return lines.reduce((acc: DockerInspectItem[], line) => {
+        const lines = splitLines(stdout);
+        const acc: DockerInspectItem[] = [];
+
+        for (const line of lines) {
             let parsed: DockerInspectOutput;
             try {
                 parsed = JSON.parse(line);
@@ -191,7 +180,7 @@ export class DockerCommands implements ContainerCommands {
                 logger.error(
                     `Docker inspect output is missing Id field, skipping container`,
                 );
-                return acc;
+                continue;
             }
             const ports = parsed.NetworkSettings?.Ports || {};
             const runtime = parsed.HostConfig?.Runtime || '';
@@ -205,30 +194,30 @@ export class DockerCommands implements ContainerCommands {
                 },
             };
             acc.push(element);
-            return acc;
-        }, []);
+        }
+
+        return acc;
     }
 
     public async containerStats(
         containerIds: string[],
         targetSshConnection: string,
-    ): Promise<string> {
+    ): Promise<DockerStatsItem[]> {
         if (containerIds.length === 0) {
-            return '';
+            return [];
         }
         const ids = containerIds.join(' ');
-        const cmd = `docker --host ${getSshUri(targetSshConnection)} stats ${ids} --no-stream --no-trunc --format '{{.ID}};{{.CPUPerc}};{{.MemUsage}}'`;
+        const cmd = `docker --host ${getSshUri(targetSshConnection)} stats ${ids} --no-stream --no-trunc --format '{{json .}}'`;
         const warnMsg = `Warnings emitted when getting container stats for container ${containerIds.join(', ')}`;
         const isErrorAWarning = (err: string): boolean => {
-            const lines = err
-                .split(/\r?\n/)
-                .map((line) => line.trim())
-                .filter((line) => line !== '');
+            const lines = splitLines(err);
             return lines.every((line) =>
                 line.startsWith('Error: No such object:'),
             );
         };
-        return runDockerCmd(cmd, warnMsg, isErrorAWarning);
+        const stdout = await runDockerCmd(cmd, warnMsg, isErrorAWarning);
+        const lines = splitLines(stdout);
+        return lines.map((l) => JSON.parse(l));
     }
 
     public async stopContainer(

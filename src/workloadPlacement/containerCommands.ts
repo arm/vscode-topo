@@ -1,4 +1,8 @@
-import type { DockerInspectItem, DockerPsItem } from '../util/types';
+import type {
+    DockerInspectItem,
+    DockerPsItem,
+    DockerStatsItem,
+} from '../util/types';
 
 export interface ContainerCommands {
     getCurrentContext(): Promise<string>;
@@ -33,7 +37,7 @@ export interface ContainerCommands {
     containerStats(
         containerIds: string[],
         targetSshConnection: string,
-    ): Promise<string>;
+    ): Promise<DockerStatsItem[]>;
     getAttachShellCommand(
         containerId: string,
         targetSshConnection: string,
