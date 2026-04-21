@@ -1,8 +1,8 @@
 import { DockerCommands, DockerError } from './dockerCommands';
 import { exec } from '../util/exec';
 import { logger } from '../util/logger';
-import { TopoError } from '../errors/topoError';
 import { DockerInspectItem, DockerStatsItem } from '../util/types';
+import { WrappedError } from '../errors/wrappedError';
 
 jest.mock('../util/exec', () => ({
     exec: jest.fn(),
@@ -268,13 +268,13 @@ describe('DockerCommands', () => {
             ).rejects.toBe(err);
         });
 
-        it('throws a TopoError when exec rejects with a DockerError', async () => {
+        it('throws a WrappedError when exec rejects with a DockerError', async () => {
             const dockerErr = makeDockerError('', 'some docker error');
             execMock.mockRejectedValue(dockerErr);
 
             await expect(
                 dockerCommands.inspectContainers(['a'], 'ctx'),
-            ).rejects.toThrow(TopoError);
+            ).rejects.toThrow(WrappedError);
             await expect(
                 dockerCommands.inspectContainers(['a'], 'ctx'),
             ).rejects.toThrow('some docker error');
@@ -341,13 +341,13 @@ describe('DockerCommands', () => {
             await expect(containerStatsOperation).rejects.toBe(err);
         });
 
-        it('throws a TopoError when exec rejects with a DockerError', async () => {
+        it('throws a WrappedError when exec rejects with a DockerError', async () => {
             const dockerErr = makeDockerError('', 'some docker error');
             execMock.mockRejectedValue(dockerErr);
 
             await expect(
                 dockerCommands.containerStats(['a'], 'ctx'),
-            ).rejects.toThrow(TopoError);
+            ).rejects.toThrow(WrappedError);
             await expect(
                 dockerCommands.containerStats(['a'], 'ctx'),
             ).rejects.toThrow('some docker error');
