@@ -50,12 +50,12 @@ describe('AttachShell', () => {
         );
         expect(attachShellCall).toBeDefined();
         const handler = attachShellCall![1];
-        const fakeItem = {
+        const fakeItem = mock<ContainerItem>({
             id: 'cid',
             image: 'clabel',
             target,
             state: 'running',
-        } as unknown as ContainerItem;
+        });
         const treeItem = new TargetTreeContainerItem(fakeItem);
 
         handler(treeItem);
