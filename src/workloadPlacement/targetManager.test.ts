@@ -47,6 +47,10 @@ const createTargetManager = () => {
         health: undefined,
         targetSsh: undefined,
     });
+    containersManager.getTargetStateSnapshot.mockReturnValue({
+        health: undefined,
+        targetSsh: undefined,
+    });
     containersManager.onDataUpdate.mockImplementation(
         onDataUpdateEmitter.event,
     );
@@ -76,60 +80,15 @@ async function executeCommand(command: string, ...args: unknown[]) {
     await handler(...args);
 }
 
-let statusBarItems: vscode.StatusBarItem[] = [];
-
-const mockedStatusBarItemCreation: typeof vscode.window.createStatusBarItem = ((
-    id: string,
-    alignment?: vscode.StatusBarAlignment,
-    priority?: number,
-) => {
-    const statusBarItem: vscode.StatusBarItem = {
-        id,
-        alignment: alignment || vscode.StatusBarAlignment.Left,
-        priority,
-        name: undefined,
-        text: '',
-        tooltip: undefined,
-        color: undefined,
-        backgroundColor: undefined,
-        command: undefined,
-        accessibilityInformation: undefined,
-        show: jest.fn(),
-        hide: jest.fn(),
-        dispose: jest.fn(),
-    };
-    statusBarItems.push(statusBarItem);
-    return statusBarItem;
-}) as unknown as typeof vscode.window.createStatusBarItem;
-
 describe('buildQuickPickItems', () => {
-    const configureItem: vscode.QuickPickItem = {
-        label: '$(gear) Configure SSH targets',
-        description: '~/.ssh/config',
-        alwaysShow: true,
-    };
+    it('returns hosts', () => {
+        const items = buildQuickPickItems(['host-a', 'host-b'], '');
 
-    it('returns hosts followed by separator and configure item', () => {
-        const items = buildQuickPickItems(
-            ['host-a', 'host-b'],
-            '',
-            configureItem,
-        );
-
-        expect(items).toEqual([
-            { label: 'host-a' },
-            { label: 'host-b' },
-            { label: '', kind: vscode.QuickPickItemKind.Separator },
-            configureItem,
-        ]);
+        expect(items).toEqual([{ label: 'host-a' }, { label: 'host-b' }]);
     });
 
     it('prepends a manual entry when filter does not match any host', () => {
-        const items = buildQuickPickItems(
-            ['host-a'],
-            'root@10.0.0.1',
-            configureItem,
-        );
+        const items = buildQuickPickItems(['host-a'], 'root@10.0.0.1');
 
         expect(items[0]).toEqual({
             label: 'root@10.0.0.1',
@@ -139,19 +98,19 @@ describe('buildQuickPickItems', () => {
     });
 
     it('does not prepend manual entry when filter matches a host (case-insensitive)', () => {
-        const items = buildQuickPickItems(['Host-A'], 'host-a', configureItem);
+        const items = buildQuickPickItems(['Host-A'], 'host-a');
 
         expect(items[0]).toEqual({ label: 'Host-A' });
     });
 
     it('does not prepend manual entry when filter is whitespace-only', () => {
-        const items = buildQuickPickItems(['host-a'], '   ', configureItem);
+        const items = buildQuickPickItems(['host-a'], '   ');
 
         expect(items[0]).toEqual({ label: 'host-a' });
     });
 
     it('trims whitespace from the filter for the manual entry label', () => {
-        const items = buildQuickPickItems([], '  my-host  ', configureItem);
+        const items = buildQuickPickItems([], '  my-host  ');
 
         expect(items[0]).toEqual({
             label: 'my-host',
@@ -159,19 +118,15 @@ describe('buildQuickPickItems', () => {
         });
     });
 
-    it('returns only separator and configure item when no hosts and empty filter', () => {
-        const items = buildQuickPickItems([], '', configureItem);
+    it('returns nothing when no hosts and empty filter', () => {
+        const items = buildQuickPickItems([], '');
 
-        expect(items).toEqual([
-            { label: '', kind: vscode.QuickPickItemKind.Separator },
-            configureItem,
-        ]);
+        expect(items).toEqual([]);
     });
 });
 
 describe('TargetManager', () => {
     beforeEach(() => {
-        statusBarItems = [];
         jest.clearAllMocks();
     });
 
@@ -202,7 +157,7 @@ describe('TargetManager', () => {
             const onDidAcceptEmitter = new vscode.EventEmitter<void>();
             const onDidHideEmitter = new vscode.EventEmitter<void>();
             const onDidChangeValueEmitter = new vscode.EventEmitter<string>();
-            const quickPick = {
+            const quickPick = mock<vscode.QuickPick<vscode.QuickPickItem>>({
                 title: '',
                 placeholder: '',
                 items: [] as vscode.QuickPickItem[],
@@ -217,11 +172,9 @@ describe('TargetManager', () => {
                         onDidHideEmitter.fire();
                     }
                 }),
-                hide: jest.fn(),
-                dispose: jest.fn(),
-            };
+            });
             jest.mocked(vscode.window.createQuickPick).mockReturnValueOnce(
-                quickPick as unknown as vscode.QuickPick<vscode.QuickPickItem>,
+                quickPick,
             );
             return quickPick;
         }
@@ -279,25 +232,17 @@ describe('TargetManager', () => {
                 ssh: 'root@localhost',
                 host: 'localhost',
             };
-            const { targetManager, targetStore, containersManager } =
-                createTargetManager();
+            const { targetManager, targetStore } = createTargetManager();
             jest.mocked(targetStore.getSelectedTarget).mockResolvedValue(
                 target,
-            );
-            jest.mocked(
-                containersManager.getTargetStateSnapshot,
-            ).mockReturnValue({
-                health: undefined,
-                targetSsh: undefined,
-            });
-            jest.mocked(vscode.window.createStatusBarItem).mockImplementation(
-                mockedStatusBarItemCreation,
             );
 
             await targetManager.activate();
 
             expect(vscode.window.createStatusBarItem).toHaveBeenCalledTimes(1);
-            const statusBarItem = statusBarItems[0];
+            const statusBarItem = jest.mocked(vscode.window.createStatusBarItem)
+                .mock.results[0].value;
+            expect(statusBarItem.text).toBe(`$(loading~spin) ${target.ssh}`);
             expect(statusBarItem.command).toBe(TargetManager.FocusViewCommand);
             expect(statusBarItem.text).toBe(`$(loading~spin) ${target.ssh}`);
             expect(statusBarItem.tooltip).toBe(
@@ -308,26 +253,14 @@ describe('TargetManager', () => {
         });
 
         it("doesn't show an item in the status bar when no target is selected", async () => {
-            const { targetManager, targetStore, containersManager } =
-                createTargetManager();
-            jest.mocked(targetStore.getSelectedTarget).mockResolvedValue(
-                undefined,
-            );
-            jest.mocked(
-                containersManager.getTargetStateSnapshot,
-            ).mockReturnValue({
-                health: undefined,
-                targetSsh: undefined,
-            });
-            jest.mocked(vscode.window.createStatusBarItem).mockImplementation(
-                mockedStatusBarItemCreation,
-            );
+            const { targetManager } = createTargetManager();
 
             await targetManager.activate();
 
             expect(vscode.window.createStatusBarItem).toHaveBeenCalledTimes(1);
-            const statusBarItem = statusBarItems[0];
-            expect(statusBarItem.text).toBe('');
+            const statusBarItem = jest.mocked(vscode.window.createStatusBarItem)
+                .mock.results[0].value;
+            expect(statusBarItem.text).toBe(undefined);
             expect(statusBarItem.tooltip).toBe(undefined);
             expect(statusBarItem.hide).toHaveBeenCalledTimes(1);
             expect(statusBarItem.show).not.toHaveBeenCalled();
@@ -357,9 +290,6 @@ describe('TargetManager', () => {
                 health: healthyTarget,
                 targetSsh: target1.ssh,
             });
-            jest.mocked(vscode.window.createStatusBarItem).mockImplementation(
-                mockedStatusBarItemCreation,
-            );
             await targetManager.activate();
             jest.mocked(targetStore.getSelectedTarget).mockResolvedValue(
                 target2,
@@ -375,7 +305,8 @@ describe('TargetManager', () => {
             await waitImmediate();
 
             expect(vscode.window.createStatusBarItem).toHaveBeenCalledTimes(1);
-            const statusBarItem = statusBarItems[0];
+            const statusBarItem = jest.mocked(vscode.window.createStatusBarItem)
+                .mock.results[0].value;
             expect(statusBarItem.text).toBe(`$(pass-filled) ${target2.ssh}`);
             expect(statusBarItem.tooltip).toBe(
                 'Connection String: root@other-host',
