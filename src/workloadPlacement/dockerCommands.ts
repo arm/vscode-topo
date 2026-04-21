@@ -1,4 +1,4 @@
-import { WrappedError } from '../errors/wrappedError';
+import { WrappedError, WrappedErrorLog } from '../errors/wrappedError';
 import { exec, ExecResult } from '../util/exec';
 import { logger } from '../util/logger';
 import type { DockerInspectItem, DockerPsItem } from '../util/types';
@@ -41,6 +41,19 @@ const isDockerError = (err: unknown): err is DockerError => {
  * @param shouldTreatErrorAsWarning - Optional function to determine if an error should be treated as a warning.
  * @returns The stdout of the command.
  */
+export const parseDockerStderr = (stderr: string): WrappedErrorLog[] => {
+    return stderr
+        .split(/\r?\n/)
+        .filter((line) => line.trim() !== '')
+        .map((line): WrappedErrorLog => {
+            const trimmed = line.trim();
+            if (trimmed.startsWith('Warning:')) {
+                return { level: 'Warning', msg: trimmed };
+            }
+            return { level: 'Error', msg: trimmed };
+        });
+};
+
 const runDockerCmd = async (
     cmd: string,
     warnMsg: string,
@@ -56,7 +69,8 @@ const runDockerCmd = async (
                 logger.warn(warnMsg, stderr);
                 return err.stdout.toString().trim();
             }
-            throw new WrappedError('DOCKER', stderr, { cause: err });
+            const logs = parseDockerStderr(stderr);
+            throw new WrappedError('DOCKER', stderr, logs, { cause: err });
         } else {
             throw err;
         }

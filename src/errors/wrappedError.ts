@@ -1,9 +1,17 @@
 export type WrappedErrorCode = 'DOCKER' | 'CLONE';
 
+export type WrappedErrorLogLevel = 'Error' | 'Warning' | 'Info' | 'Debug';
+
+export interface WrappedErrorLog {
+    level: WrappedErrorLogLevel;
+    msg: string;
+}
+
 export class WrappedError extends Error {
     constructor(
         public readonly code: WrappedErrorCode,
         message: string,
+        public readonly logs: WrappedErrorLog[] = [],
         options?: ErrorOptions,
     ) {
         super(message, options);
@@ -13,7 +21,10 @@ export class WrappedError extends Error {
 
 export function isWrappedError(
     error: unknown,
-    codes: WrappedErrorCode[],
+    codes: WrappedErrorCode[] = [],
 ): error is WrappedError {
-    return error instanceof WrappedError && codes.includes(error.code);
+    return (
+        error instanceof WrappedError &&
+        (codes.length === 0 || codes.includes(error.code))
+    );
 }
