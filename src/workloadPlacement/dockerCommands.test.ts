@@ -5,6 +5,7 @@ import {
 } from './dockerCommands';
 import { exec } from '../util/exec';
 import { logger } from '../util/logger';
+import { DockerInspectItem, DockerStatsItem } from '../util/types';
 import { WrappedError } from '../errors/wrappedError';
 
 jest.mock('../util/exec', () => ({
@@ -195,16 +196,18 @@ describe('DockerCommands', () => {
 
     describe('getContainers', () => {
         it('parses docker ps json lines', async () => {
-            const item = JSON.stringify({ ID: '1', Names: 'c1' });
-            execMock.mockResolvedValueOnce({ stdout: `${item}\n`, stderr: '' });
+            const containerItem = { ID: '1', Names: 'c1' };
+            execMock.mockResolvedValueOnce({
+                stdout: `${JSON.stringify(containerItem)}\n`,
+                stderr: '',
+            });
 
             const arr = await dockerCommands.getContainers('ctx');
 
             const expectedCall =
                 'docker --host ssh://ctx ps -a --format "{{json .}}"';
             expect(execMock).toHaveBeenCalledWith(expectedCall);
-            expect(arr).toHaveLength(1);
-            expect(arr[0].ID).toBe('1');
+            expect(arr).toEqual([containerItem]);
         });
 
         it('returns empty array when no lines', async () => {
@@ -218,12 +221,13 @@ describe('DockerCommands', () => {
 
     describe('inspectContainers', () => {
         it('returns inspect output on success', async () => {
+            const inspectItem: DockerInspectItem = {
+                Id: 'id',
+                NetworkSettings: { Ports: {} },
+                HostConfig: { Runtime: 'r', Annotations: {} },
+            };
             execMock.mockResolvedValueOnce({
-                stdout: JSON.stringify({
-                    Id: 'id',
-                    NetworkSettings: { Ports: {} },
-                    HostConfig: { Runtime: 'r', Annotations: {} },
-                }),
+                stdout: JSON.stringify(inspectItem),
                 stderr: '',
             });
 
@@ -232,23 +236,17 @@ describe('DockerCommands', () => {
                 'user@host',
             );
 
-            const expectedOutput = [
-                {
-                    HostConfig: { Annotations: {}, Runtime: 'r' },
-                    Id: 'id',
-                    NetworkSettings: { Ports: {} },
-                },
-            ];
-            expect(out).toEqual(expectedOutput);
+            expect(out).toEqual([inspectItem]);
         });
 
         it('returns partial output when exec rejects with only not-found errors', async () => {
+            const inspectItem: DockerInspectItem = {
+                Id: 'id',
+                NetworkSettings: { Ports: {} },
+                HostConfig: { Runtime: 'r', Annotations: {} },
+            };
             const err = makeDockerError(
-                JSON.stringify({
-                    Id: 'id',
-                    NetworkSettings: { Ports: {} },
-                    HostConfig: { Runtime: 'r', Annotations: {} },
-                }),
+                JSON.stringify(inspectItem),
                 'Error: No such object: a\nError: No such object: b',
             );
             execMock.mockRejectedValueOnce(err);
@@ -258,18 +256,11 @@ describe('DockerCommands', () => {
                 'user@host',
             );
 
-            const expectedOutput = [
-                {
-                    HostConfig: { Annotations: {}, Runtime: 'r' },
-                    Id: 'id',
-                    NetworkSettings: { Ports: {} },
-                },
-            ];
             expect(logger.warn).toHaveBeenCalledWith(
                 expect.any(String),
                 err.stderr,
             );
-            expect(out).toEqual(expectedOutput);
+            expect(out).toEqual([inspectItem]);
         });
 
         it('rethrows when exec rejects with unknown error', async () => {
@@ -302,27 +293,40 @@ describe('DockerCommands', () => {
     });
 
     describe('containerStats', () => {
-        it('returns trimmed stats stdout on success', async () => {
-            execMock.mockResolvedValueOnce({ stdout: 's1\n', stderr: '' });
+        it('returns parsed stats on success', async () => {
+            const statsItem: DockerStatsItem = {
+                ID: 'a',
+                CPUPerc: '10%',
+                MemUsage: '10%',
+            };
+            execMock.mockResolvedValueOnce({
+                stdout: `${JSON.stringify(statsItem)}\n`,
+                stderr: '',
+            });
 
             const out = await dockerCommands.containerStats(['a'], 'user@host');
 
-            expect(out).toBe('s1');
+            expect(out).toEqual([statsItem]);
             const expectedCall =
-                "docker --host ssh://user@host stats a --no-stream --no-trunc --format '{{.ID}};{{.CPUPerc}};{{.MemUsage}}'";
+                "docker --host ssh://user@host stats a --no-stream --no-trunc --format '{{json .}}'";
             expect(execMock).toHaveBeenCalledWith(expectedCall);
         });
 
-        it('returns err.stdout when exec rejects with only not-found errors', async () => {
+        it('returns partial output when exec rejects with only not-found errors', async () => {
+            const statsItem: DockerStatsItem = {
+                ID: 'b',
+                CPUPerc: '10%',
+                MemUsage: '10%',
+            };
             const err = makeDockerError(
-                'fallback-stats',
+                JSON.stringify(statsItem),
                 'Error: No such object: a',
             );
             execMock.mockRejectedValueOnce(err);
 
             const out = await dockerCommands.containerStats(['a'], 'user@host');
 
-            expect(out).toBe('fallback-stats');
+            expect(out).toEqual([statsItem]);
             expect(logger.warn).toHaveBeenCalledWith(
                 expect.any(String),
                 err.stderr,
@@ -353,10 +357,10 @@ describe('DockerCommands', () => {
             ).rejects.toThrow('some docker error');
         });
 
-        it('returns empty string when provided with an empty array', async () => {
+        it('returns empty array when provided with an empty array', async () => {
             const out = await dockerCommands.containerStats([], 'ctx');
 
-            expect(out).toBe('');
+            expect(out).toEqual([]);
             expect(execMock).not.toHaveBeenCalled();
         });
     });
