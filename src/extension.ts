@@ -22,8 +22,9 @@ import { ProjectClone } from './projectClone';
 import { Deploy } from './actions/deploy';
 import { HostHealth } from './actions/hostHealth';
 import { ProtocolHandler } from './protocolHandler';
-import { SetupKeys } from './actions/setupKeys';
+import { SetupSshKeys } from './actions/setupSshKeys';
 import { TargetDescriptionStore } from './workloadPlacement/targetDescriptionStore';
+import { TargetSshKeysNotifier } from './workloadPlacement/targetSshKeysNotifier';
 
 export async function activate(
     context: vscode.ExtensionContext,
@@ -65,7 +66,12 @@ export async function activate(
         dockerCommands,
         targetStore,
     );
+    const targetSshKeysNotifier = new TargetSshKeysNotifier(
+        topoCli,
+        targetStore,
+    );
     context.subscriptions.push(containersManager);
+    context.subscriptions.push(targetSshKeysNotifier);
     const targetTreeDataProvider = new TargetTreeDataProvider(
         context,
         containersManager,
@@ -102,7 +108,7 @@ export async function activate(
     const protocolHandler = new ProtocolHandler(projectClone);
 
     protocolHandler.activate(context);
-    const setupKeys = new SetupKeys(context, targetStore);
+    const setupSshKeys = new SetupSshKeys(context, targetStore);
     context.subscriptions.push(targetStore);
     await topoCli.activate();
     context.subscriptions.push(topoCli);
@@ -114,6 +120,7 @@ export async function activate(
     await attachVsCode.activate();
     attachShell.activate();
     await containersManager.activate();
+    await targetSshKeysNotifier.activate();
     await targetTreeDataProvider.activate();
     await targetManager.activate();
     await targetDashboardProvider.activate();
@@ -122,6 +129,6 @@ export async function activate(
     containerDelete.activate();
     openTargetDashboard.activate();
     health.activate();
-    setupKeys.activate();
+    setupSshKeys.activate();
     health.checkHostDependencyHealth();
 }

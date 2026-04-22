@@ -4,8 +4,8 @@ import { TargetStore } from '../workloadPlacement/targetStore';
 import { TargetTreeTargetItem } from '../workloadPlacement/targetTreeTargetItem';
 import { showAndLogError } from '../util/showAndLogError';
 
-export class SetupKeys {
-    public static readonly setupKeysCommand = `${PACKAGE_NAME}.setupKeys`;
+export class SetupSshKeys {
+    public static readonly setupSshKeysCommand = `${PACKAGE_NAME}.setupKeys`;
 
     constructor(
         private readonly context: vscode.ExtensionContext,
@@ -15,13 +15,13 @@ export class SetupKeys {
     public activate(): void {
         this.context.subscriptions.push(
             vscode.commands.registerCommand(
-                SetupKeys.setupKeysCommand,
-                (treeNode: unknown) => this.setupKeys(treeNode),
+                SetupSshKeys.setupSshKeysCommand,
+                (treeNode: unknown) => this.setupSshKeys(treeNode),
             ),
         );
     }
 
-    private async setupKeys(treeNode: unknown): Promise<void> {
+    private async setupSshKeys(treeNode: unknown): Promise<void> {
         let ssh: string | undefined;
 
         if (treeNode instanceof TargetTreeTargetItem) {
@@ -33,7 +33,7 @@ export class SetupKeys {
             const selectedTarget = await this.targetStore.getSelectedTarget();
             if (!selectedTarget) {
                 showAndLogError(
-                    'Failed to set up keys on target',
+                    'Failed to set up SSH keys on target',
                     new Error('No selected target found'),
                 );
                 return;
@@ -45,16 +45,16 @@ export class SetupKeys {
         }
 
         try {
-            await this.runSetupKeysTask(ssh);
+            await this.runSetupSshKeysTask(ssh);
             vscode.window.showInformationMessage(
-                `Keys were set up on target ${ssh}.`,
+                `SSH keys were set up on target ${ssh}.`,
             );
         } catch (err) {
-            showAndLogError(`Failed to set up keys on target ${ssh}`, err);
+            showAndLogError(`Failed to set up SSH keys on target ${ssh}`, err);
         }
     }
 
-    private async runSetupKeysTask(sshTarget: string): Promise<void> {
+    private async runSetupSshKeysTask(sshTarget: string): Promise<void> {
         const setupKeysCommand = ['topo', 'setup-keys', '--target', sshTarget];
         const [cmd, ...cmdArgs] = setupKeysCommand;
         const shellExecution = new vscode.ShellExecution(cmd, cmdArgs);
@@ -65,7 +65,7 @@ export class SetupKeys {
         const task = new vscode.Task(
             taskDefinition,
             vscode.TaskScope.Workspace,
-            `Setup keys on ${sshTarget}`,
+            `Set Up SSH Keys on ${sshTarget}`,
             PACKAGE_NAME,
             shellExecution,
         );

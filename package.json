@@ -124,7 +124,7 @@
             },
             {
                 "command": "topo.setupKeys",
-                "title": "Setup Keys",
+                "title": "Set Up SSH Keys",
                 "category": "Arm Topo"
             },
             {

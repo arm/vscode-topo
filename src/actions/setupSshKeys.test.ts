@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { mock, MockProxy } from 'jest-mock-extended';
-import { SetupKeys } from './setupKeys';
+import { SetupSshKeys } from './setupSshKeys';
 import { TargetStore } from '../workloadPlacement/targetStore';
 import { TargetTreeTargetItem } from '../workloadPlacement/targetTreeTargetItem';
 import { TargetItem } from '../util/types';
@@ -8,7 +8,7 @@ import { mutable } from '../util/mutable';
 
 jest.mock('../util/logger');
 
-describe('SetupKeys', () => {
+describe('SetupSshKeys', () => {
     let context: MockProxy<vscode.ExtensionContext>;
     let targetStore: MockProxy<TargetStore>;
     const target: TargetItem = {
@@ -42,25 +42,25 @@ describe('SetupKeys', () => {
         jest.clearAllMocks();
     });
 
-    it('registers setup keys command', () => {
-        const setupKeys = new SetupKeys(context, targetStore);
+    it('registers setup-keys command', () => {
+        const setupSshKeys = new SetupSshKeys(context, targetStore);
 
-        setupKeys.activate();
+        setupSshKeys.activate();
 
         expect(vscode.commands.registerCommand).toHaveBeenCalledWith(
-            SetupKeys.setupKeysCommand,
+            SetupSshKeys.setupSshKeysCommand,
             expect.any(Function),
         );
     });
 
     it('runs setup-keys task for selected board item', async () => {
-        const setupKeys = new SetupKeys(context, targetStore);
-        setupKeys.activate();
+        const setupSshKeys = new SetupSshKeys(context, targetStore);
+        setupSshKeys.activate();
         const boardItem = new TargetTreeTargetItem(target, true, true, true);
         const commandHandler = jest
             .mocked(vscode.commands.registerCommand)
             .mock.calls.find(
-                ([command]) => command === SetupKeys.setupKeysCommand,
+                ([command]) => command === SetupSshKeys.setupSshKeysCommand,
             )?.[1] as ((treeNode: unknown) => Promise<void>) | undefined;
         if (!commandHandler) {
             throw new Error('No command handler registered');
@@ -76,18 +76,18 @@ describe('SetupKeys', () => {
         ]);
         expect(vscode.tasks.executeTask).toHaveBeenCalled();
         expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
-            `Keys were set up on target ${target.ssh}.`,
+            `SSH keys were set up on target ${target.ssh}.`,
         );
     });
 
     it('does nothing for non-selected board item', async () => {
-        const setupKeys = new SetupKeys(context, targetStore);
-        setupKeys.activate();
+        const setupSshKeys = new SetupSshKeys(context, targetStore);
+        setupSshKeys.activate();
         const boardItem = new TargetTreeTargetItem(target, false, false, false);
         const commandHandler = jest
             .mocked(vscode.commands.registerCommand)
             .mock.calls.find(
-                ([command]) => command === SetupKeys.setupKeysCommand,
+                ([command]) => command === SetupSshKeys.setupSshKeysCommand,
             )?.[1] as ((treeNode: unknown) => Promise<void>) | undefined;
         if (!commandHandler) {
             throw new Error('No command handler registered');
@@ -99,12 +99,12 @@ describe('SetupKeys', () => {
     });
 
     it('falls back to selected target when no tree node is provided', async () => {
-        const setupKeys = new SetupKeys(context, targetStore);
-        setupKeys.activate();
+        const setupSshKeys = new SetupSshKeys(context, targetStore);
+        setupSshKeys.activate();
         const commandHandler = jest
             .mocked(vscode.commands.registerCommand)
             .mock.calls.find(
-                ([command]) => command === SetupKeys.setupKeysCommand,
+                ([command]) => command === SetupSshKeys.setupSshKeysCommand,
             )?.[1] as ((treeNode: unknown) => Promise<void>) | undefined;
         if (!commandHandler) {
             throw new Error('No command handler registered');
@@ -127,12 +127,12 @@ describe('SetupKeys', () => {
         mutable(vscode.tasks).onDidEndTaskProcess =
             onDidEndTaskProcessEmitter.event;
         jest.mocked(vscode.tasks.executeTask).mockResolvedValue(taskExec);
-        const setupKeys = new SetupKeys(context, targetStore);
-        setupKeys.activate();
+        const setupSshKeys = new SetupSshKeys(context, targetStore);
+        setupSshKeys.activate();
         const commandHandler = jest
             .mocked(vscode.commands.registerCommand)
             .mock.calls.find(
-                ([command]) => command === SetupKeys.setupKeysCommand,
+                ([command]) => command === SetupSshKeys.setupSshKeysCommand,
             )?.[1] as ((treeNode: unknown) => Promise<void>) | undefined;
         if (!commandHandler) {
             throw new Error('No command handler registered');
@@ -148,7 +148,7 @@ describe('SetupKeys', () => {
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
             expect.stringContaining(
-                `Failed to set up keys on target ${target.ssh}. setup-keys failed with exit code 1`,
+                `Failed to set up SSH keys on target ${target.ssh}. setup-keys failed with exit code 1`,
             ),
         );
     });
