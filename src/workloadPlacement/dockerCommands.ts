@@ -40,16 +40,13 @@ const isDockerError = (err: unknown): err is DockerError => {
  * @returns The stdout of the command.
  */
 export const parseDockerStderr = (stderr: string): WrappedErrorLog[] => {
-    return stderr
-        .split(/\r?\n/)
-        .filter((line) => line.trim() !== '')
-        .map((line): WrappedErrorLog => {
-            const trimmed = line.trim();
-            if (trimmed.startsWith('Warning:')) {
-                return { level: 'Warning', msg: trimmed };
-            }
-            return { level: 'Error', msg: trimmed };
-        });
+    return splitLines(stderr).map((line): WrappedErrorLog => {
+        const trimmed = line.trim();
+        if (trimmed.startsWith('Warning:')) {
+            return { level: 'Warning', msg: trimmed };
+        }
+        return { level: 'Error', msg: trimmed };
+    });
 };
 
 const runDockerCmd = async (
