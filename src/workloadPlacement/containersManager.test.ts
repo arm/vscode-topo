@@ -7,7 +7,6 @@ import * as vscode from 'vscode';
 import { TargetStore } from './targetStore';
 import { mock } from 'jest-mock-extended';
 import { TopoCli } from '../topoCli';
-import { Deferred } from '../util/deferred';
 import type { ContainerCommands } from './containerCommands';
 import type { HealthCheckResult } from '../topoCliSchema';
 
@@ -356,8 +355,11 @@ describe('ContainersManager', () => {
     });
 
     it('getTargetStateSnapshot returns default state before health load completes', async () => {
-        const pendingHealth = new Deferred<HealthCheckResult>();
-        topoCli.health.mockReturnValueOnce(pendingHealth.promise);
+        let resolveHealth: (value: HealthCheckResult) => void;
+        const pendingHealth = new Promise<HealthCheckResult>((resolve) => {
+            resolveHealth = resolve;
+        });
+        topoCli.health.mockReturnValueOnce(pendingHealth);
         const targetStore = mock<TargetStore>();
         targetStore.getSelectedTarget.mockResolvedValue(target);
         const containerCommands = mock<ContainerCommands>();
@@ -374,13 +376,16 @@ describe('ContainersManager', () => {
             targetId: undefined,
         });
 
-        pendingHealth.resolve(loadedHealth);
+        resolveHealth!(loadedHealth);
         await activation;
     });
 
     it('getTargetState waits for health load and updates the snapshot', async () => {
-        const pendingHealth = new Deferred<HealthCheckResult>();
-        topoCli.health.mockReturnValueOnce(pendingHealth.promise);
+        let resolveHealth: (value: HealthCheckResult) => void;
+        const pendingHealth = new Promise<HealthCheckResult>((resolve) => {
+            resolveHealth = resolve;
+        });
+        topoCli.health.mockReturnValueOnce(pendingHealth);
         const targetStore = mock<TargetStore>();
         targetStore.getSelectedTarget.mockResolvedValue(target);
         const containerCommands = mock<ContainerCommands>();
@@ -393,7 +398,7 @@ describe('ContainersManager', () => {
         await waitImmediate();
 
         const targetStatePromise = manager.getTargetState();
-        pendingHealth.resolve(loadedHealth);
+        resolveHealth!(loadedHealth);
 
         await activation;
         await expect(targetStatePromise).resolves.toEqual({
@@ -607,7 +612,10 @@ describe('ContainersManager', () => {
             ssh: 'bob@other.local',
             host: 'other.local',
         };
-        const pendingOldContainers = new Deferred<DockerPsItem[]>();
+        let resolveOldContainers: (value: DockerPsItem[]) => void;
+        const pendingOldContainers = new Promise<DockerPsItem[]>((resolve) => {
+            resolveOldContainers = resolve;
+        });
         let selectedTarget: TargetItem | undefined = target;
         const onChangeEmitter = new vscode.EventEmitter<void>();
         const targetStore = mock<TargetStore>();
@@ -618,9 +626,7 @@ describe('ContainersManager', () => {
         const containerCommands = mock<ContainerCommands>();
         containerCommands.getContainers.mockImplementation(
             async (targetSshConnection: string) =>
-                targetSshConnection === target.ssh
-                    ? pendingOldContainers.promise
-                    : [],
+                targetSshConnection === target.ssh ? pendingOldContainers : [],
         );
         containerCommands.inspectContainers.mockResolvedValue([]);
         containerCommands.containerStats.mockResolvedValue([]);
@@ -655,7 +661,7 @@ describe('ContainersManager', () => {
         selectedTarget = newTarget;
         onChangeEmitter.fire();
         await waitImmediate();
-        pendingOldContainers.resolve(mockContainers);
+        resolveOldContainers!(mockContainers);
         await staleLoad;
         await waitImmediate();
 
@@ -683,10 +689,13 @@ describe('ContainersManager', () => {
             async () => selectedTarget,
         );
 
-        const pendingOldHealth = new Deferred<HealthCheckResult>();
+        let resolveOldHealth: (value: HealthCheckResult) => void;
+        const pendingOldHealth = new Promise<HealthCheckResult>((resolve) => {
+            resolveOldHealth = resolve;
+        });
         topoCli.health.mockImplementation(async (ssh: string) => {
             if (ssh === target.ssh) {
-                return pendingOldHealth.promise;
+                return pendingOldHealth;
             }
 
             return {
@@ -732,7 +741,7 @@ describe('ContainersManager', () => {
         onChangeEmitter.fire();
         await waitImmediate();
 
-        pendingOldHealth.resolve({
+        resolveOldHealth!({
             host: { dependencies: [] },
             target: {
                 isLocalhost: false,
