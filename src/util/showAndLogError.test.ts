@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { showAndLogError } from './showAndLogError';
 import { logger } from './logger';
-import { TopoError } from '../errors/topoError';
+import { WrappedError } from '../errors/wrappedError';
 
 jest.mock('./logger', () => ({
     logger: {
@@ -29,40 +29,49 @@ describe('showAndLogError', () => {
         expect(logger.info).not.toHaveBeenCalled();
     });
 
-    it('logs each TopoError entry at its matching log level', () => {
+    it('logs each WrappedError entry at its matching log level', () => {
         const logEntries = [
-            { time: '2026-04-16T15:00:00Z', level: 'INFO', msg: 'starting' },
             {
-                time: '2026-04-16T15:00:01Z',
-                level: 'ERROR',
-                msg: 'lscpu not found',
+                level: 'Info',
+                msg: 'Pulling image docker.io/library/nginx:latest',
+            },
+            { level: 'Error', msg: 'Error: No such container: abc123' },
+            {
+                level: 'Warning',
+                msg: 'Warning: bridge-nf-call-iptables is disabled',
             },
             {
-                time: '2026-04-16T15:00:02Z',
-                level: 'WARN',
-                msg: 'retrying',
+                level: 'Debug',
+                msg: 'loading plugin "io.containerd.grpc.v1.cri"',
             },
-            {
-                time: '2026-04-16T15:00:03Z',
-                level: 'DEBUG',
-                msg: 'trace info',
-            },
-        ];
-        const error = new TopoError('CLI', 'lscpu not found', { logEntries });
+        ] as const;
+        const error = new WrappedError(
+            'DOCKER',
+            'Error: No such container: abc123',
+            [...logEntries],
+        );
 
-        showAndLogError('Failed to list templates', error);
+        showAndLogError('Failed to start container', error);
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-            'Failed to list templates. lscpu not found',
+            'Failed to start container. Error: No such container: abc123',
         );
-        expect(logger.info).toHaveBeenCalledWith('[topo] starting');
-        expect(logger.error).toHaveBeenCalledWith('[topo] lscpu not found');
-        expect(logger.warn).toHaveBeenCalledWith('[topo] retrying');
-        expect(logger.debug).toHaveBeenCalledWith('[topo] trace info');
+        expect(logger.info).toHaveBeenCalledWith(
+            'Pulling image docker.io/library/nginx:latest',
+        );
+        expect(logger.error).toHaveBeenCalledWith(
+            'Error: No such container: abc123',
+        );
+        expect(logger.warn).toHaveBeenCalledWith(
+            'Warning: bridge-nf-call-iptables is disabled',
+        );
+        expect(logger.debug).toHaveBeenCalledWith(
+            'loading plugin "io.containerd.grpc.v1.cri"',
+        );
     });
 
-    it('falls back to logger.error when TopoError has no log entries', () => {
-        const error = new TopoError('CLI', 'empty');
+    it('falls back to logger.error when WrappedError has no log entries', () => {
+        const error = new WrappedError('DOCKER', 'empty');
 
         showAndLogError('Failed', error);
 
@@ -73,21 +82,6 @@ describe('showAndLogError', () => {
         expect(logger.info).not.toHaveBeenCalled();
         expect(logger.warn).not.toHaveBeenCalled();
         expect(logger.debug).not.toHaveBeenCalled();
-    });
-
-    it('logs unknown levels as info', () => {
-        const logEntries = [
-            {
-                time: '2026-04-16T15:00:00Z',
-                level: 'TRACE',
-                msg: 'trace message',
-            },
-        ];
-        const error = new TopoError('CLI', 'trace message', { logEntries });
-
-        showAndLogError('Failed', error);
-
-        expect(logger.info).toHaveBeenCalledWith('[topo] trace message');
     });
 
     it('handles non-Error values', () => {

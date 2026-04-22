@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
 import {
     TopoCli,
     targetDescriptionFileName,
-    parseTopoError,
+    parseWrappedError,
     parseTopoLogEntries,
 } from './topoCli';
 import { Mutable } from './util/types';
@@ -12,7 +12,7 @@ import * as manifest from './manifest';
 import { ChildProcessWithoutNullStreams } from 'node:child_process';
 import { mock } from 'jest-mock-extended';
 import { Writable } from 'node:stream';
-import { TopoError } from './errors/topoError';
+import { WrappedError } from './errors/wrappedError';
 import {
     HealthCheckResult,
     ProjectDescription,
@@ -120,7 +120,7 @@ describe('TopoCli', () => {
         expect(() => topoCli.listTemplates('me@example.com')).toThrow();
     });
 
-    it('listTemplates throws TopoError when stderr contains structured log entries', () => {
+    it('listTemplates throws WrappedError when stderr contains structured log entries', () => {
         const stderrOutput = [
             '{"time":"2026-04-16T15:14:48Z","level":"ERROR","msg":"collecting CPU info: \\"lscpu\\" not found"}',
             '{"time":"2026-04-16T15:14:49Z","level":"ERROR","msg":"connection lost"}',
@@ -134,13 +134,13 @@ describe('TopoCli', () => {
         try {
             topoCli.listTemplates('me@example.com');
         } catch (error) {
-            expect(error).toBeInstanceOf(TopoError);
-            const cliError = error as TopoError;
-            expect(cliError.logEntries).toHaveLength(2);
-            expect(cliError.logEntries[0].msg).toBe(
+            expect(error).toBeInstanceOf(WrappedError);
+            const cliError = error as WrappedError;
+            expect(cliError.logs).toHaveLength(2);
+            expect(cliError.logs[0].msg).toBe(
                 'collecting CPU info: "lscpu" not found',
             );
-            expect(cliError.logEntries[1].msg).toBe('connection lost');
+            expect(cliError.logs[1].msg).toBe('connection lost');
             expect(cliError.message).toBe(
                 'collecting CPU info: "lscpu" not found; connection lost',
             );
@@ -168,7 +168,7 @@ describe('TopoCli', () => {
         expect(() => topoCli.listTemplates()).toThrow(execError);
     });
 
-    it('listTemplates throws TopoError with only ERROR messages when stderr has mixed log levels', () => {
+    it('listTemplates throws WrappedError with only ERROR messages when stderr has mixed log levels', () => {
         const stderrOutput = [
             '{"time":"2026-04-16T15:00:00Z","level":"INFO","msg":"starting up"}',
             '{"time":"2026-04-16T15:00:01Z","level":"ERROR","msg":"disk full"}',
@@ -183,9 +183,9 @@ describe('TopoCli', () => {
         try {
             topoCli.listTemplates();
         } catch (error) {
-            expect(error).toBeInstanceOf(TopoError);
-            const cliError = error as TopoError;
-            expect(cliError.logEntries).toHaveLength(3);
+            expect(error).toBeInstanceOf(WrappedError);
+            const cliError = error as WrappedError;
+            expect(cliError.logs).toHaveLength(3);
             expect(cliError.message).toBe('disk full');
         }
     });
@@ -414,10 +414,10 @@ describe('parseStructuredError', () => {
         ].join('\n');
         const original = errorWithStderr(stderr);
 
-        const result = parseTopoError(original);
+        const result = parseWrappedError(original);
 
-        expect(result).toBeInstanceOf(TopoError);
-        expect(result!.logEntries).toHaveLength(2);
+        expect(result).toBeInstanceOf(WrappedError);
+        expect(result!.logs).toHaveLength(2);
         expect(result!.message).toBe('lscpu not found; connection lost');
         expect(result!.cause).toBe(original);
     });
@@ -430,11 +430,11 @@ describe('parseStructuredError', () => {
         ].join('\n');
         const original = errorWithStderr(stderr);
 
-        const result = parseTopoError(original);
+        const result = parseWrappedError(original);
 
-        expect(result).toBeInstanceOf(TopoError);
+        expect(result).toBeInstanceOf(WrappedError);
         expect(result!.message).toBe('disk full');
-        expect(result!.logEntries).toHaveLength(3);
+        expect(result!.logs).toHaveLength(3);
     });
 
     it('returns undefined when stderr has only non-ERROR entries', () => {
@@ -442,21 +442,21 @@ describe('parseStructuredError', () => {
             '{"time":"2026-04-16T15:00:00Z","level":"INFO","msg":"starting up"}';
         const original = errorWithStderr(stderr);
 
-        expect(parseTopoError(original)).toBeUndefined();
+        expect(parseWrappedError(original)).toBeUndefined();
     });
 
     it('returns undefined when stderr has no structured logs', () => {
         const original = errorWithStderr('plain error text');
 
-        expect(parseTopoError(original)).toBeUndefined();
+        expect(parseWrappedError(original)).toBeUndefined();
     });
 
     it('returns undefined for plain error message', () => {
-        expect(parseTopoError(new Error('some message'))).toBeUndefined();
+        expect(parseWrappedError(new Error('some message'))).toBeUndefined();
     });
 
     it('returns undefined for non-Error values', () => {
-        expect(parseTopoError('string error')).toBeUndefined();
+        expect(parseWrappedError('string error')).toBeUndefined();
     });
 });
 
@@ -469,8 +469,7 @@ describe('parseTopoLogEntries', () => {
 
         expect(entries).toEqual([
             {
-                time: '2026-04-16T15:14:48.476234895+01:00',
-                level: 'ERROR',
+                level: 'Error',
                 msg: 'collecting CPU info: "lscpu" not found on remote target\'s $PATH',
             },
         ]);
@@ -486,7 +485,7 @@ describe('parseTopoLogEntries', () => {
         const entries = parseTopoLogEntries(input);
 
         expect(entries).toHaveLength(3);
-        expect(entries[0].level).toBe('INFO');
+        expect(entries[0].level).toBe('Info');
         expect(entries[1].msg).toBe('disk full');
         expect(entries[2].msg).toBe('aborting');
     });
@@ -502,8 +501,7 @@ describe('parseTopoLogEntries', () => {
 
         expect(entries).toEqual([
             {
-                time: '2026-04-16T15:00:00Z',
-                level: 'ERROR',
+                level: 'Error',
                 msg: 'real error',
             },
         ]);
@@ -544,8 +542,6 @@ describe('parseTopoLogEntries', () => {
 
         const entries = parseTopoLogEntries(input);
 
-        expect(entries).toEqual([
-            { time: '2026-04-16T15:00:00Z', level: 'ERROR', msg: 'fail' },
-        ]);
+        expect(entries).toEqual([{ level: 'Error', msg: 'fail' }]);
     });
 });

@@ -8,7 +8,7 @@ import { mock, MockProxy } from 'jest-mock-extended';
 import { TemplateDescription } from './topoCliSchema';
 import { showAndLogError } from './util/showAndLogError';
 import { TargetStore } from './workloadPlacement/targetStore';
-import { TopoError } from './errors/topoError';
+import { WrappedError } from './errors/wrappedError';
 
 jest.mock('./util/showAndLogError', () => ({
     showAndLogError: jest.fn(),
@@ -515,7 +515,7 @@ describe('ProjectClone', () => {
 
         const showQuickPickItemMock = jest.mocked(vscode.window.showQuickPick);
 
-        it('propagates non-TopoError from listTemplates', async () => {
+        it('propagates non-WrappedError from listTemplates', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
             topoCli.listTemplates.mockImplementation(() => {
                 throw new Error('command failed');
@@ -529,36 +529,35 @@ describe('ProjectClone', () => {
             expect(vscode.tasks.executeTask).not.toHaveBeenCalled();
         });
 
-        it('shows structured error detail when listTemplates throws TopoError', async () => {
+        it('shows structured error detail when listTemplates throws WrappedError', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
             const logEntries = [
                 {
-                    time: '2026-04-16T15:14:48Z',
-                    level: 'ERROR',
+                    level: 'Error',
                     msg: 'lscpu not found',
                 },
                 {
-                    time: '2026-04-16T15:14:49Z',
-                    level: 'INFO',
+                    level: 'Info',
                     msg: 'some info',
                 },
                 {
-                    time: '2026-04-16T15:14:50Z',
-                    level: 'ERROR',
+                    level: 'Error',
                     msg: 'connection lost',
                 },
-            ];
+            ] as const;
             topoCli.listTemplates.mockImplementation(() => {
-                throw new TopoError('CLI', 'lscpu not found; connection lost', {
-                    logEntries,
-                });
+                throw new WrappedError(
+                    'CLI',
+                    'lscpu not found; connection lost',
+                    [...logEntries],
+                );
             });
 
             await executeCommand(ProjectClone.templateCloneCommand);
 
             expect(showAndLogError).toHaveBeenCalledWith(
                 'Failed to clone project',
-                expect.any(TopoError),
+                expect.any(WrappedError),
             );
             expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
             expect(vscode.tasks.executeTask).not.toHaveBeenCalled();

@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import { CloneSource, TopoCli } from './topoCli';
 import * as path from 'node:path';
 import { TemplateDescription } from './topoCliSchema';
-import { isTopoError, TopoError } from './errors/topoError';
+import { isWrappedError, WrappedError } from './errors/wrappedError';
 import { showAndLogError } from './util/showAndLogError';
 import { TargetStore } from './workloadPlacement/targetStore';
 import { getCloneDestinationPath } from './util/getCloneDestinationPath';
@@ -118,7 +118,7 @@ const executeCloneTask = async (
                 resolve(true);
             } else {
                 const errorMsg = `Clone task "${taskName}" failed with exit code ${e.exitCode}.`;
-                reject(new TopoError('CLONE', errorMsg));
+                reject(new WrappedError('CLONE', errorMsg));
             }
         });
     });
@@ -134,7 +134,7 @@ const getDefaultProjectNameFromUrl = (url: string): string => {
         try {
             pathname = new URL(url).pathname;
         } catch {
-            throw new TopoError('CLONE', `Invalid URL: ${url}`);
+            throw new WrappedError('CLONE', `Invalid URL: ${url}`);
         }
     }
     const defaultProjectName = pathname
@@ -143,7 +143,7 @@ const getDefaultProjectNameFromUrl = (url: string): string => {
         .pop()
         ?.replace(/\.git$/, '');
     if (!defaultProjectName) {
-        throw new TopoError('CLONE', `Invalid URL: ${url}`);
+        throw new WrappedError('CLONE', `Invalid URL: ${url}`);
     }
     return defaultProjectName;
 };
@@ -260,13 +260,10 @@ export class ProjectClone {
             try {
                 await commandHandler.call(this);
             } catch (error: unknown) {
-                if (
-                    !isTopoError(error) ||
-                    (error.code !== 'CLONE' && error.code !== 'CLI')
-                ) {
-                    throw error;
+                if (isWrappedError(error, ['CLONE', 'CLI'])) {
+                    return showAndLogError('Failed to clone project', error);
                 }
-                showAndLogError('Failed to clone project', error);
+                throw error;
             }
         };
     }

@@ -1,25 +1,25 @@
+import { isWrappedError } from '../errors/wrappedError';
 import { getErrorMessage } from './getErrorMessage';
-import { isTopoError } from '../errors/topoError';
 import { logger } from './logger';
 import * as vscode from 'vscode';
 
 export const showAndLogError = (message: string, err: unknown) => {
     vscode.window.showErrorMessage(`${message}. ${getErrorMessage(err)}`);
-    if (isTopoError(err) && err.logEntries.length > 0) {
-        for (const entry of err.logEntries) {
-            const logMessage = `[topo] ${entry.msg}`;
+    if (isWrappedError(err) && err.logs.length > 0) {
+        logger.error(message);
+        for (const entry of err.logs) {
             switch (entry.level) {
-                case 'ERROR':
-                    logger.error(logMessage);
+                case 'Error':
+                    logger.error(entry.msg);
                     break;
-                case 'WARN':
-                    logger.warn(logMessage);
+                case 'Warning':
+                    logger.warn(entry.msg);
                     break;
-                case 'DEBUG':
-                    logger.debug(logMessage);
+                case 'Info':
+                    logger.info(entry.msg);
                     break;
-                default:
-                    logger.info(logMessage);
+                case 'Debug':
+                    logger.debug(entry.msg);
                     break;
             }
         }

@@ -2,7 +2,7 @@ import { TARGET_HOST_RUNTIME } from '../manifest';
 import * as vscode from 'vscode';
 import { ContainerStart } from './containerStart';
 import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
-import { TopoError } from '../errors/topoError';
+import { WrappedError } from '../errors/wrappedError';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { ContainersManager } from '../workloadPlacement/containersManager';
 import { ContainerItem, TargetItem } from '../util/types';
@@ -81,11 +81,11 @@ describe('ContainerStart', () => {
         expect(containersManager.startContainer).toHaveBeenCalledWith('abc123');
     });
 
-    it('shows error message if startContainer throws a TopoError', async () => {
+    it('shows error message if startContainer throws a WrappedError', async () => {
         const containersManager: MockProxy<ContainersManager> =
             mock<ContainersManager>();
         containersManager.startContainer.mockRejectedValue(
-            new TopoError('DOCKER', 'fail'),
+            new WrappedError('DOCKER', 'fail'),
         );
         const containerStart = new ContainerStart(context, containersManager);
         containerStart.activate();
@@ -102,11 +102,11 @@ describe('ContainerStart', () => {
         );
     });
 
-    it('re-throws non-TopoError errors from startContainer', async () => {
+    it('re-throws generic error errors from startContainer', async () => {
         const containersManager: MockProxy<ContainersManager> =
             mock<ContainersManager>();
         containersManager.startContainer.mockRejectedValue(
-            new Error('non-TopoError'),
+            new Error('generic error'),
         );
         const containerStart = new ContainerStart(context, containersManager);
         containerStart.activate();
@@ -116,6 +116,6 @@ describe('ContainerStart', () => {
                 ContainerStart.startContainerCommand,
                 treeItem,
             ),
-        ).rejects.toThrow('non-TopoError');
+        ).rejects.toThrow('generic error');
     });
 });
