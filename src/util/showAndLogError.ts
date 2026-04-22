@@ -6,20 +6,20 @@ import * as vscode from 'vscode';
 export const showAndLogError = (message: string, err: unknown) => {
     vscode.window.showErrorMessage(`${message}. ${getErrorMessage(err)}`);
     if (isWrappedError(err) && err.logs.length > 0) {
+        logger.error(message);
         for (const entry of err.logs) {
-            const logMessage = `[topo] ${entry.msg}`;
             switch (entry.level) {
                 case 'Error':
-                    logger.error(logMessage);
+                    logger.error(entry.msg);
                     break;
                 case 'Warning':
-                    logger.warn(logMessage);
+                    logger.warn(entry.msg);
                     break;
                 case 'Info':
-                    logger.info(logMessage);
+                    logger.info(entry.msg);
                     break;
                 case 'Debug':
-                    logger.debug(logMessage);
+                    logger.debug(entry.msg);
                     break;
             }
         }

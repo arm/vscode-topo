@@ -57,16 +57,16 @@ describe('showAndLogError', () => {
             'Failed to start container. Error: No such container: abc123',
         );
         expect(logger.info).toHaveBeenCalledWith(
-            '[topo] Pulling image docker.io/library/nginx:latest',
+            'Pulling image docker.io/library/nginx:latest',
         );
         expect(logger.error).toHaveBeenCalledWith(
-            '[topo] Error: No such container: abc123',
+            'Error: No such container: abc123',
         );
         expect(logger.warn).toHaveBeenCalledWith(
-            '[topo] Warning: bridge-nf-call-iptables is disabled',
+            'Warning: bridge-nf-call-iptables is disabled',
         );
         expect(logger.debug).toHaveBeenCalledWith(
-            '[topo] loading plugin "io.containerd.grpc.v1.cri"',
+            'loading plugin "io.containerd.grpc.v1.cri"',
         );
     });
 
