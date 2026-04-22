@@ -515,7 +515,7 @@ describe('ProjectClone', () => {
 
         const showQuickPickItemMock = jest.mocked(vscode.window.showQuickPick);
 
-        it('propagates non-WrappedError from listTemplates', async () => {
+        it('propagates generic from listTemplates', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
             topoCli.listTemplates.mockImplementation(() => {
                 throw new Error('command failed');
