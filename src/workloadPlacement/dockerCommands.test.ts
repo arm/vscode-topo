@@ -1,4 +1,8 @@
-import { DockerCommands, DockerError } from './dockerCommands';
+import {
+    DockerCommands,
+    DockerError,
+    parseDockerStderr,
+} from './dockerCommands';
 import { exec } from '../util/exec';
 import { logger } from '../util/logger';
 import { DockerInspectItem, DockerStatsItem } from '../util/types';
@@ -469,5 +473,57 @@ describe('DockerCommands', () => {
 
             expect(cmd).toBe('docker --host ssh://ctx exec -it abc sh');
         });
+    });
+});
+
+describe('parseDockerStderr', () => {
+    it('classifies Error: lines as errors', () => {
+        const logs = parseDockerStderr('Error: something went wrong');
+
+        expect(logs).toEqual([
+            { level: 'Error', msg: 'Error: something went wrong' },
+        ]);
+    });
+
+    it('classifies Warning: lines as warnings', () => {
+        const logs = parseDockerStderr('Warning: deprecated flag');
+
+        expect(logs).toEqual([
+            { level: 'Warning', msg: 'Warning: deprecated flag' },
+        ]);
+    });
+
+    it('classifies unrecognised lines as errors', () => {
+        const logs = parseDockerStderr('unexpected output');
+
+        expect(logs).toEqual([{ level: 'Error', msg: 'unexpected output' }]);
+    });
+
+    it('handles mixed lines', () => {
+        const stderr =
+            'Error: container not found\nWarning: low disk space\nsome other message';
+
+        const logs = parseDockerStderr(stderr);
+
+        expect(logs).toEqual([
+            { level: 'Error', msg: 'Error: container not found' },
+            { level: 'Warning', msg: 'Warning: low disk space' },
+            { level: 'Error', msg: 'some other message' },
+        ]);
+    });
+
+    it('skips empty lines', () => {
+        const logs = parseDockerStderr('Error: fail\n\n\nWarning: warn');
+
+        expect(logs).toEqual([
+            { level: 'Error', msg: 'Error: fail' },
+            { level: 'Warning', msg: 'Warning: warn' },
+        ]);
+    });
+
+    it('returns empty array for empty string', () => {
+        const logs = parseDockerStderr('');
+
+        expect(logs).toEqual([]);
     });
 });
