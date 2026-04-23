@@ -406,7 +406,7 @@ describe('TopoCli', () => {
     });
 });
 
-describe('parseStructuredError', () => {
+describe('parseWrappedError', () => {
     it('returns error with parsed entries when stderr contains structured logs', () => {
         const stderr = [
             '{"time":"2026-04-16T15:14:48Z","level":"ERROR","msg":"lscpu not found"}',
