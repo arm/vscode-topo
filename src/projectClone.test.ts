@@ -8,6 +8,7 @@ import { mock, MockProxy } from 'jest-mock-extended';
 import { TemplateDescription } from './topoCliSchema';
 import { showAndLogError } from './util/showAndLogError';
 import { TargetStore } from './workloadPlacement/targetStore';
+import { WrappedError } from './errors/wrappedError';
 
 jest.mock('./util/showAndLogError', () => ({
     showAndLogError: jest.fn(),
@@ -513,6 +514,54 @@ describe('ProjectClone', () => {
         }));
 
         const showQuickPickItemMock = jest.mocked(vscode.window.showQuickPick);
+
+        it('propagates generic from listTemplates', async () => {
+            mutable(vscode.workspace).workspaceFolders = workspaceFolders;
+            topoCli.listTemplates.mockImplementation(() => {
+                throw new Error('command failed');
+            });
+
+            await expect(
+                executeCommand(ProjectClone.templateCloneCommand),
+            ).rejects.toThrow('command failed');
+
+            expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
+            expect(vscode.tasks.executeTask).not.toHaveBeenCalled();
+        });
+
+        it('shows structured error detail when listTemplates throws WrappedError', async () => {
+            mutable(vscode.workspace).workspaceFolders = workspaceFolders;
+            const logEntries = [
+                {
+                    level: 'Error',
+                    msg: 'lscpu not found',
+                },
+                {
+                    level: 'Info',
+                    msg: 'some info',
+                },
+                {
+                    level: 'Error',
+                    msg: 'connection lost',
+                },
+            ] as const;
+            topoCli.listTemplates.mockImplementation(() => {
+                throw new WrappedError(
+                    'CLI',
+                    'lscpu not found; connection lost',
+                    [...logEntries],
+                );
+            });
+
+            await executeCommand(ProjectClone.templateCloneCommand);
+
+            expect(showAndLogError).toHaveBeenCalledWith(
+                'Failed to clone project',
+                expect.any(WrappedError),
+            );
+            expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
+            expect(vscode.tasks.executeTask).not.toHaveBeenCalled();
+        });
 
         it('prompts for a destination folder when no workspace folder is open', async () => {
             topoCli.listTemplates.mockReturnValue(templateList);

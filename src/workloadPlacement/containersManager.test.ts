@@ -82,8 +82,16 @@ const defaultInspectOutput = {
 };
 const defaultStatsOutput = {
     stdout: [
-        `${mockContainers[0].ID};2.5%;50MiB / 1GiB`,
-        `${mockContainers[1].ID};0.0%;0B / 1GiB`,
+        JSON.stringify({
+            ID: mockContainers[0].ID,
+            CPUPerc: '2.5%',
+            MemUsage: '50MiB / 1GiB',
+        }),
+        JSON.stringify({
+            ID: mockContainers[1].ID,
+            CPUPerc: '0.0%',
+            MemUsage: '0B / 1GiB',
+        }),
     ].join('\n'),
     stderr: '',
 };
@@ -154,7 +162,7 @@ describe('ContainersManager', () => {
                     return defaultPsOutput;
                 case `docker --host ssh://${target.ssh} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{json .}}'`:
                     return defaultInspectOutput;
-                case `docker --host ssh://${target.ssh} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{.ID}};{{.CPUPerc}};{{.MemUsage}}'`:
+                case `docker --host ssh://${target.ssh} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{json .}}'`:
                     return defaultStatsOutput;
                 case `ssh ${target.ssh} 'docker info'`:
                     return defaultInfoOutput;
@@ -212,7 +220,7 @@ describe('ContainersManager', () => {
                     return defaultContextOutput;
                 case `docker --host ssh://${target.ssh} ps -a --format "{{json .}}"`:
                     throw Error('ps error');
-                case `docker --host ssh://${target.ssh} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{.ID}};{{.CPUPerc}};{{.MemUsage}}'`:
+                case `docker --host ssh://${target.ssh} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{json .}}'`:
                     return defaultStatsOutput;
                 case `ssh ${target.ssh} 'docker info'`:
                     return defaultInfoOutput;
@@ -264,7 +272,7 @@ describe('ContainersManager', () => {
                     return defaultPsOutput;
                 case `docker --host ssh://${target.ssh} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{json .}}'`:
                     return defaultInspectOutput;
-                case `docker --host ssh://${target.ssh} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{.ID}};{{.CPUPerc}};{{.MemUsage}}'`:
+                case `docker --host ssh://${target.ssh} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{json .}}'`:
                     return defaultStatsOutput;
                 case `ssh ${target.ssh} 'docker info'`:
                     return defaultInfoOutput;
@@ -295,7 +303,7 @@ describe('ContainersManager', () => {
                     return defaultPsOutput;
                 case `docker --host ssh://${target.ssh} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{json .}}'`:
                     return defaultInspectOutput;
-                case `docker --host ssh://${target.ssh} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{.ID}};{{.CPUPerc}};{{.MemUsage}}'`:
+                case `docker --host ssh://${target.ssh} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{json .}}'`:
                     return defaultStatsOutput;
                 case `ssh ${target.ssh} 'docker info'`:
                     return defaultInfoOutput;
@@ -325,7 +333,7 @@ describe('ContainersManager', () => {
                     return defaultPsOutput;
                 case `docker --host ssh://${target.ssh} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{json .}}'`:
                     return defaultInspectOutput;
-                case `docker --host ssh://${target.ssh} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{.ID}};{{.CPUPerc}};{{.MemUsage}}'`:
+                case `docker --host ssh://${target.ssh} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{json .}}'`:
                     return defaultStatsOutput;
                 case `ssh ${target.ssh} 'docker info'`:
                     return defaultInfoOutput;
@@ -354,7 +362,7 @@ describe('ContainersManager', () => {
         const containerCommands = mock<ContainerCommands>();
         containerCommands.getContainers.mockResolvedValue([]);
         containerCommands.inspectContainers.mockResolvedValue([]);
-        containerCommands.containerStats.mockResolvedValue('');
+        containerCommands.containerStats.mockResolvedValue([]);
         const manager = createContainersManager(targetStore, containerCommands);
 
         const activation = manager.activate();
@@ -377,7 +385,7 @@ describe('ContainersManager', () => {
         const containerCommands = mock<ContainerCommands>();
         containerCommands.getContainers.mockResolvedValue([]);
         containerCommands.inspectContainers.mockResolvedValue([]);
-        containerCommands.containerStats.mockResolvedValue('');
+        containerCommands.containerStats.mockResolvedValue([]);
         const manager = createContainersManager(targetStore, containerCommands);
 
         const activation = manager.activate();
@@ -408,7 +416,7 @@ describe('ContainersManager', () => {
         const containerCommands = mock<ContainerCommands>();
         containerCommands.getContainers.mockResolvedValue([]);
         containerCommands.inspectContainers.mockResolvedValue([]);
-        containerCommands.containerStats.mockResolvedValue('');
+        containerCommands.containerStats.mockResolvedValue([]);
         const manager = createContainersManager(targetStore, containerCommands);
 
         await manager.activate();
@@ -440,7 +448,7 @@ describe('ContainersManager', () => {
                     return defaultPsOutput;
                 case `docker --host ssh://${target.ssh} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{json .}}'`:
                     return defaultInspectOutput;
-                case `docker --host ssh://${target.ssh} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{.ID}};{{.CPUPerc}};{{.MemUsage}}'`:
+                case `docker --host ssh://${target.ssh} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{json .}}'`:
                     return defaultStatsOutput;
                 case `ssh ${target.ssh} 'docker info'`:
                     return defaultInfoOutput;
@@ -474,7 +482,7 @@ describe('ContainersManager', () => {
                     return defaultPsOutput;
                 case `docker --host ssh://${target.ssh} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{json .}}'`:
                     return defaultInspectOutput;
-                case `docker --host ssh://${target.ssh} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{.ID}};{{.CPUPerc}};{{.MemUsage}}'`:
+                case `docker --host ssh://${target.ssh} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{json .}}'`:
                     return defaultStatsOutput;
                 case `ssh ${target.ssh} 'docker info'`:
                     return defaultInfoOutput;
@@ -502,7 +510,7 @@ describe('ContainersManager', () => {
                     return defaultPsOutput;
                 case `docker --host ssh://${target.ssh} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{json .}}'`:
                     return defaultInspectOutput;
-                case `docker --host ssh://${target.ssh} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{.ID}};{{.CPUPerc}};{{.MemUsage}}'`:
+                case `docker --host ssh://${target.ssh} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{json .}}'`:
                     return defaultStatsOutput;
                 case `ssh ${target.ssh} 'docker info'`:
                     return defaultInfoOutput;
@@ -535,7 +543,7 @@ describe('ContainersManager', () => {
                     return defaultPsOutput;
                 case `docker --host ssh://${target.ssh} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{json .}}'`:
                     return defaultInspectOutput;
-                case `docker --host ssh://${target.ssh} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{.ID}};{{.CPUPerc}};{{.MemUsage}}'`:
+                case `docker --host ssh://${target.ssh} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{json .}}'`:
                     return defaultStatsOutput;
                 case `ssh ${target.ssh} 'docker info'`:
                     return defaultInfoOutput;
@@ -612,7 +620,7 @@ describe('ContainersManager', () => {
                     : [],
         );
         containerCommands.inspectContainers.mockResolvedValue([]);
-        containerCommands.containerStats.mockResolvedValue('');
+        containerCommands.containerStats.mockResolvedValue([]);
         topoCli.health.mockImplementation(async (ssh: string) => ({
             host: { dependencies: [] },
             target: {
@@ -705,7 +713,7 @@ describe('ContainersManager', () => {
         const containerCommands = mock<ContainerCommands>();
         containerCommands.getContainers.mockResolvedValue([]);
         containerCommands.inspectContainers.mockResolvedValue([]);
-        containerCommands.containerStats.mockResolvedValue('');
+        containerCommands.containerStats.mockResolvedValue([]);
 
         const manager = new ContainersManager(
             topoCli,

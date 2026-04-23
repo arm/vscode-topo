@@ -70,3 +70,11 @@ export const projectDescriptionSchema = type({
 });
 
 export type ProjectDescription = Infer<typeof projectDescriptionSchema>;
+
+const topoLogLevelSchema = enums(['DEBUG', 'INFO', 'WARN', 'ERROR']);
+
+export const topoLogEntrySchema = type({
+    time: string(),
+    level: topoLogLevelSchema,
+    msg: string(),
+});

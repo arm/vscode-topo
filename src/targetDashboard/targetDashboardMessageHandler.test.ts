@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { TargetDashboardMessageHandler } from './targetDashboardMessageHandler';
 import { logger } from '../util/logger';
 import { showAndLogError } from '../util/showAndLogError';
-import { TopoError } from '../errors/topoError';
+import { WrappedError } from '../errors/wrappedError';
 import type { ContainersManager } from '../workloadPlacement/containersManager';
 import type {
     TargetState,
@@ -142,8 +142,8 @@ describe('TargetDashboardMessageHandler', () => {
                 );
             });
 
-            it('shows a TopoError for start-container docker errors and does not re-render', async () => {
-                const dockerErr = new TopoError('DOCKER', 'fail');
+            it('shows a WrappedError for start-container docker errors and does not re-render', async () => {
+                const dockerErr = new WrappedError('DOCKER', 'fail');
                 containersManager.startContainer.mockRejectedValueOnce(
                     dockerErr,
                 );
@@ -197,8 +197,8 @@ describe('TargetDashboardMessageHandler', () => {
                 );
             });
 
-            it('handles stop-container docker TopoError and returns early', async () => {
-                const dockerErr = new TopoError('DOCKER', 'fail');
+            it('handles stop-container docker WrappedError and returns early', async () => {
+                const dockerErr = new WrappedError('DOCKER', 'fail');
 
                 containersManager.stopContainer.mockRejectedValueOnce(
                     dockerErr,
@@ -216,7 +216,7 @@ describe('TargetDashboardMessageHandler', () => {
                 expect(messagePoster.postMessage).not.toHaveBeenCalled();
             });
 
-            it('shows an unexpected error when stop-container throws a non-TopoError', async () => {
+            it('shows an unexpected error when stop-container throws a generic error', async () => {
                 const err = new Error('boom');
                 containersManager.stopContainer.mockRejectedValueOnce(err);
 
@@ -253,8 +253,8 @@ describe('TargetDashboardMessageHandler', () => {
                 );
             });
 
-            it('handles delete-container docker TopoError and returns early', async () => {
-                const dockerErr = new TopoError('DOCKER', 'fail');
+            it('handles delete-container docker WrappedError and returns early', async () => {
+                const dockerErr = new WrappedError('DOCKER', 'fail');
 
                 containersManager.deleteContainer.mockRejectedValueOnce(
                     dockerErr,
@@ -272,7 +272,7 @@ describe('TargetDashboardMessageHandler', () => {
                 expect(messagePoster.postMessage).not.toHaveBeenCalled();
             });
 
-            it('shows an unexpected error when delete-container throws a non-TopoError', async () => {
+            it('shows an unexpected error when delete-container throws a generic error', async () => {
                 const err = new Error('boom');
                 containersManager.deleteContainer.mockRejectedValueOnce(err);
 
@@ -382,7 +382,7 @@ describe('TargetDashboardMessageHandler', () => {
                 expect(attachVsCode.attachVsCode).not.toHaveBeenCalled();
             });
 
-            it('shows an unexpected error when attach-vscode throws a non-TopoError', async () => {
+            it('shows an unexpected error when attach-vscode throws a generic error', async () => {
                 containersManager.getContainersData.mockResolvedValueOnce([
                     containerA,
                 ]);
@@ -400,11 +400,11 @@ describe('TargetDashboardMessageHandler', () => {
                 );
             });
 
-            it('shows a TopoError when attachVsCode fails with docker error', async () => {
+            it('shows a WrappedError when attachVsCode fails with docker error', async () => {
                 containersManager.getContainersData.mockResolvedValueOnce([
                     containerA,
                 ]);
-                const dockerErr = new TopoError('DOCKER', 'fail');
+                const dockerErr = new WrappedError('DOCKER', 'fail');
                 attachVsCode.attachVsCode.mockRejectedValueOnce(dockerErr);
 
                 await handler.handleMessage(messagePoster, {
@@ -463,8 +463,8 @@ describe('TargetDashboardMessageHandler', () => {
                 expect(showAndLogError).not.toHaveBeenCalled();
             });
 
-            it('shows a TopoError when attach-ssh fails with docker error', async () => {
-                const dockerErr = new TopoError('DOCKER', 'fail');
+            it('shows a WrappedError when attach-ssh fails with docker error', async () => {
+                const dockerErr = new WrappedError('DOCKER', 'fail');
                 attachShell.attachSSH.mockRejectedValueOnce(dockerErr);
 
                 await handler.handleMessage(messagePoster, {
@@ -477,7 +477,7 @@ describe('TargetDashboardMessageHandler', () => {
                 );
             });
 
-            it('shows an unexpected error when attach-ssh throws a non-TopoError', async () => {
+            it('shows an unexpected error when attach-ssh throws a generic error', async () => {
                 const err = new Error('boom');
                 attachShell.attachSSH.mockRejectedValueOnce(err);
 
