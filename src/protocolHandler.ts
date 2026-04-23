@@ -30,7 +30,7 @@ export class ProtocolHandler implements vscode.UriHandler {
                 try {
                     await this.handleCloneRequest(uri, data);
                 } catch (error: unknown) {
-                    if (isWrappedError(error, ['CLONE'])) {
+                    if (isWrappedError(error, ['CLONE', 'CLI'])) {
                         return showAndLogError(
                             'Failed to clone project',
                             error,
