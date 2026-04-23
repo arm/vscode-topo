@@ -241,6 +241,18 @@ class ThemeIcon {
     }
 }
 
+class LanguageModelTextPart {
+    constructor(value) {
+        this.value = value;
+    }
+}
+
+class LanguageModelToolResult {
+    constructor(content) {
+        this.content = content;
+    }
+}
+
 const UIKind = {
     Desktop: 1,
     Web: 2,
@@ -252,6 +264,12 @@ const EndOfLine = {
 };
 
 env.uiKind = UIKind.Desktop;
+
+const lm = {
+    registerTool: jest.fn(() => ({ dispose: jest.fn() })),
+    tools: [],
+    invokeTool: jest.fn(),
+};
 
 module.exports = {
     CodeAction,
@@ -278,6 +296,7 @@ module.exports = {
     debug,
     env,
     languages,
+    lm,
     tasks,
     window,
     workspace,
@@ -287,4 +306,6 @@ module.exports = {
     ThemeColor,
     ThemeIcon,
     UIKind,
+    LanguageModelTextPart,
+    LanguageModelToolResult,
 };

@@ -23,6 +23,10 @@ import { TargetDescriptionStore } from './target/targetDescriptionStore';
 import { InstallDependency } from './actions/installDependency';
 import { HostDependenciesTreeDataProvider } from './hostTreeView/hostDependenciesTreeDataProvider';
 import { logger } from './util/logger';
+import { ListTemplatesTool } from './tools/listTemplatesTool';
+import { CloneTemplateTool } from './tools/cloneTemplateTool';
+import { DeployProjectTool } from './tools/deployProjectTool';
+import { AddTargetTool } from './tools/addTargetTool';
 
 export async function activate(
     context: vscode.ExtensionContext,
@@ -104,4 +108,23 @@ export async function activate(
     health.activate();
     setupKeys.activate();
     await installDependency.activate();
+
+    context.subscriptions.push(
+        vscode.lm.registerTool(
+            'topo_listTemplates',
+            new ListTemplatesTool(topoCli),
+        ),
+        vscode.lm.registerTool(
+            'topo_cloneTemplate',
+            new CloneTemplateTool(topoCli, projectClone, targetStore),
+        ),
+        vscode.lm.registerTool(
+            'topo_deployProject',
+            new DeployProjectTool(deploy),
+        ),
+        vscode.lm.registerTool(
+            'topo_addTarget',
+            new AddTargetTool(targetStore),
+        ),
+    );
 }

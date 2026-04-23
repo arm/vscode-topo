@@ -344,7 +344,97 @@
                     "description": "Specify the logging verbosity of the Topo extension"
                 }
             }
-        }
+        },
+        "languageModelTools": [
+            {
+                "name": "topo_listTemplates",
+                "displayName": "List Topo Templates",
+                "toolReferenceName": "topoListTemplates",
+                "modelDescription": "Lists the available Arm Topo project templates. Each template has a name, description, git URL, and compatibility status. Optionally filter by a specific SSH target.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "target": {
+                            "type": "string",
+                            "description": "Optional SSH target (e.g. user@host) to filter templates by compatibility."
+                        }
+                    }
+                },
+                "canBeReferencedInPrompt": true,
+                "tags": [
+                    "topo",
+                    "templates"
+                ]
+            },
+            {
+                "name": "topo_cloneTemplate",
+                "displayName": "Clone Topo Template",
+                "toolReferenceName": "topoCloneTemplate",
+                "modelDescription": "Clones an Arm Topo project from a template name or a git URL. When using a template name, it resolves the URL from the available templates list. The user will be prompted to choose a project name and destination folder.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "templateName": {
+                            "type": "string",
+                            "description": "The name of a template to clone (from the templates list)."
+                        },
+                        "gitUrl": {
+                            "type": "string",
+                            "description": "A git URL to clone from directly."
+                        }
+                    }
+                },
+                "canBeReferencedInPrompt": true,
+                "tags": [
+                    "topo",
+                    "clone",
+                    "templates"
+                ]
+            },
+            {
+                "name": "topo_deployProject",
+                "displayName": "Deploy Topo Project",
+                "toolReferenceName": "topoDeployProject",
+                "modelDescription": "Deploys a Topo project to the currently selected target. Uses a compose file from the workspace, or an explicit path. The deploy runs as a VS Code task and the user can see progress in the terminal.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "composeFilePath": {
+                            "type": "string",
+                            "description": "Absolute path to the compose YAML file. If omitted, searches the workspace for a compose.yaml file."
+                        }
+                    }
+                },
+                "canBeReferencedInPrompt": true,
+                "tags": [
+                    "topo",
+                    "deploy"
+                ]
+            },
+            {
+                "name": "topo_addTarget",
+                "displayName": "Add Topo Target",
+                "toolReferenceName": "topoAddTarget",
+                "modelDescription": "Adds a new SSH target for deploying Topo projects and selects it. A target is an SSH connection string like 'root@192.168.1.1' or a hostname from the SSH config.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "ssh": {
+                            "type": "string",
+                            "description": "The SSH connection string for the target (e.g. root@192.168.1.1 or a hostname)."
+                        }
+                    },
+                    "required": [
+                        "ssh"
+                    ]
+                },
+                "canBeReferencedInPrompt": true,
+                "tags": [
+                    "topo",
+                    "target"
+                ]
+            }
+        ]
     },
     "scripts": {
         "package": "npm run build && vsce package",
