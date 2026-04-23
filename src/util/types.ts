@@ -120,7 +120,16 @@ export type MessagePoster = {
 
 export type Mutable<T> = { -readonly [P in keyof T]: T[P] };
 
-export interface TargetState {
-    health: HealthCheckResult['target'] | undefined;
-    targetSsh: string | undefined;
-}
+export type TargetConnectionStatus =
+    | 'disconnected'
+    | 'connecting'
+    | 'connected';
+
+export type TargetState =
+    | {
+          status: 'disconnected' | 'connecting';
+      }
+    | {
+          status: 'connected';
+          health: HealthCheckResult['target'];
+      };

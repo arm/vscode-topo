@@ -6,7 +6,6 @@ import { TargetStore } from './targetStore';
 import { logger } from '../util/logger';
 import { ContainersManager } from './containersManager';
 import { getTreeItemIcon } from './targetTreeTargetItem';
-import { isTargetReady } from '../util/targetState';
 import { TargetItem } from '../util/types';
 import { defaultSshConfigPath, getHosts } from '../util/ssh';
 
@@ -132,13 +131,7 @@ export class TargetManager {
         }
         if (selectedTarget) {
             const targetState = this.containersManager.getTargetStateSnapshot();
-            const connectionReady =
-                selectedTarget.ssh === targetState.targetSsh;
-            const targetTreeIcon = getTreeItemIcon(
-                true,
-                connectionReady,
-                isTargetReady(targetState),
-            );
+            const targetTreeIcon = getTreeItemIcon(true, targetState.status);
             const iconId = targetTreeIcon?.id || 'pass-filled';
             this.statusBarItem.text = `$(${iconId}) ${selectedTarget.ssh}`;
             this.statusBarItem.tooltip = `Connection String: ${selectedTarget.ssh}`;

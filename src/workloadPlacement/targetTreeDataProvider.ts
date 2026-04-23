@@ -6,7 +6,6 @@ import { TargetStore } from './targetStore';
 import { TargetTreeTargetItem } from './targetTreeTargetItem';
 import { TargetTreeSubsystemItem } from './targetTreeSubsystemItem';
 import { logger } from '../util/logger';
-import { isTargetReady } from '../util/targetState';
 import { TargetTreeDependencyGroupItem } from './targetTreeDependencyGroupItem';
 import { TargetTreeSubsystemGroupItem } from './targetTreeSubsystemGroupItem';
 import { TargetTreeDependencyItem } from './targetTreeDependencyItem';
@@ -112,13 +111,20 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
             return;
         }
 
-        if (!treeNode.contextValue?.includes('Selected')) {
+        if (!treeNode.selected) {
             const errMsg = `Invalid target for inspect health: expected selected TargetTreeTargetItem but received:`;
             logger.error(errMsg, treeNode);
             return;
         }
 
         const targetState = await this.containersManager.getTargetState();
+        if (targetState.status !== 'connected') {
+            const errMsg = `Cannot inspect health for target in non-connected state: ${targetState.status}`;
+            logger.error(errMsg, treeNode);
+            vscode.window.showErrorMessage(errMsg);
+            return;
+        }
+
         const content = JSON.stringify(targetState.health ?? null, null, 4);
         const safeTargetSsh = treeNode.target.ssh.replace(
             /[^a-zA-Z0-9._-]/g,
@@ -146,13 +152,10 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
                 .getTargets()
                 .map((target) => {
                     const selected = target.ssh === selectedTarget?.ssh;
-                    const connectionReady =
-                        target.ssh === targetState.targetSsh;
                     return new TargetTreeTargetItem(
                         target,
                         selected,
-                        connectionReady,
-                        isTargetReady(targetState),
+                        targetState.status,
                     );
                 });
             const sortedTargetTreeItems = targetTreeItems.sort((a, b) =>
@@ -170,7 +173,7 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
                 this.containersManager.getTargetState(),
                 this.targetDescriptionStore.getDescription(target.ssh),
             ]);
-            if (targetState.health === undefined) {
+            if (targetState.status !== 'connected') {
                 return [];
             }
 

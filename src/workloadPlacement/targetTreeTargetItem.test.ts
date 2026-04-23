@@ -9,7 +9,7 @@ describe('TargetTreeTargetItem', () => {
     };
 
     it('sets basic fields (id, label, description)', () => {
-        const item = new TargetTreeTargetItem(baseTarget, false, false, true);
+        const item = new TargetTreeTargetItem(baseTarget, false, 'connected');
 
         expect(item.id).toBe(baseTarget.ssh);
         expect(item.label).toBe(baseTarget.ssh);
@@ -17,13 +17,12 @@ describe('TargetTreeTargetItem', () => {
         expect(item.contextValue).toContain('Target');
     });
 
-    it('shows loading icon and Selected context when selected but not connectionReady', () => {
-        const item = new TargetTreeTargetItem(baseTarget, true, false, true);
+    it('shows loading icon and Selected context when selected and connecting', () => {
+        const item = new TargetTreeTargetItem(baseTarget, true, 'connecting');
 
         expect(item.contextValue).toContain('Target');
         expect(item.contextValue).toContain('Selected');
-        expect(item.contextValue).not.toContain('ConnectionReady');
-        expect(item.contextValue).toContain('TargetReady');
+        expect(item.contextValue).not.toContain('Connected');
         expect(item.iconPath).toBeDefined();
         expect(item.iconPath).toBeInstanceOf(vscode.ThemeIcon);
         const icon = item.iconPath as vscode.ThemeIcon;
@@ -34,13 +33,12 @@ describe('TargetTreeTargetItem', () => {
         );
     });
 
-    it('shows error icon and ConnectionReady context when connectionReady true but targetReady false', () => {
-        const item = new TargetTreeTargetItem(baseTarget, true, true, false);
+    it('shows error icon when selected and disconnected', () => {
+        const item = new TargetTreeTargetItem(baseTarget, true, 'disconnected');
 
         expect(item.contextValue).toContain('Target');
         expect(item.contextValue).toContain('Selected');
-        expect(item.contextValue).toContain('ConnectionReady');
-        expect(item.contextValue).not.toContain('TargetReady');
+        expect(item.contextValue).not.toContain('Connected');
         expect(item.iconPath).toBeDefined();
         expect(item.iconPath).toBeInstanceOf(vscode.ThemeIcon);
         const icon = item.iconPath as vscode.ThemeIcon;
@@ -54,26 +52,24 @@ describe('TargetTreeTargetItem', () => {
         );
     });
 
-    it('has no special contexts or icon when not selected and targetReady true', () => {
-        const item = new TargetTreeTargetItem(baseTarget, false, false, true);
+    it('has no selected context or icon when not selected but connected', () => {
+        const item = new TargetTreeTargetItem(baseTarget, false, 'connected');
 
         expect(item.contextValue).toContain('Target');
         expect(item.contextValue).not.toContain('Selected');
-        expect(item.contextValue).not.toContain('ConnectionReady');
-        expect(item.contextValue).toContain('TargetReady');
+        expect(item.contextValue).toContain('Connected');
         expect(item.iconPath).toBeUndefined();
         expect(item.collapsibleState).toBe(
             vscode.TreeItemCollapsibleState.None,
         );
     });
 
-    it('is expanded when selected, connectionReady and targetReady', () => {
-        const item = new TargetTreeTargetItem(baseTarget, true, true, true);
+    it('is expanded when selected and connected', () => {
+        const item = new TargetTreeTargetItem(baseTarget, true, 'connected');
 
         expect(item.contextValue).toContain('Target');
         expect(item.contextValue).toContain('Selected');
-        expect(item.contextValue).toContain('ConnectionReady');
-        expect(item.contextValue).toContain('TargetReady');
+        expect(item.contextValue).toContain('Connected');
         expect(item.iconPath).toBeUndefined();
         expect(item.collapsibleState).toBe(
             vscode.TreeItemCollapsibleState.Expanded,

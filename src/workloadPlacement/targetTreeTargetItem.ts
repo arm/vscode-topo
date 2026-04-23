@@ -1,33 +1,25 @@
 import * as vscode from 'vscode';
-import type { TargetItem } from '../util/types';
+import { TargetConnectionStatus, TargetItem } from '../util/types';
 
 /** Represents a target */
 export class TargetTreeTargetItem extends vscode.TreeItem {
     constructor(
         public readonly target: TargetItem,
         public readonly selected: boolean,
-        public readonly connectionReady: boolean,
-        public readonly targetReady: boolean,
+        public readonly status: TargetConnectionStatus,
     ) {
         super(target.ssh, vscode.TreeItemCollapsibleState.Expanded);
         this.id = target.ssh;
-        this.iconPath = getTreeItemIcon(selected, connectionReady, targetReady);
+        this.iconPath = getTreeItemIcon(selected, status);
         const contextValues = ['Target'];
         if (selected) {
             contextValues.push('Selected');
         }
-        if (connectionReady) {
-            contextValues.push('ConnectionReady');
-        }
-        if (targetReady) {
-            contextValues.push('TargetReady');
+        if (status === 'connected') {
+            contextValues.push('Connected');
         }
         this.contextValue = contextValues.join(' ');
-        this.collapsibleState = getTargetTreeItemState(
-            selected,
-            connectionReady,
-            targetReady,
-        );
+        this.collapsibleState = getTargetTreeItemState(selected, status);
     }
 
     public get displayName(): string {
@@ -37,10 +29,9 @@ export class TargetTreeTargetItem extends vscode.TreeItem {
 
 export const getTargetTreeItemState = (
     targetSelected: boolean,
-    connectionReady: boolean,
-    targetReady: boolean,
+    status: TargetConnectionStatus,
 ): vscode.TreeItemCollapsibleState => {
-    if (targetSelected && connectionReady && targetReady) {
+    if (targetSelected && status === 'connected') {
         return vscode.TreeItemCollapsibleState.Expanded;
     }
     return vscode.TreeItemCollapsibleState.None;
@@ -48,16 +39,15 @@ export const getTargetTreeItemState = (
 
 export const getTreeItemIcon = (
     targetSelected: boolean,
-    connectionReady: boolean,
-    targetReady: boolean,
+    status: TargetConnectionStatus,
 ): vscode.ThemeIcon | undefined => {
     if (!targetSelected) {
         return undefined;
     }
-    if (!connectionReady) {
+    if (status === 'connecting') {
         return new vscode.ThemeIcon('loading~spin');
     }
-    if (!targetReady) {
+    if (status === 'disconnected') {
         return new vscode.ThemeIcon(
             'error',
             new vscode.ThemeColor('terminal.ansiRed'),

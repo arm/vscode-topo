@@ -275,7 +275,7 @@
                 },
                 {
                     "command": "topo.openTargetDashboard",
-                    "when": "view === topo.target-manager && viewItem =~ /Target/ && viewItem =~ /Selected/ && viewItem=~ /ConnectionReady/ && viewItem=~ /TargetReady/ && config.topo.experimentalFeatures",
+                    "when": "view === topo.target-manager && viewItem =~ /Target/ && viewItem =~ /Selected/ && viewItem=~ /Connected/ && config.topo.experimentalFeatures",
                     "group": "topo/2_actions"
                 },
                 {

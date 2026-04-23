@@ -36,8 +36,7 @@ describe('TargetDashboardMessageHandler', () => {
         remoteprocCPU: [{ name: 'imx-rproc' }],
     };
     const targetState: TargetState = {
-        health: undefined,
-        targetSsh: target.ssh,
+        status: 'connecting',
     };
 
     const containerA: ContainerItem = {

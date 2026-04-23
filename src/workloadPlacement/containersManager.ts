@@ -11,7 +11,6 @@ import type {
 import type { ContainerCommands } from './containerCommands';
 import { TargetStore } from './targetStore';
 import type { TopoCli } from '../topoCli';
-import { isTargetReady } from '../util/targetState';
 import { future, Future } from '../util/future';
 
 const refreshInterval = 3000;
@@ -44,11 +43,6 @@ function createContainerItem(
         target,
     };
 }
-
-const defaultTargetState: TargetState = {
-    health: undefined,
-    targetSsh: undefined,
-};
 
 export class ContainersManager implements vscode.Disposable {
     private containers: Future<ContainerItem[]> | undefined;
@@ -102,8 +96,7 @@ export class ContainersManager implements vscode.Disposable {
         const target = this.target;
         if (!target) {
             return {
-                health: undefined,
-                targetSsh: undefined,
+                status: 'disconnected',
             };
         }
 
@@ -111,7 +104,10 @@ export class ContainersManager implements vscode.Disposable {
             const health = await this.topoCli.health(target.ssh);
             return {
                 health: health.target,
-                targetSsh: target.ssh,
+                status:
+                    health.target.connectivity.status === 'ok'
+                        ? 'connected'
+                        : 'disconnected',
             };
         } catch (err) {
             logger.error(
@@ -119,8 +115,7 @@ export class ContainersManager implements vscode.Disposable {
                 err,
             );
             return {
-                health: undefined,
-                targetSsh: target.ssh,
+                status: 'disconnected',
             };
         }
     }
@@ -133,7 +128,17 @@ export class ContainersManager implements vscode.Disposable {
     }
 
     public getTargetStateSnapshot(): TargetState {
-        return this.targetState?.get() || defaultTargetState;
+        if (!this.targetState) {
+            return {
+                status: 'disconnected',
+            };
+        }
+
+        return (
+            this.targetState?.get() || {
+                status: 'connecting',
+            }
+        );
     }
 
     public async getTargetState(): Promise<TargetState> {
@@ -202,7 +207,7 @@ export class ContainersManager implements vscode.Disposable {
                 return;
             }
 
-            if (isTargetReady(targetState)) {
+            if (targetState.status === 'connected') {
                 this.containers = future(() => this.getContainersInfo());
                 await this.containers.promise;
                 if (this.refreshSession !== refreshSession) {

@@ -1,5 +1,10 @@
 import { ContainersManager } from './containersManager';
-import { ContainerItem, DockerPsItem, TargetItem } from '../util/types';
+import {
+    ContainerItem,
+    DockerPsItem,
+    TargetItem,
+    TargetState,
+} from '../util/types';
 import * as manifest from '../manifest';
 import { exec } from '../util/exec';
 import { DockerCommands } from './dockerCommands';
@@ -354,7 +359,7 @@ describe('ContainersManager', () => {
         expect(spy).toHaveBeenCalled();
     });
 
-    it('getTargetStateSnapshot returns default state before health load completes', async () => {
+    it('getTargetStateSnapshot returns connecting state before health load completes', async () => {
         let resolveHealth: (value: HealthCheckResult) => void;
         const pendingHealth = new Promise<HealthCheckResult>((resolve) => {
             resolveHealth = resolve;
@@ -372,8 +377,7 @@ describe('ContainersManager', () => {
         await waitImmediate();
 
         expect(manager.getTargetStateSnapshot()).toEqual({
-            health: undefined,
-            targetId: undefined,
+            status: 'connecting',
         });
 
         resolveHealth!(loadedHealth);
@@ -401,14 +405,12 @@ describe('ContainersManager', () => {
         resolveHealth!(loadedHealth);
 
         await activation;
-        await expect(targetStatePromise).resolves.toEqual({
+        const wantTargetState: TargetState = {
             health: loadedHealth.target,
-            targetSsh: target.ssh,
-        });
-        expect(manager.getTargetStateSnapshot()).toEqual({
-            health: loadedHealth.target,
-            targetSsh: target.ssh,
-        });
+            status: 'connected',
+        };
+        await expect(targetStatePromise).resolves.toEqual(wantTargetState);
+        expect(manager.getTargetStateSnapshot()).toEqual(wantTargetState);
     });
 
     it('resets target state snapshot and getTargetState when the selected target is cleared', async () => {
@@ -428,7 +430,7 @@ describe('ContainersManager', () => {
         await manager.activate();
         await expect(manager.getTargetState()).resolves.toEqual({
             health: loadedHealth.target,
-            targetSsh: target.ssh,
+            status: 'connected',
         });
 
         selectedTarget = undefined;
@@ -436,12 +438,10 @@ describe('ContainersManager', () => {
         await waitImmediate();
 
         expect(manager.getTargetStateSnapshot()).toEqual({
-            health: undefined,
-            targetId: undefined,
+            status: 'disconnected',
         });
         await expect(manager.getTargetState()).resolves.toEqual({
-            health: undefined,
-            targetId: undefined,
+            status: 'disconnected',
         });
     });
 

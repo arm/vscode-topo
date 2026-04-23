@@ -4,7 +4,7 @@ import { TargetTreeDataProvider } from './targetTreeDataProvider';
 import { TargetStore } from './targetStore';
 import { logger } from '../util/logger';
 import { ContainersManager } from './containersManager';
-import { TargetItem } from '../util/types';
+import { TargetItem, TargetState } from '../util/types';
 import { mock, MockProxy } from 'jest-mock-extended';
 import type { TopoCli } from '../topoCli';
 import type { HealthCheckResult } from '../topoCliSchema';
@@ -43,14 +43,11 @@ const createTargetManager = () => {
 
     const containersManager: MockProxy<ContainersManager> =
         mock<ContainersManager>();
-    containersManager.getTargetState.mockResolvedValue({
-        health: undefined,
-        targetSsh: undefined,
-    });
-    containersManager.getTargetStateSnapshot.mockReturnValue({
-        health: undefined,
-        targetSsh: undefined,
-    });
+    const state: TargetState = {
+        status: 'connecting',
+    };
+    containersManager.getTargetState.mockResolvedValue(state);
+    containersManager.getTargetStateSnapshot.mockReturnValue(state);
     containersManager.onDataUpdate.mockImplementation(
         onDataUpdateEmitter.event,
     );
@@ -288,7 +285,7 @@ describe('TargetManager', () => {
                 containersManager.getTargetStateSnapshot,
             ).mockReturnValue({
                 health: healthyTarget,
-                targetSsh: target1.ssh,
+                status: 'connected',
             });
             await targetManager.activate();
             jest.mocked(targetStore.getSelectedTarget).mockResolvedValue(
@@ -298,7 +295,7 @@ describe('TargetManager', () => {
                 containersManager.getTargetStateSnapshot,
             ).mockReturnValue({
                 health: healthyTarget,
-                targetSsh: target2.ssh,
+                status: 'connected',
             });
 
             onChangeEmitter.fire();
