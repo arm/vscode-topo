@@ -89,8 +89,8 @@ export class TargetDashboardMessageHandler {
         const [targetDescription, targetState, containersData] =
             await Promise.all([
                 this.targetDescriptionStore.getDescription(target),
-                this.containersManager.getTargetState(),
-                this.containersManager.getContainersData(),
+                this.containersManager.getTargetState(target),
+                this.containersManager.getContainersData(target),
             ]);
 
         const remoteprocCpus =
@@ -108,7 +108,14 @@ export class TargetDashboardMessageHandler {
     private async getContainerById(
         containerId: string,
     ): Promise<ContainerItem> {
-        const containersData = await this.containersManager.getContainersData();
+        const target = await this.targetStore.getSelectedTarget();
+        if (!target) {
+            throw new Error('No target selected');
+        }
+
+        const containersData = await this.containersManager.getContainersData(
+            target,
+        );
         const container = containersData.find((c) => c.id === containerId);
         if (!container) {
             throw new Error(`Container with ID ${containerId} not found`);

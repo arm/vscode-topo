@@ -112,13 +112,15 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
             return;
         }
 
-        if (!treeNode.contextValue?.includes('Selected')) {
+        if (!treeNode.selected) {
             const errMsg = `Invalid target for inspect health: expected selected TargetTreeTargetItem but received:`;
             logger.error(errMsg, treeNode);
             return;
         }
 
-        const targetState = await this.containersManager.getTargetState();
+        const targetState = await this.containersManager.getTargetState(
+            treeNode.target,
+        );
         const content = JSON.stringify(targetState.health ?? null, null, 4);
         const safeTargetSsh = treeNode.target.replace(/[^a-zA-Z0-9._-]/g, '_');
         const documentUri = vscode.Uri.from({
@@ -137,18 +139,21 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
         element?: vscode.TreeItem,
     ): Promise<vscode.TreeItem[]> {
         if (!element) {
-            const targetState = this.containersManager.getTargetStateSnapshot();
             const selectedTarget = await this.targetStore.getSelectedTarget();
+            const selectedTargetState = selectedTarget
+                ? this.containersManager.getTargetStateSnapshot(selectedTarget)
+                : undefined;
             const targetTreeItems = this.targetStore
                 .getTargets()
                 .map((target) => {
                     const selected = target === selectedTarget;
-                    const connectionReady = target === targetState.target;
+                    const connectionReady =
+                        target === selectedTargetState?.target;
                     return new TargetTreeTargetItem(
                         target,
                         selected,
                         connectionReady,
-                        isTargetReady(targetState),
+                        isTargetReady(selectedTargetState),
                     );
                 });
             const sortedTargetTreeItems = targetTreeItems.sort((a, b) =>
@@ -158,13 +163,12 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
         }
 
         if (element instanceof TargetTreeTargetItem) {
-            const target = await this.targetStore.getSelectedTarget();
-            if (!target) {
+            if (!element.selected) {
                 return [];
             }
             const [targetState, selectedTargetDescription] = await Promise.all([
-                this.containersManager.getTargetState(),
-                this.targetDescriptionStore.getDescription(target),
+                this.containersManager.getTargetState(element.target),
+                this.targetDescriptionStore.getDescription(element.target),
             ]);
             if (targetState.health === undefined) {
                 return [];
@@ -191,44 +195,42 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
         }
 
         if (element instanceof TargetTreeSubsystemGroupItem) {
-            const target = await this.targetStore.getSelectedTarget();
-            if (!target) {
-                return [];
-            }
             const targetDescription =
-                await this.targetDescriptionStore.getDescription(target);
+                await this.targetDescriptionStore.getDescription(element.target);
             const remoteprocCpus =
                 targetDescription?.remoteprocCpus.map((rp) => rp.name) || [];
             const subsystemNames = ['Host', ...remoteprocCpus];
             return subsystemNames.map(
-                (name) => new TargetTreeSubsystemItem(name),
+                (name) => new TargetTreeSubsystemItem(name, element.target),
             );
         }
 
-        if (!(element instanceof TargetTreeSubsystemItem)) {
-            return [];
+        if (element instanceof TargetTreeSubsystemItem) {
+            const containers = await this.containersManager.getContainersData(
+                element.target,
+            );
+            const subsystemContainers = containers.filter((item) =>
+                element.group === 'Host'
+                    ? item.runtime === manifest.TARGET_HOST_RUNTIME
+                    : item.runtime === manifest.TARGET_REMOTEPROC_RUNTIME &&
+                      item.annotations?.['remoteproc.name'] === element.group,
+            );
+            const subsystemTreeItems = subsystemContainers.map(
+                (info) => new TargetTreeContainerItem(info),
+            );
+            const sortedSubsystemTreeItems = subsystemTreeItems.sort((a, b) => {
+                if (a.state === 'running' && b.state !== 'running') {
+                    return -1;
+                }
+                if (a.state !== 'running' && b.state === 'running') {
+                    return 1;
+                }
+                return a.name.localeCompare(b.name);
+            });
+            return sortedSubsystemTreeItems;
         }
 
-        const containers = await this.containersManager.getContainersData();
-        const subsystemContainers = containers.filter((item) =>
-            element.group === 'Host'
-                ? item.runtime === manifest.TARGET_HOST_RUNTIME
-                : item.runtime === manifest.TARGET_REMOTEPROC_RUNTIME &&
-                  item.annotations?.['remoteproc.name'] === element.group,
-        );
-        const subsystemTreeItems = subsystemContainers.map(
-            (info) => new TargetTreeContainerItem(info),
-        );
-        const sortedSubsystemTreeItems = subsystemTreeItems.sort((a, b) => {
-            if (a.state === 'running' && b.state !== 'running') {
-                return -1;
-            }
-            if (a.state !== 'running' && b.state === 'running') {
-                return 1;
-            }
-            return a.name.localeCompare(b.name);
-        });
-        return sortedSubsystemTreeItems;
+        return [];
     }
 
     public getTreeItem(element: vscode.TreeItem): vscode.TreeItem {

@@ -16,6 +16,10 @@ export function isTargetReachable(targetState: TargetState): boolean {
     return targetState.health?.connectivity.status === 'ok';
 }
 
-export function isTargetReady(targetState: TargetState): boolean {
-    return isTargetReachable(targetState) && hasContainerEngine(targetState);
+export function isTargetReady(targetState?: TargetState): boolean {
+    return (
+        !!targetState &&
+        isTargetReachable(targetState) &&
+        hasContainerEngine(targetState)
+    );
 }
