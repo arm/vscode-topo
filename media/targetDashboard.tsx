@@ -2,7 +2,6 @@ import {
     TARGET_HOST_RUNTIME,
     TARGET_REMOTEPROC_RUNTIME,
 } from '../src/manifest';
-import { hasContainerEngine, isTargetReachable } from '../src/util/targetState';
 import { getContainerHostPorts } from '../src/util/getContainerHostPorts';
 import {
     TargetState,
@@ -240,11 +239,14 @@ export function TargetDashboard({
     subsystems,
 }: TargetDashboardProps) {
     let errorMessage: string | undefined = undefined;
-    if (!isTargetReachable(targetState)) {
+    if (targetState.status !== 'connected') {
         errorMessage =
-            'No target found. Please ensure the target is running and accessible.';
+            'Failed to connect to the target. Please ensure the target is running and accessible.';
     } else {
-        if (!hasContainerEngine(targetState)) {
+        const hasContainerEngine = targetState.health.dependencies.some(
+            (v) => v.name === 'Container Engine' && v.status === 'ok',
+        );
+        if (!hasContainerEngine) {
             errorMessage =
                 'No container engine found. Please ensure the container engine of the target is installed and running.';
         }
