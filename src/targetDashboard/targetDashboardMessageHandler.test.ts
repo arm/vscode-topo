@@ -295,7 +295,7 @@ describe('TargetDashboardMessageHandler', () => {
                 await handler.handleMessage(messagePoster, {
                     type: 'open-container-in-browser',
                     containerId: 'a',
-                    targetSsh: target,
+                    target: target,
                 });
 
                 expect(showAndLogError).toHaveBeenCalledWith(
@@ -318,7 +318,7 @@ describe('TargetDashboardMessageHandler', () => {
                 await handler.handleMessage(messagePoster, {
                     type: 'open-container-in-browser',
                     containerId: 'a',
-                    targetSsh: target,
+                    target: target,
                 });
 
                 expect(
@@ -338,7 +338,7 @@ describe('TargetDashboardMessageHandler', () => {
                 await handler.handleMessage(messagePoster, {
                     type: 'open-container-in-browser',
                     containerId: 'a',
-                    targetSsh: target,
+                    target: target,
                 });
 
                 expect(
@@ -359,7 +359,7 @@ describe('TargetDashboardMessageHandler', () => {
                 await handler.handleMessage(messagePoster, {
                     type: 'attach-vscode',
                     containerId: 'a',
-                    targetSsh: target,
+                    target: target,
                 });
 
                 expect(attachVsCode.attachVsCode).toHaveBeenCalledWith(
@@ -375,7 +375,7 @@ describe('TargetDashboardMessageHandler', () => {
                 await handler.handleMessage(messagePoster, {
                     type: 'attach-vscode',
                     containerId: 'a',
-                    targetSsh: target,
+                    target: target,
                 });
 
                 expect(showAndLogError).toHaveBeenCalledWith(
@@ -395,7 +395,7 @@ describe('TargetDashboardMessageHandler', () => {
                 await handler.handleMessage(messagePoster, {
                     type: 'attach-vscode',
                     containerId: 'a',
-                    targetSsh: target,
+                    target: target,
                 });
 
                 expect(showAndLogError).toHaveBeenCalledWith(
@@ -414,7 +414,7 @@ describe('TargetDashboardMessageHandler', () => {
                 await handler.handleMessage(messagePoster, {
                     type: 'attach-vscode',
                     containerId: 'a',
-                    targetSsh: target,
+                    target: target,
                 });
 
                 expect(showAndLogError).toHaveBeenCalledWith(
@@ -433,7 +433,7 @@ describe('TargetDashboardMessageHandler', () => {
                 await handler.handleMessage(messagePoster, {
                     type: 'attach-shell',
                     containerId: 'a',
-                    targetSsh: target,
+                    target: target,
                 });
 
                 expect(attachShell.attachShell).toHaveBeenCalledWith(
@@ -449,7 +449,7 @@ describe('TargetDashboardMessageHandler', () => {
                 await handler.handleMessage(messagePoster, {
                     type: 'attach-shell',
                     containerId: 'a',
-                    targetSsh: target,
+                    target: target,
                 });
 
                 expect(showAndLogError).toHaveBeenCalledWith(

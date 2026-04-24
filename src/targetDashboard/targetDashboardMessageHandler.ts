@@ -2,7 +2,11 @@ import * as vscode from 'vscode';
 import { logger } from '../util/logger';
 import { showAndLogError } from '../util/showAndLogError';
 import { ContainersManager } from '../workloadPlacement/containersManager';
-import type { ContainerItem, MessagePoster } from '../util/types';
+import type {
+    ContainerItem,
+    MessagePoster,
+    TargetDestination,
+} from '../util/types';
 import { ContainerOpenInBrowser } from '../actions/containerOpenInBrowser';
 import { AttachVsCode } from '../actions/attachVsCode';
 import { AttachShell } from '../actions/attachShell';
@@ -10,11 +14,11 @@ import { TargetStore } from '../workloadPlacement/targetStore';
 import { isWrappedError } from '../errors/wrappedError';
 import { isPlainObject } from '../util/isPlainObject';
 import { TargetDescriptionStore } from '../workloadPlacement/targetDescriptionStore';
-import { assert, enums, Infer, string, type } from 'superstruct';
+import { assert, define, enums, Infer, string, type } from 'superstruct';
 
 const containerActionSchema = type({
     containerId: string(),
-    targetSsh: string(),
+    target: define<TargetDestination>('TargetDestination', string().validator),
     type: enums(['open-container-in-browser', 'attach-vscode', 'attach-shell']),
 });
 
@@ -109,15 +113,9 @@ export class TargetDashboardMessageHandler {
     }
 
     private async getContainerById(
-        targetSsh: string,
+        target: TargetDestination,
         containerId: string,
     ): Promise<ContainerItem> {
-        const targets = this.targetStore.getTargets();
-        const target = targets.find((t) => t === targetSsh);
-        if (!target) {
-            throw new Error(`Target with SSH ${targetSsh} not found`);
-        }
-
         const containersData =
             await this.containersManager.getContainersData(target);
         const container = containersData.find((c) => c.id === containerId);
@@ -188,10 +186,10 @@ export class TargetDashboardMessageHandler {
     }
 
     private async handleOpenContainerInBrowser(
-        targetSsh: string,
+        target: TargetDestination,
         containerId: string,
     ): Promise<void> {
-        const container = await this.getContainerById(targetSsh, containerId);
+        const container = await this.getContainerById(target, containerId);
         const result =
             await this.containerOpenInBrowser.openContainerInBrowser(container);
 
@@ -203,10 +201,10 @@ export class TargetDashboardMessageHandler {
     }
 
     private async handleAttachVsCode(
-        targetSsh: string,
+        target: TargetDestination,
         containerId: string,
     ): Promise<void> {
-        const container = await this.getContainerById(targetSsh, containerId);
+        const container = await this.getContainerById(target, containerId);
         try {
             await this.attachVsCode.attachVsCode(container);
         } catch (err: unknown) {
@@ -221,10 +219,10 @@ export class TargetDashboardMessageHandler {
     }
 
     private async handleAttachShell(
-        targetSsh: string,
+        target: TargetDestination,
         containerId: string,
     ): Promise<void> {
-        const container = await this.getContainerById(targetSsh, containerId);
+        const container = await this.getContainerById(target, containerId);
         this.attachShell.attachShell(container);
     }
 
@@ -281,21 +279,21 @@ export class TargetDashboardMessageHandler {
 
                 case 'open-container-in-browser':
                     await this.handleOpenContainerInBrowser(
-                        message.targetSsh,
+                        message.target,
                         message.containerId,
                     );
                     return;
 
                 case 'attach-vscode':
                     await this.handleAttachVsCode(
-                        message.targetSsh,
+                        message.target,
                         message.containerId,
                     );
                     return;
 
                 case 'attach-shell':
                     await this.handleAttachShell(
-                        message.targetSsh,
+                        message.target,
                         message.containerId,
                     );
                     return;
