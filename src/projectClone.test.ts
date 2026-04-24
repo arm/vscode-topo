@@ -623,7 +623,6 @@ describe('ProjectClone', () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
             targetStore.getSelectedTarget.mockResolvedValue({
                 ssh: 'me@example.com',
-                host: 'example.com',
             });
             topoCli.listTemplates.mockReturnValue(templateList);
             jest.mocked(vscode.workspace).getWorkspaceFolder.mockReturnValue(
@@ -678,7 +677,6 @@ describe('ProjectClone', () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
             targetStore.getSelectedTarget.mockResolvedValue({
                 ssh: 'me@example.com',
-                host: 'example.com',
             });
             topoCli.listTemplates.mockReturnValue(templateList);
             jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
@@ -718,7 +716,6 @@ describe('ProjectClone', () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
             targetStore.getSelectedTarget.mockResolvedValue({
                 ssh: 'me@example.com',
-                host: 'example.com',
             });
             topoCli.listTemplates.mockReturnValue(templateList);
             jest.mocked(vscode.Task).mockReturnValue(taskExec.task);

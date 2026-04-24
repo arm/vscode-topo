@@ -5,7 +5,6 @@ import { TargetItem } from '../util/types';
 describe('TargetTreeTargetItem', () => {
     const baseTarget: TargetItem = {
         ssh: 'root@host.local',
-        host: 'host.local',
     };
 
     it('sets basic fields (id, label, description)', () => {

@@ -16,7 +16,6 @@ describe('ContainerStart', () => {
     const registerCommandMock = jest.mocked(vscode.commands.registerCommand);
     const target: TargetItem = {
         ssh: 'user@topo.local',
-        host: 'topo.local',
     };
     const container: ContainerItem = {
         id: 'abc123',

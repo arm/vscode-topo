@@ -4,7 +4,6 @@ import type { ContainerItem, TargetItem } from './types';
 const makeContainer = (ports: ContainerItem['ports']): ContainerItem => {
     const target: TargetItem = {
         ssh: 'user@topo.local',
-        host: 'topo.local',
     };
     return {
         id: 'abc123',

@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import { TargetTreeDataProvider } from './targetTreeDataProvider';
 import * as manifest from '../manifest';
-import { Target } from './target';
 import { TargetStore } from './targetStore';
 import { logger } from '../util/logger';
 import { ContainersManager } from './containersManager';
@@ -73,23 +72,21 @@ export class TargetManager {
         );
     }
 
-    private async addTarget(): Promise<Target | undefined> {
+    private async addTarget(): Promise<TargetItem | undefined> {
         const ssh = await this.promptForSshTarget();
         if (!ssh?.trim()) {
             return;
         }
 
-        const newTarget = new Target(ssh);
-
         try {
-            await this.targetStore.addTarget(newTarget);
+            await this.targetStore.addTarget({ ssh });
         } catch (error) {
             const errorMsg = `Failed to add target`;
             logger.warn(errorMsg, error);
             vscode.window.showWarningMessage(errorMsg);
             return;
         }
-        await this.targetStore.setSelected(newTarget.ssh);
+        await this.targetStore.setSelected(ssh);
     }
 
     private async promptForSshTarget(): Promise<string | undefined> {

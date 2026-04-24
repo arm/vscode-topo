@@ -33,7 +33,6 @@ describe('Deploy', () => {
     });
     const target: TargetItem = {
         ssh: 'topo.local',
-        host: 'topo.local',
     };
     let targetStore: MockProxy<TargetStore>;
     let context: MockProxy<vscode.ExtensionContext>;

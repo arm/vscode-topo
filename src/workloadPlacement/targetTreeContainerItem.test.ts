@@ -6,7 +6,6 @@ import { ContainerItem, TargetItem } from '../util/types';
 describe('TargetTreeContainerItem', () => {
     const target: TargetItem = {
         ssh: 'user@topo.local',
-        host: 'topo.local',
     };
     it('should set label (image), description (name - uptime), tooltip, contextValue, command, and iconPath', () => {
         const container: ContainerItem = {

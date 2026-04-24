@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { TargetStore } from './targetStore';
-import { Target } from './target';
 import { mutable } from '../util/mutable';
 import { mock, MockProxy } from 'jest-mock-extended';
 
@@ -100,7 +99,7 @@ describe('TargetStore', () => {
     it('adds a target successfully and persists it', async () => {
         const { context } = createMockContext();
         const store = new TargetStore(context);
-        const t = new Target('success@example.com');
+        const t = { ssh: 'success@example.com' };
 
         const addTargetOperation = store.addTarget(t);
 
@@ -118,7 +117,7 @@ describe('TargetStore', () => {
         const { context, globalState } = createMockContext();
         globalState.update.mockRejectedValue(new Error('persist-fail'));
         const store = new TargetStore(context);
-        const t = new Target('fail@example.com');
+        const t = { ssh: 'fail@example.com' };
 
         const addTargetOperation = store.addTarget(t);
 
@@ -131,7 +130,7 @@ describe('TargetStore', () => {
         const { context } = createMockContext();
         const store = new TargetStore(context);
 
-        const t = new Target('alice@example.com');
+        const t = { ssh: 'alice@example.com' };
         await store.addTarget(t);
 
         const targets = store.getTargets();
@@ -147,7 +146,7 @@ describe('TargetStore', () => {
     it('stores selected target and fires onChanged when setSelected is called', async () => {
         const { context } = createMockContext();
         const store = new TargetStore(context);
-        const t = new Target('bob@example.com');
+        const t = { ssh: 'bob@example.com' };
         await store.addTarget(t);
         const cb = jest.fn();
         store.onChanged(cb);
@@ -164,7 +163,7 @@ describe('TargetStore', () => {
         const { context } = createMockContext();
         const store = new TargetStore(context);
 
-        const t = new Target('carol@example.com');
+        const t = { ssh: 'carol@example.com' };
         await store.addTarget(t);
         await store.setSelected('carol@example.com');
 
@@ -196,7 +195,7 @@ describe('TargetStore', () => {
     it('deactivates the store, disposing resources and clearing the singleton', async () => {
         const { context } = createMockContext();
         const store = new TargetStore(context);
-        await store.addTarget(new Target('d@example.com'));
+        await store.addTarget({ ssh: 'd@example.com' });
         const cb = jest.fn();
         store.onChanged(cb);
 
@@ -209,8 +208,8 @@ describe('TargetStore', () => {
     it('removes a non-selected target without changing selection', async () => {
         const { context } = createMockContext();
         const store = new TargetStore(context);
-        const t1 = new Target('a@example.com');
-        const t2 = new Target('b@example.com');
+        const t1 = { ssh: 'a@example.com' };
+        const t2 = { ssh: 'b@example.com' };
         await store.addTarget(t1);
         await store.addTarget(t2);
         await store.setSelected(t1.ssh);
@@ -226,9 +225,9 @@ describe('TargetStore', () => {
     it('removes the selected target and falls back to the first remaining target', async () => {
         const { context } = createMockContext();
         const store = new TargetStore(context);
-        const t1 = new Target('one@example.com');
-        const t2 = new Target('two@example.com');
-        const t3 = new Target('three@example.com');
+        const t1 = { ssh: 'one@example.com' };
+        const t2 = { ssh: 'two@example.com' };
+        const t3 = { ssh: 'three@example.com' };
         await store.addTarget(t1);
         await store.addTarget(t2);
         await store.addTarget(t3);
@@ -246,7 +245,7 @@ describe('TargetStore', () => {
     it('removes the only selected target and clears selection when none remain', async () => {
         const { context } = createMockContext();
         const store = new TargetStore(context);
-        const lone = new Target('only@example.com');
+        const lone = { ssh: 'only@example.com' };
         await store.addTarget(lone);
         await store.setSelected(lone.ssh);
 

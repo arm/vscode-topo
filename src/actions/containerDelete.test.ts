@@ -17,7 +17,6 @@ describe('ContainerDelete', () => {
 
     const target: TargetItem = {
         ssh: 'user@topo.local',
-        host: 'topo.local',
     };
     const container: ContainerItem = {
         id: 'abc123',
