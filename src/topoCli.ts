@@ -9,8 +9,15 @@ import {
     projectDescriptionSchema,
     TemplateDescription,
     templateSchema,
+    topoLogEntrySchema,
 } from './topoCliSchema';
-import { array, assert } from 'superstruct';
+import { array, assert, is } from 'superstruct';
+import {
+    WrappedError,
+    WrappedErrorLog,
+    WrappedErrorLogLevel,
+} from './errors/wrappedError';
+import { getErrorMessage } from './util/getErrorMessage';
 
 export interface TopoCliVersion {
     version: string;
@@ -35,6 +42,64 @@ export interface CloneRawSource {
 export type CloneSource = CloneRemoteSource | CloneLocalSource | CloneRawSource;
 
 export const targetDescriptionFileName = 'target-description.yaml';
+
+const normalizeLogLevel = (level: string): WrappedErrorLogLevel => {
+    switch (level.toUpperCase()) {
+        case 'ERROR':
+            return 'Error';
+        case 'WARN':
+            return 'Warning';
+        case 'DEBUG':
+            return 'Debug';
+        case 'INFO':
+            return 'Info';
+        default:
+            return 'Error';
+    }
+};
+
+export function parseTopoLogEntries(output: string): WrappedErrorLog[] {
+    const entries: WrappedErrorLog[] = [];
+    for (const line of output.split('\n')) {
+        const trimmed = line.trim();
+        if (!trimmed) {
+            continue;
+        }
+        try {
+            const parsed: unknown = JSON.parse(trimmed);
+            if (is(parsed, topoLogEntrySchema)) {
+                entries.push({
+                    level: normalizeLogLevel(parsed.level),
+                    msg: parsed.msg,
+                });
+            }
+        } catch {
+            // Line is not valid JSON, skip it
+        }
+    }
+    return entries;
+}
+
+function hasStderr(error: unknown): error is Error & { stderr: string } {
+    return (
+        error instanceof Error &&
+        'stderr' in error &&
+        typeof error.stderr === 'string'
+    );
+}
+
+export function parseWrappedError(error: unknown): WrappedError | undefined {
+    const stderr = hasStderr(error) ? error.stderr : getErrorMessage(error);
+    const logEntries = parseTopoLogEntries(stderr);
+    const errorMessages = logEntries
+        .filter((entry) => entry.level === 'Error')
+        .map((entry) => entry.msg);
+    if (errorMessages.length === 0) {
+        return undefined;
+    }
+    const message = errorMessages.join('; ');
+    return new WrappedError('CLI', message, logEntries, { cause: error });
+}
 
 /**
  * Encapsulates operations against the topo binary.
@@ -103,9 +168,14 @@ export class TopoCli {
             cmd.push('--target', sshTarget);
         }
         cmd.push('-o', 'json');
-        const out = childProcess.execFileSync(bin, cmd, {
-            encoding: 'utf8',
-        });
+        let out: string;
+        try {
+            out = childProcess.execFileSync(bin, cmd, {
+                encoding: 'utf8',
+            });
+        } catch (error: unknown) {
+            throw parseWrappedError(error) ?? error;
+        }
         const templates = JSON.parse(out);
         assert(templates, array(templateSchema));
         return templates;

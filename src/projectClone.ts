@@ -260,7 +260,7 @@ export class ProjectClone {
             try {
                 await commandHandler.call(this);
             } catch (error: unknown) {
-                if (isWrappedError(error, ['CLONE'])) {
+                if (isWrappedError(error, ['CLONE', 'CLI'])) {
                     return showAndLogError('Failed to clone project', error);
                 }
                 throw error;
