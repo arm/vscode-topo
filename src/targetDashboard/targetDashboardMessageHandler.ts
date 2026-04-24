@@ -10,16 +10,19 @@ import { TargetStore } from '../workloadPlacement/targetStore';
 import { isWrappedError } from '../errors/wrappedError';
 import { isPlainObject } from '../util/isPlainObject';
 import { TargetDescriptionStore } from '../workloadPlacement/targetDescriptionStore';
+import { assert, enums, Infer, string, type } from 'superstruct';
+
+const containerActionSchema = type({
+    containerId: string(),
+    targetSsh: string(),
+    type: enums(['open-container-in-browser', 'attach-vscode', 'attach-shell']),
+});
+
+type ContainerActionMessage = Infer<typeof containerActionSchema>;
 
 type StartContainerMessage = { type: 'start-container'; containerId: string };
 type StopContainerMessage = { type: 'stop-container'; containerId: string };
 type DeleteContainerMessage = { type: 'delete-container'; containerId: string };
-type OpenContainerInBrowserMessage = {
-    type: 'open-container-in-browser';
-    containerId: string;
-};
-type AttachVsCodeMessage = { type: 'attach-vscode'; containerId: string };
-type AttachShellMessage = { type: 'attach-shell'; containerId: string };
 type AttachSshMessage = { type: 'attach-ssh' };
 type TargetDashboardWebviewReadyMessage = {
     type: 'target-dashboard-webview-ready';
@@ -29,9 +32,7 @@ type TargetDashboardWebviewMessage =
     | StartContainerMessage
     | StopContainerMessage
     | DeleteContainerMessage
-    | OpenContainerInBrowserMessage
-    | AttachVsCodeMessage
-    | AttachShellMessage
+    | ContainerActionMessage
     | AttachSshMessage
     | TargetDashboardWebviewReadyMessage;
 
@@ -48,15 +49,17 @@ function parseTargetDashboardWebviewMessage(
         case 'start-container':
         case 'stop-container':
         case 'delete-container':
-        case 'open-container-in-browser':
-        case 'attach-vscode':
-        case 'attach-shell': {
             if (typeof value.containerId !== 'string') {
                 throw new Error(
                     `Invalid message for type "${value.type}": missing or invalid "containerId"`,
                 );
             }
             return { type: value.type, containerId: value.containerId };
+        case 'open-container-in-browser':
+        case 'attach-vscode':
+        case 'attach-shell': {
+            assert(value, containerActionSchema);
+            return value;
         }
 
         case 'attach-ssh':
@@ -106,16 +109,17 @@ export class TargetDashboardMessageHandler {
     }
 
     private async getContainerById(
+        targetSsh: string,
         containerId: string,
     ): Promise<ContainerItem> {
-        const target = await this.targetStore.getSelectedTarget();
+        const targets = this.targetStore.getTargets();
+        const target = targets.find((t) => t === targetSsh);
         if (!target) {
-            throw new Error('No target selected');
+            throw new Error(`Target with SSH ${targetSsh} not found`);
         }
 
-        const containersData = await this.containersManager.getContainersData(
-            target,
-        );
+        const containersData =
+            await this.containersManager.getContainersData(target);
         const container = containersData.find((c) => c.id === containerId);
         if (!container) {
             throw new Error(`Container with ID ${containerId} not found`);
@@ -184,9 +188,10 @@ export class TargetDashboardMessageHandler {
     }
 
     private async handleOpenContainerInBrowser(
+        targetSsh: string,
         containerId: string,
     ): Promise<void> {
-        const container = await this.getContainerById(containerId);
+        const container = await this.getContainerById(targetSsh, containerId);
         const result =
             await this.containerOpenInBrowser.openContainerInBrowser(container);
 
@@ -197,8 +202,11 @@ export class TargetDashboardMessageHandler {
         }
     }
 
-    private async handleAttachVsCode(containerId: string): Promise<void> {
-        const container = await this.getContainerById(containerId);
+    private async handleAttachVsCode(
+        targetSsh: string,
+        containerId: string,
+    ): Promise<void> {
+        const container = await this.getContainerById(targetSsh, containerId);
         try {
             await this.attachVsCode.attachVsCode(container);
         } catch (err: unknown) {
@@ -212,8 +220,11 @@ export class TargetDashboardMessageHandler {
         }
     }
 
-    private async handleAttachShell(containerId: string): Promise<void> {
-        const container = await this.getContainerById(containerId);
+    private async handleAttachShell(
+        targetSsh: string,
+        containerId: string,
+    ): Promise<void> {
+        const container = await this.getContainerById(targetSsh, containerId);
         this.attachShell.attachShell(container);
     }
 
@@ -270,16 +281,23 @@ export class TargetDashboardMessageHandler {
 
                 case 'open-container-in-browser':
                     await this.handleOpenContainerInBrowser(
+                        message.targetSsh,
                         message.containerId,
                     );
                     return;
 
                 case 'attach-vscode':
-                    await this.handleAttachVsCode(message.containerId);
+                    await this.handleAttachVsCode(
+                        message.targetSsh,
+                        message.containerId,
+                    );
                     return;
 
                 case 'attach-shell':
-                    await this.handleAttachShell(message.containerId);
+                    await this.handleAttachShell(
+                        message.targetSsh,
+                        message.containerId,
+                    );
                     return;
 
                 case 'attach-ssh':

@@ -261,10 +261,16 @@ describe('TargetTreeDataProvider', () => {
         });
 
         it('returns containers for Host and remoteproc groups', async () => {
-            const hostGroup = new TargetTreeSubsystemItem('Host');
+            const hostGroup = new TargetTreeSubsystemItem('Host', target);
             const hostChildren = await provider.getChildren(hostGroup);
-            const remoteprocGroup = new TargetTreeSubsystemItem('imx-rproc');
-            const otherRprocGroup = new TargetTreeSubsystemItem('other-rproc');
+            const remoteprocGroup = new TargetTreeSubsystemItem(
+                'imx-rproc',
+                target,
+            );
+            const otherRprocGroup = new TargetTreeSubsystemItem(
+                'other-rproc',
+                target,
+            );
 
             const imxRprocChildren =
                 await provider.getChildren(remoteprocGroup);
@@ -288,7 +294,10 @@ describe('TargetTreeDataProvider', () => {
 
         it('handles parsing error in getContainersData gracefully', async () => {
             containersManagerMock.getContainersData.mockResolvedValueOnce([]);
-            const remoteprocGroup = new TargetTreeSubsystemItem('imx-rproc');
+            const remoteprocGroup = new TargetTreeSubsystemItem(
+                'imx-rproc',
+                target,
+            );
 
             const children = await provider.getChildren(remoteprocGroup);
 
@@ -310,7 +319,7 @@ describe('TargetTreeDataProvider', () => {
 
     describe('getTreeItem', () => {
         it('getTreeItem returns the element itself', () => {
-            const item = new TargetTreeSubsystemItem('Host');
+            const item = new TargetTreeSubsystemItem('Host', target);
 
             const treeItem = provider.getTreeItem(item);
 
