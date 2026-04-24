@@ -82,8 +82,8 @@ export class ContainersManager implements vscode.Disposable {
         this.unsetTarget();
         if (selectedTarget) {
             this.target = selectedTarget;
+            await this.startAutoRefresh(selectedTarget);
         }
-        await this.startAutoRefresh();
     }
 
     private unsetTarget(): void {
@@ -163,12 +163,7 @@ export class ContainersManager implements vscode.Disposable {
         }
     }
 
-    public async startAutoRefresh(): Promise<void> {
-        const target = this.target;
-        if (!target) {
-            return;
-        }
-
+    public async startAutoRefresh(target: TargetDestination): Promise<void> {
         const refresh = async () => {
             const targetStateFuture = this.loadTargetState(target);
             this.targetStateMap.set(target, targetStateFuture);
@@ -181,17 +176,15 @@ export class ContainersManager implements vscode.Disposable {
             }
 
             this._onDataUpdate.fire();
-            if (this.target === target) {
-                this.refreshTimer = setTimeout(refresh, refreshInterval);
-            }
         };
 
-        await refresh();
+        refresh();
+        this.refreshTimer = setInterval(refresh, refreshInterval);
     }
 
     public stopAutoRefresh(): void {
         if (this.refreshTimer) {
-            clearTimeout(this.refreshTimer);
+            clearInterval(this.refreshTimer);
             this.refreshTimer = undefined;
         }
     }

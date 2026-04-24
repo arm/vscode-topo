@@ -346,7 +346,7 @@ describe('ContainersManager', () => {
         const spy = jest.fn();
         manager.onDataUpdate(spy);
 
-        await manager.startAutoRefresh();
+        await manager.startAutoRefresh(target);
         await jest.advanceTimersByTimeAsync(3000);
         expect(spy).toHaveBeenCalled();
     });
