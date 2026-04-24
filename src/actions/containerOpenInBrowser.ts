@@ -53,6 +53,7 @@ export class ContainerOpenInBrowser {
             return 'no-web-ports';
         }
         const target = item.target;
+        // TODO won't work when target.ssh is an ssh config alias, need to resolve it to an actual host with ssh -G
         const url = `http://${target.ssh}:${openWebPort}`;
         await vscode.env.openExternal(vscode.Uri.parse(url));
         return 'success';
