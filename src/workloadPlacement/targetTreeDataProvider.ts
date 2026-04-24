@@ -196,7 +196,9 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
 
         if (element instanceof TargetTreeSubsystemGroupItem) {
             const targetDescription =
-                await this.targetDescriptionStore.getDescription(element.target);
+                await this.targetDescriptionStore.getDescription(
+                    element.target,
+                );
             const remoteprocCpus =
                 targetDescription?.remoteprocCpus.map((rp) => rp.name) || [];
             const subsystemNames = ['Host', ...remoteprocCpus];

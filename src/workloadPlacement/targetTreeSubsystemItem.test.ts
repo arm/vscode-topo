@@ -1,9 +1,7 @@
 import * as vscode from 'vscode';
 import { TargetTreeSubsystemItem } from './targetTreeSubsystemItem';
-import { TargetItem } from '../util/types';
-import { mock } from 'jest-mock-extended';
 
-const target = mock<TargetItem>();
+const target = 'user@topo.local';
 
 describe('TargetTreeSubsystemItem', () => {
     it('should set label and contextValue', () => {

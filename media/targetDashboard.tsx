@@ -118,7 +118,7 @@ function ContainerTable({
                                                 messagePoster.postMessage({
                                                     type: 'open-container-in-browser',
                                                     containerId: c.id,
-                                                    targetSsh: c.target.ssh,
+                                                    targetSsh: c.target,
                                                 });
                                             }}
                                         >
@@ -166,8 +166,7 @@ function ContainerTable({
                                                                 containerId:
                                                                     c.id,
                                                                 targetSsh:
-                                                                    c.target
-                                                                        .ssh,
+                                                                    c.target,
                                                             },
                                                         );
                                                     }}
@@ -185,8 +184,7 @@ function ContainerTable({
                                                                 containerId:
                                                                     c.id,
                                                                 targetSsh:
-                                                                    c.target
-                                                                        .ssh,
+                                                                    c.target,
                                                             },
                                                         );
                                                     }}
