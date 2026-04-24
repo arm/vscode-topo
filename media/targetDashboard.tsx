@@ -118,6 +118,7 @@ function ContainerTable({
                                                 messagePoster.postMessage({
                                                     type: 'open-container-in-browser',
                                                     containerId: c.id,
+                                                    targetSsh: c.target.ssh,
                                                 });
                                             }}
                                         >
@@ -164,6 +165,9 @@ function ContainerTable({
                                                                 type: 'attach-vscode',
                                                                 containerId:
                                                                     c.id,
+                                                                targetSsh:
+                                                                    c.target
+                                                                        .ssh,
                                                             },
                                                         );
                                                     }}
@@ -180,6 +184,9 @@ function ContainerTable({
                                                                 type: 'attach-shell',
                                                                 containerId:
                                                                     c.id,
+                                                                targetSsh:
+                                                                    c.target
+                                                                        .ssh,
                                                             },
                                                         );
                                                     }}
