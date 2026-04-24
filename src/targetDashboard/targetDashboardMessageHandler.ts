@@ -5,7 +5,6 @@ import { ContainersManager } from '../workloadPlacement/containersManager';
 import type {
     ContainerItem,
     MessagePoster,
-    TargetDestination,
 } from '../util/types';
 import { ContainerOpenInBrowser } from '../actions/containerOpenInBrowser';
 import { AttachVsCode } from '../actions/attachVsCode';
@@ -14,11 +13,11 @@ import { TargetStore } from '../workloadPlacement/targetStore';
 import { isWrappedError } from '../errors/wrappedError';
 import { isPlainObject } from '../util/isPlainObject';
 import { TargetDescriptionStore } from '../workloadPlacement/targetDescriptionStore';
-import { assert, define, enums, Infer, string, type } from 'superstruct';
+import { assert, enums, Infer, string, type } from 'superstruct';
 
 const containerActionSchema = type({
     containerId: string(),
-    target: define<TargetDestination>('TargetDestination', string().validator),
+    target: string(),
     type: enums(['open-container-in-browser', 'attach-vscode', 'attach-shell']),
 });
 
@@ -113,7 +112,7 @@ export class TargetDashboardMessageHandler {
     }
 
     private async getContainerById(
-        target: TargetDestination,
+        target: string,
         containerId: string,
     ): Promise<ContainerItem> {
         const containersData =
@@ -186,7 +185,7 @@ export class TargetDashboardMessageHandler {
     }
 
     private async handleOpenContainerInBrowser(
-        target: TargetDestination,
+        target: string,
         containerId: string,
     ): Promise<void> {
         const container = await this.getContainerById(target, containerId);
@@ -201,7 +200,7 @@ export class TargetDashboardMessageHandler {
     }
 
     private async handleAttachVsCode(
-        target: TargetDestination,
+        target: string,
         containerId: string,
     ): Promise<void> {
         const container = await this.getContainerById(target, containerId);
@@ -219,7 +218,7 @@ export class TargetDashboardMessageHandler {
     }
 
     private async handleAttachShell(
-        target: TargetDestination,
+        target: string,
         containerId: string,
     ): Promise<void> {
         const container = await this.getContainerById(target, containerId);

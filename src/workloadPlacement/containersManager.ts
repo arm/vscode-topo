@@ -54,10 +54,10 @@ export class ContainersManager implements vscode.Disposable {
     private readonly containersMap = new Map<string, Promise<ContainerItem[]>>();
     private readonly targetStateMap = new Map<string, Future<TargetState>>();
     private refreshTimer: NodeJS.Timeout | undefined;
-    private refreshingTarget: string | undefined;
 
     private readonly _onDataUpdate = new vscode.EventEmitter<void>();
     public readonly onDataUpdate = this._onDataUpdate.event;
+
     private disposables: vscode.Disposable[] = [];
 
     constructor(
@@ -165,16 +165,11 @@ export class ContainersManager implements vscode.Disposable {
 
     public async startAutoRefresh(): Promise<void> {
         const target = this.target;
-        if (!target || this.refreshingTarget === target) {
+        if (!target) {
             return;
         }
-        this.refreshingTarget = target;
 
         const refresh = async () => {
-            if (this.refreshingTarget !== target) {
-                return;
-            }
-
             const targetStateFuture = this.loadTargetState(target);
             this.targetStateMap.set(target, targetStateFuture);
             const targetState = await targetStateFuture.promise;
@@ -186,7 +181,7 @@ export class ContainersManager implements vscode.Disposable {
             }
 
             this._onDataUpdate.fire();
-            if (this.target === target && this.refreshingTarget === target) {
+            if (this.target === target) {
                 this.refreshTimer = setTimeout(refresh, refreshInterval);
             }
         };
@@ -195,7 +190,6 @@ export class ContainersManager implements vscode.Disposable {
     }
 
     public stopAutoRefresh(): void {
-        this.refreshingTarget = undefined;
         if (this.refreshTimer) {
             clearTimeout(this.refreshTimer);
             this.refreshTimer = undefined;

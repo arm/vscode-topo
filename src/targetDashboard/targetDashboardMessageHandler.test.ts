@@ -75,7 +75,6 @@ describe('TargetDashboardMessageHandler', () => {
         containersManager.getTargetState.mockResolvedValue(targetState);
 
         targetStore.getSelectedTarget.mockResolvedValue(target);
-        targetStore.getTargets.mockReturnValue([target]);
         targetDescriptionStore.getDescription.mockResolvedValue(
             targetDescription,
         );
