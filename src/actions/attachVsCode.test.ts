@@ -3,7 +3,7 @@ import { AttachVsCode, getDockerContextName } from './attachVsCode';
 import { exec } from '../util/exec';
 import { TARGET_HOST_RUNTIME } from '../manifest';
 import { DockerCommands } from '../workloadPlacement/dockerCommands';
-import { ContainerItem, TargetItem } from '../util/types';
+import { ContainerItem, TargetDestination } from '../util/types';
 import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
 import { WrappedError } from '../errors/wrappedError';
 import { mock, MockProxy } from 'jest-mock-extended';
@@ -46,9 +46,7 @@ describe('attachVsCode', () => {
     let attachVsCode: AttachVsCode;
     const registerCommandMock = jest.mocked(vscode.commands.registerCommand);
     const dockerCommands = new DockerCommands();
-    const target: TargetItem = {
-        ssh: 'user@topo.local',
-    };
+    const target = 'user@topo.local' as TargetDestination;
     const containerItem: ContainerItem = {
         id: 'abc123',
         name: 'my-container',
@@ -66,7 +64,7 @@ describe('attachVsCode', () => {
         target,
     };
     const treeItem = new TargetTreeContainerItem(containerItem);
-    const dockerContext = getDockerContextName(target.ssh);
+    const dockerContext = getDockerContextName(target);
 
     beforeEach(() => {
         execMock = jest.mocked(exec);
@@ -146,7 +144,7 @@ describe('attachVsCode', () => {
             }
             if (
                 command ===
-                `docker context create ${dockerContext} --docker host=ssh://${target.ssh}`
+                `docker context create ${dockerContext} --docker host=ssh://${target}`
             ) {
                 return { stdout: '', stderr: '' };
             }
@@ -165,7 +163,7 @@ describe('attachVsCode', () => {
             "docker context ls --format '{{.Name}}'",
         );
         expect(execMock).toHaveBeenCalledWith(
-            `docker context create ${dockerContext} --docker host=ssh://${target.ssh}`,
+            `docker context create ${dockerContext} --docker host=ssh://${target}`,
         );
         expect(execMock).toHaveBeenCalledWith(
             `docker context use ${dockerContext}`,

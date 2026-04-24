@@ -48,11 +48,8 @@ export class AttachVsCode {
                 item.id,
             );
         };
-        const dockerContext = getDockerContextName(item.target.ssh);
-        await this.containerCommands.ensureContext(
-            dockerContext,
-            item.target.ssh,
-        );
+        const dockerContext = getDockerContextName(item.target);
+        await this.containerCommands.ensureContext(dockerContext, item.target);
         await this.containerCommands.executeWithContext(
             attachVsCodeOperation,
             dockerContext,

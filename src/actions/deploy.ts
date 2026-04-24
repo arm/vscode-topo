@@ -3,7 +3,7 @@ import { logger } from '../util/logger';
 import * as manifest from '../manifest';
 import { getErrorMessage } from '../util/getErrorMessage';
 import path from 'node:path';
-import { TargetItem } from '../util/types';
+import { TargetDestination } from '../util/types';
 import { TargetStore } from '../workloadPlacement/targetStore';
 
 const viewLogsItem: vscode.MessageItem = {
@@ -12,12 +12,12 @@ const viewLogsItem: vscode.MessageItem = {
 
 const executeDeployTask = async (
     composeFilePath: string,
-    target: TargetItem,
+    target: TargetDestination,
 ): Promise<vscode.Disposable> => {
     const cwd = path.dirname(composeFilePath);
     const shellExecution = new vscode.ShellExecution(
         'topo',
-        ['deploy', '--target', target.ssh],
+        ['deploy', '--target', target],
         {
             cwd,
         },
@@ -31,7 +31,7 @@ const executeDeployTask = async (
     const task = new vscode.Task(
         taskDefinition,
         taskScope,
-        `Deploy to ${target.ssh}`,
+        `Deploy to ${target}`,
         manifest.DISPLAY_NAME,
         shellExecution,
     );
@@ -52,7 +52,7 @@ const executeDeployTask = async (
 
         if (e.exitCode === 0) {
             vscode.window.showInformationMessage(
-                `Deployment to ${target.ssh} completed successfully.`,
+                `Deployment to ${target} completed successfully.`,
             );
         } else {
             const terminal = vscode.window.terminals.find(
@@ -63,7 +63,7 @@ const executeDeployTask = async (
                 actions.push(viewLogsItem);
             }
             const choice = await vscode.window.showErrorMessage(
-                `Deployment to ${target.ssh} failed with exit code ${e.exitCode}.`,
+                `Deployment to ${target} failed with exit code ${e.exitCode}.`,
                 ...actions,
             );
             if (choice?.title === viewLogsItem.title) {

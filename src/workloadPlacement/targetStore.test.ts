@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { TargetStore } from './targetStore';
 import { mutable } from '../util/mutable';
 import { mock, MockProxy } from 'jest-mock-extended';
+import { TargetDestination } from '../util/types';
 
 jest.mock('../util/logger');
 
@@ -99,25 +100,24 @@ describe('TargetStore', () => {
     it('adds a target successfully and persists it', async () => {
         const { context } = createMockContext();
         const store = new TargetStore(context);
-        const t = { ssh: 'success@example.com' };
+        const t = 'success@example.com' as TargetDestination;
 
         const addTargetOperation = store.addTarget(t);
 
         await expect(addTargetOperation).resolves.toBeUndefined();
         const targets = store.getTargets();
-        expect(targets.some((x) => x.ssh === t.ssh)).toBe(true);
+        expect(targets.some((x) => x === t)).toBe(true);
         const raw = context.globalState.get('targets') as string | undefined;
         expect(typeof raw).toBe('string');
         const parsed = JSON.parse(raw || '{}');
-        expect(parsed[t.ssh]).toBeDefined();
-        expect(parsed[t.ssh].ssh).toBe(t.ssh);
+        expect(parsed[t]).toEqual({});
     });
 
     it('throws an error when addTarget fails', async () => {
         const { context, globalState } = createMockContext();
         globalState.update.mockRejectedValue(new Error('persist-fail'));
         const store = new TargetStore(context);
-        const t = { ssh: 'fail@example.com' };
+        const t = 'fail@example.com' as TargetDestination;
 
         const addTargetOperation = store.addTarget(t);
 
@@ -130,23 +130,22 @@ describe('TargetStore', () => {
         const { context } = createMockContext();
         const store = new TargetStore(context);
 
-        const t = { ssh: 'alice@example.com' };
+        const t = 'alice@example.com' as TargetDestination;
         await store.addTarget(t);
 
         const targets = store.getTargets();
-        expect(targets.some((x) => x.ssh === t.ssh)).toBe(true);
+        expect(targets.some((x) => x === t)).toBe(true);
 
         const raw = context.globalState.get('targets') as string | undefined;
         expect(typeof raw).toBe('string');
         const parsed = JSON.parse(raw || '{}');
-        expect(parsed[t.ssh]).toBeDefined();
-        expect(parsed[t.ssh].ssh).toBe(t.ssh);
+        expect(parsed[t]).toEqual({});
     });
 
     it('stores selected target and fires onChanged when setSelected is called', async () => {
         const { context } = createMockContext();
         const store = new TargetStore(context);
-        const t = { ssh: 'bob@example.com' };
+        const t = 'bob@example.com' as TargetDestination;
         await store.addTarget(t);
         const cb = jest.fn();
         store.onChanged(cb);
@@ -163,13 +162,13 @@ describe('TargetStore', () => {
         const { context } = createMockContext();
         const store = new TargetStore(context);
 
-        const t = { ssh: 'carol@example.com' };
+        const t = 'carol@example.com' as TargetDestination;
         await store.addTarget(t);
         await store.setSelected('carol@example.com');
 
         const selected = await store.getSelectedTarget();
         expect(selected).toBeDefined();
-        expect(selected?.ssh).toBe('carol@example.com');
+        expect(selected).toBe('carol@example.com');
     });
 
     it('fires onChanged when signal file is modified externally and window is not focused', async () => {
@@ -195,7 +194,7 @@ describe('TargetStore', () => {
     it('deactivates the store, disposing resources and clearing the singleton', async () => {
         const { context } = createMockContext();
         const store = new TargetStore(context);
-        await store.addTarget({ ssh: 'd@example.com' });
+        await store.addTarget('d@example.com' as TargetDestination);
         const cb = jest.fn();
         store.onChanged(cb);
 
@@ -208,16 +207,16 @@ describe('TargetStore', () => {
     it('removes a non-selected target without changing selection', async () => {
         const { context } = createMockContext();
         const store = new TargetStore(context);
-        const t1 = { ssh: 'a@example.com' };
-        const t2 = { ssh: 'b@example.com' };
+        const t1 = 'a@example.com' as TargetDestination;
+        const t2 = 'b@example.com' as TargetDestination;
         await store.addTarget(t1);
         await store.addTarget(t2);
-        await store.setSelected(t1.ssh);
+        await store.setSelected(t1);
 
-        await store.deleteTarget(t2.ssh);
+        await store.deleteTarget(t2);
 
         const targets = store.getTargets();
-        expect(targets.some((t) => t.ssh === t2.ssh)).toBe(false);
+        expect(targets.some((t) => t === t2)).toBe(false);
         const selected = await store.getSelectedTarget();
         expect(selected).toBeDefined();
     });
@@ -225,31 +224,31 @@ describe('TargetStore', () => {
     it('removes the selected target and falls back to the first remaining target', async () => {
         const { context } = createMockContext();
         const store = new TargetStore(context);
-        const t1 = { ssh: 'one@example.com' };
-        const t2 = { ssh: 'two@example.com' };
-        const t3 = { ssh: 'three@example.com' };
+        const t1 = 'one@example.com' as TargetDestination;
+        const t2 = 'two@example.com' as TargetDestination;
+        const t3 = 'three@example.com' as TargetDestination;
         await store.addTarget(t1);
         await store.addTarget(t2);
         await store.addTarget(t3);
-        await store.setSelected(t2.ssh);
+        await store.setSelected(t2);
 
-        await store.deleteTarget(t2.ssh);
+        await store.deleteTarget(t2);
 
         const targets = store.getTargets();
-        expect(targets.some((t) => t.ssh === t2.ssh)).toBe(false);
+        expect(targets.some((t) => t === t2)).toBe(false);
         const selected = await store.getSelectedTarget();
         expect(selected).toBeDefined();
-        expect(selected?.ssh).toBe(t1.ssh);
+        expect(selected).toBe(t1);
     });
 
     it('removes the only selected target and clears selection when none remain', async () => {
         const { context } = createMockContext();
         const store = new TargetStore(context);
-        const lone = { ssh: 'only@example.com' };
+        const lone = 'only@example.com' as TargetDestination;
         await store.addTarget(lone);
-        await store.setSelected(lone.ssh);
+        await store.setSelected(lone);
 
-        await store.deleteTarget(lone.ssh);
+        await store.deleteTarget(lone);
 
         const targets = store.getTargets();
         expect(targets.length).toBe(0);
@@ -261,7 +260,9 @@ describe('TargetStore', () => {
         const { context } = createMockContext();
         const store = new TargetStore(context);
 
-        const deleteTargetOperation = store.deleteTarget('no-such-id');
+        const deleteTargetOperation = store.deleteTarget(
+            'no-such-id' as TargetDestination,
+        );
 
         await expect(deleteTargetOperation).rejects.toThrow('does not exist');
     });

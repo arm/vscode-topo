@@ -1,18 +1,16 @@
 import * as vscode from 'vscode';
 import { TargetTreeTargetItem } from './targetTreeTargetItem';
-import { TargetItem } from '../util/types';
+import { TargetDestination } from '../util/types';
 
 describe('TargetTreeTargetItem', () => {
-    const baseTarget: TargetItem = {
-        ssh: 'root@host.local',
-    };
+    const baseTarget = 'root@host.local' as TargetDestination;
 
     it('sets basic fields (id, label, description)', () => {
         const item = new TargetTreeTargetItem(baseTarget, false, false, true);
 
-        expect(item.id).toBe(baseTarget.ssh);
-        expect(item.label).toBe(baseTarget.ssh);
-        expect(item.displayName).toBe(baseTarget.ssh);
+        expect(item.id).toBe(baseTarget);
+        expect(item.label).toBe(baseTarget);
+        expect(item.displayName).toBe(baseTarget);
         expect(item.contextValue).toContain('Target');
     });
 

@@ -1,16 +1,16 @@
 import * as vscode from 'vscode';
-import type { TargetItem } from '../util/types';
+import type { TargetDestination } from '../util/types';
 
 /** Represents a target */
 export class TargetTreeTargetItem extends vscode.TreeItem {
     constructor(
-        public readonly target: TargetItem,
+        public readonly target: TargetDestination,
         public readonly selected: boolean,
         public readonly connectionReady: boolean,
         public readonly targetReady: boolean,
     ) {
-        super(target.ssh, vscode.TreeItemCollapsibleState.Expanded);
-        this.id = target.ssh;
+        super(target, vscode.TreeItemCollapsibleState.Expanded);
+        this.id = target;
         this.iconPath = getTreeItemIcon(selected, connectionReady, targetReady);
         const contextValues = ['Target'];
         if (selected) {

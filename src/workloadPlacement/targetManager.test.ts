@@ -4,7 +4,7 @@ import { TargetTreeDataProvider } from './targetTreeDataProvider';
 import { TargetStore } from './targetStore';
 import { logger } from '../util/logger';
 import { ContainersManager } from './containersManager';
-import { TargetItem } from '../util/types';
+import { TargetDestination } from '../util/types';
 import { mock, MockProxy } from 'jest-mock-extended';
 import type { TopoCli } from '../topoCli';
 import type { HealthCheckResult } from '../topoCliSchema';
@@ -45,11 +45,11 @@ const createTargetManager = () => {
         mock<ContainersManager>();
     containersManager.getTargetState.mockResolvedValue({
         health: undefined,
-        targetSsh: undefined,
+        target: undefined,
     });
     containersManager.getTargetStateSnapshot.mockReturnValue({
         health: undefined,
-        targetSsh: undefined,
+        target: undefined,
     });
     containersManager.onDataUpdate.mockImplementation(
         onDataUpdateEmitter.event,
@@ -188,9 +188,7 @@ describe('TargetManager', () => {
             await executeCommand(TargetManager.addTargetCommand);
 
             expect(targetStore.addTarget).toHaveBeenCalledTimes(1);
-            expect(targetStore.addTarget).toHaveBeenCalledWith(
-                expect.objectContaining({ ssh: targetSsh }),
-            );
+            expect(targetStore.addTarget).toHaveBeenCalledWith(targetSsh);
             expect(targetStore.setSelected).toHaveBeenCalledWith(targetSsh);
         });
 
@@ -228,9 +226,7 @@ describe('TargetManager', () => {
 
     describe('status bar', () => {
         it('shows an item in the status bar with the currently selected target', async () => {
-            const target: TargetItem = {
-                ssh: 'root@localhost',
-            };
+            const target = 'root@localhost' as TargetDestination;
             const { targetManager, targetStore } = createTargetManager();
             jest.mocked(targetStore.getSelectedTarget).mockResolvedValue(
                 target,
@@ -241,9 +237,9 @@ describe('TargetManager', () => {
             expect(vscode.window.createStatusBarItem).toHaveBeenCalledTimes(1);
             const statusBarItem = jest.mocked(vscode.window.createStatusBarItem)
                 .mock.results[0].value;
-            expect(statusBarItem.text).toBe(`$(loading~spin) ${target.ssh}`);
+            expect(statusBarItem.text).toBe(`$(loading~spin) ${target}`);
             expect(statusBarItem.command).toBe(TargetManager.FocusViewCommand);
-            expect(statusBarItem.text).toBe(`$(loading~spin) ${target.ssh}`);
+            expect(statusBarItem.text).toBe(`$(loading~spin) ${target}`);
             expect(statusBarItem.tooltip).toBe(
                 'Connection String: root@localhost',
             );
@@ -266,12 +262,8 @@ describe('TargetManager', () => {
         });
 
         it('changes the item in the status bar when the currently selected target changes', async () => {
-            const target1: TargetItem = {
-                ssh: 'root@localhost',
-            };
-            const target2: TargetItem = {
-                ssh: 'root@other-host',
-            };
+            const target1 = 'root@localhost' as TargetDestination;
+            const target2 = 'root@other-host' as TargetDestination;
             const {
                 targetManager,
                 targetStore,
@@ -285,7 +277,7 @@ describe('TargetManager', () => {
                 containersManager.getTargetStateSnapshot,
             ).mockReturnValue({
                 health: healthyTarget,
-                targetSsh: target1.ssh,
+                target: target1,
             });
             await targetManager.activate();
             jest.mocked(targetStore.getSelectedTarget).mockResolvedValue(
@@ -295,7 +287,7 @@ describe('TargetManager', () => {
                 containersManager.getTargetStateSnapshot,
             ).mockReturnValue({
                 health: healthyTarget,
-                targetSsh: target2.ssh,
+                target: target2,
             });
 
             onChangeEmitter.fire();
@@ -304,7 +296,7 @@ describe('TargetManager', () => {
             expect(vscode.window.createStatusBarItem).toHaveBeenCalledTimes(1);
             const statusBarItem = jest.mocked(vscode.window.createStatusBarItem)
                 .mock.results[0].value;
-            expect(statusBarItem.text).toBe(`$(pass-filled) ${target2.ssh}`);
+            expect(statusBarItem.text).toBe(`$(pass-filled) ${target2}`);
             expect(statusBarItem.tooltip).toBe(
                 'Connection String: root@other-host',
             );

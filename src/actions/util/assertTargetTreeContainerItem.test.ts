@@ -34,9 +34,7 @@ describe('assertTargetTreeContainerItem', () => {
             ports: {},
             cpuUsage: '',
             memUsage: '',
-            target: {
-                ssh: 'root@test-host',
-            },
+            target: 'root@test-host' as ContainerItem['target'],
         };
         const instanceLike = new TargetTreeContainerItem(containerItem);
 

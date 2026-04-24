@@ -8,11 +8,11 @@ import {
     TargetState,
     ContainerItem,
     MessagePoster,
-    TargetItem,
+    TargetDestination,
 } from '../src/util/types';
 
 export interface TargetDashboardProps {
-    target: TargetItem;
+    target: TargetDestination;
     containersData: ContainerItem[];
     targetState: TargetState;
     messagePoster: MessagePoster;
@@ -266,7 +266,7 @@ export function TargetDashboard({
 
     return (
         <div className="target-dashboard">
-            <h1>Target Dashboard: {target.ssh}</h1>
+            <h1>Target Dashboard: {target}</h1>
             {subsystems.map((subsystem) => (
                 <div key={subsystem} className="section-group">
                     <h3>

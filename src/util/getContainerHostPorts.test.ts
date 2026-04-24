@@ -1,10 +1,8 @@
 import { getContainerHostPorts } from './getContainerHostPorts';
-import type { ContainerItem, TargetItem } from './types';
+import type { ContainerItem, TargetDestination } from './types';
 
 const makeContainer = (ports: ContainerItem['ports']): ContainerItem => {
-    const target: TargetItem = {
-        ssh: 'user@topo.local',
-    };
+    const target = 'user@topo.local' as TargetDestination;
     return {
         id: 'abc123',
         name: 'my-container',

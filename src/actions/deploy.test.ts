@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
 import { Deploy } from './deploy';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { TargetStore } from '../workloadPlacement/targetStore';
-import { TargetItem } from '../util/types';
+import { TargetDestination } from '../util/types';
 import { mutable } from '../util/mutable';
 
 jest.mock('../util/logger');
@@ -31,9 +31,7 @@ describe('Deploy', () => {
             },
         }),
     });
-    const target: TargetItem = {
-        ssh: 'topo.local',
-    };
+    const target = 'topo.local' as TargetDestination;
     let targetStore: MockProxy<TargetStore>;
     let context: MockProxy<vscode.ExtensionContext>;
     let deployHandler: ((resource?: vscode.Uri) => Promise<void>) | undefined;

@@ -4,16 +4,14 @@ import { DockerCommands } from '../workloadPlacement/dockerCommands';
 import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { TargetStore } from '../workloadPlacement/targetStore';
-import { ContainerItem, TargetItem } from '../util/types';
+import { ContainerItem, TargetDestination } from '../util/types';
 
 jest.mock('../util/logger');
 
 describe('AttachShell', () => {
     const registerCommandMock = jest.mocked(vscode.commands.registerCommand);
     const dockerCommands = new DockerCommands();
-    const target: TargetItem = {
-        ssh: 'user@topo.local',
-    };
+    const target = 'user@topo.local' as TargetDestination;
     const targetStore = mock<TargetStore>();
     let context: MockProxy<vscode.ExtensionContext>;
 
@@ -66,7 +64,7 @@ describe('AttachShell', () => {
         const terminal = jest.mocked(vscode.window.createTerminal).mock
             .results[0].value;
         expect(terminal.sendText).toHaveBeenCalledWith(
-            `docker --host ssh://${target.ssh} exec -it cid sh`,
+            `docker --host ssh://${target} exec -it cid sh`,
         );
         expect(terminal.show).toHaveBeenCalled();
     });

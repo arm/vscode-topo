@@ -3,7 +3,7 @@ import { TopoCli } from '../topoCli';
 import { getTargetDescription } from '../util/getTargetDescription';
 import { TargetDescriptionStore } from './targetDescriptionStore';
 import { mock } from 'jest-mock-extended';
-import { TargetDescription } from '../util/types';
+import { TargetDescription, TargetDestination } from '../util/types';
 
 jest.mock('node:fs');
 jest.mock('../util/getTargetDescription');
@@ -32,7 +32,9 @@ describe('TargetDescriptionStore', () => {
         jest.mocked(getTargetDescription).mockResolvedValue(targetDescription);
         const store = new TargetDescriptionStore(topoCli);
 
-        const description = await store.getDescription('user@host');
+        const description = await store.getDescription(
+            'user@host' as TargetDestination,
+        );
 
         expect(description).toEqual(targetDescription);
     });
@@ -41,10 +43,10 @@ describe('TargetDescriptionStore', () => {
         const store = new TargetDescriptionStore(topoCli);
 
         await Promise.all([
-            store.getDescription('user@host'),
-            store.getDescription('user@host2'),
-            store.getDescription('user@host'),
-            store.getDescription('user@host2'),
+            store.getDescription('user@host' as TargetDestination),
+            store.getDescription('user@host2' as TargetDestination),
+            store.getDescription('user@host' as TargetDestination),
+            store.getDescription('user@host2' as TargetDestination),
         ]);
 
         expect(getTargetDescription).toHaveBeenCalledTimes(2);
