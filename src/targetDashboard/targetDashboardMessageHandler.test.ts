@@ -31,8 +31,8 @@ describe('TargetDashboardMessageHandler', () => {
         ssh: 'user@topo.local',
     };
     const targetDescription: TargetDescription = {
-        hostProcessor: [],
-        remoteprocCPU: [{ name: 'imx-rproc' }],
+        hostProcessors: [],
+        remoteprocCpus: [{ name: 'imx-rproc' }],
     };
     const targetState: TargetState = {
         health: undefined,

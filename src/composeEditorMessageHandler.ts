@@ -53,7 +53,7 @@ export class ComposeEditorMessageHandler {
             ? await this.targetDescriptionStore.getDescription(target.ssh)
             : undefined;
         const remoteprocCpus =
-            description?.remoteprocCPU.map((rp) => rp.name) || [];
+            description?.remoteprocCpus.map((rp) => rp.name) || [];
         const subsystemNames = ['Host', ...remoteprocCpus];
         messagePoster.postMessage({
             type: 'render-compose-editor',

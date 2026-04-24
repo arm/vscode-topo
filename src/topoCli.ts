@@ -8,10 +8,12 @@ import {
     ProjectDescription,
     projectDescriptionSchema,
     TemplateDescription,
+    TargetDescriptionResult,
+    targetDescriptionSchema,
     templateSchema,
     topoLogEntrySchema,
 } from './topoCliSchema';
-import { array, assert, is } from 'superstruct';
+import { array, assert, create, is } from 'superstruct';
 import {
     WrappedError,
     WrappedErrorLog,
@@ -40,8 +42,6 @@ export interface CloneRawSource {
 }
 
 export type CloneSource = CloneRemoteSource | CloneLocalSource | CloneRawSource;
-
-export const targetDescriptionFileName = 'target-description.yaml';
 
 const normalizeLogLevel = (level: string): WrappedErrorLogLevel => {
     switch (level.toUpperCase()) {
@@ -191,25 +191,18 @@ export class TopoCli {
         return project;
     }
 
-    /**
-     * Runs topo describe for a target and writes target-description.yaml
-     * in the provided working directory.
-     */
-    public describe(
-        workingDirectory: string,
-        sshTarget: string,
-    ): Promise<string> {
+    /** Returns target description data from topo describe JSON output. */
+    public describe(sshTarget: string): Promise<TargetDescriptionResult> {
         const bin = this.getBinaryPath();
         return new Promise((resolve, reject) => {
-            const cmd = ['describe', '--target', sshTarget];
+            const cmd = ['describe', '--target', sshTarget, '--output', 'json'];
             childProcess.execFile(
                 bin,
                 cmd,
                 {
                     env: this.getProcessEnv(),
-                    cwd: workingDirectory,
                 },
-                (error, _stdout) => {
+                (error, stdout) => {
                     if (error) {
                         reject(
                             new Error(
@@ -219,11 +212,34 @@ export class TopoCli {
                         );
                         return;
                     }
-                    const targetDescriptionFilePath = path.join(
-                        workingDirectory,
-                        targetDescriptionFileName,
-                    );
-                    resolve(targetDescriptionFilePath);
+
+                    let parsedDescription: unknown;
+                    try {
+                        parsedDescription = JSON.parse(stdout);
+                    } catch (parseError) {
+                        reject(
+                            new Error(
+                                `Failed to parse target description JSON: ${getErrorMessage(parseError)}`,
+                                { cause: parseError },
+                            ),
+                        );
+                        return;
+                    }
+
+                    try {
+                        const description = create(
+                            parsedDescription,
+                            targetDescriptionSchema,
+                        );
+                        resolve(description);
+                    } catch (validationError) {
+                        reject(
+                            new Error(
+                                `Invalid target description JSON: ${getErrorMessage(validationError)}`,
+                                { cause: validationError },
+                            ),
+                        );
+                    }
                 },
             );
         });

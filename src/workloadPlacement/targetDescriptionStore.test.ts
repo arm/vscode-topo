@@ -20,14 +20,14 @@ describe('TargetDescriptionStore', () => {
 
     it('should load and parse target description correctly', async () => {
         const targetDescription: TargetDescription = {
-            hostProcessor: [
+            hostProcessors: [
                 {
                     model: 'Cortex-A55',
                     cores: 2,
                     features: ['fp', 'asimd', 'evtstrm', 'aes'],
                 },
             ],
-            remoteprocCPU: [{ name: 'imx-rproc' }],
+            remoteprocCpus: [{ name: 'imx-rproc' }],
         };
         jest.mocked(getTargetDescription).mockResolvedValue(targetDescription);
         const store = new TargetDescriptionStore(topoCli);

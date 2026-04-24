@@ -1,12 +1,7 @@
 import * as path from 'node:path';
 import * as childProcess from 'node:child_process';
 import * as vscode from 'vscode';
-import {
-    TopoCli,
-    targetDescriptionFileName,
-    parseWrappedError,
-    parseTopoLogEntries,
-} from './topoCli';
+import { TopoCli, parseWrappedError, parseTopoLogEntries } from './topoCli';
 import { Mutable } from './util/types';
 import * as manifest from './manifest';
 import { ChildProcessWithoutNullStreams } from 'node:child_process';
@@ -16,6 +11,7 @@ import { WrappedError } from './errors/wrappedError';
 import {
     HealthCheckResult,
     ProjectDescription,
+    TargetDescriptionResult,
     TemplateDescription,
 } from './topoCliSchema';
 
@@ -212,23 +208,33 @@ describe('TopoCli', () => {
         expect(() => topoCli.getProject('p')).toThrow();
     });
 
-    it('describe resolves and runs topo describe with --target in provided cwd', async () => {
+    it('describe resolves parsed JSON and runs topo describe with --output json', async () => {
+        const description: TargetDescriptionResult = {
+            host: [{ model: 'Cortex-A55', cores: 2, features: ['fp'] }],
+            remoteprocs: [{ name: 'imx-rproc' }],
+        };
         execMock.mockImplementation((_bin, _cargs, _options, cb) => {
-            cb!(null, '', '');
+            cb!(
+                null,
+                JSON.stringify({
+                    host: [
+                        { model: ' Cortex-A55 ', cores: 2, features: [' fp '] },
+                    ],
+                    remoteprocs: [{ name: ' imx-rproc ' }],
+                }),
+                '',
+            );
             return cp;
         });
 
-        const outputDirectory = '/fake/workspace';
         const target = 'user@topo.local';
 
-        await expect(topoCli.describe(outputDirectory, target)).resolves.toBe(
-            path.join(outputDirectory, targetDescriptionFileName),
-        );
+        await expect(topoCli.describe(target)).resolves.toEqual(description);
 
         expect(execMock).toHaveBeenCalledWith(
             topoCli.getBinaryPath(),
-            ['describe', '--target', target],
-            { cwd: outputDirectory, env: {} },
+            ['describe', '--target', target, '--output', 'json'],
+            { env: {} },
             expect.any(Function),
         );
     });
@@ -239,9 +245,35 @@ describe('TopoCli', () => {
             return cp;
         });
 
-        await expect(
-            topoCli.describe('/tmp/out', 'user@topo.local'),
-        ).rejects.toThrow('Failed to describe target: fail');
+        await expect(topoCli.describe('user@topo.local')).rejects.toThrow(
+            'Failed to describe target: fail',
+        );
+    });
+
+    it('describe rejects when topo describe returns invalid JSON', async () => {
+        execMock.mockImplementation((_bin, _args, _options, cb) => {
+            cb!(null, 'not json', '');
+            return cp;
+        });
+
+        await expect(topoCli.describe('user@topo.local')).rejects.toThrow(
+            'Failed to parse target description JSON:',
+        );
+    });
+
+    it('describe rejects when topo describe returns JSON that fails schema validation', async () => {
+        execMock.mockImplementation((_bin, _args, _options, cb) => {
+            cb!(
+                null,
+                JSON.stringify({ host: [], remoteprocs: [{ name: 1 }] }),
+                '',
+            );
+            return cp;
+        });
+
+        await expect(topoCli.describe('user@topo.local')).rejects.toThrow(
+            'Invalid target description JSON:',
+        );
     });
 
     it('init resolves promise on success', async () => {
