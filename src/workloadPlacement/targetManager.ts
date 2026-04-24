@@ -94,7 +94,7 @@ export class TargetManager {
         const sshHosts = await getHosts(defaultSshConfigPath);
         const existingTargets = new Set(this.targetStore.getTargets());
         const availableHosts = sshHosts.filter(
-            (host) => !existingTargets.has(host as TargetDestination),
+            (host) => !existingTargets.has(host),
         );
 
         const quickPick = vscode.window.createQuickPick();
