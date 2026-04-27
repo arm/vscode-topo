@@ -1,9 +1,8 @@
 import * as vscode from 'vscode';
 import { TargetTreeTargetItem } from './targetTreeTargetItem';
-import { TargetDestination } from '../util/types';
 
 describe('TargetTreeTargetItem', () => {
-    const baseTarget = 'root@host.local' as TargetDestination;
+    const baseTarget = 'root@host.local';
 
     it('sets basic fields (id, label, description)', () => {
         const item = new TargetTreeTargetItem(baseTarget, false, false, true);

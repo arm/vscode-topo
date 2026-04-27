@@ -3,7 +3,7 @@ import { AttachVsCode, getDockerContextName } from './attachVsCode';
 import { exec } from '../util/exec';
 import { TARGET_HOST_RUNTIME } from '../manifest';
 import { DockerCommands } from '../workloadPlacement/dockerCommands';
-import { ContainerItem, TargetDestination } from '../util/types';
+import { ContainerItem } from '../util/types';
 import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
 import { WrappedError } from '../errors/wrappedError';
 import { mock, MockProxy } from 'jest-mock-extended';
@@ -46,7 +46,7 @@ describe('attachVsCode', () => {
     let attachVsCode: AttachVsCode;
     const registerCommandMock = jest.mocked(vscode.commands.registerCommand);
     const dockerCommands = new DockerCommands();
-    const target = 'user@topo.local' as TargetDestination;
+    const target = 'user@topo.local';
     const containerItem: ContainerItem = {
         id: 'abc123',
         name: 'my-container',

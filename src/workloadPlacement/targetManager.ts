@@ -6,7 +6,6 @@ import { logger } from '../util/logger';
 import { ContainersManager } from './containersManager';
 import { getTreeItemIcon } from './targetTreeTargetItem';
 import { isTargetReady } from '../util/targetState';
-import { TargetDestination } from '../util/types';
 import { defaultSshConfigPath, getHosts } from '../util/ssh';
 
 export function buildQuickPickItems(
@@ -72,7 +71,7 @@ export class TargetManager {
         );
     }
 
-    private async addTarget(): Promise<TargetDestination | undefined> {
+    private async addTarget(): Promise<string | undefined> {
         const target = await this.promptForSshTarget();
         if (!target) {
             return;
@@ -90,7 +89,7 @@ export class TargetManager {
         return target;
     }
 
-    private async promptForSshTarget(): Promise<TargetDestination | undefined> {
+    private async promptForSshTarget(): Promise<string | undefined> {
         const sshHosts = await getHosts(defaultSshConfigPath);
         const existingTargets = new Set(this.targetStore.getTargets());
         const availableHosts = sshHosts.filter(
@@ -107,11 +106,11 @@ export class TargetManager {
             quickPick.items = buildQuickPickItems(availableHosts, value);
         });
 
-        return new Promise<TargetDestination | undefined>((resolve) => {
+        return new Promise<string | undefined>((resolve) => {
             quickPick.onDidAccept(async () => {
                 const selected = quickPick.selectedItems[0]?.label?.trim();
                 quickPick.hide();
-                resolve(selected as TargetDestination);
+                resolve(selected);
             });
 
             quickPick.onDidHide(() => {
@@ -122,9 +121,7 @@ export class TargetManager {
         }).finally(() => quickPick.dispose());
     }
 
-    protected updateStatusBar(
-        selectedTarget: TargetDestination | undefined,
-    ): void {
+    protected updateStatusBar(selectedTarget: string | undefined): void {
         if (!this.statusBarItem) {
             return;
         }

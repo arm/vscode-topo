@@ -3,7 +3,6 @@ import { mock, MockProxy } from 'jest-mock-extended';
 import { SetupKeys } from './setupKeys';
 import { TargetStore } from '../workloadPlacement/targetStore';
 import { TargetTreeTargetItem } from '../workloadPlacement/targetTreeTargetItem';
-import { TargetDestination } from '../util/types';
 import { mutable } from '../util/mutable';
 
 jest.mock('../util/logger');
@@ -11,7 +10,7 @@ jest.mock('../util/logger');
 describe('SetupKeys', () => {
     let context: MockProxy<vscode.ExtensionContext>;
     let targetStore: MockProxy<TargetStore>;
-    const target = 'user@topo.local' as TargetDestination;
+    const target = 'user@topo.local';
     const waitImmediate = () =>
         new Promise<void>((resolve) => setTimeout(() => resolve(), 0));
     const taskExec: vscode.TaskExecution = {

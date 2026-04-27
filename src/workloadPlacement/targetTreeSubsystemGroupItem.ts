@@ -1,8 +1,7 @@
 import * as vscode from 'vscode';
-import { TargetDestination } from '../util/types';
 
 export class TargetTreeSubsystemGroupItem extends vscode.TreeItem {
-    constructor(public readonly target: TargetDestination) {
+    constructor(public readonly target: string) {
         super('Subsystems', vscode.TreeItemCollapsibleState.Expanded);
         this.iconPath = new vscode.ThemeIcon('layers');
         this.contextValue = 'Subsystems';

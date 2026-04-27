@@ -4,15 +4,10 @@ import {
 } from '../src/manifest';
 import { hasContainerEngine, isTargetReachable } from '../src/util/targetState';
 import { getContainerHostPorts } from '../src/util/getContainerHostPorts';
-import {
-    TargetState,
-    ContainerItem,
-    MessagePoster,
-    TargetDestination,
-} from '../src/util/types';
+import { TargetState, ContainerItem, MessagePoster } from '../src/util/types';
 
 export interface TargetDashboardProps {
-    target: TargetDestination;
+    target: string;
     containersData: ContainerItem[];
     targetState: TargetState;
     messagePoster: MessagePoster;

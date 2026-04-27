@@ -4,14 +4,14 @@ import { DockerCommands } from '../workloadPlacement/dockerCommands';
 import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { TargetStore } from '../workloadPlacement/targetStore';
-import { ContainerItem, TargetDestination } from '../util/types';
+import { ContainerItem } from '../util/types';
 
 jest.mock('../util/logger');
 
 describe('AttachShell', () => {
     const registerCommandMock = jest.mocked(vscode.commands.registerCommand);
     const dockerCommands = new DockerCommands();
-    const target = 'user@topo.local' as TargetDestination;
+    const target = 'user@topo.local';
     const targetStore = mock<TargetStore>();
     let context: MockProxy<vscode.ExtensionContext>;
 

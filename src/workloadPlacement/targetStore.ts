@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import { logger } from '../util/logger';
 import debounce from 'lodash.debounce';
-import { TargetDestination } from '../util/types';
 import { string, type, assert, record } from 'superstruct';
 
 type GlobalStoreKeys = 'targets';
@@ -58,12 +57,12 @@ export class TargetStore {
         this._onChanged.fire();
     }
 
-    public getTargets(): TargetDestination[] {
+    public getTargets(): string[] {
         const targets = this.loadTargets();
         return [...targets.values()];
     }
 
-    public async addTarget(target: TargetDestination): Promise<void> {
+    public async addTarget(target: string): Promise<void> {
         const targets = this.loadTargets();
         if (targets.has(target)) {
             throw new Error(`Target "${target}" already exists`);
@@ -72,7 +71,7 @@ export class TargetStore {
         await this.saveTargets(targets);
     }
 
-    public async updateTarget(target: TargetDestination): Promise<void> {
+    public async updateTarget(target: string): Promise<void> {
         const targets = this.loadTargets();
         if (!targets.has(target)) {
             throw new Error(`Target "${target}" does not exist`);
@@ -82,12 +81,12 @@ export class TargetStore {
         this._onChanged.fire();
     }
 
-    public async getSelectedTarget(): Promise<TargetDestination | undefined> {
+    public async getSelectedTarget(): Promise<string | undefined> {
         const targets = this.getTargets();
         return targets.find((target) => target === this.selected);
     }
 
-    public async deleteTarget(ssh: TargetDestination): Promise<void> {
+    public async deleteTarget(ssh: string): Promise<void> {
         const targets = this.loadTargets();
         if (!targets.has(ssh)) {
             throw new Error(`Target "${ssh}" does not exist`);
@@ -104,14 +103,12 @@ export class TargetStore {
         }
     }
 
-    protected loadTargets(): Set<TargetDestination> {
+    protected loadTargets(): Set<string> {
         try {
             const rawTargets = this.getGlobal('targets');
             const targets = rawTargets ? JSON.parse(rawTargets) : {};
             assert(targets, serializedTargetsSchema);
-            return new Set(
-                Object.keys(targets).map((k) => k as TargetDestination),
-            );
+            return new Set(Object.keys(targets));
         } catch (err) {
             const errorMsg = 'Failed to load targets';
             logger.error(errorMsg, err);
@@ -119,9 +116,7 @@ export class TargetStore {
         }
     }
 
-    protected async saveTargets(
-        targets: Set<TargetDestination>,
-    ): Promise<void> {
+    protected async saveTargets(targets: Set<string>): Promise<void> {
         const json = JSON.stringify(
             Object.fromEntries([...targets].map((k) => [k, {}])),
         );

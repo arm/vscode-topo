@@ -7,7 +7,6 @@ import { TopoCli } from './topoCli';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { TemplateDescription } from './topoCliSchema';
 import { showAndLogError } from './util/showAndLogError';
-import { TargetDestination } from './util/types';
 import { TargetStore } from './workloadPlacement/targetStore';
 import { WrappedError } from './errors/wrappedError';
 
@@ -622,9 +621,7 @@ describe('ProjectClone', () => {
 
         it('creates task and runs clone command for template selection', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-            targetStore.getSelectedTarget.mockResolvedValue(
-                'me@example.com' as TargetDestination,
-            );
+            targetStore.getSelectedTarget.mockResolvedValue('me@example.com');
             topoCli.listTemplates.mockReturnValue(templateList);
             jest.mocked(vscode.workspace).getWorkspaceFolder.mockReturnValue(
                 workspaceFolders[0],
@@ -676,9 +673,7 @@ describe('ProjectClone', () => {
 
         it('rethrows when executeTask throws', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-            targetStore.getSelectedTarget.mockResolvedValue(
-                'me@example.com' as TargetDestination,
-            );
+            targetStore.getSelectedTarget.mockResolvedValue('me@example.com');
             topoCli.listTemplates.mockReturnValue(templateList);
             jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
             showQuickPickItemMock.mockResolvedValueOnce(
@@ -715,9 +710,7 @@ describe('ProjectClone', () => {
 
         it('shows error when task ends with non-zero exit code', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-            targetStore.getSelectedTarget.mockResolvedValue(
-                'me@example.com' as TargetDestination,
-            );
+            targetStore.getSelectedTarget.mockResolvedValue('me@example.com');
             topoCli.listTemplates.mockReturnValue(templateList);
             jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
             showQuickPickItemMock.mockResolvedValueOnce(

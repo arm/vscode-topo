@@ -2,7 +2,6 @@ import * as vscode from 'vscode';
 import { TargetStore } from './targetStore';
 import { mutable } from '../util/mutable';
 import { mock, MockProxy } from 'jest-mock-extended';
-import { TargetDestination } from '../util/types';
 
 jest.mock('../util/logger');
 
@@ -100,7 +99,7 @@ describe('TargetStore', () => {
     it('adds a target successfully and persists it', async () => {
         const { context } = createMockContext();
         const store = new TargetStore(context);
-        const t = 'success@example.com' as TargetDestination;
+        const t = 'success@example.com';
 
         const addTargetOperation = store.addTarget(t);
 
@@ -117,7 +116,7 @@ describe('TargetStore', () => {
         const { context, globalState } = createMockContext();
         globalState.update.mockRejectedValue(new Error('persist-fail'));
         const store = new TargetStore(context);
-        const t = 'fail@example.com' as TargetDestination;
+        const t = 'fail@example.com';
 
         const addTargetOperation = store.addTarget(t);
 
@@ -130,7 +129,7 @@ describe('TargetStore', () => {
         const { context } = createMockContext();
         const store = new TargetStore(context);
 
-        const t = 'alice@example.com' as TargetDestination;
+        const t = 'alice@example.com';
         await store.addTarget(t);
 
         const targets = store.getTargets();
@@ -145,7 +144,7 @@ describe('TargetStore', () => {
     it('stores selected target and fires onChanged when setSelected is called', async () => {
         const { context } = createMockContext();
         const store = new TargetStore(context);
-        const t = 'bob@example.com' as TargetDestination;
+        const t = 'bob@example.com';
         await store.addTarget(t);
         const cb = jest.fn();
         store.onChanged(cb);
@@ -162,7 +161,7 @@ describe('TargetStore', () => {
         const { context } = createMockContext();
         const store = new TargetStore(context);
 
-        const t = 'carol@example.com' as TargetDestination;
+        const t = 'carol@example.com';
         await store.addTarget(t);
         await store.setSelected('carol@example.com');
 
@@ -194,7 +193,7 @@ describe('TargetStore', () => {
     it('deactivates the store, disposing resources and clearing the singleton', async () => {
         const { context } = createMockContext();
         const store = new TargetStore(context);
-        await store.addTarget('d@example.com' as TargetDestination);
+        await store.addTarget('d@example.com');
         const cb = jest.fn();
         store.onChanged(cb);
 
@@ -207,8 +206,8 @@ describe('TargetStore', () => {
     it('removes a non-selected target without changing selection', async () => {
         const { context } = createMockContext();
         const store = new TargetStore(context);
-        const t1 = 'a@example.com' as TargetDestination;
-        const t2 = 'b@example.com' as TargetDestination;
+        const t1 = 'a@example.com';
+        const t2 = 'b@example.com';
         await store.addTarget(t1);
         await store.addTarget(t2);
         await store.setSelected(t1);
@@ -224,9 +223,9 @@ describe('TargetStore', () => {
     it('removes the selected target and falls back to the first remaining target', async () => {
         const { context } = createMockContext();
         const store = new TargetStore(context);
-        const t1 = 'one@example.com' as TargetDestination;
-        const t2 = 'two@example.com' as TargetDestination;
-        const t3 = 'three@example.com' as TargetDestination;
+        const t1 = 'one@example.com';
+        const t2 = 'two@example.com';
+        const t3 = 'three@example.com';
         await store.addTarget(t1);
         await store.addTarget(t2);
         await store.addTarget(t3);
@@ -244,7 +243,7 @@ describe('TargetStore', () => {
     it('removes the only selected target and clears selection when none remain', async () => {
         const { context } = createMockContext();
         const store = new TargetStore(context);
-        const lone = 'only@example.com' as TargetDestination;
+        const lone = 'only@example.com';
         await store.addTarget(lone);
         await store.setSelected(lone);
 
@@ -260,9 +259,7 @@ describe('TargetStore', () => {
         const { context } = createMockContext();
         const store = new TargetStore(context);
 
-        const deleteTargetOperation = store.deleteTarget(
-            'no-such-id' as TargetDestination,
-        );
+        const deleteTargetOperation = store.deleteTarget('no-such-id');
 
         await expect(deleteTargetOperation).rejects.toThrow('does not exist');
     });

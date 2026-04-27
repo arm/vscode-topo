@@ -5,12 +5,7 @@ import { TargetTreeTargetItem } from './targetTreeTargetItem';
 import * as vscode from 'vscode';
 import * as manifest from '../manifest';
 import { ContainersManager } from './containersManager';
-import {
-    TargetState,
-    ContainerItem,
-    TargetDestination,
-    TargetDescription,
-} from '../util/types';
+import { TargetState, ContainerItem, TargetDescription } from '../util/types';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { TargetStore } from './targetStore';
 import { TargetTreeDependencyGroupItem } from './targetTreeDependencyGroupItem';
@@ -37,7 +32,7 @@ describe('TargetTreeDataProvider', () => {
     let containersManagerMock: MockProxy<ContainersManager>;
     let targetStoreMock: MockProxy<TargetStore>;
     let targetDescriptionStoreMock: MockProxy<TargetDescriptionStore>;
-    const target = 'user@topo.local' as TargetDestination;
+    const target = 'user@topo.local';
     const targetDescription: TargetDescription = {
         hostProcessor: [],
         remoteprocCPU: [{ name: 'imx-rproc' }, { name: 'other-rproc' }],

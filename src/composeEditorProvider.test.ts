@@ -9,7 +9,7 @@ import { TopoCli } from './topoCli';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { ProjectDescription } from './topoCliSchema';
 import { TargetStore } from './workloadPlacement/targetStore';
-import { TargetDescription, TargetDestination } from './util/types';
+import { TargetDescription } from './util/types';
 import { TargetDescriptionStore } from './workloadPlacement/targetDescriptionStore';
 
 jest.mock('./util/logger');
@@ -21,7 +21,7 @@ const waitImmediate = () =>
     new Promise<void>((resolve) => setTimeout(() => resolve(), 0));
 
 describe('ComposeEditorProvider', () => {
-    const target = 'user@topo.local' as TargetDestination;
+    const target = 'user@topo.local';
     const targetDescription: TargetDescription = {
         hostProcessor: [],
         remoteprocCPU: [{ name: 'imx-rproc' }],

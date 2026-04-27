@@ -1,8 +1,7 @@
 import { getContainerHostPorts } from './getContainerHostPorts';
-import type { ContainerItem, TargetDestination } from './types';
+import type { ContainerItem } from './types';
 
 const makeContainer = (ports: ContainerItem['ports']): ContainerItem => {
-    const target = 'user@topo.local' as TargetDestination;
     return {
         id: 'abc123',
         name: 'my-container',
@@ -17,7 +16,7 @@ const makeContainer = (ports: ContainerItem['ports']): ContainerItem => {
         ports,
         cpuUsage: '0%',
         memUsage: '0B / 0B',
-        target,
+        target: 'user@topo.local',
     };
 };
 

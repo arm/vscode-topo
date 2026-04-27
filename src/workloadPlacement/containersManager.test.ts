@@ -1,5 +1,5 @@
 import { ContainersManager } from './containersManager';
-import { ContainerItem, DockerPsItem, TargetDestination } from '../util/types';
+import { ContainerItem, DockerPsItem } from '../util/types';
 import * as manifest from '../manifest';
 import { exec } from '../util/exec';
 import { DockerCommands } from './dockerCommands';
@@ -100,7 +100,7 @@ const defaultInfoOutput = {
     stderr: '',
 };
 const execMock = exec as jest.Mock;
-const target = 'user@topo.local' as TargetDestination;
+const target = 'user@topo.local';
 const loadedHealth: HealthCheckResult = {
     host: { dependencies: [] },
     target: {
@@ -404,7 +404,7 @@ describe('ContainersManager', () => {
     });
 
     it('resets target state snapshot and getTargetState when the selected target is cleared', async () => {
-        let selectedTarget: TargetDestination | undefined = target;
+        let selectedTarget: string | undefined = target;
         const onChangeEmitter = new vscode.EventEmitter<void>();
         const targetStore = mock<TargetStore>();
         targetStore.onChanged.mockImplementation(onChangeEmitter.event);
@@ -561,7 +561,7 @@ describe('ContainersManager', () => {
     });
 
     it('updates when targetStore onChanged fires (re-queries selected target)', async () => {
-        const newTarget = 'bob@other.local' as TargetDestination;
+        const newTarget = 'bob@other.local';
         execMock.mockImplementation(async (command: string) => {
             switch (command) {
                 case `ssh ${target} 'docker info'`:
@@ -572,7 +572,7 @@ describe('ContainersManager', () => {
                     throw Error(`Unexpected command: ${command}`);
             }
         });
-        let selectedTarget: TargetDestination | undefined = target;
+        let selectedTarget: string | undefined = target;
         const onChangeEmitter = new vscode.EventEmitter<void>();
         const targetStore = mock<TargetStore>();
         targetStore.onChanged.mockImplementation(onChangeEmitter.event);
@@ -597,9 +597,9 @@ describe('ContainersManager', () => {
     });
 
     it('ignores stale container loads after selected target changes', async () => {
-        const newTarget = 'bob@other.local' as TargetDestination;
+        const newTarget = 'bob@other.local';
         const pendingOldContainers = new Deferred<DockerPsItem[]>();
-        let selectedTarget: TargetDestination | undefined = target;
+        let selectedTarget: string | undefined = target;
         const onChangeEmitter = new vscode.EventEmitter<void>();
         const targetStore = mock<TargetStore>();
         targetStore.onChanged.mockImplementation(onChangeEmitter.event);
@@ -658,8 +658,8 @@ describe('ContainersManager', () => {
     });
 
     it('refreshes the newly selected target after target change', async () => {
-        const newTarget = 'bob@other.local' as TargetDestination;
-        let selectedTarget: TargetDestination | undefined = target;
+        const newTarget = 'bob@other.local';
+        let selectedTarget: string | undefined = target;
         const onChangeEmitter = new vscode.EventEmitter<void>();
         const targetStore = mock<TargetStore>();
         targetStore.onChanged.mockImplementation(onChangeEmitter.event);

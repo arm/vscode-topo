@@ -3,7 +3,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { logger } from './logger';
-import { TargetDestination } from './types';
 
 const sshDir = path.join(os.homedir(), '.ssh');
 export const defaultSshConfigPath = path.join(sshDir, 'config');
@@ -29,8 +28,8 @@ function resolveInclude(value: string): string[] {
     return fs.globSync(resolved);
 }
 
-export async function getHosts(file: string): Promise<TargetDestination[]> {
-    const hosts = new Set<TargetDestination>();
+export async function getHosts(file: string): Promise<string[]> {
+    const hosts = new Set<string>();
     const queue: string[] = [file];
     const visited = new Set<string>();
 
@@ -67,7 +66,7 @@ export async function getHosts(file: string): Promise<TargetDestination[]> {
             } else if (directive === 'host') {
                 for (const value of flattenValue(line.value)) {
                     if (isPlainHost(value)) {
-                        hosts.add(value as TargetDestination);
+                        hosts.add(value);
                     }
                 }
             }

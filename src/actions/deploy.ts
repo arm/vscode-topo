@@ -3,7 +3,6 @@ import { logger } from '../util/logger';
 import * as manifest from '../manifest';
 import { getErrorMessage } from '../util/getErrorMessage';
 import path from 'node:path';
-import { TargetDestination } from '../util/types';
 import { TargetStore } from '../workloadPlacement/targetStore';
 
 const viewLogsItem: vscode.MessageItem = {
@@ -12,7 +11,7 @@ const viewLogsItem: vscode.MessageItem = {
 
 const executeDeployTask = async (
     composeFilePath: string,
-    target: TargetDestination,
+    target: string,
 ): Promise<vscode.Disposable> => {
     const cwd = path.dirname(composeFilePath);
     const shellExecution = new vscode.ShellExecution(

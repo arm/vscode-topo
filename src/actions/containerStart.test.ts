@@ -5,7 +5,7 @@ import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContaine
 import { WrappedError } from '../errors/wrappedError';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { ContainersManager } from '../workloadPlacement/containersManager';
-import { ContainerItem, TargetDestination } from '../util/types';
+import { ContainerItem } from '../util/types';
 
 describe('ContainerStart', () => {
     let context: MockProxy<vscode.ExtensionContext>;
@@ -14,7 +14,7 @@ describe('ContainerStart', () => {
         | { command: string; callback: (...args: unknown[]) => void }
         | undefined;
     const registerCommandMock = jest.mocked(vscode.commands.registerCommand);
-    const target = 'user@topo.local' as TargetDestination;
+    const target = 'user@topo.local';
     const container: ContainerItem = {
         id: 'abc123',
         name: 'my-container',

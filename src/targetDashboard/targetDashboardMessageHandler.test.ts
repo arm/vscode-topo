@@ -8,7 +8,6 @@ import type {
     TargetState,
     ContainerItem,
     MessagePoster,
-    TargetDestination,
     TargetDescription,
 } from '../util/types';
 import { mock } from 'jest-mock-extended';
@@ -27,7 +26,7 @@ describe('TargetDashboardMessageHandler', () => {
     const postMessage = jest.fn(async () => true);
     const messagePoster: MessagePoster = { postMessage };
 
-    const target = 'user@topo.local' as TargetDestination;
+    const target = 'user@topo.local';
     const targetDescription: TargetDescription = {
         hostProcessor: [],
         remoteprocCPU: [{ name: 'imx-rproc' }],

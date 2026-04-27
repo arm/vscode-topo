@@ -1,12 +1,9 @@
 import * as vscode from 'vscode';
 import { TargetTreeSubsystemGroupItem } from './targetTreeSubsystemGroupItem';
-import { TargetDestination } from '../util/types';
 
 describe('TargetTreeSubsystemGroupItem', () => {
     it('sets label, contextValue, and icon', () => {
-        const item = new TargetTreeSubsystemGroupItem(
-            'root@host.local' as TargetDestination,
-        );
+        const item = new TargetTreeSubsystemGroupItem('root@host.local');
 
         expect(item.label).toBe('Subsystems');
         expect(item.contextValue).toBe('Subsystems');

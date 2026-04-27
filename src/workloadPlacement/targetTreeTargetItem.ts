@@ -1,10 +1,9 @@
 import * as vscode from 'vscode';
-import type { TargetDestination } from '../util/types';
 
 /** Represents a target */
 export class TargetTreeTargetItem extends vscode.TreeItem {
     constructor(
-        public readonly target: TargetDestination,
+        public readonly target: string,
         public readonly selected: boolean,
         public readonly connectionReady: boolean,
         public readonly targetReady: boolean,

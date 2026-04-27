@@ -5,7 +5,6 @@ import type {
     TargetState,
     ContainerItem,
     DockerPsItem,
-    TargetDestination,
     DockerInspectItem,
     DockerStatsItem,
 } from '../util/types';
@@ -20,7 +19,7 @@ function createContainerItem(
     item: DockerPsItem,
     inspect: DockerInspectItem | undefined,
     stats: DockerStatsItem | undefined,
-    target: TargetDestination,
+    target: string,
 ): ContainerItem {
     const cpuUsage = stats?.CPUPerc || '';
     const memUsage = stats?.MemUsage || '';
@@ -60,7 +59,7 @@ export class ContainersManager implements vscode.Disposable {
     private refreshSession: symbol | undefined;
     private containersData: ContainerItem[] = [];
     private targetState: TargetState = this.defaultTargetState;
-    private target: TargetDestination | undefined;
+    private target: string | undefined;
     private disposables: vscode.Disposable[] = [];
 
     constructor(
@@ -89,7 +88,7 @@ export class ContainersManager implements vscode.Disposable {
         await this.startAutoRefresh();
     }
 
-    private async setTarget(target: TargetDestination) {
+    private async setTarget(target: string) {
         this.target = target;
     }
 

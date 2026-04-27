@@ -4,7 +4,6 @@ import { TargetTreeDataProvider } from './targetTreeDataProvider';
 import { TargetStore } from './targetStore';
 import { logger } from '../util/logger';
 import { ContainersManager } from './containersManager';
-import { TargetDestination } from '../util/types';
 import { mock, MockProxy } from 'jest-mock-extended';
 import type { TopoCli } from '../topoCli';
 import type { HealthCheckResult } from '../topoCliSchema';
@@ -226,7 +225,7 @@ describe('TargetManager', () => {
 
     describe('status bar', () => {
         it('shows an item in the status bar with the currently selected target', async () => {
-            const target = 'root@localhost' as TargetDestination;
+            const target = 'root@localhost';
             const { targetManager, targetStore } = createTargetManager();
             jest.mocked(targetStore.getSelectedTarget).mockResolvedValue(
                 target,
@@ -262,8 +261,8 @@ describe('TargetManager', () => {
         });
 
         it('changes the item in the status bar when the currently selected target changes', async () => {
-            const target1 = 'root@localhost' as TargetDestination;
-            const target2 = 'root@other-host' as TargetDestination;
+            const target1 = 'root@localhost';
+            const target2 = 'root@other-host';
             const {
                 targetManager,
                 targetStore,

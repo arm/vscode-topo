@@ -1,7 +1,7 @@
 import { TARGET_HOST_RUNTIME } from '../manifest';
 import * as vscode from 'vscode';
 import { ContainerDelete } from './containerDelete';
-import { ContainerItem, TargetDestination } from '../util/types';
+import { ContainerItem } from '../util/types';
 import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
 import { WrappedError } from '../errors/wrappedError';
 import { mock, MockProxy } from 'jest-mock-extended';
@@ -15,7 +15,7 @@ describe('ContainerDelete', () => {
         | undefined;
     const registerCommandMock = jest.mocked(vscode.commands.registerCommand);
 
-    const target = 'user@topo.local' as TargetDestination;
+    const target = 'user@topo.local';
     const container: ContainerItem = {
         id: 'abc123',
         name: 'my-container',
