@@ -4,8 +4,8 @@ import { ContainerStart } from './containerStart';
 import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
 import { WrappedError } from '../errors/wrappedError';
 import { mock, MockProxy } from 'jest-mock-extended';
-import { ContainersManager } from '../workloadPlacement/containersManager';
 import { ContainerItem } from '../util/types';
+import { ContainerCommands } from '../workloadPlacement/containerCommands';
 
 describe('ContainerStart', () => {
     let context: MockProxy<vscode.ExtensionContext>;
@@ -64,9 +64,8 @@ describe('ContainerStart', () => {
     });
 
     it('calls startContainer and shows info message on success', async () => {
-        const containersManager: MockProxy<ContainersManager> =
-            mock<ContainersManager>();
-        const containerStart = new ContainerStart(context, containersManager);
+        const containerCommands = mock<ContainerCommands>();
+        const containerStart = new ContainerStart(context, containerCommands);
         containerStart.activate();
 
         // Simulate command handler
@@ -75,16 +74,18 @@ describe('ContainerStart', () => {
             treeItem,
         );
 
-        expect(containersManager.startContainer).toHaveBeenCalledWith('abc123');
+        expect(containerCommands.startContainer).toHaveBeenCalledWith(
+            'abc123',
+            target,
+        );
     });
 
     it('shows error message if startContainer throws a WrappedError', async () => {
-        const containersManager: MockProxy<ContainersManager> =
-            mock<ContainersManager>();
-        containersManager.startContainer.mockRejectedValue(
+        const containerCommands = mock<ContainerCommands>();
+        containerCommands.startContainer.mockRejectedValue(
             new WrappedError('DOCKER', 'fail'),
         );
-        const containerStart = new ContainerStart(context, containersManager);
+        const containerStart = new ContainerStart(context, containerCommands);
         containerStart.activate();
 
         await vscode.commands.executeCommand(
@@ -100,12 +101,11 @@ describe('ContainerStart', () => {
     });
 
     it('re-throws generic error errors from startContainer', async () => {
-        const containersManager: MockProxy<ContainersManager> =
-            mock<ContainersManager>();
-        containersManager.startContainer.mockRejectedValue(
+        const containerCommands = mock<ContainerCommands>();
+        containerCommands.startContainer.mockRejectedValue(
             new Error('generic error'),
         );
-        const containerStart = new ContainerStart(context, containersManager);
+        const containerStart = new ContainerStart(context, containerCommands);
         containerStart.activate();
 
         await expect(

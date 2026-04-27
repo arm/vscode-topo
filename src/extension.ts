@@ -80,6 +80,7 @@ export async function activate(
     );
     const targetDashboardMessageHandler = new TargetDashboardMessageHandler(
         containersManager,
+        dockerCommands,
         targetStore,
         targetDescriptionStore,
         containerOpenInBrowser,
@@ -91,9 +92,9 @@ export async function activate(
         targetDashboardMessageHandler,
         containersManager,
     );
-    const containerStart = new ContainerStart(context, containersManager);
-    const containerStop = new ContainerStop(context, containersManager);
-    const containerDelete = new ContainerDelete(context, containersManager);
+    const containerStart = new ContainerStart(context, dockerCommands);
+    const containerStop = new ContainerStop(context, dockerCommands);
+    const containerDelete = new ContainerDelete(context, dockerCommands);
     const openTargetDashboard = new OpenTargetDashboard(
         context,
         targetDashboardProvider,

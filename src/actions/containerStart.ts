@@ -1,16 +1,16 @@
 import * as vscode from 'vscode';
-import { ContainersManager } from '../workloadPlacement/containersManager';
 import * as manifest from '../manifest';
 import { assertTargetTreeContainerItem } from './util/assertTargetTreeContainerItem';
 import { showAndLogError } from '../util/showAndLogError';
 import { isWrappedError } from '../errors/wrappedError';
+import { ContainerCommands } from '../workloadPlacement/containerCommands';
 
 export class ContainerStart {
     public static readonly startContainerCommand = `${manifest.PACKAGE_NAME}.startContainer`;
 
     constructor(
         private readonly context: vscode.ExtensionContext,
-        private readonly containersManager: ContainersManager,
+        private readonly containerCommands: ContainerCommands,
     ) {}
 
     public activate() {
@@ -27,8 +27,9 @@ export class ContainerStart {
     ): Promise<void> {
         assertTargetTreeContainerItem(treeNode);
         try {
-            await this.containersManager.startContainer(
+            await this.containerCommands.startContainer(
                 treeNode.containerItem.id,
+                treeNode.containerItem.target,
             );
         } catch (err: unknown) {
             if (isWrappedError(err, ['DOCKER'])) {

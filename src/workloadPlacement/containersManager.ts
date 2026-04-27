@@ -50,7 +50,6 @@ const defaultTargetState: TargetState = {
 };
 
 export class ContainersManager implements vscode.Disposable {
-    private target: string | undefined;
     private readonly containersMap = new Map<
         string,
         Promise<ContainerItem[]>
@@ -84,7 +83,6 @@ export class ContainersManager implements vscode.Disposable {
         const selectedTarget = await this.targetStore.getSelectedTarget();
         this.unsetTarget();
         if (selectedTarget) {
-            this.target = selectedTarget;
             await this.startAutoRefresh(selectedTarget);
         }
     }
@@ -93,7 +91,6 @@ export class ContainersManager implements vscode.Disposable {
         this.stopAutoRefresh();
         this.targetStateMap.clear();
         this.containersMap.clear();
-        this.target = undefined;
         this._onDataUpdate.fire();
     }
 
@@ -190,36 +187,6 @@ export class ContainersManager implements vscode.Disposable {
             clearInterval(this.refreshTimer);
             this.refreshTimer = undefined;
         }
-    }
-
-    public async stopContainer(containerId: string): Promise<void> {
-        const target = this.target;
-        if (!target) {
-            throw new Error(
-                'Cannot stop container: no target is currently selected',
-            );
-        }
-        return this.containerCommands.stopContainer(containerId, target);
-    }
-
-    public async startContainer(containerId: string): Promise<void> {
-        const target = this.target;
-        if (!target) {
-            throw new Error(
-                'Cannot start container: no target is currently selected',
-            );
-        }
-        return this.containerCommands.startContainer(containerId, target);
-    }
-
-    public async deleteContainer(containerId: string): Promise<void> {
-        const target = this.target;
-        if (!target) {
-            throw new Error(
-                'Cannot delete container: no target is currently selected',
-            );
-        }
-        return this.containerCommands.deleteContainer(containerId, target);
     }
 
     public dispose(): void {

@@ -16,6 +16,7 @@ import { ContainerOpenInBrowser } from '../actions/containerOpenInBrowser';
 import { AttachVsCode } from '../actions/attachVsCode';
 import { AttachShell } from '../actions/attachShell';
 import { TargetDescriptionStore } from '../workloadPlacement/targetDescriptionStore';
+import { ContainerCommands } from '../workloadPlacement/containerCommands';
 
 jest.mock('../util/logger');
 jest.mock('../util/showAndLogError', () => ({
@@ -65,6 +66,7 @@ describe('TargetDashboardMessageHandler', () => {
     const attachVsCode = mock<AttachVsCode>();
     const attachShell = mock<AttachShell>();
     const targetDescriptionStore = mock<TargetDescriptionStore>();
+    const containerCommands = mock<ContainerCommands>();
 
     let handler: TargetDashboardMessageHandler;
 
@@ -85,6 +87,7 @@ describe('TargetDashboardMessageHandler', () => {
 
         handler = new TargetDashboardMessageHandler(
             containersManager,
+            containerCommands,
             targetStore,
             targetDescriptionStore,
             containerOpenInBrowser,
@@ -126,8 +129,9 @@ describe('TargetDashboardMessageHandler', () => {
                     containerId: 'a',
                 });
 
-                expect(containersManager.startContainer).toHaveBeenCalledWith(
+                expect(containerCommands.startContainer).toHaveBeenCalledWith(
                     'a',
+                    target,
                 );
                 expect(logger.info).toHaveBeenCalledWith(
                     'Container a started successfully',
@@ -141,13 +145,14 @@ describe('TargetDashboardMessageHandler', () => {
 
             it('shows a WrappedError for start-container docker errors and does not re-render', async () => {
                 const dockerErr = new WrappedError('DOCKER', 'fail');
-                containersManager.startContainer.mockRejectedValueOnce(
+                containerCommands.startContainer.mockRejectedValueOnce(
                     dockerErr,
                 );
 
                 await handler.handleMessage(messagePoster, {
                     type: 'start-container',
                     containerId: 'a',
+                    target,
                 });
 
                 expect(showAndLogError).toHaveBeenCalledWith(
@@ -159,11 +164,12 @@ describe('TargetDashboardMessageHandler', () => {
 
             it('handles unknown errors by showing an unexpected error', async () => {
                 const err = new Error('boom');
-                containersManager.startContainer.mockRejectedValueOnce(err);
+                containerCommands.startContainer.mockRejectedValueOnce(err);
 
                 await handler.handleMessage(messagePoster, {
                     type: 'start-container',
                     containerId: 'a',
+                    target,
                 });
 
                 expect(showAndLogError).toHaveBeenCalledWith(
@@ -181,8 +187,9 @@ describe('TargetDashboardMessageHandler', () => {
                     containerId: 'a',
                 });
 
-                expect(containersManager.stopContainer).toHaveBeenCalledWith(
+                expect(containerCommands.stopContainer).toHaveBeenCalledWith(
                     'a',
+                    target,
                 );
                 expect(logger.info).toHaveBeenCalledWith(
                     'Container a stopped successfully',
@@ -197,13 +204,14 @@ describe('TargetDashboardMessageHandler', () => {
             it('handles stop-container docker WrappedError and returns early', async () => {
                 const dockerErr = new WrappedError('DOCKER', 'fail');
 
-                containersManager.stopContainer.mockRejectedValueOnce(
+                containerCommands.stopContainer.mockRejectedValueOnce(
                     dockerErr,
                 );
 
                 await handler.handleMessage(messagePoster, {
                     type: 'stop-container',
                     containerId: 'a',
+                    target,
                 });
 
                 expect(showAndLogError).toHaveBeenCalledWith(
@@ -215,11 +223,12 @@ describe('TargetDashboardMessageHandler', () => {
 
             it('shows an unexpected error when stop-container throws a generic error', async () => {
                 const err = new Error('boom');
-                containersManager.stopContainer.mockRejectedValueOnce(err);
+                containerCommands.stopContainer.mockRejectedValueOnce(err);
 
                 await handler.handleMessage(messagePoster, {
                     type: 'stop-container',
                     containerId: 'a',
+                    target,
                 });
 
                 expect(showAndLogError).toHaveBeenCalledWith(
@@ -235,10 +244,12 @@ describe('TargetDashboardMessageHandler', () => {
                 await handler.handleMessage(messagePoster, {
                     type: 'delete-container',
                     containerId: 'a',
+                    target,
                 });
 
-                expect(containersManager.deleteContainer).toHaveBeenCalledWith(
+                expect(containerCommands.deleteContainer).toHaveBeenCalledWith(
                     'a',
+                    target,
                 );
                 expect(logger.info).toHaveBeenCalledWith(
                     'Container a deleted successfully',
@@ -253,13 +264,14 @@ describe('TargetDashboardMessageHandler', () => {
             it('handles delete-container docker WrappedError and returns early', async () => {
                 const dockerErr = new WrappedError('DOCKER', 'fail');
 
-                containersManager.deleteContainer.mockRejectedValueOnce(
+                containerCommands.deleteContainer.mockRejectedValueOnce(
                     dockerErr,
                 );
 
                 await handler.handleMessage(messagePoster, {
                     type: 'delete-container',
                     containerId: 'a',
+                    target,
                 });
 
                 expect(showAndLogError).toHaveBeenCalledWith(
@@ -271,11 +283,12 @@ describe('TargetDashboardMessageHandler', () => {
 
             it('shows an unexpected error when delete-container throws a generic error', async () => {
                 const err = new Error('boom');
-                containersManager.deleteContainer.mockRejectedValueOnce(err);
+                containerCommands.deleteContainer.mockRejectedValueOnce(err);
 
                 await handler.handleMessage(messagePoster, {
                     type: 'delete-container',
                     containerId: 'a',
+                    target,
                 });
 
                 expect(showAndLogError).toHaveBeenCalledWith(
@@ -517,7 +530,7 @@ describe('TargetDashboardMessageHandler', () => {
 
             expect(showAndLogError).toHaveBeenCalledWith(
                 'Unexpected error handling message from target dashboard webview',
-                new Error('Unknown message type: nope'),
+                new Error('Invalid message received from target dashboard'),
             );
         });
 
