@@ -9,15 +9,9 @@ export async function getTargetDescription(
     try {
         const description = await cli.describe(ssh);
         return {
-            hostProcessors: description.host.map((processor) => ({
-                model: processor.model,
-                cores: processor.cores,
-                features: processor.features,
-            })),
-            remoteprocCpus: description.remoteprocs.map((remoteproc) => ({
-                name: remoteproc.name,
-            })),
-        };
+            hostProcessors: description.host,
+            remoteprocCpus: description.remoteprocs,
+        }
     } catch (error) {
         logger.warn(`Failed to get target description for ${ssh}`, error);
     }
