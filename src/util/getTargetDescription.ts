@@ -11,7 +11,7 @@ export async function getTargetDescription(
         return {
             hostProcessors: description.host,
             remoteprocCpus: description.remoteprocs,
-        }
+        };
     } catch (error) {
         logger.warn(`Failed to get target description for ${ssh}`, error);
     }
