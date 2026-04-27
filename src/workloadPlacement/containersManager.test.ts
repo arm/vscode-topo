@@ -1,5 +1,5 @@
 import { ContainersManager } from './containersManager';
-import { ContainerItem, DockerPsItem, TargetItem } from '../util/types';
+import { ContainerItem, DockerPsItem } from '../util/types';
 import * as manifest from '../manifest';
 import { exec } from '../util/exec';
 import { DockerCommands } from './dockerCommands';
@@ -100,9 +100,7 @@ const defaultInfoOutput = {
     stderr: '',
 };
 const execMock = exec as jest.Mock;
-const target: TargetItem = {
-    ssh: 'user@topo.local',
-};
+const target = 'user@topo.local';
 const loadedHealth: HealthCheckResult = {
     host: { dependencies: [] },
     target: {
@@ -158,13 +156,13 @@ describe('ContainersManager', () => {
             switch (command) {
                 case "docker context ls --format '{{.Name}}'":
                     return defaultContextOutput;
-                case `docker --host ssh://${target.ssh} ps -a --format "{{json .}}"`:
+                case `docker --host ssh://${target} ps -a --format "{{json .}}"`:
                     return defaultPsOutput;
-                case `docker --host ssh://${target.ssh} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{json .}}'`:
+                case `docker --host ssh://${target} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{json .}}'`:
                     return defaultInspectOutput;
-                case `docker --host ssh://${target.ssh} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{json .}}'`:
+                case `docker --host ssh://${target} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{json .}}'`:
                     return defaultStatsOutput;
-                case `ssh ${target.ssh} 'docker info'`:
+                case `ssh ${target} 'docker info'`:
                     return defaultInfoOutput;
                 default:
                     throw Error(`Unexpected command: ${command}`);
@@ -218,11 +216,11 @@ describe('ContainersManager', () => {
             switch (command) {
                 case "docker context ls --format '{{.Name}}'":
                     return defaultContextOutput;
-                case `docker --host ssh://${target.ssh} ps -a --format "{{json .}}"`:
+                case `docker --host ssh://${target} ps -a --format "{{json .}}"`:
                     throw Error('ps error');
-                case `docker --host ssh://${target.ssh} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{json .}}'`:
+                case `docker --host ssh://${target} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{json .}}'`:
                     return defaultStatsOutput;
-                case `ssh ${target.ssh} 'docker info'`:
+                case `ssh ${target} 'docker info'`:
                     return defaultInfoOutput;
                 default:
                     throw Error(`Unexpected command: ${command}`);
@@ -242,12 +240,12 @@ describe('ContainersManager', () => {
             switch (command) {
                 case "docker context ls --format '{{.Name}}'":
                     return defaultContextOutput;
-                case `docker --host ssh://${target.ssh} ps -a --format "{{json .}}"`:
+                case `docker --host ssh://${target} ps -a --format "{{json .}}"`:
                     return {
                         stdout: 'not-json\n',
                         stderr: '',
                     };
-                case `ssh ${target.ssh} 'docker info'`:
+                case `ssh ${target} 'docker info'`:
                     return defaultInfoOutput;
                 default:
                     throw Error(`Unexpected command: ${command}`);
@@ -268,13 +266,13 @@ describe('ContainersManager', () => {
             switch (command) {
                 case "docker context ls --format '{{.Name}}'":
                     return defaultContextOutput;
-                case `docker --host ssh://${target.ssh} ps -a --format "{{json .}}"`:
+                case `docker --host ssh://${target} ps -a --format "{{json .}}"`:
                     return defaultPsOutput;
-                case `docker --host ssh://${target.ssh} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{json .}}'`:
+                case `docker --host ssh://${target} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{json .}}'`:
                     return defaultInspectOutput;
-                case `docker --host ssh://${target.ssh} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{json .}}'`:
+                case `docker --host ssh://${target} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{json .}}'`:
                     return defaultStatsOutput;
-                case `ssh ${target.ssh} 'docker info'`:
+                case `ssh ${target} 'docker info'`:
                     return defaultInfoOutput;
                 default:
                     throw Error(`Unexpected command: ${command}`);
@@ -299,13 +297,13 @@ describe('ContainersManager', () => {
             switch (command) {
                 case "docker context ls --format '{{.Name}}'":
                     return defaultContextOutput;
-                case `docker --host ssh://${target.ssh} ps -a --format "{{json .}}"`:
+                case `docker --host ssh://${target} ps -a --format "{{json .}}"`:
                     return defaultPsOutput;
-                case `docker --host ssh://${target.ssh} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{json .}}'`:
+                case `docker --host ssh://${target} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{json .}}'`:
                     return defaultInspectOutput;
-                case `docker --host ssh://${target.ssh} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{json .}}'`:
+                case `docker --host ssh://${target} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{json .}}'`:
                     return defaultStatsOutput;
-                case `ssh ${target.ssh} 'docker info'`:
+                case `ssh ${target} 'docker info'`:
                     return defaultInfoOutput;
                 default:
                     throw Error(`Unexpected command: ${command}`);
@@ -329,13 +327,13 @@ describe('ContainersManager', () => {
             switch (command) {
                 case "docker context ls --format '{{.Name}}'":
                     return defaultContextOutput;
-                case `docker --host ssh://${target.ssh} ps -a --format "{{json .}}"`:
+                case `docker --host ssh://${target} ps -a --format "{{json .}}"`:
                     return defaultPsOutput;
-                case `docker --host ssh://${target.ssh} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{json .}}'`:
+                case `docker --host ssh://${target} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{json .}}'`:
                     return defaultInspectOutput;
-                case `docker --host ssh://${target.ssh} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{json .}}'`:
+                case `docker --host ssh://${target} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{json .}}'`:
                     return defaultStatsOutput;
-                case `ssh ${target.ssh} 'docker info'`:
+                case `ssh ${target} 'docker info'`:
                     return defaultInfoOutput;
                 default:
                     throw Error(`Unexpected command: ${command}`);
@@ -370,7 +368,7 @@ describe('ContainersManager', () => {
 
         expect(manager.getTargetStateSnapshot()).toEqual({
             health: undefined,
-            targetId: undefined,
+            target: undefined,
         });
 
         pendingHealth.resolve(loadedHealth);
@@ -397,16 +395,16 @@ describe('ContainersManager', () => {
         await activation;
         await expect(targetStatePromise).resolves.toEqual({
             health: loadedHealth.target,
-            targetSsh: target.ssh,
+            target: target,
         });
         expect(manager.getTargetStateSnapshot()).toEqual({
             health: loadedHealth.target,
-            targetSsh: target.ssh,
+            target: target,
         });
     });
 
     it('resets target state snapshot and getTargetState when the selected target is cleared', async () => {
-        let selectedTarget: TargetItem | undefined = target;
+        let selectedTarget: string | undefined = target;
         const onChangeEmitter = new vscode.EventEmitter<void>();
         const targetStore = mock<TargetStore>();
         targetStore.onChanged.mockImplementation(onChangeEmitter.event);
@@ -422,7 +420,7 @@ describe('ContainersManager', () => {
         await manager.activate();
         await expect(manager.getTargetState()).resolves.toEqual({
             health: loadedHealth.target,
-            targetSsh: target.ssh,
+            target: target,
         });
 
         selectedTarget = undefined;
@@ -431,11 +429,11 @@ describe('ContainersManager', () => {
 
         expect(manager.getTargetStateSnapshot()).toEqual({
             health: undefined,
-            targetId: undefined,
+            target: undefined,
         });
         await expect(manager.getTargetState()).resolves.toEqual({
             health: undefined,
-            targetId: undefined,
+            target: undefined,
         });
     });
 
@@ -444,13 +442,13 @@ describe('ContainersManager', () => {
             switch (command) {
                 case "docker context ls --format '{{.Name}}'":
                     return defaultContextOutput;
-                case `docker --host ssh://${target.ssh} ps -a --format "{{json .}}"`:
+                case `docker --host ssh://${target} ps -a --format "{{json .}}"`:
                     return defaultPsOutput;
-                case `docker --host ssh://${target.ssh} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{json .}}'`:
+                case `docker --host ssh://${target} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{json .}}'`:
                     return defaultInspectOutput;
-                case `docker --host ssh://${target.ssh} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{json .}}'`:
+                case `docker --host ssh://${target} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{json .}}'`:
                     return defaultStatsOutput;
-                case `ssh ${target.ssh} 'docker info'`:
+                case `ssh ${target} 'docker info'`:
                     return defaultInfoOutput;
                 default:
                     throw Error(`Unexpected command: ${command}`);
@@ -469,7 +467,7 @@ describe('ContainersManager', () => {
         await expect(manager.stopContainer('abc123')).resolves.toBeUndefined();
 
         expect(exec).toHaveBeenCalledWith(
-            `docker --host ssh://${target.ssh} stop abc123`,
+            `docker --host ssh://${target} stop abc123`,
         );
     });
 
@@ -478,13 +476,13 @@ describe('ContainersManager', () => {
             switch (command) {
                 case "docker context ls --format '{{.Name}}'":
                     return defaultContextOutput;
-                case `docker --host ssh://${target.ssh} ps -a --format "{{json .}}"`:
+                case `docker --host ssh://${target} ps -a --format "{{json .}}"`:
                     return defaultPsOutput;
-                case `docker --host ssh://${target.ssh} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{json .}}'`:
+                case `docker --host ssh://${target} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{json .}}'`:
                     return defaultInspectOutput;
-                case `docker --host ssh://${target.ssh} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{json .}}'`:
+                case `docker --host ssh://${target} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{json .}}'`:
                     return defaultStatsOutput;
-                case `ssh ${target.ssh} 'docker info'`:
+                case `ssh ${target} 'docker info'`:
                     return defaultInfoOutput;
                 default:
                     throw Error(`Unexpected command: ${command}`);
@@ -506,13 +504,13 @@ describe('ContainersManager', () => {
             switch (command) {
                 case "docker context ls --format '{{.Name}}'":
                     return defaultContextOutput;
-                case `docker --host ssh://${target.ssh} ps -a --format "{{json .}}"`:
+                case `docker --host ssh://${target} ps -a --format "{{json .}}"`:
                     return defaultPsOutput;
-                case `docker --host ssh://${target.ssh} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{json .}}'`:
+                case `docker --host ssh://${target} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{json .}}'`:
                     return defaultInspectOutput;
-                case `docker --host ssh://${target.ssh} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{json .}}'`:
+                case `docker --host ssh://${target} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{json .}}'`:
                     return defaultStatsOutput;
-                case `ssh ${target.ssh} 'docker info'`:
+                case `ssh ${target} 'docker info'`:
                     return defaultInfoOutput;
                 default:
                     throw Error(`Unexpected command: ${command}`);
@@ -530,7 +528,7 @@ describe('ContainersManager', () => {
         await expect(manager.startContainer('abc123')).resolves.toBeUndefined();
 
         expect(exec).toHaveBeenCalledWith(
-            `docker --host ssh://${target.ssh} start abc123`,
+            `docker --host ssh://${target} start abc123`,
         );
     });
 
@@ -539,13 +537,13 @@ describe('ContainersManager', () => {
             switch (command) {
                 case "docker context ls --format '{{.Name}}'":
                     return defaultContextOutput;
-                case `docker --host ssh://${target.ssh} ps -a --format "{{json .}}"`:
+                case `docker --host ssh://${target} ps -a --format "{{json .}}"`:
                     return defaultPsOutput;
-                case `docker --host ssh://${target.ssh} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{json .}}'`:
+                case `docker --host ssh://${target} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{json .}}'`:
                     return defaultInspectOutput;
-                case `docker --host ssh://${target.ssh} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{json .}}'`:
+                case `docker --host ssh://${target} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{json .}}'`:
                     return defaultStatsOutput;
-                case `ssh ${target.ssh} 'docker info'`:
+                case `ssh ${target} 'docker info'`:
                     return defaultInfoOutput;
                 default:
                     throw Error(`Unexpected command: ${command}`);
@@ -563,20 +561,18 @@ describe('ContainersManager', () => {
     });
 
     it('updates when targetStore onChanged fires (re-queries selected target)', async () => {
-        const newTarget: TargetItem = {
-            ssh: 'bob@other.local',
-        };
+        const newTarget = 'bob@other.local';
         execMock.mockImplementation(async (command: string) => {
             switch (command) {
-                case `ssh ${target.ssh} 'docker info'`:
+                case `ssh ${target} 'docker info'`:
                     return defaultInfoOutput;
-                case `ssh ${newTarget.ssh} 'docker info'`:
+                case `ssh ${newTarget} 'docker info'`:
                     return defaultInfoOutput;
                 default:
                     throw Error(`Unexpected command: ${command}`);
             }
         });
-        let selectedTarget: TargetItem | undefined = target;
+        let selectedTarget: string | undefined = target;
         const onChangeEmitter = new vscode.EventEmitter<void>();
         const targetStore = mock<TargetStore>();
         targetStore.onChanged.mockImplementation(onChangeEmitter.event);
@@ -601,11 +597,9 @@ describe('ContainersManager', () => {
     });
 
     it('ignores stale container loads after selected target changes', async () => {
-        const newTarget: TargetItem = {
-            ssh: 'bob@other.local',
-        };
+        const newTarget = 'bob@other.local';
         const pendingOldContainers = new Deferred<DockerPsItem[]>();
-        let selectedTarget: TargetItem | undefined = target;
+        let selectedTarget: string | undefined = target;
         const onChangeEmitter = new vscode.EventEmitter<void>();
         const targetStore = mock<TargetStore>();
         targetStore.onChanged.mockImplementation(onChangeEmitter.event);
@@ -615,7 +609,7 @@ describe('ContainersManager', () => {
         const containerCommands = mock<ContainerCommands>();
         containerCommands.getContainers.mockImplementation(
             async (targetSshConnection: string) =>
-                targetSshConnection === target.ssh
+                targetSshConnection === target
                     ? pendingOldContainers.promise
                     : [],
         );
@@ -635,7 +629,7 @@ describe('ContainersManager', () => {
                 connectivity: {
                     name: 'Connected',
                     value: '',
-                    status: ssh === newTarget.ssh ? 'ok' : 'error',
+                    status: ssh === newTarget ? 'ok' : 'error',
                 },
                 subsystemDriver: {
                     name: 'Subsystem Driver (remoteproc)',
@@ -656,22 +650,16 @@ describe('ContainersManager', () => {
         await staleLoad;
         await waitImmediate();
 
-        expect(containerCommands.getContainers).toHaveBeenCalledWith(
-            target.ssh,
-        );
-        expect(containerCommands.getContainers).toHaveBeenCalledWith(
-            newTarget.ssh,
-        );
+        expect(containerCommands.getContainers).toHaveBeenCalledWith(target);
+        expect(containerCommands.getContainers).toHaveBeenCalledWith(newTarget);
 
         const result = await manager.getContainersData();
         expect(result).toEqual([]);
     });
 
     it('refreshes the newly selected target after target change', async () => {
-        const newTarget: TargetItem = {
-            ssh: 'bob@other.local',
-        };
-        let selectedTarget: TargetItem | undefined = target;
+        const newTarget = 'bob@other.local';
+        let selectedTarget: string | undefined = target;
         const onChangeEmitter = new vscode.EventEmitter<void>();
         const targetStore = mock<TargetStore>();
         targetStore.onChanged.mockImplementation(onChangeEmitter.event);
@@ -681,7 +669,7 @@ describe('ContainersManager', () => {
 
         const pendingOldHealth = new Deferred<HealthCheckResult>();
         topoCli.health.mockImplementation(async (ssh: string) => {
-            if (ssh === target.ssh) {
+            if (ssh === target) {
                 return pendingOldHealth.promise;
             }
 
@@ -755,7 +743,7 @@ describe('ContainersManager', () => {
         await jest.advanceTimersByTimeAsync(9000);
 
         expect(topoCli.health).toHaveBeenCalled();
-        expect(topoCli.health).toHaveBeenCalledWith(newTarget.ssh);
-        expect(topoCli.health).not.toHaveBeenCalledWith(target.ssh);
+        expect(topoCli.health).toHaveBeenCalledWith(newTarget);
+        expect(topoCli.health).not.toHaveBeenCalledWith(target);
     });
 });

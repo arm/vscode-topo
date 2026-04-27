@@ -10,13 +10,13 @@ export class TargetDescriptionStore {
     constructor(private topoCli: TopoCli) {}
 
     private async loadDescription(
-        targetSsh: string,
+        target: string,
     ): Promise<TargetDescription | undefined> {
         try {
-            return await this.topoCli.describe(targetSsh);
+            return await this.topoCli.describe(target);
         } catch (error) {
             logger.warn(
-                `Failed to get target description for ${targetSsh}`,
+                `Failed to get target description for ${target}`,
                 error,
             );
             return undefined;
@@ -24,17 +24,17 @@ export class TargetDescriptionStore {
     }
 
     public async getDescription(
-        targetSsh: string,
+        target: string,
     ): Promise<TargetDescription | undefined> {
-        const existing = this.cache.get(targetSsh);
+        const existing = this.cache.get(target);
         if (existing) {
             return existing.promise;
         }
 
         const deferred = new Deferred<TargetDescription | undefined>();
-        this.cache.set(targetSsh, deferred);
+        this.cache.set(target, deferred);
         (async () => {
-            const description = await this.loadDescription(targetSsh);
+            const description = await this.loadDescription(target);
             deferred.resolve(description);
         })();
 

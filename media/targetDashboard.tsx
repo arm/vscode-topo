@@ -4,15 +4,10 @@ import {
 } from '../src/manifest';
 import { hasContainerEngine, isTargetReachable } from '../src/util/targetState';
 import { getContainerHostPorts } from '../src/util/getContainerHostPorts';
-import {
-    TargetState,
-    ContainerItem,
-    MessagePoster,
-    TargetItem,
-} from '../src/util/types';
+import { TargetState, ContainerItem, MessagePoster } from '../src/util/types';
 
 export interface TargetDashboardProps {
-    target: TargetItem;
+    target: string;
     containersData: ContainerItem[];
     targetState: TargetState;
     messagePoster: MessagePoster;
@@ -266,7 +261,7 @@ export function TargetDashboard({
 
     return (
         <div className="target-dashboard">
-            <h1>Target Dashboard: {target.ssh}</h1>
+            <h1>Target Dashboard: {target}</h1>
             {subsystems.map((subsystem) => (
                 <div key={subsystem} className="section-group">
                     <h3>

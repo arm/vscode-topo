@@ -8,7 +8,6 @@ import type {
     TargetState,
     ContainerItem,
     MessagePoster,
-    TargetItem,
     TargetDescription,
 } from '../util/types';
 import { mock } from 'jest-mock-extended';
@@ -27,16 +26,14 @@ describe('TargetDashboardMessageHandler', () => {
     const postMessage = jest.fn(async () => true);
     const messagePoster: MessagePoster = { postMessage };
 
-    const target: TargetItem = {
-        ssh: 'user@topo.local',
-    };
+    const target = 'user@topo.local';
     const targetDescription: TargetDescription = {
         hostProcessors: [],
         remoteprocCpus: [{ name: 'imx-rproc' }],
     };
     const targetState: TargetState = {
         health: undefined,
-        targetSsh: target.ssh,
+        target: target,
     };
 
     const containerA: ContainerItem = {

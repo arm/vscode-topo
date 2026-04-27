@@ -1,11 +1,9 @@
 import * as vscode from 'vscode';
 import { TargetTreeSubsystemGroupItem } from './targetTreeSubsystemGroupItem';
-import { TargetItem } from '../util/types';
-import { mock } from 'jest-mock-extended';
 
 describe('TargetTreeSubsystemGroupItem', () => {
     it('sets label, contextValue, and icon', () => {
-        const item = new TargetTreeSubsystemGroupItem(mock<TargetItem>());
+        const item = new TargetTreeSubsystemGroupItem('root@host.local');
 
         expect(item.label).toBe('Subsystems');
         expect(item.contextValue).toBe('Subsystems');

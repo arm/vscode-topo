@@ -5,7 +5,6 @@ import type {
     TargetState,
     ContainerItem,
     DockerPsItem,
-    TargetItem,
     DockerInspectItem,
     DockerStatsItem,
 } from '../util/types';
@@ -20,7 +19,7 @@ function createContainerItem(
     item: DockerPsItem,
     inspect: DockerInspectItem | undefined,
     stats: DockerStatsItem | undefined,
-    target: TargetItem,
+    target: string,
 ): ContainerItem {
     const cpuUsage = stats?.CPUPerc || '';
     const memUsage = stats?.MemUsage || '';
@@ -54,13 +53,13 @@ export class ContainersManager implements vscode.Disposable {
     public readonly onDataUpdate = this._onDataUpdate.event;
     private readonly defaultTargetState: TargetState = {
         health: undefined,
-        targetSsh: undefined,
+        target: undefined,
     };
     private refreshTimer: NodeJS.Timeout | undefined;
     private refreshSession: symbol | undefined;
     private containersData: ContainerItem[] = [];
     private targetState: TargetState = this.defaultTargetState;
-    private target: TargetItem | undefined;
+    private target: string | undefined;
     private disposables: vscode.Disposable[] = [];
 
     constructor(
@@ -89,7 +88,7 @@ export class ContainersManager implements vscode.Disposable {
         await this.startAutoRefresh();
     }
 
-    private async setTarget(target: TargetItem) {
+    private async setTarget(target: string) {
         this.target = target;
     }
 
@@ -114,24 +113,21 @@ export class ContainersManager implements vscode.Disposable {
         if (!target) {
             return {
                 health: undefined,
-                targetSsh: undefined,
+                target: undefined,
             };
         }
 
         try {
-            const health = await this.topoCli.health(target.ssh);
+            const health = await this.topoCli.health(target);
             return {
                 health: health.target,
-                targetSsh: target.ssh,
+                target: target,
             };
         } catch (err) {
-            logger.error(
-                `Failed to check health for target ${target.ssh}`,
-                err,
-            );
+            logger.error(`Failed to check health for target ${target}`, err);
             return {
                 health: undefined,
-                targetSsh: target.ssh,
+                target: target,
             };
         }
     }
@@ -225,13 +221,11 @@ export class ContainersManager implements vscode.Disposable {
         }
 
         try {
-            const items = await this.containerCommands.getContainers(
-                target.ssh,
-            );
+            const items = await this.containerCommands.getContainers(target);
             const ids = items.map((item) => item.ID);
             const [inspectOutput, statsOutput] = await Promise.all([
-                this.containerCommands.inspectContainers(ids, target.ssh),
-                this.containerCommands.containerStats(ids, target.ssh),
+                this.containerCommands.inspectContainers(ids, target),
+                this.containerCommands.containerStats(ids, target),
             ]);
 
             const containers: ContainerItem[] = [];
@@ -304,7 +298,7 @@ export class ContainersManager implements vscode.Disposable {
                 'Cannot stop container: no target is currently selected',
             );
         }
-        return this.containerCommands.stopContainer(containerId, target.ssh);
+        return this.containerCommands.stopContainer(containerId, target);
     }
 
     public async startContainer(containerId: string): Promise<void> {
@@ -314,7 +308,7 @@ export class ContainersManager implements vscode.Disposable {
                 'Cannot start container: no target is currently selected',
             );
         }
-        return this.containerCommands.startContainer(containerId, target.ssh);
+        return this.containerCommands.startContainer(containerId, target);
     }
 
     public async deleteContainer(containerId: string): Promise<void> {
@@ -324,7 +318,7 @@ export class ContainersManager implements vscode.Disposable {
                 'Cannot delete container: no target is currently selected',
             );
         }
-        return this.containerCommands.deleteContainer(containerId, target.ssh);
+        return this.containerCommands.deleteContainer(containerId, target);
     }
 
     public dispose(): void {

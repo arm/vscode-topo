@@ -6,7 +6,6 @@ import { logger } from '../util/logger';
 import { ContainersManager } from './containersManager';
 import { getTreeItemIcon } from './targetTreeTargetItem';
 import { isTargetReady } from '../util/targetState';
-import { TargetItem } from '../util/types';
 import { defaultSshConfigPath, getHosts } from '../util/ssh';
 
 export function buildQuickPickItems(
@@ -72,28 +71,27 @@ export class TargetManager {
         );
     }
 
-    private async addTarget(): Promise<TargetItem | undefined> {
-        const ssh = await this.promptForSshTarget();
-        if (!ssh?.trim()) {
+    private async addTarget(): Promise<string | undefined> {
+        const target = await this.promptForSshTarget();
+        if (!target) {
             return;
         }
 
         try {
-            await this.targetStore.addTarget({ ssh });
+            await this.targetStore.addTarget(target);
         } catch (error) {
             const errorMsg = `Failed to add target`;
             logger.warn(errorMsg, error);
             vscode.window.showWarningMessage(errorMsg);
             return;
         }
-        await this.targetStore.setSelected(ssh);
+        await this.targetStore.setSelected(target);
+        return target;
     }
 
     private async promptForSshTarget(): Promise<string | undefined> {
         const sshHosts = await getHosts(defaultSshConfigPath);
-        const existingTargets = new Set(
-            this.targetStore.getTargets().map((t) => t.ssh),
-        );
+        const existingTargets = new Set(this.targetStore.getTargets());
         const availableHosts = sshHosts.filter(
             (host) => !existingTargets.has(host),
         );
@@ -110,9 +108,9 @@ export class TargetManager {
 
         return new Promise<string | undefined>((resolve) => {
             quickPick.onDidAccept(async () => {
-                const selected = quickPick.selectedItems[0];
+                const selected = quickPick.selectedItems[0]?.label?.trim();
                 quickPick.hide();
-                resolve(selected?.label);
+                resolve(selected);
             });
 
             quickPick.onDidHide(() => {
@@ -123,22 +121,21 @@ export class TargetManager {
         }).finally(() => quickPick.dispose());
     }
 
-    protected updateStatusBar(selectedTarget: TargetItem | undefined): void {
+    protected updateStatusBar(selectedTarget: string | undefined): void {
         if (!this.statusBarItem) {
             return;
         }
         if (selectedTarget) {
             const targetState = this.containersManager.getTargetStateSnapshot();
-            const connectionReady =
-                selectedTarget.ssh === targetState.targetSsh;
+            const connectionReady = selectedTarget === targetState.target;
             const targetTreeIcon = getTreeItemIcon(
                 true,
                 connectionReady,
                 isTargetReady(targetState),
             );
             const iconId = targetTreeIcon?.id || 'pass-filled';
-            this.statusBarItem.text = `$(${iconId}) ${selectedTarget.ssh}`;
-            this.statusBarItem.tooltip = `Connection String: ${selectedTarget.ssh}`;
+            this.statusBarItem.text = `$(${iconId}) ${selectedTarget}`;
+            this.statusBarItem.tooltip = `Connection String: ${selectedTarget}`;
             this.statusBarItem.show();
         } else {
             this.statusBarItem.hide();

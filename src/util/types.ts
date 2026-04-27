@@ -15,10 +15,6 @@ export interface TargetDescription {
     remoteprocCpus: RemoteprocCpu[];
 }
 
-export interface TargetItem {
-    ssh: string;
-}
-
 /**
  * Represents a Docker container item from the output of the "docker ps" command.
  *
@@ -90,7 +86,7 @@ export interface DockerStatsItem {
  * @property {DockerPorts} ports - The ports exposed by the container.
  * @property {string} cpuUsage - The CPU usage of the container.
  * @property {string} memUsage - The memory usage of the container.
- * @property {TargetItem} target - The target associated with the container.
+ * @property {string} target - The target associated with the container.
  */
 export interface ContainerItem {
     id: string;
@@ -106,7 +102,7 @@ export interface ContainerItem {
     ports: DockerPorts;
     cpuUsage: string;
     memUsage: string;
-    target: TargetItem;
+    target: string;
 }
 
 export interface ServiceCreationDescription extends ServiceDescription {
@@ -121,5 +117,5 @@ export type Mutable<T> = { -readonly [P in keyof T]: T[P] };
 
 export interface TargetState {
     health: HealthCheckResult['target'] | undefined;
-    targetSsh: string | undefined;
+    target: string | undefined;
 }
