@@ -24,10 +24,7 @@ describe('TargetDescriptionStore', () => {
             ],
             remoteprocCpus: [{ name: 'imx-rproc' }],
         };
-        topoCli.describe.mockResolvedValue({
-            host: targetDescription.hostProcessors,
-            remoteprocs: targetDescription.remoteprocCpus,
-        });
+        topoCli.describe.mockResolvedValue(targetDescription);
         const store = new TargetDescriptionStore(topoCli);
 
         const description = await store.getDescription('user@host');
@@ -36,7 +33,10 @@ describe('TargetDescriptionStore', () => {
     });
 
     it('should only allow each target description to be fetched once', async () => {
-        topoCli.describe.mockResolvedValue({ host: [], remoteprocs: [] });
+        topoCli.describe.mockResolvedValue({
+            hostProcessors: [],
+            remoteprocCpus: [],
+        });
         const store = new TargetDescriptionStore(topoCli);
 
         await Promise.all([

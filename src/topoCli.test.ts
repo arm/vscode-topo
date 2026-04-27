@@ -11,9 +11,9 @@ import { WrappedError } from './errors/wrappedError';
 import {
     HealthCheckResult,
     ProjectDescription,
-    TargetDescriptionResult,
     TemplateDescription,
 } from './topoCliSchema';
+import { TargetDescription } from './util/types';
 
 jest.mock('node:child_process');
 jest.mock('node:fs');
@@ -209,9 +209,11 @@ describe('TopoCli', () => {
     });
 
     it('describe resolves parsed JSON and runs topo describe with --output json', async () => {
-        const description: TargetDescriptionResult = {
-            host: [{ model: 'Cortex-A55', cores: 2, features: ['fp'] }],
-            remoteprocs: [{ name: 'imx-rproc' }],
+        const description: TargetDescription = {
+            hostProcessors: [
+                { model: 'Cortex-A55', cores: 2, features: ['fp'] },
+            ],
+            remoteprocCpus: [{ name: 'imx-rproc' }],
         };
         execMock.mockImplementation((_bin, _cargs, _options, cb) => {
             cb!(

@@ -13,11 +13,7 @@ export class TargetDescriptionStore {
         targetSsh: string,
     ): Promise<TargetDescription | undefined> {
         try {
-            const description = await this.topoCli.describe(targetSsh);
-            return {
-                hostProcessors: description.host,
-                remoteprocCpus: description.remoteprocs,
-            };
+            return await this.topoCli.describe(targetSsh);
         } catch (error) {
             logger.warn(
                 `Failed to get target description for ${targetSsh}`,

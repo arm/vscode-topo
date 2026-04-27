@@ -8,7 +8,6 @@ import {
     ProjectDescription,
     projectDescriptionSchema,
     TemplateDescription,
-    TargetDescriptionResult,
     targetDescriptionSchema,
     templateSchema,
     topoLogEntrySchema,
@@ -20,6 +19,7 @@ import {
     WrappedErrorLogLevel,
 } from './errors/wrappedError';
 import { getErrorMessage } from './util/getErrorMessage';
+import { TargetDescription } from './util/types';
 
 export interface TopoCliVersion {
     version: string;
@@ -191,11 +191,11 @@ export class TopoCli {
         return project;
     }
 
-    private async describeRaw(sshTarget: string): Promise<string> {
+    /** Returns target description data from topo describe JSON output. */
+    public async describe(sshTarget: string): Promise<TargetDescription> {
         const bin = this.getBinaryPath();
         const cmd = ['describe', '--target', sshTarget, '--output', 'json'];
-
-        return await new Promise<string>((resolve, reject) => {
+        const output = await new Promise<string>((resolve, reject) => {
             childProcess.execFile(
                 bin,
                 cmd,
@@ -217,9 +217,7 @@ export class TopoCli {
                 },
             );
         });
-    }
 
-    private parseTargetDescription(output: string): TargetDescriptionResult {
         let parsedDescription: unknown;
         try {
             parsedDescription = JSON.parse(output);
@@ -231,19 +229,20 @@ export class TopoCli {
         }
 
         try {
-            return create(parsedDescription, targetDescriptionSchema);
+            const description = create(
+                parsedDescription,
+                targetDescriptionSchema,
+            );
+            return {
+                hostProcessors: description.host,
+                remoteprocCpus: description.remoteprocs,
+            };
         } catch (validationError) {
             throw new Error(
                 `Invalid target description JSON: ${getErrorMessage(validationError)}`,
                 { cause: validationError },
             );
         }
-    }
-
-    /** Returns target description data from topo describe JSON output. */
-    public async describe(sshTarget: string): Promise<TargetDescriptionResult> {
-        const output = await this.describeRaw(sshTarget);
-        return this.parseTargetDescription(output);
     }
 
     /** Runs the binary to initialize a project. */

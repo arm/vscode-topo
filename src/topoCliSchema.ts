@@ -87,8 +87,6 @@ export const targetDescriptionSchema = type({
     remoteprocs: array(describeRemoteprocSchema),
 });
 
-export type TargetDescriptionResult = Infer<typeof targetDescriptionSchema>;
-
 const topoLogLevelSchema = enums(['DEBUG', 'INFO', 'WARN', 'ERROR']);
 
 export const topoLogEntrySchema = type({
