@@ -1,21 +1,16 @@
-import fs from 'node:fs';
 import { TopoCli } from '../topoCli';
-import { getTargetDescription } from '../util/getTargetDescription';
 import { TargetDescriptionStore } from './targetDescriptionStore';
 import { mock } from 'jest-mock-extended';
 import { TargetDescription } from '../util/types';
+import { logger } from '../util/logger';
 
-jest.mock('node:fs');
-jest.mock('../util/getTargetDescription');
-
-const mockTmpDir = '/tmp/topo-target-12345';
+jest.mock('../util/logger');
 
 describe('TargetDescriptionStore', () => {
     const topoCli = mock<TopoCli>();
 
     beforeEach(() => {
         jest.clearAllMocks();
-        jest.mocked(fs.mkdtempSync).mockReturnValue(mockTmpDir);
     });
 
     it('should load and parse target description correctly', async () => {
@@ -29,7 +24,10 @@ describe('TargetDescriptionStore', () => {
             ],
             remoteprocCpus: [{ name: 'imx-rproc' }],
         };
-        jest.mocked(getTargetDescription).mockResolvedValue(targetDescription);
+        topoCli.describe.mockResolvedValue({
+            host: targetDescription.hostProcessors,
+            remoteprocs: targetDescription.remoteprocCpus,
+        });
         const store = new TargetDescriptionStore(topoCli);
 
         const description = await store.getDescription('user@host');
@@ -38,6 +36,7 @@ describe('TargetDescriptionStore', () => {
     });
 
     it('should only allow each target description to be fetched once', async () => {
+        topoCli.describe.mockResolvedValue({ host: [], remoteprocs: [] });
         const store = new TargetDescriptionStore(topoCli);
 
         await Promise.all([
@@ -47,6 +46,20 @@ describe('TargetDescriptionStore', () => {
             store.getDescription('user@host2'),
         ]);
 
-        expect(getTargetDescription).toHaveBeenCalledTimes(2);
+        expect(topoCli.describe).toHaveBeenCalledTimes(2);
+    });
+
+    it('should log a warning and return undefined when describe fails', async () => {
+        const error = new Error('invalid json');
+        topoCli.describe.mockRejectedValue(error);
+        const store = new TargetDescriptionStore(topoCli);
+
+        const description = await store.getDescription('user@host');
+
+        expect(description).toBeUndefined();
+        expect(logger.warn).toHaveBeenCalledWith(
+            'Failed to get target description for user@host',
+            error,
+        );
     });
 });
