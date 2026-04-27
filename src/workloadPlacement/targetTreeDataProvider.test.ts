@@ -34,8 +34,8 @@ describe('TargetTreeDataProvider', () => {
     let targetDescriptionStoreMock: MockProxy<TargetDescriptionStore>;
     const target = 'user@topo.local';
     const targetDescription: TargetDescription = {
-        hostProcessor: [],
-        remoteprocCPU: [{ name: 'imx-rproc' }, { name: 'other-rproc' }],
+        hostProcessors: [],
+        remoteprocCpus: [{ name: 'imx-rproc' }, { name: 'other-rproc' }],
     };
     const targetHealth: HealthCheckResult['target'] = {
         isLocalhost: false,

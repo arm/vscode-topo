@@ -8,16 +8,18 @@ import {
     ProjectDescription,
     projectDescriptionSchema,
     TemplateDescription,
+    targetDescriptionSchema,
     templateSchema,
     topoLogEntrySchema,
 } from './topoCliSchema';
-import { array, assert, is } from 'superstruct';
+import { array, assert, create, is } from 'superstruct';
 import {
     WrappedError,
     WrappedErrorLog,
     WrappedErrorLogLevel,
 } from './errors/wrappedError';
 import { getErrorMessage } from './util/getErrorMessage';
+import { TargetDescription } from './util/types';
 
 export interface TopoCliVersion {
     version: string;
@@ -40,8 +42,6 @@ export interface CloneRawSource {
 }
 
 export type CloneSource = CloneRemoteSource | CloneLocalSource | CloneRawSource;
-
-export const targetDescriptionFileName = 'target-description.yaml';
 
 const normalizeLogLevel = (level: string): WrappedErrorLogLevel => {
     switch (level.toUpperCase()) {
@@ -191,25 +191,18 @@ export class TopoCli {
         return project;
     }
 
-    /**
-     * Runs topo describe for a target and writes target-description.yaml
-     * in the provided working directory.
-     */
-    public describe(
-        workingDirectory: string,
-        sshTarget: string,
-    ): Promise<string> {
+    /** Returns target description data from topo describe JSON output. */
+    public async describe(sshTarget: string): Promise<TargetDescription> {
         const bin = this.getBinaryPath();
-        return new Promise((resolve, reject) => {
-            const cmd = ['describe', '--target', sshTarget];
+        const cmd = ['describe', '--target', sshTarget, '--output', 'json'];
+        const output = await new Promise<string>((resolve, reject) => {
             childProcess.execFile(
                 bin,
                 cmd,
                 {
                     env: this.getProcessEnv(),
-                    cwd: workingDirectory,
                 },
-                (error, _stdout) => {
+                (error, stdout) => {
                     if (error) {
                         reject(
                             new Error(
@@ -219,14 +212,37 @@ export class TopoCli {
                         );
                         return;
                     }
-                    const targetDescriptionFilePath = path.join(
-                        workingDirectory,
-                        targetDescriptionFileName,
-                    );
-                    resolve(targetDescriptionFilePath);
+
+                    resolve(stdout);
                 },
             );
         });
+
+        let parsedDescription: unknown;
+        try {
+            parsedDescription = JSON.parse(output);
+        } catch (parseError) {
+            throw new Error(
+                `Failed to parse target description JSON: ${getErrorMessage(parseError)}`,
+                { cause: parseError },
+            );
+        }
+
+        try {
+            const description = create(
+                parsedDescription,
+                targetDescriptionSchema,
+            );
+            return {
+                hostProcessors: description.host,
+                remoteprocCpus: description.remoteprocs,
+            };
+        } catch (validationError) {
+            throw new Error(
+                `Invalid target description JSON: ${getErrorMessage(validationError)}`,
+                { cause: validationError },
+            );
+        }
     }
 
     /** Runs the binary to initialize a project. */

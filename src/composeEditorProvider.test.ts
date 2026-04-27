@@ -23,8 +23,8 @@ const waitImmediate = () =>
 describe('ComposeEditorProvider', () => {
     const target = 'user@topo.local';
     const targetDescription: TargetDescription = {
-        hostProcessor: [],
-        remoteprocCPU: [{ name: 'imx-rproc' }],
+        hostProcessors: [],
+        remoteprocCpus: [{ name: 'imx-rproc' }],
     };
 
     const composeFolder = '/ext';

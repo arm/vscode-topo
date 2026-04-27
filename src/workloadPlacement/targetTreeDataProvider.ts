@@ -171,7 +171,7 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
             }
 
             const dependencies = [...targetState.health.dependencies];
-            if (selectedTargetDescription?.remoteprocCPU.length) {
+            if (selectedTargetDescription?.remoteprocCpus.length) {
                 dependencies.push(targetState.health.subsystemDriver);
             }
 
@@ -198,7 +198,7 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
             const targetDescription =
                 await this.targetDescriptionStore.getDescription(target);
             const remoteprocCpus =
-                targetDescription?.remoteprocCPU.map((rp) => rp.name) || [];
+                targetDescription?.remoteprocCpus.map((rp) => rp.name) || [];
             const subsystemNames = ['Host', ...remoteprocCpus];
             return subsystemNames.map(
                 (name) => new TargetTreeSubsystemItem(name),

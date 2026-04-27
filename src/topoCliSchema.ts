@@ -3,6 +3,7 @@ import {
     boolean,
     enums,
     Infer,
+    number,
     nullable,
     optional,
     record,
@@ -70,6 +71,21 @@ export const projectDescriptionSchema = type({
 });
 
 export type ProjectDescription = Infer<typeof projectDescriptionSchema>;
+
+const describeHostProcessorSchema = type({
+    model: trimmed(string()),
+    cores: number(),
+    features: array(trimmed(string())),
+});
+
+const describeRemoteprocSchema = type({
+    name: trimmed(string()),
+});
+
+export const targetDescriptionSchema = type({
+    host: array(describeHostProcessorSchema),
+    remoteprocs: array(describeRemoteprocSchema),
+});
 
 const topoLogLevelSchema = enums(['DEBUG', 'INFO', 'WARN', 'ERROR']);
 
