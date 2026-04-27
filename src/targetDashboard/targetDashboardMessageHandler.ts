@@ -34,6 +34,8 @@ const messageSchema = union([
     }),
 ]);
 
+export type TargetDashboardMessage = Infer<typeof messageSchema>;
+
 export class TargetDashboardMessageHandler {
     constructor(
         private readonly containersManager: ContainersManager,

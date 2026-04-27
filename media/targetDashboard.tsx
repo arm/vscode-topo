@@ -69,6 +69,7 @@ function ContainerTable({
         }
         return a.name.localeCompare(b.name);
     });
+
     return (
         <table className="containers-table">
             <thead>
@@ -137,6 +138,7 @@ function ContainerTable({
                                                 messagePoster.postMessage({
                                                     type: 'stop-container',
                                                     containerId: c.id,
+                                                    target: c.target,
                                                 });
                                             }}
                                         >
@@ -149,6 +151,7 @@ function ContainerTable({
                                                 messagePoster.postMessage({
                                                     type: 'delete-container',
                                                     containerId: c.id,
+                                                    target: c.target,
                                                 });
                                             }}
                                         >
@@ -202,6 +205,7 @@ function ContainerTable({
                                                 messagePoster.postMessage({
                                                     type: 'start-container',
                                                     containerId: c.id,
+                                                    target: c.target,
                                                 });
                                             }}
                                         >
@@ -214,6 +218,7 @@ function ContainerTable({
                                                 messagePoster.postMessage({
                                                     type: 'delete-container',
                                                     containerId: c.id,
+                                                    target: c.target,
                                                 });
                                             }}
                                         >

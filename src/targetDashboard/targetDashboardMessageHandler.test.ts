@@ -127,6 +127,7 @@ describe('TargetDashboardMessageHandler', () => {
                 await handler.handleMessage(messagePoster, {
                     type: 'start-container',
                     containerId: 'a',
+                    target,
                 });
 
                 expect(containerCommands.startContainer).toHaveBeenCalledWith(
@@ -185,6 +186,7 @@ describe('TargetDashboardMessageHandler', () => {
                 await handler.handleMessage(messagePoster, {
                     type: 'stop-container',
                     containerId: 'a',
+                    target,
                 });
 
                 expect(containerCommands.stopContainer).toHaveBeenCalledWith(
