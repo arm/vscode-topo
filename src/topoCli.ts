@@ -191,11 +191,11 @@ export class TopoCli {
         return project;
     }
 
-    /** Returns target description data from topo describe JSON output. */
-    public describe(sshTarget: string): Promise<TargetDescriptionResult> {
+    private async describeRaw(sshTarget: string): Promise<string> {
         const bin = this.getBinaryPath();
-        return new Promise((resolve, reject) => {
-            const cmd = ['describe', '--target', sshTarget, '--output', 'json'];
+        const cmd = ['describe', '--target', sshTarget, '--output', 'json'];
+
+        return await new Promise<string>((resolve, reject) => {
             childProcess.execFile(
                 bin,
                 cmd,
@@ -213,36 +213,37 @@ export class TopoCli {
                         return;
                     }
 
-                    let parsedDescription: unknown;
-                    try {
-                        parsedDescription = JSON.parse(stdout);
-                    } catch (parseError) {
-                        reject(
-                            new Error(
-                                `Failed to parse target description JSON: ${getErrorMessage(parseError)}`,
-                                { cause: parseError },
-                            ),
-                        );
-                        return;
-                    }
-
-                    try {
-                        const description = create(
-                            parsedDescription,
-                            targetDescriptionSchema,
-                        );
-                        resolve(description);
-                    } catch (validationError) {
-                        reject(
-                            new Error(
-                                `Invalid target description JSON: ${getErrorMessage(validationError)}`,
-                                { cause: validationError },
-                            ),
-                        );
-                    }
+                    resolve(stdout);
                 },
             );
         });
+    }
+
+    private parseTargetDescription(output: string): TargetDescriptionResult {
+        let parsedDescription: unknown;
+        try {
+            parsedDescription = JSON.parse(output);
+        } catch (parseError) {
+            throw new Error(
+                `Failed to parse target description JSON: ${getErrorMessage(parseError)}`,
+                { cause: parseError },
+            );
+        }
+
+        try {
+            return create(parsedDescription, targetDescriptionSchema);
+        } catch (validationError) {
+            throw new Error(
+                `Invalid target description JSON: ${getErrorMessage(validationError)}`,
+                { cause: validationError },
+            );
+        }
+    }
+
+    /** Returns target description data from topo describe JSON output. */
+    public async describe(sshTarget: string): Promise<TargetDescriptionResult> {
+        const output = await this.describeRaw(sshTarget);
+        return this.parseTargetDescription(output);
     }
 
     /** Runs the binary to initialize a project. */
