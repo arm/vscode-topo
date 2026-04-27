@@ -65,7 +65,7 @@ export class SetupSshKeys {
         const task = new vscode.Task(
             taskDefinition,
             vscode.TaskScope.Workspace,
-            `Set Up SSH Keys on ${sshTarget}`,
+            `Set up SSH keys on ${sshTarget}`,
             PACKAGE_NAME,
             shellExecution,
         );
