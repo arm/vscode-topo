@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { HealthCheckDependency, HealthCheckStatus } from '../topoCliSchema';
+import { getInstallableDependency } from '../actions/installDependency';
 
 export const getDependencyItemIcon = (
     status: HealthCheckStatus,
@@ -28,37 +29,20 @@ const capitalizeFirstLetter = (s: string) => {
     return s.charAt(0).toUpperCase() + s.slice(1);
 };
 
-const getInstallableDependency = (
-    dependency: HealthCheckDependency,
-): string | undefined => {
-    if (dependency.status === 'ok') {
-        return undefined;
-    }
-
-    if (
-        dependency.name === 'Remoteproc Runtime' ||
-        dependency.name === 'Remoteproc Shim'
-    ) {
-        return 'remoteproc-runtime';
-    }
-
-    return undefined;
-};
-
 export class TargetTreeDependencyItem extends vscode.TreeItem {
-    public readonly installableDependency?: string;
+    public readonly dependency: HealthCheckDependency;
 
     constructor(dependency: HealthCheckDependency) {
         super(dependency.name, vscode.TreeItemCollapsibleState.None);
         this.description = dependency.value;
-        this.installableDependency = getInstallableDependency(dependency);
+        this.dependency = dependency;
 
         const statusCapitalized = capitalizeFirstLetter(dependency.status);
         this.tooltip = `Status: ${statusCapitalized}\nValue: ${dependency.value ?? '-'}`;
         this.contextValue = [
             'Dependency',
             statusCapitalized,
-            this.installableDependency ? 'Installable' : undefined,
+            getInstallableDependency(dependency) ? 'Installable' : undefined,
         ]
             .filter(Boolean)
             .join(' ');

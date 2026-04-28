@@ -3,13 +3,10 @@ import { DISPLAY_NAME, PACKAGE_NAME } from '../manifest';
 import { TargetStore } from '../workloadPlacement/targetStore';
 import { TargetTreeDependencyItem } from '../workloadPlacement/targetTreeDependencyItem';
 import { showAndLogError } from '../util/showAndLogError';
+import { ContainersManager } from '../workloadPlacement/containersManager';
+import { HealthCheckDependency } from '../topoCliSchema';
 
-type TopoCliCommand = [string, ...string[]];
-
-const getInstallCommand = (
-    sshTarget: string,
-    value: string,
-): TopoCliCommand => {
+const getInstallCommand = (sshTarget: string, value: string): string[] => {
     return ['topo', 'install', value, '--target', sshTarget];
 };
 
@@ -59,13 +56,24 @@ const runInstallTask = async (
     });
 };
 
-const getInstallableDependency = (treeNode: unknown): string | undefined => {
-    if (!(treeNode instanceof TargetTreeDependencyItem)) {
+export const getInstallableDependency = (
+    dependency: HealthCheckDependency,
+): string | undefined => {
+    if (dependency.status === 'ok') {
         return undefined;
     }
 
-    return treeNode.installableDependency;
+    if (
+        dependency.name === 'Remoteproc Runtime' ||
+        dependency.name === 'Remoteproc Shim'
+    ) {
+        return 'remoteproc-runtime';
+    }
+
+    return undefined;
 };
+
+const installAction = { title: 'Install missing dependencies' };
 
 export class InstallDependency {
     public static readonly installDependencyCommand = `${PACKAGE_NAME}.installDependency`;
@@ -73,42 +81,93 @@ export class InstallDependency {
     constructor(
         private readonly context: vscode.ExtensionContext,
         private readonly targetStore: TargetStore,
+        private readonly containersManager: ContainersManager,
     ) {}
 
     public activate(): void {
         this.context.subscriptions.push(
             vscode.commands.registerCommand(
                 InstallDependency.installDependencyCommand,
-                (treeNode: unknown) => this.install(treeNode),
+                this.onInstallCommand.bind(this),
             ),
+            this.targetStore.onChanged(this.onTargetChanged.bind(this)),
         );
     }
 
-    private async install(treeNode: unknown): Promise<void> {
-        const installable = getInstallableDependency(treeNode);
+    private async onTargetChanged(): Promise<void> {
+        const target = await this.targetStore.getSelectedTarget();
+        if (!target) {
+            return;
+        }
+        const { health } = await this.containersManager.getTargetState(target);
+        const installables =
+            health?.dependencies
+                .map((dep) =>
+                    dep.status !== 'ok'
+                        ? getInstallableDependency(dep)
+                        : undefined,
+                )
+                .filter((v) => typeof v === 'string') ?? [];
+
+        if (installables.length > 0) {
+            await this.showInstallableNotification(target, installables);
+        }
+    }
+
+    private async onInstallCommand(treeNode: unknown): Promise<void> {
+        if (!(treeNode instanceof TargetTreeDependencyItem)) {
+            return;
+        }
+
+        const target = await this.targetStore.getSelectedTarget();
+        if (!target) {
+            return;
+        }
+
+        const installable = getInstallableDependency(treeNode.dependency);
         if (!installable) {
             return;
         }
 
-        const sshTarget = await this.targetStore.getSelectedTarget();
-        if (!sshTarget) {
-            showAndLogError(
-                `Failed to install ${installable}`,
-                new Error('No selected target found'),
-            );
-            return;
-        }
+        await this.installDependency(target, installable);
+    }
 
+    private async installDependency(
+        target: string,
+        installable: string,
+    ): Promise<void> {
         try {
-            await runInstallTask(sshTarget, installable);
+            await runInstallTask(target, installable);
             vscode.window.showInformationMessage(
-                `${installable} was installed on target ${sshTarget}.`,
+                `${installable} was installed on target ${target}.`,
             );
         } catch (err) {
             showAndLogError(
-                `Failed to install ${installable} on target ${sshTarget}`,
+                `Failed to install ${installable} on target ${target}`,
                 err,
             );
+        }
+    }
+
+    private async showInstallableNotification(
+        target: string,
+        installables: string[],
+    ): Promise<void> {
+        const choice = await vscode.window.showWarningMessage(
+            `${target} has missing or unhealthy dependencies: ${installables.join(`, `)}`,
+            installAction,
+        );
+        if (choice?.title === installAction.title) {
+            for (const installable of installables) {
+                try {
+                    await this.installDependency(target, installable);
+                } catch (err) {
+                    showAndLogError(
+                        `Failed to install ${installable} on target ${target}`,
+                        err,
+                    );
+                }
+            }
         }
     }
 }

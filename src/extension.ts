@@ -89,7 +89,11 @@ export async function activate(
     );
     const health = new HostHealth(context, topoCli);
     const protocolHandler = new ProtocolHandler(projectClone);
-    const installDependency = new InstallDependency(context, targetStore);
+    const installDependency = new InstallDependency(
+        context,
+        targetStore,
+        containersManager,
+    );
 
     protocolHandler.activate(context);
     const setupKeys = new SetupKeys(context, targetStore);
