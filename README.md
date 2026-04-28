@@ -61,7 +61,6 @@ Right-click a service in the Targets tree to manage individual containers:
 
 Deploy a compose file to the selected target. You can trigger a deployment from:
 
-- The **deploy button** in the compose editor.
 - Right-clicking a compose YAML file in the Explorer or editor tab and selecting **Topo Deploy**.
 
 The extension runs `topo deploy --target <ssh>` in a task terminal and reports success or failure.
@@ -110,7 +109,7 @@ All commands are under the **Arm Topo** category. Commands available from the Co
 | `Arm Topo: Clone Local Project`    | Clone a project from a local directory.         |
 | `Arm Topo: Inspect Host Health`    | Display host dependency health report.          |
 
-Additional commands are available through the Targets tree view context menus and the compose editor title bar (see sections above).
+Additional commands are available through the Targets tree view context menus.
 
 ## Settings
 

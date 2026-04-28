@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import { ComposeEditorProvider } from './composeEditorProvider';
 import { TopoCli } from './topoCli';
 import { ProjectInit } from './projectInit';
 import { TopoCliVersionChecker } from './topoCliVersionChecker';
@@ -8,7 +7,6 @@ import { TargetTreeDataProvider } from './workloadPlacement/targetTreeDataProvid
 import { ContainersManager } from './workloadPlacement/containersManager';
 import { TargetDashboardMessageHandler } from './targetDashboard/targetDashboardMessageHandler';
 import { TargetDashboardProvider } from './targetDashboard/targetDashboardProvider';
-import { ComposeEditorMessageHandler } from './composeEditorMessageHandler';
 import { ContainerStart } from './actions/containerStart';
 import { ContainerStop } from './actions/containerStop';
 import { ContainerOpenInBrowser } from './actions/containerOpenInBrowser';
@@ -46,16 +44,6 @@ export async function activate(
     const projectInit = new ProjectInit(context, topoCli);
     const projectClone = new ProjectClone(context, topoCli, targetStore);
     const deploy = new Deploy(context, targetStore);
-    const composeEditorMessageHandler = new ComposeEditorMessageHandler(
-        topoCli,
-        deploy,
-        targetStore,
-        targetDescriptionStore,
-    );
-    const composeEditorProvider = new ComposeEditorProvider(
-        context,
-        composeEditorMessageHandler,
-    );
     const containerOpenInBrowser = new ContainerOpenInBrowser(context);
     const dockerCommands = new DockerCommands();
     const attachVsCode = new AttachVsCode(context, dockerCommands);
@@ -110,7 +98,6 @@ export async function activate(
     await projectInit.activate();
     await projectClone.activate();
     deploy.activate();
-    await composeEditorProvider.activate();
     await containerOpenInBrowser.activate();
     await attachVsCode.activate();
     attachShell.activate();
