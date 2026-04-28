@@ -5,7 +5,7 @@ import { ContainerItem } from '../util/types';
 import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
 import { WrappedError } from '../errors/wrappedError';
 import { mock, MockProxy } from 'jest-mock-extended';
-import { ContainersManager } from '../workloadPlacement/containersManager';
+import { ContainerCommands } from '../workloadPlacement/containerCommands';
 
 describe('ContainerDelete', () => {
     let context: MockProxy<vscode.ExtensionContext>;
@@ -67,9 +67,8 @@ describe('ContainerDelete', () => {
     });
 
     it('calls deleteContainer on success', async () => {
-        const containersManager: MockProxy<ContainersManager> =
-            mock<ContainersManager>();
-        const containerDelete = new ContainerDelete(context, containersManager);
+        const containerCommands = mock<ContainerCommands>();
+        const containerDelete = new ContainerDelete(context, containerCommands);
         containerDelete.activate();
 
         await vscode.commands.executeCommand(
@@ -77,18 +76,18 @@ describe('ContainerDelete', () => {
             treeItem,
         );
 
-        expect(containersManager.deleteContainer).toHaveBeenCalledWith(
+        expect(containerCommands.deleteContainer).toHaveBeenCalledWith(
             'abc123',
+            target,
         );
     });
 
     it('shows error message if deleteContainer throws a WrappedError', async () => {
-        const containersManager: MockProxy<ContainersManager> =
-            mock<ContainersManager>();
-        containersManager.deleteContainer.mockRejectedValue(
+        const containerCommands = mock<ContainerCommands>();
+        containerCommands.deleteContainer.mockRejectedValue(
             new WrappedError('DOCKER', 'fail'),
         );
-        const containerDelete = new ContainerDelete(context, containersManager);
+        const containerDelete = new ContainerDelete(context, containerCommands);
         containerDelete.activate();
 
         await vscode.commands.executeCommand(
@@ -104,12 +103,11 @@ describe('ContainerDelete', () => {
     });
 
     it('re-throws generic errors from deleteContainer', async () => {
-        const containersManager: MockProxy<ContainersManager> =
-            mock<ContainersManager>();
-        containersManager.deleteContainer.mockRejectedValue(
+        const containerCommands = mock<ContainerCommands>();
+        containerCommands.deleteContainer.mockRejectedValue(
             new Error('generic error'),
         );
-        const containerDelete = new ContainerDelete(context, containersManager);
+        const containerDelete = new ContainerDelete(context, containerCommands);
         containerDelete.activate();
 
         await expect(

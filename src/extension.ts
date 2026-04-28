@@ -63,9 +63,9 @@ export async function activate(
         targetStore,
         containersManager,
     );
-    const containerStart = new ContainerStart(context, containersManager);
-    const containerStop = new ContainerStop(context, containersManager);
-    const containerDelete = new ContainerDelete(context, containersManager);
+    const containerStart = new ContainerStart(context, dockerCommands);
+    const containerStop = new ContainerStop(context, dockerCommands);
+    const containerDelete = new ContainerDelete(context, dockerCommands);
     const health = new HostHealth(context, topoCli);
     const protocolHandler = new ProtocolHandler(projectClone);
 

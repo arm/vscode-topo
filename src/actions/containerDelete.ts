@@ -1,16 +1,16 @@
 import * as vscode from 'vscode';
-import { ContainersManager } from '../workloadPlacement/containersManager';
 import * as manifest from '../manifest';
 import { assertTargetTreeContainerItem } from './util/assertTargetTreeContainerItem';
 import { showAndLogError } from '../util/showAndLogError';
 import { isWrappedError } from '../errors/wrappedError';
+import { ContainerCommands } from '../workloadPlacement/containerCommands';
 
 export class ContainerDelete {
     public static readonly deleteContainerCommand = `${manifest.PACKAGE_NAME}.deleteContainer`;
 
     constructor(
         private readonly context: vscode.ExtensionContext,
-        private readonly containersManager: ContainersManager,
+        private readonly containerCommands: ContainerCommands,
     ) {}
 
     public activate() {
@@ -27,8 +27,9 @@ export class ContainerDelete {
     ): Promise<void> {
         assertTargetTreeContainerItem(treeNode);
         try {
-            await this.containersManager.deleteContainer(
+            await this.containerCommands.deleteContainer(
                 treeNode.containerItem.id,
+                treeNode.containerItem.target,
             );
         } catch (err: unknown) {
             if (isWrappedError(err, ['DOCKER'])) {
