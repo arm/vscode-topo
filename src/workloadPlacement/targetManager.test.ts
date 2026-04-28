@@ -40,15 +40,14 @@ const createTargetManager = () => {
     targetStore.onChanged.mockImplementation(onChangeEmitter.event);
     targetStore.getTargets.mockReturnValue([]);
 
-    const containersManager: MockProxy<ContainersManager> =
-        mock<ContainersManager>();
+    const containersManager = mock<ContainersManager>();
     containersManager.getTargetState.mockResolvedValue({
         health: undefined,
-        target: undefined,
+        status: 'disconnected',
     });
     containersManager.getTargetStateSnapshot.mockReturnValue({
         health: undefined,
-        target: undefined,
+        status: 'disconnected',
     });
     containersManager.onDataUpdate.mockImplementation(
         onDataUpdateEmitter.event,
@@ -276,7 +275,7 @@ describe('TargetManager', () => {
                 containersManager.getTargetStateSnapshot,
             ).mockReturnValue({
                 health: healthyTarget,
-                target: target1,
+                status: 'connected',
             });
             await targetManager.activate();
             jest.mocked(targetStore.getSelectedTarget).mockResolvedValue(
@@ -286,7 +285,7 @@ describe('TargetManager', () => {
                 containersManager.getTargetStateSnapshot,
             ).mockReturnValue({
                 health: healthyTarget,
-                target: target2,
+                status: 'connected',
             });
 
             onChangeEmitter.fire();

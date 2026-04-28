@@ -1,32 +1,25 @@
 import * as vscode from 'vscode';
+import { TargetStatus } from '../util/types';
 
 /** Represents a target */
 export class TargetTreeTargetItem extends vscode.TreeItem {
     constructor(
         public readonly target: string,
         public readonly selected: boolean,
-        public readonly connectionReady: boolean,
-        public readonly targetReady: boolean,
+        public readonly status: TargetStatus,
     ) {
         super(target, vscode.TreeItemCollapsibleState.Expanded);
         this.id = target;
-        this.iconPath = getTreeItemIcon(selected, connectionReady, targetReady);
+        this.iconPath = getTreeItemIcon(selected, status);
         const contextValues = ['Target'];
         if (selected) {
             contextValues.push('Selected');
         }
-        if (connectionReady) {
-            contextValues.push('ConnectionReady');
-        }
-        if (targetReady) {
-            contextValues.push('TargetReady');
+        if (status === 'connected') {
+            contextValues.push('Connected');
         }
         this.contextValue = contextValues.join(' ');
-        this.collapsibleState = getTargetTreeItemState(
-            selected,
-            connectionReady,
-            targetReady,
-        );
+        this.collapsibleState = getTargetTreeItemState(selected, status);
     }
 
     public get displayName(): string {
@@ -36,10 +29,9 @@ export class TargetTreeTargetItem extends vscode.TreeItem {
 
 export const getTargetTreeItemState = (
     targetSelected: boolean,
-    connectionReady: boolean,
-    targetReady: boolean,
+    status: TargetStatus,
 ): vscode.TreeItemCollapsibleState => {
-    if (targetSelected && connectionReady && targetReady) {
+    if (targetSelected && status === 'connected') {
         return vscode.TreeItemCollapsibleState.Expanded;
     }
     return vscode.TreeItemCollapsibleState.None;
@@ -47,16 +39,15 @@ export const getTargetTreeItemState = (
 
 export const getTreeItemIcon = (
     targetSelected: boolean,
-    connectionReady: boolean,
-    targetReady: boolean,
+    status: TargetStatus,
 ): vscode.ThemeIcon | undefined => {
     if (!targetSelected) {
         return undefined;
     }
-    if (!connectionReady) {
+    if (status === 'disconnected' && targetSelected) {
         return new vscode.ThemeIcon('loading~spin');
     }
-    if (!targetReady) {
+    if (status === 'error') {
         return new vscode.ThemeIcon(
             'error',
             new vscode.ThemeColor('terminal.ansiRed'),

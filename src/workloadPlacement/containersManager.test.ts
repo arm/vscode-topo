@@ -367,7 +367,7 @@ describe('ContainersManager', () => {
 
         expect(manager.getTargetStateSnapshot(target)).toEqual({
             health: undefined,
-            target: undefined,
+            status: 'disconnected',
         });
     });
 
@@ -394,11 +394,11 @@ describe('ContainersManager', () => {
         await activation;
         await expect(targetStatePromise).resolves.toEqual({
             health: loadedHealth.target,
-            target: target,
+            status: 'connected',
         });
         expect(manager.getTargetStateSnapshot(target)).toEqual({
             health: loadedHealth.target,
-            target: target,
+            status: 'connected',
         });
     });
 
