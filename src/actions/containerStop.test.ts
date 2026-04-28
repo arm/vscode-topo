@@ -5,7 +5,7 @@ import { ContainerItem } from '../util/types';
 import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
 import { WrappedError } from '../errors/wrappedError';
 import { mock, MockProxy } from 'jest-mock-extended';
-import { ContainersManager } from '../workloadPlacement/containersManager';
+import { ContainerCommands } from '../workloadPlacement/containerCommands';
 
 describe('ContainerStop', () => {
     let context: MockProxy<vscode.ExtensionContext>;
@@ -59,9 +59,8 @@ describe('ContainerStop', () => {
         );
     });
     it('calls stopContainer and shows info message on success', async () => {
-        const containersManager: MockProxy<ContainersManager> =
-            mock<ContainersManager>();
-        const containerStop = new ContainerStop(context, containersManager);
+        const containerCommands = mock<ContainerCommands>();
+        const containerStop = new ContainerStop(context, containerCommands);
         await containerStop.activate();
 
         // Simulate command handler
@@ -70,16 +69,18 @@ describe('ContainerStop', () => {
             treeItem,
         );
 
-        expect(containersManager.stopContainer).toHaveBeenCalledWith('abc123');
+        expect(containerCommands.stopContainer).toHaveBeenCalledWith(
+            'abc123',
+            target,
+        );
     });
 
     it('shows error message if stopContainer throws a WrappedError', async () => {
-        const containersManager: MockProxy<ContainersManager> =
-            mock<ContainersManager>();
-        containersManager.stopContainer.mockRejectedValue(
+        const containerCommands = mock<ContainerCommands>();
+        containerCommands.stopContainer.mockRejectedValue(
             new WrappedError('DOCKER', 'fail'),
         );
-        const containerStop = new ContainerStop(context, containersManager);
+        const containerStop = new ContainerStop(context, containerCommands);
         await containerStop.activate();
 
         await vscode.commands.executeCommand(
@@ -95,12 +96,11 @@ describe('ContainerStop', () => {
     });
 
     it('re-throw generic error errors from stopContainer', async () => {
-        const containersManager: MockProxy<ContainersManager> =
-            mock<ContainersManager>();
-        containersManager.stopContainer.mockRejectedValue(
+        const containerCommands = mock<ContainerCommands>();
+        containerCommands.stopContainer.mockRejectedValue(
             new Error('generic error'),
         );
-        const containerStop = new ContainerStop(context, containersManager);
+        const containerStop = new ContainerStop(context, containerCommands);
         await containerStop.activate();
 
         await expect(
