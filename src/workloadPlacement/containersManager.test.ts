@@ -145,7 +145,7 @@ describe('ContainersManager', () => {
     });
 
     afterEach(() => {
-        containersManager?.stopAutoRefresh();
+        containersManager?.dispose();
         jest.useRealTimers();
         jest.clearAllTimers();
     });
@@ -346,7 +346,6 @@ describe('ContainersManager', () => {
         const spy = jest.fn();
         manager.onDataUpdate(spy);
 
-        await manager.startAutoRefresh(target);
         await jest.advanceTimersByTimeAsync(3000);
         expect(spy).toHaveBeenCalled();
     });
