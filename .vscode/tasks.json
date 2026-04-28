@@ -27,18 +27,6 @@
                 "group": "watchers"
             },
             "group": "build"
-        },
-        {
-            "type": "npm",
-            "script": "watch-tests",
-            "label": "npm: watch tests",
-            "problemMatcher": "$tsc-watch",
-            "isBackground": true,
-            "presentation": {
-                "reveal": "never",
-                "group": "watchers"
-            },
-            "group": "build"
         }
     ]
 }
