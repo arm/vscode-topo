@@ -1,6 +1,4 @@
 .vscode/**
-.vscode-test/**
-out/**
 node_modules/**
 src/**
 .gitignore
@@ -11,8 +9,6 @@ vsc-extension-quickstart.md
 **/eslint.config.mjs
 **/*.map
 **/*.ts
-**/*.tsx
-**/.vscode-test.*
 __mocks__
 **/__snapshots__
 test-workspace/**

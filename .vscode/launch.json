@@ -14,7 +14,7 @@
                 "${workspaceFolder}/test-workspace"
             ],
             "outFiles": ["${workspaceFolder}/dist/**/*.js"],
-            "preLaunchTask": "npm: watch all"
+            "preLaunchTask": "npm: watch"
         }
     ]
 }

@@ -2,7 +2,6 @@
     "compilerOptions": {
         "target": "ES2022",
         "module": "commonjs",
-        "jsx": "react-jsx",
         "sourceMap": true,
         "strict": true,
         "esModuleInterop": true,
