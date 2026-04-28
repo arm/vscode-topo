@@ -10,17 +10,13 @@ module.exports = {
     extends: ['eslint:recommended'],
     overrides: [
         {
-            files: ['**/*.ts', '**/*.tsx'],
+            files: ['**/*.ts'],
             parser: '@typescript-eslint/parser',
             parserOptions: {
                 project: './tsconfig.eslint.json',
             },
-            plugins: ['@typescript-eslint', 'react', 'react-hooks'],
-            extends: [
-                'plugin:@typescript-eslint/recommended',
-                'plugin:react/recommended',
-                'plugin:react-hooks/recommended',
-            ],
+            plugins: ['@typescript-eslint'],
+            extends: ['plugin:@typescript-eslint/recommended'],
             rules: {
                 '@typescript-eslint/await-thenable': 'error',
                 '@typescript-eslint/explicit-member-accessibility': [
@@ -69,19 +65,11 @@ module.exports = {
                             message: `Use 'node:${mod}' instead.`,
                         })),
                 ],
-                'react/jsx-uses-react': 'off',
-                'react/react-in-jsx-scope': 'off',
-                'react/prop-types': 'off',
                 'no-console': 'error',
-            },
-            settings: {
-                react: {
-                    version: 'detect',
-                },
             },
         },
         {
-            files: ['scripts/**', 'media/**'],
+            files: ['scripts/**'],
             rules: {
                 'no-console': 'off',
             },

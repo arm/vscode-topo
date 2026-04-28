@@ -5,8 +5,6 @@ import { TopoCliVersionChecker } from './topoCliVersionChecker';
 import { TargetManager } from './workloadPlacement/targetManager';
 import { TargetTreeDataProvider } from './workloadPlacement/targetTreeDataProvider';
 import { ContainersManager } from './workloadPlacement/containersManager';
-import { TargetDashboardMessageHandler } from './targetDashboard/targetDashboardMessageHandler';
-import { TargetDashboardProvider } from './targetDashboard/targetDashboardProvider';
 import { ContainerStart } from './actions/containerStart';
 import { ContainerStop } from './actions/containerStop';
 import { ContainerOpenInBrowser } from './actions/containerOpenInBrowser';
@@ -14,7 +12,6 @@ import { AttachVsCode } from './actions/attachVsCode';
 import { AttachShell } from './actions/attachShell';
 import { ContainerDelete } from './actions/containerDelete';
 import { DockerCommands } from './workloadPlacement/dockerCommands';
-import { OpenTargetDashboard } from './actions/openTargetDashboard';
 import { TargetStore } from './workloadPlacement/targetStore';
 import { ProjectClone } from './projectClone';
 import { Deploy } from './actions/deploy';
@@ -67,26 +64,9 @@ export async function activate(
         targetStore,
         containersManager,
     );
-    const targetDashboardMessageHandler = new TargetDashboardMessageHandler(
-        containersManager,
-        targetStore,
-        targetDescriptionStore,
-        containerOpenInBrowser,
-        attachVsCode,
-        attachShell,
-    );
-    const targetDashboardProvider = new TargetDashboardProvider(
-        context,
-        targetDashboardMessageHandler,
-        containersManager,
-    );
     const containerStart = new ContainerStart(context, containersManager);
     const containerStop = new ContainerStop(context, containersManager);
     const containerDelete = new ContainerDelete(context, containersManager);
-    const openTargetDashboard = new OpenTargetDashboard(
-        context,
-        targetDashboardProvider,
-    );
     const health = new HostHealth(context, topoCli);
     const protocolHandler = new ProtocolHandler(projectClone);
     const installDependency = new InstallDependency(
@@ -109,11 +89,9 @@ export async function activate(
     await containersManager.activate();
     await targetTreeDataProvider.activate();
     await targetManager.activate();
-    await targetDashboardProvider.activate();
     containerStart.activate();
     await containerStop.activate();
     containerDelete.activate();
-    openTargetDashboard.activate();
     health.activate();
     setupKeys.activate();
     await installDependency.activate();

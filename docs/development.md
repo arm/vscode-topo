@@ -31,7 +31,7 @@ This document covers how to build, test, and package the Arm Topo VS Code extens
 
 ## Build
 
-Compile the extension and webview bundles:
+Compile the extension bundle:
 
 ```bash
 npm run build
