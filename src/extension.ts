@@ -22,6 +22,7 @@ import { HostHealth } from './actions/hostHealth';
 import { ProtocolHandler } from './protocolHandler';
 import { SetupKeys } from './actions/setupKeys';
 import { TargetDescriptionStore } from './workloadPlacement/targetDescriptionStore';
+import { InstallDependency } from './actions/installDependency';
 
 export async function activate(
     context: vscode.ExtensionContext,
@@ -88,6 +89,7 @@ export async function activate(
     );
     const health = new HostHealth(context, topoCli);
     const protocolHandler = new ProtocolHandler(projectClone);
+    const installDependency = new InstallDependency(context, targetStore);
 
     protocolHandler.activate(context);
     const setupKeys = new SetupKeys(context, targetStore);
@@ -110,5 +112,6 @@ export async function activate(
     openTargetDashboard.activate();
     health.activate();
     setupKeys.activate();
+    installDependency.activate();
     health.checkHostDependencyHealth();
 }

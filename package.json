@@ -105,6 +105,11 @@
                 "category": "Arm Topo"
             },
             {
+                "command": "topo.installDependency",
+                "title": "Install Dependency",
+                "category": "Arm Topo"
+            },
+            {
                 "command": "topo.inspectHostHealth",
                 "title": "Inspect Host Health",
                 "category": "Arm Topo"
@@ -181,6 +186,10 @@
                     "when": "false"
                 },
                 {
+                    "command": "topo.installDependency",
+                    "when": "false"
+                },
+                {
                     "command": "topo.stopContainer",
                     "when": "false"
                 },
@@ -228,6 +237,11 @@
                 {
                     "command": "topo.setupKeys",
                     "when": "view === topo.target-manager && viewItem =~ /Target/ && viewItem =~ /Selected/",
+                    "group": "topo/2_actions"
+                },
+                {
+                    "command": "topo.installDependency",
+                    "when": "view === topo.target-manager && viewItem =~ /^Installable/",
                     "group": "topo/2_actions"
                 },
                 {

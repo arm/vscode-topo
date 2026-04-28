@@ -52,4 +52,31 @@ describe('TargetTreeDependencyItem', () => {
         expect(icon.id).toBe('close');
         expect(item.contextValue).toBe('Dependency Error');
     });
+
+    it.each([['Remoteproc Runtime'], ['Remoteproc Shim']])(
+        'marks unhealthy %s dependencies as installable',
+        (dependencyName) => {
+            const item = new TargetTreeDependencyItem(
+                mock<HealthCheckDependency>({
+                    name: dependencyName,
+                    status: 'warning',
+                }),
+            );
+
+            expect(item.contextValue).toBe(
+                `Dependency Warning Installable:remoteproc-runtime`,
+            );
+        },
+    );
+
+    it('does not mark healthy remoteproc dependencies as installable', () => {
+        const item = new TargetTreeDependencyItem(
+            mock<HealthCheckDependency>({
+                name: 'Remoteproc Runtime',
+                status: 'ok',
+            }),
+        );
+
+        expect(item.contextValue).toBe('Dependency Ok');
+    });
 });
