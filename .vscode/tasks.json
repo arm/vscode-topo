@@ -4,15 +4,13 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "type": "npm",
-            "script": "watch",
-            "label": "npm: watch",
-            "problemMatcher": [],
-            "isBackground": true,
+            "label": "npm: watch all",
+            "dependsOn": ["npm: watch extension", "npm: watch webview"],
             "presentation": {
                 "reveal": "never",
                 "group": "watchers"
             },
+            "dependsOrder": "parallel",
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -20,15 +18,58 @@
         },
         {
             "type": "npm",
-            "script": "compile",
-            "label": "npm: compile",
-            "problemMatcher": [],
+            "script": "watch:extension",
+            "label": "npm: watch extension",
+            "problemMatcher": [
+                {
+                    "owner": "vite",
+                    "pattern": {
+                        "regexp": "^error during build:\\s+(.*)$",
+                        "message": 1
+                    },
+                    "background": {
+                        "activeOnStart": true,
+                        "beginsPattern": "^build started\\.\\.\\.$",
+                        "endsPattern": "^built in \\d+ms\\.$"
+                    }
+                }
+            ],
+            "isBackground": true,
+            "presentation": {
+                "reveal": "never",
+                "group": "watchers"
+            },
+            "group": "build"
+        },
+        {
+            "type": "npm",
+            "script": "watch:webview",
+            "label": "npm: watch webview",
+            "problemMatcher": [
+                {
+                    "owner": "vite",
+                    "pattern": {
+                        "regexp": "^error during build:\\s+(.*)$",
+                        "message": 1
+                    },
+                    "background": {
+                        "activeOnStart": true,
+                        "beginsPattern": "^build started\\.\\.\\.$",
+                        "endsPattern": "^built in \\d+ms\\.$"
+                    }
+                }
+            ],
+            "isBackground": true,
+            "presentation": {
+                "reveal": "never",
+                "group": "watchers"
+            },
             "group": "build"
         },
         {
             "type": "npm",
             "script": "watch-tests",
-            "label": "npm: watch-tests",
+            "label": "npm: watch tests",
             "problemMatcher": "$tsc-watch",
             "isBackground": true,
             "presentation": {
