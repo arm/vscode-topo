@@ -88,13 +88,13 @@ export class TargetDashboardMessageHandler {
         }
         const [targetDescription, targetState, containersData] =
             await Promise.all([
-                this.targetDescriptionStore.getDescription(target.ssh),
+                this.targetDescriptionStore.getDescription(target),
                 this.containersManager.getTargetState(),
                 this.containersManager.getContainersData(),
             ]);
 
         const remoteprocCpus =
-            targetDescription?.remoteprocCPU.map((rp) => rp.name) || [];
+            targetDescription?.remoteprocCpus.map((rp) => rp.name) || [];
         const subsystems = ['Host', ...remoteprocCpus];
         await messagePoster.postMessage({
             type: 'render-target-dashboard',

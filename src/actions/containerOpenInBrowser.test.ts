@@ -1,4 +1,4 @@
-import { ContainerItem, TargetItem } from '../util/types';
+import { ContainerItem } from '../util/types';
 import { ContainerOpenInBrowser } from './containerOpenInBrowser';
 import * as vscode from 'vscode';
 import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
@@ -9,9 +9,7 @@ jest.mock('../util/logger');
 describe('ContainerOpenInBrowser', () => {
     let context: MockProxy<vscode.ExtensionContext>;
     const registerCommandMock = jest.mocked(vscode.commands.registerCommand);
-    const target: TargetItem = {
-        ssh: 'user@topo.local',
-    };
+    const target = 'user@topo.local';
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -44,7 +42,7 @@ describe('ContainerOpenInBrowser', () => {
 
         await openInBrowser(treeItem);
 
-        const url = `http://${target.ssh}:8080`;
+        const url = `http://${target}:8080`;
         expect(vscode.env.openExternal).toHaveBeenCalledWith(
             vscode.Uri.parse(url),
         );

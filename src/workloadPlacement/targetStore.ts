@@ -1,18 +1,13 @@
 import * as vscode from 'vscode';
 import { logger } from '../util/logger';
 import debounce from 'lodash.debounce';
-import { TargetItem } from '../util/types';
 import { string, type, assert, record } from 'superstruct';
 
 type GlobalStoreKeys = 'targets';
 type WorkspaceStoreKeys = 'selectedTarget';
 
-const serializedTargetsSchema = record(
-    string(),
-    type({
-        ssh: string(),
-    }),
-);
+// serialized as { [target: string]: {} }; values are empty objects for backwards compatibility
+const serializedTargetsSchema = record(string(), type({}));
 
 export class TargetStore {
     private _onChanged: vscode.EventEmitter<void> =
@@ -62,33 +57,33 @@ export class TargetStore {
         this._onChanged.fire();
     }
 
-    public getTargets(): TargetItem[] {
+    public getTargets(): string[] {
         const targets = this.loadTargets();
         return [...targets.values()];
     }
 
-    public async addTarget(target: TargetItem): Promise<void> {
+    public async addTarget(target: string): Promise<void> {
         const targets = this.loadTargets();
-        if (targets.has(target.ssh)) {
-            throw new Error(`Target "${target.ssh}" already exists`);
+        if (targets.has(target)) {
+            throw new Error(`Target "${target}" already exists`);
         }
-        targets.set(target.ssh, target);
+        targets.add(target);
         await this.saveTargets(targets);
     }
 
-    public async updateTarget(target: TargetItem): Promise<void> {
+    public async updateTarget(target: string): Promise<void> {
         const targets = this.loadTargets();
-        if (!targets.has(target.ssh)) {
-            throw new Error(`Target "${target.ssh}" does not exist`);
+        if (!targets.has(target)) {
+            throw new Error(`Target "${target}" does not exist`);
         }
-        targets.set(target.ssh, target);
+        targets.add(target);
         await this.saveTargets(targets);
         this._onChanged.fire();
     }
 
-    public async getSelectedTarget(): Promise<TargetItem | undefined> {
+    public async getSelectedTarget(): Promise<string | undefined> {
         const targets = this.getTargets();
-        return targets.find((target) => target.ssh === this.selected);
+        return targets.find((target) => target === this.selected);
     }
 
     public async deleteTarget(ssh: string): Promise<void> {
@@ -100,7 +95,7 @@ export class TargetStore {
         await this.saveTargets(targets);
         const currentSelected = this.selected;
         if (currentSelected === ssh) {
-            const remaining = [...targets.keys()];
+            const remaining = [...targets];
             const newSelected = remaining.length
                 ? remaining.sort((a, b) => a.localeCompare(b))[0]
                 : undefined;
@@ -108,12 +103,12 @@ export class TargetStore {
         }
     }
 
-    protected loadTargets(): Map<string, TargetItem> {
+    protected loadTargets(): Set<string> {
         try {
             const rawTargets = this.getGlobal('targets');
             const targets = rawTargets ? JSON.parse(rawTargets) : {};
             assert(targets, serializedTargetsSchema);
-            return new Map(Object.entries(targets));
+            return new Set(Object.keys(targets));
         } catch (err) {
             const errorMsg = 'Failed to load targets';
             logger.error(errorMsg, err);
@@ -121,10 +116,10 @@ export class TargetStore {
         }
     }
 
-    protected async saveTargets(
-        targets: Map<string, TargetItem>,
-    ): Promise<void> {
-        const json = JSON.stringify(Object.fromEntries(targets));
+    protected async saveTargets(targets: Set<string>): Promise<void> {
+        const json = JSON.stringify(
+            Object.fromEntries([...targets].map((k) => [k, {}])),
+        );
         await this.setGlobal('targets', json);
     }
 

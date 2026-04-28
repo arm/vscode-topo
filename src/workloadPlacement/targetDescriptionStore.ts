@@ -2,28 +2,39 @@ import { TopoCli } from '../topoCli';
 import { TargetDescription } from '../util/types';
 
 import { Deferred } from '../util/deferred';
-import { getTargetDescription } from '../util/getTargetDescription';
+import { logger } from '../util/logger';
 
 export class TargetDescriptionStore {
     private cache = new Map<string, Deferred<TargetDescription | undefined>>();
 
     constructor(private topoCli: TopoCli) {}
 
-    public async getDescription(
-        targetSsh: string,
+    private async loadDescription(
+        target: string,
     ): Promise<TargetDescription | undefined> {
-        const existing = this.cache.get(targetSsh);
+        try {
+            return await this.topoCli.describe(target);
+        } catch (error) {
+            logger.warn(
+                `Failed to get target description for ${target}`,
+                error,
+            );
+            return undefined;
+        }
+    }
+
+    public async getDescription(
+        target: string,
+    ): Promise<TargetDescription | undefined> {
+        const existing = this.cache.get(target);
         if (existing) {
             return existing.promise;
         }
 
         const deferred = new Deferred<TargetDescription | undefined>();
-        this.cache.set(targetSsh, deferred);
+        this.cache.set(target, deferred);
         (async () => {
-            const description = await getTargetDescription(
-                this.topoCli,
-                targetSsh,
-            );
+            const description = await this.loadDescription(target);
             deferred.resolve(description);
         })();
 

@@ -5,12 +5,7 @@ import { TargetTreeTargetItem } from './targetTreeTargetItem';
 import * as vscode from 'vscode';
 import * as manifest from '../manifest';
 import { ContainersManager } from './containersManager';
-import {
-    TargetState,
-    ContainerItem,
-    TargetItem,
-    TargetDescription,
-} from '../util/types';
+import { TargetState, ContainerItem, TargetDescription } from '../util/types';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { TargetStore } from './targetStore';
 import { TargetTreeDependencyGroupItem } from './targetTreeDependencyGroupItem';
@@ -37,12 +32,10 @@ describe('TargetTreeDataProvider', () => {
     let containersManagerMock: MockProxy<ContainersManager>;
     let targetStoreMock: MockProxy<TargetStore>;
     let targetDescriptionStoreMock: MockProxy<TargetDescriptionStore>;
-    const target: TargetItem = {
-        ssh: 'user@topo.local',
-    };
+    const target = 'user@topo.local';
     const targetDescription: TargetDescription = {
-        hostProcessor: [],
-        remoteprocCPU: [{ name: 'imx-rproc' }, { name: 'other-rproc' }],
+        hostProcessors: [],
+        remoteprocCpus: [{ name: 'imx-rproc' }, { name: 'other-rproc' }],
     };
     const targetHealth: HealthCheckResult['target'] = {
         isLocalhost: false,
@@ -125,7 +118,7 @@ describe('TargetTreeDataProvider', () => {
     beforeEach(() => {
         const targetState: TargetState = {
             health: targetHealth,
-            targetSsh: target.ssh,
+            target: target,
         };
         context = mock<vscode.ExtensionContext>({ subscriptions: [] });
 
@@ -182,11 +175,11 @@ describe('TargetTreeDataProvider', () => {
             targetStoreMock.getTargets.mockReturnValue([target]);
             containersManagerMock.getTargetStateSnapshot.mockReturnValue({
                 health: undefined,
-                targetSsh: target.ssh,
+                target: target,
             });
             containersManagerMock.getTargetState.mockResolvedValue({
                 health: targetHealth,
-                targetSsh: target.ssh,
+                target: target,
             });
 
             const rootChildren = await provider.getChildren();
@@ -219,7 +212,7 @@ describe('TargetTreeDataProvider', () => {
                 }),
             ];
             const targetState = mock<TargetState>({
-                targetSsh: target.ssh,
+                target: target,
                 health: {
                     dependencies: dependencies,
                     subsystemDriver: subsystemDriverHealth,
@@ -229,7 +222,7 @@ describe('TargetTreeDataProvider', () => {
             targetStoreMock.getTargets.mockReturnValue([target]);
             containersManagerMock.getTargetStateSnapshot.mockReturnValue({
                 health: targetState.health,
-                targetSsh: target.ssh,
+                target: target,
             });
             const rootChildren = await provider.getChildren();
             const targetChildren = await provider.getChildren(rootChildren[0]);
@@ -251,7 +244,7 @@ describe('TargetTreeDataProvider', () => {
             targetStoreMock.getSelectedTarget.mockResolvedValue(target);
             containersManagerMock.getTargetStateSnapshot.mockReturnValue({
                 health: undefined,
-                targetSsh: target.ssh,
+                target: target,
             });
 
             const rootChildren = await provider.getChildren();
@@ -306,7 +299,7 @@ describe('TargetTreeDataProvider', () => {
             targetStoreMock.getTargets.mockReturnValue([]);
             containersManagerMock.getTargetState.mockResolvedValueOnce({
                 health: undefined,
-                targetSsh: target.ssh,
+                target: target,
             });
 
             const rootChildren = await provider.getChildren();
@@ -351,9 +344,7 @@ describe('TargetTreeDataProvider', () => {
                 targetItem,
             );
 
-            expect(targetStoreMock.setSelected).toHaveBeenCalledWith(
-                target.ssh,
-            );
+            expect(targetStoreMock.setSelected).toHaveBeenCalledWith(target);
         });
 
         it('does not call setSelected when select command is executed with a non-target item', async () => {
@@ -381,9 +372,7 @@ describe('TargetTreeDataProvider', () => {
                 targetItem,
             );
 
-            expect(targetStoreMock.deleteTarget).toHaveBeenCalledWith(
-                target.ssh,
-            );
+            expect(targetStoreMock.deleteTarget).toHaveBeenCalledWith(target);
         });
 
         it('does not call deleteTarget when remove command is executed with a non-target item', async () => {

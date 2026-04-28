@@ -28,7 +28,7 @@ export class SetupKeys {
             if (!treeNode.contextValue?.includes('Selected')) {
                 return;
             }
-            ssh = treeNode.target.ssh;
+            ssh = treeNode.target;
         } else {
             const selectedTarget = await this.targetStore.getSelectedTarget();
             if (!selectedTarget) {
@@ -38,7 +38,7 @@ export class SetupKeys {
                 );
                 return;
             }
-            ssh = selectedTarget.ssh;
+            ssh = selectedTarget;
         }
         if (!ssh) {
             return;

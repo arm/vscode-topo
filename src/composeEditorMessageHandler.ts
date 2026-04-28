@@ -50,10 +50,10 @@ export class ComposeEditorMessageHandler {
         const project = this.topoCli.getProject(document.uri.fsPath);
         const target = await this.targetStore.getSelectedTarget();
         const description = target
-            ? await this.targetDescriptionStore.getDescription(target.ssh)
+            ? await this.targetDescriptionStore.getDescription(target)
             : undefined;
         const remoteprocCpus =
-            description?.remoteprocCPU.map((rp) => rp.name) || [];
+            description?.remoteprocCpus.map((rp) => rp.name) || [];
         const subsystemNames = ['Host', ...remoteprocCpus];
         messagePoster.postMessage({
             type: 'render-compose-editor',

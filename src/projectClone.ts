@@ -312,7 +312,7 @@ export class ProjectClone {
         const selectedTarget = await this.targetStore.getSelectedTarget();
         const selectedTemplate = await getTemplateOfChoice(
             this.topoCli,
-            selectedTarget?.ssh,
+            selectedTarget,
         );
         if (!selectedTemplate) {
             return;

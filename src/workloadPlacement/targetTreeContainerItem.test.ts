@@ -1,12 +1,10 @@
 import * as vscode from 'vscode';
 import { TargetTreeContainerItem } from './targetTreeContainerItem';
 import { TARGET_REMOTEPROC_RUNTIME } from '../manifest';
-import { ContainerItem, TargetItem } from '../util/types';
+import { ContainerItem } from '../util/types';
 
 describe('TargetTreeContainerItem', () => {
-    const target: TargetItem = {
-        ssh: 'user@topo.local',
-    };
+    const target = 'user@topo.local';
     it('should set label (image), description (name - uptime), tooltip, contextValue, command, and iconPath', () => {
         const container: ContainerItem = {
             id: 'id123',

@@ -3,7 +3,6 @@ import { mock, MockProxy } from 'jest-mock-extended';
 import { SetupKeys } from './setupKeys';
 import { TargetStore } from '../workloadPlacement/targetStore';
 import { TargetTreeTargetItem } from '../workloadPlacement/targetTreeTargetItem';
-import { TargetItem } from '../util/types';
 import { mutable } from '../util/mutable';
 
 jest.mock('../util/logger');
@@ -11,9 +10,7 @@ jest.mock('../util/logger');
 describe('SetupKeys', () => {
     let context: MockProxy<vscode.ExtensionContext>;
     let targetStore: MockProxy<TargetStore>;
-    const target: TargetItem = {
-        ssh: 'user@topo.local',
-    };
+    const target = 'user@topo.local';
     const waitImmediate = () =>
         new Promise<void>((resolve) => setTimeout(() => resolve(), 0));
     const taskExec: vscode.TaskExecution = {
@@ -72,11 +69,11 @@ describe('SetupKeys', () => {
         expect(vscode.ShellExecution).toHaveBeenCalledWith('topo', [
             'setup-keys',
             '--target',
-            target.ssh,
+            target,
         ]);
         expect(vscode.tasks.executeTask).toHaveBeenCalled();
         expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
-            `Keys were set up on target ${target.ssh}.`,
+            `Keys were set up on target ${target}.`,
         );
     });
 
@@ -117,7 +114,7 @@ describe('SetupKeys', () => {
         expect(vscode.ShellExecution).toHaveBeenCalledWith('topo', [
             'setup-keys',
             '--target',
-            target.ssh,
+            target,
         ]);
     });
 
@@ -148,7 +145,7 @@ describe('SetupKeys', () => {
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
             expect.stringContaining(
-                `Failed to set up keys on target ${target.ssh}. setup-keys failed with exit code 1`,
+                `Failed to set up keys on target ${target}. setup-keys failed with exit code 1`,
             ),
         );
     });
