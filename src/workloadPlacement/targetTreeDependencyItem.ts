@@ -30,12 +30,9 @@ const capitalizeFirstLetter = (s: string) => {
 };
 
 export class TargetTreeDependencyItem extends vscode.TreeItem {
-    public readonly dependency: HealthCheckDependency;
-
-    constructor(dependency: HealthCheckDependency) {
+    constructor(public readonly dependency: HealthCheckDependency) {
         super(dependency.name, vscode.TreeItemCollapsibleState.None);
         this.description = dependency.value;
-        this.dependency = dependency;
 
         const statusCapitalized = capitalizeFirstLetter(dependency.status);
         this.tooltip = `Status: ${statusCapitalized}\nValue: ${dependency.value ?? '-'}`;

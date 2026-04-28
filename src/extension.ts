@@ -90,10 +90,10 @@ export async function activate(
     const health = new HostHealth(context, topoCli);
     const protocolHandler = new ProtocolHandler(projectClone);
     const installDependency = new InstallDependency(
-        context,
         targetStore,
         containersManager,
     );
+    context.subscriptions.push(installDependency);
 
     protocolHandler.activate(context);
     const setupKeys = new SetupKeys(context, targetStore);
@@ -116,6 +116,6 @@ export async function activate(
     openTargetDashboard.activate();
     health.activate();
     setupKeys.activate();
-    installDependency.activate();
+    await installDependency.activate();
     health.checkHostDependencyHealth();
 }

@@ -75,23 +75,25 @@ export const getInstallableDependency = (
 
 const installAction = { title: 'Install missing dependencies' };
 
-export class InstallDependency {
+export class InstallDependency implements vscode.Disposable {
+    private disposables: vscode.Disposable[] = [];
     public static readonly installDependencyCommand = `${PACKAGE_NAME}.installDependency`;
 
     constructor(
-        private readonly context: vscode.ExtensionContext,
         private readonly targetStore: TargetStore,
         private readonly containersManager: ContainersManager,
     ) {}
 
-    public activate(): void {
-        this.context.subscriptions.push(
+    public activate(): Promise<void> {
+        this.disposables.push(
             vscode.commands.registerCommand(
                 InstallDependency.installDependencyCommand,
                 this.onInstallCommand.bind(this),
             ),
             this.targetStore.onChanged(this.onTargetChanged.bind(this)),
         );
+
+        return this.onTargetChanged();
     }
 
     private async onTargetChanged(): Promise<void> {
@@ -100,14 +102,13 @@ export class InstallDependency {
             return;
         }
         const { health } = await this.containersManager.getTargetState(target);
-        const installables =
-            health?.dependencies
-                .map((dep) =>
-                    dep.status !== 'ok'
-                        ? getInstallableDependency(dep)
-                        : undefined,
-                )
-                .filter((v) => typeof v === 'string') ?? [];
+        const installables = Array.from(
+            new Set(
+                health?.dependencies
+                    .map(getInstallableDependency)
+                    .filter((v) => typeof v === 'string'),
+            ),
+        );
 
         if (installables.length > 0) {
             await this.showInstallableNotification(target, installables);
@@ -139,7 +140,7 @@ export class InstallDependency {
         try {
             await runInstallTask(target, installable);
             vscode.window.showInformationMessage(
-                `${installable} was installed on target ${target}.`,
+                `${installable} was installed on target ${target}`,
             );
         } catch (err) {
             showAndLogError(
@@ -169,5 +170,12 @@ export class InstallDependency {
                 }
             }
         }
+    }
+
+    public dispose(): void {
+        for (const disposable of this.disposables) {
+            disposable.dispose();
+        }
+        this.disposables = [];
     }
 }
