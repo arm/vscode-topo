@@ -118,6 +118,7 @@ function ContainerTable({
                                                 messagePoster.postMessage({
                                                     type: 'open-container-in-browser',
                                                     containerId: c.id,
+                                                    target: c.target,
                                                 });
                                             }}
                                         >
@@ -164,6 +165,7 @@ function ContainerTable({
                                                                 type: 'attach-vscode',
                                                                 containerId:
                                                                     c.id,
+                                                                target: c.target,
                                                             },
                                                         );
                                                     }}
@@ -180,6 +182,7 @@ function ContainerTable({
                                                                 type: 'attach-shell',
                                                                 containerId:
                                                                     c.id,
+                                                                target: c.target,
                                                             },
                                                         );
                                                     }}

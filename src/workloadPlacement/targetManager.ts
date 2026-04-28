@@ -126,7 +126,8 @@ export class TargetManager {
             return;
         }
         if (selectedTarget) {
-            const targetState = this.containersManager.getTargetStateSnapshot();
+            const targetState =
+                this.containersManager.getTargetStateSnapshot(selectedTarget);
             const connectionReady = selectedTarget === targetState.target;
             const targetTreeIcon = getTreeItemIcon(
                 true,
