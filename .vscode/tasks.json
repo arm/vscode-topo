@@ -4,8 +4,8 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "npm: watch",
-            "dependsOn": ["npm: watch:extension", "npm: watch:webview"],
+            "label": "npm: watch all",
+            "dependsOn": ["npm: watch extension", "npm: watch webview"],
             "presentation": {
                 "reveal": "never",
                 "group": "watchers"
@@ -19,7 +19,7 @@
         {
             "type": "npm",
             "script": "watch:extension",
-            "label": "npm: watch:extension",
+            "label": "npm: watch extension",
             "problemMatcher": [
                 {
                     "owner": "vite",
@@ -44,7 +44,7 @@
         {
             "type": "npm",
             "script": "watch:webview",
-            "label": "npm: watch:webview",
+            "label": "npm: watch webview",
             "problemMatcher": [
                 {
                     "owner": "vite",
@@ -68,28 +68,8 @@
         },
         {
             "type": "npm",
-            "script": "build",
-            "label": "npm: build",
-            "problemMatcher": [],
-            "group": "build"
-        },
-        {
-            "label": "npm: install",
-            "type": "shell",
-            "command": "npm",
-            "args": ["install"],
-            "problemMatcher": []
-        },
-        {
-            "label": "npm: install and build",
-            "dependsOrder": "sequence",
-            "dependsOn": ["npm: install", "npm: build"],
-            "problemMatcher": []
-        },
-        {
-            "type": "npm",
             "script": "watch-tests",
-            "label": "npm: watch-tests",
+            "label": "npm: watch tests",
             "problemMatcher": "$tsc-watch",
             "isBackground": true,
             "presentation": {
