@@ -12,6 +12,7 @@ import { TargetStore } from './targetStore';
 import type { TopoCli } from '../topoCli';
 import { isTargetReady } from '../util/targetState';
 import { future, type Future } from '../util/future';
+import { RefreshLoop } from '../util/refreshLoop';
 
 const refreshInterval = 3000;
 
@@ -55,7 +56,7 @@ export class ContainersManager implements vscode.Disposable {
         Promise<ContainerItem[]>
     >();
     private readonly targetStateMap = new Map<string, Future<TargetState>>();
-    private refreshTimer: NodeJS.Timeout | undefined;
+    private refreshLoop: RefreshLoop | undefined;
 
     private readonly _onDataUpdate = new vscode.EventEmitter<void>();
     public readonly onDataUpdate = this._onDataUpdate.event;
@@ -163,8 +164,8 @@ export class ContainersManager implements vscode.Disposable {
         }
     }
 
-    public async startAutoRefresh(target: string): Promise<void> {
-        const refresh = async () => {
+    private async startAutoRefresh(target: string): Promise<void> {
+        this.refreshLoop = new RefreshLoop(async () => {
             const targetStateFuture = this.loadTargetState(target);
             const targetState = await targetStateFuture.promise;
             this.targetStateMap.set(target, targetStateFuture);
@@ -176,16 +177,14 @@ export class ContainersManager implements vscode.Disposable {
             }
 
             this._onDataUpdate.fire();
-        };
-
-        this.refreshTimer = setInterval(refresh, refreshInterval);
-        await refresh();
+        }, refreshInterval);
+        await this.refreshLoop.start();
     }
 
-    public stopAutoRefresh(): void {
-        if (this.refreshTimer) {
-            clearInterval(this.refreshTimer);
-            this.refreshTimer = undefined;
+    private stopAutoRefresh(): void {
+        if (this.refreshLoop) {
+            this.refreshLoop.stop();
+            this.refreshLoop = undefined;
         }
     }
 

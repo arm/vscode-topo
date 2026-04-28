@@ -74,7 +74,7 @@ export class TargetDashboardMessageHandler {
         });
     }
 
-    private async getContainerById(
+    private async getContainer(
         target: string,
         containerId: string,
     ): Promise<ContainerItem> {
@@ -151,7 +151,7 @@ export class TargetDashboardMessageHandler {
         containerId,
         target,
     }: ContainerActionMessage): Promise<void> {
-        const container = await this.getContainerById(target, containerId);
+        const container = await this.getContainer(target, containerId);
         const result =
             await this.containerOpenInBrowser.openContainerInBrowser(container);
 
@@ -166,7 +166,7 @@ export class TargetDashboardMessageHandler {
         containerId,
         target,
     }: ContainerActionMessage): Promise<void> {
-        const container = await this.getContainerById(target, containerId);
+        const container = await this.getContainer(target, containerId);
         try {
             await this.attachVsCode.attachVsCode(container);
         } catch (err: unknown) {
@@ -184,7 +184,7 @@ export class TargetDashboardMessageHandler {
         containerId,
         target,
     }: ContainerActionMessage): Promise<void> {
-        const container = await this.getContainerById(target, containerId);
+        const container = await this.getContainer(target, containerId);
         this.attachShell.attachShell(container);
     }
 
