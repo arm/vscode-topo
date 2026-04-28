@@ -106,7 +106,7 @@
             },
             {
                 "command": "topo.installDependency",
-                "title": "Install Dependency",
+                "title": "Install",
                 "category": "Arm Topo"
             },
             {
@@ -240,14 +240,14 @@
                     "group": "topo/2_actions"
                 },
                 {
-                    "command": "topo.installDependency",
-                    "when": "view === topo.target-manager && viewItem =~ /^Installable/",
-                    "group": "topo/2_actions"
-                },
-                {
                     "command": "topo.removeTarget",
                     "when": "view == topo.target-manager && viewItem =~ /Target/",
                     "group": "topo/3_cleanup"
+                },
+                {
+                    "command": "topo.installDependency",
+                    "when": "view === topo.target-manager && viewItem =~ /Installable/",
+                    "group": "topo/manage@1"
                 },
                 {
                     "command": "topo.attachVsCode",

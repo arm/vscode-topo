@@ -28,7 +28,7 @@ const capitalizeFirstLetter = (s: string) => {
     return s.charAt(0).toUpperCase() + s.slice(1);
 };
 
-const getInstallableContext = (
+const getInstallableDependency = (
     dependency: HealthCheckDependency,
 ): string | undefined => {
     if (dependency.status === 'ok') {
@@ -39,23 +39,26 @@ const getInstallableContext = (
         dependency.name === 'Remoteproc Runtime' ||
         dependency.name === 'Remoteproc Shim'
     ) {
-        return 'Installable:remoteproc-runtime';
+        return 'remoteproc-runtime';
     }
 
     return undefined;
 };
 
 export class TargetTreeDependencyItem extends vscode.TreeItem {
+    public readonly installableDependency?: string;
+
     constructor(dependency: HealthCheckDependency) {
         super(dependency.name, vscode.TreeItemCollapsibleState.None);
         this.description = dependency.value;
+        this.installableDependency = getInstallableDependency(dependency);
 
         const statusCapitalized = capitalizeFirstLetter(dependency.status);
         this.tooltip = `Status: ${statusCapitalized}\nValue: ${dependency.value ?? '-'}`;
         this.contextValue = [
             'Dependency',
             statusCapitalized,
-            getInstallableContext(dependency),
+            this.installableDependency ? 'Installable' : undefined,
         ]
             .filter(Boolean)
             .join(' ');

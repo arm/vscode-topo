@@ -63,9 +63,8 @@ describe('TargetTreeDependencyItem', () => {
                 }),
             );
 
-            expect(item.contextValue).toBe(
-                `Dependency Warning Installable:remoteproc-runtime`,
-            );
+            expect(item.contextValue).toBe('Dependency Warning Installable');
+            expect(item.installableDependency).toBe('remoteproc-runtime');
         },
     );
 
@@ -78,5 +77,6 @@ describe('TargetTreeDependencyItem', () => {
         );
 
         expect(item.contextValue).toBe('Dependency Ok');
+        expect(item.installableDependency).toBeUndefined();
     });
 });

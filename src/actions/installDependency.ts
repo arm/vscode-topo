@@ -59,15 +59,12 @@ const runInstallTask = async (
     });
 };
 
-const getInstallable = (treeNode: unknown): string | undefined => {
+const getInstallableDependency = (treeNode: unknown): string | undefined => {
     if (!(treeNode instanceof TargetTreeDependencyItem)) {
         return undefined;
     }
 
-    const tokens = treeNode.contextValue?.split(' ');
-    return tokens
-        ?.find((token) => token.startsWith('Installable:'))
-        ?.split(':')[1];
+    return treeNode.installableDependency;
 };
 
 export class InstallDependency {
@@ -88,7 +85,7 @@ export class InstallDependency {
     }
 
     private async install(treeNode: unknown): Promise<void> {
-        const installable = getInstallable(treeNode);
+        const installable = getInstallableDependency(treeNode);
         if (!installable) {
             return;
         }
