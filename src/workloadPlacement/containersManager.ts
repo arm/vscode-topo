@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { logger } from '../util/logger';
-import { Deferred } from '../util/deferred';
 import type {
     TargetState,
     ContainerItem,
@@ -12,6 +11,8 @@ import type { ContainerCommands } from './containerCommands';
 import { TargetStore } from './targetStore';
 import type { TopoCli } from '../topoCli';
 import { isTargetReady } from '../util/targetState';
+import { future, type Future } from '../util/future';
+import { RefreshLoop } from '../util/refreshLoop';
 
 const refreshInterval = 3000;
 
@@ -44,22 +45,23 @@ function createContainerItem(
     };
 }
 
+const defaultTargetState: TargetState = {
+    health: undefined,
+    target: undefined,
+};
+
 export class ContainersManager implements vscode.Disposable {
-    private containersDataDeferred: Deferred<void> | undefined = undefined;
-    private targetStateDeferred: Deferred<void> | undefined = undefined;
-    private containersDataInitialised = false;
-    private targetStateInitialised = false;
+    private target: string | undefined;
+    private readonly containersMap = new Map<
+        string,
+        Promise<ContainerItem[]>
+    >();
+    private readonly targetStateMap = new Map<string, Future<TargetState>>();
+    private refreshLoop: RefreshLoop | undefined;
+
     private readonly _onDataUpdate = new vscode.EventEmitter<void>();
     public readonly onDataUpdate = this._onDataUpdate.event;
-    private readonly defaultTargetState: TargetState = {
-        health: undefined,
-        target: undefined,
-    };
-    private refreshTimer: NodeJS.Timeout | undefined;
-    private refreshSession: symbol | undefined;
-    private containersData: ContainerItem[] = [];
-    private targetState: TargetState = this.defaultTargetState;
-    private target: string | undefined;
+
     private disposables: vscode.Disposable[] = [];
 
     constructor(
@@ -79,147 +81,63 @@ export class ContainersManager implements vscode.Disposable {
         await this.updateTarget();
     }
 
-    private async updateTarget() {
+    private async updateTarget(): Promise<void> {
         const selectedTarget = await this.targetStore.getSelectedTarget();
         this.unsetTarget();
         if (selectedTarget) {
-            await this.setTarget(selectedTarget);
+            this.target = selectedTarget;
+            await this.startAutoRefresh(selectedTarget);
         }
-        await this.startAutoRefresh();
-    }
-
-    private async setTarget(target: string) {
-        this.target = target;
     }
 
     private unsetTarget(): void {
         this.stopAutoRefresh();
-        const containersDataDeferred = this.containersDataDeferred;
-        const targetStateDeferred = this.targetStateDeferred;
-        this.containersDataDeferred = undefined;
-        this.targetStateDeferred = undefined;
+        this.targetStateMap.clear();
+        this.containersMap.clear();
         this.target = undefined;
-        this.containersData = [];
-        this.containersDataInitialised = false;
-        this.targetState = this.defaultTargetState;
-        this.targetStateInitialised = false;
-        containersDataDeferred?.resolve();
-        targetStateDeferred?.resolve();
         this._onDataUpdate.fire();
     }
 
-    private async getTargetStateInfo(): Promise<TargetState> {
-        const target = this.target;
-        if (!target) {
-            return {
-                health: undefined,
-                target: undefined,
-            };
-        }
-
-        try {
-            const health = await this.topoCli.health(target);
-            return {
-                health: health.target,
-                target: target,
-            };
-        } catch (err) {
-            logger.error(`Failed to check health for target ${target}`, err);
-            return {
-                health: undefined,
-                target: target,
-            };
-        }
-    }
-
-    public async getContainersData(): Promise<ContainerItem[]> {
-        if (!this.containersDataInitialised) {
-            await this.loadContainersData();
-        }
-        return this.containersData;
-    }
-
-    private async loadContainersData(): Promise<void> {
-        if (this.containersDataDeferred) {
-            return this.containersDataDeferred.promise;
-        }
-        const deferred = new Deferred<void>();
-        this.containersDataDeferred = deferred;
-        (async () => {
+    private loadTargetState(target: string): Future<TargetState> {
+        return future(async () => {
             try {
-                const containersData = await this.getContainersInfo();
-                if (this.containersDataDeferred !== deferred) {
-                    deferred.resolve();
-                    return;
-                }
-
-                this.containersData = containersData;
-                this.containersDataInitialised = true;
-                deferred.resolve();
+                const health = await this.topoCli.health(target);
+                return {
+                    health: health.target,
+                    target,
+                };
             } catch (err) {
-                if (this.containersDataDeferred === deferred) {
-                    deferred.reject(err);
-                } else {
-                    deferred.resolve();
-                }
-            } finally {
-                if (this.containersDataDeferred === deferred) {
-                    this.containersDataDeferred = undefined;
-                }
+                logger.error(
+                    `Failed to check health for target ${target}`,
+                    err,
+                );
+                return {
+                    health: undefined,
+                    target,
+                };
             }
-        })();
-        return deferred.promise;
+        });
     }
 
-    public getTargetStateSnapshot(): TargetState {
-        return this.targetState;
-    }
-
-    public async getTargetState(): Promise<TargetState> {
-        if (!this.targetStateInitialised) {
-            await this.loadTargetState();
+    public async getContainersData(target: string): Promise<ContainerItem[]> {
+        if (!this.containersMap.has(target)) {
+            this.containersMap.set(target, this.loadContainersData(target));
         }
-        return this.targetState;
+        return this.containersMap.get(target)!;
     }
 
-    private loadTargetState(): Promise<void> {
-        if (this.targetStateDeferred) {
-            return this.targetStateDeferred.promise;
+    public async getTargetState(target: string): Promise<TargetState> {
+        if (!this.targetStateMap.has(target)) {
+            this.targetStateMap.set(target, this.loadTargetState(target));
         }
-        const deferred = new Deferred<void>();
-        this.targetStateDeferred = deferred;
-        (async () => {
-            try {
-                const targetState = await this.getTargetStateInfo();
-                if (this.targetStateDeferred !== deferred) {
-                    deferred.resolve();
-                    return;
-                }
-
-                this.targetState = targetState;
-                this.targetStateInitialised = true;
-                deferred.resolve();
-            } catch (err) {
-                if (this.targetStateDeferred === deferred) {
-                    deferred.reject(err);
-                } else {
-                    deferred.resolve();
-                }
-            } finally {
-                if (this.targetStateDeferred === deferred) {
-                    this.targetStateDeferred = undefined;
-                }
-            }
-        })();
-        return deferred.promise;
+        return this.targetStateMap.get(target)!.promise;
     }
 
-    private async getContainersInfo(): Promise<ContainerItem[]> {
-        const target = this.target;
-        if (!target) {
-            return [];
-        }
+    public getTargetStateSnapshot(target: string): TargetState {
+        return this.targetStateMap.get(target)?.get() ?? defaultTargetState;
+    }
 
+    private async loadContainersData(target: string): Promise<ContainerItem[]> {
         try {
             const items = await this.containerCommands.getContainers(target);
             const ids = items.map((item) => item.ID);
@@ -236,58 +154,40 @@ export class ContainersManager implements vscode.Disposable {
                 const stats = statsOutput.find((el) =>
                     el.ID.startsWith(item.ID),
                 );
-                const container = createContainerItem(
-                    item,
-                    inspect,
-                    stats,
-                    target,
+                containers.push(
+                    createContainerItem(item, inspect, stats, target),
                 );
-
-                containers.push(container);
             }
             return containers;
         } catch (err: unknown) {
             const errorMsg =
                 err instanceof Error ? err.message : 'Unknown error';
             logger.error(`Failed to get containers info: ${errorMsg}`);
-            return this.containersData;
+            return [];
         }
     }
 
-    public async startAutoRefresh(): Promise<void> {
-        if (this.refreshSession) {
-            return;
-        }
-        const refreshSession = Symbol('refreshSession');
-        this.refreshSession = refreshSession;
-        const refresh = async () => {
-            if (this.refreshSession !== refreshSession) {
-                return;
-            }
+    private async startAutoRefresh(target: string): Promise<void> {
+        this.refreshLoop = new RefreshLoop(async () => {
+            const targetStateFuture = this.loadTargetState(target);
+            const targetState = await targetStateFuture.promise;
+            this.targetStateMap.set(target, targetStateFuture);
 
-            await this.loadTargetState();
-            if (this.refreshSession !== refreshSession) {
-                return;
-            }
-
-            if (isTargetReady(this.targetState)) {
-                await this.loadContainersData();
-                if (this.refreshSession !== refreshSession) {
-                    return;
-                }
+            if (isTargetReady(targetState)) {
+                const containersPromise = this.loadContainersData(target);
+                await containersPromise;
+                this.containersMap.set(target, containersPromise);
             }
 
             this._onDataUpdate.fire();
-            this.refreshTimer = setTimeout(refresh, refreshInterval);
-        };
-        await refresh();
+        }, refreshInterval);
+        await this.refreshLoop.start();
     }
 
-    public stopAutoRefresh(): void {
-        this.refreshSession = undefined;
-        if (this.refreshTimer) {
-            clearTimeout(this.refreshTimer);
-            this.refreshTimer = undefined;
+    private stopAutoRefresh(): void {
+        if (this.refreshLoop) {
+            this.refreshLoop.stop();
+            this.refreshLoop = undefined;
         }
     }
 
