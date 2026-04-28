@@ -79,7 +79,7 @@ Organizing code well makes it easy to navigate, maintain, and extend. A logical 
 
 ## Repository Workflow
 
-- **Build after code changes**: Use `npm run build` to compile the extension and webview bundles.
+- **Build after code changes**: Use `npm run build` to compile the extension bundle.
 
 - **Run tests before finishing**: Use `npm test` to execute the unit test suite and generate coverage.
 

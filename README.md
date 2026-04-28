@@ -113,10 +113,9 @@ Additional commands are available through the Targets tree view context menus.
 
 ## Settings
 
-| Setting                     | Type                                            | Default | Description                                                                             |
-| --------------------------- | ----------------------------------------------- | ------- | --------------------------------------------------------------------------------------- |
-| `topo.loggingVerbosity`     | `off` \| `error` \| `warn` \| `info` \| `debug` | `warn`  | Control the logging verbosity of the extension.                                         |
-| `topo.experimentalFeatures` | `boolean`                                       | `false` | Enable experimental features such as the Target Dashboard and compose preview commands. |
+| Setting                 | Type                                            | Default | Description                                     |
+| ----------------------- | ----------------------------------------------- | ------- | ----------------------------------------------- |
+| `topo.loggingVerbosity` | `off` \| `error` \| `warn` \| `info` \| `debug` | `warn`  | Control the logging verbosity of the extension. |
 
 ## Development
 
