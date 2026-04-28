@@ -15,9 +15,7 @@
     ],
     "activationEvents": [
         "onUri",
-        "onLanguage:yaml",
-        "onCommand:topo.openEditor",
-        "onView:topo.composeEditor"
+        "onLanguage:yaml"
     ],
     "main": "./dist/extension.js",
     "topo": {
@@ -25,27 +23,6 @@
     },
     "contributes": {
         "commands": [
-            {
-                "command": "topo.showSource",
-                "title": "Show Source",
-                "category": "Arm Topo",
-                "icon": "$(go-to-file)"
-            },
-            {
-                "command": "topo.showPreviewToSide",
-                "title": "Open Preview to the Side",
-                "category": "Arm Topo",
-                "icon": "$(open-preview)"
-            },
-            {
-                "command": "topo.showPreview",
-                "title": "Open Preview",
-                "category": "Arm Topo",
-                "icon": {
-                    "light": "./media/preview-light.svg",
-                    "dark": "./media/preview-dark.svg"
-                }
-            },
             {
                 "command": "topo.initProject",
                 "title": "Initialize Project",
@@ -164,37 +141,14 @@
             }
         ],
         "menus": {
-            "editor/title": [
-                {
-                    "command": "topo.showSource",
-                    "when": "activeWebviewPanelId == 'topo.composeEditor'",
-                    "group": "navigation"
-                },
-                {
-                    "command": "topo.showPreviewToSide",
-                    "alt": "topo.showPreview",
-                    "group": "navigation",
-                    "when": "resourceFilename =~ /compose(\\..*)?\\.yaml$/ && activeCustomEditorId != 'topo.composeEditor' && config.topo.experimentalFeatures"
-                }
-            ],
             "editor/title/context": [
-                {
-                    "command": "topo.showPreview",
-                    "group": "1_open",
-                    "when": "resourceFilename =~ /compose(\\..*)?\\.yaml$/ && activeCustomEditorId != 'topo.composeEditor' && config.topo.experimentalFeatures"
-                },
                 {
                     "command": "topo.deploy.context",
                     "group": "topo",
-                    "when": "resourceFilename =~ /compose(\\..*)?\\.yaml$/ && activeCustomEditorId != 'topo.composeEditor'"
+                    "when": "resourceFilename =~ /compose(\\..*)?\\.yaml$/"
                 }
             ],
             "explorer/context": [
-                {
-                    "command": "topo.showPreview",
-                    "group": "navigation@1",
-                    "when": "resourceFilename =~ /compose(\\..*)?\\.yaml$/ && activeCustomEditorId != 'topo.composeEditor' && config.topo.experimentalFeatures"
-                },
                 {
                     "command": "topo.deploy.context",
                     "group": "topo",
@@ -202,18 +156,6 @@
                 }
             ],
             "commandPalette": [
-                {
-                    "command": "topo.showSource",
-                    "when": "false"
-                },
-                {
-                    "command": "topo.showPreviewToSide",
-                    "when": "false"
-                },
-                {
-                    "command": "topo.showPreview",
-                    "when": "false"
-                },
                 {
                     "command": "topo.addTarget",
                     "when": "false"
