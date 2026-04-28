@@ -90,11 +90,6 @@
                 "category": "Arm Topo"
             },
             {
-                "command": "topo.openTargetDashboard",
-                "title": "Open Target Dashboard",
-                "category": "Arm Topo"
-            },
-            {
                 "command": "topo.inspectTargetHealth",
                 "title": "Inspect Health",
                 "category": "Arm Topo"
@@ -169,10 +164,6 @@
                     "when": "false"
                 },
                 {
-                    "command": "topo.openTargetDashboard",
-                    "when": "false"
-                },
-                {
                     "command": "topo.inspectTargetHealth",
                     "when": "false"
                 },
@@ -214,11 +205,6 @@
                     "command": "topo.selectTarget",
                     "when": "view == topo.target-manager && viewItem =~ /Target/",
                     "group": "topo/1_select"
-                },
-                {
-                    "command": "topo.openTargetDashboard",
-                    "when": "view === topo.target-manager && viewItem =~ /Target/ && viewItem =~ /Selected/ && viewItem=~ /ConnectionReady/ && viewItem=~ /TargetReady/ && config.topo.experimentalFeatures",
-                    "group": "topo/2_actions"
                 },
                 {
                     "command": "topo.inspectTargetHealth",
@@ -288,11 +274,6 @@
                     ],
                     "default": "warn",
                     "description": "Specify the logging verbosity of the Topo extension"
-                },
-                "topo.experimentalFeatures": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Enable experimental features"
                 }
             }
         }
@@ -305,56 +286,41 @@
         "lint": "npm run prettier-check && npm run eslint-check && npm run tsc-check",
         "test": "jest --passWithNoTests --coverage",
         "build:extension": "vite build --mode extension",
-        "build:webview": "vite build --mode webview",
-        "build": "npm run build:extension && npm run build:webview",
+        "build": "npm run build:extension",
         "watch:extension": "vite build --mode extension --watch --minify=false",
-        "watch:webview": "vite build --mode webview --watch --minify=false",
-        "watch": "npm-run-all --parallel watch:extension watch:webview",
+        "watch": "npm run watch:extension",
         "download": "node --no-warnings --experimental-strip-types scripts/download.ts",
         "calculate-new-version": "node --no-warnings --experimental-strip-types scripts/calculate-new-version.ts",
         "prettier-check": "prettier -c .",
         "eslint-check": "eslint .",
-        "tsc-check": "tsc --noEmit -p src/tsconfig.json && tsc --noEmit -p media/tsconfig.json"
+        "tsc-check": "tsc --noEmit -p src/tsconfig.json"
     },
     "devDependencies": {
         "@eslint/eslintrc": "^3.3.1",
         "@swc/core": "^1.15.24",
         "@swc/jest": "^0.2.39",
-        "@testing-library/jest-dom": "^6.6.3",
-        "@testing-library/react": "^16.3.0",
         "@types/jest": "^30.0.0",
         "@types/js-yaml": "^4.0.9",
         "@types/lodash.debounce": "^4.0.9",
         "@types/lodash.isplainobject": "^4.0.7",
         "@types/mocha": "^10.0.10",
         "@types/node": "^22.19.15",
-        "@types/react": "^19.2.7",
-        "@types/react-dom": "^19.2.3",
         "@types/tar": "^6.1.13",
         "@types/vscode": "^1.99.1",
         "@typescript-eslint/eslint-plugin": "^8.58.2",
         "@typescript-eslint/parser": "^8.58.2",
-        "@vitejs/plugin-react": "^4.4.1",
         "@vscode/test-cli": "^0.0.12",
         "@vscode/test-electron": "^2.4.1",
         "@vscode/vsce": "^3.6.2",
         "eslint": "^8.57.1",
-        "eslint-plugin-react": "^7.37.5",
-        "eslint-plugin-react-hooks": "^7.0.1",
         "extract-zip": "^2.0.1",
         "jest": "^30.3.0",
-        "jest-environment-jsdom": "^30.3.0",
         "jest-mock-extended": "^4.0.0",
-        "npm-run-all": "^4.1.5",
         "prettier": "^3.7.4",
-        "react": "^19.2.0",
-        "react-dom": "^19.2.0",
-        "rollup-plugin-copy": "^3.5.0",
         "tar": "^7.5.2",
         "ts-loader": "^9.5.2",
         "typescript": "^6.0.2",
         "vite": "^6.3.4",
-        "vite-tsconfig-paths": "^5.1.4",
         "yargs": "^18.0.0"
     },
     "dependencies": {
