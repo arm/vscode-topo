@@ -10,7 +10,7 @@ module.exports = {
     extends: ['eslint:recommended'],
     overrides: [
         {
-            files: ['**/*.ts', '**/*.tsx'],
+            files: ['**/*.ts'],
             parser: '@typescript-eslint/parser',
             parserOptions: {
                 project: './tsconfig.eslint.json',

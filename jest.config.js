@@ -1,18 +1,18 @@
 const commonConfig = {
   transform: {
-    "^.+\\.(ts|tsx)$": ["@swc/jest", {
+    "^.+\\.ts$": ["@swc/jest", {
       jsc: {
-        parser: { syntax: "typescript", tsx: true }
+        parser: { syntax: "typescript" }
       }
     }]
   },
   testMatch: [
-    "**/?(*.)+(test).[jt]s?(x)"
+    "**/?(*.)+(test).[jt]s"
   ],
 };
 
 module.exports = {
-  collectCoverageFrom: ["src/**/*.{js,jsx,ts,tsx}", "!src/**/*.d.ts"],
+  collectCoverageFrom: ["src/**/*.{js,ts}", "!src/**/*.d.ts"],
   projects: [
     {
       ...commonConfig,
