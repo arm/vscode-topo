@@ -14,8 +14,6 @@ const makeContainer = (ports: ContainerItem['ports']): ContainerItem => {
         runtime: 'runc',
         annotations: {},
         ports,
-        cpuUsage: '0%',
-        memUsage: '0B / 0B',
         target: 'user@topo.local',
     };
 };

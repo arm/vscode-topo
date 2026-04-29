@@ -65,12 +65,6 @@ export interface DockerInspectItem {
     };
 }
 
-export interface DockerStatsItem {
-    ID: string;
-    CPUPerc: string;
-    MemUsage: string;
-}
-
 /**
  * Represents a Docker container item.
  *
@@ -100,8 +94,6 @@ export interface ContainerItem {
     runtime: string;
     annotations: Record<string, string>;
     ports: DockerPorts;
-    cpuUsage: string;
-    memUsage: string;
     target: string;
 }
 

@@ -59,8 +59,6 @@ describe('attachVsCode', () => {
         annotations: {},
         createdAt: '',
         ports: {},
-        cpuUsage: '0.0%',
-        memUsage: '0B / 1GiB',
         target,
     };
     const treeItem = new TargetTreeContainerItem(containerItem);

@@ -1,11 +1,7 @@
 import { WrappedError, WrappedErrorLog } from '../errors/wrappedError';
 import { exec, ExecResult } from '../util/exec';
 import { logger } from '../util/logger';
-import type {
-    DockerInspectItem,
-    DockerPsItem,
-    DockerStatsItem,
-} from '../util/types';
+import type { DockerInspectItem, DockerPsItem } from '../util/types';
 import type { ContainerCommands } from './containerCommands';
 import { getErrorMessage } from '../util/getErrorMessage';
 
@@ -193,27 +189,6 @@ export class DockerCommands implements ContainerCommands {
             });
         }
         return inspectItems;
-    }
-
-    public async containerStats(
-        containerIds: string[],
-        targetSshConnection: string,
-    ): Promise<DockerStatsItem[]> {
-        if (containerIds.length === 0) {
-            return [];
-        }
-        const ids = containerIds.join(' ');
-        const cmd = `docker --host ${getSshUri(targetSshConnection)} stats ${ids} --no-stream --no-trunc --format '{{json .}}'`;
-        const warnMsg = `Warnings emitted when getting container stats for container ${containerIds.join(', ')}`;
-        const isErrorAWarning = (err: string): boolean => {
-            const lines = splitLines(err);
-            return lines.every((line) =>
-                line.startsWith('Error: No such object:'),
-            );
-        };
-        const stdout = await runDockerCmd(cmd, warnMsg, isErrorAWarning);
-        const lines = splitLines(stdout);
-        return lines.map((l) => JSON.parse(l));
     }
 
     public async stopContainer(
