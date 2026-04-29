@@ -3,12 +3,27 @@ import { PACKAGE_NAME } from '../manifest';
 import { TopoCli } from '../topoCli';
 import { logger } from '../util/logger';
 import { showAndLogError } from '../util/showAndLogError';
-import { HealthCheckResult } from '../topoCliSchema';
+import { HealthCheckDependency, HealthCheckResult } from '../topoCliSchema';
 
 const hostHealthTarget = 'localhost';
 const inspectHostHealthAction: vscode.MessageItem = {
     title: 'Inspect Host Health',
 };
+
+function getUnhealthyHostDependencies(
+    dependencies: HealthCheckDependency[],
+): string[] {
+    return dependencies
+        .filter((dependency) => dependency.status !== 'ok')
+        .filter(
+            (dependency) =>
+                !(
+                    dependency.name === 'Topo' &&
+                    dependency.value.toLowerCase().includes('out of date')
+                ),
+        )
+        .map((dependency) => dependency.name);
+}
 
 export class HostHealth {
     public static readonly inspectHostHealthCommand = `${PACKAGE_NAME}.inspectHostHealth`;
@@ -51,9 +66,9 @@ export class HostHealth {
             return;
         }
 
-        const unhealthyDependencies = health.host.dependencies
-            .filter((v) => v.status !== 'ok')
-            .map((dependency) => dependency.name);
+        const unhealthyDependencies = getUnhealthyHostDependencies(
+            health.host.dependencies,
+        );
         if (unhealthyDependencies.length === 0) {
             return;
         }

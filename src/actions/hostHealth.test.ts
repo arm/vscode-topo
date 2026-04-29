@@ -173,6 +173,27 @@ describe('HostHealth', () => {
         expect(vscode.window.showWarningMessage).not.toHaveBeenCalled();
     });
 
+    it('does not warn when Topo is only out of date on startup', async () => {
+        topoCli.health.mockResolvedValue(
+            mock<HealthCheckResult>({
+                host: {
+                    dependencies: [
+                        {
+                            name: 'Topo',
+                            status: 'info',
+                            value: 'out of date - current: 5.0.0, latest version: 5.1.0',
+                        },
+                    ],
+                },
+            }),
+        );
+        const health = new HostHealth(context, topoCli);
+
+        await health.checkHostDependencyHealth();
+
+        expect(vscode.window.showWarningMessage).not.toHaveBeenCalled();
+    });
+
     it('does not warn when startup host health check fails', async () => {
         topoCli.health.mockRejectedValue(new Error('health unavailable'));
         const health = new HostHealth(context, topoCli);
