@@ -59,21 +59,17 @@ const runInstallTask = async (
     });
 };
 
+const fixCommandRegex = /^run `topo install ([A-z-]+)`$/;
+
 export const getInstallableDependency = (
     dependency: HealthCheckDependency,
 ): string | undefined => {
-    if (dependency.status === 'ok') {
+    if (typeof dependency.fix !== 'string') {
         return undefined;
     }
 
-    if (
-        dependency.name === 'Remoteproc Runtime' ||
-        dependency.name === 'Remoteproc Shim'
-    ) {
-        return 'remoteproc-runtime';
-    }
-
-    return undefined;
+    const match = dependency.fix.match(fixCommandRegex);
+    return match ? match[1] : undefined;
 };
 
 const installAction = { title: 'Install missing dependencies' };

@@ -83,46 +83,44 @@ describe('InstallDependency', () => {
         );
     });
 
-    it.each(['Remoteproc Runtime', 'Remoteproc Shim'])(
-        'runs install task for unhealthy %s dependency',
-        async (dependencyName) => {
-            const taskExec: vscode.TaskExecution = {
-                task: {} as vscode.Task,
-                terminate: jest.fn(),
-            };
-            jest.mocked(vscode.tasks.executeTask).mockResolvedValue(taskExec);
-            const installDependency = new InstallDependency(
-                targetStore,
-                containersManager,
-            );
-            const dependencyItem = new TargetTreeDependencyItem({
-                name: dependencyName,
-                status: 'error',
-                value: 'missing',
-            });
+    it('runs install task for dependency with `topo install` fix', async () => {
+        const taskExec: vscode.TaskExecution = {
+            task: {} as vscode.Task,
+            terminate: jest.fn(),
+        };
+        jest.mocked(vscode.tasks.executeTask).mockResolvedValue(taskExec);
+        const installDependency = new InstallDependency(
+            targetStore,
+            containersManager,
+        );
+        const dependencyItem = new TargetTreeDependencyItem({
+            name: 'Remoteproc Runtime',
+            status: 'error',
+            value: 'missing',
+            fix: 'run `topo install remoteproc-runtime`',
+        });
 
-            await installDependency.activate();
+        await installDependency.activate();
 
-            const handler = getCommandHandler()(dependencyItem);
-            await waitImmediate();
-            onDidEndTaskProcessEmitter.fire({
-                execution: taskExec,
-                exitCode: 0,
-            });
-            await handler;
+        const handler = getCommandHandler()(dependencyItem);
+        await waitImmediate();
+        onDidEndTaskProcessEmitter.fire({
+            execution: taskExec,
+            exitCode: 0,
+        });
+        await handler;
 
-            expect(vscode.ShellExecution).toHaveBeenCalledWith('topo', [
-                'install',
-                'remoteproc-runtime',
-                '--target',
-                target,
-            ]);
-            expect(vscode.tasks.executeTask).toHaveBeenCalled();
-            expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
-                `remoteproc-runtime was installed on target ${target}`,
-            );
-        },
-    );
+        expect(vscode.ShellExecution).toHaveBeenCalledWith('topo', [
+            'install',
+            'remoteproc-runtime',
+            '--target',
+            target,
+        ]);
+        expect(vscode.tasks.executeTask).toHaveBeenCalled();
+        expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
+            `remoteproc-runtime was installed on target ${target}`,
+        );
+    });
 
     it('does nothing for a healthy dependency', async () => {
         const installDependency = new InstallDependency(
@@ -151,11 +149,13 @@ describe('InstallDependency', () => {
                         name: 'Remoteproc Runtime',
                         status: 'error',
                         value: 'missing',
+                        fix: 'run `topo install remoteproc-runtime`',
                     },
                     {
                         name: 'Debugger',
                         status: 'error',
                         value: 'missing',
+                        fix: 'run `topo install debugger`',
                     },
                 ],
             },
@@ -169,7 +169,7 @@ describe('InstallDependency', () => {
         await installDependency.activate();
 
         expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
-            `${target} has missing or unhealthy dependencies: remoteproc-runtime`,
+            `${target} has missing or unhealthy dependencies: remoteproc-runtime, debugger`,
             { title: 'Install missing dependencies' },
         );
     });

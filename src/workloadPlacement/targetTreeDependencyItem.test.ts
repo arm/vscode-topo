@@ -49,18 +49,16 @@ describe('TargetTreeDependencyItem', () => {
         expect(item.contextValue).toBe('Dependency Error');
     });
 
-    it.each([['Remoteproc Runtime'], ['Remoteproc Shim']])(
-        'marks unhealthy %s dependencies as installable',
-        (dependencyName) => {
-            const item = new TargetTreeDependencyItem({
-                name: dependencyName,
-                value: 'missing',
-                status: 'warning',
-            });
+    it('marks dependency with `topo install` fix as installable', () => {
+        const item = new TargetTreeDependencyItem({
+            name: 'Container Engine',
+            value: 'missing',
+            status: 'warning',
+            fix: 'run `topo install container-engine`',
+        });
 
-            expect(item.contextValue).toBe('Dependency Warning Installable');
-        },
-    );
+        expect(item.contextValue).toBe('Dependency Warning Installable');
+    });
 
     it('does not mark healthy remoteproc dependencies as installable', () => {
         const item = new TargetTreeDependencyItem({
