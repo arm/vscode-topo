@@ -7,6 +7,7 @@ import { isWrappedError, WrappedError } from './errors/wrappedError';
 import { showAndLogError } from './util/showAndLogError';
 import { TargetStore } from './workloadPlacement/targetStore';
 import { getCloneDestinationPath } from './util/getCloneDestinationPath';
+import { executeTask } from './util/executeTask';
 
 type CloneResult =
     | {
@@ -79,49 +80,6 @@ const getLocalSourcePath = async (): Promise<string | undefined> => {
         return undefined;
     }
     return cloneSourceUri[0].fsPath;
-};
-
-const executeCloneTask = async (
-    cloneCommand: string[],
-    taskName: string,
-): Promise<boolean> => {
-    const cmd = cloneCommand[0];
-    const cmdArgs = cloneCommand.slice(1);
-    const shellExecution = new vscode.ShellExecution(cmd, cmdArgs);
-    const scope = vscode.TaskScope.Global;
-    const taskDefinition: vscode.TaskDefinition = {
-        type: 'shell',
-        taskId: `${manifest.PACKAGE_NAME} clone`,
-    };
-    const task = new vscode.Task(
-        taskDefinition,
-        scope,
-        taskName,
-        manifest.DISPLAY_NAME,
-        shellExecution,
-    );
-    task.presentationOptions = {
-        reveal: vscode.TaskRevealKind.Always,
-        echo: true,
-        focus: true,
-        showReuseMessage: true,
-        clear: true,
-    };
-    const taskExecution = await vscode.tasks.executeTask(task);
-    return await new Promise<boolean>((resolve, reject) => {
-        const taskEndDisposable = vscode.tasks.onDidEndTaskProcess((e) => {
-            if (e.execution !== taskExecution) {
-                return;
-            }
-            taskEndDisposable.dispose();
-            if (e.exitCode === 0) {
-                resolve(true);
-            } else {
-                const errorMsg = `Clone task "${taskName}" failed with exit code ${e.exitCode}.`;
-                reject(new WrappedError('CLONE', errorMsg));
-            }
-        });
-    });
 };
 
 const getDefaultProjectNameFromUrl = (url: string): string => {
@@ -211,11 +169,14 @@ const cloneWithSource = async (
         cloneBuildArgs,
     );
     const taskName = `Clone ${projectName}`;
-    const cloneSucceeded = await executeCloneTask(cloneCommand, taskName);
-    if (!cloneSucceeded) {
-        return { success: false };
+    try {
+        await executeTask(taskName, cloneCommand);
+        return { success: true, repositoryPath };
+    } catch (err) {
+        throw new WrappedError('CLONE', 'Failed to execute clone task', [], {
+            cause: err,
+        });
     }
-    return { success: true, repositoryPath };
 };
 
 const getTemplateOfChoice = async (

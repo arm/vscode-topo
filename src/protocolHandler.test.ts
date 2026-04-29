@@ -6,13 +6,16 @@ import { ProtocolHandler } from './protocolHandler';
 import { TopoCli } from './topoCli';
 import { mutable } from './util/mutable';
 import { showAndLogError } from './util/showAndLogError';
+import { executeTask } from './util/executeTask';
 import { TargetStore } from './workloadPlacement/targetStore';
 
 jest.mock('./util/showAndLogError', () => ({
     showAndLogError: jest.fn(),
 }));
+jest.mock('./util/executeTask');
 
 const showAndLogErrorSpy = jest.mocked(showAndLogError);
+const executeTaskMock = jest.mocked(executeTask);
 
 const subscriptions: vscode.Disposable[] = [];
 const workspacePath = path.join('home', 'workspace');
@@ -21,39 +24,12 @@ const workspaceFolders = [{ uri: workspaceUri, name: 'workspace', index: 0 }];
 const destinationPath = path.join('home', 'destination');
 const destinationUri = vscode.Uri.file(destinationPath);
 
-const mockTaskEnd = (taskExecution: vscode.TaskExecution, exitCode: number) => {
-    jest.mocked(vscode.tasks.executeTask).mockResolvedValueOnce(taskExecution);
-    mutable(vscode.tasks).onDidEndTaskProcess = (callback, thisArg) => {
-        const listener = thisArg ? callback.bind(thisArg) : callback;
-        queueMicrotask(() => {
-            listener({
-                execution: taskExecution,
-                exitCode,
-            });
-        });
-        return { dispose: jest.fn() };
-    };
-};
-
 describe('ProtocolHandler', () => {
     let projectClone: ProjectClone;
     let protocolHandler: ProtocolHandler;
     let context: MockProxy<vscode.ExtensionContext>;
     const topoCli = mock<TopoCli>();
     const targetStore = mock<TargetStore>();
-    const taskExec: vscode.TaskExecution = {
-        task: {
-            definition: { type: 'shell', taskId: 'topo clone' },
-            scope: undefined,
-            name: '',
-            isBackground: false,
-            source: '',
-            presentationOptions: {},
-            problemMatchers: [],
-            runOptions: {},
-        },
-        terminate: jest.fn(),
-    };
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -76,8 +52,6 @@ describe('ProtocolHandler', () => {
 
     it('runs a topo clone task for explicit git sources', async () => {
         mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-        jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
-        mockTaskEnd(taskExec, 0);
         jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
 
         await protocolHandler.handleUri(
@@ -87,7 +61,8 @@ describe('ProtocolHandler', () => {
         );
 
         expect(vscode.window.showOpenDialog).not.toHaveBeenCalled();
-        expect(vscode.ShellExecution).toHaveBeenCalledWith('topo', [
+        expect(executeTaskMock).toHaveBeenCalledWith('Clone repo', [
+            'topo',
             'clone',
             'git:https://example.com/repo.git',
             path.join(workspaceUri.fsPath, 'repo'),
@@ -102,8 +77,6 @@ describe('ProtocolHandler', () => {
         jest.mocked(vscode.window.showOpenDialog).mockResolvedValueOnce([
             destinationUri,
         ]);
-        jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
-        mockTaskEnd(taskExec, 0);
         jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
 
         await protocolHandler.handleUri(
@@ -118,7 +91,8 @@ describe('ProtocolHandler', () => {
             canSelectMany: false,
             openLabel: 'Select Destination Folder',
         });
-        expect(vscode.ShellExecution).toHaveBeenCalledWith('topo', [
+        expect(executeTaskMock).toHaveBeenCalledWith('Clone repo', [
+            'topo',
             'clone',
             'git:https://example.com/repo.git',
             path.join(destinationUri.fsPath, 'repo'),
@@ -127,8 +101,9 @@ describe('ProtocolHandler', () => {
 
     it('shows an error when the clone task fails', async () => {
         mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-        jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
-        mockTaskEnd(taskExec, 1);
+        executeTaskMock.mockRejectedValueOnce(
+            new Error('Clone repo failed with exit code 1'),
+        );
         jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
 
         await protocolHandler.handleUri(
@@ -141,15 +116,13 @@ describe('ProtocolHandler', () => {
             'Failed to clone project',
             expect.objectContaining({
                 code: 'CLONE',
-                message: expect.stringContaining('exit code 1'),
+                message: 'Failed to execute clone task',
             }),
         );
     });
 
     it('forwards arbitrary query params as clone options', async () => {
         mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-        jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
-        mockTaskEnd(taskExec, 0);
         jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
 
         await protocolHandler.handleUri(
@@ -158,7 +131,8 @@ describe('ProtocolHandler', () => {
             ),
         );
 
-        expect(vscode.ShellExecution).toHaveBeenCalledWith('topo', [
+        expect(executeTaskMock).toHaveBeenCalledWith('Clone repo', [
+            'topo',
             'clone',
             'https://example.com/repo.git',
             path.join(workspaceUri.fsPath, 'repo'),
@@ -168,8 +142,6 @@ describe('ProtocolHandler', () => {
 
     it('parses HTML-escaped ampersands in query params', async () => {
         mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-        jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
-        mockTaskEnd(taskExec, 0);
         jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
 
         await protocolHandler.handleUri(
@@ -181,7 +153,8 @@ describe('ProtocolHandler', () => {
             }),
         );
 
-        expect(vscode.ShellExecution).toHaveBeenCalledWith('topo', [
+        expect(executeTaskMock).toHaveBeenCalledWith('Clone repo', [
+            'topo',
             'clone',
             'https://example.com/repo.git',
             path.join(workspaceUri.fsPath, 'repo'),
@@ -193,8 +166,6 @@ describe('ProtocolHandler', () => {
 
     it('runs a topo clone task for bare github urls', async () => {
         mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-        jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
-        mockTaskEnd(taskExec, 0);
         jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
             'topo-lightbulb-moment',
         );
@@ -205,11 +176,15 @@ describe('ProtocolHandler', () => {
             ),
         );
 
-        expect(vscode.ShellExecution).toHaveBeenCalledWith('topo', [
-            'clone',
-            'https://github.com/Arm-Examples/topo-lightbulb-moment',
-            path.join(workspaceUri.fsPath, 'topo-lightbulb-moment'),
-        ]);
+        expect(executeTaskMock).toHaveBeenCalledWith(
+            'Clone topo-lightbulb-moment',
+            [
+                'topo',
+                'clone',
+                'https://github.com/Arm-Examples/topo-lightbulb-moment',
+                path.join(workspaceUri.fsPath, 'topo-lightbulb-moment'),
+            ],
+        );
     });
 
     it('does not attempt clone when source is missing', async () => {
@@ -217,7 +192,7 @@ describe('ProtocolHandler', () => {
             vscode.Uri.parse('vscode://arm.topo/clone?model=test-model'),
         );
 
-        expect(vscode.ShellExecution).not.toHaveBeenCalled();
+        expect(executeTaskMock).not.toHaveBeenCalled();
         expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
     });
 
@@ -228,7 +203,7 @@ describe('ProtocolHandler', () => {
 
         await protocolHandler.handleUri(uri);
 
-        expect(vscode.ShellExecution).not.toHaveBeenCalled();
+        expect(executeTaskMock).not.toHaveBeenCalled();
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
             `Invalid URI: ${uri.toString()}`,
         );
@@ -246,14 +221,11 @@ describe('ProtocolHandler', () => {
         );
         expect(vscode.window.showOpenDialog).not.toHaveBeenCalled();
         expect(vscode.window.showInputBox).not.toHaveBeenCalled();
-        expect(vscode.ShellExecution).not.toHaveBeenCalled();
-        expect(vscode.tasks.executeTask).not.toHaveBeenCalled();
+        expect(executeTaskMock).not.toHaveBeenCalled();
     });
 
     it('forwards repeated query params as array clone options', async () => {
         mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-        jest.mocked(vscode.Task).mockReturnValue(taskExec.task);
-        mockTaskEnd(taskExec, 0);
         jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
 
         await protocolHandler.handleUri(
@@ -262,7 +234,8 @@ describe('ProtocolHandler', () => {
             ),
         );
 
-        expect(vscode.ShellExecution).toHaveBeenCalledWith('topo', [
+        expect(executeTaskMock).toHaveBeenCalledWith('Clone repo', [
+            'topo',
             'clone',
             'https://github.com/Arm-Examples/topo-lightbulb-moment',
             path.join(workspaceUri.fsPath, 'repo'),
