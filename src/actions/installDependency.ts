@@ -5,6 +5,7 @@ import { TargetTreeDependencyItem } from '../workloadPlacement/targetTreeDepende
 import { showAndLogError } from '../util/showAndLogError';
 import { ContainersManager } from '../workloadPlacement/containersManager';
 import { HealthCheckDependency } from '../topoCliSchema';
+import { isWrappedError, WrappedError } from '../errors/wrappedError';
 
 const getInstallCommand = (sshTarget: string, value: string): string[] => {
     return ['topo', 'install', value, '--target', sshTarget];
@@ -48,7 +49,8 @@ const runInstallTask = async (
             }
 
             reject(
-                new Error(
+                new WrappedError(
+                    'CLI',
                     `install ${value} failed with exit code ${e.exitCode ?? 'unknown'}`,
                 ),
             );
@@ -143,10 +145,14 @@ export class InstallDependency implements vscode.Disposable {
                 `${installable} was installed on target ${target}`,
             );
         } catch (err) {
-            showAndLogError(
-                `Failed to install ${installable} on target ${target}`,
-                err,
-            );
+            if (isWrappedError(err, ['CLI'])) {
+                return showAndLogError(
+                    `Failed to install ${installable} on target ${target}`,
+                    err,
+                );
+            }
+
+            throw err;
         }
     }
 
