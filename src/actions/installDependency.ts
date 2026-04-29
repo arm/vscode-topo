@@ -182,7 +182,7 @@ export class InstallDependency implements vscode.Disposable {
     }
 
     public dispose(): void {
-        for (const disposable of this.disposables) {
+        for (const disposable of [...this.disposables].reverse()) {
             disposable.dispose();
         }
         this.disposables = [];
