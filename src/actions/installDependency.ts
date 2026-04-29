@@ -76,6 +76,7 @@ const installAction = { title: 'Install missing dependencies' };
 
 export class InstallDependency implements vscode.Disposable {
     private disposables: vscode.Disposable[] = [];
+    private targetChangedAbortController: AbortController | undefined;
     public static readonly installDependencyCommand = `${PACKAGE_NAME}.installDependency`;
 
     constructor(
@@ -96,6 +97,10 @@ export class InstallDependency implements vscode.Disposable {
     }
 
     private async onTargetChanged(): Promise<void> {
+        this.targetChangedAbortController?.abort();
+        const abortController = new AbortController();
+        this.targetChangedAbortController = abortController;
+
         const target = await this.targetStore.getSelectedTarget();
         if (!target) {
             return;
@@ -109,7 +114,7 @@ export class InstallDependency implements vscode.Disposable {
             ),
         ];
 
-        if (installables.length > 0) {
+        if (installables.length > 0 && !abortController.signal.aborted) {
             await this.showInstallableNotification(target, installables);
         }
     }
@@ -178,6 +183,8 @@ export class InstallDependency implements vscode.Disposable {
     }
 
     public dispose(): void {
+        this.targetChangedAbortController?.abort();
+        this.targetChangedAbortController = undefined;
         for (const disposable of [...this.disposables].reverse()) {
             disposable.dispose();
         }
