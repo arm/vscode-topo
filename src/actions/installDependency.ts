@@ -170,14 +170,7 @@ export class InstallDependency implements vscode.Disposable {
         );
         if (choice?.title === installAction.title) {
             for (const installable of installables) {
-                try {
-                    await this.installDependency(target, installable);
-                } catch (err) {
-                    showAndLogError(
-                        `Failed to install ${installable} on target ${target}`,
-                        err,
-                    );
-                }
+                await this.installDependency(target, installable);
             }
         }
     }
