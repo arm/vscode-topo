@@ -233,7 +233,7 @@
                 {
                     "command": "topo.installDependency",
                     "when": "view === topo.target-manager && viewItem =~ /Installable/",
-                    "group": "topo/manage@1"
+                    "group": "topo/1_manage"
                 },
                 {
                     "command": "topo.attachVsCode",
