@@ -6,6 +6,7 @@ import { showAndLogError } from '../util/showAndLogError';
 import { ContainersManager } from '../workloadPlacement/containersManager';
 import { HealthCheckDependency } from '../topoCliSchema';
 import { isWrappedError, WrappedError } from '../errors/wrappedError';
+import { logger } from '../util/logger';
 
 const getInstallCommand = (sshTarget: string, value: string): string[] => {
     return ['topo', 'install', value, '--target', sshTarget];
@@ -119,6 +120,8 @@ export class InstallDependency implements vscode.Disposable {
 
     private async onInstallCommand(treeNode: unknown): Promise<void> {
         if (!(treeNode instanceof TargetTreeDependencyItem)) {
+            const errMsg = `Invalid target type for install dependency: expected TargetTreeDependencyItem but received:`;
+            logger.error(errMsg, treeNode);
             return;
         }
 
