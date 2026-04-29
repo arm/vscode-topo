@@ -164,21 +164,31 @@ export class ContainersManager implements vscode.Disposable {
         }
     }
 
+    private async refreshTarget(target: string): Promise<void> {
+        const targetStateFuture = this.loadTargetState(target);
+        const targetState = await targetStateFuture.promise;
+        this.targetStateMap.set(target, targetStateFuture);
+
+        if (isTargetReady(targetState)) {
+            const containersPromise = this.loadContainersData(target);
+            await containersPromise;
+            this.containersMap.set(target, containersPromise);
+        }
+
+        this._onDataUpdate.fire();
+    }
+
     private async startAutoRefresh(target: string): Promise<void> {
-        this.refreshLoop = new RefreshLoop(async () => {
-            const targetStateFuture = this.loadTargetState(target);
-            const targetState = await targetStateFuture.promise;
-            this.targetStateMap.set(target, targetStateFuture);
+        const refreshLoop = new RefreshLoop(
+            async () => this.refreshTarget(target),
+            refreshInterval,
+        );
 
-            if (isTargetReady(targetState)) {
-                const containersPromise = this.loadContainersData(target);
-                await containersPromise;
-                this.containersMap.set(target, containersPromise);
-            }
-
-            this._onDataUpdate.fire();
-        }, refreshInterval);
-        await this.refreshLoop.start();
+        this.refreshLoop = refreshLoop;
+        await this.refreshTarget(target);
+        if (this.refreshLoop === refreshLoop) {
+            await refreshLoop.start();
+        }
     }
 
     private stopAutoRefresh(): void {
