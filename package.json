@@ -310,7 +310,7 @@
         "prettier": "^3.7.4",
         "tar": "^7.5.2",
         "typescript": "^6.0.2",
-        "vite": "^6.3.4",
+        "vite": "^8.0.10",
         "yargs": "^18.0.0"
     },
     "dependencies": {
