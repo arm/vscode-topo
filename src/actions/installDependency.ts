@@ -1,62 +1,15 @@
 import * as vscode from 'vscode';
-import { DISPLAY_NAME, PACKAGE_NAME } from '../manifest';
+import { PACKAGE_NAME } from '../manifest';
 import { TargetStore } from '../workloadPlacement/targetStore';
 import { TargetTreeDependencyItem } from '../workloadPlacement/targetTreeDependencyItem';
 import { showAndLogError } from '../util/showAndLogError';
 import { ContainersManager } from '../workloadPlacement/containersManager';
 import { HealthCheckDependency } from '../topoCliSchema';
-import { isWrappedError, WrappedError } from '../errors/wrappedError';
 import { logger } from '../util/logger';
+import { executeTask } from '../util/executeTask';
 
 const getInstallCommand = (sshTarget: string, value: string): string[] => {
     return ['topo', 'install', value, '--target', sshTarget];
-};
-
-const runInstallTask = async (
-    sshTarget: string,
-    value: string,
-): Promise<void> => {
-    const [cmd, ...cmdArgs] = getInstallCommand(sshTarget, value);
-    const shellExecution = new vscode.ShellExecution(cmd, cmdArgs);
-    const taskDefinition: vscode.TaskDefinition = {
-        type: 'shell',
-        taskId: `${PACKAGE_NAME} install ${value}`,
-    };
-    const task = new vscode.Task(
-        taskDefinition,
-        vscode.TaskScope.Workspace,
-        `Install ${value} on ${sshTarget}`,
-        DISPLAY_NAME,
-        shellExecution,
-    );
-    task.presentationOptions = {
-        reveal: vscode.TaskRevealKind.Always,
-        echo: true,
-        focus: true,
-        showReuseMessage: true,
-        clear: false,
-    };
-    const taskExecution = await vscode.tasks.executeTask(task);
-
-    await new Promise<void>((resolve, reject) => {
-        const disposable = vscode.tasks.onDidEndTaskProcess((e) => {
-            if (e.execution !== taskExecution) {
-                return;
-            }
-            disposable.dispose();
-            if (e.exitCode === 0) {
-                resolve();
-                return;
-            }
-
-            reject(
-                new WrappedError(
-                    'CLI',
-                    `install ${value} failed with exit code ${e.exitCode ?? 'unknown'}`,
-                ),
-            );
-        });
-    });
 };
 
 const fixCommandRegex = /^run `topo install ([A-z-]+)`$/;
@@ -159,19 +112,15 @@ export class InstallDependency implements vscode.Disposable {
         installable: string,
     ): Promise<void> {
         try {
-            await runInstallTask(target, installable);
+            await executeTask(target, getInstallCommand(target, installable));
             vscode.window.showInformationMessage(
                 `${installable} was installed on target ${target}`,
             );
         } catch (err) {
-            if (isWrappedError(err, ['CLI'])) {
-                return showAndLogError(
-                    `Failed to install ${installable} on target ${target}`,
-                    err,
-                );
-            }
-
-            throw err;
+            showAndLogError(
+                `Failed to install ${installable} on target ${target}`,
+                err,
+            );
         }
     }
 

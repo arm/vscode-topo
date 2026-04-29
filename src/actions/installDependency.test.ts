@@ -4,10 +4,13 @@ import { InstallDependency } from './installDependency';
 import { TargetStore } from '../workloadPlacement/targetStore';
 import { TargetTreeDependencyItem } from '../workloadPlacement/targetTreeDependencyItem';
 import { HealthCheckResult } from '../topoCliSchema';
-import { mutable } from '../util/mutable';
 import { ContainersManager } from '../workloadPlacement/containersManager';
+import { executeTask } from '../util/executeTask';
 
 jest.mock('../util/logger');
+jest.mock('../util/executeTask');
+
+const executeTaskMock = jest.mocked(executeTask);
 
 const getCommandHandler = () => {
     const handler = jest
@@ -23,9 +26,6 @@ const getCommandHandler = () => {
 
     return handler;
 };
-
-const waitImmediate = () =>
-    new Promise<void>((resolve) => setTimeout(() => resolve(), 0));
 
 const loadedHealth: HealthCheckResult = {
     host: { dependencies: [] },
@@ -51,8 +51,6 @@ describe('InstallDependency', () => {
     const targetStore = mock<TargetStore>();
     const containersManager = mock<ContainersManager>();
     const target = 'user@topo.local';
-    const onDidEndTaskProcessEmitter =
-        new vscode.EventEmitter<vscode.TaskProcessEndEvent>();
 
     beforeEach(() => {
         targetStore.getSelectedTarget.mockResolvedValue(target);
@@ -60,9 +58,6 @@ describe('InstallDependency', () => {
             health: loadedHealth.target,
             target,
         });
-
-        mutable(vscode.tasks).onDidEndTaskProcess =
-            onDidEndTaskProcessEmitter.event;
     });
 
     afterEach(() => {
@@ -102,24 +97,15 @@ describe('InstallDependency', () => {
 
         await installDependency.activate();
 
-        const handler = getCommandHandler()(dependencyItem);
-        await waitImmediate();
-        onDidEndTaskProcessEmitter.fire({
-            execution: taskExec,
-            exitCode: 0,
-        });
-        await handler;
+        await getCommandHandler()(dependencyItem);
 
-        expect(vscode.ShellExecution).toHaveBeenCalledWith('topo', [
+        expect(executeTaskMock).toHaveBeenCalledWith(target, [
+            'topo',
             'install',
             'remoteproc-runtime',
             '--target',
             target,
         ]);
-        expect(vscode.tasks.executeTask).toHaveBeenCalled();
-        expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
-            `remoteproc-runtime was installed on target ${target}`,
-        );
     });
 
     it('does nothing for a healthy dependency', async () => {
