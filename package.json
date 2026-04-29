@@ -303,7 +303,6 @@
         "@typescript-eslint/eslint-plugin": "^8.58.2",
         "@typescript-eslint/parser": "^8.58.2",
         "@vscode/vsce": "^3.6.2",
-        "esbuild": "^0.28.0",
         "eslint": "^8.57.1",
         "extract-zip": "^2.0.1",
         "jest": "^30.3.0",
