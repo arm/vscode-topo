@@ -73,8 +73,6 @@ describe('TargetTreeDataProvider', () => {
             },
             createdAt: '',
             ports: {},
-            cpuUsage: '0.0%',
-            memUsage: '0B / 1GiB',
             target,
         },
         {
@@ -89,8 +87,6 @@ describe('TargetTreeDataProvider', () => {
             annotations: {},
             createdAt: '',
             ports: {},
-            cpuUsage: '0.0%',
-            memUsage: '0B / 1GiB',
             target,
         },
         {
@@ -107,8 +103,6 @@ describe('TargetTreeDataProvider', () => {
             },
             createdAt: '',
             ports: {},
-            cpuUsage: '0.0%',
-            memUsage: '0B / 1GiB',
             target,
         },
     ];
