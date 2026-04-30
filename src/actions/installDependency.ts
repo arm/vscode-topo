@@ -88,15 +88,17 @@ export class InstallDependency implements vscode.Disposable {
         this.disposables.push(
             vscode.commands.registerCommand(
                 InstallDependency.installDependencyCommand,
-                this.onInstallCommand.bind(this),
+                this.installDependencyFromTreeItem.bind(this),
             ),
-            this.targetStore.onChanged(this.onTargetChanged.bind(this)),
+            this.targetStore.onChanged(
+                this.promptToInstallMissingDependencies.bind(this),
+            ),
         );
 
-        return this.onTargetChanged();
+        return this.promptToInstallMissingDependencies();
     }
 
-    private async onTargetChanged(): Promise<void> {
+    private async promptToInstallMissingDependencies(): Promise<void> {
         this.targetChangedAbortController?.abort();
         const abortController = new AbortController();
         this.targetChangedAbortController = abortController;
@@ -119,7 +121,9 @@ export class InstallDependency implements vscode.Disposable {
         }
     }
 
-    private async onInstallCommand(treeNode: unknown): Promise<void> {
+    private async installDependencyFromTreeItem(
+        treeNode: unknown,
+    ): Promise<void> {
         if (!(treeNode instanceof TargetTreeDependencyItem)) {
             const errMsg = `Invalid target type for install dependency: expected TargetTreeDependencyItem but received:`;
             logger.error(errMsg, treeNode);
