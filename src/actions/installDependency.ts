@@ -108,16 +108,17 @@ export class InstallDependency implements vscode.Disposable {
             return;
         }
         const { health } = await this.containersManager.getTargetState(target);
-        const installables = [
-            ...new Set(
-                health?.dependencies
-                    .map(getInstallableDependency)
-                    .filter((v) => typeof v === 'string'),
-            ),
-        ];
 
-        if (installables.length > 0 && !abortController.signal.aborted) {
-            await this.showInstallableNotification(target, installables);
+        const installables = new Set<string>();
+        for (const dependency of health?.dependencies ?? []) {
+            const installable = getInstallableDependency(dependency);
+            if (installable) {
+                installables.add(installable);
+            }
+        }
+
+        if (installables.size > 0 && !abortController.signal.aborted) {
+            await this.showInstallableNotification(target, [...installables]);
         }
     }
 
