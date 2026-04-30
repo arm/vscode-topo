@@ -15,6 +15,17 @@ import { RefreshLoop } from '../util/refreshLoop';
 
 const refreshInterval = 3000;
 
+function hasHealthyDependency(
+    state: TargetState,
+    dependencyName: string,
+): boolean {
+    return (
+        state.health?.dependencies.some(
+            (dep) => dep.name === dependencyName && dep.status === 'ok',
+        ) ?? false
+    );
+}
+
 function createContainerItem(
     item: DockerPsItem,
     inspect: DockerInspectItem | undefined,
@@ -173,7 +184,10 @@ export class ContainersManager implements vscode.Disposable {
             const targetState = await targetStateFuture.promise;
             this.targetStateMap.set(target, targetStateFuture);
 
-            if (targetState?.health?.connectivity.status === 'ok') {
+            if (
+                targetState.status === 'connected' &&
+                hasHealthyDependency(targetState, 'Container Engine')
+            ) {
                 const containersPromise = this.loadContainersData(target);
                 await containersPromise;
                 this.containersMap.set(target, containersPromise);
