@@ -13,7 +13,7 @@ export default defineConfig((config: ConfigEnv) => {
     );
     console.log(`Build config:\n${JSON.stringify(config, null, 2)}`);
     const build: BuildEnvironmentOptions = {
-        minify: isDev ? false : 'esbuild',
+        minify: isDev ? false : 'oxc',
         emptyOutDir: false,
         target: 'node16',
         outDir: 'dist',
@@ -23,7 +23,7 @@ export default defineConfig((config: ConfigEnv) => {
             formats: ['cjs'],
             fileName: () => 'extension.js',
         },
-        rollupOptions: {
+        rolldownOptions: {
             external: [
                 'vscode',
                 'node:fs',
