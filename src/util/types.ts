@@ -78,8 +78,6 @@ export interface DockerInspectItem {
  * @property {string} createdAt - The timestamp indicating when the container was created.
  * @property {string} runtime - The runtime of the container.
  * @property {DockerPorts} ports - The ports exposed by the container.
- * @property {string} cpuUsage - The CPU usage of the container.
- * @property {string} memUsage - The memory usage of the container.
  * @property {string} target - The target associated with the container.
  */
 export interface ContainerItem {
