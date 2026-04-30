@@ -394,6 +394,7 @@ describe('TopoCli', () => {
                 'health',
                 '--target',
                 'hostname',
+                '--skip-version-checks',
                 '--accept-new-host-keys',
                 '-o',
                 'json',
