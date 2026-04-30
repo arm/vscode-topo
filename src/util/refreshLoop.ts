@@ -6,7 +6,7 @@ export class RefreshLoop {
         private readonly refreshInterval: number,
     ) {}
 
-    public async start(): Promise<void> {
+    public start(): void {
         this.stop();
         this.timeoutId = setTimeout(async () => {
             await this.callback();

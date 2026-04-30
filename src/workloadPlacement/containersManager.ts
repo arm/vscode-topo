@@ -187,7 +187,7 @@ export class ContainersManager implements vscode.Disposable {
         this.refreshLoop = refreshLoop;
         await this.refreshTarget(target);
         if (this.refreshLoop === refreshLoop) {
-            await refreshLoop.start();
+            refreshLoop.start();
         }
     }
 
