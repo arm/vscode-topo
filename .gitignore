@@ -6,3 +6,4 @@ coverage
 test-workspace/
 resources
 .vscode/settings.json
+.codex
