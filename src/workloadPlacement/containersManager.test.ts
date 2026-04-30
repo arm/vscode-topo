@@ -291,6 +291,49 @@ describe('ContainersManager', () => {
         expect(execMock).not.toHaveBeenCalled();
     });
 
+    it('clears cached containers when the container engine becomes unhealthy', async () => {
+        const unhealthyContainerEngine: HealthCheckResult = {
+            host: { dependencies: [] },
+            target: {
+                isLocalhost: false,
+                dependencies: [
+                    {
+                        name: 'Container Engine',
+                        status: 'error',
+                        value: 'docker',
+                    },
+                ],
+                connectivity: { name: 'Connected', status: 'ok', value: '' },
+                subsystemDriver: {
+                    name: 'Subsystem Driver (remoteproc)',
+                    status: 'ok',
+                    value: 'driver-x',
+                },
+            },
+        };
+        topoCli.health
+            .mockResolvedValueOnce(loadedHealth)
+            .mockResolvedValueOnce(unhealthyContainerEngine);
+        const targetStore = mock<TargetStore>();
+        targetStore.getSelectedTarget.mockResolvedValue(target);
+        const containerCommands = mock<ContainerCommands>();
+        containerCommands.getContainers.mockResolvedValue(mockContainers);
+        containerCommands.inspectContainers.mockResolvedValue([]);
+        containerCommands.containerStats.mockResolvedValue([]);
+        const manager = createContainersManager(targetStore, containerCommands);
+        await manager.activate();
+        await jest.advanceTimersByTimeAsync(3000);
+        await expect(manager.getContainersData(target)).resolves.toHaveLength(
+            mockContainers.length,
+        );
+
+        containerCommands.getContainers.mockClear();
+        await jest.advanceTimersByTimeAsync(3000);
+
+        await expect(manager.getContainersData(target)).resolves.toEqual([]);
+        expect(containerCommands.getContainers).not.toHaveBeenCalled();
+    });
+
     it('startAutoRefresh and stopAutoRefresh manage timer and update data', async () => {
         execMock.mockImplementation(async (command: string) => {
             switch (command) {

@@ -184,13 +184,14 @@ export class ContainersManager implements vscode.Disposable {
             const targetState = await targetStateFuture.promise;
             this.targetStateMap.set(target, targetStateFuture);
 
-            if (
-                targetState.status === 'connected' &&
-                hasHealthyDependency(targetState, 'Container Engine')
-            ) {
-                const containersPromise = this.loadContainersData(target);
-                await containersPromise;
-                this.containersMap.set(target, containersPromise);
+            if (targetState.status === 'connected') {
+                if (hasHealthyDependency(targetState, 'Container Engine')) {
+                    const containersPromise = this.loadContainersData(target);
+                    await containersPromise;
+                    this.containersMap.set(target, containersPromise);
+                } else {
+                    this.containersMap.set(target, Promise.resolve([]));
+                }
             }
 
             this._onDataUpdate.fire();
