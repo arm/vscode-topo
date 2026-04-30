@@ -133,11 +133,21 @@ export class InstallDependency implements vscode.Disposable {
 
         const target = await this.targetStore.getSelectedTarget();
         if (!target) {
+            showAndLogError(
+                `Failed to install dependency`,
+                new Error('No selected target found'),
+            );
             return;
         }
 
         const installable = getInstallableDependency(treeNode.dependency);
         if (!installable) {
+            showAndLogError(
+                `Failed to install dependency`,
+                new Error(
+                    'No installable dependency found for the selected item',
+                ),
+            );
             return;
         }
 
