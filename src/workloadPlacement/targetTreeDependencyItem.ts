@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { HealthCheckDependency, HealthCheckStatus } from '../topoCliSchema';
+import { getInstallableDependency } from '../actions/installDependency';
 
 export const getDependencyItemIcon = (
     status: HealthCheckStatus,
@@ -29,13 +30,19 @@ const capitalizeFirstLetter = (s: string) => {
 };
 
 export class TargetTreeDependencyItem extends vscode.TreeItem {
-    constructor(dependency: HealthCheckDependency) {
+    constructor(public readonly dependency: HealthCheckDependency) {
         super(dependency.name, vscode.TreeItemCollapsibleState.None);
         this.description = dependency.value;
 
         const statusCapitalized = capitalizeFirstLetter(dependency.status);
         this.tooltip = `Status: ${statusCapitalized}\nValue: ${dependency.value ?? '-'}`;
-        this.contextValue = `Dependency ${statusCapitalized}`;
+        this.contextValue = [
+            'Dependency',
+            statusCapitalized,
+            getInstallableDependency(dependency) ? 'Installable' : undefined,
+        ]
+            .filter(Boolean)
+            .join(' ');
         this.iconPath = getDependencyItemIcon(dependency.status);
     }
 }
