@@ -180,7 +180,7 @@ export class ContainersManager implements vscode.Disposable {
 
     private async startAutoRefresh(target: string): Promise<void> {
         const refreshLoop = new RefreshLoop(
-            async () => this.refreshTarget(target),
+            () => this.refreshTarget(target),
             refreshInterval,
         );
 
