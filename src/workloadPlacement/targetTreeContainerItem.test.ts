@@ -18,8 +18,6 @@ describe('TargetTreeContainerItem', () => {
             annotations: {},
             createdAt: '',
             ports: { '80/tcp': [{ HostIp: '0.0.0.0', HostPort: '8080' }] },
-            cpuUsage: '2.5%',
-            memUsage: '0B / 1GiB',
             target,
         };
         const item = new TargetTreeContainerItem(container);
@@ -55,8 +53,6 @@ describe('TargetTreeContainerItem', () => {
             annotations: {},
             createdAt: '',
             ports: {},
-            cpuUsage: '0.0%',
-            memUsage: '0B / 1GiB',
             target,
         };
         const item = new TargetTreeContainerItem(container);

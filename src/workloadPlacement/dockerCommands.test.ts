@@ -5,7 +5,7 @@ import {
 } from './dockerCommands';
 import { exec } from '../util/exec';
 import { logger } from '../util/logger';
-import { DockerInspectItem, DockerStatsItem } from '../util/types';
+import { DockerInspectItem } from '../util/types';
 import { WrappedError } from '../errors/wrappedError';
 
 jest.mock('../util/exec', () => ({
@@ -286,79 +286,6 @@ describe('DockerCommands', () => {
 
         it('returns empty array when provided with an empty array', async () => {
             const out = await dockerCommands.inspectContainers([], 'ctx');
-
-            expect(out).toEqual([]);
-            expect(execMock).not.toHaveBeenCalled();
-        });
-    });
-
-    describe('containerStats', () => {
-        it('returns parsed stats on success', async () => {
-            const statsItem: DockerStatsItem = {
-                ID: 'a',
-                CPUPerc: '10%',
-                MemUsage: '10%',
-            };
-            execMock.mockResolvedValueOnce({
-                stdout: `${JSON.stringify(statsItem)}\n`,
-                stderr: '',
-            });
-
-            const out = await dockerCommands.containerStats(['a'], 'user@host');
-
-            expect(out).toEqual([statsItem]);
-            const expectedCall =
-                "docker --host ssh://user@host stats a --no-stream --no-trunc --format '{{json .}}'";
-            expect(execMock).toHaveBeenCalledWith(expectedCall);
-        });
-
-        it('returns partial output when exec rejects with only not-found errors', async () => {
-            const statsItem: DockerStatsItem = {
-                ID: 'b',
-                CPUPerc: '10%',
-                MemUsage: '10%',
-            };
-            const err = makeDockerError(
-                JSON.stringify(statsItem),
-                'Error: No such object: a',
-            );
-            execMock.mockRejectedValueOnce(err);
-
-            const out = await dockerCommands.containerStats(['a'], 'user@host');
-
-            expect(out).toEqual([statsItem]);
-            expect(logger.warn).toHaveBeenCalledWith(
-                expect.any(String),
-                err.stderr,
-            );
-        });
-
-        it('rethrows when exec rejects with unknown error', async () => {
-            const err = new Error('boom');
-            execMock.mockRejectedValueOnce(err);
-
-            const containerStatsOperation = dockerCommands.containerStats(
-                ['a'],
-                'ctx',
-            );
-
-            await expect(containerStatsOperation).rejects.toBe(err);
-        });
-
-        it('throws a WrappedError when exec rejects with a DockerError', async () => {
-            const dockerErr = makeDockerError('', 'some docker error');
-            execMock.mockRejectedValue(dockerErr);
-
-            await expect(
-                dockerCommands.containerStats(['a'], 'ctx'),
-            ).rejects.toThrow(WrappedError);
-            await expect(
-                dockerCommands.containerStats(['a'], 'ctx'),
-            ).rejects.toThrow('some docker error');
-        });
-
-        it('returns empty array when provided with an empty array', async () => {
-            const out = await dockerCommands.containerStats([], 'ctx');
 
             expect(out).toEqual([]);
             expect(execMock).not.toHaveBeenCalled();
