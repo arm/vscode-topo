@@ -19,7 +19,7 @@
     ],
     "main": "./dist/extension.js",
     "topo": {
-        "version": "v5.0.0"
+        "version": "v5.1.1"
     },
     "contributes": {
         "commands": [
@@ -100,6 +100,11 @@
                 "category": "Arm Topo"
             },
             {
+                "command": "topo.installDependency",
+                "title": "Install",
+                "category": "Arm Topo"
+            },
+            {
                 "command": "topo.inspectHostHealth",
                 "title": "Inspect Host Health",
                 "category": "Arm Topo"
@@ -172,6 +177,10 @@
                     "when": "false"
                 },
                 {
+                    "command": "topo.installDependency",
+                    "when": "false"
+                },
+                {
                     "command": "topo.stopContainer",
                     "when": "false"
                 },
@@ -220,6 +229,11 @@
                     "command": "topo.removeTarget",
                     "when": "view == topo.target-manager && viewItem =~ /Target/",
                     "group": "topo/3_cleanup"
+                },
+                {
+                    "command": "topo.installDependency",
+                    "when": "view === topo.target-manager && viewItem =~ /Installable/",
+                    "group": "topo/1_manage"
                 },
                 {
                     "command": "topo.attachVsCode",
