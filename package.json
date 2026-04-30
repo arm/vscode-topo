@@ -307,6 +307,7 @@
     },
     "devDependencies": {
         "@eslint/eslintrc": "^3.3.1",
+        "@eslint/js": "^10.0.1",
         "@swc/core": "^1.15.24",
         "@swc/jest": "^0.2.39",
         "@types/jest": "^30.0.0",
@@ -317,8 +318,9 @@
         "@typescript-eslint/eslint-plugin": "^8.58.2",
         "@typescript-eslint/parser": "^8.58.2",
         "@vscode/vsce": "^3.6.2",
-        "eslint": "^8.57.1",
+        "eslint": "^10.2.1",
         "extract-zip": "^2.0.1",
+        "globals": "^17.5.0",
         "jest": "^30.3.0",
         "jest-mock-extended": "^4.0.0",
         "prettier": "^3.7.4",
