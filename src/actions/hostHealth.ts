@@ -1,14 +1,10 @@
 import * as vscode from 'vscode';
 import { PACKAGE_NAME } from '../manifest';
 import { TopoCli } from '../topoCli';
-import { logger } from '../util/logger';
 import { showAndLogError } from '../util/showAndLogError';
 import { HealthCheckResult } from '../topoCliSchema';
 
 const hostHealthTarget = 'localhost';
-const inspectHostHealthAction: vscode.MessageItem = {
-    title: 'Inspect Host Health',
-};
 
 export class HostHealth {
     public static readonly inspectHostHealthCommand = `${PACKAGE_NAME}.inspectHostHealth`;
@@ -40,33 +36,6 @@ export class HostHealth {
                 this.inspectHealthContentProvider,
             ),
         );
-    }
-
-    public async checkHostDependencyHealth(): Promise<void> {
-        let health: HealthCheckResult;
-        try {
-            health = await this.topoCli.health(hostHealthTarget);
-        } catch (err) {
-            logger.warn('Failed to verify host dependencies on startup', err);
-            return;
-        }
-
-        const unhealthyDependencies = health.host.dependencies
-            .filter((v) => v.status !== 'ok')
-            .map((dependency) => dependency.name);
-        if (unhealthyDependencies.length === 0) {
-            return;
-        }
-
-        const choice = await vscode.window.showWarningMessage(
-            `Missing or unhealthy host dependencies: ${unhealthyDependencies.join(', ')}. Some Topo features may not work.`,
-            inspectHostHealthAction,
-        );
-        if (choice?.title === inspectHostHealthAction.title) {
-            await vscode.commands.executeCommand(
-                HostHealth.inspectHostHealthCommand,
-            );
-        }
     }
 
     private async inspectHostHealth(): Promise<void> {
