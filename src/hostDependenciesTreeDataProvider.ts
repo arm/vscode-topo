@@ -52,25 +52,25 @@ export class HostDependenciesTreeDataProvider implements vscode.TreeDataProvider
     public async getChildren(
         element?: vscode.TreeItem,
     ): Promise<vscode.TreeItem[]> {
-        try {
-            const health = await this.topoCli.health(hostHealthTarget);
-            if (!element) {
+        if (!element) {
+            try {
+                const health = await this.topoCli.health(hostHealthTarget);
                 return [
                     new TargetTreeDependencyGroupItem(health.host.dependencies),
                 ];
+            } catch (err) {
+                logger.warn('Failed to load host dependencies', err);
+                return [];
             }
-
-            if (element instanceof TargetTreeDependencyGroupItem) {
-                return sortDependenciesByName([...element.dependencies]).map(
-                    (dependency) => new TargetTreeDependencyItem(dependency),
-                );
-            }
-
-            return [];
-        } catch (err) {
-            logger.warn('Failed to load host dependencies', err);
-            return [];
         }
+
+        if (element instanceof TargetTreeDependencyGroupItem) {
+            return sortDependenciesByName([...element.dependencies]).map(
+                (dependency) => new TargetTreeDependencyItem(dependency),
+            );
+        }
+
+        return [];
     }
 
     public getTreeItem(
