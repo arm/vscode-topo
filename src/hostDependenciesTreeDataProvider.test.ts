@@ -101,9 +101,17 @@ describe('HostDependenciesTreeDataProvider', () => {
         expect(
             children.every((item) => item instanceof TargetTreeDependencyItem),
         ).toBe(true);
-        expect(children.map((item) => item.label)).toEqual(['Alpha', 'Zed']);
-        expect(children[1].description).toBe('missing');
-        expect(children[1].contextValue).toBe('Dependency Warning Installable');
+        expect(children).toMatchObject([
+            expect.objectContaining({
+                label: 'Alpha',
+                description: 'installed',
+            }),
+            expect.objectContaining({
+                label: 'Zed',
+                contextValue: 'Dependency Warning Installable',
+                description: 'missing',
+            }),
+        ]);
     });
 
     it('returns an error item when host health cannot be loaded', async () => {
