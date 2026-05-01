@@ -99,11 +99,10 @@ describe('ProtocolHandler', () => {
         ]);
     });
 
-    it('shows an error when the clone task fails', async () => {
+    it('shows an error when the clone task throws', async () => {
         mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-        executeTaskMock.mockRejectedValueOnce(
-            new Error('Clone repo failed with exit code 1'),
-        );
+        const err = new Error('task fail');
+        executeTaskMock.mockRejectedValueOnce(err);
         jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
 
         await protocolHandler.handleUri(
@@ -116,7 +115,7 @@ describe('ProtocolHandler', () => {
             'Failed to clone project',
             expect.objectContaining({
                 code: 'CLONE',
-                message: 'Failed to execute clone task',
+                message: err.message,
             }),
         );
     });

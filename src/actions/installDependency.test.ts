@@ -79,11 +79,6 @@ describe('InstallDependency', () => {
     });
 
     it('runs install task for dependency with `topo install` fix', async () => {
-        const taskExec: vscode.TaskExecution = {
-            task: {} as vscode.Task,
-            terminate: jest.fn(),
-        };
-        jest.mocked(vscode.tasks.executeTask).mockResolvedValue(taskExec);
         const installDependency = new InstallDependency(
             targetStore,
             containersManager,
@@ -119,7 +114,7 @@ describe('InstallDependency', () => {
         await installDependency.activate();
         await getCommandHandler()(dependencyItem);
 
-        expect(vscode.tasks.executeTask).not.toHaveBeenCalled();
+        expect(executeTaskMock).not.toHaveBeenCalled();
     });
 
     it('shows one notification for missing installable dependencies', async () => {
