@@ -135,7 +135,7 @@
                 {
                     "id": "topo.host-manager",
                     "name": "Host",
-                   "visibility": "visible",
+                    "visibility": "visible",
                     "icon": "$(vm-small)"
                 },
                 {
