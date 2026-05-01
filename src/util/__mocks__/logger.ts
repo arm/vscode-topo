@@ -14,4 +14,5 @@ export const logger = {
     debug: jest.fn((_message: unknown): void => {}),
     getVerbosity: jest.fn(),
     show: jest.fn(),
+    dispose: jest.fn(),
 };
