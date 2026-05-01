@@ -58,7 +58,7 @@ describe('InstallDependency', () => {
         targetStore.getSelectedTarget.mockResolvedValue(target);
         containersManager.getTargetState.mockResolvedValue({
             health: loadedHealth.target,
-            target,
+            status: 'connected',
         });
 
         mutable(vscode.tasks).onDidEndTaskProcess =
@@ -159,7 +159,7 @@ describe('InstallDependency', () => {
                     },
                 ],
             },
-            target,
+            status: 'connected',
         });
         const installDependency = new InstallDependency(
             targetStore,
