@@ -213,16 +213,16 @@ describe('TopoCli', () => {
             hostProcessors: [
                 { model: 'Cortex-A55', cores: 2, features: ['fp'] },
             ],
-            remoteprocCpus: [{ name: 'imx-rproc' }],
+            remoteProcessors: [{ name: 'imx-rproc' }],
         };
         execMock.mockImplementation((_bin, _cargs, _options, cb) => {
             cb!(
                 null,
                 JSON.stringify({
-                    host: [
+                    hostProcessors: [
                         { model: ' Cortex-A55 ', cores: 2, features: [' fp '] },
                     ],
-                    remoteprocs: [{ name: ' imx-rproc ' }],
+                    remoteProcessors: [{ name: ' imx-rproc ' }],
                 }),
                 '',
             );
@@ -267,7 +267,10 @@ describe('TopoCli', () => {
         execMock.mockImplementation((_bin, _args, _options, cb) => {
             cb!(
                 null,
-                JSON.stringify({ host: [], remoteprocs: [{ name: 1 }] }),
+                JSON.stringify({
+                    hostProcessors: [],
+                    remoteProcessors: [{ name: 1 }],
+                }),
                 '',
             );
             return cp;

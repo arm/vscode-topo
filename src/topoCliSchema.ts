@@ -83,8 +83,8 @@ const describeRemoteprocSchema = type({
 });
 
 export const targetDescriptionSchema = type({
-    host: array(describeHostProcessorSchema),
-    remoteprocs: array(describeRemoteprocSchema),
+    hostProcessors: array(describeHostProcessorSchema),
+    remoteProcessors: array(describeRemoteprocSchema),
 });
 
 const topoLogLevelSchema = enums(['DEBUG', 'INFO', 'WARN', 'ERROR']);
