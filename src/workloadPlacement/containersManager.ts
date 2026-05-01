@@ -5,7 +5,6 @@ import type {
     ContainerItem,
     DockerPsItem,
     DockerInspectItem,
-    DockerStatsItem,
 } from '../util/types';
 import type { ContainerCommands } from './containerCommands';
 import { TargetStore } from './targetStore';
@@ -29,11 +28,8 @@ function hasHealthyDependency(
 function createContainerItem(
     item: DockerPsItem,
     inspect: DockerInspectItem | undefined,
-    stats: DockerStatsItem | undefined,
     target: string,
 ): ContainerItem {
-    const cpuUsage = stats?.CPUPerc || '';
-    const memUsage = stats?.MemUsage || '';
     const runtime = inspect?.HostConfig.Runtime || '';
     const annotations = inspect?.HostConfig.Annotations || {};
     const ports = inspect?.NetworkSettings.Ports || {};
@@ -49,8 +45,6 @@ function createContainerItem(
         runtime,
         annotations,
         ports,
-        cpuUsage,
-        memUsage,
         target,
     };
 }
@@ -152,22 +146,14 @@ export class ContainersManager implements vscode.Disposable {
         try {
             const items = await this.containerCommands.getContainers(target);
             const ids = items.map((item) => item.ID);
-            const [inspectOutput, statsOutput] = await Promise.all([
-                this.containerCommands.inspectContainers(ids, target),
-                this.containerCommands.containerStats(ids, target),
-            ]);
-
+            const inspectOutput =
+                await this.containerCommands.inspectContainers(ids, target);
             const containers: ContainerItem[] = [];
             for (const item of items) {
                 const inspect = inspectOutput.find((el) =>
                     el.Id.startsWith(item.ID),
                 );
-                const stats = statsOutput.find((el) =>
-                    el.ID.startsWith(item.ID),
-                );
-                containers.push(
-                    createContainerItem(item, inspect, stats, target),
-                );
+                containers.push(createContainerItem(item, inspect, target));
             }
             return containers;
         } catch (err: unknown) {
@@ -178,25 +164,35 @@ export class ContainersManager implements vscode.Disposable {
         }
     }
 
-    private async startAutoRefresh(target: string): Promise<void> {
-        this.refreshLoop = new RefreshLoop(async () => {
-            const targetStateFuture = this.loadTargetState(target);
-            const targetState = await targetStateFuture.promise;
-            this.targetStateMap.set(target, targetStateFuture);
+    private async refreshTarget(target: string): Promise<void> {
+        const targetStateFuture = this.loadTargetState(target);
+        const targetState = await targetStateFuture.promise;
+        this.targetStateMap.set(target, targetStateFuture);
 
-            if (targetState.status === 'connected') {
-                if (hasHealthyDependency(targetState, 'Container Engine')) {
-                    const containersPromise = this.loadContainersData(target);
-                    await containersPromise;
-                    this.containersMap.set(target, containersPromise);
-                } else {
-                    this.containersMap.set(target, Promise.resolve([]));
-                }
+        if (targetState.status === 'connected') {
+            if (hasHealthyDependency(targetState, 'Container Engine')) {
+                const containersPromise = this.loadContainersData(target);
+                await containersPromise;
+                this.containersMap.set(target, containersPromise);
+            } else {
+                this.containersMap.set(target, Promise.resolve([]));
             }
+        }
 
-            this._onDataUpdate.fire();
-        }, refreshInterval);
-        await this.refreshLoop.start();
+        this._onDataUpdate.fire();
+    }
+
+    private async startAutoRefresh(target: string): Promise<void> {
+        const refreshLoop = new RefreshLoop(
+            () => this.refreshTarget(target),
+            refreshInterval,
+        );
+
+        this.refreshLoop = refreshLoop;
+        await this.refreshTarget(target);
+        if (this.refreshLoop === refreshLoop) {
+            refreshLoop.start();
+        }
     }
 
     private stopAutoRefresh(): void {

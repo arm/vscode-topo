@@ -32,8 +32,6 @@ describe('assertTargetTreeContainerItem', () => {
             runtime: '',
             annotations: {},
             ports: {},
-            cpuUsage: '',
-            memUsage: '',
             target: 'root@test-host',
         };
         const instanceLike = new TargetTreeContainerItem(containerItem);
