@@ -5,9 +5,13 @@ import { HealthCheckDependency } from './topoCliSchema';
 import { TargetTreeDependencyGroupItem } from './workloadPlacement/targetTreeDependencyGroupItem';
 import { TargetTreeDependencyItem } from './workloadPlacement/targetTreeDependencyItem';
 import { logger } from './util/logger';
+import {
+    failedToLoadHostDependenciesMessage,
+    HostDependenciesLoadErrorItem,
+} from './hostDependenciesLoadErrorItem';
+import { showTopoOutputCommand } from './showTopoOutputCommand';
 
 const hostHealthTarget = 'localhost';
-const failedToLoadHostDependenciesMessage = 'Failed to load host dependencies';
 
 function sortDependenciesByName(
     deps: HealthCheckDependency[],
@@ -44,6 +48,9 @@ export class HostDependenciesTreeDataProvider implements vscode.TreeDataProvider
                 HostDependenciesTreeDataProvider.refreshCommand,
                 () => this.refresh(),
             ),
+            vscode.commands.registerCommand(showTopoOutputCommand, () =>
+                logger.show(),
+            ),
             this._onDidChangeTreeData,
         );
     }
@@ -54,9 +61,10 @@ export class HostDependenciesTreeDataProvider implements vscode.TreeDataProvider
         if (!element) {
             try {
                 const health = await this.topoCli.health(hostHealthTarget);
-                return [
-                    new TargetTreeDependencyGroupItem(health.host.dependencies),
-                ];
+                const dependenciesGroup = new TargetTreeDependencyGroupItem(
+                    health.host.dependencies,
+                );
+                return [dependenciesGroup];
             } catch (err) {
                 logger.warn(failedToLoadHostDependenciesMessage, err);
                 return [new HostDependenciesLoadErrorItem()];
@@ -80,19 +88,5 @@ export class HostDependenciesTreeDataProvider implements vscode.TreeDataProvider
 
     public refresh(): void {
         this._onDidChangeTreeData.fire(undefined);
-    }
-}
-
-class HostDependenciesLoadErrorItem extends vscode.TreeItem {
-    constructor() {
-        super(
-            failedToLoadHostDependenciesMessage,
-            vscode.TreeItemCollapsibleState.None,
-        );
-        this.iconPath = new vscode.ThemeIcon(
-            'error',
-            new vscode.ThemeColor('testing.iconFailed'),
-        );
-        this.tooltip = 'Check the Topo logs for details.';
     }
 }

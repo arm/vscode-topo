@@ -5,6 +5,9 @@ import { TopoCli } from './topoCli';
 import { HealthCheckResult } from './topoCliSchema';
 import { TargetTreeDependencyGroupItem } from './workloadPlacement/targetTreeDependencyGroupItem';
 import { TargetTreeDependencyItem } from './workloadPlacement/targetTreeDependencyItem';
+import { failedToLoadHostDependenciesMessage } from './hostDependenciesLoadErrorItem';
+import { logger } from './util/logger';
+import { showTopoOutputCommand } from './showTopoOutputCommand';
 
 jest.mock('./util/logger');
 
@@ -80,6 +83,10 @@ describe('HostDependenciesTreeDataProvider', () => {
             HostDependenciesTreeDataProvider.refreshCommand,
             expect.any(Function),
         );
+        expect(vscode.commands.registerCommand).toHaveBeenCalledWith(
+            showTopoOutputCommand,
+            expect.any(Function),
+        );
         expect(context.subscriptions.length).toBeGreaterThan(0);
     });
 
@@ -90,6 +97,7 @@ describe('HostDependenciesTreeDataProvider', () => {
         expect(children).toHaveLength(1);
         expect(children[0]).toBeInstanceOf(TargetTreeDependencyGroupItem);
         expect(children[0].label).toBe('Dependencies');
+        expect(children[0].contextValue).toBe('Dependencies');
     });
 
     it('returns host dependency items sorted by name below the Dependencies group', async () => {
@@ -121,9 +129,14 @@ describe('HostDependenciesTreeDataProvider', () => {
 
         expect(children).toHaveLength(1);
         expect(children[0]).toMatchObject({
-            label: 'Failed to load host dependencies',
+            label: failedToLoadHostDependenciesMessage,
             collapsibleState: vscode.TreeItemCollapsibleState.None,
-            tooltip: 'Check the Topo logs for details.',
+            command: {
+                command: showTopoOutputCommand,
+                title: 'Open Arm Topo Output',
+            },
+            contextValue: 'Dependencies Error',
+            tooltip: 'Open the Arm Topo output channel for details.',
         });
     });
 
@@ -143,5 +156,13 @@ describe('HostDependenciesTreeDataProvider', () => {
         await executeCommand(HostDependenciesTreeDataProvider.refreshCommand);
 
         expect(spy).toHaveBeenCalledWith(undefined);
+    });
+
+    it('show host dependencies output command opens the Arm Topo output channel', async () => {
+        provider.activate();
+
+        await executeCommand(showTopoOutputCommand);
+
+        expect(logger.show).toHaveBeenCalled();
     });
 });

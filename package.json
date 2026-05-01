@@ -116,6 +116,11 @@
                 "category": "Arm Topo"
             },
             {
+                "command": "topo.showOutput",
+                "title": "Open Arm Topo Output",
+                "category": "Arm Topo"
+            },
+            {
                 "command": "topo.deploy.context",
                 "title": "Topo Deploy",
                 "category": "Arm Topo"
@@ -223,9 +228,18 @@
                 {
                     "command": "topo.refreshHostDependencies",
                     "when": "false"
+                },
+                {
+                    "command": "topo.showOutput",
+                    "when": "false"
                 }
             ],
             "view/item/context": [
+                {
+                    "command": "topo.showOutput",
+                    "when": "view == topo.host-manager && viewItem =~ /Dependencies/ && viewItem =~ /Error/",
+                    "group": "topo/1_output"
+                },
                 {
                     "command": "topo.selectTarget",
                     "when": "view == topo.target-manager && viewItem =~ /Target/",
