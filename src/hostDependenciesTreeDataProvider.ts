@@ -7,6 +7,7 @@ import { TargetTreeDependencyItem } from './workloadPlacement/targetTreeDependen
 import { logger } from './util/logger';
 
 const hostHealthTarget = 'localhost';
+const failedToLoadHostDependenciesMessage = 'Failed to load host dependencies';
 
 function sortDependenciesByName(
     deps: HealthCheckDependency[],
@@ -59,8 +60,8 @@ export class HostDependenciesTreeDataProvider implements vscode.TreeDataProvider
                     new TargetTreeDependencyGroupItem(health.host.dependencies),
                 ];
             } catch (err) {
-                logger.warn('Failed to load host dependencies', err);
-                return [];
+                logger.warn(failedToLoadHostDependenciesMessage, err);
+                return [new HostDependenciesLoadErrorItem()];
             }
         }
 
@@ -81,5 +82,19 @@ export class HostDependenciesTreeDataProvider implements vscode.TreeDataProvider
 
     public refresh(): void {
         this._onDidChangeTreeData.fire(undefined);
+    }
+}
+
+class HostDependenciesLoadErrorItem extends vscode.TreeItem {
+    constructor() {
+        super(
+            failedToLoadHostDependenciesMessage,
+            vscode.TreeItemCollapsibleState.None,
+        );
+        this.iconPath = new vscode.ThemeIcon(
+            'error',
+            new vscode.ThemeColor('testing.iconFailed'),
+        );
+        this.tooltip = 'Check the Topo logs for details.';
     }
 }

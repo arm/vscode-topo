@@ -106,12 +106,17 @@ describe('HostDependenciesTreeDataProvider', () => {
         expect(children[1].contextValue).toBe('Dependency Warning Installable');
     });
 
-    it('returns empty children when host health cannot be loaded', async () => {
+    it('returns an error item when host health cannot be loaded', async () => {
         topoCli.health.mockRejectedValueOnce(new Error('health unavailable'));
 
         const children = await provider.getChildren();
 
-        expect(children).toEqual([]);
+        expect(children).toHaveLength(1);
+        expect(children[0]).toMatchObject({
+            label: 'Failed to load host dependencies',
+            collapsibleState: vscode.TreeItemCollapsibleState.None,
+            tooltip: 'Check the Topo logs for details.',
+        });
     });
 
     it('getTreeItem returns the element itself', () => {
