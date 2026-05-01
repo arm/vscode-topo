@@ -39,7 +39,7 @@ describe('SetupKeys', () => {
     it('runs setup-keys task for selected board item', async () => {
         const setupKeys = new SetupKeys(context, targetStore);
         setupKeys.activate();
-        const boardItem = new TargetTreeTargetItem(target, true, true, true);
+        const boardItem = new TargetTreeTargetItem(target, true, 'connected');
         const commandHandler = jest
             .mocked(vscode.commands.registerCommand)
             .mock.calls.find(
@@ -63,7 +63,11 @@ describe('SetupKeys', () => {
     it('does nothing for non-selected board item', async () => {
         const setupKeys = new SetupKeys(context, targetStore);
         setupKeys.activate();
-        const boardItem = new TargetTreeTargetItem(target, false, false, false);
+        const boardItem = new TargetTreeTargetItem(
+            target,
+            false,
+            'disconnected',
+        );
         const commandHandler = jest
             .mocked(vscode.commands.registerCommand)
             .mock.calls.find(

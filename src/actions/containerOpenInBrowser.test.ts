@@ -35,8 +35,6 @@ describe('ContainerOpenInBrowser', () => {
             createdAt: '',
             runtime: '',
             annotations: {},
-            cpuUsage: '',
-            memUsage: '',
         };
         const treeItem = new TargetTreeContainerItem(item);
 
@@ -68,8 +66,6 @@ describe('ContainerOpenInBrowser', () => {
             createdAt: '',
             runtime: '',
             annotations: {},
-            cpuUsage: '',
-            memUsage: '',
         };
         const treeItem = new TargetTreeContainerItem(item);
 
@@ -100,8 +96,6 @@ describe('ContainerOpenInBrowser', () => {
             createdAt: '',
             runtime: '',
             annotations: {},
-            cpuUsage: '',
-            memUsage: '',
         };
         const treeItem = new TargetTreeContainerItem(item);
 

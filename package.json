@@ -19,7 +19,7 @@
     ],
     "main": "./dist/extension.js",
     "topo": {
-        "version": "v5.0.0"
+        "version": "v5.1.1"
     },
     "contributes": {
         "commands": [
@@ -312,7 +312,7 @@
         "@types/jest": "^30.0.0",
         "@types/lodash.debounce": "^4.0.9",
         "@types/node": "^22.19.15",
-        "@types/tar": "^6.1.13",
+        "@types/tar": "^7.0.87",
         "@types/vscode": "^1.99.1",
         "@typescript-eslint/eslint-plugin": "^8.58.2",
         "@typescript-eslint/parser": "^8.58.2",

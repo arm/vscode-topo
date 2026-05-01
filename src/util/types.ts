@@ -65,12 +65,6 @@ export interface DockerInspectItem {
     };
 }
 
-export interface DockerStatsItem {
-    ID: string;
-    CPUPerc: string;
-    MemUsage: string;
-}
-
 /**
  * Represents a Docker container item.
  *
@@ -84,8 +78,6 @@ export interface DockerStatsItem {
  * @property {string} createdAt - The timestamp indicating when the container was created.
  * @property {string} runtime - The runtime of the container.
  * @property {DockerPorts} ports - The ports exposed by the container.
- * @property {string} cpuUsage - The CPU usage of the container.
- * @property {string} memUsage - The memory usage of the container.
  * @property {string} target - The target associated with the container.
  */
 export interface ContainerItem {
@@ -100,8 +92,6 @@ export interface ContainerItem {
     runtime: string;
     annotations: Record<string, string>;
     ports: DockerPorts;
-    cpuUsage: string;
-    memUsage: string;
     target: string;
 }
 
@@ -115,7 +105,9 @@ export type MessagePoster = {
 
 export type Mutable<T> = { -readonly [P in keyof T]: T[P] };
 
+export type TargetStatus = 'disconnected' | 'connected' | 'error';
+
 export interface TargetState {
     health: HealthCheckResult['target'] | undefined;
-    target: string | undefined;
+    status: TargetStatus;
 }

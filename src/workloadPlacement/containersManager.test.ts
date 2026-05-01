@@ -79,21 +79,7 @@ const defaultInspectOutput = {
     ].join('\n'),
     stderr: '',
 };
-const defaultStatsOutput = {
-    stdout: [
-        JSON.stringify({
-            ID: mockContainers[0].ID,
-            CPUPerc: '2.5%',
-            MemUsage: '50MiB / 1GiB',
-        }),
-        JSON.stringify({
-            ID: mockContainers[1].ID,
-            CPUPerc: '0.0%',
-            MemUsage: '0B / 1GiB',
-        }),
-    ].join('\n'),
-    stderr: '',
-};
+
 const defaultInfoOutput = {
     stdout: 'Server Version: 8',
     stderr: '',
@@ -159,8 +145,6 @@ describe('ContainersManager', () => {
                     return defaultPsOutput;
                 case `docker --host ssh://${target} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{json .}}'`:
                     return defaultInspectOutput;
-                case `docker --host ssh://${target} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{json .}}'`:
-                    return defaultStatsOutput;
                 case `ssh ${target} 'docker info'`:
                     return defaultInfoOutput;
                 default:
@@ -186,8 +170,6 @@ describe('ContainersManager', () => {
             runtime: manifest.TARGET_HOST_RUNTIME,
             annotations: {},
             ports: webServerPortInfo,
-            cpuUsage: '2.5%',
-            memUsage: '50MiB / 1GiB',
             target,
         };
         const remoteprocContainer: ContainerItem = {
@@ -202,8 +184,6 @@ describe('ContainersManager', () => {
             runtime: manifest.TARGET_REMOTEPROC_RUNTIME,
             annotations: remoteprocAnnotations,
             ports: {},
-            cpuUsage: '0.0%',
-            memUsage: '0B / 1GiB',
             target,
         };
         const expectedContainers = [hostContainer, remoteprocContainer];
@@ -217,8 +197,6 @@ describe('ContainersManager', () => {
                     return defaultContextOutput;
                 case `docker --host ssh://${target} ps -a --format "{{json .}}"`:
                     throw Error('ps error');
-                case `docker --host ssh://${target} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{json .}}'`:
-                    return defaultStatsOutput;
                 case `ssh ${target} 'docker info'`:
                     return defaultInfoOutput;
                 default:
@@ -269,8 +247,6 @@ describe('ContainersManager', () => {
                     return defaultPsOutput;
                 case `docker --host ssh://${target} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{json .}}'`:
                     return defaultInspectOutput;
-                case `docker --host ssh://${target} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{json .}}'`:
-                    return defaultStatsOutput;
                 case `ssh ${target} 'docker info'`:
                     return defaultInfoOutput;
                 default:
@@ -291,6 +267,47 @@ describe('ContainersManager', () => {
         expect(execMock).not.toHaveBeenCalled();
     });
 
+    it('clears cached containers when the container engine becomes unhealthy', async () => {
+        const unhealthyContainerEngine: HealthCheckResult = {
+            host: { dependencies: [] },
+            target: {
+                isLocalhost: false,
+                dependencies: [
+                    {
+                        name: 'Container Engine',
+                        status: 'error',
+                        value: 'docker',
+                    },
+                ],
+                connectivity: { name: 'Connected', status: 'ok', value: '' },
+                subsystemDriver: {
+                    name: 'Subsystem Driver (remoteproc)',
+                    status: 'ok',
+                    value: 'driver-x',
+                },
+            },
+        };
+        topoCli.health
+            .mockResolvedValueOnce(loadedHealth)
+            .mockResolvedValueOnce(unhealthyContainerEngine);
+        const targetStore = mock<TargetStore>();
+        targetStore.getSelectedTarget.mockResolvedValue(target);
+        const containerCommands = mock<ContainerCommands>();
+        containerCommands.getContainers.mockResolvedValue(mockContainers);
+        containerCommands.inspectContainers.mockResolvedValue([]);
+        const manager = createContainersManager(targetStore, containerCommands);
+        await manager.activate();
+        await expect(manager.getContainersData(target)).resolves.toHaveLength(
+            mockContainers.length,
+        );
+
+        containerCommands.getContainers.mockClear();
+        await jest.advanceTimersByTimeAsync(3000);
+
+        await expect(manager.getContainersData(target)).resolves.toEqual([]);
+        expect(containerCommands.getContainers).not.toHaveBeenCalled();
+    });
+
     it('startAutoRefresh and stopAutoRefresh manage timer and update data', async () => {
         execMock.mockImplementation(async (command: string) => {
             switch (command) {
@@ -300,8 +317,6 @@ describe('ContainersManager', () => {
                     return defaultPsOutput;
                 case `docker --host ssh://${target} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{json .}}'`:
                     return defaultInspectOutput;
-                case `docker --host ssh://${target} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{json .}}'`:
-                    return defaultStatsOutput;
                 case `ssh ${target} 'docker info'`:
                     return defaultInfoOutput;
                 default:
@@ -330,8 +345,6 @@ describe('ContainersManager', () => {
                     return defaultPsOutput;
                 case `docker --host ssh://${target} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{json .}}'`:
                     return defaultInspectOutput;
-                case `docker --host ssh://${target} stats ${mockContainers[0].ID} ${mockContainers[1].ID} --no-stream --no-trunc --format '{{json .}}'`:
-                    return defaultStatsOutput;
                 case `ssh ${target} 'docker info'`:
                     return defaultInfoOutput;
                 default:
@@ -359,7 +372,6 @@ describe('ContainersManager', () => {
         const containerCommands = mock<ContainerCommands>();
         containerCommands.getContainers.mockResolvedValue([]);
         containerCommands.inspectContainers.mockResolvedValue([]);
-        containerCommands.containerStats.mockResolvedValue([]);
         const manager = createContainersManager(targetStore, containerCommands);
 
         manager.activate();
@@ -367,7 +379,7 @@ describe('ContainersManager', () => {
 
         expect(manager.getTargetStateSnapshot(target)).toEqual({
             health: undefined,
-            target: undefined,
+            status: 'disconnected',
         });
     });
 
@@ -382,7 +394,6 @@ describe('ContainersManager', () => {
         const containerCommands = mock<ContainerCommands>();
         containerCommands.getContainers.mockResolvedValue([]);
         containerCommands.inspectContainers.mockResolvedValue([]);
-        containerCommands.containerStats.mockResolvedValue([]);
         const manager = createContainersManager(targetStore, containerCommands);
 
         const activation = manager.activate();
@@ -394,11 +405,11 @@ describe('ContainersManager', () => {
         await activation;
         await expect(targetStatePromise).resolves.toEqual({
             health: loadedHealth.target,
-            target: target,
+            status: 'connected',
         });
         expect(manager.getTargetStateSnapshot(target)).toEqual({
             health: loadedHealth.target,
-            target: target,
+            status: 'connected',
         });
     });
 
@@ -485,7 +496,6 @@ describe('ContainersManager', () => {
         const containerCommands = mock<ContainerCommands>();
         containerCommands.getContainers.mockResolvedValue([]);
         containerCommands.inspectContainers.mockResolvedValue([]);
-        containerCommands.containerStats.mockResolvedValue([]);
 
         const manager = new ContainersManager(
             topoCli,

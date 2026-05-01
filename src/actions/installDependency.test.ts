@@ -56,7 +56,7 @@ describe('InstallDependency', () => {
         targetStore.getSelectedTarget.mockResolvedValue(target);
         containersManager.getTargetState.mockResolvedValue({
             health: loadedHealth.target,
-            target,
+            status: 'connected',
         });
     });
 
@@ -137,7 +137,7 @@ describe('InstallDependency', () => {
                     },
                 ],
             },
-            target,
+            status: 'connected',
         });
         const installDependency = new InstallDependency(
             targetStore,
