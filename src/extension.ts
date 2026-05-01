@@ -21,6 +21,7 @@ import { SetupKeys } from './actions/setupKeys';
 import { TargetDescriptionStore } from './workloadPlacement/targetDescriptionStore';
 import { InstallDependency } from './actions/installDependency';
 import { HostDependenciesTreeDataProvider } from './hostDependenciesTreeDataProvider';
+import { logger } from './util/logger';
 
 export async function activate(
     context: vscode.ExtensionContext,
@@ -77,6 +78,7 @@ export async function activate(
         containersManager,
     );
     context.subscriptions.push(installDependency);
+    context.subscriptions.push(logger);
 
     protocolHandler.activate(context);
     const setupKeys = new SetupKeys(context, targetStore);

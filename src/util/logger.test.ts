@@ -85,6 +85,21 @@ describe('OutputChannelLogger', () => {
             'visible info',
         );
     });
+
+    it('disposes configuration listener and output channel', () => {
+        configurationMock.get.mockReturnValue('warn');
+        const configurationChangeDisposable = mock<vscode.Disposable>();
+        mutable(vscode.workspace).onDidChangeConfiguration = jest.fn(
+            () => configurationChangeDisposable,
+        );
+        const logger = new OutputChannelLogger();
+        logger.warn('visible warn');
+
+        logger.dispose();
+
+        expect(configurationChangeDisposable.dispose).toHaveBeenCalled();
+        expect(outputChannelMock.dispose).toHaveBeenCalled();
+    });
 });
 
 describe('stringifyMessage', () => {
