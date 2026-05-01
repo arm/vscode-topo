@@ -112,7 +112,10 @@ export class InstallDependency implements vscode.Disposable {
         installable: string,
     ): Promise<void> {
         try {
-            await executeTask(target, getInstallCommand(target, installable));
+            await executeTask(
+                `Install ${installable} on ${target}`,
+                getInstallCommand(target, installable),
+            );
             vscode.window.showInformationMessage(
                 `${installable} was installed on target ${target}`,
             );

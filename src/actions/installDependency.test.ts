@@ -99,13 +99,10 @@ describe('InstallDependency', () => {
 
         await getCommandHandler()(dependencyItem);
 
-        expect(executeTaskMock).toHaveBeenCalledWith(target, [
-            'topo',
-            'install',
-            'remoteproc-runtime',
-            '--target',
-            target,
-        ]);
+        expect(executeTaskMock).toHaveBeenCalledWith(
+            `Install remoteproc-runtime on ${target}`,
+            ['topo', 'install', 'remoteproc-runtime', '--target', target],
+        );
     });
 
     it('does nothing for a healthy dependency', async () => {
