@@ -9,11 +9,21 @@ import type {
 import type { ContainerCommands } from './containerCommands';
 import { TargetStore } from './targetStore';
 import type { TopoCli } from '../topoCli';
-import { isTargetReady } from '../util/targetState';
 import { future, type Future } from '../util/future';
 import { RefreshLoop } from '../util/refreshLoop';
 
 const refreshInterval = 3000;
+
+function hasHealthyDependency(
+    state: TargetState,
+    dependencyName: string,
+): boolean {
+    return (
+        state.health?.dependencies.some(
+            (dep) => dep.name === dependencyName && dep.status === 'ok',
+        ) ?? false
+    );
+}
 
 function createContainerItem(
     item: DockerPsItem,
@@ -41,7 +51,7 @@ function createContainerItem(
 
 const defaultTargetState: TargetState = {
     health: undefined,
-    target: undefined,
+    status: 'disconnected',
 };
 
 export class ContainersManager implements vscode.Disposable {
@@ -93,9 +103,13 @@ export class ContainersManager implements vscode.Disposable {
         return future(async () => {
             try {
                 const health = await this.topoCli.health(target);
+                const status =
+                    health.target?.connectivity.status === 'ok'
+                        ? 'connected'
+                        : 'error';
                 return {
                     health: health.target,
-                    target,
+                    status,
                 };
             } catch (err) {
                 logger.error(
@@ -104,7 +118,7 @@ export class ContainersManager implements vscode.Disposable {
                 );
                 return {
                     health: undefined,
-                    target,
+                    status: 'error',
                 };
             }
         });
@@ -155,10 +169,14 @@ export class ContainersManager implements vscode.Disposable {
         const targetState = await targetStateFuture.promise;
         this.targetStateMap.set(target, targetStateFuture);
 
-        if (isTargetReady(targetState)) {
-            const containersPromise = this.loadContainersData(target);
-            await containersPromise;
-            this.containersMap.set(target, containersPromise);
+        if (targetState.status === 'connected') {
+            if (hasHealthyDependency(targetState, 'Container Engine')) {
+                const containersPromise = this.loadContainersData(target);
+                await containersPromise;
+                this.containersMap.set(target, containersPromise);
+            } else {
+                this.containersMap.set(target, Promise.resolve([]));
+            }
         }
 
         this._onDataUpdate.fire();
