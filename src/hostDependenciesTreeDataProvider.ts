@@ -21,9 +21,7 @@ export class HostDependenciesTreeDataProvider implements vscode.TreeDataProvider
     public static readonly viewId = `${PACKAGE_NAME}.host-manager`;
     public static readonly refreshCommand = `${PACKAGE_NAME}.refreshHostDependencies`;
 
-    private _onDidChangeTreeData = new vscode.EventEmitter<
-        vscode.TreeItem | undefined
-    >();
+    private _onDidChangeTreeData = new vscode.EventEmitter<undefined>();
     public readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
     constructor(
