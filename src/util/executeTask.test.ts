@@ -104,4 +104,10 @@ describe('executeTask', () => {
             expect.anything(),
         );
     });
+
+    it('fails when no command is provided', async () => {
+        await expect(executeTask('Empty Command', [])).rejects.toThrow(
+            'No command passed to task',
+        );
+    });
 });

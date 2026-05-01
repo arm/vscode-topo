@@ -22,6 +22,9 @@ export async function executeTask(
     opts?: TaskOptions,
 ): Promise<void> {
     const [cmd, ...args] = command;
+    if (!cmd) {
+        throw new Error('No command passed to task');
+    }
 
     const taskDefinition: vscode.TaskDefinition = {
         type: 'shell',
