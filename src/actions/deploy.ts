@@ -4,73 +4,10 @@ import * as manifest from '../manifest';
 import { getErrorMessage } from '../util/getErrorMessage';
 import path from 'node:path';
 import { TargetStore } from '../workloadPlacement/targetStore';
+import { executeTask } from '../util/executeTask';
 
 const viewLogsItem: vscode.MessageItem = {
     title: 'View Logs',
-};
-
-const executeDeployTask = async (
-    composeFilePath: string,
-    target: string,
-): Promise<vscode.Disposable> => {
-    const cwd = path.dirname(composeFilePath);
-    const shellExecution = new vscode.ShellExecution(
-        'topo',
-        ['deploy', '--target', target],
-        {
-            cwd,
-        },
-    );
-    const workspace = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(cwd));
-    const taskScope = workspace ?? vscode.TaskScope.Workspace;
-    const taskDefinition: vscode.TaskDefinition = {
-        type: 'shell',
-        taskId: `${manifest.PACKAGE_NAME} deploy`,
-    };
-    const task = new vscode.Task(
-        taskDefinition,
-        taskScope,
-        `Deploy to ${target}`,
-        manifest.DISPLAY_NAME,
-        shellExecution,
-    );
-    task.presentationOptions = {
-        reveal: vscode.TaskRevealKind.Always,
-        echo: true,
-        focus: true,
-        showReuseMessage: true,
-        clear: true,
-    };
-    const taskExecution = await vscode.tasks.executeTask(task);
-    const taskEndDisposable = vscode.tasks.onDidEndTaskProcess(async (e) => {
-        if (e.execution !== taskExecution) {
-            return;
-        }
-
-        taskEndDisposable.dispose();
-
-        if (e.exitCode === 0) {
-            vscode.window.showInformationMessage(
-                `Deployment to ${target} completed successfully.`,
-            );
-        } else {
-            const terminal = vscode.window.terminals.find(
-                (t) => t.name === task.name,
-            );
-            const actions: vscode.MessageItem[] = [];
-            if (terminal) {
-                actions.push(viewLogsItem);
-            }
-            const choice = await vscode.window.showErrorMessage(
-                `Deployment to ${target} failed with exit code ${e.exitCode}.`,
-                ...actions,
-            );
-            if (choice?.title === viewLogsItem.title) {
-                terminal?.show();
-            }
-        }
-    });
-    return taskEndDisposable;
 };
 
 export class Deploy {
@@ -113,7 +50,34 @@ export class Deploy {
             );
         }
 
-        const deployTask = await executeDeployTask(composeFilePath, target);
-        this.context.subscriptions.push(deployTask);
+        const taskName = `Deploy to ${target}`;
+
+        try {
+            await executeTask(
+                taskName,
+                ['topo', 'deploy', '--target', target],
+                {
+                    cwd: path.dirname(composeFilePath),
+                },
+            );
+            vscode.window.showInformationMessage(
+                `Deployment to ${target} completed successfully.`,
+            );
+        } catch (e) {
+            const terminal = vscode.window.terminals.find(
+                (t) => t.name === taskName,
+            );
+            const actions: vscode.MessageItem[] = [];
+            if (terminal) {
+                actions.push(viewLogsItem);
+            }
+            const choice = await vscode.window.showErrorMessage(
+                `Deployment to ${target} failed: ${getErrorMessage(e)}`,
+                ...actions,
+            );
+            if (choice?.title === viewLogsItem.title) {
+                terminal?.show();
+            }
+        }
     }
 }
