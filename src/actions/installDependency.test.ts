@@ -4,10 +4,13 @@ import { InstallDependency } from './installDependency';
 import { TargetStore } from '../workloadPlacement/targetStore';
 import { TargetTreeDependencyItem } from '../workloadPlacement/targetTreeDependencyItem';
 import { HealthCheckResult } from '../topoCliSchema';
-import { mutable } from '../util/mutable';
 import { ContainersManager } from '../workloadPlacement/containersManager';
+import { executeTask } from '../util/executeTask';
 
 jest.mock('../util/logger');
+jest.mock('../util/executeTask');
+
+const executeTaskMock = jest.mocked(executeTask);
 
 const getCommandHandler = () => {
     const handler = jest
@@ -23,9 +26,6 @@ const getCommandHandler = () => {
 
     return handler;
 };
-
-const waitImmediate = () =>
-    new Promise<void>((resolve) => setTimeout(() => resolve(), 0));
 
 const loadedHealth: HealthCheckResult = {
     host: { dependencies: [] },
@@ -51,8 +51,6 @@ describe('InstallDependency', () => {
     const targetStore = mock<TargetStore>();
     const containersManager = mock<ContainersManager>();
     const target = 'user@topo.local';
-    const onDidEndTaskProcessEmitter =
-        new vscode.EventEmitter<vscode.TaskProcessEndEvent>();
 
     beforeEach(() => {
         targetStore.getSelectedTarget.mockResolvedValue(target);
@@ -60,9 +58,6 @@ describe('InstallDependency', () => {
             health: loadedHealth.target,
             status: 'connected',
         });
-
-        mutable(vscode.tasks).onDidEndTaskProcess =
-            onDidEndTaskProcessEmitter.event;
     });
 
     afterEach(() => {
@@ -84,11 +79,6 @@ describe('InstallDependency', () => {
     });
 
     it('runs install task for dependency with `topo install` fix', async () => {
-        const taskExec: vscode.TaskExecution = {
-            task: {} as vscode.Task,
-            terminate: jest.fn(),
-        };
-        jest.mocked(vscode.tasks.executeTask).mockResolvedValue(taskExec);
         const installDependency = new InstallDependency(
             targetStore,
             containersManager,
@@ -102,23 +92,11 @@ describe('InstallDependency', () => {
 
         await installDependency.activate();
 
-        const handler = getCommandHandler()(dependencyItem);
-        await waitImmediate();
-        onDidEndTaskProcessEmitter.fire({
-            execution: taskExec,
-            exitCode: 0,
-        });
-        await handler;
+        await getCommandHandler()(dependencyItem);
 
-        expect(vscode.ShellExecution).toHaveBeenCalledWith('topo', [
-            'install',
-            'remoteproc-runtime',
-            '--target',
-            target,
-        ]);
-        expect(vscode.tasks.executeTask).toHaveBeenCalled();
-        expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
-            `remoteproc-runtime was installed on target ${target}`,
+        expect(executeTaskMock).toHaveBeenCalledWith(
+            `Install remoteproc-runtime on ${target}`,
+            ['topo', 'install', 'remoteproc-runtime', '--target', target],
         );
     });
 
@@ -136,7 +114,7 @@ describe('InstallDependency', () => {
         await installDependency.activate();
         await getCommandHandler()(dependencyItem);
 
-        expect(vscode.tasks.executeTask).not.toHaveBeenCalled();
+        expect(executeTaskMock).not.toHaveBeenCalled();
     });
 
     it('shows one notification for missing installable dependencies', async () => {
