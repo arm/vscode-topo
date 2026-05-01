@@ -14,7 +14,7 @@ describe('RefreshLoop', () => {
         const callback = jest.fn().mockResolvedValue(undefined);
         const refreshLoop = new RefreshLoop(callback, 1000);
 
-        await refreshLoop.start();
+        refreshLoop.start();
 
         expect(callback).not.toHaveBeenCalled();
 
@@ -29,7 +29,7 @@ describe('RefreshLoop', () => {
         const callback = jest.fn().mockResolvedValue(undefined);
         const refreshLoop = new RefreshLoop(callback, 1000);
 
-        await refreshLoop.start();
+        refreshLoop.start();
 
         await jest.advanceTimersByTimeAsync(1000);
         expect(callback).toHaveBeenCalledTimes(1);
@@ -45,7 +45,7 @@ describe('RefreshLoop', () => {
         const callback = jest.fn().mockResolvedValue(undefined);
         const refreshLoop = new RefreshLoop(callback, 1000);
 
-        await refreshLoop.start();
+        refreshLoop.start();
         refreshLoop.stop();
 
         await jest.advanceTimersByTimeAsync(1000);
@@ -57,9 +57,9 @@ describe('RefreshLoop', () => {
         const callback = jest.fn().mockResolvedValue(undefined);
         const refreshLoop = new RefreshLoop(callback, 1000);
 
-        await refreshLoop.start();
+        refreshLoop.start();
         await jest.advanceTimersByTimeAsync(500);
-        await refreshLoop.start();
+        refreshLoop.start();
 
         await jest.advanceTimersByTimeAsync(999);
         expect(callback).not.toHaveBeenCalled();
