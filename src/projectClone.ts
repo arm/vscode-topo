@@ -8,6 +8,7 @@ import { showAndLogError } from './util/showAndLogError';
 import { TargetStore } from './workloadPlacement/targetStore';
 import { getCloneDestinationPath } from './util/getCloneDestinationPath';
 import { executeTask } from './util/executeTask';
+import { getErrorMessage } from './util/getErrorMessage';
 
 type CloneResult =
     | {
@@ -168,12 +169,11 @@ const cloneWithSource = async (
         cloneSourceString,
         cloneBuildArgs,
     );
-    const taskName = `Clone ${projectName}`;
     try {
-        await executeTask(taskName, cloneCommand);
+        await executeTask(`Clone ${projectName}`, cloneCommand);
         return { success: true, repositoryPath };
     } catch (err) {
-        throw new WrappedError('CLONE', 'Failed to execute clone task', [], {
+        throw new WrappedError('CLONE', getErrorMessage(err), [], {
             cause: err,
         });
     }
