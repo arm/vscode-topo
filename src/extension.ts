@@ -15,6 +15,7 @@ import { DockerCommands } from './workloadPlacement/dockerCommands';
 import { TargetStore } from './workloadPlacement/targetStore';
 import { ProjectClone } from './projectClone';
 import { Deploy } from './actions/deploy';
+import { TopoStop } from './actions/topoStop';
 import { HostHealth } from './actions/hostHealth';
 import { ProtocolHandler } from './protocolHandler';
 import { SetupKeys } from './actions/setupKeys';
@@ -43,6 +44,7 @@ export async function activate(
     const projectInit = new ProjectInit(context, topoCli);
     const projectClone = new ProjectClone(context, topoCli, targetStore);
     const deploy = new Deploy(context, targetStore);
+    const topoStop = new TopoStop(context, targetStore);
     const containerOpenInBrowser = new ContainerOpenInBrowser(context);
     const dockerCommands = new DockerCommands();
     const attachVsCode = new AttachVsCode(context, dockerCommands);
@@ -85,6 +87,7 @@ export async function activate(
     await projectInit.activate();
     await projectClone.activate();
     deploy.activate();
+    topoStop.activate();
     await containerOpenInBrowser.activate();
     await attachVsCode.activate();
     attachShell.activate();

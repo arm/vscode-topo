@@ -275,6 +275,21 @@ export class TopoCli {
         });
     }
 
+    public stop(
+        projectPath: string,
+        sshTarget?: string,
+    ): childProcess.ChildProcessWithoutNullStreams {
+        const cmd = ['stop'];
+        if (sshTarget) {
+            cmd.push('--target', sshTarget);
+        }
+        return childProcess.spawn(this.getBinaryPath(), cmd, {
+            cwd: projectPath,
+            env: this.getProcessEnv(),
+            detached: true,
+        });
+    }
+
     public async health(sshTarget: string): Promise<HealthCheckResult> {
         const bin = this.getBinaryPath();
         const cmd = [
