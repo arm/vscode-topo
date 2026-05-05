@@ -6,13 +6,13 @@ export interface HostProcessor {
     features: string[];
 }
 
-export interface RemoteprocCpu {
+export interface RemoteProcessor {
     name: string;
 }
 
 export interface TargetDescription {
     hostProcessors: HostProcessor[];
-    remoteprocCpus: RemoteprocCpu[];
+    remoteProcessors: RemoteProcessor[];
 }
 
 /**

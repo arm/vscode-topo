@@ -35,7 +35,7 @@ describe('TargetTreeDataProvider', () => {
     const target = 'user@topo.local';
     const targetDescription: TargetDescription = {
         hostProcessors: [],
-        remoteprocCpus: [{ name: 'imx-rproc' }, { name: 'other-rproc' }],
+        remoteProcessors: [{ name: 'imx-rproc' }, { name: 'other-rproc' }],
     };
     const targetHealth: HealthCheckResult['target'] = {
         isLocalhost: false,

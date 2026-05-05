@@ -229,14 +229,7 @@ export class TopoCli {
         }
 
         try {
-            const description = create(
-                parsedDescription,
-                targetDescriptionSchema,
-            );
-            return {
-                hostProcessors: description.host,
-                remoteprocCpus: description.remoteprocs,
-            };
+            return create(parsedDescription, targetDescriptionSchema);
         } catch (validationError) {
             throw new Error(
                 `Invalid target description JSON: ${getErrorMessage(validationError)}`,
