@@ -38,20 +38,22 @@ export const stringifyMessage = (message: unknown): string => {
     }
 };
 
-abstract class Logger {
+abstract class Logger implements vscode.Disposable {
     private logVerbosity: Verbosity;
+    private configurationChangeDisposable: vscode.Disposable;
 
     constructor() {
         this.logVerbosity = this.getVerbosity();
-        vscode.workspace.onDidChangeConfiguration((e) => {
-            if (
-                e.affectsConfiguration(
-                    `${manifest.PACKAGE_NAME}.${manifest.CONFIG_LOGGING_VERBOSITY}`,
-                )
-            ) {
-                this.logVerbosity = this.getVerbosity();
-            }
-        });
+        this.configurationChangeDisposable =
+            vscode.workspace.onDidChangeConfiguration((e) => {
+                if (
+                    e.affectsConfiguration(
+                        `${manifest.PACKAGE_NAME}.${manifest.CONFIG_LOGGING_VERBOSITY}`,
+                    )
+                ) {
+                    this.logVerbosity = this.getVerbosity();
+                }
+            });
     }
 
     public getVerbosity(): Verbosity {
@@ -85,6 +87,10 @@ abstract class Logger {
         this.log(Verbosity.info, ...messages);
     public debug = (...messages: unknown[]): void =>
         this.log(Verbosity.debug, ...messages);
+
+    public dispose(): void {
+        this.configurationChangeDisposable.dispose();
+    }
 }
 
 export class OutputChannelLogger extends Logger {
@@ -103,6 +109,12 @@ export class OutputChannelLogger extends Logger {
 
     public show(): void {
         this.outputChannel?.show();
+    }
+
+    public override dispose(): void {
+        super.dispose();
+        this.outputChannel?.dispose();
+        this.outputChannel = undefined;
     }
 }
 
