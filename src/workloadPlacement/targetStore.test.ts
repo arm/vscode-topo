@@ -191,18 +191,21 @@ describe('TargetStore', () => {
     });
 
     it('deactivates the store, disposing resources', () => {
+        const eventWithDisposable = (
+            dispose: () => void,
+        ): vscode.Event<vscode.Uri> => jest.fn(() => ({ dispose }));
         const watcherDispose = jest.fn();
         const onDidCreateDispose = jest.fn();
         const onDidChangeDispose = jest.fn();
-        const watcher = {
-            onDidCreate: jest.fn(() => ({ dispose: onDidCreateDispose })),
-            onDidChange: jest.fn(() => ({ dispose: onDidChangeDispose })),
-            onDidDelete: jest.fn(),
+        const watcher: vscode.FileSystemWatcher = {
+            onDidCreate: eventWithDisposable(onDidCreateDispose),
+            onDidChange: eventWithDisposable(onDidChangeDispose),
+            onDidDelete: eventWithDisposable(jest.fn()),
             dispose: watcherDispose,
             ignoreCreateEvents: false,
             ignoreChangeEvents: false,
             ignoreDeleteEvents: false,
-        } as unknown as vscode.FileSystemWatcher;
+        };
         jest.mocked(
             vscode.workspace.createFileSystemWatcher,
         ).mockReturnValueOnce(watcher);
