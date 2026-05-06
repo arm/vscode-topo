@@ -21,17 +21,22 @@ export class TargetStore {
             'targets-update.signal',
         );
         const watcher = vscode.workspace.createFileSystemWatcher(pattern);
-        watcher.onDidCreate(() => {
+        const onDidCreate = watcher.onDidCreate(() => {
             if (!vscode.window.state.focused) {
                 this._onChanged.fire();
             }
         });
-        watcher.onDidChange(() => {
+        const onDidChange = watcher.onDidChange(() => {
             if (!vscode.window.state.focused) {
                 this._onChanged.fire();
             }
         });
-        this.disposables.push(watcher, this._onChanged);
+        this.disposables.push(
+            watcher,
+            onDidCreate,
+            onDidChange,
+            this._onChanged,
+        );
     }
 
     // Debounced function to publish a change to other VS Code instances
@@ -169,7 +174,7 @@ export class TargetStore {
 
     public dispose(): void {
         this.publishChange.cancel();
-        for (const d of this.disposables) {
+        for (const d of [...this.disposables].reverse()) {
             try {
                 d.dispose();
             } catch (err) {
