@@ -110,6 +110,17 @@
                 "category": "Arm Topo"
             },
             {
+                "command": "topo.refreshHostDependencies",
+                "title": "Refresh",
+                "icon": "$(refresh)",
+                "category": "Arm Topo"
+            },
+            {
+                "command": "topo.showOutput",
+                "title": "Open Arm Topo Output",
+                "category": "Arm Topo"
+            },
+            {
                 "command": "topo.deploy.context",
                 "title": "Topo Deploy",
                 "category": "Arm Topo"
@@ -126,6 +137,12 @@
         },
         "views": {
             "topo": [
+                {
+                    "id": "topo.host-manager",
+                    "name": "Host",
+                    "visibility": "visible",
+                    "icon": "$(vm-small)"
+                },
                 {
                     "id": "topo.target-manager",
                     "name": "Targets",
@@ -207,9 +224,22 @@
                 {
                     "command": "topo.deploy.context",
                     "when": "false"
+                },
+                {
+                    "command": "topo.refreshHostDependencies",
+                    "when": "false"
+                },
+                {
+                    "command": "topo.showOutput",
+                    "when": "false"
                 }
             ],
             "view/item/context": [
+                {
+                    "command": "topo.showOutput",
+                    "when": "view == topo.host-manager && viewItem =~ /Dependencies/ && viewItem =~ /Error/",
+                    "group": "topo/1_output"
+                },
                 {
                     "command": "topo.selectTarget",
                     "when": "view == topo.target-manager && viewItem =~ /Target/",
@@ -270,6 +300,11 @@
                 {
                     "command": "topo.addTarget",
                     "when": "view == topo.target-manager",
+                    "group": "navigation"
+                },
+                {
+                    "command": "topo.refreshHostDependencies",
+                    "when": "view == topo.host-manager",
                     "group": "navigation"
                 }
             ]

@@ -20,6 +20,7 @@ import { ProtocolHandler } from './protocolHandler';
 import { SetupKeys } from './actions/setupKeys';
 import { TargetDescriptionStore } from './workloadPlacement/targetDescriptionStore';
 import { InstallDependency } from './actions/installDependency';
+import { HostDependenciesTreeDataProvider } from './hostDependenciesTreeDataProvider';
 import { logger } from './util/logger';
 
 export async function activate(
@@ -59,6 +60,8 @@ export async function activate(
         targetStore,
         targetDescriptionStore,
     );
+    const hostDependenciesTreeDataProvider =
+        new HostDependenciesTreeDataProvider(context, topoCli);
     const targetManager = new TargetManager(
         context,
         targetTreeDataProvider,
@@ -90,6 +93,7 @@ export async function activate(
     attachShell.activate();
     await containersManager.activate();
     await targetTreeDataProvider.activate();
+    hostDependenciesTreeDataProvider.activate();
     await targetManager.activate();
     containerStart.activate();
     await containerStop.activate();
@@ -97,5 +101,4 @@ export async function activate(
     health.activate();
     setupKeys.activate();
     await installDependency.activate();
-    health.checkHostDependencyHealth();
 }
