@@ -22,7 +22,7 @@ describe('TargetDescriptionStore', () => {
                     features: ['fp', 'asimd', 'evtstrm', 'aes'],
                 },
             ],
-            remoteprocCpus: [{ name: 'imx-rproc' }],
+            remoteProcessors: [{ name: 'imx-rproc' }],
         };
         topoCli.describe.mockResolvedValue(targetDescription);
         const store = new TargetDescriptionStore(topoCli);
@@ -35,7 +35,7 @@ describe('TargetDescriptionStore', () => {
     it('should only allow each target description to be fetched once', async () => {
         topoCli.describe.mockResolvedValue({
             hostProcessors: [],
-            remoteprocCpus: [],
+            remoteProcessors: [],
         });
         const store = new TargetDescriptionStore(topoCli);
 

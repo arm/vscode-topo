@@ -190,17 +190,33 @@ describe('TargetStore', () => {
         expect(cb).toHaveBeenCalled();
     });
 
-    it('deactivates the store, disposing resources and clearing the singleton', async () => {
+    it('deactivates the store, disposing resources', () => {
+        const eventWithDisposable = (
+            dispose: () => void,
+        ): vscode.Event<vscode.Uri> => jest.fn(() => ({ dispose }));
+        const watcherDispose = jest.fn();
+        const onDidCreateDispose = jest.fn();
+        const onDidChangeDispose = jest.fn();
+        const watcher: vscode.FileSystemWatcher = {
+            onDidCreate: eventWithDisposable(onDidCreateDispose),
+            onDidChange: eventWithDisposable(onDidChangeDispose),
+            onDidDelete: eventWithDisposable(jest.fn()),
+            dispose: watcherDispose,
+            ignoreCreateEvents: false,
+            ignoreChangeEvents: false,
+            ignoreDeleteEvents: false,
+        };
+        jest.mocked(
+            vscode.workspace.createFileSystemWatcher,
+        ).mockReturnValueOnce(watcher);
         const { context } = createMockContext();
         const store = new TargetStore(context);
-        await store.addTarget('d@example.com');
-        const cb = jest.fn();
-        store.onChanged(cb);
 
         store.dispose();
 
-        const newStore = new TargetStore(context);
-        expect(newStore).not.toBe(store);
+        expect(watcherDispose).toHaveBeenCalled();
+        expect(onDidCreateDispose).toHaveBeenCalled();
+        expect(onDidChangeDispose).toHaveBeenCalled();
     });
 
     it('removes a non-selected target without changing selection', async () => {

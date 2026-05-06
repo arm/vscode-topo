@@ -6,13 +6,13 @@ export interface HostProcessor {
     features: string[];
 }
 
-export interface RemoteprocCpu {
+export interface RemoteProcessor {
     name: string;
 }
 
 export interface TargetDescription {
     hostProcessors: HostProcessor[];
-    remoteprocCpus: RemoteprocCpu[];
+    remoteProcessors: RemoteProcessor[];
 }
 
 /**
@@ -105,7 +105,9 @@ export type MessagePoster = {
 
 export type Mutable<T> = { -readonly [P in keyof T]: T[P] };
 
+export type TargetStatus = 'disconnected' | 'connected' | 'error';
+
 export interface TargetState {
     health: HealthCheckResult['target'] | undefined;
-    target: string | undefined;
+    status: TargetStatus;
 }

@@ -3,36 +3,22 @@ import { mock, MockProxy } from 'jest-mock-extended';
 import { SetupKeys } from './setupKeys';
 import { TargetStore } from '../workloadPlacement/targetStore';
 import { TargetTreeTargetItem } from '../workloadPlacement/targetTreeTargetItem';
-import { mutable } from '../util/mutable';
+import { executeTask } from '../util/executeTask';
 
 jest.mock('../util/logger');
+jest.mock('../util/executeTask');
+
+const executeTaskMock = jest.mocked(executeTask);
 
 describe('SetupKeys', () => {
     let context: MockProxy<vscode.ExtensionContext>;
     let targetStore: MockProxy<TargetStore>;
     const target = 'user@topo.local';
-    const waitImmediate = () =>
-        new Promise<void>((resolve) => setTimeout(() => resolve(), 0));
-    const taskExec: vscode.TaskExecution = {
-        task: {} as vscode.Task,
-        terminate: jest.fn(),
-    };
 
     beforeEach(() => {
         context = mock<vscode.ExtensionContext>({ subscriptions: [] });
         targetStore = mock<TargetStore>();
         targetStore.getSelectedTarget.mockResolvedValue(target);
-        jest.mocked(vscode.tasks.executeTask).mockResolvedValue(taskExec);
-        const onDidEndTaskProcessEmitter =
-            new vscode.EventEmitter<vscode.TaskProcessEndEvent>();
-        mutable(vscode.tasks).onDidEndTaskProcess =
-            onDidEndTaskProcessEmitter.event;
-        setTimeout(() => {
-            onDidEndTaskProcessEmitter.fire({
-                execution: taskExec,
-                exitCode: 0,
-            });
-        }, 0);
     });
 
     afterEach(() => {
@@ -53,7 +39,7 @@ describe('SetupKeys', () => {
     it('runs setup-keys task for selected board item', async () => {
         const setupKeys = new SetupKeys(context, targetStore);
         setupKeys.activate();
-        const boardItem = new TargetTreeTargetItem(target, true, true, true);
+        const boardItem = new TargetTreeTargetItem(target, true, 'connected');
         const commandHandler = jest
             .mocked(vscode.commands.registerCommand)
             .mock.calls.find(
@@ -64,14 +50,11 @@ describe('SetupKeys', () => {
         }
 
         await commandHandler(boardItem);
-        await waitImmediate();
 
-        expect(vscode.ShellExecution).toHaveBeenCalledWith('topo', [
-            'setup-keys',
-            '--target',
-            target,
-        ]);
-        expect(vscode.tasks.executeTask).toHaveBeenCalled();
+        expect(executeTaskMock).toHaveBeenCalledWith(
+            `Setup keys on ${target}`,
+            ['topo', 'setup-keys', '--target', target],
+        );
         expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
             `Keys were set up on target ${target}.`,
         );
@@ -80,7 +63,11 @@ describe('SetupKeys', () => {
     it('does nothing for non-selected board item', async () => {
         const setupKeys = new SetupKeys(context, targetStore);
         setupKeys.activate();
-        const boardItem = new TargetTreeTargetItem(target, false, false, false);
+        const boardItem = new TargetTreeTargetItem(
+            target,
+            false,
+            'disconnected',
+        );
         const commandHandler = jest
             .mocked(vscode.commands.registerCommand)
             .mock.calls.find(
@@ -92,7 +79,7 @@ describe('SetupKeys', () => {
 
         await commandHandler(boardItem);
 
-        expect(vscode.tasks.executeTask).not.toHaveBeenCalled();
+        expect(executeTaskMock).not.toHaveBeenCalled();
     });
 
     it('falls back to selected target when no tree node is provided', async () => {
@@ -108,22 +95,18 @@ describe('SetupKeys', () => {
         }
 
         await commandHandler(undefined);
-        await waitImmediate();
 
         expect(targetStore.getSelectedTarget).toHaveBeenCalled();
-        expect(vscode.ShellExecution).toHaveBeenCalledWith('topo', [
-            'setup-keys',
-            '--target',
-            target,
-        ]);
+        expect(executeTaskMock).toHaveBeenCalledWith(
+            `Setup keys on ${target}`,
+            ['topo', 'setup-keys', '--target', target],
+        );
     });
 
     it('shows error when setup-keys fails', async () => {
-        const onDidEndTaskProcessEmitter =
-            new vscode.EventEmitter<vscode.TaskProcessEndEvent>();
-        mutable(vscode.tasks).onDidEndTaskProcess =
-            onDidEndTaskProcessEmitter.event;
-        jest.mocked(vscode.tasks.executeTask).mockResolvedValue(taskExec);
+        executeTaskMock.mockRejectedValueOnce(
+            new Error('setup-keys failed with exit code 1'),
+        );
         const setupKeys = new SetupKeys(context, targetStore);
         setupKeys.activate();
         const commandHandler = jest
@@ -135,13 +118,7 @@ describe('SetupKeys', () => {
             throw new Error('No command handler registered');
         }
 
-        const running = commandHandler(undefined);
-        await waitImmediate();
-        onDidEndTaskProcessEmitter.fire({
-            execution: taskExec,
-            exitCode: 1,
-        });
-        await running;
+        await commandHandler(undefined);
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
             expect.stringContaining(

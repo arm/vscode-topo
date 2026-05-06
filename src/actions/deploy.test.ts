@@ -4,12 +4,12 @@ import * as vscode from 'vscode';
 import { Deploy } from './deploy';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { TargetStore } from '../workloadPlacement/targetStore';
-import { mutable } from '../util/mutable';
+import { executeTask } from '../util/executeTask';
 
 jest.mock('../util/logger');
+jest.mock('../util/executeTask');
 
-const waitImmediate = () =>
-    new Promise<void>((resolve) => setTimeout(() => resolve(), 0));
+const executeTaskMock = jest.mocked(executeTask);
 
 describe('Deploy', () => {
     let deploy: Deploy;
@@ -17,28 +17,11 @@ describe('Deploy', () => {
         path.join(os.tmpdir(), 'compose.yaml'),
     );
     const composeFilePath = composeFileUri.fsPath;
-    const deployTask: vscode.Task = expect.objectContaining({
-        execution: expect.objectContaining({
-            executablePath: 'topo',
-            executionArgs: expect.arrayContaining([
-                'deploy',
-                '--target',
-                'topo.local',
-            ]),
-            options: {
-                cwd: path.dirname(composeFilePath),
-            },
-        }),
-    });
     const target = 'topo.local';
     let targetStore: MockProxy<TargetStore>;
     let context: MockProxy<vscode.ExtensionContext>;
     let deployHandler: ((resource?: vscode.Uri) => Promise<void>) | undefined;
     let registerSpy: jest.SpyInstance;
-    const taskExec: vscode.TaskExecution = {
-        task: {} as vscode.Task,
-        terminate: jest.fn(),
-    };
 
     beforeEach(() => {
         context = mock<vscode.ExtensionContext>({ subscriptions: [] });
@@ -79,30 +62,21 @@ describe('Deploy', () => {
     });
 
     it('handles successful deploy operation', async () => {
-        deploy.deploy(composeFilePath);
-        await waitImmediate();
+        await deploy.deploy(composeFilePath);
 
-        expect(jest.mocked(vscode.tasks.executeTask)).toHaveBeenCalledWith(
-            deployTask,
+        expect(executeTaskMock).toHaveBeenCalledWith(
+            'Deploy to topo.local',
+            ['topo', 'deploy', '--target', 'topo.local'],
+            { cwd: path.dirname(composeFilePath) },
         );
     });
 
     it('handles task failure', async () => {
-        const onDidEndTaskProcessEmitter =
-            new vscode.EventEmitter<vscode.TaskProcessEndEvent>();
-        mutable(vscode.tasks).onDidEndTaskProcess =
-            onDidEndTaskProcessEmitter.event;
-        jest.mocked(vscode.tasks.executeTask).mockResolvedValueOnce(taskExec);
-
+        executeTaskMock.mockRejectedValueOnce(new Error('deploy failed'));
         await deploy.deploy(composeFilePath);
-        onDidEndTaskProcessEmitter.fire({
-            execution: taskExec,
-            exitCode: 1,
-        });
-        await waitImmediate();
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-            'Deployment to topo.local failed with exit code 1.',
+            'Deployment to topo.local failed: deploy failed',
         );
     });
 
@@ -110,11 +84,12 @@ describe('Deploy', () => {
         deploy.activate();
 
         const op = deployHandler!(composeFileUri);
-        await waitImmediate();
 
         await expect(op).resolves.toBeUndefined();
-        expect(jest.mocked(vscode.tasks.executeTask)).toHaveBeenCalledWith(
-            deployTask,
+        expect(executeTaskMock).toHaveBeenCalledWith(
+            'Deploy to topo.local',
+            ['topo', 'deploy', '--target', 'topo.local'],
+            { cwd: path.dirname(composeFilePath) },
         );
     });
 });

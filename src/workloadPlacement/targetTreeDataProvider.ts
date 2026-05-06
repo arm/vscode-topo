@@ -6,7 +6,6 @@ import { TargetStore } from './targetStore';
 import { TargetTreeTargetItem } from './targetTreeTargetItem';
 import { TargetTreeSubsystemItem } from './targetTreeSubsystemItem';
 import { logger } from '../util/logger';
-import { isTargetReady } from '../util/targetState';
 import { TargetTreeDependencyGroupItem } from './targetTreeDependencyGroupItem';
 import { TargetTreeSubsystemGroupItem } from './targetTreeSubsystemGroupItem';
 import { TargetTreeDependencyItem } from './targetTreeDependencyItem';
@@ -140,21 +139,13 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
     ): Promise<vscode.TreeItem[]> {
         if (!element) {
             const selectedTarget = await this.targetStore.getSelectedTarget();
-            const selectedTargetState = selectedTarget
-                ? this.containersManager.getTargetStateSnapshot(selectedTarget)
-                : undefined;
             const targetTreeItems = this.targetStore
                 .getTargets()
                 .map((target) => {
                     const selected = target === selectedTarget;
-                    const connectionReady =
-                        target === selectedTargetState?.target;
-                    return new TargetTreeTargetItem(
-                        target,
-                        selected,
-                        connectionReady,
-                        isTargetReady(selectedTargetState),
-                    );
+                    const { status } =
+                        this.containersManager.getTargetStateSnapshot(target);
+                    return new TargetTreeTargetItem(target, selected, status);
                 });
             const sortedTargetTreeItems = targetTreeItems.sort((a, b) =>
                 a.displayName.localeCompare(b.displayName),
@@ -175,7 +166,7 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
             }
 
             const dependencies = [...targetState.health.dependencies];
-            if (selectedTargetDescription?.remoteprocCpus.length) {
+            if (selectedTargetDescription?.remoteProcessors.length) {
                 dependencies.push(targetState.health.subsystemDriver);
             }
 
@@ -199,9 +190,9 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
                 await this.targetDescriptionStore.getDescription(
                     element.target,
                 );
-            const remoteprocCpus =
-                targetDescription?.remoteprocCpus.map((rp) => rp.name) || [];
-            const subsystemNames = ['Host', ...remoteprocCpus];
+            const remoteProcessors =
+                targetDescription?.remoteProcessors.map((rp) => rp.name) || [];
+            const subsystemNames = ['Host', ...remoteProcessors];
             return subsystemNames.map(
                 (name) => new TargetTreeSubsystemItem(name, element.target),
             );

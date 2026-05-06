@@ -5,7 +5,6 @@ import { TargetStore } from './targetStore';
 import { logger } from '../util/logger';
 import { ContainersManager } from './containersManager';
 import { getTreeItemIcon } from './targetTreeTargetItem';
-import { isTargetReady } from '../util/targetState';
 import { defaultSshConfigPath, getHosts } from '../util/ssh';
 
 export function buildQuickPickItems(
@@ -128,12 +127,7 @@ export class TargetManager {
         if (selectedTarget) {
             const targetState =
                 this.containersManager.getTargetStateSnapshot(selectedTarget);
-            const connectionReady = selectedTarget === targetState.target;
-            const targetTreeIcon = getTreeItemIcon(
-                true,
-                connectionReady,
-                isTargetReady(targetState),
-            );
+            const targetTreeIcon = getTreeItemIcon(true, targetState.status);
             const iconId = targetTreeIcon?.id || 'pass-filled';
             this.statusBarItem.text = `$(${iconId}) ${selectedTarget}`;
             this.statusBarItem.tooltip = `Connection String: ${selectedTarget}`;

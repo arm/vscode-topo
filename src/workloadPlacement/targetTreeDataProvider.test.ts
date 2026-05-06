@@ -35,7 +35,7 @@ describe('TargetTreeDataProvider', () => {
     const target = 'user@topo.local';
     const targetDescription: TargetDescription = {
         hostProcessors: [],
-        remoteprocCpus: [{ name: 'imx-rproc' }, { name: 'other-rproc' }],
+        remoteProcessors: [{ name: 'imx-rproc' }, { name: 'other-rproc' }],
     };
     const targetHealth: HealthCheckResult['target'] = {
         isLocalhost: false,
@@ -112,7 +112,7 @@ describe('TargetTreeDataProvider', () => {
     beforeEach(() => {
         const targetState: TargetState = {
             health: targetHealth,
-            target: target,
+            status: 'connected',
         };
         context = mock<vscode.ExtensionContext>({ subscriptions: [] });
 
@@ -169,11 +169,11 @@ describe('TargetTreeDataProvider', () => {
             targetStoreMock.getTargets.mockReturnValue([target]);
             containersManagerMock.getTargetStateSnapshot.mockReturnValue({
                 health: undefined,
-                target: target,
+                status: 'disconnected',
             });
             containersManagerMock.getTargetState.mockResolvedValue({
                 health: targetHealth,
-                target: target,
+                status: 'connected',
             });
 
             const rootChildren = await provider.getChildren();
@@ -206,7 +206,7 @@ describe('TargetTreeDataProvider', () => {
                 }),
             ];
             const targetState = mock<TargetState>({
-                target: target,
+                status: 'connected',
                 health: {
                     dependencies: dependencies,
                     subsystemDriver: subsystemDriverHealth,
@@ -214,10 +214,9 @@ describe('TargetTreeDataProvider', () => {
             });
             containersManagerMock.getTargetState.mockResolvedValue(targetState);
             targetStoreMock.getTargets.mockReturnValue([target]);
-            containersManagerMock.getTargetStateSnapshot.mockReturnValue({
-                health: targetState.health,
-                target: target,
-            });
+            containersManagerMock.getTargetStateSnapshot.mockReturnValue(
+                targetState,
+            );
             const rootChildren = await provider.getChildren();
             const targetChildren = await provider.getChildren(rootChildren[0]);
             const dependenciesGroup = targetChildren.find(
@@ -233,12 +232,12 @@ describe('TargetTreeDataProvider', () => {
             ]);
         });
 
-        it('marks selected target as not ready when health is undefined', async () => {
+        it('marks selected target as disconnected when health is undefined', async () => {
             targetStoreMock.getTargets.mockReturnValue([target]);
             targetStoreMock.getSelectedTarget.mockResolvedValue(target);
             containersManagerMock.getTargetStateSnapshot.mockReturnValue({
                 health: undefined,
-                target: target,
+                status: 'disconnected',
             });
 
             const rootChildren = await provider.getChildren();
@@ -247,8 +246,7 @@ describe('TargetTreeDataProvider', () => {
             const targetItem = rootChildren[0] as TargetTreeTargetItem;
             expect(targetItem.contextValue).toContain('Target');
             expect(targetItem.contextValue).toContain('Selected');
-            expect(targetItem.contextValue).toContain('ConnectionReady');
-            expect(targetItem.contextValue).not.toContain('TargetReady');
+            expect(targetItem.contextValue).not.toContain('Connected');
             expect(targetItem.collapsibleState).toBe(
                 vscode.TreeItemCollapsibleState.None,
             );
@@ -302,7 +300,7 @@ describe('TargetTreeDataProvider', () => {
             targetStoreMock.getTargets.mockReturnValue([]);
             containersManagerMock.getTargetState.mockResolvedValueOnce({
                 health: undefined,
-                target: target,
+                status: 'disconnected',
             });
 
             const rootChildren = await provider.getChildren();
@@ -338,8 +336,7 @@ describe('TargetTreeDataProvider', () => {
             const targetItem = new TargetTreeTargetItem(
                 target,
                 true,
-                true,
-                true,
+                'connected',
             );
 
             await executeCommand(
@@ -364,8 +361,7 @@ describe('TargetTreeDataProvider', () => {
             const targetItem = new TargetTreeTargetItem(
                 target,
                 true,
-                true,
-                true,
+                'connected',
             );
             targetStoreMock.getTargets.mockReturnValue([target]);
             await provider.activate();
@@ -390,8 +386,7 @@ describe('TargetTreeDataProvider', () => {
             const targetItem = new TargetTreeTargetItem(
                 target,
                 true,
-                true,
-                true,
+                'connected',
             );
             targetStoreMock.deleteTarget.mockRejectedValue(
                 new Error('Target not found'),
@@ -413,8 +408,7 @@ describe('TargetTreeDataProvider', () => {
             const targetItem = new TargetTreeTargetItem(
                 target,
                 true,
-                true,
-                true,
+                'connected',
             );
             const textDocument = mock<vscode.TextDocument>();
             jest.mocked(
@@ -455,8 +449,7 @@ describe('TargetTreeDataProvider', () => {
             const targetItem = new TargetTreeTargetItem(
                 target,
                 false,
-                false,
-                false,
+                'disconnected',
             );
 
             await executeCommand(
