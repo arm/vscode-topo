@@ -10,7 +10,7 @@ const viewLogsItem: vscode.MessageItem = {
     title: 'View Logs',
 };
 
-export class TopoStop {
+export class Stop {
     public static readonly stopCommand = `${manifest.PACKAGE_NAME}.stop.context`;
 
     constructor(
@@ -21,7 +21,7 @@ export class TopoStop {
     public activate(): void {
         this.context.subscriptions.push(
             vscode.commands.registerCommand(
-                TopoStop.stopCommand,
+                Stop.stopCommand,
                 this.handleStopCommand.bind(this),
             ),
         );

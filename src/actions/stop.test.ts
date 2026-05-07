@@ -1,7 +1,7 @@
 import path from 'node:path';
 import os from 'node:os';
 import * as vscode from 'vscode';
-import { TopoStop } from './topoStop';
+import { Stop } from './stop';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { TargetStore } from '../workloadPlacement/targetStore';
 import { executeTask } from '../util/executeTask';
@@ -11,8 +11,8 @@ jest.mock('../util/executeTask');
 
 const executeTaskMock = jest.mocked(executeTask);
 
-describe('TopoStop', () => {
-    let topoStop: TopoStop;
+describe('Stop', () => {
+    let stop: Stop;
     const composeFileUri = vscode.Uri.file(
         path.join(os.tmpdir(), 'compose.yaml'),
     );
@@ -27,7 +27,7 @@ describe('TopoStop', () => {
         context = mock<vscode.ExtensionContext>({ subscriptions: [] });
         targetStore = mock<TargetStore>();
         targetStore.getSelectedTarget.mockResolvedValue(target);
-        topoStop = new TopoStop(context, targetStore);
+        stop = new Stop(context, targetStore);
         registerSpy = jest
             .spyOn(vscode.commands, 'registerCommand')
             .mockImplementation(
@@ -44,10 +44,10 @@ describe('TopoStop', () => {
     });
 
     it('registers the stop command on activate', () => {
-        topoStop.activate();
+        stop.activate();
 
         expect(registerSpy).toHaveBeenCalledWith(
-            TopoStop.stopCommand,
+            Stop.stopCommand,
             expect.any(Function),
         );
         expect(context.subscriptions.length).toBeGreaterThan(0);
@@ -56,13 +56,13 @@ describe('TopoStop', () => {
     it('fails with no target selected', async () => {
         targetStore.getSelectedTarget.mockResolvedValueOnce(undefined);
 
-        const stopOperation = topoStop.stop(composeFilePath);
+        const stopOperation = stop.stop(composeFilePath);
 
         await expect(stopOperation).rejects.toThrow('No target selected');
     });
 
     it('handles successful stop operation', async () => {
-        await topoStop.stop(composeFilePath);
+        await stop.stop(composeFilePath);
 
         expect(executeTaskMock).toHaveBeenCalledWith(
             'Stop services on topo.local',
@@ -73,7 +73,7 @@ describe('TopoStop', () => {
 
     it('handles task failure', async () => {
         executeTaskMock.mockRejectedValueOnce(new Error('stop failed'));
-        await topoStop.stop(composeFilePath);
+        await stop.stop(composeFilePath);
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
             'Stopping services on topo.local failed: stop failed',
@@ -81,7 +81,7 @@ describe('TopoStop', () => {
     });
 
     it('invokes handler when command called', async () => {
-        topoStop.activate();
+        stop.activate();
 
         const op = stopHandler!(composeFileUri);
 
