@@ -28,8 +28,8 @@ module.exports = [
     js.configs.recommended,
     {
         rules: {
-            'no-useless-assignment': 'off',
-            'preserve-caught-error': 'off',
+            'no-useless-assignment': 'error',
+            'preserve-caught-error': 'error',
         },
     },
     ...tsPlugin.configs['flat/recommended'],
