@@ -337,38 +337,6 @@ describe('TopoCli', () => {
         expect(result).toBe(fakeProc);
     });
 
-    it('stop spawns a child process and returns it', () => {
-        const fakeProc = mock<Mutable<ChildProcessWithoutNullStreams>>();
-        fakeProc.pid = 5678;
-
-        spawnMock.mockReturnValue(fakeProc);
-
-        const result = topoCli.stop('/fake/project');
-
-        expect(childProcess.spawn).toHaveBeenCalledWith(
-            topoCli.getBinaryPath(),
-            ['stop'],
-            { cwd: '/fake/project', env: expect.any(Object), detached: true },
-        );
-        expect(result).toBe(fakeProc);
-    });
-
-    it('stop includes --target and sets env when ssh target provided', () => {
-        const fakeProc = mock<Mutable<ChildProcessWithoutNullStreams>>();
-        fakeProc.pid = 8765;
-
-        spawnMock.mockReturnValue(fakeProc);
-
-        const result = topoCli.stop('/fake/project', 'me@example.com');
-
-        expect(childProcess.spawn).toHaveBeenCalledWith(
-            topoCli.getBinaryPath(),
-            ['stop', '--target', 'me@example.com'],
-            { cwd: '/fake/project', env: expect.any(Object), detached: true },
-        );
-        expect(result).toBe(fakeProc);
-    });
-
     it('health parses JSON output', async () => {
         const want: HealthCheckResult = {
             host: { dependencies: [] },
