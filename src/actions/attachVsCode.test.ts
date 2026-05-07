@@ -2,9 +2,9 @@ import * as vscode from 'vscode';
 import { AttachVsCode, getDockerContextName } from './attachVsCode';
 import { exec } from '../util/exec';
 import { TARGET_HOST_RUNTIME } from '../manifest';
-import { DockerCommands } from '../workloadPlacement/dockerCommands';
+import { DockerCommands } from '../target/dockerCommands';
 import { ContainerItem } from '../util/types';
-import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
+import { TargetTreeContainerItem } from '../targetTreeView/targetTreeContainerItem';
 import { WrappedError } from '../errors/wrappedError';
 import { mock, MockProxy } from 'jest-mock-extended';
 

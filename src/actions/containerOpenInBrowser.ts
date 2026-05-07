@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { ContainerItem } from '../util/types';
 import * as manifest from '../manifest';
-import { assertTargetTreeContainerItem } from './util/assertTargetTreeContainerItem';
+import { assertTargetTreeContainerItem } from '../targetTreeView/assertTargetTreeContainerItem';
 import { logger } from '../util/logger';
 import { getContainerHostPorts } from '../util/getContainerHostPorts';
 

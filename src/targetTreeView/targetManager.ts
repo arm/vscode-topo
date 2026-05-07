@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
 import { TargetTreeDataProvider } from './targetTreeDataProvider';
 import * as manifest from '../manifest';
-import { TargetStore } from './targetStore';
+import { TargetStore } from '../target/targetStore';
 import { logger } from '../util/logger';
-import { ContainersManager } from './containersManager';
+import { ContainersManager } from '../target/containersManager';
 import { getTreeItemIcon } from './targetTreeTargetItem';
 import { defaultSshConfigPath, getHosts } from '../util/ssh';
 

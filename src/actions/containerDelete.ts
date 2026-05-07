@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
 import * as manifest from '../manifest';
-import { assertTargetTreeContainerItem } from './util/assertTargetTreeContainerItem';
+import { assertTargetTreeContainerItem } from '../targetTreeView/assertTargetTreeContainerItem';
 import { showAndLogError } from '../util/showAndLogError';
 import { isWrappedError } from '../errors/wrappedError';
-import { ContainerCommands } from '../workloadPlacement/containerCommands';
+import { ContainerCommands } from '../target/containerCommands';
 
 export class ContainerDelete {
     public static readonly deleteContainerCommand = `${manifest.PACKAGE_NAME}.deleteContainer`;

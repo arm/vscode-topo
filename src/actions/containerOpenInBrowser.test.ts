@@ -1,7 +1,7 @@
 import { ContainerItem } from '../util/types';
 import { ContainerOpenInBrowser } from './containerOpenInBrowser';
 import * as vscode from 'vscode';
-import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
+import { TargetTreeContainerItem } from '../targetTreeView/targetTreeContainerItem';
 import { mock, MockProxy } from 'jest-mock-extended';
 
 jest.mock('../util/logger');

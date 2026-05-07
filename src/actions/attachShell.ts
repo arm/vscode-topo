@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
-import { ContainerCommands } from '../workloadPlacement/containerCommands';
+import { ContainerCommands } from '../target/containerCommands';
 import * as manifest from '../manifest';
-import { TargetStore } from '../workloadPlacement/targetStore';
-import { assertTargetTreeContainerItem } from './util/assertTargetTreeContainerItem';
+import { TargetStore } from '../target/targetStore';
+import { assertTargetTreeContainerItem } from '../targetTreeView/assertTargetTreeContainerItem';
 import { ContainerItem } from '../util/types';
 
 export class AttachShell {

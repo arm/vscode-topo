@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { PACKAGE_NAME } from '../manifest';
-import { TargetStore } from '../workloadPlacement/targetStore';
-import { TargetTreeTargetItem } from '../workloadPlacement/targetTreeTargetItem';
+import { TargetStore } from '../target/targetStore';
+import { TargetTreeTargetItem } from '../targetTreeView/targetTreeTargetItem';
 import { showAndLogError } from '../util/showAndLogError';
 import { executeTask } from '../util/executeTask';
 

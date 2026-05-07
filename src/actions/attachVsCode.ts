@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import { ContainerItem } from '../util/types';
-import { ContainerCommands } from '../workloadPlacement/containerCommands';
+import { ContainerCommands } from '../target/containerCommands';
 import * as manifest from '../manifest';
-import { assertTargetTreeContainerItem } from './util/assertTargetTreeContainerItem';
+import { assertTargetTreeContainerItem } from '../targetTreeView/assertTargetTreeContainerItem';
 import { isWrappedError } from '../errors/wrappedError';
 import { showAndLogError } from '../util/showAndLogError';
 

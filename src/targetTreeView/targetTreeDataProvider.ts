@@ -1,16 +1,16 @@
 import * as vscode from 'vscode';
 import { TargetTreeContainerItem } from './targetTreeContainerItem';
-import { ContainersManager } from './containersManager';
+import { ContainersManager } from '../target/containersManager';
 import * as manifest from '../manifest';
-import { TargetStore } from './targetStore';
+import { TargetStore } from '../target/targetStore';
 import { TargetTreeTargetItem } from './targetTreeTargetItem';
 import { TargetTreeSubsystemItem } from './targetTreeSubsystemItem';
 import { logger } from '../util/logger';
-import { TargetTreeDependencyGroupItem } from './targetTreeDependencyGroupItem';
+import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
 import { TargetTreeSubsystemGroupItem } from './targetTreeSubsystemGroupItem';
-import { TargetTreeDependencyItem } from './targetTreeDependencyItem';
+import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 import { HealthCheckDependency } from '../topoCliSchema';
-import { TargetDescriptionStore } from './targetDescriptionStore';
+import { TargetDescriptionStore } from '../target/targetDescriptionStore';
 
 function sortDependenciesByName(
     deps: HealthCheckDependency[],
@@ -170,7 +170,7 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
                 dependencies.push(targetState.health.subsystemDriver);
             }
 
-            const dependenciesGroup = new TargetTreeDependencyGroupItem(
+            const dependenciesGroup = new HealthCheckDependencyGroupTreeItem(
                 dependencies,
             );
             const subsystemsGroup = new TargetTreeSubsystemGroupItem(
@@ -179,9 +179,9 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
             return [dependenciesGroup, subsystemsGroup];
         }
 
-        if (element instanceof TargetTreeDependencyGroupItem) {
+        if (element instanceof HealthCheckDependencyGroupTreeItem) {
             return sortDependenciesByName(element.dependencies).map(
-                (d) => new TargetTreeDependencyItem(d),
+                (d) => new HealthCheckDependencyTreeItem(d),
             );
         }
 

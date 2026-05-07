@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { SetupKeys } from './setupKeys';
-import { TargetStore } from '../workloadPlacement/targetStore';
-import { TargetTreeTargetItem } from '../workloadPlacement/targetTreeTargetItem';
+import { TargetStore } from '../target/targetStore';
+import { TargetTreeTargetItem } from '../targetTreeView/targetTreeTargetItem';
 import { executeTask } from '../util/executeTask';
 
 jest.mock('../util/logger');

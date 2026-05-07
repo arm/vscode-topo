@@ -2,10 +2,10 @@ import { TARGET_HOST_RUNTIME } from '../manifest';
 import * as vscode from 'vscode';
 import { ContainerDelete } from './containerDelete';
 import { ContainerItem } from '../util/types';
-import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
+import { TargetTreeContainerItem } from '../targetTreeView/targetTreeContainerItem';
 import { WrappedError } from '../errors/wrappedError';
 import { mock, MockProxy } from 'jest-mock-extended';
-import { ContainerCommands } from '../workloadPlacement/containerCommands';
+import { ContainerCommands } from '../target/containerCommands';
 
 describe('ContainerDelete', () => {
     let context: MockProxy<vscode.ExtensionContext>;

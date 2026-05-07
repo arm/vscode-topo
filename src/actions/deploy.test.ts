@@ -3,7 +3,7 @@ import os from 'node:os';
 import * as vscode from 'vscode';
 import { Deploy } from './deploy';
 import { mock, MockProxy } from 'jest-mock-extended';
-import { TargetStore } from '../workloadPlacement/targetStore';
+import { TargetStore } from '../target/targetStore';
 import { executeTask } from '../util/executeTask';
 
 jest.mock('../util/logger');

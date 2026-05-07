@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
-import { DISPLAY_NAME } from './manifest';
-import { showTopoOutputCommand } from './showTopoOutputCommand';
+import { DISPLAY_NAME } from '../manifest';
+import { showTopoOutputCommand } from '../showTopoOutputCommand';
 
 export const failedToLoadHostDependenciesMessage =
     'Failed to load host dependencies';

@@ -1,9 +1,9 @@
 import { assertTargetTreeContainerItem } from './assertTargetTreeContainerItem';
-import { TargetTreeContainerItem } from '../../workloadPlacement/targetTreeContainerItem';
-import { logger } from '../../util/logger';
-import { ContainerItem } from '../../util/types';
+import { TargetTreeContainerItem } from './targetTreeContainerItem';
+import { logger } from '../util/logger';
+import { ContainerItem } from '../util/types';
 
-jest.mock('../../util/logger', () => ({
+jest.mock('../util/logger', () => ({
     logger: {
         error: jest.fn(),
         info: jest.fn(),

@@ -1,11 +1,11 @@
 import { TARGET_HOST_RUNTIME } from '../manifest';
 import * as vscode from 'vscode';
 import { ContainerStart } from './containerStart';
-import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
+import { TargetTreeContainerItem } from '../targetTreeView/targetTreeContainerItem';
 import { WrappedError } from '../errors/wrappedError';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { ContainerItem } from '../util/types';
-import { ContainerCommands } from '../workloadPlacement/containerCommands';
+import { ContainerCommands } from '../target/containerCommands';
 
 describe('ContainerStart', () => {
     let context: MockProxy<vscode.ExtensionContext>;

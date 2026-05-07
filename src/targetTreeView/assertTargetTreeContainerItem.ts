@@ -1,5 +1,5 @@
-import { logger } from '../../util/logger';
-import { TargetTreeContainerItem } from '../../workloadPlacement/targetTreeContainerItem';
+import { logger } from '../util/logger';
+import { TargetTreeContainerItem } from './targetTreeContainerItem';
 
 /**
  * Asserts that the provided treeNode is an instance of TargetTreeContainerItem.

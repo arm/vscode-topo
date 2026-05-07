@@ -4,14 +4,14 @@ import { TargetTreeSubsystemItem } from './targetTreeSubsystemItem';
 import { TargetTreeTargetItem } from './targetTreeTargetItem';
 import * as vscode from 'vscode';
 import * as manifest from '../manifest';
-import { ContainersManager } from './containersManager';
+import { ContainersManager } from '../target/containersManager';
 import { TargetState, ContainerItem, TargetDescription } from '../util/types';
 import { mock, MockProxy } from 'jest-mock-extended';
-import { TargetStore } from './targetStore';
-import { TargetTreeDependencyGroupItem } from './targetTreeDependencyGroupItem';
+import { TargetStore } from '../target/targetStore';
+import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
 import { TargetTreeSubsystemGroupItem } from './targetTreeSubsystemGroupItem';
 import { HealthCheckDependency, HealthCheckResult } from '../topoCliSchema';
-import { TargetDescriptionStore } from './targetDescriptionStore';
+import { TargetDescriptionStore } from '../target/targetDescriptionStore';
 
 jest.mock('../util/logger');
 
@@ -181,7 +181,7 @@ describe('TargetTreeDataProvider', () => {
 
             expect(targetChildren).toHaveLength(2);
             expect(targetChildren[0]).toBeInstanceOf(
-                TargetTreeDependencyGroupItem,
+                HealthCheckDependencyGroupTreeItem,
             );
             expect(targetChildren[1]).toBeInstanceOf(
                 TargetTreeSubsystemGroupItem,
@@ -220,7 +220,7 @@ describe('TargetTreeDataProvider', () => {
             const rootChildren = await provider.getChildren();
             const targetChildren = await provider.getChildren(rootChildren[0]);
             const dependenciesGroup = targetChildren.find(
-                (v) => v instanceof TargetTreeDependencyGroupItem,
+                (v) => v instanceof HealthCheckDependencyGroupTreeItem,
             );
 
             const got = await provider.getChildren(dependenciesGroup);

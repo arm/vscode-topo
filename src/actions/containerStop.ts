@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
 import * as manifest from '../manifest';
-import { assertTargetTreeContainerItem } from './util/assertTargetTreeContainerItem';
+import { assertTargetTreeContainerItem } from '../targetTreeView/assertTargetTreeContainerItem';
 import { showAndLogError } from '../util/showAndLogError';
 import { isWrappedError } from '../errors/wrappedError';
-import { ContainerCommands } from '../workloadPlacement/containerCommands';
+import { ContainerCommands } from '../target/containerCommands';
 
 export class ContainerStop {
     public static readonly stopContainerCommand = `${manifest.PACKAGE_NAME}.stopContainer`;
