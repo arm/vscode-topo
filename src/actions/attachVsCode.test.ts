@@ -4,7 +4,7 @@ import { exec } from '../util/exec';
 import { TARGET_HOST_RUNTIME } from '../manifest';
 import { DockerCommands } from '../target/dockerCommands';
 import { ContainerItem } from '../util/types';
-import { TargetTreeContainerItem } from '../targetTreeView/targetTreeContainerItem';
+import { TargetContainerTreeItem } from '../targetTreeView/targetContainerTreeItem';
 import { WrappedError } from '../errors/wrappedError';
 import { mock, MockProxy } from 'jest-mock-extended';
 
@@ -61,7 +61,7 @@ describe('attachVsCode', () => {
         ports: {},
         target,
     };
-    const treeItem = new TargetTreeContainerItem(containerItem);
+    const treeItem = new TargetContainerTreeItem(containerItem);
     const dockerContext = getDockerContextName(target);
 
     beforeEach(() => {

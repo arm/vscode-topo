@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { SetupKeys } from './setupKeys';
 import { TargetStore } from '../target/targetStore';
-import { TargetTreeTargetItem } from '../targetTreeView/targetTreeTargetItem';
+import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
 import { executeTask } from '../util/executeTask';
 
 jest.mock('../util/logger');
@@ -39,7 +39,7 @@ describe('SetupKeys', () => {
     it('runs setup-keys task for selected board item', async () => {
         const setupKeys = new SetupKeys(context, targetStore);
         setupKeys.activate();
-        const boardItem = new TargetTreeTargetItem(target, true, 'connected');
+        const boardItem = new TargetTreeItem(target, true, 'connected');
         const commandHandler = jest
             .mocked(vscode.commands.registerCommand)
             .mock.calls.find(
@@ -63,11 +63,7 @@ describe('SetupKeys', () => {
     it('does nothing for non-selected board item', async () => {
         const setupKeys = new SetupKeys(context, targetStore);
         setupKeys.activate();
-        const boardItem = new TargetTreeTargetItem(
-            target,
-            false,
-            'disconnected',
-        );
+        const boardItem = new TargetTreeItem(target, false, 'disconnected');
         const commandHandler = jest
             .mocked(vscode.commands.registerCommand)
             .mock.calls.find(

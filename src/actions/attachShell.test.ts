@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { AttachShell } from '../actions/attachShell';
 import { DockerCommands } from '../target/dockerCommands';
-import { TargetTreeContainerItem } from '../targetTreeView/targetTreeContainerItem';
+import { TargetContainerTreeItem } from '../targetTreeView/targetContainerTreeItem';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { TargetStore } from '../target/targetStore';
 import { ContainerItem } from '../util/types';
@@ -54,7 +54,7 @@ describe('AttachShell', () => {
             target,
             state: 'running',
         });
-        const treeItem = new TargetTreeContainerItem(fakeItem);
+        const treeItem = new TargetContainerTreeItem(fakeItem);
 
         handler(treeItem);
 

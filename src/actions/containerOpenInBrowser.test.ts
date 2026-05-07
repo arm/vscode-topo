@@ -1,7 +1,7 @@
 import { ContainerItem } from '../util/types';
 import { ContainerOpenInBrowser } from './containerOpenInBrowser';
 import * as vscode from 'vscode';
-import { TargetTreeContainerItem } from '../targetTreeView/targetTreeContainerItem';
+import { TargetContainerTreeItem } from '../targetTreeView/targetContainerTreeItem';
 import { mock, MockProxy } from 'jest-mock-extended';
 
 jest.mock('../util/logger');
@@ -36,7 +36,7 @@ describe('ContainerOpenInBrowser', () => {
             runtime: '',
             annotations: {},
         };
-        const treeItem = new TargetTreeContainerItem(item);
+        const treeItem = new TargetContainerTreeItem(item);
 
         await openInBrowser(treeItem);
 
@@ -67,7 +67,7 @@ describe('ContainerOpenInBrowser', () => {
             runtime: '',
             annotations: {},
         };
-        const treeItem = new TargetTreeContainerItem(item);
+        const treeItem = new TargetContainerTreeItem(item);
 
         await openInBrowser(treeItem);
 
@@ -97,7 +97,7 @@ describe('ContainerOpenInBrowser', () => {
             runtime: '',
             annotations: {},
         };
-        const treeItem = new TargetTreeContainerItem(item);
+        const treeItem = new TargetContainerTreeItem(item);
 
         await openInBrowser(treeItem);
 

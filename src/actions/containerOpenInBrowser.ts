@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { ContainerItem } from '../util/types';
 import * as manifest from '../manifest';
-import { assertTargetTreeContainerItem } from '../targetTreeView/assertTargetTreeContainerItem';
+import { assertTargetContainerTreeItem } from '../targetTreeView/assertTargetContainerTreeItem';
 import { logger } from '../util/logger';
 import { getContainerHostPorts } from '../util/getContainerHostPorts';
 
@@ -24,7 +24,7 @@ export class ContainerOpenInBrowser {
     private async openContainerInBrowserCommandHandler(
         treeNode: unknown,
     ): Promise<void> {
-        assertTargetTreeContainerItem(treeNode);
+        assertTargetContainerTreeItem(treeNode);
         try {
             const result = await this.openContainerInBrowser(
                 treeNode.containerItem,

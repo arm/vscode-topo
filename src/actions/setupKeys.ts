@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { PACKAGE_NAME } from '../manifest';
 import { TargetStore } from '../target/targetStore';
-import { TargetTreeTargetItem } from '../targetTreeView/targetTreeTargetItem';
+import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
 import { showAndLogError } from '../util/showAndLogError';
 import { executeTask } from '../util/executeTask';
 
@@ -25,7 +25,7 @@ export class SetupKeys {
     private async setupKeys(treeNode: unknown): Promise<void> {
         let ssh: string | undefined;
 
-        if (treeNode instanceof TargetTreeTargetItem) {
+        if (treeNode instanceof TargetTreeItem) {
             if (!treeNode.contextValue?.includes('Selected')) {
                 return;
             }

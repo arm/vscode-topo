@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { ContainerCommands } from '../target/containerCommands';
 import * as manifest from '../manifest';
 import { TargetStore } from '../target/targetStore';
-import { assertTargetTreeContainerItem } from '../targetTreeView/assertTargetTreeContainerItem';
+import { assertTargetContainerTreeItem } from '../targetTreeView/assertTargetContainerTreeItem';
 import { ContainerItem } from '../util/types';
 
 export class AttachShell {
@@ -24,7 +24,7 @@ export class AttachShell {
     }
 
     private async attachShellCommandHandler(treeNode: unknown): Promise<void> {
-        assertTargetTreeContainerItem(treeNode);
+        assertTargetContainerTreeItem(treeNode);
         this.attachShell(treeNode.containerItem);
     }
 

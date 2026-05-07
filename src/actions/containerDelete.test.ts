@@ -2,7 +2,7 @@ import { TARGET_HOST_RUNTIME } from '../manifest';
 import * as vscode from 'vscode';
 import { ContainerDelete } from './containerDelete';
 import { ContainerItem } from '../util/types';
-import { TargetTreeContainerItem } from '../targetTreeView/targetTreeContainerItem';
+import { TargetContainerTreeItem } from '../targetTreeView/targetContainerTreeItem';
 import { WrappedError } from '../errors/wrappedError';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { ContainerCommands } from '../target/containerCommands';
@@ -30,7 +30,7 @@ describe('ContainerDelete', () => {
         ports: {},
         target,
     };
-    const treeItem = new TargetTreeContainerItem(container);
+    const treeItem = new TargetContainerTreeItem(container);
 
     beforeEach(() => {
         context = mock<vscode.ExtensionContext>({ subscriptions: [] });

@@ -1,7 +1,7 @@
 import { TargetTreeDataProvider } from './targetTreeDataProvider';
-import { TargetTreeContainerItem } from './targetTreeContainerItem';
-import { TargetTreeSubsystemItem } from './targetTreeSubsystemItem';
-import { TargetTreeTargetItem } from './targetTreeTargetItem';
+import { TargetContainerTreeItem } from './targetContainerTreeItem';
+import { TargetSubsystemTreeItem } from './targetSubsystemTreeItem';
+import { TargetTreeItem } from './targetTreeItem';
 import * as vscode from 'vscode';
 import * as manifest from '../manifest';
 import { ContainersManager } from '../target/containersManager';
@@ -9,7 +9,7 @@ import { TargetState, ContainerItem, TargetDescription } from '../util/types';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { TargetStore } from '../target/targetStore';
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
-import { TargetTreeSubsystemGroupItem } from './targetTreeSubsystemGroupItem';
+import { TargetSubsystemGroupTreeItem } from './targetSubsystemGroupTreeItem';
 import { HealthCheckDependency, HealthCheckResult } from '../topoCliSchema';
 import { TargetDescriptionStore } from '../target/targetDescriptionStore';
 
@@ -184,7 +184,7 @@ describe('TargetTreeDataProvider', () => {
                 HealthCheckDependencyGroupTreeItem,
             );
             expect(targetChildren[1]).toBeInstanceOf(
-                TargetTreeSubsystemGroupItem,
+                TargetSubsystemGroupTreeItem,
             );
             expect(targetChildren[0].label).toBe('Dependencies');
             expect(targetChildren[1].label).toBe('Subsystems');
@@ -243,7 +243,7 @@ describe('TargetTreeDataProvider', () => {
             const rootChildren = await provider.getChildren();
 
             expect(rootChildren).toHaveLength(1);
-            const targetItem = rootChildren[0] as TargetTreeTargetItem;
+            const targetItem = rootChildren[0] as TargetTreeItem;
             expect(targetItem.contextValue).toContain('Target');
             expect(targetItem.contextValue).toContain('Selected');
             expect(targetItem.contextValue).not.toContain('Connected');
@@ -253,13 +253,13 @@ describe('TargetTreeDataProvider', () => {
         });
 
         it('returns containers for Host and remoteproc groups', async () => {
-            const hostGroup = new TargetTreeSubsystemItem('Host', target);
+            const hostGroup = new TargetSubsystemTreeItem('Host', target);
             const hostChildren = await provider.getChildren(hostGroup);
-            const remoteprocGroup = new TargetTreeSubsystemItem(
+            const remoteprocGroup = new TargetSubsystemTreeItem(
                 'imx-rproc',
                 target,
             );
-            const otherRprocGroup = new TargetTreeSubsystemItem(
+            const otherRprocGroup = new TargetSubsystemTreeItem(
                 'other-rproc',
                 target,
             );
@@ -270,15 +270,15 @@ describe('TargetTreeDataProvider', () => {
                 await provider.getChildren(otherRprocGroup);
 
             expect(hostChildren).toHaveLength(1);
-            expect(hostChildren[0]).toBeInstanceOf(TargetTreeContainerItem);
-            expect((hostChildren[0] as TargetTreeContainerItem).name).toBe(
+            expect(hostChildren[0]).toBeInstanceOf(TargetContainerTreeItem);
+            expect((hostChildren[0] as TargetContainerTreeItem).name).toBe(
                 'cont2',
             );
             expect(imxRprocChildren).toHaveLength(2);
-            expect(imxRprocChildren[0]).toBeInstanceOf(TargetTreeContainerItem);
+            expect(imxRprocChildren[0]).toBeInstanceOf(TargetContainerTreeItem);
             expect(
                 imxRprocChildren.map(
-                    (c) => (c as TargetTreeContainerItem).name,
+                    (c) => (c as TargetContainerTreeItem).name,
                 ),
             ).toEqual(expect.arrayContaining(['cont1', 'cont3']));
             expect(otherRprocChildren).toHaveLength(0);
@@ -286,7 +286,7 @@ describe('TargetTreeDataProvider', () => {
 
         it('handles parsing error in getContainersData gracefully', async () => {
             containersManagerMock.getContainersData.mockResolvedValueOnce([]);
-            const remoteprocGroup = new TargetTreeSubsystemItem(
+            const remoteprocGroup = new TargetSubsystemTreeItem(
                 'imx-rproc',
                 target,
             );
@@ -311,7 +311,7 @@ describe('TargetTreeDataProvider', () => {
 
     describe('getTreeItem', () => {
         it('getTreeItem returns the element itself', () => {
-            const item = new TargetTreeSubsystemItem('Host', target);
+            const item = new TargetSubsystemTreeItem('Host', target);
 
             const treeItem = provider.getTreeItem(item);
 
@@ -333,11 +333,7 @@ describe('TargetTreeDataProvider', () => {
     describe('selectTarget command', () => {
         it('invokes targetStore.setSelected when select command is executed with a target item', async () => {
             await provider.activate();
-            const targetItem = new TargetTreeTargetItem(
-                target,
-                true,
-                'connected',
-            );
+            const targetItem = new TargetTreeItem(target, true, 'connected');
 
             await executeCommand(
                 TargetTreeDataProvider.selectTargetCommand,
@@ -358,11 +354,7 @@ describe('TargetTreeDataProvider', () => {
 
     describe('removeTarget command', () => {
         it('invokes targetStore.deleteTarget when remove command is executed with a target item', async () => {
-            const targetItem = new TargetTreeTargetItem(
-                target,
-                true,
-                'connected',
-            );
+            const targetItem = new TargetTreeItem(target, true, 'connected');
             targetStoreMock.getTargets.mockReturnValue([target]);
             await provider.activate();
 
@@ -383,11 +375,7 @@ describe('TargetTreeDataProvider', () => {
         });
 
         it('shows an error when deleteTarget fails', async () => {
-            const targetItem = new TargetTreeTargetItem(
-                target,
-                true,
-                'connected',
-            );
+            const targetItem = new TargetTreeItem(target, true, 'connected');
             targetStoreMock.deleteTarget.mockRejectedValue(
                 new Error('Target not found'),
             );
@@ -405,11 +393,7 @@ describe('TargetTreeDataProvider', () => {
     describe('inspectHealth command', () => {
         it('opens a readonly health JSON virtual document for selected target', async () => {
             await provider.activate();
-            const targetItem = new TargetTreeTargetItem(
-                target,
-                true,
-                'connected',
-            );
+            const targetItem = new TargetTreeItem(target, true, 'connected');
             const textDocument = mock<vscode.TextDocument>();
             jest.mocked(
                 vscode.workspace.openTextDocument,
@@ -446,7 +430,7 @@ describe('TargetTreeDataProvider', () => {
 
         it('does not open health document for non-selected target', async () => {
             await provider.activate();
-            const targetItem = new TargetTreeTargetItem(
+            const targetItem = new TargetTreeItem(
                 target,
                 false,
                 'disconnected',
