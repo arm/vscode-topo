@@ -72,12 +72,9 @@ export class ContainersManager implements vscode.Disposable {
         private readonly containerCommands: ContainerCommands,
         private readonly targetStore: TargetStore,
     ) {
-        const onChangedDisposable = this.targetStore.onChanged(async () => {
-            await this.updateTarget().catch((err) => {
-                logger.error(`Failed to update the target`, err);
-            });
-        });
-        this.disposables.push(this._onDataUpdate, onChangedDisposable);
+        const onSelectedTargetChanged =
+            this.targetStore.onSelectedTargetChanged(() => this.updateTarget());
+        this.disposables.push(this._onDataUpdate, onSelectedTargetChanged);
     }
 
     public async activate(): Promise<void> {

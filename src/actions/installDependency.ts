@@ -43,7 +43,7 @@ export class InstallDependency implements vscode.Disposable {
                 InstallDependency.installDependencyCommand,
                 this.installDependencyFromTreeItem.bind(this),
             ),
-            this.targetStore.onChanged(
+            this.targetStore.onSelectedTargetChanged(
                 this.promptToInstallMissingDependencies.bind(this),
             ),
         );

@@ -413,7 +413,7 @@ describe('ContainersManager', () => {
         });
     });
 
-    it('updates when targetStore onChanged fires (re-queries selected target)', async () => {
+    it('updates when targetStore onSelectedTargetChanged fires (re-queries selected target)', async () => {
         const newTarget = 'bob@other.local';
         execMock.mockImplementation(async (command: string) => {
             switch (command) {
@@ -426,9 +426,11 @@ describe('ContainersManager', () => {
             }
         });
         let selectedTarget: string | undefined = target;
-        const onChangeEmitter = new vscode.EventEmitter<void>();
+        const onSelectedTargetChangedEmitter = new vscode.EventEmitter<void>();
         const targetStore = mock<TargetStore>();
-        targetStore.onChanged.mockImplementation(onChangeEmitter.event);
+        targetStore.onSelectedTargetChanged.mockImplementation(
+            onSelectedTargetChangedEmitter.event,
+        );
         targetStore.getSelectedTarget.mockImplementation(
             async () => selectedTarget,
         );
@@ -441,7 +443,7 @@ describe('ContainersManager', () => {
         manager.onDataUpdate(dataUpdateSpy);
         selectedTarget = newTarget;
 
-        onChangeEmitter.fire();
+        onSelectedTargetChangedEmitter.fire();
         await waitImmediate();
 
         expect(
@@ -452,9 +454,11 @@ describe('ContainersManager', () => {
     it('refreshes the newly selected target after target change', async () => {
         const newTarget = 'bob@other.local';
         let selectedTarget: string | undefined = target;
-        const onChangeEmitter = new vscode.EventEmitter<void>();
+        const onSelectedTargetChangedEmitter = new vscode.EventEmitter<void>();
         const targetStore = mock<TargetStore>();
-        targetStore.onChanged.mockImplementation(onChangeEmitter.event);
+        targetStore.onSelectedTargetChanged.mockImplementation(
+            onSelectedTargetChangedEmitter.event,
+        );
         targetStore.getSelectedTarget.mockImplementation(
             async () => selectedTarget,
         );
@@ -507,7 +511,7 @@ describe('ContainersManager', () => {
         await waitImmediate();
         selectedTarget = newTarget;
 
-        onChangeEmitter.fire();
+        onSelectedTargetChangedEmitter.fire();
         await waitImmediate();
 
         resolveOldHealth!({

@@ -29,7 +29,7 @@ const waitImmediate = () =>
     new Promise<void>((resolve) => setTimeout(() => resolve(), 0));
 
 const createTargetManager = () => {
-    const onChangeEmitter = new vscode.EventEmitter<void>();
+    const onSelectedTargetChanged = new vscode.EventEmitter<void>();
     const onDataUpdateEmitter = new vscode.EventEmitter<void>();
     const context = mock<vscode.ExtensionContext>({ subscriptions: [] });
 
@@ -37,7 +37,9 @@ const createTargetManager = () => {
         mock<TargetTreeDataProvider>();
 
     const targetStore = mock<TargetStore>();
-    targetStore.onChanged.mockImplementation(onChangeEmitter.event);
+    targetStore.onSelectedTargetChanged.mockImplementation(
+        onSelectedTargetChanged.event,
+    );
     targetStore.getTargets.mockReturnValue([]);
 
     const containersManager = mock<ContainersManager>();
@@ -60,7 +62,7 @@ const createTargetManager = () => {
         containersManager,
     );
     return {
-        onChangeEmitter,
+        onSelectedTargetChanged,
         onDataUpdateEmitter,
         targetTreeDataProvider,
         targetManager,
@@ -266,7 +268,7 @@ describe('TargetManager', () => {
                 targetManager,
                 targetStore,
                 containersManager,
-                onChangeEmitter,
+                onSelectedTargetChanged,
             } = createTargetManager();
             jest.mocked(targetStore.getSelectedTarget).mockResolvedValue(
                 target1,
@@ -288,7 +290,7 @@ describe('TargetManager', () => {
                 status: 'connected',
             });
 
-            onChangeEmitter.fire();
+            onSelectedTargetChanged.fire();
             await waitImmediate();
 
             expect(vscode.window.createStatusBarItem).toHaveBeenCalledTimes(1);

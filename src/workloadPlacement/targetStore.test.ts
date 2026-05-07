@@ -5,11 +5,6 @@ import { mock, MockProxy } from 'jest-mock-extended';
 
 jest.mock('../util/logger');
 
-const waitImmediate = async () => {
-    await Promise.resolve();
-    await Promise.resolve();
-};
-
 function createMockContext(): {
     context: vscode.ExtensionContext;
     globalState: MockProxy<vscode.Memento>;
@@ -60,34 +55,6 @@ function createMockContext(): {
 }
 
 describe('TargetStore', () => {
-    const emitter = new vscode.EventEmitter<vscode.Uri>();
-    const fsWatchers: {
-        pattern: vscode.GlobPattern;
-        watcher: vscode.FileSystemWatcher;
-    }[] = [];
-    jest.mocked(vscode.workspace.createFileSystemWatcher).mockImplementation(
-        (pattern) => {
-            const watcher: vscode.FileSystemWatcher = {
-                onDidCreate: emitter.event,
-                onDidChange: emitter.event,
-                onDidDelete: emitter.event,
-                dispose: () => {},
-                ignoreCreateEvents: false,
-                ignoreChangeEvents: false,
-                ignoreDeleteEvents: false,
-            };
-            fsWatchers.push({ pattern, watcher });
-            return watcher;
-        },
-    );
-    jest.mocked(vscode.workspace.fs.writeFile).mockImplementation(
-        async (uri, _content) => {
-            for (const _entry of fsWatchers) {
-                emitter.fire(uri);
-            }
-        },
-    );
-
     beforeEach(() => {
         mutable(vscode.window).state = {
             focused: true,
@@ -141,13 +108,13 @@ describe('TargetStore', () => {
         expect(parsed[t]).toEqual({});
     });
 
-    it('stores selected target and fires onChanged when setSelected is called', async () => {
+    it('stores selected target and fires onSelectedTargetChanged when setSelected is called', async () => {
         const { context } = createMockContext();
         const store = new TargetStore(context);
         const t = 'bob@example.com';
         await store.addTarget(t);
         const cb = jest.fn();
-        store.onChanged(cb);
+        store.onSelectedTargetChanged(cb);
 
         await store.setSelected('bob@example.com');
 
@@ -168,55 +135,6 @@ describe('TargetStore', () => {
         const selected = await store.getSelectedTarget();
         expect(selected).toBeDefined();
         expect(selected).toBe('carol@example.com');
-    });
-
-    it('fires onChanged when signal file is modified externally and window is not focused', async () => {
-        const { context } = createMockContext();
-        const store = new TargetStore(context);
-        const cb = jest.fn();
-        store.onChanged(cb);
-        mutable(vscode.window.state).focused = false;
-        const signalUri = vscode.Uri.joinPath(
-            context.globalStorageUri,
-            'targets-update.signal',
-        );
-
-        await vscode.workspace.fs.writeFile(
-            signalUri,
-            new TextEncoder().encode('1'),
-        );
-        await waitImmediate();
-
-        expect(cb).toHaveBeenCalled();
-    });
-
-    it('deactivates the store, disposing resources', () => {
-        const eventWithDisposable = (
-            dispose: () => void,
-        ): vscode.Event<vscode.Uri> => jest.fn(() => ({ dispose }));
-        const watcherDispose = jest.fn();
-        const onDidCreateDispose = jest.fn();
-        const onDidChangeDispose = jest.fn();
-        const watcher: vscode.FileSystemWatcher = {
-            onDidCreate: eventWithDisposable(onDidCreateDispose),
-            onDidChange: eventWithDisposable(onDidChangeDispose),
-            onDidDelete: eventWithDisposable(jest.fn()),
-            dispose: watcherDispose,
-            ignoreCreateEvents: false,
-            ignoreChangeEvents: false,
-            ignoreDeleteEvents: false,
-        };
-        jest.mocked(
-            vscode.workspace.createFileSystemWatcher,
-        ).mockReturnValueOnce(watcher);
-        const { context } = createMockContext();
-        const store = new TargetStore(context);
-
-        store.dispose();
-
-        expect(watcherDispose).toHaveBeenCalled();
-        expect(onDidCreateDispose).toHaveBeenCalled();
-        expect(onDidChangeDispose).toHaveBeenCalled();
     });
 
     it('removes a non-selected target without changing selection', async () => {

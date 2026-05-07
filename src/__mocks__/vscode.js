@@ -175,12 +175,6 @@ const workspace = {
     workspaceFolders: undefined,
     getWorkspaceFolder: jest.fn(),
     updateWorkspaceFolders: jest.fn(),
-    createFileSystemWatcher: jest.fn(() => ({
-        onDidCreate: new EventEmitter().event,
-        onDidChange: new EventEmitter().event,
-        onDidDelete: new EventEmitter().event,
-        dispose: jest.fn(),
-    })),
 };
 
 const TreeItemCollapsibleState = {

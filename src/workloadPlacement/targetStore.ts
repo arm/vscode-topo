@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { logger } from '../util/logger';
-import debounce from 'lodash.debounce';
 import { string, type, assert, record } from 'superstruct';
 
 type GlobalStoreKeys = 'targets';
@@ -10,48 +9,14 @@ type WorkspaceStoreKeys = 'selectedTarget';
 const serializedTargetsSchema = record(string(), type({}));
 
 export class TargetStore {
-    private _onChanged: vscode.EventEmitter<void> =
-        new vscode.EventEmitter<void>();
-    public readonly onChanged: vscode.Event<void> = this._onChanged.event;
+    private _onSelectedTargetChanged = new vscode.EventEmitter<void>();
+    public readonly onSelectedTargetChanged =
+        this._onSelectedTargetChanged.event;
     private disposables: vscode.Disposable[] = [];
 
     constructor(protected context: vscode.ExtensionContext) {
-        const pattern = new vscode.RelativePattern(
-            this.context.globalStorageUri,
-            'targets-update.signal',
-        );
-        const watcher = vscode.workspace.createFileSystemWatcher(pattern);
-        const onDidCreate = watcher.onDidCreate(() => {
-            if (!vscode.window.state.focused) {
-                this._onChanged.fire();
-            }
-        });
-        const onDidChange = watcher.onDidChange(() => {
-            if (!vscode.window.state.focused) {
-                this._onChanged.fire();
-            }
-        });
-        this.disposables.push(
-            watcher,
-            onDidCreate,
-            onDidChange,
-            this._onChanged,
-        );
+        this.disposables.push(this._onSelectedTargetChanged);
     }
-
-    // Debounced function to publish a change to other VS Code instances
-    protected publishChange = debounce(async () => {
-        try {
-            const signalUri = vscode.Uri.joinPath(
-                this.context.globalStorageUri,
-                'targets-update.signal',
-            );
-            const payload = new TextEncoder().encode(Date.now().toString());
-            await vscode.workspace.fs.writeFile(signalUri, payload);
-        } catch (err: unknown) {
-            logger.error(`Failed to publish target change signal`, err);
-        }
-    }, 500);
 
     public get selected(): string | undefined {
         return this.getWorkspace('selectedTarget');
@@ -59,7 +24,7 @@ export class TargetStore {
 
     public async setSelected(id: string | undefined): Promise<void> {
         await this.setWorkspace('selectedTarget', id);
-        this._onChanged.fire();
+        this._onSelectedTargetChanged.fire();
     }
 
     public getTargets(): string[] {
@@ -74,16 +39,6 @@ export class TargetStore {
         }
         targets.add(target);
         await this.saveTargets(targets);
-    }
-
-    public async updateTarget(target: string): Promise<void> {
-        const targets = this.loadTargets();
-        if (!targets.has(target)) {
-            throw new Error(`Target "${target}" does not exist`);
-        }
-        targets.add(target);
-        await this.saveTargets(targets);
-        this._onChanged.fire();
     }
 
     public async getSelectedTarget(): Promise<string | undefined> {
@@ -137,10 +92,6 @@ export class TargetStore {
         value: string | undefined,
     ): Promise<void> {
         await this.set(this.context.globalState, key, value);
-
-        if (vscode.env.uiKind === vscode.UIKind.Desktop) {
-            this.publishChange();
-        }
     }
 
     protected getWorkspace(key: WorkspaceStoreKeys): string | undefined {
@@ -173,7 +124,6 @@ export class TargetStore {
     }
 
     public dispose(): void {
-        this.publishChange.cancel();
         for (const d of [...this.disposables].reverse()) {
             try {
                 d.dispose();

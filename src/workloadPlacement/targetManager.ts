@@ -63,7 +63,9 @@ export class TargetManager {
                 TargetManager.addTargetCommand,
                 () => this.addTarget(),
             ),
-            this.targetStore.onChanged(() => this.refreshTargetVisualisation()),
+            this.targetStore.onSelectedTargetChanged(() =>
+                this.refreshTargetVisualisation(),
+            ),
             this.containersManager.onDataUpdate(() =>
                 this.refreshTargetVisualisation(),
             ),

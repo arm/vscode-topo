@@ -48,9 +48,11 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
     ) {}
 
     public async activate(): Promise<void> {
-        const onTargetStoreChanged = this.targetStore.onChanged(() => {
-            this._onDidChangeTreeData.fire(undefined);
-        });
+        const selectedTargetChanged = this.targetStore.onSelectedTargetChanged(
+            () => {
+                this._onDidChangeTreeData.fire(undefined);
+            },
+        );
         const onContainersManagerDataUpdate =
             this.containersManager.onDataUpdate(() => {
                 this._onDidChangeTreeData.fire(undefined);
@@ -72,7 +74,7 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
                 TargetTreeDataProvider.inspectTargetHealthScheme,
                 this.inspectHealthContentProvider,
             ),
-            onTargetStoreChanged,
+            selectedTargetChanged,
             onContainersManagerDataUpdate,
             this._onDidChangeTreeData,
         );
