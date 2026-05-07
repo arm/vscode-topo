@@ -87,7 +87,7 @@ function calculateNewVersion(releaseType: string): string {
         patch: 0,
     });
 
-    let next = '';
+    let next: string;
     if (releaseType === 'Major') {
         next = formatVersion({ major: current.major + 1, minor: 0, patch: 0 });
     } else if (releaseType === 'Minor') {
@@ -122,7 +122,6 @@ function calculateNewVersion(releaseType: string): string {
     return next;
 }
 
-/* eslint-disable no-console */
 try {
     const newVersion = calculateNewVersion(process.env.RELEASE_TYPE || 'None');
     console.log(newVersion);
@@ -130,4 +129,3 @@ try {
     console.error(e instanceof Error ? e.message : String(e));
     process.exit(1);
 }
-/* eslint-enable no-console */
