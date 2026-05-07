@@ -11,8 +11,6 @@ import {
 } from './hostDependenciesLoadErrorItem';
 import { showTopoOutputCommand } from './showTopoOutputCommand';
 
-const hostHealthTarget = 'localhost';
-
 function sortDependenciesByName(
     deps: HealthCheckDependency[],
 ): HealthCheckDependency[] {
@@ -60,7 +58,7 @@ export class HostDependenciesTreeDataProvider implements vscode.TreeDataProvider
     ): Promise<vscode.TreeItem[]> {
         if (!element) {
             try {
-                const health = await this.topoCli.health(hostHealthTarget);
+                const health = await this.topoCli.hostHealth();
                 const dependenciesGroup = new TargetTreeDependencyGroupItem(
                     health.host.dependencies,
                 );

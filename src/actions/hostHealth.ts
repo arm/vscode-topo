@@ -2,9 +2,7 @@ import * as vscode from 'vscode';
 import { PACKAGE_NAME } from '../manifest';
 import { TopoCli } from '../topoCli';
 import { showAndLogError } from '../util/showAndLogError';
-import { HealthCheckResult } from '../topoCliSchema';
-
-const hostHealthTarget = 'localhost';
+import { HostHealthCheckResult } from '../topoCliSchema';
 
 export class HostHealth {
     public static readonly inspectHostHealthCommand = `${PACKAGE_NAME}.inspectHostHealth`;
@@ -39,9 +37,9 @@ export class HostHealth {
     }
 
     private async inspectHostHealth(): Promise<void> {
-        let health: HealthCheckResult;
+        let health: HostHealthCheckResult;
         try {
-            health = await this.topoCli.health(hostHealthTarget);
+            health = await this.topoCli.hostHealth();
         } catch (err) {
             showAndLogError('Failed to inspect host health', err);
             return;
