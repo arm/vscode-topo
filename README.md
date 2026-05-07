@@ -11,13 +11,13 @@ This extension is [free to use](LICENSE) and can be installed from the VS Code M
 ## Getting Started
 
 1. Install the extension from the VS Code Marketplace or a `.vsix` package.
-2. Add a target from the **Targets** view in the activity bar.
+2. Add a target from the **Targets** view in the **Topo** activity bar container.
 3. Configure a target, making sure all the dependencies are set up correctly.
 4. Deploy your services to the target.
 
 ## Target Management
 
-The **Targets** view appears in the activity bar and lets you manage remote devices where services are deployed.
+The **Targets** view appears in the **Topo** activity bar container and lets you manage remote devices where services are deployed.
 
 ### Add a Target
 
@@ -93,9 +93,9 @@ vscode://arm.topo/clone?source=git:https://github.com/example/repo
 
 ## Host Health Check
 
-On startup, the extension checks that host dependencies (Docker, SSH) are available. If any are missing or unhealthy, a warning notification is shown.
+The **Host** view appears in the **Topo** activity bar container and shows host dependency health for tools such as Docker and SSH. Missing or unhealthy dependencies are shown in the tree.
 
-Use the **Arm Topo: Inspect Host Health** command to view a detailed health report.
+Use the refresh button in the Host view title bar to reload host dependency health. Use the **Arm Topo: Inspect Host Health** command to view a detailed JSON health report.
 
 ## Commands
 

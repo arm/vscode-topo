@@ -1,5 +1,3 @@
-/* eslint-env jest */
-
 /*
  * Copyright (C) 2024 Arm Limited
  * Mocks for the vscode API, used in unit tests.

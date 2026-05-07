@@ -110,6 +110,17 @@
                 "category": "Arm Topo"
             },
             {
+                "command": "topo.refreshHostDependencies",
+                "title": "Refresh",
+                "icon": "$(refresh)",
+                "category": "Arm Topo"
+            },
+            {
+                "command": "topo.showOutput",
+                "title": "Open Arm Topo Output",
+                "category": "Arm Topo"
+            },
+            {
                 "command": "topo.deploy.context",
                 "title": "Topo Deploy",
                 "category": "Arm Topo"
@@ -131,6 +142,12 @@
         },
         "views": {
             "topo": [
+                {
+                    "id": "topo.host-manager",
+                    "name": "Host",
+                    "visibility": "visible",
+                    "icon": "$(vm-small)"
+                },
                 {
                     "id": "topo.target-manager",
                     "name": "Targets",
@@ -226,9 +243,22 @@
                 {
                     "command": "topo.stop.context",
                     "when": "false"
+                },
+                {
+                    "command": "topo.refreshHostDependencies",
+                    "when": "false"
+                },
+                {
+                    "command": "topo.showOutput",
+                    "when": "false"
                 }
             ],
             "view/item/context": [
+                {
+                    "command": "topo.showOutput",
+                    "when": "view == topo.host-manager && viewItem =~ /Dependencies/ && viewItem =~ /Error/",
+                    "group": "topo/1_output"
+                },
                 {
                     "command": "topo.selectTarget",
                     "when": "view == topo.target-manager && viewItem =~ /Target/",
@@ -290,6 +320,11 @@
                     "command": "topo.addTarget",
                     "when": "view == topo.target-manager",
                     "group": "navigation"
+                },
+                {
+                    "command": "topo.refreshHostDependencies",
+                    "when": "view == topo.host-manager",
+                    "group": "navigation"
                 }
             ]
         },
@@ -325,7 +360,7 @@
         "tsc-check": "tsc --noEmit -p src/tsconfig.json"
     },
     "devDependencies": {
-        "@eslint/eslintrc": "^3.3.1",
+        "@eslint/js": "^10.0.1",
         "@swc/core": "^1.15.24",
         "@swc/jest": "^0.2.39",
         "@types/jest": "^30.0.0",
@@ -336,8 +371,9 @@
         "@typescript-eslint/eslint-plugin": "^8.58.2",
         "@typescript-eslint/parser": "^8.58.2",
         "@vscode/vsce": "^3.6.2",
-        "eslint": "^8.57.1",
+        "eslint": "^10.2.1",
         "extract-zip": "^2.0.1",
+        "globals": "^17.5.0",
         "jest": "^30.3.0",
         "jest-mock-extended": "^4.0.0",
         "prettier": "^3.7.4",
