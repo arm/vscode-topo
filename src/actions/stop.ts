@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
-import { logger } from '../util/logger';
 import * as manifest from '../manifest';
 import { getErrorMessage } from '../util/getErrorMessage';
 import path from 'node:path';
 import { TargetStore } from '../workloadPlacement/targetStore';
 import { executeTask } from '../util/executeTask';
+import { showAndLogError } from '../util/showAndLogError';
 
 const viewLogsItem: vscode.MessageItem = {
     title: 'View Logs',
@@ -34,11 +34,7 @@ export class Stop {
         try {
             await this.stop(resource.fsPath);
         } catch (err) {
-            const errorMsg = 'Error executing stop command';
-            logger.error(errorMsg, err);
-            void vscode.window.showErrorMessage(
-                `${errorMsg}: ${getErrorMessage(err)}`,
-            );
+            showAndLogError('Error executing stop command', err);
         }
     }
 
