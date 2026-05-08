@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { HealthCheckDependency, HealthCheckStatus } from '../topoCliSchema';
-import { getDependencyItemIcon } from './targetTreeDependencyItem';
+import { getDependencyItemIcon } from './healthCheckDependencyTreeItem';
 
 const getDependencyGroupIcon = (
     status: HealthCheckStatus,
@@ -26,7 +26,7 @@ const getWorstDependencyStatus = (
     }, 'ok');
 };
 
-export class TargetTreeDependencyGroupItem extends vscode.TreeItem {
+export class HealthCheckDependencyGroupTreeItem extends vscode.TreeItem {
     public readonly dependencies: HealthCheckDependency[];
 
     constructor(dependencies: HealthCheckDependency[]) {

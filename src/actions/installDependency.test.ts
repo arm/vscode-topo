@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
 import { mock } from 'jest-mock-extended';
 import { InstallDependency } from './installDependency';
-import { TargetStore } from '../workloadPlacement/targetStore';
-import { TargetTreeDependencyItem } from '../workloadPlacement/targetTreeDependencyItem';
+import { TargetStore } from '../target/targetStore';
+import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 import { HealthCheckResult } from '../topoCliSchema';
-import { ContainersManager } from '../workloadPlacement/containersManager';
+import { ContainersManager } from '../target/containersManager';
 import { executeTask } from '../util/executeTask';
 
 jest.mock('../util/logger');
@@ -83,7 +83,7 @@ describe('InstallDependency', () => {
             targetStore,
             containersManager,
         );
-        const dependencyItem = new TargetTreeDependencyItem({
+        const dependencyItem = new HealthCheckDependencyTreeItem({
             name: 'Remoteproc Runtime',
             status: 'error',
             value: 'missing',
@@ -105,7 +105,7 @@ describe('InstallDependency', () => {
             targetStore,
             containersManager,
         );
-        const dependencyItem = new TargetTreeDependencyItem({
+        const dependencyItem = new HealthCheckDependencyTreeItem({
             name: 'Remoteproc Runtime',
             status: 'ok',
             value: 'installed',

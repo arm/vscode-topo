@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
-import { TargetTreeDependencyItem } from './targetTreeDependencyItem';
+import { HealthCheckDependencyTreeItem } from './healthCheckDependencyTreeItem';
 
-describe('TargetTreeDependencyItem', () => {
+describe('HealthCheckDependencyTreeItem', () => {
     it('sets label and description', () => {
-        const item = new TargetTreeDependencyItem({
+        const item = new HealthCheckDependencyTreeItem({
             name: 'Container Engine',
             value: 'docker',
             status: 'ok',
@@ -14,7 +14,7 @@ describe('TargetTreeDependencyItem', () => {
     });
 
     it('sets icon and context value for an ok dependency', () => {
-        const item = new TargetTreeDependencyItem({
+        const item = new HealthCheckDependencyTreeItem({
             name: 'Container Engine',
             value: 'docker',
             status: 'ok',
@@ -26,7 +26,7 @@ describe('TargetTreeDependencyItem', () => {
     });
 
     it('sets icon and context value for a dependency with a warning', () => {
-        const item = new TargetTreeDependencyItem({
+        const item = new HealthCheckDependencyTreeItem({
             name: 'Container Engine',
             value: 'docker',
             status: 'warning',
@@ -38,7 +38,7 @@ describe('TargetTreeDependencyItem', () => {
     });
 
     it('sets icon and context value for a dependency with an error', () => {
-        const item = new TargetTreeDependencyItem({
+        const item = new HealthCheckDependencyTreeItem({
             name: 'Container Engine',
             value: 'missing',
             status: 'error',
@@ -50,7 +50,7 @@ describe('TargetTreeDependencyItem', () => {
     });
 
     it('marks dependency with `topo install` fix as installable', () => {
-        const item = new TargetTreeDependencyItem({
+        const item = new HealthCheckDependencyTreeItem({
             name: 'Container Engine',
             value: 'missing',
             status: 'warning',
@@ -61,7 +61,7 @@ describe('TargetTreeDependencyItem', () => {
     });
 
     it('does not mark healthy remoteproc dependencies as installable', () => {
-        const item = new TargetTreeDependencyItem({
+        const item = new HealthCheckDependencyTreeItem({
             name: 'Remoteproc Runtime',
             value: 'installed',
             status: 'ok',

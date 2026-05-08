@@ -1,15 +1,15 @@
 import * as vscode from 'vscode';
-import { PACKAGE_NAME } from './manifest';
-import { TopoCli } from './topoCli';
-import { HealthCheckDependency } from './topoCliSchema';
-import { TargetTreeDependencyGroupItem } from './workloadPlacement/targetTreeDependencyGroupItem';
-import { TargetTreeDependencyItem } from './workloadPlacement/targetTreeDependencyItem';
-import { logger } from './util/logger';
+import { PACKAGE_NAME } from '../manifest';
+import { TopoCli } from '../topoCli';
+import { HealthCheckDependency } from '../topoCliSchema';
+import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
+import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
+import { logger } from '../util/logger';
 import {
     failedToLoadHostDependenciesMessage,
     HostDependenciesLoadErrorItem,
 } from './hostDependenciesLoadErrorItem';
-import { showTopoOutputCommand } from './showTopoOutputCommand';
+import { showTopoOutputCommand } from '../showTopoOutputCommand';
 
 const hostHealthTarget = 'localhost';
 
@@ -61,9 +61,10 @@ export class HostDependenciesTreeDataProvider implements vscode.TreeDataProvider
         if (!element) {
             try {
                 const health = await this.topoCli.health(hostHealthTarget);
-                const dependenciesGroup = new TargetTreeDependencyGroupItem(
-                    health.host.dependencies,
-                );
+                const dependenciesGroup =
+                    new HealthCheckDependencyGroupTreeItem(
+                        health.host.dependencies,
+                    );
                 return [dependenciesGroup];
             } catch (err) {
                 logger.warn(failedToLoadHostDependenciesMessage, err);
@@ -71,9 +72,9 @@ export class HostDependenciesTreeDataProvider implements vscode.TreeDataProvider
             }
         }
 
-        if (element instanceof TargetTreeDependencyGroupItem) {
+        if (element instanceof HealthCheckDependencyGroupTreeItem) {
             return sortDependenciesByName([...element.dependencies]).map(
-                (dependency) => new TargetTreeDependencyItem(dependency),
+                (dependency) => new HealthCheckDependencyTreeItem(dependency),
             );
         }
 
