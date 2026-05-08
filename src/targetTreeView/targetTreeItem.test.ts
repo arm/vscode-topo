@@ -1,11 +1,11 @@
 import * as vscode from 'vscode';
-import { TargetTreeTargetItem } from './targetTreeTargetItem';
+import { TargetTreeItem } from './targetTreeItem';
 
-describe('TargetTreeTargetItem', () => {
+describe('TargetTreeItem', () => {
     const baseTarget = 'root@host.local';
 
     it('sets basic fields (id, label, description)', () => {
-        const item = new TargetTreeTargetItem(baseTarget, false, 'connected');
+        const item = new TargetTreeItem(baseTarget, false, 'connected');
 
         expect(item.id).toBe(baseTarget);
         expect(item.label).toBe(baseTarget);
@@ -14,7 +14,7 @@ describe('TargetTreeTargetItem', () => {
     });
 
     it('shows loading icon and Selected context when selected but not connected', () => {
-        const item = new TargetTreeTargetItem(baseTarget, true, 'disconnected');
+        const item = new TargetTreeItem(baseTarget, true, 'disconnected');
 
         expect(item.contextValue).toContain('Target');
         expect(item.contextValue).toContain('Selected');
@@ -30,7 +30,7 @@ describe('TargetTreeTargetItem', () => {
     });
 
     it('shows error icon when errored', () => {
-        const item = new TargetTreeTargetItem(baseTarget, true, 'error');
+        const item = new TargetTreeItem(baseTarget, true, 'error');
 
         expect(item.contextValue).toContain('Target');
         expect(item.contextValue).toContain('Selected');
@@ -49,11 +49,7 @@ describe('TargetTreeTargetItem', () => {
     });
 
     it('has no special contexts or icon when not selected and disconnected', () => {
-        const item = new TargetTreeTargetItem(
-            baseTarget,
-            false,
-            'disconnected',
-        );
+        const item = new TargetTreeItem(baseTarget, false, 'disconnected');
 
         expect(item.contextValue).toContain('Target');
         expect(item.contextValue).not.toContain('Selected');
@@ -65,7 +61,7 @@ describe('TargetTreeTargetItem', () => {
     });
 
     it('is expanded when selected and connected', () => {
-        const item = new TargetTreeTargetItem(baseTarget, true, 'connected');
+        const item = new TargetTreeItem(baseTarget, true, 'connected');
 
         expect(item.contextValue).toContain('Target');
         expect(item.contextValue).toContain('Selected');
