@@ -168,6 +168,7 @@ export class DockerCommands implements ContainerCommands {
             } catch (err) {
                 throw new Error(
                     `Failed to parse Docker inspect JSON output. Error: ${getErrorMessage(err)}`,
+                    { cause: err },
                 );
             }
             if (!parsed.Id) {
