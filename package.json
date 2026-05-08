@@ -345,6 +345,7 @@
         "@swc/core": "^1.15.24",
         "@swc/jest": "^0.2.39",
         "@types/jest": "^30.0.0",
+        "@types/lodash.debounce": "^4.0.9",
         "@types/node": "^22.19.15",
         "@types/vscode": "^1.99.1",
         "@typescript-eslint/eslint-plugin": "^8.58.2",
@@ -362,6 +363,7 @@
         "yargs": "^18.0.0"
     },
     "dependencies": {
+        "lodash.debounce": "^4.0.8",
         "ssh-config": "^5.1.0",
         "superstruct": "^2.0.2",
         "vscode-uri": "^3.1.0"
