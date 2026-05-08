@@ -1,15 +1,15 @@
 import * as vscode from 'vscode';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { HostDependenciesTreeDataProvider } from './hostDependenciesTreeDataProvider';
-import { TopoCli } from './topoCli';
-import { HealthCheckResult } from './topoCliSchema';
-import { TargetTreeDependencyGroupItem } from './workloadPlacement/targetTreeDependencyGroupItem';
-import { TargetTreeDependencyItem } from './workloadPlacement/targetTreeDependencyItem';
+import { TopoCli } from '../topoCli';
+import { HealthCheckResult } from '../topoCliSchema';
+import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
+import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 import { failedToLoadHostDependenciesMessage } from './hostDependenciesLoadErrorItem';
-import { logger } from './util/logger';
-import { showTopoOutputCommand } from './showTopoOutputCommand';
+import { logger } from '../util/logger';
+import { showTopoOutputCommand } from '../showTopoOutputCommand';
 
-jest.mock('./util/logger');
+jest.mock('../util/logger');
 
 async function executeCommand(command: string, ...args: unknown[]) {
     const calls = jest.mocked(vscode.commands.registerCommand).mock.calls;
@@ -95,7 +95,7 @@ describe('HostDependenciesTreeDataProvider', () => {
 
         expect(topoCli.health).toHaveBeenCalledWith('localhost');
         expect(children).toHaveLength(1);
-        expect(children[0]).toBeInstanceOf(TargetTreeDependencyGroupItem);
+        expect(children[0]).toBeInstanceOf(HealthCheckDependencyGroupTreeItem);
         expect(children[0].label).toBe('Dependencies');
         expect(children[0].contextValue).toBe('Dependencies');
     });
@@ -107,7 +107,9 @@ describe('HostDependenciesTreeDataProvider', () => {
         expect(topoCli.health).toHaveBeenCalledWith('localhost');
         expect(children).toHaveLength(2);
         expect(
-            children.every((item) => item instanceof TargetTreeDependencyItem),
+            children.every(
+                (item) => item instanceof HealthCheckDependencyTreeItem,
+            ),
         ).toBe(true);
         expect(children).toMatchObject([
             expect.objectContaining({
@@ -141,7 +143,9 @@ describe('HostDependenciesTreeDataProvider', () => {
     });
 
     it('getTreeItem returns the element itself', () => {
-        const item = new TargetTreeDependencyItem(health.host.dependencies[0]);
+        const item = new HealthCheckDependencyTreeItem(
+            health.host.dependencies[0],
+        );
 
         const treeItem = provider.getTreeItem(item);
 

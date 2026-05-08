@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
-import { TargetTreeContainerItem } from './targetTreeContainerItem';
+import { TargetContainerTreeItem } from './targetContainerTreeItem';
 import { TARGET_REMOTEPROC_RUNTIME } from '../manifest';
 import { ContainerItem } from '../util/types';
 
-describe('TargetTreeContainerItem', () => {
+describe('TargetContainerTreeItem', () => {
     const target = 'user@topo.local';
     it('should set label (image), description (name - uptime), tooltip, contextValue, command, and iconPath', () => {
         const container: ContainerItem = {
@@ -20,7 +20,7 @@ describe('TargetTreeContainerItem', () => {
             ports: { '80/tcp': [{ HostIp: '0.0.0.0', HostPort: '8080' }] },
             target,
         };
-        const item = new TargetTreeContainerItem(container);
+        const item = new TargetContainerTreeItem(container);
         expect(item.label).toBe('nginx:latest');
         expect(item.description).toBe('my-container - 10m');
         expect(item.tooltip).toContain('id123');
@@ -55,7 +55,7 @@ describe('TargetTreeContainerItem', () => {
             ports: {},
             target,
         };
-        const item = new TargetTreeContainerItem(container);
+        const item = new TargetContainerTreeItem(container);
         expect(item.iconPath).toBeInstanceOf(vscode.ThemeIcon);
         expect((item.iconPath as vscode.ThemeIcon).id).toBe(
             'debug-breakpoint-log',

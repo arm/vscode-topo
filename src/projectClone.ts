@@ -5,7 +5,7 @@ import * as path from 'node:path';
 import { TemplateDescription } from './topoCliSchema';
 import { isWrappedError, WrappedError } from './errors/wrappedError';
 import { showAndLogError } from './util/showAndLogError';
-import { TargetStore } from './workloadPlacement/targetStore';
+import { TargetStore } from './target/targetStore';
 import { getCloneDestinationPath } from './util/getCloneDestinationPath';
 import { executeTask } from './util/executeTask';
 import { getErrorMessage } from './util/getErrorMessage';

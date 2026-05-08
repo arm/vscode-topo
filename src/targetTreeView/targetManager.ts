@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
 import { TargetTreeDataProvider } from './targetTreeDataProvider';
 import * as manifest from '../manifest';
-import { TargetStore } from './targetStore';
+import { TargetStore } from '../target/targetStore';
 import { logger } from '../util/logger';
-import { ContainersManager } from './containersManager';
-import { getTreeItemIcon } from './targetTreeTargetItem';
+import { ContainersManager } from '../target/containersManager';
+import { getTargetTreeItemIcon } from './targetTreeItem';
 import { defaultSshConfigPath, getHosts } from '../util/ssh';
 
 export function buildQuickPickItems(
@@ -127,7 +127,10 @@ export class TargetManager {
         if (selectedTarget) {
             const targetState =
                 this.containersManager.getTargetStateSnapshot(selectedTarget);
-            const targetTreeIcon = getTreeItemIcon(true, targetState.status);
+            const targetTreeIcon = getTargetTreeItemIcon(
+                true,
+                targetState.status,
+            );
             const iconId = targetTreeIcon?.id || 'pass-filled';
             this.statusBarItem.text = `$(${iconId}) ${selectedTarget}`;
             this.statusBarItem.tooltip = `Connection String: ${selectedTarget}`;

@@ -1,28 +1,15 @@
 import * as vscode from 'vscode';
 import { PACKAGE_NAME } from '../manifest';
-import { TargetStore } from '../workloadPlacement/targetStore';
-import { TargetTreeDependencyItem } from '../workloadPlacement/targetTreeDependencyItem';
+import { TargetStore } from '../target/targetStore';
+import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 import { showAndLogError } from '../util/showAndLogError';
-import { ContainersManager } from '../workloadPlacement/containersManager';
-import { HealthCheckDependency } from '../topoCliSchema';
+import { ContainersManager } from '../target/containersManager';
 import { logger } from '../util/logger';
 import { executeTask } from '../util/executeTask';
+import { getInstallableDependency } from '../util/getInstallableDependency';
 
 const getInstallCommand = (sshTarget: string, value: string): string[] => {
     return ['topo', 'install', value, '--target', sshTarget];
-};
-
-const fixCommandRegex = /^run `topo install ([A-z-]+)`$/;
-
-export const getInstallableDependency = (
-    dependency: HealthCheckDependency,
-): string | undefined => {
-    if (typeof dependency.fix !== 'string') {
-        return undefined;
-    }
-
-    const match = dependency.fix.match(fixCommandRegex);
-    return match ? match[1] : undefined;
 };
 
 const installAction = { title: 'Install missing dependencies' };
@@ -78,8 +65,8 @@ export class InstallDependency implements vscode.Disposable {
     private async installDependencyFromTreeItem(
         treeNode: unknown,
     ): Promise<void> {
-        if (!(treeNode instanceof TargetTreeDependencyItem)) {
-            const errMsg = `Invalid target type for install dependency: expected TargetTreeDependencyItem but received:`;
+        if (!(treeNode instanceof HealthCheckDependencyTreeItem)) {
+            const errMsg = `Invalid dependency item for install dependency: expected HealthCheckDependencyTreeItem but received:`;
             logger.error(errMsg, treeNode);
             return;
         }

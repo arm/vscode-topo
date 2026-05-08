@@ -6,7 +6,7 @@ import { TopoCli } from './topoCli';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { TemplateDescription } from './topoCliSchema';
 import { showAndLogError } from './util/showAndLogError';
-import { TargetStore } from './workloadPlacement/targetStore';
+import { TargetStore } from './target/targetStore';
 import { WrappedError } from './errors/wrappedError';
 import { executeTask } from './util/executeTask';
 
