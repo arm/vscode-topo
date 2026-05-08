@@ -10,8 +10,8 @@ const viewLogsItem: vscode.MessageItem = {
     title: 'View Logs',
 };
 
-export class Deploy {
-    public static readonly deployCommand = `${manifest.PACKAGE_NAME}.deploy.context`;
+export class Stop {
+    public static readonly stopCommand = `${manifest.PACKAGE_NAME}.stop.context`;
 
     constructor(
         private readonly context: vscode.ExtensionContext,
@@ -21,43 +21,39 @@ export class Deploy {
     public activate(): void {
         this.context.subscriptions.push(
             vscode.commands.registerCommand(
-                Deploy.deployCommand,
-                this.handleDeployCommand.bind(this),
+                Stop.stopCommand,
+                this.handleStopCommand.bind(this),
             ),
         );
     }
 
-    private async handleDeployCommand(resource?: vscode.Uri): Promise<void> {
+    private async handleStopCommand(resource?: vscode.Uri): Promise<void> {
         if (!resource) {
-            throw new Error('No compose file selected for deployment');
+            throw new Error('No compose file selected for stop');
         }
         try {
-            await this.deploy(resource.fsPath);
+            await this.stop(resource.fsPath);
         } catch (err) {
-            showAndLogError('Error executing deploy command', err);
+            showAndLogError('Error executing stop command', err);
         }
     }
 
-    public async deploy(composeFilePath: string): Promise<void> {
+    public async stop(composeFilePath: string): Promise<void> {
         const target = await this.targetStore.getSelectedTarget();
         if (!target) {
             throw new Error(
-                'No target selected. Please select a target before deploying.',
+                'No target selected. Please select a target before stopping.',
             );
         }
 
-        const taskName = `Deploy to ${target}`;
+        const taskName = `Stop services on ${target}`;
 
         try {
-            await executeTask(
-                taskName,
-                ['topo', 'deploy', '--target', target],
-                {
-                    cwd: path.dirname(composeFilePath),
-                },
-            );
+            await executeTask(taskName, ['topo', 'stop', '--target', target], {
+                cwd: path.dirname(composeFilePath),
+            });
             vscode.window.showInformationMessage(
-                `Deployment to ${target} completed successfully.`,
+                `Services on ${target} stopped successfully.`,
             );
         } catch (e) {
             const terminal = vscode.window.terminals.find(
@@ -68,7 +64,7 @@ export class Deploy {
                 actions.push(viewLogsItem);
             }
             const choice = await vscode.window.showErrorMessage(
-                `Deployment to ${target} failed: ${getErrorMessage(e)}`,
+                `Stopping services on ${target} failed: ${getErrorMessage(e)}`,
                 ...actions,
             );
             if (choice?.title === viewLogsItem.title) {
