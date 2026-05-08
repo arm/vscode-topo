@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
 import * as manifest from '../manifest';
-import { assertTargetTreeContainerItem } from './util/assertTargetTreeContainerItem';
+import { assertTargetContainerTreeItem } from '../targetTreeView/assertTargetContainerTreeItem';
 import { showAndLogError } from '../util/showAndLogError';
 import { isWrappedError } from '../errors/wrappedError';
-import { ContainerCommands } from '../workloadPlacement/containerCommands';
+import { ContainerCommands } from '../target/containerCommands';
 
 export class ContainerDelete {
     public static readonly deleteContainerCommand = `${manifest.PACKAGE_NAME}.deleteContainer`;
@@ -25,7 +25,7 @@ export class ContainerDelete {
     private async deleteContainerCommandHandler(
         treeNode: unknown,
     ): Promise<void> {
-        assertTargetTreeContainerItem(treeNode);
+        assertTargetContainerTreeItem(treeNode);
         try {
             await this.containerCommands.deleteContainer(
                 treeNode.containerItem.id,

@@ -3,7 +3,7 @@ import { logger } from '../util/logger';
 import * as manifest from '../manifest';
 import { getErrorMessage } from '../util/getErrorMessage';
 import path from 'node:path';
-import { TargetStore } from '../workloadPlacement/targetStore';
+import { TargetStore } from '../target/targetStore';
 import { executeTask } from '../util/executeTask';
 
 const viewLogsItem: vscode.MessageItem = {

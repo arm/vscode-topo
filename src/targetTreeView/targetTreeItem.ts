@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { TargetStatus } from '../util/types';
 
 /** Represents a target */
-export class TargetTreeTargetItem extends vscode.TreeItem {
+export class TargetTreeItem extends vscode.TreeItem {
     constructor(
         public readonly target: string,
         public readonly selected: boolean,
@@ -10,7 +10,7 @@ export class TargetTreeTargetItem extends vscode.TreeItem {
     ) {
         super(target, vscode.TreeItemCollapsibleState.Expanded);
         this.id = target;
-        this.iconPath = getTreeItemIcon(selected, status);
+        this.iconPath = getTargetTreeItemIcon(selected, status);
         const contextValues = ['Target'];
         if (selected) {
             contextValues.push('Selected');
@@ -37,7 +37,7 @@ export const getTargetTreeItemState = (
     return vscode.TreeItemCollapsibleState.None;
 };
 
-export const getTreeItemIcon = (
+export const getTargetTreeItemIcon = (
     targetSelected: boolean,
     status: TargetStatus,
 ): vscode.ThemeIcon | undefined => {
