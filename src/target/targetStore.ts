@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { logger } from '../util/logger';
+import debounce from 'lodash.debounce';
 import { string, type, assert, record } from 'superstruct';
 
 type GlobalStoreKeys = 'targets';
@@ -9,14 +10,34 @@ type WorkspaceStoreKeys = 'selectedTarget';
 const serializedTargetsSchema = record(string(), type({}));
 
 export class TargetStore {
-    private _onSelectedTargetChanged = new vscode.EventEmitter<void>();
-    public readonly onSelectedTargetChanged =
+    private _onSelectedTargetChanged: vscode.EventEmitter<void> =
+        new vscode.EventEmitter<void>();
+    public readonly onSelectedTargetChanged: vscode.Event<void> =
         this._onSelectedTargetChanged.event;
     private disposables: vscode.Disposable[] = [];
 
     constructor(protected context: vscode.ExtensionContext) {
-        this.disposables.push(this._onSelectedTargetChanged);
+        const pattern = new vscode.RelativePattern(
+            this.context.globalStorageUri,
+            'targets-update.signal',
+        );
+        const watcher = vscode.workspace.createFileSystemWatcher(pattern);
+        this.disposables.push(watcher, this._onSelectedTargetChanged);
     }
+
+    // Debounced function to publish a change to other VS Code instances
+    protected publishChange = debounce(async () => {
+        try {
+            const signalUri = vscode.Uri.joinPath(
+                this.context.globalStorageUri,
+                'targets-update.signal',
+            );
+            const payload = new TextEncoder().encode(Date.now().toString());
+            await vscode.workspace.fs.writeFile(signalUri, payload);
+        } catch (err: unknown) {
+            logger.error(`Failed to publish target change signal`, err);
+        }
+    }, 500);
 
     public get selected(): string | undefined {
         return this.getWorkspace('selectedTarget');
@@ -92,6 +113,10 @@ export class TargetStore {
         value: string | undefined,
     ): Promise<void> {
         await this.set(this.context.globalState, key, value);
+
+        if (vscode.env.uiKind === vscode.UIKind.Desktop) {
+            this.publishChange();
+        }
     }
 
     protected getWorkspace(key: WorkspaceStoreKeys): string | undefined {
@@ -124,6 +149,7 @@ export class TargetStore {
     }
 
     public dispose(): void {
+        this.publishChange.cancel();
         for (const d of [...this.disposables].reverse()) {
             try {
                 d.dispose();

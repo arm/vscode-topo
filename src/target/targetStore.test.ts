@@ -55,6 +55,34 @@ function createMockContext(): {
 }
 
 describe('TargetStore', () => {
+    const emitter = new vscode.EventEmitter<vscode.Uri>();
+    const fsWatchers: {
+        pattern: vscode.GlobPattern;
+        watcher: vscode.FileSystemWatcher;
+    }[] = [];
+    jest.mocked(vscode.workspace.createFileSystemWatcher).mockImplementation(
+        (pattern) => {
+            const watcher: vscode.FileSystemWatcher = {
+                onDidCreate: emitter.event,
+                onDidChange: emitter.event,
+                onDidDelete: emitter.event,
+                dispose: () => {},
+                ignoreCreateEvents: false,
+                ignoreChangeEvents: false,
+                ignoreDeleteEvents: false,
+            };
+            fsWatchers.push({ pattern, watcher });
+            return watcher;
+        },
+    );
+    jest.mocked(vscode.workspace.fs.writeFile).mockImplementation(
+        async (uri, _content) => {
+            for (const _entry of fsWatchers) {
+                emitter.fire(uri);
+            }
+        },
+    );
+
     beforeEach(() => {
         mutable(vscode.window).state = {
             focused: true,
@@ -135,6 +163,19 @@ describe('TargetStore', () => {
         const selected = await store.getSelectedTarget();
         expect(selected).toBeDefined();
         expect(selected).toBe('carol@example.com');
+    });
+
+    it('deactivates the store, disposing resources', () => {
+        const watcher = mock<vscode.FileSystemWatcher>();
+        jest.mocked(
+            vscode.workspace.createFileSystemWatcher,
+        ).mockReturnValueOnce(watcher);
+        const { context } = createMockContext();
+        const store = new TargetStore(context);
+
+        store.dispose();
+
+        expect(watcher.dispose).toHaveBeenCalled();
     });
 
     it('removes a non-selected target without changing selection', async () => {
