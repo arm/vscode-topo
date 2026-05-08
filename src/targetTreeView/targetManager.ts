@@ -6,6 +6,8 @@ import { logger } from '../util/logger';
 import { ContainersManager } from '../target/containersManager';
 import { getTargetTreeItemIcon } from './targetTreeItem';
 import { defaultSshConfigPath, getHosts } from '../util/ssh';
+import { refreshCommand } from '../refreshCommand';
+import { TargetStatus } from '../util/types';
 
 export function buildQuickPickItems(
     availableHosts: string[],
@@ -24,9 +26,14 @@ export function buildQuickPickItems(
     return [...(manualItem ? [manualItem] : []), ...hostItems];
 }
 
+function getStatusBarItemText(target: string, status: TargetStatus): string {
+    const icon = getTargetTreeItemIcon(true, status);
+    const iconId = icon?.id || 'pass-filled';
+    return `$(${iconId}) ${target}`;
+}
+
 export class TargetManager {
     public static readonly viewId = `${manifest.PACKAGE_NAME}.target-manager`;
-    public static readonly refreshCommand = `${manifest.PACKAGE_NAME}.refresh`;
     public static readonly addTargetCommand = `${manifest.PACKAGE_NAME}.addTarget`;
     public static readonly FocusViewCommand = `${TargetManager.viewId}.focus`;
     public static readonly statusPriority = 100;
@@ -56,7 +63,7 @@ export class TargetManager {
         this.context.subscriptions.push(
             this.statusBarItem,
             treeView,
-            vscode.commands.registerCommand(TargetManager.refreshCommand, () =>
+            vscode.commands.registerCommand(refreshCommand, () =>
                 this.refreshTargetVisualisation(),
             ),
             vscode.commands.registerCommand(
@@ -117,23 +124,24 @@ export class TargetManager {
         }).finally(() => quickPick.dispose());
     }
 
-    protected async updateStatusBar(
-        selectedTarget: string | undefined,
-    ): Promise<void> {
+    protected async updateStatusBar(target: string | undefined): Promise<void> {
         if (!this.statusBarItem) {
             return;
         }
-        if (selectedTarget) {
+
+        if (target) {
+            this.statusBarItem.tooltip = `Connection String: ${target}`;
+            this.statusBarItem.text = getStatusBarItemText(
+                target,
+                'disconnected',
+            );
+            this.statusBarItem.show();
             const targetState =
-                await this.containersManager.getTargetState(selectedTarget);
-            const targetTreeIcon = getTargetTreeItemIcon(
-                true,
+                await this.containersManager.getTargetState(target);
+            this.statusBarItem.text = getStatusBarItemText(
+                target,
                 targetState.status,
             );
-            const iconId = targetTreeIcon?.id || 'pass-filled';
-            this.statusBarItem.text = `$(${iconId}) ${selectedTarget}`;
-            this.statusBarItem.tooltip = `Connection String: ${selectedTarget}`;
-            this.statusBarItem.show();
         } else {
             this.statusBarItem.hide();
         }

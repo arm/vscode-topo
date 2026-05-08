@@ -11,6 +11,7 @@ import { TargetSubsystemGroupTreeItem } from './targetSubsystemGroupTreeItem';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 import { HealthCheckDependency } from '../topoCliSchema';
 import { TargetDescriptionStore } from '../target/targetDescriptionStore';
+import { refreshCommand } from '../refreshCommand';
 
 function sortDependenciesByName(
     deps: HealthCheckDependency[],
@@ -48,9 +49,6 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
     ) {}
 
     public async activate(): Promise<void> {
-        const onTargetStoreChanged = this.targetStore.onChanged(() => {
-            this._onDidChangeTreeData.fire(undefined);
-        });
         this.context.subscriptions.push(
             vscode.commands.registerCommand(
                 TargetTreeDataProvider.selectTargetCommand,
@@ -68,7 +66,6 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
                 TargetTreeDataProvider.inspectTargetHealthScheme,
                 this.inspectHealthContentProvider,
             ),
-            onTargetStoreChanged,
             this._onDidChangeTreeData,
         );
     }
@@ -95,7 +92,7 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
             vscode.window.showErrorMessage(errorMessage);
             logger.error(errorMessage, err);
         } finally {
-            this._onDidChangeTreeData.fire(undefined);
+            vscode.commands.executeCommand(refreshCommand);
         }
     }
 

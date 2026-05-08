@@ -90,6 +90,12 @@
                 "category": "Arm Topo"
             },
             {
+                "command": "topo.refresh",
+                "title": "Refresh",
+                "icon": "$(refresh)",
+                "category": "Arm Topo"
+            },
+            {
                 "command": "topo.inspectTargetHealth",
                 "title": "Inspect Health",
                 "category": "Arm Topo"
@@ -226,6 +232,10 @@
                     "when": "false"
                 },
                 {
+                    "command": "topo.refresh",
+                    "when": "false"
+                },
+                {
                     "command": "topo.refreshHostDependencies",
                     "when": "false"
                 },
@@ -297,6 +307,11 @@
                 }
             ],
             "view/title": [
+                {
+                    "command": "topo.refresh",
+                    "when": "view == topo.target-manager",
+                    "group": "navigation"
+                },
                 {
                     "command": "topo.addTarget",
                     "when": "view == topo.target-manager",
