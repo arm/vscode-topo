@@ -3,6 +3,6 @@ dist
 node_modules
 *.vsix
 coverage
-test-workspace/
+test-workspace
 resources
-.vscode/settings.json
+/.vscode/settings.json
