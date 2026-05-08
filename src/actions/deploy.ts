@@ -43,7 +43,7 @@ export class Deploy {
     }
 
     public async deploy(composeFilePath: string): Promise<void> {
-        const target = await this.targetStore.getSelectedTarget();
+        const target = this.targetStore.getSelectedTarget();
         if (!target) {
             throw new Error(
                 'No target selected. Please select a target before deploying.',

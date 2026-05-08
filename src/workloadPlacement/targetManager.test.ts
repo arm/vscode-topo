@@ -132,7 +132,7 @@ describe('TargetManager', () => {
         it('registers tree provider and refresh command on activate', async () => {
             const { targetManager, context } = createTargetManager();
 
-            await targetManager.activate();
+            targetManager.activate();
 
             expect(vscode.window.createTreeView).toHaveBeenCalledWith(
                 TargetManager.viewId,
@@ -181,7 +181,7 @@ describe('TargetManager', () => {
             const targetSsh = 'root@192.0.2.1';
             mockQuickPick({ label: targetSsh });
             const { targetStore, targetManager } = createTargetManager();
-            await targetManager.activate();
+            targetManager.activate();
 
             await executeCommand(TargetManager.addTargetCommand);
 
@@ -193,7 +193,7 @@ describe('TargetManager', () => {
         it('does nothing when quick pick is dismissed', async () => {
             mockQuickPick(undefined);
             const { targetStore, targetManager } = createTargetManager();
-            await targetManager.activate();
+            targetManager.activate();
 
             await executeCommand(TargetManager.addTargetCommand);
 
@@ -206,7 +206,7 @@ describe('TargetManager', () => {
             const { targetStore, targetManager } = createTargetManager();
             const error = new Error('boom');
             jest.mocked(targetStore.addTarget).mockRejectedValueOnce(error);
-            await targetManager.activate();
+            targetManager.activate();
 
             await executeCommand(TargetManager.addTargetCommand);
 
@@ -226,11 +226,9 @@ describe('TargetManager', () => {
         it('shows an item in the status bar with the currently selected target', async () => {
             const target = 'root@localhost';
             const { targetManager, targetStore } = createTargetManager();
-            jest.mocked(targetStore.getSelectedTarget).mockResolvedValue(
-                target,
-            );
+            jest.mocked(targetStore.getSelectedTarget).mockReturnValue(target);
 
-            await targetManager.activate();
+            targetManager.activate();
 
             expect(vscode.window.createStatusBarItem).toHaveBeenCalledTimes(1);
             const statusBarItem = jest.mocked(vscode.window.createStatusBarItem)
@@ -248,7 +246,7 @@ describe('TargetManager', () => {
         it("doesn't show an item in the status bar when no target is selected", async () => {
             const { targetManager } = createTargetManager();
 
-            await targetManager.activate();
+            targetManager.activate();
 
             expect(vscode.window.createStatusBarItem).toHaveBeenCalledTimes(1);
             const statusBarItem = jest.mocked(vscode.window.createStatusBarItem)
@@ -268,19 +266,15 @@ describe('TargetManager', () => {
                 containersManager,
                 onChangeEmitter,
             } = createTargetManager();
-            jest.mocked(targetStore.getSelectedTarget).mockResolvedValue(
-                target1,
-            );
+            jest.mocked(targetStore.getSelectedTarget).mockReturnValue(target1);
             jest.mocked(
                 containersManager.getTargetStateSnapshot,
             ).mockReturnValue({
                 health: healthyTarget,
                 status: 'connected',
             });
-            await targetManager.activate();
-            jest.mocked(targetStore.getSelectedTarget).mockResolvedValue(
-                target2,
-            );
+            targetManager.activate();
+            jest.mocked(targetStore.getSelectedTarget).mockReturnValue(target2);
             jest.mocked(
                 containersManager.getTargetStateSnapshot,
             ).mockReturnValue({

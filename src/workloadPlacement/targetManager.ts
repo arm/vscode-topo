@@ -40,7 +40,7 @@ export class TargetManager {
         private readonly containersManager: ContainersManager,
     ) {}
 
-    public async activate() {
+    public activate() {
         this.statusBarItem = vscode.window.createStatusBarItem(
             TargetManager.viewId,
             vscode.StatusBarAlignment.Left,
@@ -51,7 +51,7 @@ export class TargetManager {
             treeDataProvider: this.targetTreeDataProvider,
             showCollapseAll: true,
         });
-        await this.refreshTargetVisualisation();
+        this.refreshTargetVisualisation();
 
         this.context.subscriptions.push(
             this.statusBarItem,
@@ -137,8 +137,8 @@ export class TargetManager {
         }
     }
 
-    private async refreshTargetVisualisation(): Promise<void> {
-        const selectedTarget = await this.targetStore.getSelectedTarget();
+    private refreshTargetVisualisation(): void {
+        const selectedTarget = this.targetStore.getSelectedTarget();
         this.updateStatusBar(selectedTarget);
     }
 }

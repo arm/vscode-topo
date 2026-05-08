@@ -270,7 +270,7 @@ export class ProjectClone {
     }
 
     private async cloneTemplateProject(): Promise<void> {
-        const selectedTarget = await this.targetStore.getSelectedTarget();
+        const selectedTarget = this.targetStore.getSelectedTarget();
         const selectedTemplate = await getTemplateOfChoice(
             this.topoCli,
             selectedTarget,

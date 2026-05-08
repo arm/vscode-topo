@@ -26,7 +26,7 @@ describe('Deploy', () => {
     beforeEach(() => {
         context = mock<vscode.ExtensionContext>({ subscriptions: [] });
         targetStore = mock<TargetStore>();
-        targetStore.getSelectedTarget.mockResolvedValue(target);
+        targetStore.getSelectedTarget.mockReturnValue(target);
         deploy = new Deploy(context, targetStore);
         registerSpy = jest
             .spyOn(vscode.commands, 'registerCommand')
@@ -54,7 +54,7 @@ describe('Deploy', () => {
     });
 
     it('fails with no target selected', async () => {
-        targetStore.getSelectedTarget.mockResolvedValueOnce(undefined);
+        targetStore.getSelectedTarget.mockReturnValueOnce(undefined);
 
         const deployOperation = deploy.deploy(composeFilePath);
 

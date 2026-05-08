@@ -165,7 +165,7 @@ describe('TargetStore', () => {
         await store.addTarget(t);
         await store.setSelected('carol@example.com');
 
-        const selected = await store.getSelectedTarget();
+        const selected = store.getSelectedTarget();
         expect(selected).toBeDefined();
         expect(selected).toBe('carol@example.com');
     });
@@ -232,7 +232,7 @@ describe('TargetStore', () => {
 
         const targets = store.getTargets();
         expect(targets.some((t) => t === t2)).toBe(false);
-        const selected = await store.getSelectedTarget();
+        const selected = store.getSelectedTarget();
         expect(selected).toBeDefined();
     });
 
@@ -251,7 +251,7 @@ describe('TargetStore', () => {
 
         const targets = store.getTargets();
         expect(targets.some((t) => t === t2)).toBe(false);
-        const selected = await store.getSelectedTarget();
+        const selected = store.getSelectedTarget();
         expect(selected).toBeDefined();
         expect(selected).toBe(t1);
     });
@@ -267,7 +267,7 @@ describe('TargetStore', () => {
 
         const targets = store.getTargets();
         expect(targets.length).toBe(0);
-        const selected = await store.getSelectedTarget();
+        const selected = store.getSelectedTarget();
         expect(selected).toBeUndefined();
     });
 

@@ -138,7 +138,7 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
         element?: vscode.TreeItem,
     ): Promise<vscode.TreeItem[]> {
         if (!element) {
-            const selectedTarget = await this.targetStore.getSelectedTarget();
+            const selectedTarget = this.targetStore.getSelectedTarget();
             const targetTreeItems = this.targetStore
                 .getTargets()
                 .map((target) => {

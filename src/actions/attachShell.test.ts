@@ -3,7 +3,6 @@ import { AttachShell } from '../actions/attachShell';
 import { DockerCommands } from '../workloadPlacement/dockerCommands';
 import { TargetTreeContainerItem } from '../workloadPlacement/targetTreeContainerItem';
 import { mock, MockProxy } from 'jest-mock-extended';
-import { TargetStore } from '../workloadPlacement/targetStore';
 import { ContainerItem } from '../util/types';
 
 jest.mock('../util/logger');
@@ -12,7 +11,6 @@ describe('AttachShell', () => {
     const registerCommandMock = jest.mocked(vscode.commands.registerCommand);
     const dockerCommands = new DockerCommands();
     const target = 'user@topo.local';
-    const targetStore = mock<TargetStore>();
     let context: MockProxy<vscode.ExtensionContext>;
 
     beforeEach(() => {
@@ -24,11 +22,7 @@ describe('AttachShell', () => {
     });
 
     it('registers attachShell command on activate', () => {
-        const attachShell = new AttachShell(
-            context,
-            dockerCommands,
-            targetStore,
-        );
+        const attachShell = new AttachShell(context, dockerCommands);
         attachShell.activate();
         expect(vscode.commands.registerCommand).toHaveBeenCalledWith(
             AttachShell.attachShellCommand,
@@ -37,11 +31,7 @@ describe('AttachShell', () => {
     });
 
     it('attachShell command opens terminal and sends docker exec', () => {
-        const attachShell = new AttachShell(
-            context,
-            dockerCommands,
-            targetStore,
-        );
+        const attachShell = new AttachShell(context, dockerCommands);
         attachShell.activate();
         const attachShellCall = registerCommandMock.mock.calls.find(
             ([cmd]) => cmd === AttachShell.attachShellCommand,

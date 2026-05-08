@@ -31,7 +31,7 @@ export class SetupKeys {
             }
             ssh = treeNode.target;
         } else {
-            const selectedTarget = await this.targetStore.getSelectedTarget();
+            const selectedTarget = this.targetStore.getSelectedTarget();
             if (!selectedTarget) {
                 showAndLogError(
                     'Failed to set up keys on target',

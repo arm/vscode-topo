@@ -152,7 +152,7 @@ describe('ContainersManager', () => {
             }
         });
         const targetStore = mock<TargetStore>();
-        targetStore.getSelectedTarget.mockResolvedValue(target);
+        targetStore.getSelectedTarget.mockReturnValue(target);
         const manager = createContainersManager(targetStore);
         await manager.activate();
 
@@ -204,7 +204,7 @@ describe('ContainersManager', () => {
             }
         });
         const targetStore = mock<TargetStore>();
-        targetStore.getSelectedTarget.mockResolvedValue(target);
+        targetStore.getSelectedTarget.mockReturnValue(target);
         const manager = createContainersManager(targetStore);
         await manager.activate();
 
@@ -229,7 +229,7 @@ describe('ContainersManager', () => {
             }
         });
         const targetStore = mock<TargetStore>();
-        targetStore.getSelectedTarget.mockResolvedValue(target);
+        targetStore.getSelectedTarget.mockReturnValue(target);
         const manager = createContainersManager(targetStore);
 
         await manager.activate();
@@ -254,7 +254,7 @@ describe('ContainersManager', () => {
             }
         });
         const targetStore = mock<TargetStore>();
-        targetStore.getSelectedTarget.mockResolvedValue(target);
+        targetStore.getSelectedTarget.mockReturnValue(target);
         const manager = createContainersManager(targetStore);
         await manager.activate();
 
@@ -291,7 +291,7 @@ describe('ContainersManager', () => {
             .mockResolvedValueOnce(loadedHealth)
             .mockResolvedValueOnce(unhealthyContainerEngine);
         const targetStore = mock<TargetStore>();
-        targetStore.getSelectedTarget.mockResolvedValue(target);
+        targetStore.getSelectedTarget.mockReturnValue(target);
         const containerCommands = mock<ContainerCommands>();
         containerCommands.getContainers.mockResolvedValue(mockContainers);
         containerCommands.inspectContainers.mockResolvedValue([]);
@@ -324,7 +324,7 @@ describe('ContainersManager', () => {
             }
         });
         const targetStore = mock<TargetStore>();
-        targetStore.getSelectedTarget.mockResolvedValue(target);
+        targetStore.getSelectedTarget.mockReturnValue(target);
         const manager = createContainersManager(targetStore);
         await manager.activate();
 
@@ -352,7 +352,7 @@ describe('ContainersManager', () => {
             }
         });
         const targetStore = mock<TargetStore>();
-        targetStore.getSelectedTarget.mockResolvedValue(target);
+        targetStore.getSelectedTarget.mockReturnValue(target);
         const manager = createContainersManager(targetStore);
         await manager.activate();
 
@@ -368,7 +368,7 @@ describe('ContainersManager', () => {
             new Promise<HealthCheckResult>(() => {}),
         );
         const targetStore = mock<TargetStore>();
-        targetStore.getSelectedTarget.mockResolvedValue(target);
+        targetStore.getSelectedTarget.mockReturnValue(target);
         const containerCommands = mock<ContainerCommands>();
         containerCommands.getContainers.mockResolvedValue([]);
         containerCommands.inspectContainers.mockResolvedValue([]);
@@ -390,7 +390,7 @@ describe('ContainersManager', () => {
         );
         topoCli.health.mockReturnValueOnce(pendingHealth);
         const targetStore = mock<TargetStore>();
-        targetStore.getSelectedTarget.mockResolvedValue(target);
+        targetStore.getSelectedTarget.mockReturnValue(target);
         const containerCommands = mock<ContainerCommands>();
         containerCommands.getContainers.mockResolvedValue([]);
         containerCommands.inspectContainers.mockResolvedValue([]);
@@ -429,9 +429,7 @@ describe('ContainersManager', () => {
         const onChangeEmitter = new vscode.EventEmitter<void>();
         const targetStore = mock<TargetStore>();
         targetStore.onChanged.mockImplementation(onChangeEmitter.event);
-        targetStore.getSelectedTarget.mockImplementation(
-            async () => selectedTarget,
-        );
+        targetStore.getSelectedTarget.mockImplementation(() => selectedTarget);
         const manager = createContainersManager(targetStore);
         await manager.activate();
         expect(
@@ -455,9 +453,7 @@ describe('ContainersManager', () => {
         const onChangeEmitter = new vscode.EventEmitter<void>();
         const targetStore = mock<TargetStore>();
         targetStore.onChanged.mockImplementation(onChangeEmitter.event);
-        targetStore.getSelectedTarget.mockImplementation(
-            async () => selectedTarget,
-        );
+        targetStore.getSelectedTarget.mockImplementation(() => selectedTarget);
 
         let resolveOldHealth: (result: HealthCheckResult) => void;
         const pendingOldHealth = new Promise<HealthCheckResult>(
