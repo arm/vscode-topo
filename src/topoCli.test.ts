@@ -25,7 +25,6 @@ function errorWithStderr(stderr: string): Error & { stderr: string } {
 
 const execSyncMock = jest.mocked(childProcess.execFileSync);
 const execMock = jest.mocked(childProcess.execFile);
-const spawnMock = jest.mocked(childProcess.spawn);
 
 describe('TopoCli', () => {
     const ext = '/fake/ext';
@@ -303,38 +302,6 @@ describe('TopoCli', () => {
             return cp;
         });
         await expect(topoCli.init('t')).rejects.toThrow('err');
-    });
-
-    it('deploy spawns a child process and returns it', () => {
-        const fakeProc = mock<Mutable<ChildProcessWithoutNullStreams>>();
-        fakeProc.pid = 1234;
-
-        spawnMock.mockReturnValue(fakeProc);
-
-        const result = topoCli.deploy('/fake/project');
-
-        expect(childProcess.spawn).toHaveBeenCalledWith(
-            topoCli.getBinaryPath(),
-            ['deploy'],
-            { cwd: '/fake/project', env: expect.any(Object), detached: true },
-        );
-        expect(result).toBe(fakeProc);
-    });
-
-    it('deploy includes --target and sets env when ssh target provided', () => {
-        const fakeProc = mock<Mutable<ChildProcessWithoutNullStreams>>();
-        fakeProc.pid = 4321;
-
-        spawnMock.mockReturnValue(fakeProc);
-
-        const result = topoCli.deploy('/fake/project', 'me@example.com');
-
-        expect(childProcess.spawn).toHaveBeenCalledWith(
-            topoCli.getBinaryPath(),
-            ['deploy', '--target', 'me@example.com'],
-            { cwd: '/fake/project', env: expect.any(Object), detached: true },
-        );
-        expect(result).toBe(fakeProc);
     });
 
     it('health parses JSON output', async () => {

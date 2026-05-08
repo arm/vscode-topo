@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-export class TargetTreeSubsystemItem extends vscode.TreeItem {
+export class TargetSubsystemTreeItem extends vscode.TreeItem {
     constructor(
         public readonly group: string,
         public readonly target: string,

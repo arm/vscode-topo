@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
-import { TargetTreeDependencyGroupItem } from './targetTreeDependencyGroupItem';
+import { HealthCheckDependencyGroupTreeItem } from './healthCheckDependencyGroupTreeItem';
 
-describe('TargetTreeDependencyGroupItem', () => {
+describe('HealthCheckDependencyGroupTreeItem', () => {
     it('uses a neutral icon when all entries are healthy', () => {
-        const item = new TargetTreeDependencyGroupItem([
+        const item = new HealthCheckDependencyGroupTreeItem([
             { name: 'Container Engine', status: 'ok', value: 'docker' },
         ]);
 
@@ -18,7 +18,7 @@ describe('TargetTreeDependencyGroupItem', () => {
     });
 
     it('uses a warning icon if at least one entry has a warning', () => {
-        const item = new TargetTreeDependencyGroupItem([
+        const item = new HealthCheckDependencyGroupTreeItem([
             { name: 'Container Engine', status: 'ok', value: 'docker' },
             { name: 'Something Else', status: 'warning', value: 'foobar' },
         ]);
@@ -28,7 +28,7 @@ describe('TargetTreeDependencyGroupItem', () => {
     });
 
     it('uses an error icon if at least one entry has an error', () => {
-        const item = new TargetTreeDependencyGroupItem([
+        const item = new HealthCheckDependencyGroupTreeItem([
             { name: 'Container Engine', status: 'ok', value: 'docker' },
             { name: 'Something Else', status: 'warning', value: 'foobar' },
             { name: 'Subsystem Driver', status: 'error', value: 'missing' },

@@ -26,12 +26,6 @@ module.exports = [
         },
     },
     js.configs.recommended,
-    {
-        rules: {
-            'no-useless-assignment': 'off',
-            'preserve-caught-error': 'off',
-        },
-    },
     ...tsPlugin.configs['flat/recommended'],
     {
         files: ['src/**/__mocks__/**/*.js'],
@@ -66,7 +60,6 @@ module.exports = [
                 'error',
                 { selector: 'import', format: ['camelCase', 'PascalCase'] },
             ],
-            'no-unused-vars': 'off',
             '@typescript-eslint/no-unused-vars': [
                 'error',
                 {
@@ -76,7 +69,6 @@ module.exports = [
                 },
             ],
             '@typescript-eslint/no-unused-private-class-members': 'error',
-            '@typescript-eslint/no-explicit-any': 'error',
             '@typescript-eslint/switch-exhaustiveness-check': 'error',
             curly: 'warn',
             eqeqeq: 'warn',

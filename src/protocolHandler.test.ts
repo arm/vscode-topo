@@ -7,7 +7,7 @@ import { TopoCli } from './topoCli';
 import { mutable } from './util/mutable';
 import { showAndLogError } from './util/showAndLogError';
 import { executeTask } from './util/executeTask';
-import { TargetStore } from './workloadPlacement/targetStore';
+import { TargetStore } from './target/targetStore';
 
 jest.mock('./util/showAndLogError', () => ({
     showAndLogError: jest.fn(),

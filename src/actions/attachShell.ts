@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
-import { ContainerCommands } from '../workloadPlacement/containerCommands';
+import { ContainerCommands } from '../target/containerCommands';
 import * as manifest from '../manifest';
-import { TargetStore } from '../workloadPlacement/targetStore';
-import { assertTargetTreeContainerItem } from './util/assertTargetTreeContainerItem';
+import { TargetStore } from '../target/targetStore';
+import { assertTargetContainerTreeItem } from '../targetTreeView/assertTargetContainerTreeItem';
 import { ContainerItem } from '../util/types';
 
 export class AttachShell {
@@ -24,7 +24,7 @@ export class AttachShell {
     }
 
     private async attachShellCommandHandler(treeNode: unknown): Promise<void> {
-        assertTargetTreeContainerItem(treeNode);
+        assertTargetContainerTreeItem(treeNode);
         this.attachShell(treeNode.containerItem);
     }
 

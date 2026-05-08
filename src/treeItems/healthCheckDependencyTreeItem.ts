@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { HealthCheckDependency, HealthCheckStatus } from '../topoCliSchema';
-import { getInstallableDependency } from '../actions/installDependency';
+import { getInstallableDependency } from '../util/getInstallableDependency';
 
 export const getDependencyItemIcon = (
     status: HealthCheckStatus,
@@ -29,7 +29,7 @@ const capitalizeFirstLetter = (s: string) => {
     return s.charAt(0).toUpperCase() + s.slice(1);
 };
 
-export class TargetTreeDependencyItem extends vscode.TreeItem {
+export class HealthCheckDependencyTreeItem extends vscode.TreeItem {
     constructor(public readonly dependency: HealthCheckDependency) {
         super(dependency.name, vscode.TreeItemCollapsibleState.None);
         this.description = dependency.value;

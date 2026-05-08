@@ -262,21 +262,6 @@ export class TopoCli {
         });
     }
 
-    public deploy(
-        projectPath: string,
-        sshTarget?: string,
-    ): childProcess.ChildProcessWithoutNullStreams {
-        const cmd = ['deploy'];
-        if (sshTarget) {
-            cmd.push('--target', sshTarget);
-        }
-        return childProcess.spawn(this.getBinaryPath(), cmd, {
-            cwd: projectPath,
-            env: this.getProcessEnv(),
-            detached: true,
-        });
-    }
-
     private async runHealth<T>(
         schema: Struct<T>,
         sshTarget?: string,
