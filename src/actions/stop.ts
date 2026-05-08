@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as manifest from '../manifest';
 import { getErrorMessage } from '../util/getErrorMessage';
 import path from 'node:path';
-import { TargetStore } from '../workloadPlacement/targetStore';
+import { TargetStore } from '../target/targetStore';
 import { executeTask } from '../util/executeTask';
 import { showAndLogError } from '../util/showAndLogError';
 
