@@ -107,7 +107,6 @@ describe('TargetTreeDataProvider', () => {
         },
     ];
     const onChangedEmitter = new vscode.EventEmitter<void>();
-    const onDataUpdateEmitter = new vscode.EventEmitter<void>();
 
     beforeEach(() => {
         const targetState: TargetState = {
@@ -121,9 +120,6 @@ describe('TargetTreeDataProvider', () => {
             mockContainers,
         );
         containersManagerMock.getTargetState.mockResolvedValue(targetState);
-        containersManagerMock.onDataUpdate.mockImplementation(
-            onDataUpdateEmitter.event,
-        );
 
         targetStoreMock = mock<TargetStore>();
         targetStoreMock.getSelectedTarget.mockResolvedValue(target);
@@ -167,10 +163,6 @@ describe('TargetTreeDataProvider', () => {
     describe('getChildren', () => {
         it('returns Target at root and Dependencies/Subsystems as its children', async () => {
             targetStoreMock.getTargets.mockReturnValue([target]);
-            containersManagerMock.getTargetStateSnapshot.mockReturnValue({
-                health: undefined,
-                status: 'disconnected',
-            });
             containersManagerMock.getTargetState.mockResolvedValue({
                 health: targetHealth,
                 status: 'connected',
@@ -214,9 +206,6 @@ describe('TargetTreeDataProvider', () => {
             });
             containersManagerMock.getTargetState.mockResolvedValue(targetState);
             targetStoreMock.getTargets.mockReturnValue([target]);
-            containersManagerMock.getTargetStateSnapshot.mockReturnValue(
-                targetState,
-            );
             const rootChildren = await provider.getChildren();
             const targetChildren = await provider.getChildren(rootChildren[0]);
             const dependenciesGroup = targetChildren.find(
@@ -235,7 +224,7 @@ describe('TargetTreeDataProvider', () => {
         it('marks selected target as disconnected when health is undefined', async () => {
             targetStoreMock.getTargets.mockReturnValue([target]);
             targetStoreMock.getSelectedTarget.mockResolvedValue(target);
-            containersManagerMock.getTargetStateSnapshot.mockReturnValue({
+            containersManagerMock.getTargetState.mockResolvedValue({
                 health: undefined,
                 status: 'disconnected',
             });

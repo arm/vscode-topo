@@ -45,13 +45,6 @@ const createTargetManager = () => {
         health: undefined,
         status: 'disconnected',
     });
-    containersManager.getTargetStateSnapshot.mockReturnValue({
-        health: undefined,
-        status: 'disconnected',
-    });
-    containersManager.onDataUpdate.mockImplementation(
-        onDataUpdateEmitter.event,
-    );
     const topoCli: MockProxy<TopoCli> = mock<TopoCli>();
     const targetManager = new TargetManager(
         context,
@@ -271,9 +264,7 @@ describe('TargetManager', () => {
             jest.mocked(targetStore.getSelectedTarget).mockResolvedValue(
                 target1,
             );
-            jest.mocked(
-                containersManager.getTargetStateSnapshot,
-            ).mockReturnValue({
+            jest.mocked(containersManager.getTargetState).mockResolvedValue({
                 health: healthyTarget,
                 status: 'connected',
             });
@@ -281,12 +272,6 @@ describe('TargetManager', () => {
             jest.mocked(targetStore.getSelectedTarget).mockResolvedValue(
                 target2,
             );
-            jest.mocked(
-                containersManager.getTargetStateSnapshot,
-            ).mockReturnValue({
-                health: healthyTarget,
-                status: 'connected',
-            });
 
             onChangeEmitter.fire();
             await waitImmediate();

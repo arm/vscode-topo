@@ -57,16 +57,13 @@ export class TargetManager {
             this.statusBarItem,
             treeView,
             vscode.commands.registerCommand(TargetManager.refreshCommand, () =>
-                this.targetTreeDataProvider.refresh(),
+                this.refreshTargetVisualisation(),
             ),
             vscode.commands.registerCommand(
                 TargetManager.addTargetCommand,
                 () => this.addTarget(),
             ),
             this.targetStore.onChanged(() => this.refreshTargetVisualisation()),
-            this.containersManager.onDataUpdate(() =>
-                this.refreshTargetVisualisation(),
-            ),
         );
     }
 
@@ -120,13 +117,15 @@ export class TargetManager {
         }).finally(() => quickPick.dispose());
     }
 
-    protected updateStatusBar(selectedTarget: string | undefined): void {
+    protected async updateStatusBar(
+        selectedTarget: string | undefined,
+    ): Promise<void> {
         if (!this.statusBarItem) {
             return;
         }
         if (selectedTarget) {
             const targetState =
-                this.containersManager.getTargetStateSnapshot(selectedTarget);
+                await this.containersManager.getTargetState(selectedTarget);
             const targetTreeIcon = getTargetTreeItemIcon(
                 true,
                 targetState.status,
@@ -142,6 +141,8 @@ export class TargetManager {
 
     private async refreshTargetVisualisation(): Promise<void> {
         const selectedTarget = await this.targetStore.getSelectedTarget();
+        // TODO get the target state once here and pass into both of these calls to avoid redundant work
         this.updateStatusBar(selectedTarget);
+        this.targetTreeDataProvider.refresh();
     }
 }

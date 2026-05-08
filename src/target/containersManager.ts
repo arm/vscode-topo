@@ -1,4 +1,3 @@
-import * as vscode from 'vscode';
 import { logger } from '../util/logger';
 import type {
     TargetState,
@@ -7,23 +6,7 @@ import type {
     DockerInspectItem,
 } from '../util/types';
 import type { ContainerCommands } from './containerCommands';
-import { TargetStore } from './targetStore';
 import type { TopoCli } from '../topoCli';
-import { future, type Future } from '../util/future';
-import { RefreshLoop } from '../util/refreshLoop';
-
-const refreshInterval = 3000;
-
-function hasHealthyDependency(
-    state: TargetState,
-    dependencyName: string,
-): boolean {
-    return (
-        state.health?.dependencies.some(
-            (dep) => dep.name === dependencyName && dep.status === 'ok',
-        ) ?? false
-    );
-}
 
 function createContainerItem(
     item: DockerPsItem,
@@ -49,100 +32,34 @@ function createContainerItem(
     };
 }
 
-const defaultTargetState: TargetState = {
-    health: undefined,
-    status: 'disconnected',
-};
-
-export class ContainersManager implements vscode.Disposable {
-    private readonly containersMap = new Map<
-        string,
-        Promise<ContainerItem[]>
-    >();
-    private readonly targetStateMap = new Map<string, Future<TargetState>>();
-    private refreshLoop: RefreshLoop | undefined;
-
-    private readonly _onDataUpdate = new vscode.EventEmitter<void>();
-    public readonly onDataUpdate = this._onDataUpdate.event;
-
-    private disposables: vscode.Disposable[] = [];
-
+// TODO write new test suite for this
+export class ContainersManager {
     constructor(
         private readonly topoCli: TopoCli,
         private readonly containerCommands: ContainerCommands,
-        private readonly targetStore: TargetStore,
-    ) {
-        const onChangedDisposable = this.targetStore.onChanged(async () => {
-            await this.updateTarget().catch((err) => {
-                logger.error(`Failed to update the target`, err);
-            });
-        });
-        this.disposables.push(this._onDataUpdate, onChangedDisposable);
-    }
+    ) {}
 
-    public async activate(): Promise<void> {
-        await this.updateTarget();
-    }
-
-    private async updateTarget(): Promise<void> {
-        const selectedTarget = await this.targetStore.getSelectedTarget();
-        this.unsetTarget();
-        if (selectedTarget) {
-            await this.startAutoRefresh(selectedTarget);
+    public async getTargetState(target: string): Promise<TargetState> {
+        try {
+            const health = await this.topoCli.health(target);
+            const status =
+                health.target?.connectivity.status === 'ok'
+                    ? 'connected'
+                    : 'error';
+            return {
+                health: health.target,
+                status,
+            };
+        } catch (err) {
+            logger.error(`Failed to check health for target ${target}`, err);
+            return {
+                health: undefined,
+                status: 'error',
+            };
         }
-    }
-
-    private unsetTarget(): void {
-        this.stopAutoRefresh();
-        this.targetStateMap.clear();
-        this.containersMap.clear();
-        this._onDataUpdate.fire();
-    }
-
-    private loadTargetState(target: string): Future<TargetState> {
-        return future(async () => {
-            try {
-                const health = await this.topoCli.health(target);
-                const status =
-                    health.target?.connectivity.status === 'ok'
-                        ? 'connected'
-                        : 'error';
-                return {
-                    health: health.target,
-                    status,
-                };
-            } catch (err) {
-                logger.error(
-                    `Failed to check health for target ${target}`,
-                    err,
-                );
-                return {
-                    health: undefined,
-                    status: 'error',
-                };
-            }
-        });
     }
 
     public async getContainersData(target: string): Promise<ContainerItem[]> {
-        if (!this.containersMap.has(target)) {
-            this.containersMap.set(target, this.loadContainersData(target));
-        }
-        return this.containersMap.get(target)!;
-    }
-
-    public async getTargetState(target: string): Promise<TargetState> {
-        if (!this.targetStateMap.has(target)) {
-            this.targetStateMap.set(target, this.loadTargetState(target));
-        }
-        return this.targetStateMap.get(target)!.promise;
-    }
-
-    public getTargetStateSnapshot(target: string): TargetState {
-        return this.targetStateMap.get(target)?.get() ?? defaultTargetState;
-    }
-
-    private async loadContainersData(target: string): Promise<ContainerItem[]> {
         try {
             const items = await this.containerCommands.getContainers(target);
             const ids = items.map((item) => item.ID);
@@ -162,55 +79,5 @@ export class ContainersManager implements vscode.Disposable {
             logger.error(`Failed to get containers info: ${errorMsg}`);
             return [];
         }
-    }
-
-    private async refreshTarget(target: string): Promise<void> {
-        const targetStateFuture = this.loadTargetState(target);
-        const targetState = await targetStateFuture.promise;
-        this.targetStateMap.set(target, targetStateFuture);
-
-        if (targetState.status === 'connected') {
-            if (hasHealthyDependency(targetState, 'Container Engine')) {
-                const containersPromise = this.loadContainersData(target);
-                await containersPromise;
-                this.containersMap.set(target, containersPromise);
-            } else {
-                this.containersMap.set(target, Promise.resolve([]));
-            }
-        }
-
-        this._onDataUpdate.fire();
-    }
-
-    private async startAutoRefresh(target: string): Promise<void> {
-        const refreshLoop = new RefreshLoop(
-            () => this.refreshTarget(target),
-            refreshInterval,
-        );
-
-        this.refreshLoop = refreshLoop;
-        await this.refreshTarget(target);
-        if (this.refreshLoop === refreshLoop) {
-            refreshLoop.start();
-        }
-    }
-
-    private stopAutoRefresh(): void {
-        if (this.refreshLoop) {
-            this.refreshLoop.stop();
-            this.refreshLoop = undefined;
-        }
-    }
-
-    public dispose(): void {
-        this.stopAutoRefresh();
-        [...this.disposables].reverse().forEach((d) => {
-            try {
-                d.dispose();
-            } catch (error) {
-                logger.error(`Error disposing resource`, error);
-            }
-        });
-        this.disposables = [];
     }
 }

@@ -48,12 +48,7 @@ export async function activate(
     const dockerCommands = new DockerCommands();
     const attachVsCode = new AttachVsCode(context, dockerCommands);
     const attachShell = new AttachShell(context, dockerCommands, targetStore);
-    const containersManager = new ContainersManager(
-        topoCli,
-        dockerCommands,
-        targetStore,
-    );
-    context.subscriptions.push(containersManager);
+    const containersManager = new ContainersManager(topoCli, dockerCommands);
     const targetTreeDataProvider = new TargetTreeDataProvider(
         context,
         containersManager,
@@ -91,7 +86,6 @@ export async function activate(
     await containerOpenInBrowser.activate();
     await attachVsCode.activate();
     attachShell.activate();
-    await containersManager.activate();
     await targetTreeDataProvider.activate();
     hostDependenciesTreeDataProvider.activate();
     await targetManager.activate();

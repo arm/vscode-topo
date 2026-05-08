@@ -51,10 +51,6 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
         const onTargetStoreChanged = this.targetStore.onChanged(() => {
             this._onDidChangeTreeData.fire(undefined);
         });
-        const onContainersManagerDataUpdate =
-            this.containersManager.onDataUpdate(() => {
-                this._onDidChangeTreeData.fire(undefined);
-            });
         this.context.subscriptions.push(
             vscode.commands.registerCommand(
                 TargetTreeDataProvider.selectTargetCommand,
@@ -73,7 +69,6 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
                 this.inspectHealthContentProvider,
             ),
             onTargetStoreChanged,
-            onContainersManagerDataUpdate,
             this._onDidChangeTreeData,
         );
     }
@@ -139,13 +134,21 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
     ): Promise<vscode.TreeItem[]> {
         if (!element) {
             const selectedTarget = await this.targetStore.getSelectedTarget();
+            const selectedTargetState = selectedTarget
+                ? await this.containersManager.getTargetState(selectedTarget)
+                : undefined;
+            const selectedTargetStatus =
+                selectedTargetState?.status ?? 'disconnected';
+
             const targetTreeItems = this.targetStore
                 .getTargets()
                 .map((target) => {
                     const selected = target === selectedTarget;
-                    const { status } =
-                        this.containersManager.getTargetStateSnapshot(target);
-                    return new TargetTreeItem(target, selected, status);
+                    return new TargetTreeItem(
+                        target,
+                        selected,
+                        selectedTargetStatus,
+                    );
                 });
             const sortedTargetTreeItems = targetTreeItems.sort((a, b) =>
                 a.displayName.localeCompare(b.displayName),
