@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
 import { buildQuickPickItems, TargetManager } from './targetManager';
 import { TargetTreeDataProvider } from './targetTreeDataProvider';
-import { TargetStore } from './targetStore';
+import { TargetStore } from '../target/targetStore';
 import { logger } from '../util/logger';
-import { ContainersManager } from './containersManager';
+import { ContainersManager } from '../target/containersManager';
 import { mock, MockProxy } from 'jest-mock-extended';
 import type { TopoCli } from '../topoCli';
 import type { HealthCheckResult } from '../topoCliSchema';

@@ -1,16 +1,16 @@
 import * as vscode from 'vscode';
-import { TargetTreeContainerItem } from './targetTreeContainerItem';
-import { ContainersManager } from './containersManager';
+import { TargetContainerTreeItem } from './targetContainerTreeItem';
+import { ContainersManager } from '../target/containersManager';
 import * as manifest from '../manifest';
-import { TargetStore } from './targetStore';
-import { TargetTreeTargetItem } from './targetTreeTargetItem';
-import { TargetTreeSubsystemItem } from './targetTreeSubsystemItem';
+import { TargetStore } from '../target/targetStore';
+import { TargetTreeItem } from './targetTreeItem';
+import { TargetSubsystemTreeItem } from './targetSubsystemTreeItem';
 import { logger } from '../util/logger';
-import { TargetTreeDependencyGroupItem } from './targetTreeDependencyGroupItem';
-import { TargetTreeSubsystemGroupItem } from './targetTreeSubsystemGroupItem';
-import { TargetTreeDependencyItem } from './targetTreeDependencyItem';
+import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
+import { TargetSubsystemGroupTreeItem } from './targetSubsystemGroupTreeItem';
+import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 import { HealthCheckDependency } from '../topoCliSchema';
-import { TargetDescriptionStore } from './targetDescriptionStore';
+import { TargetDescriptionStore } from '../target/targetDescriptionStore';
 
 function sortDependenciesByName(
     deps: HealthCheckDependency[],
@@ -81,8 +81,8 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
     }
 
     private async selectTarget(treeNode: unknown): Promise<void> {
-        if (!(treeNode instanceof TargetTreeTargetItem)) {
-            const errMsg = `Invalid target type for select: expected TargetTreeTargetItem but received:`;
+        if (!(treeNode instanceof TargetTreeItem)) {
+            const errMsg = `Invalid target type for select: expected TargetTreeItem but received:`;
             logger.error(errMsg, treeNode);
             return;
         }
@@ -90,8 +90,8 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
     }
 
     private async removeTarget(treeNode: unknown): Promise<void> {
-        if (!(treeNode instanceof TargetTreeTargetItem)) {
-            const errMsg = `Invalid target type for remove: expected TargetTreeTargetItem but received:`;
+        if (!(treeNode instanceof TargetTreeItem)) {
+            const errMsg = `Invalid target type for remove: expected TargetTreeItem but received:`;
             logger.error(errMsg, treeNode);
             return;
         }
@@ -107,14 +107,14 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
     }
 
     private async inspectHealth(treeNode: unknown): Promise<void> {
-        if (!(treeNode instanceof TargetTreeTargetItem)) {
-            const errMsg = `Invalid target type for inspect health: expected TargetTreeTargetItem but received:`;
+        if (!(treeNode instanceof TargetTreeItem)) {
+            const errMsg = `Invalid target type for inspect health: expected TargetTreeItem but received:`;
             logger.error(errMsg, treeNode);
             return;
         }
 
         if (!treeNode.selected) {
-            const errMsg = `Invalid target for inspect health: expected selected TargetTreeTargetItem but received:`;
+            const errMsg = `Invalid target for inspect health: expected selected TargetTreeItem but received:`;
             logger.error(errMsg, treeNode);
             return;
         }
@@ -147,7 +147,7 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
                     const selected = target === selectedTarget;
                     const { status } =
                         this.containersManager.getTargetStateSnapshot(target);
-                    return new TargetTreeTargetItem(target, selected, status);
+                    return new TargetTreeItem(target, selected, status);
                 });
             const sortedTargetTreeItems = targetTreeItems.sort((a, b) =>
                 a.displayName.localeCompare(b.displayName),
@@ -155,7 +155,7 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
             return sortedTargetTreeItems;
         }
 
-        if (element instanceof TargetTreeTargetItem) {
+        if (element instanceof TargetTreeItem) {
             if (!element.selected) {
                 return [];
             }
@@ -172,22 +172,22 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
                 dependencies.push(targetState.health.subsystemDriver);
             }
 
-            const dependenciesGroup = new TargetTreeDependencyGroupItem(
+            const dependenciesGroup = new HealthCheckDependencyGroupTreeItem(
                 dependencies,
             );
-            const subsystemsGroup = new TargetTreeSubsystemGroupItem(
+            const subsystemsGroup = new TargetSubsystemGroupTreeItem(
                 element.target,
             );
             return [dependenciesGroup, subsystemsGroup];
         }
 
-        if (element instanceof TargetTreeDependencyGroupItem) {
+        if (element instanceof HealthCheckDependencyGroupTreeItem) {
             return sortDependenciesByName(element.dependencies).map(
-                (d) => new TargetTreeDependencyItem(d),
+                (d) => new HealthCheckDependencyTreeItem(d),
             );
         }
 
-        if (element instanceof TargetTreeSubsystemGroupItem) {
+        if (element instanceof TargetSubsystemGroupTreeItem) {
             const targetDescription =
                 await this.targetDescriptionStore.getDescription(
                     element.target,
@@ -196,11 +196,11 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
                 targetDescription?.remoteProcessors.map((rp) => rp.name) || [];
             const subsystemNames = ['Host', ...remoteProcessors];
             return subsystemNames.map(
-                (name) => new TargetTreeSubsystemItem(name, element.target),
+                (name) => new TargetSubsystemTreeItem(name, element.target),
             );
         }
 
-        if (element instanceof TargetTreeSubsystemItem) {
+        if (element instanceof TargetSubsystemTreeItem) {
             const containers = await this.containersManager.getContainersData(
                 element.target,
             );
@@ -211,7 +211,7 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
                       item.annotations?.['remoteproc.name'] === element.group,
             );
             const subsystemTreeItems = subsystemContainers.map(
-                (info) => new TargetTreeContainerItem(info),
+                (info) => new TargetContainerTreeItem(info),
             );
             const sortedSubsystemTreeItems = subsystemTreeItems.sort((a, b) => {
                 if (a.state === 'running' && b.state !== 'running') {

@@ -346,7 +346,6 @@
         "@swc/jest": "^0.2.39",
         "@types/jest": "^30.0.0",
         "@types/node": "^22.19.15",
-        "@types/tar": "^7.0.87",
         "@types/vscode": "^1.99.1",
         "@typescript-eslint/eslint-plugin": "^8.58.2",
         "@typescript-eslint/parser": "^8.58.2",
