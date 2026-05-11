@@ -14,6 +14,7 @@ describe('ProjectInit', () => {
         context = mock<vscode.ExtensionContext>({ subscriptions: [] });
         topoCli = mock<TopoCli>();
         jest.resetAllMocks();
+        mutable(vscode.workspace).workspaceFolders = undefined;
         projectInit = new ProjectInit(context, topoCli);
     });
 
@@ -42,6 +43,10 @@ describe('ProjectInit', () => {
     });
 
     it('shows error message if topoCli.init throws', async () => {
+        const workspaceUri = vscode.Uri.file(workspacePath);
+        mutable(vscode.workspace).workspaceFolders = [
+            { uri: workspaceUri, name: 'workspace', index: 0 },
+        ];
         topoCli.init.mockRejectedValue(new Error('fail'));
         await projectInit.activate();
 
@@ -49,6 +54,17 @@ describe('ProjectInit', () => {
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
             'Failed to initialize project: fail',
+        );
+    });
+
+    it('shows error message if no workspace folder is open', async () => {
+        await projectInit.activate();
+
+        await jest.mocked(vscode.commands.registerCommand).mock.calls[0][1]();
+
+        expect(topoCli.init).not.toHaveBeenCalled();
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
+            'No workspace folder is open. Please open a folder to initialize the project.',
         );
     });
 });

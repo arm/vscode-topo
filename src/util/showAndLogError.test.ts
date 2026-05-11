@@ -56,6 +56,14 @@ describe('showAndLogError', () => {
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
             'Failed to start container. Error: No such container: abc123',
         );
+        expect(logger.error).toHaveBeenNthCalledWith(
+            1,
+            'Failed to start container',
+        );
+        expect(logger.error).toHaveBeenNthCalledWith(
+            2,
+            'Error: No such container: abc123',
+        );
         expect(logger.info).toHaveBeenCalledWith(
             'Pulling image docker.io/library/nginx:latest',
         );
@@ -70,7 +78,7 @@ describe('showAndLogError', () => {
         );
     });
 
-    it('falls back to logger.error when WrappedError has no log entries', () => {
+    it('logs WrappedError message even when it has no log entries', () => {
         const error = new WrappedError('DOCKER', 'empty');
 
         showAndLogError('Failed', error);
@@ -78,7 +86,8 @@ describe('showAndLogError', () => {
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
             'Failed. empty',
         );
-        expect(logger.error).toHaveBeenCalledWith('Failed', error);
+        expect(logger.error).toHaveBeenNthCalledWith(1, 'Failed');
+        expect(logger.error).toHaveBeenNthCalledWith(2, 'empty');
         expect(logger.info).not.toHaveBeenCalled();
         expect(logger.warn).not.toHaveBeenCalled();
         expect(logger.debug).not.toHaveBeenCalled();

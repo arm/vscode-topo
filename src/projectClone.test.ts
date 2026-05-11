@@ -324,6 +324,42 @@ describe('ProjectClone', () => {
             expect(executeTaskMock).not.toHaveBeenCalled();
         });
 
+        it('shows error when selected target lookup fails with a TARGET error', async () => {
+            mutable(vscode.workspace).workspaceFolders = workspaceFolders;
+            targetStore.getSelectedTarget.mockRejectedValueOnce(
+                new WrappedError('TARGET', 'target store failed'),
+            );
+
+            await executeCommand(ProjectClone.templateCloneCommand);
+
+            expect(showAndLogError).toHaveBeenCalledWith(
+                'Failed to clone project',
+                expect.objectContaining({
+                    code: 'TARGET',
+                    message: 'target store failed',
+                }),
+            );
+            expect(topoCli.listTemplates).not.toHaveBeenCalled();
+            expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
+            expect(executeTaskMock).not.toHaveBeenCalled();
+        });
+
+        it('rethrows non-TARGET errors from selected target lookup', async () => {
+            mutable(vscode.workspace).workspaceFolders = workspaceFolders;
+            targetStore.getSelectedTarget.mockRejectedValueOnce(
+                new Error('target lookup failed'),
+            );
+
+            await expect(
+                executeCommand(ProjectClone.templateCloneCommand),
+            ).rejects.toThrow('target lookup failed');
+
+            expect(showAndLogError).not.toHaveBeenCalled();
+            expect(topoCli.listTemplates).not.toHaveBeenCalled();
+            expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
+            expect(executeTaskMock).not.toHaveBeenCalled();
+        });
+
         it('returns early when no template selected', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
             topoCli.listTemplates.mockReturnValue(templateList);

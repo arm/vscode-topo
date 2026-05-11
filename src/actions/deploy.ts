@@ -5,6 +5,7 @@ import path from 'node:path';
 import { TargetStore } from '../target/targetStore';
 import { executeTask } from '../util/executeTask';
 import { showAndLogError } from '../util/showAndLogError';
+import { isWrappedError, WrappedError } from '../errors/wrappedError';
 
 const viewLogsItem: vscode.MessageItem = {
     title: 'View Logs',
@@ -31,21 +32,36 @@ export class Deploy {
         if (!resource) {
             throw new Error('No compose file selected for deployment');
         }
+        let target: string | undefined;
+
         try {
-            await this.deploy(resource.fsPath);
+            target = await this.targetStore.getSelectedTarget();
         } catch (err) {
-            showAndLogError('Error executing deploy command', err);
+            if (isWrappedError(err, ['TARGET'])) {
+                showAndLogError('Error executing deploy command', err);
+                return;
+            }
+            throw err;
         }
+
+        if (!target) {
+            showAndLogError(
+                'Error executing deploy command',
+                new WrappedError(
+                    'TARGET',
+                    'No target selected. Please select a target before deploying.',
+                ),
+            );
+            return;
+        }
+
+        await this.deploy(resource.fsPath, target);
     }
 
-    public async deploy(composeFilePath: string): Promise<void> {
-        const target = await this.targetStore.getSelectedTarget();
-        if (!target) {
-            throw new Error(
-                'No target selected. Please select a target before deploying.',
-            );
-        }
-
+    public async deploy(
+        composeFilePath: string,
+        target: string,
+    ): Promise<void> {
         const taskName = `Deploy to ${target}`;
 
         try {

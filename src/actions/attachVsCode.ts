@@ -22,12 +22,12 @@ export class AttachVsCode {
         this.context.subscriptions.push(
             vscode.commands.registerCommand(
                 AttachVsCode.attachVsCodeCommand,
-                this.attachVsCodeCommandHandler.bind(this),
+                this.handleAttachVsCodeCommand.bind(this),
             ),
         );
     }
 
-    private async attachVsCodeCommandHandler(treeNode: unknown) {
+    private async handleAttachVsCodeCommand(treeNode: unknown): Promise<void> {
         assertTargetContainerTreeItem(treeNode);
         try {
             await this.attachVsCode(treeNode.containerItem);

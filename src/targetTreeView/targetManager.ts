@@ -56,12 +56,13 @@ export class TargetManager {
         this.context.subscriptions.push(
             this.statusBarItem,
             treeView,
-            vscode.commands.registerCommand(TargetManager.refreshCommand, () =>
-                this.targetTreeDataProvider.refresh(),
+            vscode.commands.registerCommand(
+                TargetManager.refreshCommand,
+                this.handleRefreshCommand.bind(this),
             ),
             vscode.commands.registerCommand(
                 TargetManager.addTargetCommand,
-                () => this.addTarget(),
+                this.handleAddTargetCommand.bind(this),
             ),
             this.targetStore.onChanged(() => this.refreshTargetVisualisation()),
             this.containersManager.onDataUpdate(() =>
@@ -70,7 +71,11 @@ export class TargetManager {
         );
     }
 
-    private async addTarget(): Promise<string | undefined> {
+    private handleRefreshCommand(): void {
+        this.targetTreeDataProvider.refresh();
+    }
+
+    private async handleAddTargetCommand(): Promise<string | undefined> {
         const target = await this.promptForSshTarget();
         if (!target) {
             return;

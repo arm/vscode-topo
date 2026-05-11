@@ -29,7 +29,7 @@ export class HostHealth {
         this.context.subscriptions.push(
             vscode.commands.registerCommand(
                 HostHealth.inspectHostHealthCommand,
-                this.inspectHostHealth.bind(this),
+                this.handleInspectHostHealthCommand.bind(this),
             ),
             vscode.workspace.registerTextDocumentContentProvider(
                 HostHealth.inspectHostHealthScheme,
@@ -38,7 +38,7 @@ export class HostHealth {
         );
     }
 
-    private async inspectHostHealth(): Promise<void> {
+    private async handleInspectHostHealthCommand(): Promise<void> {
         let health: HealthCheckResult;
         try {
             health = await this.topoCli.health(hostHealthTarget);

@@ -46,13 +46,22 @@ export class HostDependenciesTreeDataProvider implements vscode.TreeDataProvider
             treeView,
             vscode.commands.registerCommand(
                 HostDependenciesTreeDataProvider.refreshCommand,
-                () => this.refresh(),
+                this.handleRefreshCommand.bind(this),
             ),
-            vscode.commands.registerCommand(showTopoOutputCommand, () =>
-                logger.show(),
+            vscode.commands.registerCommand(
+                showTopoOutputCommand,
+                this.handleShowTopoOutputCommand.bind(this),
             ),
             this._onDidChangeTreeData,
         );
+    }
+
+    private handleRefreshCommand(): void {
+        this.refresh();
+    }
+
+    private handleShowTopoOutputCommand(): void {
+        logger.show();
     }
 
     public async getChildren(

@@ -234,19 +234,19 @@ export class ProjectClone {
             vscode.commands.registerCommand(
                 ProjectClone.remoteCloneCommand,
                 this.wrapCloneCommandWithCloneErrorHandling(
-                    this.cloneRemoteProject,
+                    this.handleRemoteCloneCommand,
                 ),
             ),
             vscode.commands.registerCommand(
                 ProjectClone.localCloneCommand,
                 this.wrapCloneCommandWithCloneErrorHandling(
-                    this.cloneLocalProject,
+                    this.handleLocalCloneCommand,
                 ),
             ),
             vscode.commands.registerCommand(
                 ProjectClone.templateCloneCommand,
                 this.wrapCloneCommandWithCloneErrorHandling(
-                    this.cloneTemplateProject,
+                    this.handleTemplateCloneCommand,
                 ),
             ),
         );
@@ -269,8 +269,17 @@ export class ProjectClone {
         return cloneResult.success;
     }
 
-    private async cloneTemplateProject(): Promise<void> {
-        const selectedTarget = await this.targetStore.getSelectedTarget();
+    private async handleTemplateCloneCommand(): Promise<void> {
+        let selectedTarget: string | undefined;
+        try {
+            selectedTarget = await this.targetStore.getSelectedTarget();
+        } catch (error) {
+            if (isWrappedError(error, ['TARGET'])) {
+                return showAndLogError('Failed to clone project', error);
+            }
+            throw error;
+        }
+
         const selectedTemplate = await getTemplateOfChoice(
             this.topoCli,
             selectedTarget,
@@ -287,7 +296,7 @@ export class ProjectClone {
         );
     }
 
-    private async cloneLocalProject(): Promise<void> {
+    private async handleLocalCloneCommand(): Promise<void> {
         const cloneSourcePath = await getLocalSourcePath();
         if (!cloneSourcePath) {
             return;
@@ -301,7 +310,7 @@ export class ProjectClone {
         );
     }
 
-    private async cloneRemoteProject(): Promise<void> {
+    private async handleRemoteCloneCommand(): Promise<void> {
         const cloneSourceRemoteUrl = await vscode.window.showInputBox({
             prompt: 'Enter the git URL to clone from',
         });

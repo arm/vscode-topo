@@ -58,15 +58,15 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
         this.context.subscriptions.push(
             vscode.commands.registerCommand(
                 TargetTreeDataProvider.selectTargetCommand,
-                (node: unknown) => this.selectTarget(node),
+                this.handleSelectTargetCommand.bind(this),
             ),
             vscode.commands.registerCommand(
                 TargetTreeDataProvider.removeTargetCommand,
-                (node: unknown) => this.removeTarget(node),
+                this.handleRemoveTargetCommand.bind(this),
             ),
             vscode.commands.registerCommand(
                 TargetTreeDataProvider.inspectTargetHealthCommand,
-                (node: unknown) => this.inspectHealth(node),
+                this.handleInspectTargetHealthCommand.bind(this),
             ),
             vscode.workspace.registerTextDocumentContentProvider(
                 TargetTreeDataProvider.inspectTargetHealthScheme,
@@ -78,21 +78,29 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
         );
     }
 
-    private async selectTarget(treeNode: unknown): Promise<void> {
+    private async handleSelectTargetCommand(treeNode: unknown): Promise<void> {
         if (!(treeNode instanceof TargetTreeItem)) {
             const errMsg = `Invalid target type for select: expected TargetTreeItem but received:`;
             logger.error(errMsg, treeNode);
             return;
         }
+        await this.selectTarget(treeNode);
+    }
+
+    private async selectTarget(treeNode: TargetTreeItem): Promise<void> {
         await this.targetStore.setSelected(treeNode.target);
     }
 
-    private async removeTarget(treeNode: unknown): Promise<void> {
+    private async handleRemoveTargetCommand(treeNode: unknown): Promise<void> {
         if (!(treeNode instanceof TargetTreeItem)) {
             const errMsg = `Invalid target type for remove: expected TargetTreeItem but received:`;
             logger.error(errMsg, treeNode);
             return;
         }
+        await this.removeTarget(treeNode);
+    }
+
+    private async removeTarget(treeNode: TargetTreeItem): Promise<void> {
         try {
             await this.targetStore.deleteTarget(treeNode.target);
         } catch (err) {
@@ -104,7 +112,9 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
         }
     }
 
-    private async inspectHealth(treeNode: unknown): Promise<void> {
+    private async handleInspectTargetHealthCommand(
+        treeNode: unknown,
+    ): Promise<void> {
         if (!(treeNode instanceof TargetTreeItem)) {
             const errMsg = `Invalid target type for inspect health: expected TargetTreeItem but received:`;
             logger.error(errMsg, treeNode);
@@ -116,7 +126,10 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
             logger.error(errMsg, treeNode);
             return;
         }
+        await this.inspectHealth(treeNode);
+    }
 
+    private async inspectHealth(treeNode: TargetTreeItem): Promise<void> {
         const targetState = await this.containersManager.getTargetState(
             treeNode.target,
         );

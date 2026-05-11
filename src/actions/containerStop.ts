@@ -17,14 +17,12 @@ export class ContainerStop {
         this.context.subscriptions.push(
             vscode.commands.registerCommand(
                 ContainerStop.stopContainerCommand,
-                this.stopContainerCommandHandler.bind(this),
+                this.handleStopContainerCommand.bind(this),
             ),
         );
     }
 
-    private async stopContainerCommandHandler(
-        treeNode: unknown,
-    ): Promise<void> {
+    private async handleStopContainerCommand(treeNode: unknown): Promise<void> {
         assertTargetContainerTreeItem(treeNode);
         try {
             await this.containerCommands.stopContainer(

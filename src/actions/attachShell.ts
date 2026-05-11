@@ -4,6 +4,8 @@ import * as manifest from '../manifest';
 import { TargetStore } from '../target/targetStore';
 import { assertTargetContainerTreeItem } from '../targetTreeView/assertTargetContainerTreeItem';
 import { ContainerItem } from '../util/types';
+import { showAndLogError } from '../util/showAndLogError';
+import { isWrappedError, WrappedError } from '../errors/wrappedError';
 
 export class AttachShell {
     public static readonly attachShellCommand = `${manifest.PACKAGE_NAME}.attachShell`;
@@ -18,12 +20,12 @@ export class AttachShell {
         this.context.subscriptions.push(
             vscode.commands.registerCommand(
                 AttachShell.attachShellCommand,
-                this.attachShellCommandHandler.bind(this),
+                this.handleAttachShellCommand.bind(this),
             ),
         );
     }
 
-    private async attachShellCommandHandler(treeNode: unknown): Promise<void> {
+    private async handleAttachShellCommand(treeNode: unknown): Promise<void> {
         assertTargetContainerTreeItem(treeNode);
         this.attachShell(treeNode.containerItem);
     }
@@ -39,9 +41,23 @@ export class AttachShell {
     }
 
     public async attachSSH() {
-        const target = await this.targetStore.getSelectedTarget();
+        let target: string | undefined;
+        try {
+            target = await this.targetStore.getSelectedTarget();
+        } catch (err) {
+            if (isWrappedError(err, ['TARGET'])) {
+                showAndLogError('Failed to attach SSH', err);
+                return;
+            }
+            throw err;
+        }
+
         if (!target) {
-            throw new Error('No target is currently selected');
+            showAndLogError(
+                'Failed to attach SSH',
+                new WrappedError('TARGET', 'No selected target found'),
+            );
+            return;
         }
         const terminal = vscode.window.createTerminal({
             name: `SSH: ${target}`,

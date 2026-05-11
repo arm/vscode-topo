@@ -17,12 +17,12 @@ export class ContainerDelete {
         this.context.subscriptions.push(
             vscode.commands.registerCommand(
                 ContainerDelete.deleteContainerCommand,
-                this.deleteContainerCommandHandler.bind(this),
+                this.handleDeleteContainerCommand.bind(this),
             ),
         );
     }
 
-    private async deleteContainerCommandHandler(
+    private async handleDeleteContainerCommand(
         treeNode: unknown,
     ): Promise<void> {
         assertTargetContainerTreeItem(treeNode);

@@ -17,12 +17,12 @@ export class ContainerStart {
         this.context.subscriptions.push(
             vscode.commands.registerCommand(
                 ContainerStart.startContainerCommand,
-                this.startContainerCommandHandler.bind(this),
+                this.handleStartContainerCommand.bind(this),
             ),
         );
     }
 
-    private async startContainerCommandHandler(
+    private async handleStartContainerCommand(
         treeNode: unknown,
     ): Promise<void> {
         assertTargetContainerTreeItem(treeNode);

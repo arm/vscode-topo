@@ -7,6 +7,7 @@ import { ContainersManager } from '../target/containersManager';
 import { logger } from '../util/logger';
 import { executeTask } from '../util/executeTask';
 import { getInstallableDependency } from '../util/getInstallableDependency';
+import { isWrappedError, WrappedError } from '../errors/wrappedError';
 
 const getInstallCommand = (sshTarget: string, value: string): string[] => {
     return ['topo', 'install', value, '--target', sshTarget];
@@ -28,7 +29,7 @@ export class InstallDependency implements vscode.Disposable {
         this.disposables.push(
             vscode.commands.registerCommand(
                 InstallDependency.installDependencyCommand,
-                this.installDependencyFromTreeItem.bind(this),
+                this.handleInstallDependencyCommand.bind(this),
             ),
             this.targetStore.onChanged(
                 this.promptToInstallMissingDependencies.bind(this),
@@ -62,7 +63,7 @@ export class InstallDependency implements vscode.Disposable {
         }
     }
 
-    private async installDependencyFromTreeItem(
+    private async handleInstallDependencyCommand(
         treeNode: unknown,
     ): Promise<void> {
         if (!(treeNode instanceof HealthCheckDependencyTreeItem)) {
@@ -71,11 +72,21 @@ export class InstallDependency implements vscode.Disposable {
             return;
         }
 
-        const target = await this.targetStore.getSelectedTarget();
+        let target: string | undefined;
+        try {
+            target = await this.targetStore.getSelectedTarget();
+        } catch (err) {
+            if (isWrappedError(err, ['TARGET'])) {
+                showAndLogError(`Failed to install dependency`, err);
+                return;
+            }
+            throw err;
+        }
+
         if (!target) {
             showAndLogError(
                 `Failed to install dependency`,
-                new Error('No selected target found'),
+                new WrappedError('TARGET', 'No selected target found'),
             );
             return;
         }

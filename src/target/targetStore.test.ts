@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { TargetStore } from './targetStore';
 import { mutable } from '../util/mutable';
 import { mock, MockProxy } from 'jest-mock-extended';
+import { WrappedError } from '../errors/wrappedError';
 
 jest.mock('../util/logger');
 
@@ -168,6 +169,30 @@ describe('TargetStore', () => {
         const selected = await store.getSelectedTarget();
         expect(selected).toBeDefined();
         expect(selected).toBe('carol@example.com');
+    });
+
+    it('throws a TARGET WrappedError when stored targets cannot be loaded', () => {
+        const { context, globalState } = createMockContext();
+        globalState.get.mockImplementation((key: string) =>
+            key === 'targets' ? 'not-json' : undefined,
+        );
+        const store = new TargetStore(context);
+
+        let thrown: unknown;
+        try {
+            store.getTargets();
+        } catch (err) {
+            thrown = err;
+        }
+        expect(thrown).toBeInstanceOf(WrappedError);
+        expect((thrown as WrappedError).code).toBe('TARGET');
+        expect((thrown as WrappedError).message).toBe('Failed to load targets');
+        expect((thrown as WrappedError).logs).toEqual([
+            {
+                level: 'Error',
+                msg: expect.stringContaining('Unexpected token'),
+            },
+        ]);
     });
 
     it('fires onChanged when signal file is modified externally and window is not focused', async () => {

@@ -5,6 +5,7 @@ import path from 'node:path';
 import { TargetStore } from '../target/targetStore';
 import { executeTask } from '../util/executeTask';
 import { showAndLogError } from '../util/showAndLogError';
+import { isWrappedError, WrappedError } from '../errors/wrappedError';
 
 const viewLogsItem: vscode.MessageItem = {
     title: 'View Logs',
@@ -31,21 +32,33 @@ export class Stop {
         if (!resource) {
             throw new Error('No compose file selected for stop');
         }
+        let target: string | undefined;
+
         try {
-            await this.stop(resource.fsPath);
+            target = await this.targetStore.getSelectedTarget();
         } catch (err) {
-            showAndLogError('Error executing stop command', err);
+            if (isWrappedError(err, ['TARGET'])) {
+                showAndLogError('Error executing stop command', err);
+                return;
+            }
+            throw err;
         }
+
+        if (!target) {
+            showAndLogError(
+                'Error executing stop command',
+                new WrappedError(
+                    'TARGET',
+                    'No target selected. Please select a target before stopping.',
+                ),
+            );
+            return;
+        }
+
+        await this.stop(resource.fsPath, target);
     }
 
-    public async stop(composeFilePath: string): Promise<void> {
-        const target = await this.targetStore.getSelectedTarget();
-        if (!target) {
-            throw new Error(
-                'No target selected. Please select a target before stopping.',
-            );
-        }
-
+    public async stop(composeFilePath: string, target: string): Promise<void> {
         const taskName = `Stop services on ${target}`;
 
         try {

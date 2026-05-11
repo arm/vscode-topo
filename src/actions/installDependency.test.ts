@@ -6,6 +6,7 @@ import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependenc
 import { HealthCheckResult } from '../topoCliSchema';
 import { ContainersManager } from '../target/containersManager';
 import { executeTask } from '../util/executeTask';
+import { WrappedError } from '../errors/wrappedError';
 
 jest.mock('../util/logger');
 jest.mock('../util/executeTask');
@@ -53,6 +54,9 @@ describe('InstallDependency', () => {
     const target = 'user@topo.local';
 
     beforeEach(() => {
+        jest.clearAllMocks();
+        targetStore.getSelectedTarget.mockReset();
+        containersManager.getTargetState.mockReset();
         targetStore.getSelectedTarget.mockResolvedValue(target);
         containersManager.getTargetState.mockResolvedValue({
             health: loadedHealth.target,
@@ -115,6 +119,78 @@ describe('InstallDependency', () => {
         await getCommandHandler()(dependencyItem);
 
         expect(executeTaskMock).not.toHaveBeenCalled();
+    });
+
+    it('shows an error when no target is available for install dependency', async () => {
+        targetStore.getSelectedTarget.mockResolvedValue(undefined);
+        const installDependency = new InstallDependency(
+            targetStore,
+            containersManager,
+        );
+        const dependencyItem = new HealthCheckDependencyTreeItem({
+            name: 'Remoteproc Runtime',
+            status: 'error',
+            value: 'missing',
+            fix: 'run `topo install remoteproc-runtime`',
+        });
+
+        await installDependency.activate();
+        await getCommandHandler()(dependencyItem);
+
+        expect(executeTaskMock).not.toHaveBeenCalled();
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
+            'Failed to install dependency. No selected target found',
+        );
+    });
+
+    it('shows an error when selected target lookup fails with a TARGET error', async () => {
+        targetStore.getSelectedTarget
+            .mockResolvedValueOnce(target)
+            .mockRejectedValueOnce(
+                new WrappedError('TARGET', 'target store failed'),
+            );
+        const installDependency = new InstallDependency(
+            targetStore,
+            containersManager,
+        );
+        const dependencyItem = new HealthCheckDependencyTreeItem({
+            name: 'Remoteproc Runtime',
+            status: 'error',
+            value: 'missing',
+            fix: 'run `topo install remoteproc-runtime`',
+        });
+
+        await installDependency.activate();
+        await getCommandHandler()(dependencyItem);
+
+        expect(executeTaskMock).not.toHaveBeenCalled();
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
+            'Failed to install dependency. target store failed',
+        );
+    });
+
+    it('rethrows non-TARGET errors from selected target lookup', async () => {
+        targetStore.getSelectedTarget
+            .mockResolvedValueOnce(target)
+            .mockRejectedValueOnce(new Error('target lookup failed'));
+        const installDependency = new InstallDependency(
+            targetStore,
+            containersManager,
+        );
+        const dependencyItem = new HealthCheckDependencyTreeItem({
+            name: 'Remoteproc Runtime',
+            status: 'error',
+            value: 'missing',
+            fix: 'run `topo install remoteproc-runtime`',
+        });
+
+        await installDependency.activate();
+
+        await expect(getCommandHandler()(dependencyItem)).rejects.toThrow(
+            'target lookup failed',
+        );
+        expect(executeTaskMock).not.toHaveBeenCalled();
+        expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
     });
 
     it('shows one notification for missing installable dependencies', async () => {

@@ -14,21 +14,24 @@ export class ProjectInit {
         this.context.subscriptions.push(
             vscode.commands.registerCommand(
                 ProjectInit.initProjectCommand,
-                this.initProject.bind(this),
+                this.handleInitProjectCommand.bind(this),
             ),
         );
     }
 
-    private async initProject(): Promise<void> {
+    private async handleInitProjectCommand(): Promise<void> {
+        const projectPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+        if (!projectPath) {
+            vscode.window.showErrorMessage(
+                'No workspace folder is open. Please open a folder to initialize the project.',
+            );
+            return;
+        }
+        await this.initProject(projectPath);
+    }
+
+    private async initProject(projectPath: string): Promise<void> {
         try {
-            const projectPath =
-                vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-            if (!projectPath) {
-                vscode.window.showErrorMessage(
-                    'No workspace folder is open. Please open a folder to initialize the project.',
-                );
-                return;
-            }
             await this.topoCli.init(projectPath);
             vscode.window.showInformationMessage(
                 `Project initialized successfully.`,
