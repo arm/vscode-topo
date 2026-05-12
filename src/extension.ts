@@ -26,6 +26,7 @@ import { logger } from './util/logger';
 import { ListTemplatesTool } from './tools/listTemplatesTool';
 import { CloneTemplateTool } from './tools/cloneTemplateTool';
 import { DeployProjectTool } from './tools/deployProjectTool';
+import { StopProjectTool } from './tools/stopProjectTool';
 import { AddTargetTool } from './tools/addTargetTool';
 
 export async function activate(
@@ -122,6 +123,7 @@ export async function activate(
             'topo_deployProject',
             new DeployProjectTool(deploy),
         ),
+        vscode.lm.registerTool('topo_stopProject', new StopProjectTool(stop)),
         vscode.lm.registerTool(
             'topo_addTarget',
             new AddTargetTool(targetStore),

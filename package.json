@@ -412,6 +412,26 @@
                 ]
             },
             {
+                "name": "topo_stopProject",
+                "displayName": "Stop Topo Project",
+                "toolReferenceName": "topoStopProject",
+                "modelDescription": "Stops services for a Topo project on the currently selected target. Uses a compose file from the workspace, or an explicit path. The stop runs as a VS Code task and the user can see progress in the terminal.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "composeFilePath": {
+                            "type": "string",
+                            "description": "Absolute path to the compose YAML file. If omitted, searches the workspace for a compose.yaml file."
+                        }
+                    }
+                },
+                "canBeReferencedInPrompt": true,
+                "tags": [
+                    "topo",
+                    "stop"
+                ]
+            },
+            {
                 "name": "topo_addTarget",
                 "displayName": "Add Topo Target",
                 "toolReferenceName": "topoAddTarget",
