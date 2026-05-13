@@ -66,7 +66,9 @@ export class ProtocolHandler implements vscode.UriHandler {
 
         const cloneStarted = await this.projectClone.cloneProjectFromSource(
             cloneSource,
-            cloneBuildArgs,
+            {
+                cloneBuildArgs,
+            },
         );
         if (!cloneStarted) {
             logger.info(`Clone cancelled for URI ${uri.toString()}`);

@@ -153,6 +153,7 @@ const window = {
 };
 const fs = {
     readFile: jest.fn(),
+    stat: jest.fn(),
     writeFile: jest.fn(),
 };
 const workspace = {

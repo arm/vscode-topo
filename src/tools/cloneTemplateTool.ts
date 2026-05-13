@@ -1,11 +1,12 @@
 import * as vscode from 'vscode';
 import { ProjectClone } from '../projectClone';
-import { TopoCli } from '../topoCli';
+import { CloneSource, TopoCli } from '../topoCli';
 import { TargetStore } from '../target/targetStore';
 
 interface CloneTemplateInput {
     templateName?: string;
     gitUrl?: string;
+    projectName?: string;
 }
 
 export class CloneTemplateTool implements vscode.LanguageModelTool<CloneTemplateInput> {
@@ -19,13 +20,17 @@ export class CloneTemplateTool implements vscode.LanguageModelTool<CloneTemplate
         options: vscode.LanguageModelToolInvocationOptions<CloneTemplateInput>,
         _token: vscode.CancellationToken,
     ): Promise<vscode.LanguageModelToolResult> {
-        const { templateName, gitUrl } = options.input;
+        const { templateName, gitUrl, projectName } = options.input;
+        const cloneOptions = projectName?.trim() ? { projectName } : undefined;
 
         if (gitUrl) {
-            const success = await this.projectClone.cloneProjectFromSource({
-                type: 'git',
-                url: gitUrl,
-            });
+            const success = await this.cloneProject(
+                {
+                    type: 'git',
+                    url: gitUrl,
+                },
+                cloneOptions,
+            );
             const message = success
                 ? `Successfully cloned project from ${gitUrl}.`
                 : 'Clone was cancelled or failed.';
@@ -48,10 +53,13 @@ export class CloneTemplateTool implements vscode.LanguageModelTool<CloneTemplate
                     ),
                 ]);
             }
-            const success = await this.projectClone.cloneProjectFromSource({
-                type: 'git',
-                url: template.url,
-            });
+            const success = await this.cloneProject(
+                {
+                    type: 'git',
+                    url: template.url,
+                },
+                cloneOptions,
+            );
             const message = success
                 ? `Successfully cloned template "${template.name}" from ${template.url}.`
                 : 'Clone was cancelled or failed.';
@@ -80,5 +88,17 @@ export class CloneTemplateTool implements vscode.LanguageModelTool<CloneTemplate
                 message: `Clone a project from ${source}? This will create a new folder on disk.`,
             },
         };
+    }
+
+    private cloneProject(
+        cloneSource: CloneSource,
+        cloneOptions: { projectName: string } | undefined,
+    ): Promise<boolean> {
+        return cloneOptions
+            ? this.projectClone.cloneProjectFromSource(
+                  cloneSource,
+                  cloneOptions,
+              )
+            : this.projectClone.cloneProjectFromSource(cloneSource);
     }
 }

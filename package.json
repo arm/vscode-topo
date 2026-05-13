@@ -370,7 +370,7 @@
                 "name": "topo_cloneTemplate",
                 "displayName": "Clone Topo Template",
                 "toolReferenceName": "topoCloneTemplate",
-                "modelDescription": "Clones an Arm Topo project from a template name or a git URL. When using a template name, it resolves the URL from the available templates list. The user will be prompted to choose a project name and destination folder.",
+                "modelDescription": "Clones an Arm Topo project from a template name or a git URL. When using a template name, it resolves the URL from the available templates list. A project name can be supplied programmatically; if omitted or already present at the destination, the user will be prompted to choose one.",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -381,6 +381,10 @@
                         "gitUrl": {
                             "type": "string",
                             "description": "A git URL to clone from directly."
+                        },
+                        "projectName": {
+                            "type": "string",
+                            "description": "Optional project folder name to use without prompting when it does not already exist at the selected destination."
                         }
                     }
                 },

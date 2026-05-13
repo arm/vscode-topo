@@ -52,6 +52,32 @@ describe('CloneTemplateTool', () => {
         expect(text).toContain('Successfully cloned');
     });
 
+    it('passes projectName when cloning from gitUrl directly', async () => {
+        projectClone.cloneProjectFromSource.mockResolvedValue(true);
+
+        await tool.invoke(
+            {
+                input: {
+                    gitUrl: 'https://example.com/repo.git',
+                    projectName: 'my-project',
+                },
+                toolInvocationToken: undefined,
+            } as vscode.LanguageModelToolInvocationOptions<{
+                gitUrl: string;
+                projectName: string;
+            }>,
+            token,
+        );
+
+        expect(projectClone.cloneProjectFromSource).toHaveBeenCalledWith(
+            {
+                type: 'git',
+                url: 'https://example.com/repo.git',
+            },
+            { projectName: 'my-project' },
+        );
+    });
+
     it('reports when git clone is cancelled', async () => {
         projectClone.cloneProjectFromSource.mockResolvedValue(false);
 
@@ -90,6 +116,34 @@ describe('CloneTemplateTool', () => {
         });
         const text = (result.content[0] as vscode.LanguageModelTextPart).value;
         expect(text).toContain('Successfully cloned template');
+    });
+
+    it('passes projectName when cloning from template name', async () => {
+        targetStore.getSelectedTarget.mockResolvedValue(undefined);
+        topoCli.listTemplates.mockReturnValue(templates);
+        projectClone.cloneProjectFromSource.mockResolvedValue(true);
+
+        await tool.invoke(
+            {
+                input: {
+                    templateName: 'hello-world',
+                    projectName: 'my-project',
+                },
+                toolInvocationToken: undefined,
+            } as vscode.LanguageModelToolInvocationOptions<{
+                templateName: string;
+                projectName: string;
+            }>,
+            token,
+        );
+
+        expect(projectClone.cloneProjectFromSource).toHaveBeenCalledWith(
+            {
+                type: 'git',
+                url: 'https://example.com/hello.git',
+            },
+            { projectName: 'my-project' },
+        );
     });
 
     it('matches template name case-insensitively', async () => {

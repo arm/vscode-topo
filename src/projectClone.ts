@@ -18,7 +18,14 @@ type CloneResult =
     | {
           success: false;
       };
-type CloneBuildArgs = Record<string, string>;
+export type CloneBuildArgs = Record<string, string>;
+export interface CloneProjectOptions {
+    cloneBuildArgs?: CloneBuildArgs;
+    projectName?: string;
+}
+interface CloneCommandOptions {
+    projectName?: string;
+}
 
 const postCloneAction = async (repositoryPath: string) => {
     let message = 'Would you like to open the cloned repository?';
@@ -148,23 +155,35 @@ const getCloneSourceString = (cloneSource: CloneSource): string => {
 const cloneWithSource = async (
     cloneSource: CloneSource,
     defaultProjectName: string,
-    cloneBuildArgs: CloneBuildArgs = {},
+    options: CloneProjectOptions = {},
 ): Promise<CloneResult> => {
-    const projectName = await vscode.window.showInputBox({
-        prompt: 'Enter the project name',
-        value: defaultProjectName,
-    });
+    const { cloneBuildArgs = {}, projectName: requestedProjectName } = options;
+    const requestedName = requestedProjectName?.trim();
+    const workspacePath = requestedName
+        ? await getCloneDestinationPath()
+        : undefined;
+    if (requestedName && !workspacePath) {
+        return { success: false };
+    }
+    const projectName = requestedName
+        ? await getRequestedOrPromptedProjectName(
+              workspacePath,
+              requestedName,
+              defaultProjectName,
+          )
+        : await promptForProjectName(defaultProjectName);
     if (!projectName) {
         return { success: false };
     }
-    const workspacePath = await getCloneDestinationPath();
-    if (!workspacePath) {
+    const selectedWorkspacePath =
+        workspacePath ?? (await getCloneDestinationPath());
+    if (!selectedWorkspacePath) {
         return { success: false };
     }
-    const repositoryPath = path.join(workspacePath, projectName);
+    const repositoryPath = path.join(selectedWorkspacePath, projectName);
     const cloneSourceString = getCloneSourceString(cloneSource);
     const cloneCommand = getCloneCommandFromSourceString(
-        workspacePath,
+        selectedWorkspacePath,
         projectName,
         cloneSourceString,
         cloneBuildArgs,
@@ -176,6 +195,38 @@ const cloneWithSource = async (
         throw new WrappedError('CLONE', getErrorMessage(err), [], {
             cause: err,
         });
+    }
+};
+
+const promptForProjectName = async (
+    defaultProjectName: string,
+): Promise<string | undefined> =>
+    vscode.window.showInputBox({
+        prompt: 'Enter the project name',
+        value: defaultProjectName,
+    });
+
+const getRequestedOrPromptedProjectName = async (
+    workspacePath: string | undefined,
+    requestedProjectName: string,
+    defaultProjectName: string,
+): Promise<string | undefined> => {
+    if (
+        workspacePath &&
+        !(await pathExists(path.join(workspacePath, requestedProjectName)))
+    ) {
+        return requestedProjectName;
+    }
+
+    return promptForProjectName(defaultProjectName);
+};
+
+const pathExists = async (fsPath: string): Promise<boolean> => {
+    try {
+        const stat = await vscode.workspace.fs.stat(vscode.Uri.file(fsPath));
+        return stat !== undefined;
+    } catch {
+        return false;
     }
 };
 
@@ -215,11 +266,14 @@ export class ProjectClone {
     ) {}
 
     private wrapCloneCommandWithCloneErrorHandling(
-        commandHandler: (this: ProjectClone) => Promise<void>,
-    ): () => Promise<void> {
-        return async () => {
+        commandHandler: (
+            this: ProjectClone,
+            options?: CloneCommandOptions,
+        ) => Promise<void>,
+    ): (options?: CloneCommandOptions) => Promise<void> {
+        return async (options?: CloneCommandOptions) => {
             try {
-                await commandHandler.call(this);
+                await commandHandler.call(this, options);
             } catch (error: unknown) {
                 if (isWrappedError(error, ['CLONE', 'CLI'])) {
                     return showAndLogError('Failed to clone project', error);
@@ -254,14 +308,14 @@ export class ProjectClone {
 
     public async cloneProjectFromSource(
         cloneSource: CloneSource,
-        cloneBuildArgs: CloneBuildArgs = {},
+        options: CloneProjectOptions = {},
     ): Promise<boolean> {
         const defaultProjectName =
             getDefaultProjectNameFromSourceString(cloneSource);
         const cloneResult = await cloneWithSource(
             cloneSource,
             defaultProjectName,
-            cloneBuildArgs,
+            options,
         );
         if (cloneResult.success) {
             await postCloneAction(cloneResult.repositoryPath);
@@ -269,7 +323,9 @@ export class ProjectClone {
         return cloneResult.success;
     }
 
-    private async cloneTemplateProject(): Promise<void> {
+    private async cloneTemplateProject(
+        options?: CloneCommandOptions,
+    ): Promise<void> {
         const selectedTarget = await this.targetStore.getSelectedTarget();
         const selectedTemplate = await getTemplateOfChoice(
             this.topoCli,
@@ -283,11 +339,13 @@ export class ProjectClone {
                 type: 'git',
                 url: selectedTemplate.url,
             },
-            {},
+            { projectName: options?.projectName },
         );
     }
 
-    private async cloneLocalProject(): Promise<void> {
+    private async cloneLocalProject(
+        options?: CloneCommandOptions,
+    ): Promise<void> {
         const cloneSourcePath = await getLocalSourcePath();
         if (!cloneSourcePath) {
             return;
@@ -297,11 +355,13 @@ export class ProjectClone {
                 type: 'dir',
                 path: cloneSourcePath,
             },
-            {},
+            { projectName: options?.projectName },
         );
     }
 
-    private async cloneRemoteProject(): Promise<void> {
+    private async cloneRemoteProject(
+        options?: CloneCommandOptions,
+    ): Promise<void> {
         const cloneSourceRemoteUrl = await vscode.window.showInputBox({
             prompt: 'Enter the git URL to clone from',
         });
@@ -313,7 +373,7 @@ export class ProjectClone {
                 type: 'git',
                 url: cloneSourceRemoteUrl,
             },
-            {},
+            { projectName: options?.projectName },
         );
     }
 }
