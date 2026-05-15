@@ -57,13 +57,13 @@ Right-click a service in the Targets tree to manage individual containers:
 | **Attach VS Code**  | Open the container in a VS Code Remote Containers session.               |
 | **Open in Browser** | Open the service in the default browser (auto-detects common web ports). |
 
-## Deploy
+## Deploy and Stop
 
-Deploy a compose file to the selected target. You can trigger a deployment from:
+Deploy or stop a compose file on the selected target. You can trigger either operation from:
 
-- Right-clicking a compose YAML file in the Explorer or editor tab and selecting **Topo Deploy**.
+- Right-clicking a compose YAML file in the Explorer or editor tab and selecting **Topo Deploy** or **Topo Stop**.
 
-The extension runs `topo deploy --target <ssh>` in a task terminal and reports success or failure.
+The extension runs the equivalent of `topo deploy --target <ssh>` or `topo stop --target <ssh>` in a task terminal and reports success or failure.
 
 ## Project Management
 
