@@ -90,8 +90,14 @@
                 "category": "Arm Topo"
             },
             {
-                "command": "topo.refresh",
+                "command": "topo.refreshTargetState",
                 "title": "Refresh",
+                "icon": "$(refresh)",
+                "category": "Arm Topo"
+            },
+            {
+                "command": "topo.refreshTargetContainers",
+                "title": "Refresh Containers",
                 "icon": "$(refresh)",
                 "category": "Arm Topo"
             },
@@ -232,7 +238,11 @@
                     "when": "false"
                 },
                 {
-                    "command": "topo.refresh",
+                    "command": "topo.refreshTargetState",
+                    "when": "false"
+                },
+                {
+                    "command": "topo.refreshTargetContainers",
                     "when": "false"
                 },
                 {
@@ -308,7 +318,7 @@
             ],
             "view/title": [
                 {
-                    "command": "topo.refresh",
+                    "command": "topo.refreshTargetState",
                     "when": "view == topo.target-manager",
                     "group": "navigation"
                 },

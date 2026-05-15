@@ -7,7 +7,7 @@ import { ContainersManager } from '../target/containersManager';
 import { mock, MockProxy } from 'jest-mock-extended';
 import type { TopoCli } from '../topoCli';
 import type { HealthCheckResult } from '../topoCliSchema';
-import { refreshCommand } from '../refreshCommand';
+import { refreshTargetStateCommand } from '../refreshCommands';
 
 jest.mock('../util/logger');
 
@@ -133,7 +133,7 @@ describe('TargetManager', () => {
                 expect.anything(),
             );
             expect(vscode.commands.registerCommand).toHaveBeenCalledWith(
-                refreshCommand,
+                refreshTargetStateCommand,
                 expect.any(Function),
             );
             expect(vscode.commands.registerCommand).toHaveBeenCalledWith(

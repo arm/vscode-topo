@@ -11,7 +11,7 @@ import { TargetSubsystemGroupTreeItem } from './targetSubsystemGroupTreeItem';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 import { HealthCheckDependency } from '../topoCliSchema';
 import { TargetDescriptionStore } from '../target/targetDescriptionStore';
-import { refreshCommand } from '../refreshCommand';
+import { refreshTargetStateCommand } from '../refreshCommands';
 
 function sortDependenciesByName(
     deps: HealthCheckDependency[],
@@ -86,13 +86,15 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
             return;
         }
         try {
+            const selected = await this.targetStore.getSelectedTarget();
             await this.targetStore.deleteTarget(treeNode.target);
+            if (selected === treeNode.target) {
+                vscode.commands.executeCommand(refreshTargetStateCommand);
+            }
         } catch (err) {
             const errorMessage = `Failed to remove target`;
             vscode.window.showErrorMessage(errorMessage);
             logger.error(errorMessage, err);
-        } finally {
-            vscode.commands.executeCommand(refreshCommand);
         }
     }
 

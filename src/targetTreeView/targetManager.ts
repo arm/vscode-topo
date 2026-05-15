@@ -6,7 +6,10 @@ import { logger } from '../util/logger';
 import { ContainersManager } from '../target/containersManager';
 import { getTargetTreeItemIcon } from './targetTreeItem';
 import { defaultSshConfigPath, getHosts } from '../util/ssh';
-import { refreshCommand } from '../refreshCommand';
+import {
+    refreshTargetContainersCommand,
+    refreshTargetStateCommand,
+} from '../refreshCommands';
 import { TargetStatus } from '../util/types';
 
 export function buildQuickPickItems(
@@ -58,23 +61,27 @@ export class TargetManager {
             treeDataProvider: this.targetTreeDataProvider,
             showCollapseAll: true,
         });
-        await this.refreshTargetVisualisation();
+        await this.refreshTargetState();
 
         this.context.subscriptions.push(
             this.statusBarItem,
             treeView,
-            vscode.commands.registerCommand(refreshCommand, () =>
-                this.refreshTargetVisualisation(),
+            vscode.commands.registerCommand(refreshTargetStateCommand, () =>
+                this.refreshTargetState(),
+            ),
+            vscode.commands.registerCommand(
+                refreshTargetContainersCommand,
+                () => this.refreshTargetContainers(),
             ),
             vscode.commands.registerCommand(
                 TargetManager.addTargetCommand,
                 () => this.addTarget(),
             ),
-            this.targetStore.onChanged(() => this.refreshTargetVisualisation()),
+            this.targetStore.onChanged(() => this.refreshTargetState()),
         );
     }
 
-    private async addTarget(): Promise<string | undefined> {
+    private async addTarget(): Promise<void> {
         const target = await this.promptForSshTarget();
         if (!target) {
             return;
@@ -89,7 +96,7 @@ export class TargetManager {
             return;
         }
         await this.targetStore.setSelected(target);
-        return target;
+        vscode.commands.executeCommand(refreshTargetStateCommand);
     }
 
     private async promptForSshTarget(): Promise<string | undefined> {
@@ -147,10 +154,19 @@ export class TargetManager {
         }
     }
 
-    private async refreshTargetVisualisation(): Promise<void> {
+    private async refreshVisualisations(): Promise<void> {
         const selectedTarget = await this.targetStore.getSelectedTarget();
-        // TODO get the target state once here and pass into both of these calls to avoid redundant work
         this.updateStatusBar(selectedTarget);
         this.targetTreeDataProvider.refresh();
+    }
+
+    private async refreshTargetState(): Promise<void> {
+        this.containersManager.clear();
+        this.refreshVisualisations();
+    }
+
+    private async refreshTargetContainers(): Promise<void> {
+        this.containersManager.clearContainers();
+        this.refreshVisualisations();
     }
 }
