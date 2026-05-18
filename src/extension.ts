@@ -97,7 +97,7 @@ export async function activate(
     await containersManager.activate();
     await targetTreeDataProvider.activate();
     hostDependenciesTreeDataProvider.activate();
-    await targetManager.activate();
+    targetManager.activate();
     containerStart.activate();
     await containerStop.activate();
     containerDelete.activate();
