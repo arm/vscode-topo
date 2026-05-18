@@ -107,8 +107,6 @@ describe('TargetTreeDataProvider', () => {
             target,
         },
     ];
-    const onChangedEmitter = new vscode.EventEmitter<void>();
-
     beforeEach(() => {
         const targetState: TargetState = {
             health: targetHealth,
@@ -128,7 +126,6 @@ describe('TargetTreeDataProvider', () => {
         targetDescriptionStoreMock.getDescription.mockResolvedValue(
             targetDescription,
         );
-        targetStoreMock.onChanged.mockImplementation(onChangedEmitter.event);
         provider = new TargetTreeDataProvider(
             context,
             containersManagerMock,

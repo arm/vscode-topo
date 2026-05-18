@@ -34,7 +34,6 @@ const waitImmediate = () =>
 
 const createTargetManager = () => {
     const onChangeEmitter = new vscode.EventEmitter<void>();
-    const onDataUpdateEmitter = new vscode.EventEmitter<void>();
     const context = mock<vscode.ExtensionContext>({ subscriptions: [] });
 
     const targetTreeDataProvider: MockProxy<TargetTreeDataProvider> =
@@ -58,7 +57,6 @@ const createTargetManager = () => {
     );
     return {
         onChangeEmitter,
-        onDataUpdateEmitter,
         targetTreeDataProvider,
         targetManager,
         targetStore,
