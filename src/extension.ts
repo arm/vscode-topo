@@ -49,7 +49,7 @@ export async function activate(
     const containerOpenInBrowser = new ContainerOpenInBrowser(context);
     const dockerCommands = new DockerCommands();
     const attachVsCode = new AttachVsCode(context, dockerCommands);
-    const attachShell = new AttachShell(context, dockerCommands);
+    const attachShell = new AttachShell(context, dockerCommands, targetStore);
     const containersManager = new ContainersManager(
         topoCli,
         dockerCommands,
