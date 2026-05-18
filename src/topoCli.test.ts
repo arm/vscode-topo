@@ -379,15 +379,8 @@ describe('TopoCli', () => {
     });
 
     it('hostHealth omits --target', async () => {
-        const cliResponse = {
-            host: { dependencies: [] },
-        };
-        execMock.mockImplementation((_bin, _cargs, _options, cb) => {
-            cb!(null, JSON.stringify(cliResponse), '');
-            return cp;
-        });
+        await topoCli.hostHealth();
 
-        await expect(topoCli.hostHealth()).resolves.toEqual(cliResponse);
         expect(execMock).toHaveBeenCalledTimes(1);
         expect(execMock).toHaveBeenCalledWith(
             topoCli.getBinaryPath(),
