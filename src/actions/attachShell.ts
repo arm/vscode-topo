@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
-import { ContainerCommands } from '../target/containerCommands';
 import * as manifest from '../manifest';
+import { ContainerItem } from '../util/types';
+import { ContainerCommands } from '../target/containerCommands';
 import { TargetStore } from '../target/targetStore';
 import { assertTargetContainerTreeItem } from '../targetTreeView/assertTargetContainerTreeItem';
-import { ContainerItem } from '../util/types';
 
 export class AttachShell {
     public static readonly attachShellCommand = `${manifest.PACKAGE_NAME}.attachShell`;
@@ -38,8 +38,8 @@ export class AttachShell {
         terminal.show();
     }
 
-    public async attachSSH() {
-        const target = await this.targetStore.getSelectedTarget();
+    public attachSSH() {
+        const target = this.targetStore.getSelectedTarget();
         if (!target) {
             throw new Error('No target is currently selected');
         }

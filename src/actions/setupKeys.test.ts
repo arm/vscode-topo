@@ -18,7 +18,7 @@ describe('SetupKeys', () => {
     beforeEach(() => {
         context = mock<vscode.ExtensionContext>({ subscriptions: [] });
         targetStore = mock<TargetStore>();
-        targetStore.getSelectedTarget.mockResolvedValue(target);
+        targetStore.getSelectedTarget.mockReturnValue(target);
     });
 
     afterEach(() => {
