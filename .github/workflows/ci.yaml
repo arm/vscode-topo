@@ -17,19 +17,12 @@ jobs:
         name: Build
         runs-on: ubuntu-latest
         steps:
-            - id: get-app-token
-              uses: getsentry/action-github-app-token@d4b5da6c5e37703f8c3b3e43abb5705b46e159cc
-              with:
-                  app_id: ${{ secrets.TOPO_ACCESS_APP_ID }}
-                  private_key: ${{ secrets.TOPO_ACCESS_APP_PRIVATE_KEY }}
             - uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e
             - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
               with:
                   node-version: ${{ env.NODE_VERSION }}
                   cache: npm
             - name: Install dependencies
-              env:
-                  GITHUB_TOKEN: ${{ steps.get-app-token.outputs.token }}
               run: npm ci --prefer-offline --no-audit --fund=false
             - name: Lint
               run: npm run lint
@@ -44,11 +37,6 @@ jobs:
                     - ubuntu-latest
                     - windows-latest
         steps:
-            - id: get-app-token
-              uses: getsentry/action-github-app-token@d4b5da6c5e37703f8c3b3e43abb5705b46e159cc
-              with:
-                  app_id: ${{ secrets.TOPO_ACCESS_APP_ID }}
-                  private_key: ${{ secrets.TOPO_ACCESS_APP_PRIVATE_KEY }}
             - uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e
             - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
               with:
@@ -56,8 +44,6 @@ jobs:
                   cache: npm
             - name: Install NPM dependencies
               run: npm ci --prefer-offline --no-audit --fund=false
-              env:
-                  GITHUB_TOKEN: ${{ steps.get-app-token.outputs.token }}
             - name: Download other dependencies
               run: npm run download
             - name: Store npm-debug.log
