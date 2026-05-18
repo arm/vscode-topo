@@ -4,7 +4,9 @@ import * as vscode from 'vscode';
 import * as manifest from './manifest';
 import {
     HealthCheckResult,
+    HostHealthCheckResult,
     healthCheckResultSchema,
+    hostHealthCheckResultSchema,
     ProjectDescription,
     projectDescriptionSchema,
     TemplateDescription,
@@ -12,7 +14,7 @@ import {
     templateSchema,
     topoLogEntrySchema,
 } from './topoCliSchema';
-import { array, assert, create, is } from 'superstruct';
+import { array, assert, create, is, Struct } from 'superstruct';
 import {
     WrappedError,
     WrappedErrorLog,
@@ -260,17 +262,21 @@ export class TopoCli {
         });
     }
 
-    public async health(sshTarget: string): Promise<HealthCheckResult> {
+    private async runHealth<T>(
+        schema: Struct<T>,
+        sshTarget?: string,
+    ): Promise<T> {
         const bin = this.getBinaryPath();
-        const cmd = [
-            'health',
-            '--target',
-            sshTarget,
+        const cmd = ['health'];
+        if (sshTarget) {
+            cmd.push('--target', sshTarget);
+        }
+        cmd.push(
             '--skip-version-checks',
             '--accept-new-host-keys',
             '-o',
             'json',
-        ];
+        );
         const promise = await new Promise<string>((resolve, reject) => {
             const child = childProcess.execFile(
                 bin,
@@ -290,7 +296,15 @@ export class TopoCli {
             child.stdin?.end();
         });
         const result = JSON.parse(promise);
-        assert(result, healthCheckResultSchema);
+        assert(result, schema);
         return result;
+    }
+
+    public async hostHealth(): Promise<HostHealthCheckResult> {
+        return this.runHealth(hostHealthCheckResultSchema);
+    }
+
+    public async health(sshTarget: string): Promise<HealthCheckResult> {
+        return this.runHealth(healthCheckResultSchema, sshTarget);
     }
 }

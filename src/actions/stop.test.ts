@@ -27,7 +27,7 @@ describe('Stop', () => {
     beforeEach(() => {
         context = mock<vscode.ExtensionContext>({ subscriptions: [] });
         targetStore = mock<TargetStore>();
-        targetStore.getSelectedTarget.mockResolvedValue(target);
+        targetStore.getSelectedTarget.mockReturnValue(target);
         stop = new Stop(context, targetStore);
         registerSpy = jest
             .spyOn(vscode.commands, 'registerCommand')
@@ -55,7 +55,7 @@ describe('Stop', () => {
     });
 
     it('fails with no target selected', async () => {
-        targetStore.getSelectedTarget.mockResolvedValueOnce(undefined);
+        targetStore.getSelectedTarget.mockReturnValue(undefined);
 
         const stopOperation = stop.stop(composeFilePath);
 

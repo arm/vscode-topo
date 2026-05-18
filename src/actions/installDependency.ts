@@ -44,7 +44,7 @@ export class InstallDependency implements vscode.Disposable {
         const abortController = new AbortController();
         this.targetChangedAbortController = abortController;
 
-        const target = await this.targetStore.getSelectedTarget();
+        const target = this.targetStore.getSelectedTarget();
         if (!target) {
             return;
         }
@@ -72,7 +72,7 @@ export class InstallDependency implements vscode.Disposable {
             return;
         }
 
-        const target = await this.targetStore.getSelectedTarget();
+        const target = this.targetStore.getSelectedTarget();
         if (!target) {
             showAndLogError(
                 `Failed to install dependency`,

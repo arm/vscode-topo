@@ -54,7 +54,7 @@ describe('InstallDependency', () => {
     const target = 'user@topo.local';
 
     beforeEach(() => {
-        targetStore.getSelectedTarget.mockResolvedValue(target);
+        targetStore.getSelectedTarget.mockReturnValue(target);
         containersManager.getTargetState.mockResolvedValue({
             health: loadedHealth.target,
             status: 'connected',

@@ -378,6 +378,28 @@ describe('TopoCli', () => {
         expect(cp.stdin.end).toHaveBeenCalledTimes(1);
     });
 
+    it('hostHealth omits --target', async () => {
+        await topoCli.hostHealth();
+
+        expect(execMock).toHaveBeenCalledTimes(1);
+        expect(execMock).toHaveBeenCalledWith(
+            topoCli.getBinaryPath(),
+            [
+                'health',
+                '--skip-version-checks',
+                '--accept-new-host-keys',
+                '-o',
+                'json',
+            ],
+            {
+                env: {},
+                windowsHide: true,
+            },
+            expect.any(Function),
+        );
+        expect(cp.stdin.end).toHaveBeenCalledTimes(1);
+    });
+
     it('health throws error when JSON output is invalid', async () => {
         execMock.mockImplementation((_bin, _cargs, _options, cb) => {
             cb!(null, 'invalid json', '');

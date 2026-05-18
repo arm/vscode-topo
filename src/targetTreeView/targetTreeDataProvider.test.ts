@@ -121,7 +121,7 @@ describe('TargetTreeDataProvider', () => {
         containersManagerMock.getTargetState.mockResolvedValue(targetState);
 
         targetStoreMock = mock<TargetStore>();
-        targetStoreMock.getSelectedTarget.mockResolvedValue(target);
+        targetStoreMock.getSelectedTarget.mockReturnValue(target);
         targetDescriptionStoreMock = mock<TargetDescriptionStore>();
         targetDescriptionStoreMock.getDescription.mockResolvedValue(
             targetDescription,
@@ -221,7 +221,7 @@ describe('TargetTreeDataProvider', () => {
 
         it('marks selected target as disconnected when health is undefined', async () => {
             targetStoreMock.getTargets.mockReturnValue([target]);
-            targetStoreMock.getSelectedTarget.mockResolvedValue(target);
+            targetStoreMock.getSelectedTarget.mockReturnValue(target);
             containersManagerMock.getTargetState.mockResolvedValue({
                 health: undefined,
                 status: 'disconnected',
@@ -242,7 +242,7 @@ describe('TargetTreeDataProvider', () => {
         it('does not mark non-selected targets as connected', async () => {
             const otherTarget = 'user@other.local';
             targetStoreMock.getTargets.mockReturnValue([target, otherTarget]);
-            targetStoreMock.getSelectedTarget.mockResolvedValue(target);
+            targetStoreMock.getSelectedTarget.mockReturnValue(target);
             containersManagerMock.getTargetState.mockResolvedValue({
                 health: targetHealth,
                 status: 'connected',
