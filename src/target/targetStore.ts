@@ -86,7 +86,7 @@ export class TargetStore {
         this._onChanged.fire();
     }
 
-    public async getSelectedTarget(): Promise<string | undefined> {
+    public getSelectedTarget(): string | undefined {
         const targets = this.getTargets();
         return targets.find((target) => target === this.selected);
     }

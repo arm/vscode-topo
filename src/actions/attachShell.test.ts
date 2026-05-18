@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
 import { AttachShell } from '../actions/attachShell';
+import { mock, MockProxy } from 'jest-mock-extended';
+import { ContainerItem } from '../util/types';
+import { TargetStore } from '../target/targetStore';
 import { DockerCommands } from '../target/dockerCommands';
 import { TargetContainerTreeItem } from '../targetTreeView/targetContainerTreeItem';
-import { mock, MockProxy } from 'jest-mock-extended';
-import { TargetStore } from '../target/targetStore';
-import { ContainerItem } from '../util/types';
 
 jest.mock('../util/logger');
 

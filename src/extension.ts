@@ -91,7 +91,7 @@ export async function activate(
     attachShell.activate();
     await targetTreeDataProvider.activate();
     hostDependenciesTreeDataProvider.activate();
-    await targetManager.activate();
+    targetManager.activate();
     containerStart.activate();
     await containerStop.activate();
     containerDelete.activate();
