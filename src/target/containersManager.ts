@@ -85,7 +85,7 @@ export class ContainersManager implements vscode.Disposable {
     }
 
     private async updateTarget(): Promise<void> {
-        const selectedTarget = await this.targetStore.getSelectedTarget();
+        const selectedTarget = this.targetStore.getSelectedTarget();
         this.unsetTarget();
         if (selectedTarget) {
             await this.startAutoRefresh(selectedTarget);

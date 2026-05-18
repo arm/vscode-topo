@@ -353,7 +353,7 @@ describe('ProjectClone', () => {
 
         it('creates task and runs clone command for template selection', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-            targetStore.getSelectedTarget.mockResolvedValue('me@example.com');
+            targetStore.getSelectedTarget.mockReturnValue('me@example.com');
             topoCli.listTemplates.mockReturnValue(templateList);
             showQuickPickItemMock.mockResolvedValueOnce(
                 templateQuickPickItems[0],
@@ -389,7 +389,7 @@ describe('ProjectClone', () => {
 
         it('lists templates without a target when none is selected', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-            targetStore.getSelectedTarget.mockResolvedValue(undefined);
+            targetStore.getSelectedTarget.mockReturnValue(undefined);
             topoCli.listTemplates.mockReturnValue(templateList);
             jest.mocked(vscode.window.showQuickPick).mockResolvedValueOnce(
                 undefined,
