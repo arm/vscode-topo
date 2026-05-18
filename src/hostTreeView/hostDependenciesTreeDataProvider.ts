@@ -59,9 +59,10 @@ export class HostDependenciesTreeDataProvider implements vscode.TreeDataProvider
         if (!element) {
             try {
                 const health = await this.topoCli.hostHealth();
-                const dependenciesGroup = new HealthCheckDependencyGroupTreeItem(
-                    health.host.dependencies,
-                );
+                const dependenciesGroup =
+                    new HealthCheckDependencyGroupTreeItem(
+                        health.host.dependencies,
+                    );
                 return [dependenciesGroup];
             } catch (err) {
                 logger.warn(failedToLoadHostDependenciesMessage, err);
