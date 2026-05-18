@@ -221,7 +221,7 @@ describe('TargetManager', () => {
             const targetSsh = 'root@192.0.2.1';
             mockQuickPick({ label: targetSsh });
             const { targetManager } = createTargetManager();
-            await targetManager.activate();
+            targetManager.activate();
 
             await executeCommand(TargetManager.addTargetCommand);
 

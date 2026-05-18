@@ -86,7 +86,7 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
             return;
         }
         try {
-            const selected = await this.targetStore.getSelectedTarget();
+            const selected = this.targetStore.getSelectedTarget();
             await this.targetStore.deleteTarget(treeNode.target);
             if (selected === treeNode.target) {
                 vscode.commands.executeCommand(refreshTargetStateCommand);

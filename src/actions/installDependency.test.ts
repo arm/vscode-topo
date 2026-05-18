@@ -185,7 +185,7 @@ describe('InstallDependency', () => {
         });
 
         await installDependency.activate();
-        targetStore.getSelectedTarget.mockResolvedValueOnce(undefined);
+        targetStore.getSelectedTarget.mockReturnValueOnce(undefined);
         await getCommandHandler()(dependencyItem);
 
         expect(vscode.commands.executeCommand).not.toHaveBeenCalledWith(

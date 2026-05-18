@@ -376,7 +376,7 @@ describe('TargetTreeDataProvider', () => {
 
         it('refreshes target state after removing selected target', async () => {
             const targetItem = new TargetTreeItem(target, true, 'connected');
-            targetStoreMock.getSelectedTarget.mockResolvedValue(target);
+            targetStoreMock.getSelectedTarget.mockReturnValue(target);
             await provider.activate();
 
             await executeCommand(
@@ -396,7 +396,7 @@ describe('TargetTreeDataProvider', () => {
                 false,
                 'disconnected',
             );
-            targetStoreMock.getSelectedTarget.mockResolvedValue(target);
+            targetStoreMock.getSelectedTarget.mockReturnValue(target);
             await provider.activate();
 
             await executeCommand(
