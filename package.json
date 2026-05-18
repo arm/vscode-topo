@@ -124,6 +124,11 @@
                 "command": "topo.deploy.context",
                 "title": "Topo Deploy",
                 "category": "Arm Topo"
+            },
+            {
+                "command": "topo.stop.context",
+                "title": "Topo Stop",
+                "category": "Arm Topo"
             }
         ],
         "viewsContainers": {
@@ -161,14 +166,24 @@
             "editor/title/context": [
                 {
                     "command": "topo.deploy.context",
-                    "group": "topo",
+                    "group": "topo@1",
+                    "when": "resourceFilename =~ /compose(\\..*)?\\.yaml$/"
+                },
+                {
+                    "command": "topo.stop.context",
+                    "group": "topo@2",
                     "when": "resourceFilename =~ /compose(\\..*)?\\.yaml$/"
                 }
             ],
             "explorer/context": [
                 {
                     "command": "topo.deploy.context",
-                    "group": "topo",
+                    "group": "topo@1",
+                    "when": "resourceFilename =~ /compose(\\..*)?\\.yaml$/"
+                },
+                {
+                    "command": "topo.stop.context",
+                    "group": "topo@2",
                     "when": "resourceFilename =~ /compose(\\..*)?\\.yaml$/"
                 }
             ],
@@ -223,6 +238,10 @@
                 },
                 {
                     "command": "topo.deploy.context",
+                    "when": "false"
+                },
+                {
+                    "command": "topo.stop.context",
                     "when": "false"
                 },
                 {
