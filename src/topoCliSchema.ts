@@ -38,10 +38,18 @@ export const healthCheckDependencySchema = type({
 
 export type HealthCheckDependency = Infer<typeof healthCheckDependencySchema>;
 
+const healthCheckHostSchema = type({
+    dependencies: array(healthCheckDependencySchema),
+});
+
+export const hostHealthCheckResultSchema = type({
+    host: healthCheckHostSchema,
+});
+
+export type HostHealthCheckResult = Infer<typeof hostHealthCheckResultSchema>;
+
 export const healthCheckResultSchema = type({
-    host: type({
-        dependencies: array(healthCheckDependencySchema),
-    }),
+    host: healthCheckHostSchema,
     target: type({
         isLocalhost: boolean(),
         connectivity: healthCheckDependencySchema,

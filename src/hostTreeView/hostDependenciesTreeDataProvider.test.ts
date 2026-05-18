@@ -61,7 +61,7 @@ describe('HostDependenciesTreeDataProvider', () => {
     beforeEach(() => {
         context = mock<vscode.ExtensionContext>({ subscriptions: [] });
         topoCli = mock<TopoCli>();
-        topoCli.health.mockResolvedValue(health);
+        topoCli.hostHealth.mockResolvedValue(health);
         provider = new HostDependenciesTreeDataProvider(context, topoCli);
     });
 
@@ -93,7 +93,7 @@ describe('HostDependenciesTreeDataProvider', () => {
     it('returns a Dependencies group at the root', async () => {
         const children = await provider.getChildren();
 
-        expect(topoCli.health).toHaveBeenCalledWith('localhost');
+        expect(topoCli.hostHealth).toHaveBeenCalledWith();
         expect(children).toHaveLength(1);
         expect(children[0]).toBeInstanceOf(HealthCheckDependencyGroupTreeItem);
         expect(children[0].label).toBe('Dependencies');
@@ -104,7 +104,7 @@ describe('HostDependenciesTreeDataProvider', () => {
         const rootChildren = await provider.getChildren();
         const children = await provider.getChildren(rootChildren[0]);
 
-        expect(topoCli.health).toHaveBeenCalledWith('localhost');
+        expect(topoCli.hostHealth).toHaveBeenCalledWith();
         expect(children).toHaveLength(2);
         expect(
             children.every(
@@ -125,7 +125,9 @@ describe('HostDependenciesTreeDataProvider', () => {
     });
 
     it('returns an error item when host health cannot be loaded', async () => {
-        topoCli.health.mockRejectedValueOnce(new Error('health unavailable'));
+        topoCli.hostHealth.mockRejectedValueOnce(
+            new Error('health unavailable'),
+        );
 
         const children = await provider.getChildren();
 

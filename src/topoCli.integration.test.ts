@@ -51,7 +51,17 @@ describe('listTemplates', () => {
 });
 
 describe('health', () => {
-    it('parses health check result correctly', async () => {
+    it('parses host health check result correctly', async () => {
+        const health = await topoCli.hostHealth();
+
+        expect(health).toEqual({
+            host: {
+                dependencies: expect.any(Array),
+            },
+        });
+    });
+
+    it('parses target health check result correctly', async () => {
         const health = await topoCli.health('localhost');
 
         expect(health).toEqual({

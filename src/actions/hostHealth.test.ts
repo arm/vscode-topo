@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { HostHealth } from './hostHealth';
 import { TopoCli } from '../topoCli';
-import { HealthCheckResult } from '../topoCliSchema';
+import { HealthCheckResult, HostHealthCheckResult } from '../topoCliSchema';
 
 jest.mock('../util/logger');
 
@@ -57,24 +57,10 @@ describe('HostHealth', () => {
                 },
             ],
         };
-        const healthResult: HealthCheckResult = {
+        const healthResult: HostHealthCheckResult = {
             host: hostHealth,
-            target: {
-                isLocalhost: true,
-                dependencies: [],
-                connectivity: {
-                    name: 'Connectivity',
-                    status: 'ok',
-                    value: 'ok',
-                },
-                subsystemDriver: {
-                    name: 'Subsystem Driver',
-                    status: 'ok',
-                    value: 'ready',
-                },
-            },
         };
-        topoCli.health.mockResolvedValue(healthResult);
+        topoCli.hostHealth.mockResolvedValue(healthResult);
         const health = new HostHealth(context, topoCli);
         health.activate();
         const document = mock<vscode.TextDocument>();
@@ -97,7 +83,7 @@ describe('HostHealth', () => {
             ),
         );
 
-        expect(topoCli.health).toHaveBeenCalledWith('localhost');
+        expect(topoCli.hostHealth).toHaveBeenCalledWith();
         expect((uri as vscode.Uri).scheme).toBe(
             HostHealth.inspectHostHealthScheme,
         );
@@ -108,7 +94,7 @@ describe('HostHealth', () => {
     });
 
     it('shows an error when host health command fails', async () => {
-        topoCli.health.mockRejectedValue(new Error('health unavailable'));
+        topoCli.hostHealth.mockRejectedValue(new Error('health unavailable'));
         const health = new HostHealth(context, topoCli);
         health.activate();
 
