@@ -32,7 +32,6 @@ function createContainerItem(
     };
 }
 
-// TODO write new test suite for this
 export class ContainersManager {
     private containersCache = new Map<string, Promise<ContainerItem[]>>();
     private targetStateCache = new Map<string, Promise<TargetState>>();
