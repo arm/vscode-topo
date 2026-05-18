@@ -5,6 +5,7 @@ import { Stop } from './stop';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { TargetStore } from '../target/targetStore';
 import { executeTask } from '../util/executeTask';
+import { refreshTargetContainersCommand } from '../refreshCommands';
 
 jest.mock('../util/logger');
 jest.mock('../util/executeTask');
@@ -71,12 +72,30 @@ describe('Stop', () => {
         );
     });
 
+    it('refreshes target containers after stopping services', async () => {
+        await stop.stop(composeFilePath);
+
+        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            refreshTargetContainersCommand,
+        );
+    });
+
     it('handles task failure', async () => {
         executeTaskMock.mockRejectedValueOnce(new Error('stop failed'));
         await stop.stop(composeFilePath);
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
             'Stopping services on topo.local failed: stop failed',
+        );
+    });
+
+    it('refreshes target containers when stop fails', async () => {
+        executeTaskMock.mockRejectedValueOnce(new Error('stop failed'));
+
+        await stop.stop(composeFilePath);
+
+        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            refreshTargetContainersCommand,
         );
     });
 
