@@ -5,6 +5,7 @@ import { Deploy } from './deploy';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { TargetStore } from '../target/targetStore';
 import { executeTask } from '../util/executeTask';
+import { refreshTargetContainersCommand } from '../refreshCommands';
 
 jest.mock('../util/logger');
 jest.mock('../util/executeTask');
@@ -68,6 +69,14 @@ describe('Deploy', () => {
             'Deploy to topo.local',
             ['topo', 'deploy', '--target', 'topo.local'],
             { cwd: path.dirname(composeFilePath) },
+        );
+    });
+
+    it('refreshes target containers after deploying', async () => {
+        await deploy.deploy(composeFilePath);
+
+        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            refreshTargetContainersCommand,
         );
     });
 

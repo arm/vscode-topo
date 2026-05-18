@@ -6,6 +6,7 @@ import { TargetContainerTreeItem } from '../targetTreeView/targetContainerTreeIt
 import { WrappedError } from '../errors/wrappedError';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { ContainerCommands } from '../target/containerCommands';
+import { refreshTargetContainersCommand } from '../refreshCommands';
 
 describe('ContainerDelete', () => {
     let context: MockProxy<vscode.ExtensionContext>;
@@ -77,6 +78,21 @@ describe('ContainerDelete', () => {
         expect(containerCommands.deleteContainer).toHaveBeenCalledWith(
             'abc123',
             target,
+        );
+    });
+
+    it('refreshes target containers after deleting a container', async () => {
+        const containerCommands = mock<ContainerCommands>();
+        const containerDelete = new ContainerDelete(context, containerCommands);
+        containerDelete.activate();
+
+        await vscode.commands.executeCommand(
+            ContainerDelete.deleteContainerCommand,
+            treeItem,
+        );
+
+        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            refreshTargetContainersCommand,
         );
     });
 

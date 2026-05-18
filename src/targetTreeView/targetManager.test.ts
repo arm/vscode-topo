@@ -7,7 +7,10 @@ import { ContainersManager } from '../target/containersManager';
 import { mock, MockProxy } from 'jest-mock-extended';
 import type { TopoCli } from '../topoCli';
 import type { HealthCheckResult } from '../topoCliSchema';
-import { refreshTargetStateCommand } from '../refreshCommands';
+import {
+    refreshTargetContainersCommand,
+    refreshTargetStateCommand,
+} from '../refreshCommands';
 
 jest.mock('../util/logger');
 
@@ -123,7 +126,7 @@ describe('TargetManager', () => {
     });
 
     describe('activation', () => {
-        it('registers tree provider and refresh command on activate', async () => {
+        it('registers tree provider and refresh commands on activate', async () => {
             const { targetManager, context } = createTargetManager();
 
             await targetManager.activate();
@@ -134,6 +137,10 @@ describe('TargetManager', () => {
             );
             expect(vscode.commands.registerCommand).toHaveBeenCalledWith(
                 refreshTargetStateCommand,
+                expect.any(Function),
+            );
+            expect(vscode.commands.registerCommand).toHaveBeenCalledWith(
+                refreshTargetContainersCommand,
                 expect.any(Function),
             );
             expect(vscode.commands.registerCommand).toHaveBeenCalledWith(
@@ -182,6 +189,19 @@ describe('TargetManager', () => {
             expect(targetStore.addTarget).toHaveBeenCalledTimes(1);
             expect(targetStore.addTarget).toHaveBeenCalledWith(targetSsh);
             expect(targetStore.setSelected).toHaveBeenCalledWith(targetSsh);
+        });
+
+        it('refreshes target state after adding a target', async () => {
+            const targetSsh = 'root@192.0.2.1';
+            mockQuickPick({ label: targetSsh });
+            const { targetManager } = createTargetManager();
+            await targetManager.activate();
+
+            await executeCommand(TargetManager.addTargetCommand);
+
+            expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+                refreshTargetStateCommand,
+            );
         });
 
         it('does nothing when quick pick is dismissed', async () => {

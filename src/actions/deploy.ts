@@ -5,6 +5,7 @@ import { getErrorMessage } from '../util/getErrorMessage';
 import path from 'node:path';
 import { TargetStore } from '../target/targetStore';
 import { executeTask } from '../util/executeTask';
+import { refreshTargetContainersCommand } from '../refreshCommands';
 
 const viewLogsItem: vscode.MessageItem = {
     title: 'View Logs',
@@ -78,6 +79,8 @@ export class Deploy {
             if (choice?.title === viewLogsItem.title) {
                 terminal?.show();
             }
+        } finally {
+            vscode.commands.executeCommand(refreshTargetContainersCommand);
         }
     }
 }

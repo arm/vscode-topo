@@ -4,6 +4,7 @@ import { assertTargetContainerTreeItem } from '../targetTreeView/assertTargetCon
 import { showAndLogError } from '../util/showAndLogError';
 import { isWrappedError } from '../errors/wrappedError';
 import { ContainerCommands } from '../target/containerCommands';
+import { refreshTargetContainersCommand } from '../refreshCommands';
 
 export class ContainerStop {
     public static readonly stopContainerCommand = `${manifest.PACKAGE_NAME}.stopContainer`;
@@ -38,6 +39,8 @@ export class ContainerStop {
                 return;
             }
             throw err;
+        } finally {
+            vscode.commands.executeCommand(refreshTargetContainersCommand);
         }
     }
 }

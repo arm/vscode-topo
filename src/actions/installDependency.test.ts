@@ -6,6 +6,7 @@ import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependenc
 import { HealthCheckResult } from '../topoCliSchema';
 import { ContainersManager } from '../target/containersManager';
 import { executeTask } from '../util/executeTask';
+import { refreshTargetStateCommand } from '../refreshCommands';
 
 jest.mock('../util/logger');
 jest.mock('../util/executeTask');
@@ -100,6 +101,26 @@ describe('InstallDependency', () => {
         );
     });
 
+    it('refreshes target state after installing a dependency from the tree', async () => {
+        const installDependency = new InstallDependency(
+            targetStore,
+            containersManager,
+        );
+        const dependencyItem = new HealthCheckDependencyTreeItem({
+            name: 'Remoteproc Runtime',
+            status: 'error',
+            value: 'missing',
+            fix: 'run `topo install remoteproc-runtime`',
+        });
+
+        await installDependency.activate();
+        await getCommandHandler()(dependencyItem);
+
+        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            refreshTargetStateCommand,
+        );
+    });
+
     it('does nothing for a healthy dependency', async () => {
         const installDependency = new InstallDependency(
             targetStore,
@@ -115,6 +136,37 @@ describe('InstallDependency', () => {
         await getCommandHandler()(dependencyItem);
 
         expect(executeTaskMock).not.toHaveBeenCalled();
+    });
+
+    it('refreshes target state after installing dependencies from the notification', async () => {
+        jest.mocked(vscode.window.showWarningMessage).mockResolvedValueOnce({
+            title: 'Install missing dependencies',
+        });
+        containersManager.getTargetState.mockResolvedValue({
+            health: {
+                ...loadedHealth.target,
+                dependencies: [
+                    ...loadedHealth.target.dependencies,
+                    {
+                        name: 'Remoteproc Runtime',
+                        status: 'error',
+                        value: 'missing',
+                        fix: 'run `topo install remoteproc-runtime`',
+                    },
+                ],
+            },
+            status: 'connected',
+        });
+        const installDependency = new InstallDependency(
+            targetStore,
+            containersManager,
+        );
+
+        await installDependency.activate();
+
+        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            refreshTargetStateCommand,
+        );
     });
 
     it('shows one notification for missing installable dependencies', async () => {

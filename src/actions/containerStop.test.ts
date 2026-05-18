@@ -6,6 +6,7 @@ import { TargetContainerTreeItem } from '../targetTreeView/targetContainerTreeIt
 import { WrappedError } from '../errors/wrappedError';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { ContainerCommands } from '../target/containerCommands';
+import { refreshTargetContainersCommand } from '../refreshCommands';
 
 describe('ContainerStop', () => {
     let context: MockProxy<vscode.ExtensionContext>;
@@ -70,6 +71,21 @@ describe('ContainerStop', () => {
         expect(containerCommands.stopContainer).toHaveBeenCalledWith(
             'abc123',
             target,
+        );
+    });
+
+    it('refreshes target containers after stopping a container', async () => {
+        const containerCommands = mock<ContainerCommands>();
+        const containerStop = new ContainerStop(context, containerCommands);
+        await containerStop.activate();
+
+        await vscode.commands.executeCommand(
+            ContainerStop.stopContainerCommand,
+            treeItem,
+        );
+
+        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            refreshTargetContainersCommand,
         );
     });
 

@@ -6,6 +6,7 @@ import { WrappedError } from '../errors/wrappedError';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { ContainerItem } from '../util/types';
 import { ContainerCommands } from '../target/containerCommands';
+import { refreshTargetContainersCommand } from '../refreshCommands';
 
 describe('ContainerStart', () => {
     let context: MockProxy<vscode.ExtensionContext>;
@@ -75,6 +76,21 @@ describe('ContainerStart', () => {
         expect(containerCommands.startContainer).toHaveBeenCalledWith(
             'abc123',
             target,
+        );
+    });
+
+    it('refreshes target containers after starting a container', async () => {
+        const containerCommands = mock<ContainerCommands>();
+        const containerStart = new ContainerStart(context, containerCommands);
+        containerStart.activate();
+
+        await vscode.commands.executeCommand(
+            ContainerStart.startContainerCommand,
+            treeItem,
+        );
+
+        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            refreshTargetContainersCommand,
         );
     });
 
