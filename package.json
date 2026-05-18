@@ -15,7 +15,15 @@
     ],
     "activationEvents": [
         "onUri",
-        "onLanguage:yaml"
+        "onLanguage:yaml",
+        "onLanguageModelTool:topo_listTemplates",
+        "onLanguageModelTool:topo_listExamples",
+        "onLanguageModelTool:topo_clone",
+        "onLanguageModelTool:topo_cloneTemplate",
+        "onLanguageModelTool:topo_cloneProject",
+        "onLanguageModelTool:topo_deployProject",
+        "onLanguageModelTool:topo_stopProject",
+        "onLanguageModelTool:topo_addTarget"
     ],
     "main": "./dist/extension.js",
     "topo": {
@@ -350,37 +358,95 @@
                 "name": "topo_listTemplates",
                 "displayName": "List Topo Templates",
                 "toolReferenceName": "topoListTemplates",
-                "modelDescription": "Lists the available Arm Topo project templates. Each template has a name, description, git URL, and compatibility status. Optionally filter by a specific SSH target.",
+                "modelDescription": "Lists existing Arm Topo example programs, demos, samples, and project templates, and can also clone a listed template when templateName is provided or deploy the current project when deploy is true. In chat, use this tool instead of running `topo templates`, `topo deploy`, or other `topo` commands directly. Use this first when the user asks for examples for a board or target, including wording like 'example programs for imx93'. Do not create a new example from scratch before reading this list. If the user wants to get, pull in, clone, create, or open one of the listed examples and no separate clone tool is surfaced, call this same tool again with the listed templateName and optional projectName; otherwise call topo_clone / topoClone with templateName. If the user asks to deploy it and no separate deploy tool is surfaced, call this same tool again with deploy: true and optional composeFilePath; otherwise call topo_deployProject. Do not run git clone, direct topo clone, or direct topo deploy. Pass the mentioned board or SSH-config target name when available; if the target was already selected, the tool uses it automatically.",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
                         "target": {
                             "type": "string",
-                            "description": "Optional SSH target (e.g. user@host) to filter templates by compatibility."
+                            "description": "Optional SSH target, SSH-config hostname, or board/target name from the user prompt (e.g. user@host, my-board, or imx93) to filter templates by compatibility."
+                        },
+                        "templateName": {
+                            "type": "string",
+                            "description": "Optional template name to clone through this same Topo examples/templates tool when the user wants to get, pull in, clone, create, or open a listed example. Use this instead of falling back to git clone or direct topo clone."
+                        },
+                        "projectName": {
+                            "type": "string",
+                            "description": "Optional project folder name to use when cloning a template through this tool."
+                        },
+                        "deploy": {
+                            "type": "boolean",
+                            "description": "Set true to deploy the current project through this same Topo examples/templates tool when the user asks to deploy and no separate deploy tool is surfaced. Use this instead of falling back to direct topo deploy."
+                        },
+                        "composeFilePath": {
+                            "type": "string",
+                            "description": "Optional absolute path to a compose YAML file to deploy when deploy is true. If omitted, the tool searches the workspace for compose.yaml."
                         }
                     }
                 },
                 "canBeReferencedInPrompt": true,
                 "tags": [
                     "topo",
+                    "templates",
+                    "examples",
+                    "demos",
+                    "samples"
+                ]
+            },
+            {
+                "name": "topo_listExamples",
+                "displayName": "List Topo Examples",
+                "toolReferenceName": "topoListExamples",
+                "modelDescription": "Lists existing Arm Topo example programs, demos, samples, and project templates for a board or target, and can also clone a listed template when templateName is provided or deploy the current project when deploy is true. In chat, use this tool instead of running `topo templates`, `topo deploy`, or other `topo` commands directly. Use this first when the user asks for example programs, sample apps, demos, starter projects, or code examples for a board, including wording like 'example programs for imx93'. Do not create a new example from scratch before reading this list. If the user wants to get, pull in, clone, create, or open one of the listed examples and no separate clone tool is surfaced, call this same tool again with the listed templateName and optional projectName; otherwise call topo_clone / topoClone with templateName. If the user asks to deploy it and no separate deploy tool is surfaced, call this same tool again with deploy: true and optional composeFilePath; otherwise call topo_deployProject. Do not run git clone, direct topo clone, or direct topo deploy. Pass the mentioned board or SSH-config target name when available; if the target was already selected, the tool uses it automatically.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "target": {
+                            "type": "string",
+                            "description": "Optional SSH target, SSH-config hostname, or board/target name from the user prompt (e.g. user@host, my-board, or imx93) to filter examples by compatibility."
+                        },
+                        "templateName": {
+                            "type": "string",
+                            "description": "Optional template name to clone through this same Topo examples/templates tool when the user wants to get, pull in, clone, create, or open a listed example. Use this instead of falling back to git clone or direct topo clone."
+                        },
+                        "projectName": {
+                            "type": "string",
+                            "description": "Optional project folder name to use when cloning a template through this tool."
+                        },
+                        "deploy": {
+                            "type": "boolean",
+                            "description": "Set true to deploy the current project through this same Topo examples/templates tool when the user asks to deploy and no separate deploy tool is surfaced. Use this instead of falling back to direct topo deploy."
+                        },
+                        "composeFilePath": {
+                            "type": "string",
+                            "description": "Optional absolute path to a compose YAML file to deploy when deploy is true. If omitted, the tool searches the workspace for compose.yaml."
+                        }
+                    }
+                },
+                "canBeReferencedInPrompt": true,
+                "tags": [
+                    "topo",
+                    "examples",
+                    "demos",
+                    "samples",
                     "templates"
                 ]
             },
             {
-                "name": "topo_cloneTemplate",
-                "displayName": "Clone Topo Template",
-                "toolReferenceName": "topoCloneTemplate",
-                "modelDescription": "Clones an Arm Topo project from a template name or a git URL. When using a template name, it resolves the URL from the available templates list. A project name can be supplied programmatically; if omitted or already present at the destination, the user will be prompted to choose one.",
+                "name": "topo_clone",
+                "displayName": "Topo Clone",
+                "toolReferenceName": "topoClone",
+                "modelDescription": "Clones an Arm Topo project from a template name or repository URL through the Topo extension clone flow. This is the exact Topo clone operation for chat. In chat, use this tool instead of running `topo clone`, `git clone`, or other shell commands directly. This tool invokes the extension's Topo clone implementation, which runs the correct `topo clone` task internally. For examples listed by topo_listExamples or topo_listTemplates, clone by passing the listed templateName. Use a repository URL only when the user explicitly asks for a specific repository.",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
                         "templateName": {
                             "type": "string",
-                            "description": "The name of a template to clone (from the templates list)."
+                            "description": "The name of a template to clone from the Topo examples/templates list."
                         },
                         "gitUrl": {
                             "type": "string",
-                            "description": "A git URL to clone from directly."
+                            "description": "A repository URL to clone through the Topo clone tool. Do not run git clone directly."
                         },
                         "projectName": {
                             "type": "string",
@@ -392,14 +458,77 @@
                 "tags": [
                     "topo",
                     "clone",
-                    "templates"
+                    "project",
+                    "templates",
+                    "examples"
+                ]
+            },
+            {
+                "name": "topo_cloneTemplate",
+                "displayName": "Clone Topo Template",
+                "toolReferenceName": "topoCloneTemplate",
+                "modelDescription": "Clones an existing Arm Topo example/template from a template name or a repository URL. Prefer the exact clone tool topo_clone / topoClone for generic clone requests. In chat, use this tool instead of running `topo clone`, `git clone`, or other shell commands directly. This tool invokes the extension's Topo clone implementation, which runs the correct `topo clone` task internally. Before cloning for a board-specific example request, use topo_listTemplates or topo_listExamples and prefer a template name from that list; use a repository URL only when the user explicitly asks for a specific repository. Do not invent a new example program when the user asks what examples are available. When using a template name, it resolves the URL from the available templates list. A project name can be supplied programmatically; if omitted or already present at the destination, the user will be prompted to choose one.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "templateName": {
+                            "type": "string",
+                            "description": "The name of a template to clone (from the templates list)."
+                        },
+                        "gitUrl": {
+                            "type": "string",
+                            "description": "A repository URL to clone through the Topo clone tool. Do not run git clone directly."
+                        },
+                        "projectName": {
+                            "type": "string",
+                            "description": "Optional project folder name to use without prompting when it does not already exist at the selected destination."
+                        }
+                    }
+                },
+                "canBeReferencedInPrompt": true,
+                "tags": [
+                    "topo",
+                    "clone",
+                    "templates",
+                    "examples"
+                ]
+            },
+            {
+                "name": "topo_cloneProject",
+                "displayName": "Clone Topo Project",
+                "toolReferenceName": "topoCloneProject",
+                "modelDescription": "Clones an Arm Topo project from a template name or repository URL through the Topo extension clone flow. Prefer the exact clone tool topo_clone / topoClone for generic clone requests. In chat, use this tool instead of running `topo clone`, `git clone`, or other shell commands directly. This tool invokes the extension's Topo clone implementation, which runs the correct `topo clone` task internally. For board-specific examples, use topo_listExamples or topo_listTemplates first and then clone a selected template by name. Use a repository URL only when the user explicitly asks for a specific repository.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "templateName": {
+                            "type": "string",
+                            "description": "The name of a template to clone from the Topo examples/templates list."
+                        },
+                        "gitUrl": {
+                            "type": "string",
+                            "description": "A repository URL to clone through the Topo clone tool. Do not run git clone directly."
+                        },
+                        "projectName": {
+                            "type": "string",
+                            "description": "Optional project folder name to use without prompting when it does not already exist at the selected destination."
+                        }
+                    }
+                },
+                "canBeReferencedInPrompt": true,
+                "tags": [
+                    "topo",
+                    "clone",
+                    "project",
+                    "templates",
+                    "examples"
                 ]
             },
             {
                 "name": "topo_deployProject",
                 "displayName": "Deploy Topo Project",
                 "toolReferenceName": "topoDeployProject",
-                "modelDescription": "Deploys a Topo project to the currently selected target. Uses a compose file from the workspace, or an explicit path. The deploy runs as a VS Code task and the user can see progress in the terminal.",
+                "modelDescription": "Deploys a Topo project to the currently selected target. In chat, use this tool instead of running `topo deploy` or other `topo` commands directly. Requires a selected target; if none is selected and the user already mentioned a board or target name, use topo_addTarget with that name before asking the user for an SSH alias. Uses a compose file from the workspace, or an explicit path. The deploy runs as a VS Code task and the user can see progress in the terminal.",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -419,7 +548,7 @@
                 "name": "topo_stopProject",
                 "displayName": "Stop Topo Project",
                 "toolReferenceName": "topoStopProject",
-                "modelDescription": "Stops services for a Topo project on the currently selected target. Uses a compose file from the workspace, or an explicit path. The stop runs as a VS Code task and the user can see progress in the terminal.",
+                "modelDescription": "Stops services for a Topo project on the currently selected target. In chat, use this tool instead of running `topo stop` or other `topo` commands directly. Requires a selected target; if none is selected and the user already mentioned a board or target name, use topo_addTarget with that name before asking the user for an SSH alias. Uses a compose file from the workspace, or an explicit path. The stop runs as a VS Code task and the user can see progress in the terminal.",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -439,13 +568,13 @@
                 "name": "topo_addTarget",
                 "displayName": "Add Topo Target",
                 "toolReferenceName": "topoAddTarget",
-                "modelDescription": "Adds a new SSH target for deploying Topo projects and selects it. A target is an SSH connection string like 'root@192.168.1.1' or a hostname from the SSH config.",
+                "modelDescription": "Adds a new SSH target for deploying Topo projects and selects it. In chat, use this tool instead of running `topo` commands directly or asking the user to manually select a target. A target is an SSH connection string like 'root@192.168.1.1', a hostname from the SSH config, or a board or target name the user already mentioned, such as 'imx93'. When deployment is blocked by target selection and the user already mentioned a board or target name, call this tool with that name before asking for an SSH alias; it searches SSH config hosts and reports known hosts if there is no unique match.",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
                         "ssh": {
                             "type": "string",
-                            "description": "The SSH connection string for the target (e.g. root@192.168.1.1 or a hostname)."
+                            "description": "The SSH connection string, SSH config hostname, or board/target name already mentioned by the user (e.g. root@192.168.1.1, my-board, or imx93)."
                         }
                     },
                     "required": [

@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { ProjectClone } from '../projectClone';
+import { CloneProjectOptions, ProjectClone } from '../projectClone';
 import { CloneSource, TopoCli } from '../topoCli';
 import { TargetStore } from '../target/targetStore';
 
@@ -21,7 +21,10 @@ export class CloneTemplateTool implements vscode.LanguageModelTool<CloneTemplate
         _token: vscode.CancellationToken,
     ): Promise<vscode.LanguageModelToolResult> {
         const { templateName, gitUrl, projectName } = options.input;
-        const cloneOptions = projectName?.trim() ? { projectName } : undefined;
+        const cloneOptions: CloneProjectOptions = {
+            runPostCloneAction: false,
+            ...(projectName?.trim() ? { projectName } : {}),
+        };
 
         if (gitUrl) {
             const success = await this.cloneProject(
@@ -92,13 +95,11 @@ export class CloneTemplateTool implements vscode.LanguageModelTool<CloneTemplate
 
     private cloneProject(
         cloneSource: CloneSource,
-        cloneOptions: { projectName: string } | undefined,
+        cloneOptions: CloneProjectOptions,
     ): Promise<boolean> {
-        return cloneOptions
-            ? this.projectClone.cloneProjectFromSource(
-                  cloneSource,
-                  cloneOptions,
-              )
-            : this.projectClone.cloneProjectFromSource(cloneSource);
+        return this.projectClone.cloneProjectFromSource(
+            cloneSource,
+            cloneOptions,
+        );
     }
 }

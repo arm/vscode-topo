@@ -72,9 +72,91 @@ describe('AddTargetTool', () => {
             token,
         );
 
-        expect(targetStore.addTarget).toHaveBeenCalled();
+        expect(targetStore.addTarget).toHaveBeenCalledWith('My-Board');
+        expect(targetStore.setSelected).toHaveBeenCalledWith('My-Board');
         const text = (result.content[0] as vscode.LanguageModelTextPart).value;
+        expect(text).toContain('My-Board');
+        expect(text).not.toContain('my-board');
         expect(text).toContain('added and selected');
+    });
+
+    it('matches a mentioned host name to the ssh config host label', async () => {
+        mockGetHosts.mockResolvedValue(['my-board']);
+        targetStore.addTarget.mockResolvedValue(undefined);
+        targetStore.setSelected.mockResolvedValue(undefined);
+
+        const result = await tool.invoke(
+            {
+                input: { ssh: 'my board' },
+                toolInvocationToken: undefined,
+            } as vscode.LanguageModelToolInvocationOptions<{ ssh: string }>,
+            token,
+        );
+
+        expect(targetStore.addTarget).toHaveBeenCalledWith('my-board');
+        expect(targetStore.setSelected).toHaveBeenCalledWith('my-board');
+        const text = (result.content[0] as vscode.LanguageModelTextPart).value;
+        expect(text).toContain('my-board');
+        expect(text).toContain('added and selected');
+    });
+
+    it('matches a mentioned board phrase to a ssh config host alias', async () => {
+        mockGetHosts.mockResolvedValue(['imx93']);
+        targetStore.addTarget.mockResolvedValue(undefined);
+        targetStore.setSelected.mockResolvedValue(undefined);
+
+        const result = await tool.invoke(
+            {
+                input: { ssh: 'i.MX93 board' },
+                toolInvocationToken: undefined,
+            } as vscode.LanguageModelToolInvocationOptions<{ ssh: string }>,
+            token,
+        );
+
+        expect(targetStore.addTarget).toHaveBeenCalledWith('imx93');
+        expect(targetStore.setSelected).toHaveBeenCalledWith('imx93');
+        const text = (result.content[0] as vscode.LanguageModelTextPart).value;
+        expect(text).toContain('imx93');
+        expect(text).toContain('added and selected');
+    });
+
+    it('matches a board name to a unique longer ssh config host alias', async () => {
+        mockGetHosts.mockResolvedValue(['imx93-evk', 'imx8mp-evk']);
+        targetStore.addTarget.mockResolvedValue(undefined);
+        targetStore.setSelected.mockResolvedValue(undefined);
+
+        const result = await tool.invoke(
+            {
+                input: { ssh: 'imx93' },
+                toolInvocationToken: undefined,
+            } as vscode.LanguageModelToolInvocationOptions<{ ssh: string }>,
+            token,
+        );
+
+        expect(targetStore.addTarget).toHaveBeenCalledWith('imx93-evk');
+        expect(targetStore.setSelected).toHaveBeenCalledWith('imx93-evk');
+        const text = (result.content[0] as vscode.LanguageModelTextPart).value;
+        expect(text).toContain('imx93-evk');
+        expect(text).toContain('added and selected');
+    });
+
+    it('does not add a target when a board name matches multiple ssh config aliases', async () => {
+        mockGetHosts.mockResolvedValue(['imx93-a', 'imx93-b']);
+
+        const result = await tool.invoke(
+            {
+                input: { ssh: 'imx93' },
+                toolInvocationToken: undefined,
+            } as vscode.LanguageModelToolInvocationOptions<{ ssh: string }>,
+            token,
+        );
+
+        expect(targetStore.addTarget).not.toHaveBeenCalled();
+        const text = (result.content[0] as vscode.LanguageModelTextPart).value;
+        expect(text).toContain('matched multiple hosts in ~/.ssh/config');
+        expect(text).toContain('Matching hosts:');
+        expect(text).toContain('imx93-a');
+        expect(text).toContain('imx93-b');
     });
 
     it('warns when hostname not found in ssh config and lists known hosts', async () => {

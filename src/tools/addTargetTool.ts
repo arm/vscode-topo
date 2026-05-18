@@ -6,7 +6,49 @@ interface AddTargetInput {
     ssh: string;
 }
 
+interface KnownHostMatch {
+    host?: string;
+    ambiguousHosts?: string[];
+}
+
 const looksLikeHostname = (value: string): boolean => !value.includes('@');
+
+const normalizeHostName = (value: string): string =>
+    value.toLowerCase().replace(/[\s._-]+/g, '');
+
+const findKnownHost = (
+    requestedHost: string,
+    knownHosts: string[],
+): KnownHostMatch => {
+    const exactMatch = knownHosts.find(
+        (host) => host.toLowerCase() === requestedHost.toLowerCase(),
+    );
+    if (exactMatch) {
+        return { host: exactMatch };
+    }
+
+    const normalizedRequestedHost = normalizeHostName(requestedHost);
+    const normalizedMatch = knownHosts.find(
+        (host) => normalizeHostName(host) === normalizedRequestedHost,
+    );
+    if (normalizedMatch) {
+        return { host: normalizedMatch };
+    }
+
+    const fuzzyMatches = knownHosts.filter((host) => {
+        const normalizedHost = normalizeHostName(host);
+        return (
+            normalizedHost.length >= 3 &&
+            normalizedRequestedHost.length >= 3 &&
+            (normalizedRequestedHost.includes(normalizedHost) ||
+                normalizedHost.includes(normalizedRequestedHost))
+        );
+    });
+    if (fuzzyMatches.length === 1) {
+        return { host: fuzzyMatches[0] };
+    }
+    return fuzzyMatches.length > 1 ? { ambiguousHosts: fuzzyMatches } : {};
+};
 
 export class AddTargetTool implements vscode.LanguageModelTool<AddTargetInput> {
     constructor(private readonly targetStore: TargetStore) {}
@@ -25,31 +67,37 @@ export class AddTargetTool implements vscode.LanguageModelTool<AddTargetInput> {
         }
 
         const trimmed = ssh.trim();
+        let target = trimmed;
 
         if (looksLikeHostname(trimmed)) {
             const knownHosts = await getHosts(defaultSshConfigPath);
-            const match = knownHosts.find(
-                (h) => h.toLowerCase() === trimmed.toLowerCase(),
-            );
-            if (!match) {
+            const match = findKnownHost(trimmed, knownHosts);
+            if (!match.host) {
                 const suggestions =
-                    knownHosts.length > 0
-                        ? ` Known hosts: ${knownHosts.join(', ')}.`
-                        : '';
+                    match.ambiguousHosts && match.ambiguousHosts.length > 0
+                        ? ` Matching hosts: ${match.ambiguousHosts.join(', ')}.`
+                        : knownHosts.length > 0
+                          ? ` Known hosts: ${knownHosts.join(', ')}.`
+                          : '';
+                const message =
+                    match.ambiguousHosts && match.ambiguousHosts.length > 0
+                        ? `"${trimmed}" matched multiple hosts in ~/.ssh/config.`
+                        : `"${trimmed}" was not found in ~/.ssh/config.`;
                 return new vscode.LanguageModelToolResult([
                     new vscode.LanguageModelTextPart(
-                        `"${trimmed}" was not found in ~/.ssh/config.${suggestions} You can still add it as a target if the hostname is reachable, or provide a full connection string (e.g. user@host).`,
+                        `${message}${suggestions} You can still add it as a target if the hostname is reachable, or provide a full connection string (e.g. user@host).`,
                     ),
                 ]);
             }
+            target = match.host;
         }
 
         try {
-            await this.targetStore.addTarget(trimmed);
-            await this.targetStore.setSelected(trimmed);
+            await this.targetStore.addTarget(target);
+            await this.targetStore.setSelected(target);
             return new vscode.LanguageModelToolResult([
                 new vscode.LanguageModelTextPart(
-                    `Target "${trimmed}" added and selected.`,
+                    `Target "${target}" added and selected.`,
                 ),
             ]);
         } catch (error: unknown) {

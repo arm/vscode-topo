@@ -113,10 +113,22 @@ export async function activate(
     context.subscriptions.push(
         vscode.lm.registerTool(
             'topo_listTemplates',
-            new ListTemplatesTool(topoCli),
+            new ListTemplatesTool(topoCli, targetStore, projectClone, deploy),
+        ),
+        vscode.lm.registerTool(
+            'topo_listExamples',
+            new ListTemplatesTool(topoCli, targetStore, projectClone, deploy),
+        ),
+        vscode.lm.registerTool(
+            'topo_clone',
+            new CloneTemplateTool(topoCli, projectClone, targetStore),
         ),
         vscode.lm.registerTool(
             'topo_cloneTemplate',
+            new CloneTemplateTool(topoCli, projectClone, targetStore),
+        ),
+        vscode.lm.registerTool(
+            'topo_cloneProject',
             new CloneTemplateTool(topoCli, projectClone, targetStore),
         ),
         vscode.lm.registerTool(

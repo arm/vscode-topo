@@ -44,10 +44,15 @@ describe('CloneTemplateTool', () => {
             token,
         );
 
-        expect(projectClone.cloneProjectFromSource).toHaveBeenCalledWith({
-            type: 'git',
-            url: 'https://example.com/repo.git',
-        });
+        expect(projectClone.cloneProjectFromSource).toHaveBeenCalledWith(
+            {
+                type: 'git',
+                url: 'https://example.com/repo.git',
+            },
+            {
+                runPostCloneAction: false,
+            },
+        );
         const text = (result.content[0] as vscode.LanguageModelTextPart).value;
         expect(text).toContain('Successfully cloned');
     });
@@ -74,7 +79,7 @@ describe('CloneTemplateTool', () => {
                 type: 'git',
                 url: 'https://example.com/repo.git',
             },
-            { projectName: 'my-project' },
+            { projectName: 'my-project', runPostCloneAction: false },
         );
     });
 
@@ -110,10 +115,15 @@ describe('CloneTemplateTool', () => {
             token,
         );
 
-        expect(projectClone.cloneProjectFromSource).toHaveBeenCalledWith({
-            type: 'git',
-            url: 'https://example.com/hello.git',
-        });
+        expect(projectClone.cloneProjectFromSource).toHaveBeenCalledWith(
+            {
+                type: 'git',
+                url: 'https://example.com/hello.git',
+            },
+            {
+                runPostCloneAction: false,
+            },
+        );
         const text = (result.content[0] as vscode.LanguageModelTextPart).value;
         expect(text).toContain('Successfully cloned template');
     });
@@ -142,7 +152,7 @@ describe('CloneTemplateTool', () => {
                 type: 'git',
                 url: 'https://example.com/hello.git',
             },
-            { projectName: 'my-project' },
+            { projectName: 'my-project', runPostCloneAction: false },
         );
     });
 
@@ -161,10 +171,15 @@ describe('CloneTemplateTool', () => {
             token,
         );
 
-        expect(projectClone.cloneProjectFromSource).toHaveBeenCalledWith({
-            type: 'git',
-            url: 'https://example.com/hello.git',
-        });
+        expect(projectClone.cloneProjectFromSource).toHaveBeenCalledWith(
+            {
+                type: 'git',
+                url: 'https://example.com/hello.git',
+            },
+            {
+                runPostCloneAction: false,
+            },
+        );
     });
 
     it('returns error when template not found', async () => {

@@ -22,6 +22,7 @@ export type CloneBuildArgs = Record<string, string>;
 export interface CloneProjectOptions {
     cloneBuildArgs?: CloneBuildArgs;
     projectName?: string;
+    runPostCloneAction?: boolean;
 }
 interface CloneCommandOptions {
     projectName?: string;
@@ -310,6 +311,7 @@ export class ProjectClone {
         cloneSource: CloneSource,
         options: CloneProjectOptions = {},
     ): Promise<boolean> {
+        const { runPostCloneAction = true } = options;
         const defaultProjectName =
             getDefaultProjectNameFromSourceString(cloneSource);
         const cloneResult = await cloneWithSource(
@@ -317,7 +319,7 @@ export class ProjectClone {
             defaultProjectName,
             options,
         );
-        if (cloneResult.success) {
+        if (cloneResult.success && runPostCloneAction) {
             await postCloneAction(cloneResult.repositoryPath);
         }
         return cloneResult.success;

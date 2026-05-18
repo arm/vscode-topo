@@ -589,5 +589,24 @@ describe('ProjectClone', () => {
 
             expect(vscode.window.showInformationMessage).not.toHaveBeenCalled();
         });
+
+        it('does not prompt for a post-clone action when disabled in clone options', async () => {
+            mutable(vscode.workspace).workspaceFolders = workspaceFolders;
+            jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
+                'repo',
+            );
+
+            await projectClone.cloneProjectFromSource(
+                {
+                    type: 'git',
+                    url: 'https://example.com/repo.git',
+                },
+                {
+                    runPostCloneAction: false,
+                },
+            );
+
+            expect(vscode.window.showInformationMessage).not.toHaveBeenCalled();
+        });
     });
 });
