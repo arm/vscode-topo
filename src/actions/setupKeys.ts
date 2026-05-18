@@ -4,7 +4,6 @@ import { TargetStore } from '../target/targetStore';
 import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
 import { showAndLogError } from '../util/showAndLogError';
 import { executeTask } from '../util/executeTask';
-import { refreshTargetStateCommand } from '../refreshCommands';
 
 export class SetupKeys {
     public static readonly setupKeysCommand = `${PACKAGE_NAME}.setupKeys`;
@@ -56,7 +55,6 @@ export class SetupKeys {
             vscode.window.showInformationMessage(
                 `Keys were set up on target ${ssh}.`,
             );
-            vscode.commands.executeCommand(refreshTargetStateCommand);
         } catch (err) {
             showAndLogError(`Failed to set up keys on target ${ssh}`, err);
         }

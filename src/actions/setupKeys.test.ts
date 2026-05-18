@@ -4,24 +4,11 @@ import { SetupKeys } from './setupKeys';
 import { TargetStore } from '../target/targetStore';
 import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
 import { executeTask } from '../util/executeTask';
-import { refreshTargetStateCommand } from '../refreshCommands';
 
 jest.mock('../util/logger');
 jest.mock('../util/executeTask');
 
 const executeTaskMock = jest.mocked(executeTask);
-
-const getCommandHandler = () => {
-    const commandHandler = jest
-        .mocked(vscode.commands.registerCommand)
-        .mock.calls.find(
-            ([command]) => command === SetupKeys.setupKeysCommand,
-        )?.[1] as ((treeNode: unknown) => Promise<void>) | undefined;
-    if (!commandHandler) {
-        throw new Error('No command handler registered');
-    }
-    return commandHandler;
-};
 
 describe('SetupKeys', () => {
     let context: MockProxy<vscode.ExtensionContext>;
@@ -53,8 +40,16 @@ describe('SetupKeys', () => {
         const setupKeys = new SetupKeys(context, targetStore);
         setupKeys.activate();
         const boardItem = new TargetTreeItem(target, true, 'connected');
+        const commandHandler = jest
+            .mocked(vscode.commands.registerCommand)
+            .mock.calls.find(
+                ([command]) => command === SetupKeys.setupKeysCommand,
+            )?.[1] as ((treeNode: unknown) => Promise<void>) | undefined;
+        if (!commandHandler) {
+            throw new Error('No command handler registered');
+        }
 
-        await getCommandHandler()(boardItem);
+        await commandHandler(boardItem);
 
         expect(executeTaskMock).toHaveBeenCalledWith(
             `Setup keys on ${target}`,
@@ -62,17 +57,6 @@ describe('SetupKeys', () => {
         );
         expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
             `Keys were set up on target ${target}.`,
-        );
-    });
-
-    it('refreshes target state after setting up keys', async () => {
-        const setupKeys = new SetupKeys(context, targetStore);
-        setupKeys.activate();
-
-        await getCommandHandler()(undefined);
-
-        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
-            refreshTargetStateCommand,
         );
     });
 
@@ -92,9 +76,6 @@ describe('SetupKeys', () => {
         await commandHandler(boardItem);
 
         expect(executeTaskMock).not.toHaveBeenCalled();
-        expect(vscode.commands.executeCommand).not.toHaveBeenCalledWith(
-            refreshTargetStateCommand,
-        );
     });
 
     it('falls back to selected target when no tree node is provided', async () => {
@@ -139,9 +120,6 @@ describe('SetupKeys', () => {
             expect.stringContaining(
                 `Failed to set up keys on target ${target}. setup-keys failed with exit code 1`,
             ),
-        );
-        expect(vscode.commands.executeCommand).not.toHaveBeenCalledWith(
-            refreshTargetStateCommand,
         );
     });
 });

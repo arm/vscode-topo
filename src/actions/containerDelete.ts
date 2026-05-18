@@ -4,7 +4,6 @@ import { assertTargetContainerTreeItem } from '../targetTreeView/assertTargetCon
 import { showAndLogError } from '../util/showAndLogError';
 import { isWrappedError } from '../errors/wrappedError';
 import { ContainerCommands } from '../target/containerCommands';
-import { refreshTargetContainersCommand } from '../refreshCommands';
 
 export class ContainerDelete {
     public static readonly deleteContainerCommand = `${manifest.PACKAGE_NAME}.deleteContainer`;
@@ -39,8 +38,6 @@ export class ContainerDelete {
                 return;
             }
             throw err;
-        } finally {
-            vscode.commands.executeCommand(refreshTargetContainersCommand);
         }
     }
 }

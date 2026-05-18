@@ -12,7 +12,6 @@ import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDepe
 import { TargetSubsystemGroupTreeItem } from './targetSubsystemGroupTreeItem';
 import { HealthCheckDependency, HealthCheckResult } from '../topoCliSchema';
 import { TargetDescriptionStore } from '../target/targetDescriptionStore';
-import { refreshTargetStateCommand } from '../refreshCommands';
 
 jest.mock('../util/logger');
 
@@ -372,41 +371,6 @@ describe('TargetTreeDataProvider', () => {
             );
 
             expect(targetStoreMock.deleteTarget).toHaveBeenCalledWith(target);
-        });
-
-        it('refreshes target state after removing selected target', async () => {
-            const targetItem = new TargetTreeItem(target, true, 'connected');
-            targetStoreMock.getSelectedTarget.mockResolvedValue(target);
-            await provider.activate();
-
-            await executeCommand(
-                TargetTreeDataProvider.removeTargetCommand,
-                targetItem,
-            );
-
-            expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
-                refreshTargetStateCommand,
-            );
-        });
-
-        it('does not refresh target state after removing a non-selected target', async () => {
-            const removedTarget = 'user@removed.local';
-            const targetItem = new TargetTreeItem(
-                removedTarget,
-                false,
-                'disconnected',
-            );
-            targetStoreMock.getSelectedTarget.mockResolvedValue(target);
-            await provider.activate();
-
-            await executeCommand(
-                TargetTreeDataProvider.removeTargetCommand,
-                targetItem,
-            );
-
-            expect(vscode.commands.executeCommand).not.toHaveBeenCalledWith(
-                refreshTargetStateCommand,
-            );
         });
 
         it('does not call deleteTarget when remove command is executed with a non-target item', async () => {
