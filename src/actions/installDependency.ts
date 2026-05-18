@@ -7,6 +7,7 @@ import { ContainersManager } from '../target/containersManager';
 import { logger } from '../util/logger';
 import { executeTask } from '../util/executeTask';
 import { getInstallableDependency } from '../util/getInstallableDependency';
+import { refreshTargetStateCommand } from '../refreshCommands';
 
 const getInstallCommand = (sshTarget: string, value: string): string[] => {
     return ['topo', 'install', value, '--target', sshTarget];
@@ -92,6 +93,7 @@ export class InstallDependency implements vscode.Disposable {
         }
 
         await this.installDependency(target, installable);
+        vscode.commands.executeCommand(refreshTargetStateCommand);
     }
 
     private async installDependency(
@@ -126,6 +128,7 @@ export class InstallDependency implements vscode.Disposable {
             for (const installable of installables) {
                 await this.installDependency(target, installable);
             }
+            vscode.commands.executeCommand(refreshTargetStateCommand);
         }
     }
 

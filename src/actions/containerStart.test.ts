@@ -6,6 +6,7 @@ import { WrappedError } from '../errors/wrappedError';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { ContainerItem } from '../util/types';
 import { ContainerCommands } from '../target/containerCommands';
+import { refreshTargetContainersCommand } from '../refreshCommands';
 
 describe('ContainerStart', () => {
     let context: MockProxy<vscode.ExtensionContext>;
@@ -78,7 +79,22 @@ describe('ContainerStart', () => {
         );
     });
 
-    it('shows error message if startContainer throws a WrappedError', async () => {
+    it('refreshes target containers after starting a container', async () => {
+        const containerCommands = mock<ContainerCommands>();
+        const containerStart = new ContainerStart(context, containerCommands);
+        containerStart.activate();
+
+        await vscode.commands.executeCommand(
+            ContainerStart.startContainerCommand,
+            treeItem,
+        );
+
+        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            refreshTargetContainersCommand,
+        );
+    });
+
+    it('shows error message and refreshes UI if startContainer throws a WrappedError', async () => {
         const containerCommands = mock<ContainerCommands>();
         containerCommands.startContainer.mockRejectedValue(
             new WrappedError('DOCKER', 'fail'),
@@ -95,6 +111,9 @@ describe('ContainerStart', () => {
             expect.stringContaining(
                 'Failed to start the container abc123. fail',
             ),
+        );
+        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            refreshTargetContainersCommand,
         );
     });
 

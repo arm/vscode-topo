@@ -6,6 +6,7 @@ import { TargetContainerTreeItem } from '../targetTreeView/targetContainerTreeIt
 import { WrappedError } from '../errors/wrappedError';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { ContainerCommands } from '../target/containerCommands';
+import { refreshTargetContainersCommand } from '../refreshCommands';
 
 describe('ContainerDelete', () => {
     let context: MockProxy<vscode.ExtensionContext>;
@@ -80,7 +81,22 @@ describe('ContainerDelete', () => {
         );
     });
 
-    it('shows error message if deleteContainer throws a WrappedError', async () => {
+    it('refreshes target containers after deleting a container', async () => {
+        const containerCommands = mock<ContainerCommands>();
+        const containerDelete = new ContainerDelete(context, containerCommands);
+        containerDelete.activate();
+
+        await vscode.commands.executeCommand(
+            ContainerDelete.deleteContainerCommand,
+            treeItem,
+        );
+
+        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            refreshTargetContainersCommand,
+        );
+    });
+
+    it('shows error message and refreshes UI if deleteContainer throws a WrappedError', async () => {
         const containerCommands = mock<ContainerCommands>();
         containerCommands.deleteContainer.mockRejectedValue(
             new WrappedError('DOCKER', 'fail'),
@@ -97,6 +113,9 @@ describe('ContainerDelete', () => {
             expect.stringContaining(
                 'Failed to delete the container abc123. fail',
             ),
+        );
+        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            refreshTargetContainersCommand,
         );
     });
 

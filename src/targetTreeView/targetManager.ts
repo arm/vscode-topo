@@ -81,7 +81,7 @@ export class TargetManager {
         );
     }
 
-    private async addTarget(): Promise<string | undefined> {
+    private async addTarget(): Promise<void> {
         const target = await this.promptForSshTarget();
         if (!target) {
             return;
@@ -96,7 +96,7 @@ export class TargetManager {
             return;
         }
         await this.targetStore.setSelected(target);
-        return target;
+        vscode.commands.executeCommand(refreshTargetStateCommand);
     }
 
     private async promptForSshTarget(): Promise<string | undefined> {

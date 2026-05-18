@@ -217,6 +217,19 @@ describe('TargetManager', () => {
             expect(targetStore.setSelected).toHaveBeenCalledWith(targetSsh);
         });
 
+        it('refreshes target state after adding a target', async () => {
+            const targetSsh = 'root@192.0.2.1';
+            mockQuickPick({ label: targetSsh });
+            const { targetManager } = createTargetManager();
+            await targetManager.activate();
+
+            await executeCommand(TargetManager.addTargetCommand);
+
+            expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+                refreshTargetStateCommand,
+            );
+        });
+
         it('does nothing when quick pick is dismissed', async () => {
             mockQuickPick(undefined);
             const { targetStore, targetManager } = createTargetManager();

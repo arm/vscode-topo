@@ -5,6 +5,7 @@ import { Deploy } from './deploy';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { TargetStore } from '../target/targetStore';
 import { executeTask } from '../util/executeTask';
+import { refreshTargetContainersCommand } from '../refreshCommands';
 
 jest.mock('../util/logger');
 jest.mock('../util/executeTask');
@@ -71,12 +72,30 @@ describe('Deploy', () => {
         );
     });
 
+    it('refreshes target containers after deploying', async () => {
+        await deploy.deploy(composeFilePath);
+
+        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            refreshTargetContainersCommand,
+        );
+    });
+
     it('handles task failure', async () => {
         executeTaskMock.mockRejectedValueOnce(new Error('deploy failed'));
         await deploy.deploy(composeFilePath);
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
             'Deployment to topo.local failed: deploy failed',
+        );
+    });
+
+    it('refreshes target containers when deploy fails', async () => {
+        executeTaskMock.mockRejectedValueOnce(new Error('deploy failed'));
+
+        await deploy.deploy(composeFilePath);
+
+        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            refreshTargetContainersCommand,
         );
     });
 

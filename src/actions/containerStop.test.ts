@@ -6,6 +6,7 @@ import { TargetContainerTreeItem } from '../targetTreeView/targetContainerTreeIt
 import { WrappedError } from '../errors/wrappedError';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { ContainerCommands } from '../target/containerCommands';
+import { refreshTargetContainersCommand } from '../refreshCommands';
 
 describe('ContainerStop', () => {
     let context: MockProxy<vscode.ExtensionContext>;
@@ -73,7 +74,22 @@ describe('ContainerStop', () => {
         );
     });
 
-    it('shows error message if stopContainer throws a WrappedError', async () => {
+    it('refreshes target containers after stopping a container', async () => {
+        const containerCommands = mock<ContainerCommands>();
+        const containerStop = new ContainerStop(context, containerCommands);
+        await containerStop.activate();
+
+        await vscode.commands.executeCommand(
+            ContainerStop.stopContainerCommand,
+            treeItem,
+        );
+
+        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            refreshTargetContainersCommand,
+        );
+    });
+
+    it('shows error message and refreshes UI if stopContainer throws a WrappedError', async () => {
         const containerCommands = mock<ContainerCommands>();
         containerCommands.stopContainer.mockRejectedValue(
             new WrappedError('DOCKER', 'fail'),
@@ -90,6 +106,9 @@ describe('ContainerStop', () => {
             expect.stringContaining(
                 'Failed to stop the container abc123. fail',
             ),
+        );
+        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            refreshTargetContainersCommand,
         );
     });
 
