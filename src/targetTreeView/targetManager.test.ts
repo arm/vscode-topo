@@ -147,6 +147,34 @@ describe('TargetManager', () => {
             );
             expect(context.subscriptions.length).toBeGreaterThan(0);
         });
+
+        it('clears target state when refresh target state command runs', async () => {
+            const { targetManager, containersManager, targetTreeDataProvider } =
+                createTargetManager();
+            await targetManager.activate();
+            jest.mocked(containersManager.clear).mockClear();
+            jest.mocked(targetTreeDataProvider.refresh).mockClear();
+
+            await executeCommand(refreshTargetStateCommand);
+
+            expect(containersManager.clear).toHaveBeenCalledTimes(1);
+            expect(targetTreeDataProvider.refresh).toHaveBeenCalledTimes(1);
+        });
+
+        it('clears only containers when refresh target containers command runs', async () => {
+            const { targetManager, containersManager, targetTreeDataProvider } =
+                createTargetManager();
+            await targetManager.activate();
+            jest.mocked(containersManager.clear).mockClear();
+            jest.mocked(containersManager.clearContainers).mockClear();
+            jest.mocked(targetTreeDataProvider.refresh).mockClear();
+
+            await executeCommand(refreshTargetContainersCommand);
+
+            expect(containersManager.clearContainers).toHaveBeenCalledTimes(1);
+            expect(containersManager.clear).not.toHaveBeenCalled();
+            expect(targetTreeDataProvider.refresh).toHaveBeenCalledTimes(1);
+        });
     });
 
     describe('target addition', () => {
@@ -288,6 +316,7 @@ describe('TargetManager', () => {
                 status: 'connected',
             });
             await targetManager.activate();
+            jest.mocked(containersManager.clear).mockClear();
             jest.mocked(targetStore.getSelectedTarget).mockResolvedValue(
                 target2,
             );
@@ -295,6 +324,7 @@ describe('TargetManager', () => {
             onChangeEmitter.fire();
             await waitImmediate();
 
+            expect(containersManager.clear).toHaveBeenCalledTimes(1);
             expect(vscode.window.createStatusBarItem).toHaveBeenCalledTimes(1);
             const statusBarItem = jest.mocked(vscode.window.createStatusBarItem)
                 .mock.results[0].value;

@@ -94,7 +94,7 @@ describe('ContainerStart', () => {
         );
     });
 
-    it('shows error message if startContainer throws a WrappedError', async () => {
+    it('shows error message and refreshes UI if startContainer throws a WrappedError', async () => {
         const containerCommands = mock<ContainerCommands>();
         containerCommands.startContainer.mockRejectedValue(
             new WrappedError('DOCKER', 'fail'),
@@ -111,6 +111,9 @@ describe('ContainerStart', () => {
             expect.stringContaining(
                 'Failed to start the container abc123. fail',
             ),
+        );
+        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            refreshTargetContainersCommand,
         );
     });
 

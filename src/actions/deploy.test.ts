@@ -89,6 +89,16 @@ describe('Deploy', () => {
         );
     });
 
+    it('refreshes target containers when deploy fails', async () => {
+        executeTaskMock.mockRejectedValueOnce(new Error('deploy failed'));
+
+        await deploy.deploy(composeFilePath);
+
+        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            refreshTargetContainersCommand,
+        );
+    });
+
     it('invokes handler when command called', async () => {
         deploy.activate();
 

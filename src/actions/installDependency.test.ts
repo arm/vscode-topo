@@ -136,6 +136,9 @@ describe('InstallDependency', () => {
         await getCommandHandler()(dependencyItem);
 
         expect(executeTaskMock).not.toHaveBeenCalled();
+        expect(vscode.commands.executeCommand).not.toHaveBeenCalledWith(
+            refreshTargetStateCommand,
+        );
     });
 
     it('refreshes target state after installing dependencies from the notification', async () => {
@@ -165,6 +168,27 @@ describe('InstallDependency', () => {
         await installDependency.activate();
 
         expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            refreshTargetStateCommand,
+        );
+    });
+
+    it('does not refresh target state when no target is selected', async () => {
+        const installDependency = new InstallDependency(
+            targetStore,
+            containersManager,
+        );
+        const dependencyItem = new HealthCheckDependencyTreeItem({
+            name: 'Remoteproc Runtime',
+            status: 'error',
+            value: 'missing',
+            fix: 'run `topo install remoteproc-runtime`',
+        });
+
+        await installDependency.activate();
+        targetStore.getSelectedTarget.mockResolvedValueOnce(undefined);
+        await getCommandHandler()(dependencyItem);
+
+        expect(vscode.commands.executeCommand).not.toHaveBeenCalledWith(
             refreshTargetStateCommand,
         );
     });

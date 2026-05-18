@@ -89,7 +89,7 @@ describe('ContainerStop', () => {
         );
     });
 
-    it('shows error message if stopContainer throws a WrappedError', async () => {
+    it('shows error message and refreshes UI if stopContainer throws a WrappedError', async () => {
         const containerCommands = mock<ContainerCommands>();
         containerCommands.stopContainer.mockRejectedValue(
             new WrappedError('DOCKER', 'fail'),
@@ -106,6 +106,9 @@ describe('ContainerStop', () => {
             expect.stringContaining(
                 'Failed to stop the container abc123. fail',
             ),
+        );
+        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            refreshTargetContainersCommand,
         );
     });
 

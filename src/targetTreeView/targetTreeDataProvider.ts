@@ -146,7 +146,7 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
                     return new TargetTreeItem(
                         target,
                         selected,
-                        selectedTargetStatus,
+                        selected ? selectedTargetStatus : 'disconnected',
                     );
                 });
             const sortedTargetTreeItems = targetTreeItems.sort((a, b) =>

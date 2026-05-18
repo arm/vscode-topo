@@ -92,6 +92,9 @@ describe('SetupKeys', () => {
         await commandHandler(boardItem);
 
         expect(executeTaskMock).not.toHaveBeenCalled();
+        expect(vscode.commands.executeCommand).not.toHaveBeenCalledWith(
+            refreshTargetStateCommand,
+        );
     });
 
     it('falls back to selected target when no tree node is provided', async () => {
@@ -136,6 +139,9 @@ describe('SetupKeys', () => {
             expect.stringContaining(
                 `Failed to set up keys on target ${target}. setup-keys failed with exit code 1`,
             ),
+        );
+        expect(vscode.commands.executeCommand).not.toHaveBeenCalledWith(
+            refreshTargetStateCommand,
         );
     });
 });

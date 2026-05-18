@@ -155,18 +155,18 @@ export class TargetManager {
     }
 
     private async refreshVisualisations(): Promise<void> {
-        const selectedTarget = await this.targetStore.getSelectedTarget();
-        this.updateStatusBar(selectedTarget);
         this.targetTreeDataProvider.refresh();
+        const selectedTarget = await this.targetStore.getSelectedTarget();
+        await this.updateStatusBar(selectedTarget);
     }
 
     private async refreshTargetState(): Promise<void> {
         this.containersManager.clear();
-        this.refreshVisualisations();
+        await this.refreshVisualisations();
     }
 
     private async refreshTargetContainers(): Promise<void> {
         this.containersManager.clearContainers();
-        this.refreshVisualisations();
+        await this.refreshVisualisations();
     }
 }

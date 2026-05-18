@@ -239,6 +239,27 @@ describe('TargetTreeDataProvider', () => {
             );
         });
 
+        it('does not mark non-selected targets as connected', async () => {
+            const otherTarget = 'user@other.local';
+            targetStoreMock.getTargets.mockReturnValue([target, otherTarget]);
+            targetStoreMock.getSelectedTarget.mockResolvedValue(target);
+            containersManagerMock.getTargetState.mockResolvedValue({
+                health: targetHealth,
+                status: 'connected',
+            });
+
+            const rootChildren = await provider.getChildren();
+
+            const otherTargetItem = rootChildren.find(
+                (item): item is TargetTreeItem =>
+                    item instanceof TargetTreeItem &&
+                    item.target === otherTarget,
+            );
+            expect(otherTargetItem).toBeDefined();
+            expect(otherTargetItem!.status).toBe('disconnected');
+            expect(otherTargetItem!.contextValue).not.toContain('Connected');
+        });
+
         it('returns containers for Host and remoteproc groups', async () => {
             const hostGroup = new TargetSubsystemTreeItem('Host', target);
             const hostChildren = await provider.getChildren(hostGroup);

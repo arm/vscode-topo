@@ -96,7 +96,7 @@ describe('ContainerDelete', () => {
         );
     });
 
-    it('shows error message if deleteContainer throws a WrappedError', async () => {
+    it('shows error message and refreshes UI if deleteContainer throws a WrappedError', async () => {
         const containerCommands = mock<ContainerCommands>();
         containerCommands.deleteContainer.mockRejectedValue(
             new WrappedError('DOCKER', 'fail'),
@@ -113,6 +113,9 @@ describe('ContainerDelete', () => {
             expect.stringContaining(
                 'Failed to delete the container abc123. fail',
             ),
+        );
+        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            refreshTargetContainersCommand,
         );
     });
 
