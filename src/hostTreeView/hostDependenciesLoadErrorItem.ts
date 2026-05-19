@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { DISPLAY_NAME } from '../manifest';
-import { showTopoOutputCommand } from '../showTopoOutputCommand';
+import { ShowOutput } from '../actions/showOutput';
 
 export const failedToLoadHostDependenciesMessage =
     'Failed to load host dependencies';
@@ -17,7 +17,7 @@ export class HostDependenciesLoadErrorItem extends vscode.TreeItem {
         );
         this.contextValue = 'Dependencies Error';
         this.command = {
-            command: showTopoOutputCommand,
+            command: ShowOutput.showOutputCommand,
             title: `Open ${DISPLAY_NAME} Output`,
         };
         this.tooltip = `Open the ${DISPLAY_NAME} output channel for details.`;

@@ -5,7 +5,6 @@ import * as manifest from '../manifest';
 import { TargetStore } from '../target/targetStore';
 import { TargetTreeItem } from './targetTreeItem';
 import { TargetSubsystemTreeItem } from './targetSubsystemTreeItem';
-import { logger } from '../util/logger';
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
 import { TargetSubsystemGroupTreeItem } from './targetSubsystemGroupTreeItem';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
@@ -21,12 +20,7 @@ function sortDependenciesByName(
 }
 
 export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
-    public static readonly selectTargetCommand = `${manifest.PACKAGE_NAME}.selectTarget`;
-    public static readonly removeTargetCommand = `${manifest.PACKAGE_NAME}.removeTarget`;
-
-    private _onDidChangeTreeData = new vscode.EventEmitter<
-        vscode.TreeItem | undefined
-    >();
+    private _onDidChangeTreeData = new vscode.EventEmitter<undefined>();
     public readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
     constructor(
@@ -37,52 +31,15 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
     ) {}
 
     public async activate(): Promise<void> {
-        const onTargetStoreChanged = this.targetStore.onChanged(() => {
-            this._onDidChangeTreeData.fire(undefined);
-        });
-        const onContainersManagerDataUpdate =
+        this.context.subscriptions.push(
+            this.targetStore.onChanged(() => {
+                this._onDidChangeTreeData.fire(undefined);
+            }),
             this.containersManager.onDataUpdate(() => {
                 this._onDidChangeTreeData.fire(undefined);
-            });
-        this.context.subscriptions.push(
-            vscode.commands.registerCommand(
-                TargetTreeDataProvider.selectTargetCommand,
-                (node: unknown) => this.selectTarget(node),
-            ),
-            vscode.commands.registerCommand(
-                TargetTreeDataProvider.removeTargetCommand,
-                (node: unknown) => this.removeTarget(node),
-            ),
-            onTargetStoreChanged,
-            onContainersManagerDataUpdate,
+            }),
             this._onDidChangeTreeData,
         );
-    }
-
-    private async selectTarget(treeNode: unknown): Promise<void> {
-        if (!(treeNode instanceof TargetTreeItem)) {
-            const errMsg = `Invalid target type for select: expected TargetTreeItem but received:`;
-            logger.error(errMsg, treeNode);
-            return;
-        }
-        await this.targetStore.setSelected(treeNode.target);
-    }
-
-    private async removeTarget(treeNode: unknown): Promise<void> {
-        if (!(treeNode instanceof TargetTreeItem)) {
-            const errMsg = `Invalid target type for remove: expected TargetTreeItem but received:`;
-            logger.error(errMsg, treeNode);
-            return;
-        }
-        try {
-            await this.targetStore.deleteTarget(treeNode.target);
-        } catch (err) {
-            const errorMessage = `Failed to remove target`;
-            vscode.window.showErrorMessage(errorMessage);
-            logger.error(errorMessage, err);
-        } finally {
-            this._onDidChangeTreeData.fire(undefined);
-        }
     }
 
     public async getChildren(

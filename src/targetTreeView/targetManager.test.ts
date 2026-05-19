@@ -129,7 +129,7 @@ describe('TargetManager', () => {
     });
 
     describe('activation', () => {
-        it('registers tree provider and refresh command on activate', async () => {
+        it('registers tree provider on activate', async () => {
             const { targetManager, context } = createTargetManager();
 
             targetManager.activate();
@@ -137,14 +137,6 @@ describe('TargetManager', () => {
             expect(vscode.window.createTreeView).toHaveBeenCalledWith(
                 TargetManager.viewId,
                 expect.anything(),
-            );
-            expect(vscode.commands.registerCommand).toHaveBeenCalledWith(
-                TargetManager.refreshCommand,
-                expect.any(Function),
-            );
-            expect(vscode.commands.registerCommand).toHaveBeenCalledWith(
-                TargetManager.addTargetCommand,
-                expect.any(Function),
             );
             expect(context.subscriptions.length).toBeGreaterThan(0);
         });
