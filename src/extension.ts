@@ -13,8 +13,8 @@ import { AttachShell } from './actions/attachShell';
 import { ContainerDelete } from './actions/containerDelete';
 import { DockerCommands } from './target/dockerCommands';
 import { TargetStore } from './target/targetStore';
-import { ProjectClone } from './projectClone';
 import { Deploy } from './actions/deploy';
+import { Clone } from './actions/clone';
 import { Stop } from './actions/stop';
 import { HostHealth } from './actions/hostHealth';
 import { ProtocolHandler } from './protocolHandler';
@@ -44,7 +44,8 @@ export async function activate(
     const targetStore = new TargetStore(context);
     const targetDescriptionStore = new TargetDescriptionStore(topoCli);
     const projectInit = new ProjectInit(context, topoCli);
-    const projectClone = new ProjectClone(context, topoCli, targetStore);
+    const clone = new Clone(topoCli, targetStore);
+    context.subscriptions.push(clone);
     const deploy = new Deploy(context, targetStore);
     const stop = new Stop(context, targetStore);
     const containerOpenInBrowser = new ContainerOpenInBrowser(context);
@@ -77,7 +78,8 @@ export async function activate(
     const hostHealth = new HostHealth(context, topoCli);
     const targetHealth = new TargetHealth(containersManager);
     context.subscriptions.push(targetHealth);
-    const protocolHandler = new ProtocolHandler(projectClone);
+    const protocolHandler = new ProtocolHandler();
+    context.subscriptions.push(protocolHandler);
     const installDependency = new InstallDependency(
         targetStore,
         containersManager,
@@ -85,13 +87,13 @@ export async function activate(
     context.subscriptions.push(installDependency);
     context.subscriptions.push(logger);
 
-    protocolHandler.activate(context);
+    protocolHandler.activate();
     const setupKeys = new SetupKeys(context, targetStore);
     context.subscriptions.push(targetStore);
     await topoCli.activate();
     context.subscriptions.push(topoCli);
     await projectInit.activate();
-    await projectClone.activate();
+    clone.activate();
     deploy.activate();
     stop.activate();
     await containerOpenInBrowser.activate();

@@ -1,14 +1,13 @@
 import path from 'node:path';
 import * as vscode from 'vscode';
-import { getFirstSentence, ProjectClone } from './projectClone';
-import { mutable } from './util/mutable';
-import { TopoCli } from './topoCli';
+import { mutable } from './mutable';
+import { TopoCli } from '../topoCli';
 import { mock, MockProxy } from 'jest-mock-extended';
-import { TemplateDescription } from './topoCliSchema';
-import { showAndLogError } from './util/showAndLogError';
-import { TargetStore } from './target/targetStore';
-import { WrappedError } from './errors/wrappedError';
-import { executeTask } from './util/executeTask';
+import { TemplateDescription } from '../topoCliSchema';
+import { showAndLogError } from './showAndLogError';
+import { TargetStore } from '../target/targetStore';
+import { WrappedError } from '../errors/wrappedError';
+import { executeTask } from './executeTask';
 
 jest.mock('./util/showAndLogError', () => ({
     showAndLogError: jest.fn(),

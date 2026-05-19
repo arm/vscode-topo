@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
-import { ProjectClone } from './projectClone';
 import { logger } from './util/logger';
 import { parseCloneSourceString } from './util/parseSourceCloneString';
 import { isWrappedError } from './errors/wrappedError';
 import { showAndLogError } from './util/showAndLogError';
+import { cloneProjectFromSource } from './util/projectClone';
 
 /**
  * VS Code URI handler for Topo deep links.
@@ -14,11 +14,11 @@ import { showAndLogError } from './util/showAndLogError';
  * `source` is required and uses the same format as `topo clone` (e.g. `git:https://...` or a bare git URL).
  * Additional query parameters are forwarded to `topo clone` as `key=value` arguments.
  */
-export class ProtocolHandler implements vscode.UriHandler {
-    constructor(private readonly projectClone: ProjectClone) {}
+export class ProtocolHandler implements vscode.UriHandler, vscode.Disposable {
+    private disposables: vscode.Disposable[] = [];
 
-    public activate(context: vscode.ExtensionContext): void {
-        context.subscriptions.push(vscode.window.registerUriHandler(this));
+    public activate(): void {
+        this.disposables.push(vscode.window.registerUriHandler(this));
     }
 
     public async handleUri(uri: vscode.Uri): Promise<void> {
@@ -64,7 +64,7 @@ export class ProtocolHandler implements vscode.UriHandler {
             return;
         }
 
-        const cloneStarted = await this.projectClone.cloneProjectFromSource(
+        const cloneStarted = await cloneProjectFromSource(
             cloneSource,
             cloneBuildArgs,
         );
@@ -82,5 +82,12 @@ export class ProtocolHandler implements vscode.UriHandler {
             params.entries(),
         );
         return parsed;
+    }
+
+    public dispose(): void {
+        for (const disposable of [...this.disposables].reverse()) {
+            disposable.dispose();
+        }
+        this.disposables = [];
     }
 }

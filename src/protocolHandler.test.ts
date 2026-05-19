@@ -1,13 +1,9 @@
 import * as vscode from 'vscode';
 import path from 'node:path';
-import { mock, MockProxy } from 'jest-mock-extended';
-import { ProjectClone } from './projectClone';
 import { ProtocolHandler } from './protocolHandler';
-import { TopoCli } from './topoCli';
 import { mutable } from './util/mutable';
 import { showAndLogError } from './util/showAndLogError';
 import { executeTask } from './util/executeTask';
-import { TargetStore } from './target/targetStore';
 
 jest.mock('./util/showAndLogError', () => ({
     showAndLogError: jest.fn(),
@@ -17,7 +13,6 @@ jest.mock('./util/executeTask');
 const showAndLogErrorSpy = jest.mocked(showAndLogError);
 const executeTaskMock = jest.mocked(executeTask);
 
-const subscriptions: vscode.Disposable[] = [];
 const workspacePath = path.join('home', 'workspace');
 const workspaceUri = vscode.Uri.file(workspacePath);
 const workspaceFolders = [{ uri: workspaceUri, name: 'workspace', index: 0 }];
@@ -25,29 +20,20 @@ const destinationPath = path.join('home', 'destination');
 const destinationUri = vscode.Uri.file(destinationPath);
 
 describe('ProtocolHandler', () => {
-    let projectClone: ProjectClone;
     let protocolHandler: ProtocolHandler;
-    let context: MockProxy<vscode.ExtensionContext>;
-    const topoCli = mock<TopoCli>();
-    const targetStore = mock<TargetStore>();
 
     beforeEach(() => {
         jest.clearAllMocks();
-        context = mock<vscode.ExtensionContext>({
-            subscriptions,
-        });
-        projectClone = new ProjectClone(context, topoCli, targetStore);
-        protocolHandler = new ProtocolHandler(projectClone);
+        protocolHandler = new ProtocolHandler();
         mutable(vscode.workspace).workspaceFolders = undefined;
     });
 
     it('registers the URI handler on activate', () => {
-        protocolHandler.activate(context);
+        protocolHandler.activate();
 
         expect(vscode.window.registerUriHandler).toHaveBeenCalledWith(
             protocolHandler,
         );
-        expect(context.subscriptions).toHaveLength(1);
     });
 
     it('runs a topo clone task for explicit git sources', async () => {
