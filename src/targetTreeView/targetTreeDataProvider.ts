@@ -137,8 +137,4 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
     public getTreeItem(element: vscode.TreeItem): vscode.TreeItem {
         return element;
     }
-
-    public refresh(): void {
-        this._onDidChangeTreeData.fire(undefined);
-    }
 }

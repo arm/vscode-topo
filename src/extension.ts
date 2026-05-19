@@ -26,6 +26,7 @@ import { logger } from './util/logger';
 import { TargetHealth } from './actions/targetHealth';
 import { SelectTarget } from './actions/selectTarget';
 import { RemoveTarget } from './actions/removeTarget';
+import { AddTarget } from './actions/addTarget';
 
 export async function activate(
     context: vscode.ExtensionContext,
@@ -80,7 +81,13 @@ export async function activate(
     const targetHealth = new TargetHealth(containersManager);
     const selectTarget = new SelectTarget(targetStore);
     const removeTarget = new RemoveTarget(targetStore);
-    context.subscriptions.push(targetHealth, selectTarget, removeTarget);
+    const addTarget = new AddTarget(targetStore);
+    context.subscriptions.push(
+        targetHealth,
+        selectTarget,
+        removeTarget,
+        addTarget,
+    );
     const protocolHandler = new ProtocolHandler(projectClone);
     const installDependency = new InstallDependency(
         targetStore,
@@ -112,6 +119,7 @@ export async function activate(
     targetHealth.activate();
     selectTarget.activate();
     removeTarget.activate();
+    addTarget.activate();
     setupKeys.activate();
     await installDependency.activate();
 }

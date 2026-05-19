@@ -291,15 +291,4 @@ describe('TargetTreeDataProvider', () => {
             expect(treeItem).toBe(item);
         });
     });
-
-    describe('refresh', () => {
-        it('refresh fires the event', () => {
-            const spy = jest.fn();
-            provider.onDidChangeTreeData(spy);
-
-            provider.refresh();
-
-            expect(spy).toHaveBeenCalledWith(undefined);
-        });
-    });
 });
