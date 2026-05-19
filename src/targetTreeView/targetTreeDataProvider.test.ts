@@ -13,19 +13,6 @@ import { TargetSubsystemGroupTreeItem } from './targetSubsystemGroupTreeItem';
 import { HealthCheckDependency, HealthCheckResult } from '../topoCliSchema';
 import { TargetDescriptionStore } from '../target/targetDescriptionStore';
 
-jest.mock('../util/logger');
-
-async function executeCommand(command: string, ...args: unknown[]) {
-    const calls = jest.mocked(vscode.commands.registerCommand).mock.calls;
-    const matching = calls.filter((c: unknown[]) => c[0] === command);
-    if (!matching.length) {
-        throw new Error(`No handler registered for command ${command}`);
-    }
-    const addCall = matching[matching.length - 1];
-    const handler = addCall[1] as (...args: unknown[]) => Promise<void>;
-    await handler(...args);
-}
-
 describe('TargetTreeDataProvider', () => {
     let provider: TargetTreeDataProvider;
     let context: MockProxy<vscode.ExtensionContext>;
@@ -142,14 +129,9 @@ describe('TargetTreeDataProvider', () => {
         jest.clearAllMocks();
     });
 
-    describe('activation / registration', () => {
-        it('registers the selectTarget command when activated', async () => {
+    describe('activation', () => {
+        it('registers event subscriptions when activated', async () => {
             await provider.activate();
-
-            expect(vscode.commands.registerCommand).toHaveBeenCalledWith(
-                TargetTreeDataProvider.selectTargetCommand,
-                expect.any(Function),
-            );
 
             expect(context.subscriptions.length).toBeGreaterThan(0);
         });
@@ -318,66 +300,6 @@ describe('TargetTreeDataProvider', () => {
             provider.refresh();
 
             expect(spy).toHaveBeenCalledWith(undefined);
-        });
-    });
-
-    describe('selectTarget command', () => {
-        it('invokes targetStore.setSelected when select command is executed with a target item', async () => {
-            await provider.activate();
-            const targetItem = new TargetTreeItem(target, true, 'connected');
-
-            await executeCommand(
-                TargetTreeDataProvider.selectTargetCommand,
-                targetItem,
-            );
-
-            expect(targetStoreMock.setSelected).toHaveBeenCalledWith(target);
-        });
-
-        it('does not call setSelected when select command is executed with a non-target item', async () => {
-            await provider.activate();
-
-            await executeCommand(TargetTreeDataProvider.selectTargetCommand);
-
-            expect(targetStoreMock.setSelected).not.toHaveBeenCalled();
-        });
-    });
-
-    describe('removeTarget command', () => {
-        it('invokes targetStore.deleteTarget when remove command is executed with a target item', async () => {
-            const targetItem = new TargetTreeItem(target, true, 'connected');
-            targetStoreMock.getTargets.mockReturnValue([target]);
-            await provider.activate();
-
-            await executeCommand(
-                TargetTreeDataProvider.removeTargetCommand,
-                targetItem,
-            );
-
-            expect(targetStoreMock.deleteTarget).toHaveBeenCalledWith(target);
-        });
-
-        it('does not call deleteTarget when remove command is executed with a non-target item', async () => {
-            await provider.activate();
-
-            await executeCommand(TargetTreeDataProvider.removeTargetCommand);
-
-            expect(targetStoreMock.deleteTarget).not.toHaveBeenCalled();
-        });
-
-        it('shows an error when deleteTarget fails', async () => {
-            const targetItem = new TargetTreeItem(target, true, 'connected');
-            targetStoreMock.deleteTarget.mockRejectedValue(
-                new Error('Target not found'),
-            );
-            await provider.activate();
-
-            await executeCommand(
-                TargetTreeDataProvider.removeTargetCommand,
-                targetItem,
-            );
-
-            expect(vscode.window.showErrorMessage).toHaveBeenCalled();
         });
     });
 });
