@@ -76,16 +76,6 @@ export class TargetStore {
         await this.saveTargets(targets);
     }
 
-    public async updateTarget(target: string): Promise<void> {
-        const targets = this.loadTargets();
-        if (!targets.has(target)) {
-            throw new Error(`Target "${target}" does not exist`);
-        }
-        targets.add(target);
-        await this.saveTargets(targets);
-        this._onChanged.fire();
-    }
-
     public getSelectedTarget(): string | undefined {
         const targets = this.getTargets();
         return targets.find((target) => target === this.selected);
