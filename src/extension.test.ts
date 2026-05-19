@@ -4,6 +4,7 @@ import { activate } from './extension';
 
 jest.mock('child_process');
 jest.mock('./util/logger');
+jest.mock('./topoCli');
 jest.mock('./topoCliVersionChecker', () => {
     return {
         TopoCliVersionChecker: jest.fn().mockImplementation(() => ({
