@@ -9,7 +9,6 @@ import {
     failedToLoadHostDependenciesMessage,
     HostDependenciesLoadErrorItem,
 } from './hostDependenciesLoadErrorItem';
-import { showTopoOutputCommand } from '../showTopoOutputCommand';
 
 function sortDependenciesByName(
     deps: HealthCheckDependency[],
@@ -45,9 +44,6 @@ export class HostDependenciesTreeDataProvider implements vscode.TreeDataProvider
             vscode.commands.registerCommand(
                 HostDependenciesTreeDataProvider.refreshCommand,
                 () => this.refresh(),
-            ),
-            vscode.commands.registerCommand(showTopoOutputCommand, () =>
-                logger.show(),
             ),
             this._onDidChangeTreeData,
         );
