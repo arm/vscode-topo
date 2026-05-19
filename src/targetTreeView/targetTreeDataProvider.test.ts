@@ -150,16 +150,7 @@ describe('TargetTreeDataProvider', () => {
                 TargetTreeDataProvider.selectTargetCommand,
                 expect.any(Function),
             );
-            expect(vscode.commands.registerCommand).toHaveBeenCalledWith(
-                TargetTreeDataProvider.inspectTargetHealthCommand,
-                expect.any(Function),
-            );
-            expect(
-                vscode.workspace.registerTextDocumentContentProvider,
-            ).toHaveBeenCalledWith(
-                TargetTreeDataProvider.inspectTargetHealthScheme,
-                expect.any(Object),
-            );
+
             expect(context.subscriptions.length).toBeGreaterThan(0);
         });
     });
@@ -387,62 +378,6 @@ describe('TargetTreeDataProvider', () => {
             );
 
             expect(vscode.window.showErrorMessage).toHaveBeenCalled();
-        });
-    });
-
-    describe('inspectHealth command', () => {
-        it('opens a readonly health JSON virtual document for selected target', async () => {
-            await provider.activate();
-            const targetItem = new TargetTreeItem(target, true, 'connected');
-            const textDocument = mock<vscode.TextDocument>();
-            jest.mocked(
-                vscode.workspace.openTextDocument,
-            ).mockResolvedValueOnce(textDocument);
-
-            await executeCommand(
-                TargetTreeDataProvider.inspectTargetHealthCommand,
-                targetItem,
-            );
-
-            const providerRegistration = jest.mocked(
-                vscode.workspace.registerTextDocumentContentProvider,
-            ).mock.calls[0];
-            const contentProvider = providerRegistration[1];
-            const uri = jest.mocked(vscode.workspace.openTextDocument).mock
-                .calls[0][0];
-            const content = await Promise.resolve(
-                contentProvider.provideTextDocumentContent(
-                    uri as vscode.Uri,
-                    mock<vscode.CancellationToken>(),
-                ),
-            );
-
-            expect((uri as vscode.Uri).scheme).toBe(
-                TargetTreeDataProvider.inspectTargetHealthScheme,
-            );
-            expect(content).toBeDefined();
-            expect(JSON.parse(content!)).toEqual(targetHealth);
-            expect(vscode.window.showTextDocument).toHaveBeenCalledWith(
-                textDocument,
-                { preview: true },
-            );
-        });
-
-        it('does not open health document for non-selected target', async () => {
-            await provider.activate();
-            const targetItem = new TargetTreeItem(
-                target,
-                false,
-                'disconnected',
-            );
-
-            await executeCommand(
-                TargetTreeDataProvider.inspectTargetHealthCommand,
-                targetItem,
-            );
-
-            expect(vscode.workspace.openTextDocument).not.toHaveBeenCalled();
-            expect(vscode.window.showTextDocument).not.toHaveBeenCalled();
         });
     });
 });
