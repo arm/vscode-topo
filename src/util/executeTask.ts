@@ -18,11 +18,10 @@ function getTaskScope(
 
 export async function executeTask(
     taskName: string,
-    command: string[],
+    command: string[] | string,
     opts?: TaskOptions,
 ): Promise<void> {
-    const [cmd, ...args] = command;
-    if (!cmd) {
+    if (command.length === 0) {
         throw new Error('No command passed to task');
     }
 
@@ -30,9 +29,14 @@ export async function executeTask(
         type: 'shell',
     };
 
-    const shellExecution = new vscode.ShellExecution(cmd, args, {
-        cwd: opts?.cwd,
-    });
+    const shellExecution =
+        typeof command === 'string'
+            ? new vscode.ShellExecution(command, {
+                  cwd: opts?.cwd,
+              })
+            : new vscode.ShellExecution(command[0], command.slice(1), {
+                  cwd: opts?.cwd,
+              });
 
     const taskScope = getTaskScope(opts?.cwd);
     const task = new vscode.Task(

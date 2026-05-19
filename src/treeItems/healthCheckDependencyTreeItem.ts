@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { HealthCheckDependency, HealthCheckStatus } from '../topoCliSchema';
-import { getInstallableDependency } from '../util/getInstallableDependency';
+import { getInstallableDependencyCommand } from '../util/getInstallableDependency';
 
 export const getDependencyItemIcon = (
     status: HealthCheckStatus,
@@ -39,7 +39,9 @@ export class HealthCheckDependencyTreeItem extends vscode.TreeItem {
         this.contextValue = [
             'Dependency',
             statusCapitalized,
-            getInstallableDependency(dependency) ? 'Installable' : undefined,
+            getInstallableDependencyCommand(dependency)
+                ? 'Installable'
+                : undefined,
         ]
             .filter(Boolean)
             .join(' ');

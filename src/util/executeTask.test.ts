@@ -59,6 +59,29 @@ describe('executeTask', () => {
         );
     });
 
+    it('creates a VS Code shell task from a command line', async () => {
+        executeTask('Poto', 'topo install remoteproc-runtime --target imx93', {
+            cwd,
+        });
+        await Promise.resolve();
+
+        expect(vscode.ShellExecution).toHaveBeenCalledWith(
+            'topo install remoteproc-runtime --target imx93',
+            {
+                cwd,
+            },
+        );
+        expect(vscode.Task).toHaveBeenCalledWith(
+            { type: 'shell' },
+            vscode.TaskScope.Workspace,
+            'Poto',
+            PACKAGE_NAME,
+            expect.objectContaining({
+                commandLine: 'topo install remoteproc-runtime --target imx93',
+            }),
+        );
+    });
+
     it('resolves when the task exits successfully', async () => {
         const runningTask = executeTask('Deploy to board', ['foo', 'bar']);
         await Promise.resolve();

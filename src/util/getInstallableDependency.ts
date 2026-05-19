@@ -1,14 +1,8 @@
 import { HealthCheckDependency } from '../topoCliSchema';
 
-const fixCommandRegex = /^run `topo install ([A-z-]+)`$/;
-
-export const getInstallableDependency = (
+export const getInstallableDependencyCommand = (
     dependency: HealthCheckDependency,
 ): string | undefined => {
-    if (typeof dependency.fix !== 'string') {
-        return undefined;
-    }
-
-    const match = dependency.fix.match(fixCommandRegex);
-    return match ? match[1] : undefined;
+    const command = dependency.fix?.command?.trim();
+    return command || undefined;
 };

@@ -6,13 +6,14 @@ import { showAndLogError } from '../util/showAndLogError';
 import { ContainersManager } from '../target/containersManager';
 import { logger } from '../util/logger';
 import { executeTask } from '../util/executeTask';
-import { getInstallableDependency } from '../util/getInstallableDependency';
-
-const getInstallCommand = (sshTarget: string, value: string): string[] => {
-    return ['topo', 'install', value, '--target', sshTarget];
-};
+import { getInstallableDependencyCommand } from '../util/getInstallableDependency';
 
 const installAction = { title: 'Install missing dependencies' };
+
+type InstallableDependency = {
+    names: string[];
+    command: string;
+};
 
 export class InstallDependency implements vscode.Disposable {
     private disposables: vscode.Disposable[] = [];
@@ -49,16 +50,26 @@ export class InstallDependency implements vscode.Disposable {
         }
         const { health } = await this.containersManager.getTargetState(target);
 
-        const installables = new Set<string>();
+        const installables = new Map<string, InstallableDependency>();
         for (const dependency of health?.dependencies ?? []) {
-            const installable = getInstallableDependency(dependency);
-            if (installable) {
-                installables.add(installable);
+            const command = getInstallableDependencyCommand(dependency);
+            if (command) {
+                const installable = installables.get(command);
+                if (installable) {
+                    installable.names.push(dependency.name);
+                } else {
+                    installables.set(command, {
+                        names: [dependency.name],
+                        command,
+                    });
+                }
             }
         }
 
         if (installables.size > 0 && !abortController.signal.aborted) {
-            await this.showInstallableNotification(target, [...installables]);
+            await this.showInstallableNotification(target, [
+                ...installables.values(),
+            ]);
         }
     }
 
@@ -80,8 +91,8 @@ export class InstallDependency implements vscode.Disposable {
             return;
         }
 
-        const installable = getInstallableDependency(treeNode.dependency);
-        if (!installable) {
+        const command = getInstallableDependencyCommand(treeNode.dependency);
+        if (!command) {
             showAndLogError(
                 `Failed to install dependency`,
                 new Error(
@@ -91,24 +102,27 @@ export class InstallDependency implements vscode.Disposable {
             return;
         }
 
-        await this.installDependency(target, installable);
+        await this.installDependency(
+            target,
+            [treeNode.dependency.name],
+            command,
+        );
     }
 
     private async installDependency(
         target: string,
-        installable: string,
+        names: string[],
+        command: string,
     ): Promise<void> {
+        const name = names.join(', ');
         try {
-            await executeTask(
-                `Install ${installable} on ${target}`,
-                getInstallCommand(target, installable),
-            );
+            await executeTask(`Install ${name} on ${target}`, command);
             vscode.window.showInformationMessage(
-                `${installable} was installed on target ${target}`,
+                `${name} was installed on target ${target}`,
             );
         } catch (err) {
             showAndLogError(
-                `Failed to install ${installable} on target ${target}`,
+                `Failed to install ${name} on target ${target}`,
                 err,
             );
         }
@@ -116,15 +130,19 @@ export class InstallDependency implements vscode.Disposable {
 
     private async showInstallableNotification(
         target: string,
-        installables: string[],
+        installables: InstallableDependency[],
     ): Promise<void> {
         const choice = await vscode.window.showWarningMessage(
-            `${target} has missing or unhealthy dependencies: ${installables.join(`, `)}`,
+            `${target} has missing or unhealthy dependencies: ${installables.flatMap(({ names }) => names).join(`, `)}`,
             installAction,
         );
         if (choice?.title === installAction.title) {
             for (const installable of installables) {
-                await this.installDependency(target, installable);
+                await this.installDependency(
+                    target,
+                    installable.names,
+                    installable.command,
+                );
             }
         }
     }

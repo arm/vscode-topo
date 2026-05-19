@@ -87,7 +87,10 @@ describe('InstallDependency', () => {
             name: 'Remoteproc Runtime',
             status: 'error',
             value: 'missing',
-            fix: 'run `topo install remoteproc-runtime`',
+            fix: {
+                description: 'Install the remoteproc runtime',
+                command: `topo install remoteproc-runtime --target ${target}`,
+            },
         });
 
         await installDependency.activate();
@@ -95,8 +98,8 @@ describe('InstallDependency', () => {
         await getCommandHandler()(dependencyItem);
 
         expect(executeTaskMock).toHaveBeenCalledWith(
-            `Install remoteproc-runtime on ${target}`,
-            ['topo', 'install', 'remoteproc-runtime', '--target', target],
+            `Install Remoteproc Runtime on ${target}`,
+            `topo install remoteproc-runtime --target ${target}`,
         );
     });
 
@@ -127,13 +130,19 @@ describe('InstallDependency', () => {
                         name: 'Remoteproc Runtime',
                         status: 'error',
                         value: 'missing',
-                        fix: 'run `topo install remoteproc-runtime`',
+                        fix: {
+                            description: 'Install the remoteproc runtime',
+                            command: `topo install remoteproc-runtime --target ${target}`,
+                        },
                     },
                     {
                         name: 'Debugger',
                         status: 'error',
                         value: 'missing',
-                        fix: 'run `topo install debugger`',
+                        fix: {
+                            description: 'Install the debugger',
+                            command: 'topo install debugger',
+                        },
                     },
                 ],
             },
@@ -147,7 +156,47 @@ describe('InstallDependency', () => {
         await installDependency.activate();
 
         expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
-            `${target} has missing or unhealthy dependencies: remoteproc-runtime, debugger`,
+            `${target} has missing or unhealthy dependencies: Remoteproc Runtime, Debugger`,
+            { title: 'Install missing dependencies' },
+        );
+    });
+
+    it('lists every missing dependency when multiple dependencies share a fix command', async () => {
+        containersManager.getTargetState.mockResolvedValue({
+            health: {
+                ...loadedHealth.target,
+                dependencies: [
+                    {
+                        name: 'Remoteproc Runtime',
+                        status: 'error',
+                        value: 'missing',
+                        fix: {
+                            description: 'Install the remoteproc components',
+                            command: `topo install remoteproc --target ${target}`,
+                        },
+                    },
+                    {
+                        name: 'Remoteproc Shim',
+                        status: 'error',
+                        value: 'missing',
+                        fix: {
+                            description: 'Install the remoteproc components',
+                            command: `topo install remoteproc --target ${target}`,
+                        },
+                    },
+                ],
+            },
+            status: 'connected',
+        });
+        const installDependency = new InstallDependency(
+            targetStore,
+            containersManager,
+        );
+
+        await installDependency.activate();
+
+        expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
+            `${target} has missing or unhealthy dependencies: Remoteproc Runtime, Remoteproc Shim`,
             { title: 'Install missing dependencies' },
         );
     });
