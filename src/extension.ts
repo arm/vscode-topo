@@ -23,6 +23,7 @@ import { TargetDescriptionStore } from './target/targetDescriptionStore';
 import { InstallDependency } from './actions/installDependency';
 import { HostDependenciesTreeDataProvider } from './hostTreeView/hostDependenciesTreeDataProvider';
 import { logger } from './util/logger';
+import { TargetHealth } from './actions/targetHealth';
 
 export async function activate(
     context: vscode.ExtensionContext,
@@ -73,7 +74,9 @@ export async function activate(
     const containerStart = new ContainerStart(context, dockerCommands);
     const containerStop = new ContainerStop(context, dockerCommands);
     const containerDelete = new ContainerDelete(context, dockerCommands);
-    const health = new HostHealth(context, topoCli);
+    const hostHealth = new HostHealth(context, topoCli);
+    const targetHealth = new TargetHealth(containersManager);
+    context.subscriptions.push(targetHealth);
     const protocolHandler = new ProtocolHandler(projectClone);
     const installDependency = new InstallDependency(
         targetStore,
@@ -101,7 +104,8 @@ export async function activate(
     containerStart.activate();
     await containerStop.activate();
     containerDelete.activate();
-    health.activate();
+    hostHealth.activate();
+    targetHealth.activate();
     setupKeys.activate();
     await installDependency.activate();
 }
