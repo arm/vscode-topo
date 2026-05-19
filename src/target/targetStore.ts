@@ -95,6 +95,8 @@ export class TargetStore {
                 ? remaining.sort((a, b) => a.localeCompare(b))[0]
                 : undefined;
             await this.setSelected(newSelected);
+        } else {
+            this._onChanged.fire();
         }
     }
 
