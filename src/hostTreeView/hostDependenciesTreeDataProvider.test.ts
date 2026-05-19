@@ -6,8 +6,7 @@ import { HealthCheckResult } from '../topoCliSchema';
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 import { failedToLoadHostDependenciesMessage } from './hostDependenciesLoadErrorItem';
-import { logger } from '../util/logger';
-import { showTopoOutputCommand } from '../showTopoOutputCommand';
+import { ShowOutput } from '../actions/showOutput';
 
 jest.mock('../util/logger');
 
@@ -83,10 +82,6 @@ describe('HostDependenciesTreeDataProvider', () => {
             HostDependenciesTreeDataProvider.refreshCommand,
             expect.any(Function),
         );
-        expect(vscode.commands.registerCommand).toHaveBeenCalledWith(
-            showTopoOutputCommand,
-            expect.any(Function),
-        );
         expect(context.subscriptions.length).toBeGreaterThan(0);
     });
 
@@ -136,7 +131,7 @@ describe('HostDependenciesTreeDataProvider', () => {
             label: failedToLoadHostDependenciesMessage,
             collapsibleState: vscode.TreeItemCollapsibleState.None,
             command: {
-                command: showTopoOutputCommand,
+                command: ShowOutput.showOutputCommand,
                 title: 'Open Arm Topo Output',
             },
             contextValue: 'Dependencies Error',
@@ -162,13 +157,5 @@ describe('HostDependenciesTreeDataProvider', () => {
         await executeCommand(HostDependenciesTreeDataProvider.refreshCommand);
 
         expect(spy).toHaveBeenCalledWith(undefined);
-    });
-
-    it('show host dependencies output command opens the Arm Topo output channel', async () => {
-        provider.activate();
-
-        await executeCommand(showTopoOutputCommand);
-
-        expect(logger.show).toHaveBeenCalled();
     });
 });
