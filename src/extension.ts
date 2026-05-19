@@ -125,5 +125,6 @@ export async function activate(
     removeTarget.activate();
     setupKeys.activate();
     showOutput.activate();
+    refreshHostHealth.activate();
     await installDependency.activate();
 }

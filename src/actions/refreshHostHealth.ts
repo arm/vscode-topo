@@ -19,6 +19,7 @@ export class RefreshHostHealth implements vscode.Disposable {
                 () => this.refresh(),
             ),
         );
+        this.refresh();
     }
 
     private refresh(): void {

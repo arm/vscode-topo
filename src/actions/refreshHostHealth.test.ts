@@ -38,10 +38,11 @@ describe('RefreshHostHealth', () => {
         jest.clearAllMocks();
     });
 
-    it('registers the refresh host health command on activation', () => {
+    it('registers the refresh host health command and refreshes host health on activation', () => {
+        const topoCli = mock<TopoCli>();
         const refreshHostHealth = new RefreshHostHealth(
             new HostHealthModel(),
-            mock<TopoCli>(),
+            topoCli,
         );
 
         refreshHostHealth.activate();
@@ -50,6 +51,7 @@ describe('RefreshHostHealth', () => {
             RefreshHostHealth.refreshHostHealthCommand,
             expect.any(Function),
         );
+        expect(topoCli.hostHealth).toHaveBeenCalled();
     });
 
     it('refreshes host health on command execution', async () => {
