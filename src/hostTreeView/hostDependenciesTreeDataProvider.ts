@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { PACKAGE_NAME } from '../manifest';
-import { TopoCli } from '../topoCli';
 import { HealthCheckDependency } from '../topoCliSchema';
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
@@ -9,6 +8,7 @@ import {
     failedToLoadHostDependenciesMessage,
     HostDependenciesLoadErrorItem,
 } from './hostDependenciesLoadErrorItem';
+import { HostHealthModel } from '../models/hostHealthModel';
 
 function sortDependenciesByName(
     deps: HealthCheckDependency[],
@@ -18,17 +18,15 @@ function sortDependenciesByName(
     );
 }
 
-export class HostDependenciesTreeDataProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
+export class HostDependenciesTreeDataProvider
+    implements vscode.TreeDataProvider<vscode.TreeItem>, vscode.Disposable
+{
     public static readonly viewId = `${PACKAGE_NAME}.host-manager`;
-    public static readonly refreshCommand = `${PACKAGE_NAME}.refreshHostDependencies`;
-
+    private disposables: vscode.Disposable[] = [];
     private _onDidChangeTreeData = new vscode.EventEmitter<undefined>();
     public readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
-    constructor(
-        private readonly context: vscode.ExtensionContext,
-        private readonly topoCli: TopoCli,
-    ) {}
+    constructor(private readonly hostHealthModel: HostHealthModel) {}
 
     public activate(): void {
         const treeView = vscode.window.createTreeView(
@@ -39,13 +37,12 @@ export class HostDependenciesTreeDataProvider implements vscode.TreeDataProvider
             },
         );
 
-        this.context.subscriptions.push(
+        this.disposables.push(
             treeView,
-            vscode.commands.registerCommand(
-                HostDependenciesTreeDataProvider.refreshCommand,
-                () => this.refresh(),
-            ),
             this._onDidChangeTreeData,
+            this.hostHealthModel.onChanged(() => {
+                this._onDidChangeTreeData.fire(undefined);
+            }),
         );
     }
 
@@ -54,12 +51,9 @@ export class HostDependenciesTreeDataProvider implements vscode.TreeDataProvider
     ): Promise<vscode.TreeItem[]> {
         if (!element) {
             try {
-                const health = await this.topoCli.hostHealth();
-                const dependenciesGroup =
-                    new HealthCheckDependencyGroupTreeItem(
-                        health.host.dependencies,
-                    );
-                return [dependenciesGroup];
+                const health = await this.hostHealthModel.health;
+                const deps = health.host.dependencies;
+                return [new HealthCheckDependencyGroupTreeItem(deps)];
             } catch (err) {
                 logger.warn(failedToLoadHostDependenciesMessage, err);
                 return [new HostDependenciesLoadErrorItem()];
@@ -81,7 +75,10 @@ export class HostDependenciesTreeDataProvider implements vscode.TreeDataProvider
         return element;
     }
 
-    public refresh(): void {
-        this._onDidChangeTreeData.fire(undefined);
+    public dispose(): void {
+        for (const disposable of [...this.disposables].reverse()) {
+            disposable.dispose();
+        }
+        this.disposables = [];
     }
 }

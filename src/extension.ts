@@ -27,6 +27,8 @@ import { TargetHealth } from './actions/targetHealth';
 import { ShowOutput } from './actions/showOutput';
 import { SelectTarget } from './actions/selectTarget';
 import { RemoveTarget } from './actions/removeTarget';
+import { HostHealthModel } from './models/hostHealthModel';
+import { RefreshHostHealth } from './actions/refreshHostHealth';
 
 export async function activate(
     context: vscode.ExtensionContext,
@@ -44,6 +46,8 @@ export async function activate(
         return;
     }
 
+    const hostHealthModel = new HostHealthModel();
+
     const targetStore = new TargetStore(context);
     const targetDescriptionStore = new TargetDescriptionStore(topoCli);
     const projectInit = new ProjectInit(topoCli);
@@ -53,6 +57,8 @@ export async function activate(
     const stop = new Stop(context, targetStore);
     const showOutput = new ShowOutput();
     context.subscriptions.push(showOutput);
+    const refreshHostHealth = new RefreshHostHealth(hostHealthModel, topoCli);
+    context.subscriptions.push(refreshHostHealth);
     const containerOpenInBrowser = new ContainerOpenInBrowser(context);
     const dockerCommands = new DockerCommands();
     const attachVsCode = new AttachVsCode(context, dockerCommands);
@@ -70,7 +76,8 @@ export async function activate(
         targetDescriptionStore,
     );
     const hostDependenciesTreeDataProvider =
-        new HostDependenciesTreeDataProvider(context, topoCli);
+        new HostDependenciesTreeDataProvider(hostHealthModel);
+    context.subscriptions.push(hostDependenciesTreeDataProvider);
     const targetManager = new TargetManager(
         context,
         targetTreeDataProvider,
