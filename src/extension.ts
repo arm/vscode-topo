@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { TopoCli } from './topoCli';
-import { ProjectInit } from './projectInit';
+import { ProjectInit } from './actions/projectInit';
 import { TopoCliVersionChecker } from './topoCliVersionChecker';
 import { TargetManager } from './targetTreeView/targetManager';
 import { TargetTreeDataProvider } from './targetTreeView/targetTreeDataProvider';
@@ -46,9 +46,10 @@ export async function activate(
 
     const targetStore = new TargetStore(context);
     const targetDescriptionStore = new TargetDescriptionStore(topoCli);
-    const projectInit = new ProjectInit(context, topoCli);
     const clone = new Clone(topoCli, targetStore);
     context.subscriptions.push(clone);
+    const projectInit = new ProjectInit(topoCli);
+    context.subscriptions.push(projectInit);
     const deploy = new Deploy(context, targetStore);
     const stop = new Stop(context, targetStore);
     const showOutput = new ShowOutput();
@@ -100,7 +101,7 @@ export async function activate(
     context.subscriptions.push(targetStore);
     await topoCli.activate();
     context.subscriptions.push(topoCli);
-    await projectInit.activate();
+    projectInit.activate();
     clone.activate();
     deploy.activate();
     stop.activate();
