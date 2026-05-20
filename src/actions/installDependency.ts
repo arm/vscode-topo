@@ -9,7 +9,7 @@ import { executeTask } from '../util/executeTask';
 
 const installAction = { title: 'Install missing dependencies' };
 
-type InstallableDependency = {
+type InstallableDependencyGroup = {
     names: string[];
     command: string;
 };
@@ -49,7 +49,7 @@ export class InstallDependency implements vscode.Disposable {
         }
         const { health } = await this.containersManager.getTargetState(target);
 
-        const installables = new Map<string, InstallableDependency>();
+        const installables = new Map<string, InstallableDependencyGroup>();
         for (const dependency of health?.dependencies ?? []) {
             const command = dependency.fix?.command;
             if (command) {
@@ -129,7 +129,7 @@ export class InstallDependency implements vscode.Disposable {
 
     private async showInstallableNotification(
         target: string,
-        installables: InstallableDependency[],
+        installables: InstallableDependencyGroup[],
     ): Promise<void> {
         const choice = await vscode.window.showWarningMessage(
             `${target} has missing or unhealthy dependencies: ${installables.flatMap(({ names }) => names).join(`, `)}`,
