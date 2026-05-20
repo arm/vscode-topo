@@ -24,7 +24,7 @@ export class InstallDependency implements vscode.Disposable {
         private readonly containersManager: ContainersManager,
     ) {}
 
-    public activate(): Promise<void> {
+    public activate(): void {
         this.disposables.push(
             vscode.commands.registerCommand(
                 InstallDependency.installDependencyCommand,
@@ -35,7 +35,7 @@ export class InstallDependency implements vscode.Disposable {
             ),
         );
 
-        return this.promptToInstallMissingDependencies();
+        this.promptToInstallMissingDependencies();
     }
 
     private async promptToInstallMissingDependencies(): Promise<void> {

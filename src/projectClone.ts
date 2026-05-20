@@ -229,7 +229,7 @@ export class ProjectClone {
         };
     }
 
-    public async activate() {
+    public activate() {
         this.context.subscriptions.push(
             vscode.commands.registerCommand(
                 ProjectClone.remoteCloneCommand,

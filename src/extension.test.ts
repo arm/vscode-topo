@@ -45,7 +45,7 @@ describe('extension activation', () => {
             globalStorageUri,
         });
 
-        await activate(context);
+        activate(context);
 
         expect(vscode.commands.registerCommand).toHaveBeenCalled();
         expect(subscriptions.length).toBeGreaterThan(0);

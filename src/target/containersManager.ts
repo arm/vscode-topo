@@ -80,8 +80,8 @@ export class ContainersManager implements vscode.Disposable {
         this.disposables.push(this._onDataUpdate, onChangedDisposable);
     }
 
-    public async activate(): Promise<void> {
-        await this.updateTarget();
+    public activate(): void {
+        this.updateTarget();
     }
 
     private async updateTarget(): Promise<void> {

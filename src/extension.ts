@@ -28,13 +28,12 @@ import { ShowOutput } from './actions/showOutput';
 import { SelectTarget } from './actions/selectTarget';
 import { RemoveTarget } from './actions/removeTarget';
 
-export async function activate(
-    context: vscode.ExtensionContext,
-): Promise<void> {
+export function activate(context: vscode.ExtensionContext): void {
     const topoCli = new TopoCli(
         context.extensionPath,
         context.environmentVariableCollection,
     );
+    context.subscriptions.push(topoCli);
     const topoCliVersionChecker = new TopoCliVersionChecker(
         topoCli,
         context.extensionPath,
@@ -45,6 +44,7 @@ export async function activate(
     }
 
     const targetStore = new TargetStore(context);
+    context.subscriptions.push(targetStore);
     const targetDescriptionStore = new TargetDescriptionStore(topoCli);
     const projectInit = new ProjectInit(topoCli);
     context.subscriptions.push(projectInit);
@@ -57,6 +57,7 @@ export async function activate(
     const dockerCommands = new DockerCommands();
     const attachVsCode = new AttachVsCode(context, dockerCommands);
     const attachShell = new AttachShell(context, dockerCommands, targetStore);
+    const setupKeys = new SetupKeys(context, targetStore);
     const containersManager = new ContainersManager(
         topoCli,
         dockerCommands,
@@ -94,23 +95,20 @@ export async function activate(
     context.subscriptions.push(logger);
 
     protocolHandler.activate(context);
-    const setupKeys = new SetupKeys(context, targetStore);
-    context.subscriptions.push(targetStore);
-    await topoCli.activate();
-    context.subscriptions.push(topoCli);
+    topoCli.activate();
     projectInit.activate();
-    await projectClone.activate();
+    projectClone.activate();
     deploy.activate();
     stop.activate();
-    await containerOpenInBrowser.activate();
-    await attachVsCode.activate();
+    containerOpenInBrowser.activate();
+    attachVsCode.activate();
     attachShell.activate();
-    await containersManager.activate();
-    await targetTreeDataProvider.activate();
+    containersManager.activate();
+    targetTreeDataProvider.activate();
     hostDependenciesTreeDataProvider.activate();
     targetManager.activate();
     containerStart.activate();
-    await containerStop.activate();
+    containerStop.activate();
     containerDelete.activate();
     hostHealth.activate();
     targetHealth.activate();
@@ -118,5 +116,5 @@ export async function activate(
     removeTarget.activate();
     setupKeys.activate();
     showOutput.activate();
-    await installDependency.activate();
+    installDependency.activate();
 }
