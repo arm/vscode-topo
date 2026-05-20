@@ -99,7 +99,7 @@ describe('InstallDependency', () => {
 
         expect(executeTaskMock).toHaveBeenCalledWith(
             `Install Remoteproc Runtime on ${target}`,
-            `topo install remoteproc-runtime --target ${target}`,
+            ['topo', 'install', 'remoteproc-runtime', '--target', target],
         );
     });
 
@@ -162,6 +162,9 @@ describe('InstallDependency', () => {
     });
 
     it('lists every missing dependency when multiple dependencies share a fix command', async () => {
+        jest.mocked(vscode.window.showWarningMessage).mockResolvedValue({
+            title: 'Install missing dependencies',
+        });
         containersManager.getTargetState.mockResolvedValue({
             health: {
                 ...loadedHealth.target,
@@ -198,6 +201,11 @@ describe('InstallDependency', () => {
         expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
             `${target} has missing or unhealthy dependencies: Remoteproc Runtime, Remoteproc Shim`,
             { title: 'Install missing dependencies' },
+        );
+        expect(executeTaskMock).toHaveBeenCalledTimes(1);
+        expect(executeTaskMock).toHaveBeenCalledWith(
+            `Install Remoteproc Runtime, Remoteproc Shim on ${target}`,
+            ['topo', 'install', 'remoteproc', '--target', target],
         );
     });
 });

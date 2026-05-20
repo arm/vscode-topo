@@ -6,6 +6,7 @@ import { showAndLogError } from '../util/showAndLogError';
 import { ContainersManager } from '../target/containersManager';
 import { logger } from '../util/logger';
 import { executeTask } from '../util/executeTask';
+import { getFixCommandArgs } from '../util/getFixCommandArgs';
 
 const installAction = { title: 'Install missing dependencies' };
 
@@ -51,15 +52,14 @@ export class InstallDependency implements vscode.Disposable {
 
         const installables = new Map<string, InstallableDependencyGroup>();
         for (const dependency of health?.dependencies ?? []) {
-            const command = dependency.fix?.command;
-            if (command) {
-                const installable = installables.get(command);
+            if (dependency.fix?.command) {
+                const installable = installables.get(dependency.fix.command);
                 if (installable) {
                     installable.names.push(dependency.name);
                 } else {
-                    installables.set(command, {
+                    installables.set(dependency.fix.command, {
                         names: [dependency.name],
-                        command,
+                        command: dependency.fix.command,
                     });
                 }
             }
@@ -91,7 +91,7 @@ export class InstallDependency implements vscode.Disposable {
         }
 
         const command = treeNode.dependency.fix?.command;
-        if (!command) {
+        if (!command || !getFixCommandArgs(command)) {
             showAndLogError(
                 `Failed to install dependency`,
                 new Error(
@@ -114,8 +114,17 @@ export class InstallDependency implements vscode.Disposable {
         command: string,
     ): Promise<void> {
         const name = names.join(', ');
+        const commandArgs = getFixCommandArgs(command);
+        if (!commandArgs) {
+            showAndLogError(
+                `Failed to install ${name} on target ${target}`,
+                new Error('No installable command found'),
+            );
+            return;
+        }
+
         try {
-            await executeTask(`Install ${name} on ${target}`, command);
+            await executeTask(`Install ${name} on ${target}`, commandArgs);
             vscode.window.showInformationMessage(
                 `${name} was installed on target ${target}`,
             );

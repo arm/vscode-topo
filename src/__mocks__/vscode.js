@@ -31,20 +31,11 @@ class EventEmitter {
     }
 }
 const RelativePattern = jest.fn();
-const ShellExecution = jest.fn((command, executionArgs, options) => {
-    if (Array.isArray(executionArgs)) {
-        return {
-            executablePath: command,
-            executionArgs,
-            options,
-        };
-    }
-
-    return {
-        commandLine: command,
-        options: executionArgs,
-    };
-});
+const ShellExecution = jest.fn((executablePath, executionArgs, options) => ({
+    executablePath,
+    executionArgs,
+    options,
+}));
 const Task = jest.fn((definition, scope, name, type, execution) => ({
     definition,
     scope,
