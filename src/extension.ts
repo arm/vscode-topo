@@ -28,7 +28,9 @@ import { ShowOutput } from './actions/showOutput';
 import { SelectTarget } from './actions/selectTarget';
 import { RemoveTarget } from './actions/removeTarget';
 
-export function activate(context: vscode.ExtensionContext): void {
+export async function activate(
+    context: vscode.ExtensionContext,
+): Promise<void> {
     const topoCli = new TopoCli(
         context.extensionPath,
         context.environmentVariableCollection,
@@ -103,7 +105,7 @@ export function activate(context: vscode.ExtensionContext): void {
     containerOpenInBrowser.activate();
     attachVsCode.activate();
     attachShell.activate();
-    containersManager.activate();
+    await containersManager.activate();
     targetTreeDataProvider.activate();
     hostDependenciesTreeDataProvider.activate();
     targetManager.activate();
@@ -116,5 +118,5 @@ export function activate(context: vscode.ExtensionContext): void {
     removeTarget.activate();
     setupKeys.activate();
     showOutput.activate();
-    installDependency.activate();
+    await installDependency.activate();
 }
