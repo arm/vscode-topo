@@ -65,7 +65,6 @@ export async function activate(
     context.subscriptions.push(hostTreeView);
 
     hostHealthController.activate();
-
     hostTreeView.activate();
 
     const targetStore = new TargetStore(context);
