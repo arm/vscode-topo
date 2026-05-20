@@ -28,9 +28,7 @@ export class HostTreeView
     private _onDidChangeTreeData = new vscode.EventEmitter<undefined>();
     public readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
-    constructor(private readonly model: HostModel) {}
-
-    public activate(): void {
+    constructor(private readonly model: HostModel) {
         const treeView = vscode.window.createTreeView(HostTreeView.viewId, {
             treeDataProvider: this,
             showCollapseAll: false,

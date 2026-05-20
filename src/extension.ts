@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as commands from './commands';
 import { TopoCli } from './topoCli';
 import { ProjectInit } from './actions/projectInit';
 import { TopoCliVersionChecker } from './topoCliVersionChecker';
@@ -29,11 +30,6 @@ import { SelectTarget } from './actions/selectTarget';
 import { RemoveTarget } from './actions/removeTarget';
 import { HostModel } from './models/hostModel';
 import { HostController } from './controllers/hostController';
-import { PACKAGE_NAME } from './manifest';
-
-function command(id: string): string {
-    return `${PACKAGE_NAME}.${id}`;
-}
 
 export async function activate(
     context: vscode.ExtensionContext,
@@ -53,19 +49,13 @@ export async function activate(
 
     const hostModel = new HostModel();
 
-    const hostHealthController = new HostController(hostModel, topoCli);
-
-    context.subscriptions.push(
-        vscode.commands.registerCommand(command('refreshHostHealth'), () =>
-            hostHealthController.refreshHealth(),
-        ),
-    );
-
     const hostTreeView = new HostTreeView(hostModel);
     context.subscriptions.push(hostTreeView);
 
-    hostHealthController.activate();
-    hostTreeView.activate();
+    const hostHealthController = new HostController(hostModel, topoCli);
+
+    const disposeCommands = commands.register(hostHealthController);
+    context.subscriptions.push(disposeCommands);
 
     const targetStore = new TargetStore(context);
     const targetDescriptionStore = new TargetDescriptionStore(topoCli);

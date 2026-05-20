@@ -5,9 +5,7 @@ export class HostController {
     constructor(
         private readonly hostModel: HostModel,
         private readonly topoCli: TopoCli,
-    ) {}
-
-    public activate(): void {
+    ) {
         this.refreshHealth();
     }
 

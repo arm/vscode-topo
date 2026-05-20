@@ -15,7 +15,6 @@ describe('HostDependenciesTreeDataProvider', () => {
 
     it('registers the host dependencies tree', () => {
         const provider = new HostTreeView(new HostModel());
-        provider.activate();
 
         expect(vscode.window.createTreeView).toHaveBeenCalledWith(
             HostTreeView.viewId,
@@ -28,7 +27,6 @@ describe('HostDependenciesTreeDataProvider', () => {
 
     it('returns a Dependencies group at the root', async () => {
         const provider = new HostTreeView(new HostModel());
-        provider.activate();
 
         const children = await provider.getChildren();
 
@@ -58,7 +56,6 @@ describe('HostDependenciesTreeDataProvider', () => {
             },
         });
         const provider = new HostTreeView(model);
-        provider.activate();
 
         const rootChildren = await provider.getChildren();
         const children = await provider.getChildren(rootChildren[0]);
@@ -86,7 +83,6 @@ describe('HostDependenciesTreeDataProvider', () => {
         const model = new HostModel();
         model.health = Promise.reject(new Error('health unavailable'));
         const provider = new HostTreeView(model);
-        provider.activate();
 
         const children = await provider.getChildren();
 
@@ -105,7 +101,6 @@ describe('HostDependenciesTreeDataProvider', () => {
 
     it('getTreeItem returns the element itself', () => {
         const provider = new HostTreeView(new HostModel());
-        provider.activate();
         const item = new HealthCheckDependencyTreeItem({
             name: 'Alpha',
             status: 'ok',

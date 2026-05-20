@@ -8,11 +8,10 @@ describe('HostController', () => {
         jest.clearAllMocks();
     });
 
-    it('refreshes host health on activation', () => {
+    it('refreshes host health on creation', () => {
         const topoCli = mock<TopoCli>();
-        const controller = new HostController(new HostModel(), topoCli);
 
-        controller.activate();
+        new HostController(new HostModel(), topoCli);
 
         expect(topoCli.hostHealth).toHaveBeenCalled();
     });
