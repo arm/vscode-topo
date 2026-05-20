@@ -43,29 +43,22 @@ export class InstallDependency implements vscode.Disposable {
         const abortController = new AbortController();
         this.targetChangedAbortController = abortController;
 
-        try {
-            const target = this.targetStore.getSelectedTarget();
-            if (!target) {
-                return;
-            }
-            const { health } =
-                await this.containersManager.getTargetState(target);
+        const target = this.targetStore.getSelectedTarget();
+        if (!target) {
+            return;
+        }
+        const { health } = await this.containersManager.getTargetState(target);
 
-            const installables = new Set<string>();
-            for (const dependency of health?.dependencies ?? []) {
-                const installable = getInstallableDependency(dependency);
-                if (installable) {
-                    installables.add(installable);
-                }
+        const installables = new Set<string>();
+        for (const dependency of health?.dependencies ?? []) {
+            const installable = getInstallableDependency(dependency);
+            if (installable) {
+                installables.add(installable);
             }
+        }
 
-            if (installables.size > 0 && !abortController.signal.aborted) {
-                await this.showInstallableNotification(target, [
-                    ...installables,
-                ]);
-            }
-        } catch (err) {
-            logger.error(`Failed to check for missing dependencies`, err);
+        if (installables.size > 0 && !abortController.signal.aborted) {
+            await this.showInstallableNotification(target, [...installables]);
         }
     }
 
