@@ -7,6 +7,7 @@ import { ContainersManager } from '../target/containersManager';
 import { logger } from '../util/logger';
 import { executeTask } from '../util/executeTask';
 import { getInstallableDependency } from '../util/getInstallableDependency';
+import { HealthCheckResult } from '../topoCliSchema';
 
 const getInstallCommand = (sshTarget: string, value: string): string[] => {
     return ['topo', 'install', value, '--target', sshTarget];
@@ -47,7 +48,15 @@ export class InstallDependency implements vscode.Disposable {
         if (!target) {
             return;
         }
-        const { health } = await this.containersManager.getTargetState(target);
+
+        let health: HealthCheckResult['target'] | undefined;
+        try {
+            const result = await this.containersManager.getTargetState(target);
+            health = result.health;
+        } catch (err) {
+            logger.error(`Failed to get target health for ${target}`, err);
+            return;
+        }
 
         const installables = new Set<string>();
         for (const dependency of health?.dependencies ?? []) {
