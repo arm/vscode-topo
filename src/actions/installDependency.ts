@@ -6,7 +6,6 @@ import { showAndLogError } from '../util/showAndLogError';
 import { ContainersManager } from '../target/containersManager';
 import { logger } from '../util/logger';
 import { executeTask } from '../util/executeTask';
-import { getInstallableDependencyCommand } from '../util/getInstallableDependency';
 
 const installAction = { title: 'Install missing dependencies' };
 
@@ -52,7 +51,7 @@ export class InstallDependency implements vscode.Disposable {
 
         const installables = new Map<string, InstallableDependency>();
         for (const dependency of health?.dependencies ?? []) {
-            const command = getInstallableDependencyCommand(dependency);
+            const command = dependency.fix?.command;
             if (command) {
                 const installable = installables.get(command);
                 if (installable) {
@@ -91,7 +90,7 @@ export class InstallDependency implements vscode.Disposable {
             return;
         }
 
-        const command = getInstallableDependencyCommand(treeNode.dependency);
+        const command = treeNode.dependency.fix?.command;
         if (!command) {
             showAndLogError(
                 `Failed to install dependency`,
