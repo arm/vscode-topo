@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
-import { HostDependenciesTreeDataProvider } from './hostDependenciesTreeDataProvider';
+import { HostTreeView } from './hostTreeView';
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 import { failedToLoadHostDependenciesMessage } from './hostDependenciesLoadErrorItem';
 import { ShowOutput } from '../actions/showOutput';
-import { HostHealthModel } from '../models/hostHealthModel';
+import { HostModel } from '../models/hostModel';
 
 jest.mock('../util/logger');
 
@@ -14,13 +14,11 @@ describe('HostDependenciesTreeDataProvider', () => {
     });
 
     it('registers the host dependencies tree', () => {
-        const provider = new HostDependenciesTreeDataProvider(
-            new HostHealthModel(),
-        );
+        const provider = new HostTreeView(new HostModel());
         provider.activate();
 
         expect(vscode.window.createTreeView).toHaveBeenCalledWith(
-            HostDependenciesTreeDataProvider.viewId,
+            HostTreeView.viewId,
             {
                 treeDataProvider: provider,
                 showCollapseAll: false,
@@ -29,9 +27,7 @@ describe('HostDependenciesTreeDataProvider', () => {
     });
 
     it('returns a Dependencies group at the root', async () => {
-        const provider = new HostDependenciesTreeDataProvider(
-            new HostHealthModel(),
-        );
+        const provider = new HostTreeView(new HostModel());
         provider.activate();
 
         const children = await provider.getChildren();
@@ -43,7 +39,7 @@ describe('HostDependenciesTreeDataProvider', () => {
     });
 
     it('returns host dependency items sorted by name below the Dependencies group', async () => {
-        const model = new HostHealthModel();
+        const model = new HostModel();
         model.health = Promise.resolve({
             host: {
                 dependencies: [
@@ -61,7 +57,7 @@ describe('HostDependenciesTreeDataProvider', () => {
                 ],
             },
         });
-        const provider = new HostDependenciesTreeDataProvider(model);
+        const provider = new HostTreeView(model);
         provider.activate();
 
         const rootChildren = await provider.getChildren();
@@ -87,9 +83,9 @@ describe('HostDependenciesTreeDataProvider', () => {
     });
 
     it('returns an error item when host health cannot be loaded', async () => {
-        const model = new HostHealthModel();
+        const model = new HostModel();
         model.health = Promise.reject(new Error('health unavailable'));
-        const provider = new HostDependenciesTreeDataProvider(model);
+        const provider = new HostTreeView(model);
         provider.activate();
 
         const children = await provider.getChildren();
@@ -108,9 +104,7 @@ describe('HostDependenciesTreeDataProvider', () => {
     });
 
     it('getTreeItem returns the element itself', () => {
-        const provider = new HostDependenciesTreeDataProvider(
-            new HostHealthModel(),
-        );
+        const provider = new HostTreeView(new HostModel());
         provider.activate();
         const item = new HealthCheckDependencyTreeItem({
             name: 'Alpha',

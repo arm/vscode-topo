@@ -1,0 +1,17 @@
+import { HostModel } from '../models/hostModel';
+import { TopoCli } from '../topoCli';
+
+export class HostController {
+    constructor(
+        private readonly hostModel: HostModel,
+        private readonly topoCli: TopoCli,
+    ) {}
+
+    public activate(): void {
+        this.refreshHealth();
+    }
+
+    public refreshHealth(): void {
+        this.hostModel.health = this.topoCli.hostHealth();
+    }
+}

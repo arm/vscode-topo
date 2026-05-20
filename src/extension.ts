@@ -21,14 +21,14 @@ import { ProtocolHandler } from './protocolHandler';
 import { SetupKeys } from './actions/setupKeys';
 import { TargetDescriptionStore } from './target/targetDescriptionStore';
 import { InstallDependency } from './actions/installDependency';
-import { HostDependenciesTreeDataProvider } from './hostTreeView/hostDependenciesTreeDataProvider';
+import { HostTreeView } from './hostTreeView/hostTreeView';
 import { logger } from './util/logger';
 import { TargetHealth } from './actions/targetHealth';
 import { ShowOutput } from './actions/showOutput';
 import { SelectTarget } from './actions/selectTarget';
 import { RemoveTarget } from './actions/removeTarget';
-import { HostHealthModel } from './models/hostHealthModel';
-import { HostHealthController } from './controllers/hostHealthController';
+import { HostModel } from './models/hostModel';
+import { HostController } from './controllers/hostController';
 import { PACKAGE_NAME } from './manifest';
 
 function command(id: string): string {
@@ -51,24 +51,22 @@ export async function activate(
         return;
     }
 
-    const hostHealthModel = new HostHealthModel();
+    const hostModel = new HostModel();
 
-    const hostDependenciesTreeDataProvider =
-        new HostDependenciesTreeDataProvider(hostHealthModel);
-    context.subscriptions.push(hostDependenciesTreeDataProvider);
-
-    const hostHealthController = new HostHealthController(
-        hostHealthModel,
-        topoCli,
-    );
+    const hostHealthController = new HostController(hostModel, topoCli);
 
     context.subscriptions.push(
         vscode.commands.registerCommand(command('refreshHostHealth'), () =>
-            hostHealthController.refresh(),
+            hostHealthController.refreshHealth(),
         ),
     );
 
+    const hostTreeView = new HostTreeView(hostModel);
+    context.subscriptions.push(hostTreeView);
+
     hostHealthController.activate();
+
+    hostTreeView.activate();
 
     const targetStore = new TargetStore(context);
     const targetDescriptionStore = new TargetDescriptionStore(topoCli);
@@ -95,8 +93,6 @@ export async function activate(
         targetStore,
         targetDescriptionStore,
     );
-
-    context.subscriptions.push(hostDependenciesTreeDataProvider);
     const targetManager = new TargetManager(
         context,
         targetTreeDataProvider,
@@ -133,7 +129,6 @@ export async function activate(
     attachShell.activate();
     await containersManager.activate();
     await targetTreeDataProvider.activate();
-    hostDependenciesTreeDataProvider.activate();
     targetManager.activate();
     containerStart.activate();
     await containerStop.activate();

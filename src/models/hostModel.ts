@@ -7,16 +7,17 @@ const defaultHealthCheckResult: HostHealthCheckResult = {
     },
 };
 
-export class HostHealthModel {
-    private _onChanged: vscode.EventEmitter<void> =
+export class HostModel {
+    private _onHealthChanged: vscode.EventEmitter<void> =
         new vscode.EventEmitter<void>();
-    public readonly onChanged: vscode.Event<void> = this._onChanged.event;
+    public readonly onHealthChanged: vscode.Event<void> =
+        this._onHealthChanged.event;
 
     private _health?: Promise<HostHealthCheckResult>;
 
     public set health(healthPromise: Promise<HostHealthCheckResult>) {
         this._health = healthPromise;
-        this._onChanged.fire();
+        this._onHealthChanged.fire();
     }
 
     public get health(): Promise<HostHealthCheckResult> {

@@ -1,4 +1,4 @@
-import { HostHealthModel } from './hostHealthModel';
+import { HostModel } from './hostModel';
 import { HostHealthCheckResult } from '../topoCliSchema';
 
 const hostHealth: HostHealthCheckResult = {
@@ -13,9 +13,9 @@ const hostHealth: HostHealthCheckResult = {
     },
 };
 
-describe('HostHealthModel', () => {
+describe('HostModel', () => {
     it('defaults to an empty host dependency list', async () => {
-        const model = new HostHealthModel();
+        const model = new HostModel();
 
         await expect(model.health).resolves.toEqual({
             host: {
@@ -25,7 +25,7 @@ describe('HostHealthModel', () => {
     });
 
     it('stores the latest host health promise', async () => {
-        const model = new HostHealthModel();
+        const model = new HostModel();
         const healthPromise = Promise.resolve(hostHealth);
 
         model.health = healthPromise;
@@ -35,9 +35,9 @@ describe('HostHealthModel', () => {
     });
 
     it('fires onChanged when host health is updated', () => {
-        const model = new HostHealthModel();
+        const model = new HostModel();
         const onChanged = jest.fn();
-        model.onChanged(onChanged);
+        model.onHealthChanged(onChanged);
 
         model.health = Promise.resolve(hostHealth);
 
