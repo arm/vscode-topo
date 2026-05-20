@@ -1,7 +1,7 @@
 import { mock } from 'jest-mock-extended';
 import { HostHealthModel } from '../models/hostHealthModel';
 import { TopoCli } from '../topoCli';
-import { HostHealthController } from './HostHealthController';
+import { HostHealthController } from './hostHealthController';
 
 describe('HostHealthController', () => {
     afterEach(() => {

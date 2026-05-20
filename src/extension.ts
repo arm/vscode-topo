@@ -28,7 +28,7 @@ import { ShowOutput } from './actions/showOutput';
 import { SelectTarget } from './actions/selectTarget';
 import { RemoveTarget } from './actions/removeTarget';
 import { HostHealthModel } from './models/hostHealthModel';
-import { HostHealthController } from './controllers/HostHealthController';
+import { HostHealthController } from './controllers/hostHealthController';
 import { PACKAGE_NAME } from './manifest';
 
 function command(id: string): string {
@@ -52,6 +52,10 @@ export async function activate(
     }
 
     const hostHealthModel = new HostHealthModel();
+
+    const hostDependenciesTreeDataProvider =
+        new HostDependenciesTreeDataProvider(hostHealthModel);
+    context.subscriptions.push(hostDependenciesTreeDataProvider);
 
     const hostHealthController = new HostHealthController(
         hostHealthModel,
@@ -91,8 +95,7 @@ export async function activate(
         targetStore,
         targetDescriptionStore,
     );
-    const hostDependenciesTreeDataProvider =
-        new HostDependenciesTreeDataProvider(hostHealthModel);
+
     context.subscriptions.push(hostDependenciesTreeDataProvider);
     const targetManager = new TargetManager(
         context,
