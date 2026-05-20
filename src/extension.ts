@@ -28,7 +28,12 @@ import { ShowOutput } from './actions/showOutput';
 import { SelectTarget } from './actions/selectTarget';
 import { RemoveTarget } from './actions/removeTarget';
 import { HostHealthModel } from './models/hostHealthModel';
-import { RefreshHostHealth } from './actions/refreshHostHealth';
+import { HostHealthController } from './controllers/HostHealthController';
+import { PACKAGE_NAME } from './manifest';
+
+function command(id: string): string {
+    return `${PACKAGE_NAME}.${id}`;
+}
 
 export async function activate(
     context: vscode.ExtensionContext,
@@ -48,6 +53,19 @@ export async function activate(
 
     const hostHealthModel = new HostHealthModel();
 
+    const hostHealthController = new HostHealthController(
+        hostHealthModel,
+        topoCli,
+    );
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand(command('refreshHostHealth'), () =>
+            hostHealthController.refresh(),
+        ),
+    );
+
+    hostHealthController.activate();
+
     const targetStore = new TargetStore(context);
     const targetDescriptionStore = new TargetDescriptionStore(topoCli);
     const projectInit = new ProjectInit(topoCli);
@@ -57,8 +75,6 @@ export async function activate(
     const stop = new Stop(context, targetStore);
     const showOutput = new ShowOutput();
     context.subscriptions.push(showOutput);
-    const refreshHostHealth = new RefreshHostHealth(hostHealthModel, topoCli);
-    context.subscriptions.push(refreshHostHealth);
     const containerOpenInBrowser = new ContainerOpenInBrowser(context);
     const dockerCommands = new DockerCommands();
     const attachVsCode = new AttachVsCode(context, dockerCommands);
@@ -125,6 +141,5 @@ export async function activate(
     removeTarget.activate();
     setupKeys.activate();
     showOutput.activate();
-    refreshHostHealth.activate();
     await installDependency.activate();
 }
