@@ -18,7 +18,7 @@ export class AttachVsCode {
         private readonly containerCommands: ContainerCommands,
     ) {}
 
-    public async activate() {
+    public activate(): void {
         this.context.subscriptions.push(
             vscode.commands.registerCommand(
                 AttachVsCode.attachVsCodeCommand,

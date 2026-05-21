@@ -12,6 +12,11 @@ jest.mock('../util/executeTask');
 
 const executeTaskMock = jest.mocked(executeTask);
 
+const waitImmediate = async () => {
+    await Promise.resolve();
+    await Promise.resolve();
+};
+
 const getCommandHandler = () => {
     const handler = jest
         .mocked(vscode.commands.registerCommand)
@@ -70,7 +75,7 @@ describe('InstallDependency', () => {
             containersManager,
         );
 
-        await installDependency.activate();
+        installDependency.activate();
 
         expect(vscode.commands.registerCommand).toHaveBeenCalledWith(
             InstallDependency.installDependencyCommand,
@@ -93,7 +98,7 @@ describe('InstallDependency', () => {
             },
         });
 
-        await installDependency.activate();
+        installDependency.activate();
 
         await getCommandHandler()(dependencyItem);
 
@@ -114,7 +119,7 @@ describe('InstallDependency', () => {
             value: 'installed',
         });
 
-        await installDependency.activate();
+        installDependency.activate();
         await getCommandHandler()(dependencyItem);
 
         expect(executeTaskMock).not.toHaveBeenCalled();
@@ -153,7 +158,8 @@ describe('InstallDependency', () => {
             containersManager,
         );
 
-        await installDependency.activate();
+        installDependency.activate();
+        await waitImmediate();
 
         expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
             `${target} has missing or unhealthy dependencies: Remoteproc Runtime, Debugger`,

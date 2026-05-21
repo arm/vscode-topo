@@ -154,7 +154,7 @@ describe('ContainersManager', () => {
         const targetStore = mock<TargetStore>();
         targetStore.getSelectedTarget.mockReturnValue(target);
         const manager = createContainersManager(targetStore);
-        await manager.activate();
+        manager.activate();
 
         const result = await manager.getContainersData(target);
 
@@ -206,7 +206,7 @@ describe('ContainersManager', () => {
         const targetStore = mock<TargetStore>();
         targetStore.getSelectedTarget.mockReturnValue(target);
         const manager = createContainersManager(targetStore);
-        await manager.activate();
+        manager.activate();
 
         const result = await manager.getContainersData(target);
         expect(result).toEqual([]);
@@ -232,7 +232,7 @@ describe('ContainersManager', () => {
         targetStore.getSelectedTarget.mockReturnValue(target);
         const manager = createContainersManager(targetStore);
 
-        await manager.activate();
+        manager.activate();
 
         const result = await manager.getContainersData(target);
         expect(result).toEqual([]);
@@ -256,7 +256,7 @@ describe('ContainersManager', () => {
         const targetStore = mock<TargetStore>();
         targetStore.getSelectedTarget.mockReturnValue(target);
         const manager = createContainersManager(targetStore);
-        await manager.activate();
+        manager.activate();
 
         const first = await manager.getContainersData(target);
         expect(first).toHaveLength(2);
@@ -296,7 +296,7 @@ describe('ContainersManager', () => {
         containerCommands.getContainers.mockResolvedValue(mockContainers);
         containerCommands.inspectContainers.mockResolvedValue([]);
         const manager = createContainersManager(targetStore, containerCommands);
-        await manager.activate();
+        manager.activate();
         await expect(manager.getContainersData(target)).resolves.toHaveLength(
             mockContainers.length,
         );
@@ -326,7 +326,7 @@ describe('ContainersManager', () => {
         const targetStore = mock<TargetStore>();
         targetStore.getSelectedTarget.mockReturnValue(target);
         const manager = createContainersManager(targetStore);
-        await manager.activate();
+        manager.activate();
 
         const spy = jest.fn();
         manager.onDataUpdate(spy);
@@ -354,7 +354,7 @@ describe('ContainersManager', () => {
         const targetStore = mock<TargetStore>();
         targetStore.getSelectedTarget.mockReturnValue(target);
         const manager = createContainersManager(targetStore);
-        await manager.activate();
+        manager.activate();
 
         const spy = jest.fn();
         manager.onDataUpdate(spy);
@@ -396,13 +396,12 @@ describe('ContainersManager', () => {
         containerCommands.inspectContainers.mockResolvedValue([]);
         const manager = createContainersManager(targetStore, containerCommands);
 
-        const activation = manager.activate();
+        manager.activate();
         await waitImmediate();
 
         const targetStatePromise = manager.getTargetState(target);
         resolveHealth!(loadedHealth);
 
-        await activation;
         await expect(targetStatePromise).resolves.toEqual({
             health: loadedHealth.target,
             status: 'connected',
@@ -431,7 +430,7 @@ describe('ContainersManager', () => {
         targetStore.onChanged.mockImplementation(onChangeEmitter.event);
         targetStore.getSelectedTarget.mockImplementation(() => selectedTarget);
         const manager = createContainersManager(targetStore);
-        await manager.activate();
+        manager.activate();
         expect(
             targetStore.getSelectedTarget.mock.calls.length,
         ).toBeGreaterThanOrEqual(1);
@@ -499,7 +498,7 @@ describe('ContainersManager', () => {
             targetStore,
         );
 
-        const activation = manager.activate();
+        manager.activate();
         await waitImmediate();
         selectedTarget = newTarget;
 
@@ -525,7 +524,6 @@ describe('ContainersManager', () => {
                 },
             },
         });
-        await activation;
         await waitImmediate();
 
         topoCli.health.mockClear();

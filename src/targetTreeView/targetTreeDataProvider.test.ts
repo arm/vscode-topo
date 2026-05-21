@@ -131,7 +131,7 @@ describe('TargetTreeDataProvider', () => {
 
     describe('activation', () => {
         it('registers event subscriptions when activated', async () => {
-            await provider.activate();
+            provider.activate();
 
             expect(context.subscriptions.length).toBeGreaterThan(0);
         });

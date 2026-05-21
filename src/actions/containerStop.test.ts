@@ -59,7 +59,7 @@ describe('ContainerStop', () => {
     it('calls stopContainer and shows info message on success', async () => {
         const containerCommands = mock<ContainerCommands>();
         const containerStop = new ContainerStop(context, containerCommands);
-        await containerStop.activate();
+        containerStop.activate();
 
         // Simulate command handler
         await vscode.commands.executeCommand(
@@ -79,7 +79,7 @@ describe('ContainerStop', () => {
             new WrappedError('DOCKER', 'fail'),
         );
         const containerStop = new ContainerStop(context, containerCommands);
-        await containerStop.activate();
+        containerStop.activate();
 
         await vscode.commands.executeCommand(
             ContainerStop.stopContainerCommand,
@@ -99,7 +99,7 @@ describe('ContainerStop', () => {
             new Error('generic error'),
         );
         const containerStop = new ContainerStop(context, containerCommands);
-        await containerStop.activate();
+        containerStop.activate();
 
         await expect(
             vscode.commands.executeCommand(

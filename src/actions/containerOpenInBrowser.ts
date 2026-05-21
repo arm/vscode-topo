@@ -12,7 +12,7 @@ export class ContainerOpenInBrowser {
 
     constructor(private readonly context: vscode.ExtensionContext) {}
 
-    public async activate() {
+    public activate(): void {
         this.context.subscriptions.push(
             vscode.commands.registerCommand(
                 ContainerOpenInBrowser.openInBrowserCommand,

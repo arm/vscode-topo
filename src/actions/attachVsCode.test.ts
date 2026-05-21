@@ -78,7 +78,7 @@ describe('attachVsCode', () => {
     });
 
     it('registers the command', async () => {
-        await attachVsCode.activate();
+        attachVsCode.activate();
 
         expect(registerCommandMock).toHaveBeenCalledWith(
             AttachVsCode.attachVsCodeCommand,
@@ -87,7 +87,7 @@ describe('attachVsCode', () => {
     });
 
     it("executes attachVsCode command that doesn't create context and calls remote-containers.attachToRunningContainer with container id", async () => {
-        await attachVsCode.activate();
+        attachVsCode.activate();
         execMock.mockImplementation(async (command) => {
             if (command === 'docker context show') {
                 return { stdout: 'default\n', stderr: '' };
@@ -126,7 +126,7 @@ describe('attachVsCode', () => {
     });
 
     it('executes attachVsCode command that creates context and calls remote-containers.attachToRunningContainer with container id', async () => {
-        await attachVsCode.activate();
+        attachVsCode.activate();
         execMock.mockImplementation(async (command) => {
             if (command === 'docker context show') {
                 return { stdout: 'default\n', stderr: '' };
@@ -174,7 +174,7 @@ describe('attachVsCode', () => {
     });
 
     it('shows an error if the attachVsCode command fails', async () => {
-        await attachVsCode.activate();
+        attachVsCode.activate();
         execMock.mockImplementation(async () => {
             throw new WrappedError('DOCKER', 'fail');
         });
