@@ -4,6 +4,7 @@ import { ContainersManager } from '../target/containersManager';
 import { TargetHealth } from './targetHealth';
 import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
 import { TargetState } from '../util/types';
+import { executeCommand } from '../util/test/executeCommand';
 
 jest.mock('../util/logger');
 
@@ -30,17 +31,6 @@ const targetState: TargetState = {
     },
     status: 'connected',
 };
-
-async function executeCommand(command: string, ...args: unknown[]) {
-    const calls = jest.mocked(vscode.commands.registerCommand).mock.calls;
-    const matching = calls.filter((c: unknown[]) => c[0] === command);
-    if (!matching.length) {
-        throw new Error(`No handler registered for command ${command}`);
-    }
-    const addCall = matching[matching.length - 1];
-    const handler = addCall[1] as (...args: unknown[]) => Promise<void>;
-    await handler(...args);
-}
 
 describe('TargetHealth', () => {
     afterEach(() => {

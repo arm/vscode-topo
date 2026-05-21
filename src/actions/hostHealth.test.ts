@@ -3,18 +3,9 @@ import { mock, MockProxy } from 'jest-mock-extended';
 import { HostHealth } from './hostHealth';
 import { TopoCli } from '../topoCli';
 import { HealthCheckResult, HostHealthCheckResult } from '../topoCliSchema';
+import { executeCommand } from '../util/test/executeCommand';
 
 jest.mock('../util/logger');
-
-async function executeCommand(command: string, ...args: unknown[]) {
-    const calls = jest.mocked(vscode.commands.registerCommand).mock.calls;
-    const addCall = calls.find((call: unknown[]) => call[0] === command);
-    if (!addCall) {
-        throw new Error(`No handler registered for command ${command}`);
-    }
-    const handler = addCall[1] as (...handlerArgs: unknown[]) => Promise<void>;
-    await handler(...args);
-}
 
 describe('HostHealth', () => {
     let context: MockProxy<vscode.ExtensionContext>;

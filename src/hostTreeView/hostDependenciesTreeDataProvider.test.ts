@@ -7,19 +7,9 @@ import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDepe
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 import { failedToLoadHostDependenciesMessage } from './hostDependenciesLoadErrorItem';
 import { ShowOutput } from '../actions/showOutput';
+import { executeCommand } from '../util/test/executeCommand';
 
 jest.mock('../util/logger');
-
-async function executeCommand(command: string, ...args: unknown[]) {
-    const calls = jest.mocked(vscode.commands.registerCommand).mock.calls;
-    const matching = calls.filter((c: unknown[]) => c[0] === command);
-    if (!matching.length) {
-        throw new Error(`No handler registered for command ${command}`);
-    }
-    const addCall = matching[matching.length - 1];
-    const handler = addCall[1] as (...args: unknown[]) => Promise<void>;
-    await handler(...args);
-}
 
 describe('HostDependenciesTreeDataProvider', () => {
     let context: MockProxy<vscode.ExtensionContext>;
