@@ -26,10 +26,9 @@ import { HostTreeView } from './hostTreeView/hostTreeView';
 import { logger } from './util/logger';
 import { TargetHealth } from './actions/targetHealth';
 import { ShowOutput } from './actions/showOutput';
-import { SelectTarget } from './actions/selectTarget';
-import { RemoveTarget } from './actions/removeTarget';
 import { HostModel } from './models/hostModel';
 import { HostController } from './controllers/hostController';
+import { TargetsController } from './controllers/targetsController';
 
 export async function activate(
     context: vscode.ExtensionContext,
@@ -47,17 +46,22 @@ export async function activate(
         return;
     }
 
+    const targetStore = new TargetStore(context);
+
     const hostModel = new HostModel();
 
     const hostTreeView = new HostTreeView(hostModel);
     context.subscriptions.push(hostTreeView);
 
     const hostHealthController = new HostController(hostModel, topoCli);
+    const targetsController = new TargetsController(targetStore);
 
-    const disposeCommands = commands.register(hostHealthController);
+    const disposeCommands = commands.register(
+        hostHealthController,
+        targetsController,
+    );
     context.subscriptions.push(disposeCommands);
 
-    const targetStore = new TargetStore(context);
     const targetDescriptionStore = new TargetDescriptionStore(topoCli);
     const projectInit = new ProjectInit(topoCli);
     context.subscriptions.push(projectInit);
@@ -93,9 +97,7 @@ export async function activate(
     const containerDelete = new ContainerDelete(context, dockerCommands);
     const hostHealth = new HostHealth(context, topoCli);
     const targetHealth = new TargetHealth(containersManager);
-    const selectTarget = new SelectTarget(targetStore);
-    const removeTarget = new RemoveTarget(targetStore);
-    context.subscriptions.push(targetHealth, selectTarget, removeTarget);
+    context.subscriptions.push(targetHealth);
     const protocolHandler = new ProtocolHandler(projectClone);
     const installDependency = new InstallDependency(
         targetStore,
@@ -124,8 +126,6 @@ export async function activate(
     containerDelete.activate();
     hostHealth.activate();
     targetHealth.activate();
-    selectTarget.activate();
-    removeTarget.activate();
     setupKeys.activate();
     showOutput.activate();
     await installDependency.activate();
