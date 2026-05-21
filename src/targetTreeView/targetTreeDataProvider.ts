@@ -30,7 +30,7 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
         private readonly targetDescriptionStore: TargetDescriptionStore,
     ) {}
 
-    public async activate(): Promise<void> {
+    public activate(): void {
         this.context.subscriptions.push(
             this.targetStore.onChanged(() => {
                 this._onDidChangeTreeData.fire(undefined);
