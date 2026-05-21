@@ -1,7 +1,7 @@
-import { TargetTreeDataProvider } from './targetTreeDataProvider';
-import { TargetContainerTreeItem } from './targetContainerTreeItem';
-import { TargetSubsystemTreeItem } from './targetSubsystemTreeItem';
-import { TargetTreeItem } from './targetTreeItem';
+import { TargetTreeView } from './targetTreeView';
+import { TargetContainerTreeItem } from '../targetTreeView/targetContainerTreeItem';
+import { TargetSubsystemTreeItem } from '../targetTreeView/targetSubsystemTreeItem';
+import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
 import * as vscode from 'vscode';
 import * as manifest from '../manifest';
 import { ContainersManager } from '../target/containersManager';
@@ -9,13 +9,12 @@ import { TargetState, ContainerItem, TargetDescription } from '../util/types';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { TargetStore } from '../target/targetStore';
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
-import { TargetSubsystemGroupTreeItem } from './targetSubsystemGroupTreeItem';
+import { TargetSubsystemGroupTreeItem } from '../targetTreeView/targetSubsystemGroupTreeItem';
 import { HealthCheckDependency, HealthCheckResult } from '../topoCliSchema';
 import { TargetDescriptionStore } from '../target/targetDescriptionStore';
 
-describe('TargetTreeDataProvider', () => {
-    let provider: TargetTreeDataProvider;
-    let context: MockProxy<vscode.ExtensionContext>;
+describe('TargetTreeView', () => {
+    let view: TargetTreeView;
     let containersManagerMock: MockProxy<ContainersManager>;
     let targetStoreMock: MockProxy<TargetStore>;
     let targetDescriptionStoreMock: MockProxy<TargetDescriptionStore>;
@@ -101,7 +100,6 @@ describe('TargetTreeDataProvider', () => {
             health: targetHealth,
             status: 'connected',
         };
-        context = mock<vscode.ExtensionContext>({ subscriptions: [] });
 
         containersManagerMock = mock<ContainersManager>();
         containersManagerMock.getContainersData.mockResolvedValue(
@@ -119,22 +117,13 @@ describe('TargetTreeDataProvider', () => {
             targetDescription,
         );
         targetStoreMock.onChanged.mockImplementation(onChangedEmitter.event);
-        provider = new TargetTreeDataProvider(
-            context,
+        view = new TargetTreeView(
             containersManagerMock,
             targetStoreMock,
             targetDescriptionStoreMock,
         );
         jest.clearAllTimers();
         jest.clearAllMocks();
-    });
-
-    describe('activation', () => {
-        it('registers event subscriptions when activated', async () => {
-            provider.activate();
-
-            expect(context.subscriptions.length).toBeGreaterThan(0);
-        });
     });
 
     describe('getChildren', () => {
@@ -149,8 +138,8 @@ describe('TargetTreeDataProvider', () => {
                 status: 'connected',
             });
 
-            const rootChildren = await provider.getChildren();
-            const targetChildren = await provider.getChildren(rootChildren[0]);
+            const rootChildren = await view.getChildren();
+            const targetChildren = await view.getChildren(rootChildren[0]);
 
             expect(targetChildren).toHaveLength(2);
             expect(targetChildren[0]).toBeInstanceOf(
@@ -190,13 +179,13 @@ describe('TargetTreeDataProvider', () => {
             containersManagerMock.getTargetStateSnapshot.mockReturnValue(
                 targetState,
             );
-            const rootChildren = await provider.getChildren();
-            const targetChildren = await provider.getChildren(rootChildren[0]);
+            const rootChildren = await view.getChildren();
+            const targetChildren = await view.getChildren(rootChildren[0]);
             const dependenciesGroup = targetChildren.find(
                 (v) => v instanceof HealthCheckDependencyGroupTreeItem,
             );
 
-            const got = await provider.getChildren(dependenciesGroup);
+            const got = await view.getChildren(dependenciesGroup);
 
             expect(got.map((item) => item.label)).toEqual([
                 dependencies[0].name,
@@ -213,7 +202,7 @@ describe('TargetTreeDataProvider', () => {
                 status: 'disconnected',
             });
 
-            const rootChildren = await provider.getChildren();
+            const rootChildren = await view.getChildren();
 
             expect(rootChildren).toHaveLength(1);
             const targetItem = rootChildren[0] as TargetTreeItem;
@@ -227,7 +216,7 @@ describe('TargetTreeDataProvider', () => {
 
         it('returns containers for Host and remoteproc groups', async () => {
             const hostGroup = new TargetSubsystemTreeItem('Host', target);
-            const hostChildren = await provider.getChildren(hostGroup);
+            const hostChildren = await view.getChildren(hostGroup);
             const remoteprocGroup = new TargetSubsystemTreeItem(
                 'imx-rproc',
                 target,
@@ -237,10 +226,8 @@ describe('TargetTreeDataProvider', () => {
                 target,
             );
 
-            const imxRprocChildren =
-                await provider.getChildren(remoteprocGroup);
-            const otherRprocChildren =
-                await provider.getChildren(otherRprocGroup);
+            const imxRprocChildren = await view.getChildren(remoteprocGroup);
+            const otherRprocChildren = await view.getChildren(otherRprocGroup);
 
             expect(hostChildren).toHaveLength(1);
             expect(hostChildren[0]).toBeInstanceOf(TargetContainerTreeItem);
@@ -264,7 +251,7 @@ describe('TargetTreeDataProvider', () => {
                 target,
             );
 
-            const children = await provider.getChildren(remoteprocGroup);
+            const children = await view.getChildren(remoteprocGroup);
 
             expect(children).toEqual([]);
         });
@@ -276,7 +263,7 @@ describe('TargetTreeDataProvider', () => {
                 status: 'disconnected',
             });
 
-            const rootChildren = await provider.getChildren();
+            const rootChildren = await view.getChildren();
 
             expect(rootChildren.length).toEqual(0);
         });
@@ -286,20 +273,9 @@ describe('TargetTreeDataProvider', () => {
         it('getTreeItem returns the element itself', () => {
             const item = new TargetSubsystemTreeItem('Host', target);
 
-            const treeItem = provider.getTreeItem(item);
+            const treeItem = view.getTreeItem(item);
 
             expect(treeItem).toBe(item);
-        });
-    });
-
-    describe('refresh', () => {
-        it('refresh fires the event', () => {
-            const spy = jest.fn();
-            provider.onDidChangeTreeData(spy);
-
-            provider.refresh();
-
-            expect(spy).toHaveBeenCalledWith(undefined);
         });
     });
 });

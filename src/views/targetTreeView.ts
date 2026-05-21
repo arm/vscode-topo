@@ -1,12 +1,12 @@
 import * as vscode from 'vscode';
-import { TargetContainerTreeItem } from './targetContainerTreeItem';
+import { TargetContainerTreeItem } from '../targetTreeView/targetContainerTreeItem';
 import { ContainersManager } from '../target/containersManager';
 import * as manifest from '../manifest';
 import { TargetStore } from '../target/targetStore';
-import { TargetTreeItem } from './targetTreeItem';
-import { TargetSubsystemTreeItem } from './targetSubsystemTreeItem';
+import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
+import { TargetSubsystemTreeItem } from '../targetTreeView/targetSubsystemTreeItem';
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
-import { TargetSubsystemGroupTreeItem } from './targetSubsystemGroupTreeItem';
+import { TargetSubsystemGroupTreeItem } from '../targetTreeView/targetSubsystemGroupTreeItem';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 import { HealthCheckDependency } from '../topoCliSchema';
 import { TargetDescriptionStore } from '../target/targetDescriptionStore';
@@ -19,19 +19,29 @@ function sortDependenciesByName(
     );
 }
 
-export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
+export class TargetTreeView
+    implements vscode.TreeDataProvider<vscode.TreeItem>, vscode.Disposable
+{
+    public static readonly viewId = `${manifest.PACKAGE_NAME}.target-manager`;
+    public static readonly focusViewCommand = `${TargetTreeView.viewId}.focus`;
+
     private _onDidChangeTreeData = new vscode.EventEmitter<undefined>();
     public readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
+    private disposables: vscode.Disposable[] = [];
+
     constructor(
-        private readonly context: vscode.ExtensionContext,
         private readonly containersManager: ContainersManager,
         private readonly targetStore: TargetStore,
         private readonly targetDescriptionStore: TargetDescriptionStore,
-    ) {}
+    ) {
+        const treeView = vscode.window.createTreeView(TargetTreeView.viewId, {
+            treeDataProvider: this,
+            showCollapseAll: true,
+        });
 
-    public activate(): void {
-        this.context.subscriptions.push(
+        this.disposables.push(
+            treeView,
             this.targetStore.onChanged(() => {
                 this._onDidChangeTreeData.fire(undefined);
             }),
@@ -138,7 +148,10 @@ export class TargetTreeDataProvider implements vscode.TreeDataProvider<vscode.Tr
         return element;
     }
 
-    public refresh(): void {
-        this._onDidChangeTreeData.fire(undefined);
+    public dispose(): void {
+        for (const disposable of [...this.disposables].reverse()) {
+            disposable.dispose();
+        }
+        this.disposables = [];
     }
 }
