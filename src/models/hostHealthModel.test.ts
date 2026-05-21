@@ -28,7 +28,7 @@ describe('HostModel', () => {
         const model = new HostModel();
         const healthPromise = Promise.resolve(hostHealth);
 
-        model.health = healthPromise;
+        model.setHealth(healthPromise);
 
         expect(model.health).toBe(healthPromise);
         await expect(model.health).resolves.toBe(hostHealth);
@@ -39,7 +39,7 @@ describe('HostModel', () => {
         const onChanged = jest.fn();
         model.onHealthChanged(onChanged);
 
-        model.health = Promise.resolve(hostHealth);
+        model.setHealth(Promise.resolve(hostHealth));
 
         expect(onChanged).toHaveBeenCalledTimes(1);
     });

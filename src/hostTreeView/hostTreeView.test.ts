@@ -38,26 +38,29 @@ describe('HostDependenciesTreeDataProvider', () => {
 
     it('returns host dependency items sorted by name below the Dependencies group', async () => {
         const model = new HostModel();
-        model.health = Promise.resolve({
-            host: {
-                dependencies: [
-                    {
-                        name: 'Zed',
-                        status: 'warning',
-                        value: 'missing',
-                        fix: {
-                            description: 'Install Zed',
-                            command: 'topo install zed --target ssh://imx93',
+        model.setHealth(
+            Promise.resolve({
+                host: {
+                    dependencies: [
+                        {
+                            name: 'Zed',
+                            status: 'warning',
+                            value: 'missing',
+                            fix: {
+                                description: 'Install Zed',
+                                command:
+                                    'topo install zed --target ssh://imx93',
+                            },
                         },
-                    },
-                    {
-                        name: 'Alpha',
-                        status: 'ok',
-                        value: 'installed',
-                    },
-                ],
-            },
-        });
+                        {
+                            name: 'Alpha',
+                            status: 'ok',
+                            value: 'installed',
+                        },
+                    ],
+                },
+            }),
+        );
         const provider = new HostTreeView(model);
 
         const rootChildren = await provider.getChildren();
@@ -84,7 +87,7 @@ describe('HostDependenciesTreeDataProvider', () => {
 
     it('returns an error item when host health cannot be loaded', async () => {
         const model = new HostModel();
-        model.health = Promise.reject(new Error('health unavailable'));
+        model.setHealth(Promise.reject(new Error('health unavailable')));
         const provider = new HostTreeView(model);
 
         const children = await provider.getChildren();
