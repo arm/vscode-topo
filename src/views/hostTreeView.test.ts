@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { HostTreeView } from './hostTreeView';
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
-import { failedToLoadHostDependenciesMessage } from './hostDependenciesLoadErrorItem';
+import { failedToLoadHostDependenciesMessage } from '../treeItems/hostDependenciesLoadErrorItem';
 import { ShowOutput } from '../actions/showOutput';
 import { HostModel } from '../models/hostModel';
 

@@ -7,7 +7,7 @@ import { logger } from '../util/logger';
 import {
     failedToLoadHostDependenciesMessage,
     HostDependenciesLoadErrorItem,
-} from './hostDependenciesLoadErrorItem';
+} from '../treeItems/hostDependenciesLoadErrorItem';
 import { HostModel } from '../models/hostModel';
 
 function sortDependenciesByName(

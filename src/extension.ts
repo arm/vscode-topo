@@ -22,7 +22,7 @@ import { ProtocolHandler } from './protocolHandler';
 import { SetupKeys } from './actions/setupKeys';
 import { TargetDescriptionStore } from './target/targetDescriptionStore';
 import { InstallDependency } from './actions/installDependency';
-import { HostTreeView } from './hostTreeView/hostTreeView';
+import { HostTreeView } from './views/hostTreeView';
 import { logger } from './util/logger';
 import { TargetHealth } from './actions/targetHealth';
 import { ShowOutput } from './actions/showOutput';
