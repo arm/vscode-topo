@@ -4,6 +4,7 @@ import { SetupKeys } from './setupKeys';
 import { TargetStore } from '../target/targetStore';
 import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
 import { executeTask } from '../util/executeTask';
+import { executeCommand } from '../util/test/executeCommand';
 
 jest.mock('../util/logger');
 jest.mock('../util/executeTask');
@@ -40,16 +41,8 @@ describe('SetupKeys', () => {
         const setupKeys = new SetupKeys(context, targetStore);
         setupKeys.activate();
         const boardItem = new TargetTreeItem(target, true, 'connected');
-        const commandHandler = jest
-            .mocked(vscode.commands.registerCommand)
-            .mock.calls.find(
-                ([command]) => command === SetupKeys.setupKeysCommand,
-            )?.[1] as ((treeNode: unknown) => Promise<void>) | undefined;
-        if (!commandHandler) {
-            throw new Error('No command handler registered');
-        }
 
-        await commandHandler(boardItem);
+        await executeCommand(SetupKeys.setupKeysCommand, boardItem);
 
         expect(executeTaskMock).toHaveBeenCalledWith(
             `Setup keys on ${target}`,
@@ -64,16 +57,8 @@ describe('SetupKeys', () => {
         const setupKeys = new SetupKeys(context, targetStore);
         setupKeys.activate();
         const boardItem = new TargetTreeItem(target, false, 'disconnected');
-        const commandHandler = jest
-            .mocked(vscode.commands.registerCommand)
-            .mock.calls.find(
-                ([command]) => command === SetupKeys.setupKeysCommand,
-            )?.[1] as ((treeNode: unknown) => Promise<void>) | undefined;
-        if (!commandHandler) {
-            throw new Error('No command handler registered');
-        }
 
-        await commandHandler(boardItem);
+        await executeCommand(SetupKeys.setupKeysCommand, boardItem);
 
         expect(executeTaskMock).not.toHaveBeenCalled();
     });
@@ -81,16 +66,8 @@ describe('SetupKeys', () => {
     it('falls back to selected target when no tree node is provided', async () => {
         const setupKeys = new SetupKeys(context, targetStore);
         setupKeys.activate();
-        const commandHandler = jest
-            .mocked(vscode.commands.registerCommand)
-            .mock.calls.find(
-                ([command]) => command === SetupKeys.setupKeysCommand,
-            )?.[1] as ((treeNode: unknown) => Promise<void>) | undefined;
-        if (!commandHandler) {
-            throw new Error('No command handler registered');
-        }
 
-        await commandHandler(undefined);
+        await executeCommand(SetupKeys.setupKeysCommand, undefined);
 
         expect(targetStore.getSelectedTarget).toHaveBeenCalled();
         expect(executeTaskMock).toHaveBeenCalledWith(
@@ -105,16 +82,8 @@ describe('SetupKeys', () => {
         );
         const setupKeys = new SetupKeys(context, targetStore);
         setupKeys.activate();
-        const commandHandler = jest
-            .mocked(vscode.commands.registerCommand)
-            .mock.calls.find(
-                ([command]) => command === SetupKeys.setupKeysCommand,
-            )?.[1] as ((treeNode: unknown) => Promise<void>) | undefined;
-        if (!commandHandler) {
-            throw new Error('No command handler registered');
-        }
 
-        await commandHandler(undefined);
+        await executeCommand(SetupKeys.setupKeysCommand, undefined);
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
             expect.stringContaining(

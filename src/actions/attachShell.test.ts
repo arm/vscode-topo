@@ -5,11 +5,11 @@ import { ContainerItem } from '../util/types';
 import { TargetStore } from '../target/targetStore';
 import { DockerCommands } from '../target/dockerCommands';
 import { TargetContainerTreeItem } from '../targetTreeView/targetContainerTreeItem';
+import { executeCommand } from '../util/test/executeCommand';
 
 jest.mock('../util/logger');
 
 describe('AttachShell', () => {
-    const registerCommandMock = jest.mocked(vscode.commands.registerCommand);
     const dockerCommands = new DockerCommands();
     const target = 'user@topo.local';
     const targetStore = mock<TargetStore>();
@@ -36,18 +36,13 @@ describe('AttachShell', () => {
         );
     });
 
-    it('attachShell command opens terminal and sends docker exec', () => {
+    it('attachShell command opens terminal and sends docker exec', async () => {
         const attachShell = new AttachShell(
             context,
             dockerCommands,
             targetStore,
         );
         attachShell.activate();
-        const attachShellCall = registerCommandMock.mock.calls.find(
-            ([cmd]) => cmd === AttachShell.attachShellCommand,
-        );
-        expect(attachShellCall).toBeDefined();
-        const handler = attachShellCall![1];
         const fakeItem = mock<ContainerItem>({
             id: 'cid',
             image: 'clabel',
@@ -56,7 +51,7 @@ describe('AttachShell', () => {
         });
         const treeItem = new TargetContainerTreeItem(fakeItem);
 
-        handler(treeItem);
+        await executeCommand(AttachShell.attachShellCommand, treeItem);
 
         expect(vscode.window.createTerminal).toHaveBeenCalledWith({
             name: 'Shell: clabel',
