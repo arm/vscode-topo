@@ -48,7 +48,7 @@ describe('ProjectClone', () => {
             subscriptions: subscriptions,
         });
         projectClone = new ProjectClone(context, topoCli, targetStore);
-        await projectClone.activate();
+        projectClone.activate();
     });
 
     it('registers the command on activate', async () => {

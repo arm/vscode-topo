@@ -49,12 +49,15 @@ describe('HealthCheckDependencyTreeItem', () => {
         expect(item.contextValue).toBe('Dependency Error');
     });
 
-    it('marks dependency with `topo install` fix as installable', () => {
+    it('marks dependency with `topo install` command as installable', () => {
         const item = new HealthCheckDependencyTreeItem({
             name: 'Container Engine',
             value: 'missing',
             status: 'warning',
-            fix: 'run `topo install container-engine`',
+            fix: {
+                description: 'Install the container engine',
+                command: 'topo install container-engine --target ssh://imx93',
+            },
         });
 
         expect(item.contextValue).toBe('Dependency Warning Installable');

@@ -18,7 +18,7 @@ describe('ContainerOpenInBrowser', () => {
 
     it('opens browser for common web port', async () => {
         const containerOpenInBrowser = new ContainerOpenInBrowser(context);
-        await containerOpenInBrowser.activate();
+        containerOpenInBrowser.activate();
         const openInBrowser = registerCommandMock.mock.calls.find(
             ([cmd]) => cmd === ContainerOpenInBrowser.openInBrowserCommand,
         )![1];
@@ -49,7 +49,7 @@ describe('ContainerOpenInBrowser', () => {
 
     it('shows warning if no ports', async () => {
         const containerOpenInBrowser = new ContainerOpenInBrowser(context);
-        await containerOpenInBrowser.activate();
+        containerOpenInBrowser.activate();
         const openInBrowser = registerCommandMock.mock.calls.find(
             ([cmd]) => cmd === ContainerOpenInBrowser.openInBrowserCommand,
         )![1];
@@ -79,7 +79,7 @@ describe('ContainerOpenInBrowser', () => {
 
     it('shows warning if no common web port', async () => {
         const containerOpenInBrowser = new ContainerOpenInBrowser(context);
-        await containerOpenInBrowser.activate();
+        containerOpenInBrowser.activate();
         const openInBrowser = registerCommandMock.mock.calls.find(
             ([cmd]) => cmd === ContainerOpenInBrowser.openInBrowserCommand,
         )![1];

@@ -22,7 +22,10 @@ describe('HostDependenciesTreeDataProvider', () => {
                     name: 'Zed',
                     status: 'warning',
                     value: 'missing',
-                    fix: 'run `topo install zed`',
+                    fix: {
+                        description: 'Install Zed',
+                        command: 'topo install zed --target ssh://imx93',
+                    },
                 },
                 {
                     name: 'Alpha',
