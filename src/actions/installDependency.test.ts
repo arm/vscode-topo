@@ -6,6 +6,7 @@ import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependenc
 import { HealthCheckResult } from '../topoCliSchema';
 import { ContainersManager } from '../target/containersManager';
 import { executeTask } from '../util/executeTask';
+import { executeCommand } from '../util/test/executeCommand';
 
 jest.mock('../util/logger');
 jest.mock('../util/executeTask');
@@ -15,21 +16,6 @@ const executeTaskMock = jest.mocked(executeTask);
 const waitImmediate = async () => {
     await Promise.resolve();
     await Promise.resolve();
-};
-
-const getCommandHandler = () => {
-    const handler = jest
-        .mocked(vscode.commands.registerCommand)
-        .mock.calls.find(
-            ([command]) =>
-                command === InstallDependency.installDependencyCommand,
-        )?.[1] as ((treeNode: unknown) => Promise<void>) | undefined;
-
-    if (!handler) {
-        throw new Error('No install dependency handler registered');
-    }
-
-    return handler;
 };
 
 const loadedHealth: HealthCheckResult = {
@@ -100,7 +86,10 @@ describe('InstallDependency', () => {
 
         installDependency.activate();
 
-        await getCommandHandler()(dependencyItem);
+        await executeCommand(
+            InstallDependency.installDependencyCommand,
+            dependencyItem,
+        );
 
         expect(executeTaskMock).toHaveBeenCalledWith(
             `Install Remoteproc Runtime on ${target}`,
@@ -120,7 +109,10 @@ describe('InstallDependency', () => {
         });
 
         installDependency.activate();
-        await getCommandHandler()(dependencyItem);
+        await executeCommand(
+            InstallDependency.installDependencyCommand,
+            dependencyItem,
+        );
 
         expect(executeTaskMock).not.toHaveBeenCalled();
     });

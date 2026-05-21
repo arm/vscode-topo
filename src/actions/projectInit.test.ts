@@ -3,6 +3,7 @@ import { ProjectInit } from './projectInit';
 import { mutable } from '../util/mutable';
 import { mock } from 'jest-mock-extended';
 import { TopoCli } from '../topoCli';
+import { executeCommand } from '../util/test/executeCommand';
 
 describe('ProjectInit', () => {
     beforeEach(() => {
@@ -28,7 +29,7 @@ describe('ProjectInit', () => {
         const projectInit = new ProjectInit(topoCli);
         projectInit.activate();
 
-        await jest.mocked(vscode.commands.registerCommand).mock.calls[0][1]();
+        await executeCommand(ProjectInit.initProjectCommand);
 
         expect(topoCli.init).toHaveBeenCalledWith(workspaceUri.fsPath);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
@@ -42,7 +43,7 @@ describe('ProjectInit', () => {
         const projectInit = new ProjectInit(topoCli);
         projectInit.activate();
 
-        await jest.mocked(vscode.commands.registerCommand).mock.calls[0][1]();
+        await executeCommand(ProjectInit.initProjectCommand);
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
             'Failed to initialize project: fail',
