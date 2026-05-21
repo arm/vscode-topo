@@ -7,18 +7,12 @@ import { ContainerItem } from '../util/types';
 import { TargetContainerTreeItem } from '../targetTreeView/targetContainerTreeItem';
 import { WrappedError } from '../errors/wrappedError';
 import { mock, MockProxy } from 'jest-mock-extended';
+import { executeCommand } from '../util/test/executeCommand';
 
 jest.mock('../util/exec', () => ({
     exec: jest.fn(),
 }));
 jest.mock('../util/logger');
-
-async function executeCommand(command: string, ...args: unknown[]) {
-    const calls = jest.mocked(vscode.commands.registerCommand).mock.calls;
-    const addCall = calls.find((c: unknown[]) => c[0] === command);
-    const handler = addCall![1] as (...args: unknown[]) => Promise<void>;
-    await handler(...args);
-}
 
 describe('getDockerContextName', () => {
     it('keeps docker context characters that are already valid', () => {

@@ -7,6 +7,7 @@ import { ContainersManager } from '../target/containersManager';
 import { mock, MockProxy } from 'jest-mock-extended';
 import type { TopoCli } from '../topoCli';
 import type { HealthCheckResult } from '../topoCliSchema';
+import { executeCommand } from '../util/test/executeCommand';
 
 jest.mock('../util/logger');
 
@@ -70,13 +71,6 @@ const createTargetManager = () => {
         context,
     };
 };
-
-async function executeCommand(command: string, ...args: unknown[]) {
-    const calls = jest.mocked(vscode.commands.registerCommand).mock.calls;
-    const addCall = calls.find((c: unknown[]) => c[0] === command);
-    const handler = addCall![1] as (...args: unknown[]) => Promise<void>;
-    await handler(...args);
-}
 
 describe('buildQuickPickItems', () => {
     it('returns hosts', () => {

@@ -12,7 +12,11 @@ const commonConfig = {
 };
 
 module.exports = {
-  collectCoverageFrom: ["src/**/*.{js,ts}", "!src/**/*.d.ts"],
+  collectCoverageFrom: [
+    "src/**/*.{js,ts}",
+    "!src/**/*.d.ts",
+    "!src/util/test/**",
+  ],
   projects: [
     {
       ...commonConfig,
