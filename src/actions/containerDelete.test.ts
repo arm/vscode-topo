@@ -6,14 +6,11 @@ import { TargetContainerTreeItem } from '../targetTreeView/targetContainerTreeIt
 import { WrappedError } from '../errors/wrappedError';
 import { mock, MockProxy } from 'jest-mock-extended';
 import { ContainerCommands } from '../target/containerCommands';
+import { executeCommand } from '../util/test/executeCommand';
 
 describe('ContainerDelete', () => {
     let context: MockProxy<vscode.ExtensionContext>;
     let showErrorMessageSpy: jest.SpyInstance;
-    let commandHandler:
-        | { command: string; callback: (...args: unknown[]) => void }
-        | undefined;
-    const registerCommandMock = jest.mocked(vscode.commands.registerCommand);
 
     const target = 'user@topo.local';
     const container: ContainerItem = {
@@ -34,30 +31,9 @@ describe('ContainerDelete', () => {
 
     beforeEach(() => {
         context = mock<vscode.ExtensionContext>({ subscriptions: [] });
-        commandHandler = undefined;
         showErrorMessageSpy = jest
             .spyOn(vscode.window, 'showErrorMessage')
             .mockImplementation(jest.fn());
-
-        registerCommandMock.mockImplementation((command, callback) => {
-            if (command !== ContainerDelete.deleteContainerCommand) {
-                throw Error('Unexpected command registration');
-            }
-            commandHandler = { command, callback };
-            return { dispose: jest.fn() };
-        });
-
-        jest.mocked(vscode.commands.executeCommand).mockImplementation(
-            async (command, ...args) => {
-                if (
-                    command === ContainerDelete.deleteContainerCommand &&
-                    commandHandler
-                ) {
-                    return commandHandler.callback(...args);
-                }
-                return Promise.resolve();
-            },
-        );
     });
 
     afterEach(() => {
@@ -69,10 +45,7 @@ describe('ContainerDelete', () => {
         const containerDelete = new ContainerDelete(context, containerCommands);
         containerDelete.activate();
 
-        await vscode.commands.executeCommand(
-            ContainerDelete.deleteContainerCommand,
-            treeItem,
-        );
+        await executeCommand(ContainerDelete.deleteContainerCommand, treeItem);
 
         expect(containerCommands.deleteContainer).toHaveBeenCalledWith(
             'abc123',
@@ -88,10 +61,7 @@ describe('ContainerDelete', () => {
         const containerDelete = new ContainerDelete(context, containerCommands);
         containerDelete.activate();
 
-        await vscode.commands.executeCommand(
-            ContainerDelete.deleteContainerCommand,
-            treeItem,
-        );
+        await executeCommand(ContainerDelete.deleteContainerCommand, treeItem);
 
         expect(showErrorMessageSpy).toHaveBeenCalledWith(
             expect.stringContaining(
@@ -109,10 +79,7 @@ describe('ContainerDelete', () => {
         containerDelete.activate();
 
         await expect(
-            vscode.commands.executeCommand(
-                ContainerDelete.deleteContainerCommand,
-                treeItem,
-            ),
+            executeCommand(ContainerDelete.deleteContainerCommand, treeItem),
         ).rejects.toThrow('generic error');
     });
 });
