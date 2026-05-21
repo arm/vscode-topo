@@ -9,10 +9,15 @@ describe('HostController', () => {
     });
 
     it('refreshes host health on creation', () => {
-        const topoCli = mock<TopoCli>();
+        const healthPromise = Promise.resolve();
+        const topoCli = mock<TopoCli>({
+            hostHealth: jest.fn().mockResolvedValue(healthPromise),
+        });
+        const model = new HostModel();
 
-        new HostController(new HostModel(), topoCli);
+        new HostController(model, topoCli);
 
         expect(topoCli.hostHealth).toHaveBeenCalled();
+        expect(model.health).toBe(healthPromise);
     });
 });

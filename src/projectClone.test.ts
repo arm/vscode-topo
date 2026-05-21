@@ -9,6 +9,7 @@ import { showAndLogError } from './util/showAndLogError';
 import { TargetStore } from './target/targetStore';
 import { WrappedError } from './errors/wrappedError';
 import { executeTask } from './util/executeTask';
+import { executeCommand } from './util/test/executeCommand';
 
 jest.mock('./util/showAndLogError', () => ({
     showAndLogError: jest.fn(),
@@ -16,15 +17,6 @@ jest.mock('./util/showAndLogError', () => ({
 jest.mock('./util/executeTask');
 
 const executeTaskMock = jest.mocked(executeTask);
-
-const executeCommand = async function (command: string, ...args: unknown[]) {
-    const registeredCommands = jest.mocked(vscode.commands.registerCommand).mock
-        .calls;
-    const handler = registeredCommands.find(
-        (c: unknown[]) => c[0] === command,
-    )?.[1];
-    await handler!(...args);
-};
 
 const subscriptions: vscode.Disposable[] = [];
 
@@ -56,7 +48,7 @@ describe('ProjectClone', () => {
             subscriptions: subscriptions,
         });
         projectClone = new ProjectClone(context, topoCli, targetStore);
-        await projectClone.activate();
+        projectClone.activate();
     });
 
     it('registers the command on activate', async () => {

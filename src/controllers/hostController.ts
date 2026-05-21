@@ -10,6 +10,6 @@ export class HostController {
     }
 
     public refreshHealth(): void {
-        this.hostModel.health = this.topoCli.hostHealth();
+        this.hostModel.setHealth(this.topoCli.hostHealth());
     }
 }

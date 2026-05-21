@@ -112,7 +112,7 @@ export class TopoCli {
         private readonly env: vscode.EnvironmentVariableCollection,
     ) {}
 
-    public async activate(): Promise<void> {
+    public activate(): void {
         const sep = process.platform === 'win32' ? ';' : ':';
         this.env.prepend('PATH', this.getBinaryFolder() + sep);
     }

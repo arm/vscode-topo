@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { HostTreeView } from './hostTreeView';
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
-import { failedToLoadHostDependenciesMessage } from './hostDependenciesLoadErrorItem';
+import { failedToLoadHostDependenciesMessage } from '../treeItems/hostDependenciesLoadErrorItem';
 import { ShowOutput } from '../actions/showOutput';
 import { HostModel } from '../models/hostModel';
 
@@ -38,23 +38,29 @@ describe('HostDependenciesTreeDataProvider', () => {
 
     it('returns host dependency items sorted by name below the Dependencies group', async () => {
         const model = new HostModel();
-        model.health = Promise.resolve({
-            host: {
-                dependencies: [
-                    {
-                        name: 'Zed',
-                        status: 'warning',
-                        value: 'missing',
-                        fix: 'run `topo install zed`',
-                    },
-                    {
-                        name: 'Alpha',
-                        status: 'ok',
-                        value: 'installed',
-                    },
-                ],
-            },
-        });
+        model.setHealth(
+            Promise.resolve({
+                host: {
+                    dependencies: [
+                        {
+                            name: 'Zed',
+                            status: 'warning',
+                            value: 'missing',
+                            fix: {
+                                description: 'Install Zed',
+                                command:
+                                    'topo install zed --target ssh://imx93',
+                            },
+                        },
+                        {
+                            name: 'Alpha',
+                            status: 'ok',
+                            value: 'installed',
+                        },
+                    ],
+                },
+            }),
+        );
         const provider = new HostTreeView(model);
 
         const rootChildren = await provider.getChildren();
@@ -81,7 +87,7 @@ describe('HostDependenciesTreeDataProvider', () => {
 
     it('returns an error item when host health cannot be loaded', async () => {
         const model = new HostModel();
-        model.health = Promise.reject(new Error('health unavailable'));
+        model.setHealth(Promise.reject(new Error('health unavailable')));
         const provider = new HostTreeView(model);
 
         const children = await provider.getChildren();

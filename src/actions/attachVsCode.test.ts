@@ -7,18 +7,12 @@ import { ContainerItem } from '../util/types';
 import { TargetContainerTreeItem } from '../targetTreeView/targetContainerTreeItem';
 import { WrappedError } from '../errors/wrappedError';
 import { mock, MockProxy } from 'jest-mock-extended';
+import { executeCommand } from '../util/test/executeCommand';
 
 jest.mock('../util/exec', () => ({
     exec: jest.fn(),
 }));
 jest.mock('../util/logger');
-
-async function executeCommand(command: string, ...args: unknown[]) {
-    const calls = jest.mocked(vscode.commands.registerCommand).mock.calls;
-    const addCall = calls.find((c: unknown[]) => c[0] === command);
-    const handler = addCall![1] as (...args: unknown[]) => Promise<void>;
-    await handler(...args);
-}
 
 describe('getDockerContextName', () => {
     it('keeps docker context characters that are already valid', () => {
@@ -78,7 +72,7 @@ describe('attachVsCode', () => {
     });
 
     it('registers the command', async () => {
-        await attachVsCode.activate();
+        attachVsCode.activate();
 
         expect(registerCommandMock).toHaveBeenCalledWith(
             AttachVsCode.attachVsCodeCommand,
@@ -87,7 +81,7 @@ describe('attachVsCode', () => {
     });
 
     it("executes attachVsCode command that doesn't create context and calls remote-containers.attachToRunningContainer with container id", async () => {
-        await attachVsCode.activate();
+        attachVsCode.activate();
         execMock.mockImplementation(async (command) => {
             if (command === 'docker context show') {
                 return { stdout: 'default\n', stderr: '' };
@@ -126,7 +120,7 @@ describe('attachVsCode', () => {
     });
 
     it('executes attachVsCode command that creates context and calls remote-containers.attachToRunningContainer with container id', async () => {
-        await attachVsCode.activate();
+        attachVsCode.activate();
         execMock.mockImplementation(async (command) => {
             if (command === 'docker context show') {
                 return { stdout: 'default\n', stderr: '' };
@@ -174,7 +168,7 @@ describe('attachVsCode', () => {
     });
 
     it('shows an error if the attachVsCode command fails', async () => {
-        await attachVsCode.activate();
+        attachVsCode.activate();
         execMock.mockImplementation(async () => {
             throw new WrappedError('DOCKER', 'fail');
         });

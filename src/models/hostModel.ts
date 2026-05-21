@@ -15,7 +15,7 @@ export class HostModel {
 
     private _health?: Promise<HostHealthCheckResult>;
 
-    public set health(healthPromise: Promise<HostHealthCheckResult>) {
+    public setHealth(healthPromise: Promise<HostHealthCheckResult>): void {
         this._health = healthPromise;
         this._onHealthChanged.fire();
     }
