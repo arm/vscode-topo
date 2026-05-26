@@ -3,6 +3,26 @@ import { TargetStore } from '../target/targetStore';
 import { ContainersManager } from '../target/containersManager';
 import { getTargetTreeItemIcon } from '../targetTreeView/targetTreeItem';
 import { TargetTreeView } from './targetTreeView';
+import { TargetStatus } from '../util/types';
+
+function renderStatusBarItem(
+    statusBarItem: vscode.StatusBarItem | undefined,
+    target: string | undefined,
+    status: TargetStatus,
+): void {
+    if (!statusBarItem) {
+        return;
+    }
+    if (target) {
+        const targetTreeIcon = getTargetTreeItemIcon(true, status);
+        const iconId = targetTreeIcon?.id || 'pass-filled';
+        statusBarItem.text = `$(${iconId}) ${target}`;
+        statusBarItem.tooltip = `Connection String: ${target}`;
+        statusBarItem.show();
+    } else {
+        statusBarItem.hide();
+    }
+}
 
 export class TargetStatusBarItemView {
     public static readonly priority = 100;
@@ -31,29 +51,13 @@ export class TargetStatusBarItemView {
         );
     }
 
-    protected renderStatusBarItem(selectedTarget: string | undefined): void {
-        if (!this.statusBarItem) {
-            return;
-        }
-        if (selectedTarget) {
-            const targetState =
-                this.containersManager.getTargetStateSnapshot(selectedTarget);
-            const targetTreeIcon = getTargetTreeItemIcon(
-                true,
-                targetState.status,
-            );
-            const iconId = targetTreeIcon?.id || 'pass-filled';
-            this.statusBarItem.text = `$(${iconId}) ${selectedTarget}`;
-            this.statusBarItem.tooltip = `Connection String: ${selectedTarget}`;
-            this.statusBarItem.show();
-        } else {
-            this.statusBarItem.hide();
-        }
-    }
-
     private refresh(): void {
         const selectedTarget = this.targetStore.getSelectedTarget();
-        this.renderStatusBarItem(selectedTarget);
+        const status = selectedTarget
+            ? this.containersManager.getTargetStateSnapshot(selectedTarget)
+                  .status
+            : 'disconnected';
+        renderStatusBarItem(this.statusBarItem, selectedTarget, status);
     }
 
     public dispose(): void {
