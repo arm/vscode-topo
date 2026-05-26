@@ -80,7 +80,7 @@ describe('HostDependenciesTreeDataProvider', () => {
             }),
             expect.objectContaining({
                 label: 'Zed',
-                contextValue: 'Dependency Warning Installable',
+                contextValue: 'Dependency Warning Fixable',
                 description: 'missing',
             }),
         ]);

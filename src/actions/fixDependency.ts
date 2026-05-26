@@ -12,12 +12,12 @@ import {
     getDependencyFixCommandGroups,
 } from '../util/getDependencyFixes';
 
-const installAction = { title: 'Install missing dependencies' };
+const fixDependenciesAction = { title: 'Fix dependencies' };
 
-export class InstallDependency implements vscode.Disposable {
+export class FixDependency implements vscode.Disposable {
     private disposables: vscode.Disposable[] = [];
     private targetChangedAbortController: AbortController | undefined;
-    public static readonly installDependencyCommand = `${PACKAGE_NAME}.installDependency`;
+    public static readonly fixDependenciesCommand = `${PACKAGE_NAME}.fixDependencies`;
 
     constructor(
         private readonly targetStore: TargetStore,
@@ -27,18 +27,18 @@ export class InstallDependency implements vscode.Disposable {
     public async activate(): Promise<void> {
         this.disposables.push(
             vscode.commands.registerCommand(
-                InstallDependency.installDependencyCommand,
-                this.installDependencyFromTreeItem.bind(this),
+                FixDependency.fixDependenciesCommand,
+                this.fixDependencyFromTreeItem.bind(this),
             ),
             this.targetStore.onChanged(
-                this.promptToInstallMissingDependencies.bind(this),
+                this.promptToFixMissingDependencies.bind(this),
             ),
         );
 
-        await this.promptToInstallMissingDependencies();
+        await this.promptToFixMissingDependencies();
     }
 
-    private async promptToInstallMissingDependencies(): Promise<void> {
+    private async promptToFixMissingDependencies(): Promise<void> {
         this.targetChangedAbortController?.abort();
         const abortController = new AbortController();
         this.targetChangedAbortController = abortController;
@@ -49,20 +49,21 @@ export class InstallDependency implements vscode.Disposable {
         }
         const { health } = await this.containersManager.getTargetState(target);
 
-        const installables = health?.dependencies
+        const fixableDependencies = health?.dependencies
             ? getDependencyFixCommandGroups(health.dependencies)
             : [];
 
-        if (installables.length > 0 && !abortController.signal.aborted) {
-            await this.showInstallableNotification(target, installables);
+        if (fixableDependencies.length > 0 && !abortController.signal.aborted) {
+            await this.showFixableDependenciesPrompt(
+                target,
+                fixableDependencies,
+            );
         }
     }
 
-    private async installDependencyFromTreeItem(
-        treeNode: unknown,
-    ): Promise<void> {
+    private async fixDependencyFromTreeItem(treeNode: unknown): Promise<void> {
         if (!(treeNode instanceof HealthCheckDependencyTreeItem)) {
-            const errMsg = `Invalid dependency item for install dependency: expected HealthCheckDependencyTreeItem but received:`;
+            const errMsg = `Invalid dependency item for fix dependencies: expected HealthCheckDependencyTreeItem but received:`;
             logger.error(errMsg, treeNode);
             return;
         }
@@ -70,7 +71,7 @@ export class InstallDependency implements vscode.Disposable {
         const target = this.targetStore.getSelectedTarget();
         if (!target) {
             showAndLogError(
-                `Failed to install dependency`,
+                `Failed to fix dependency`,
                 new Error('No selected target found'),
             );
             return;
@@ -79,22 +80,16 @@ export class InstallDependency implements vscode.Disposable {
         const command = treeNode.dependency.fix?.command;
         if (!command) {
             showAndLogError(
-                `Failed to install dependency`,
-                new Error(
-                    'No installable dependency found for the selected item',
-                ),
+                `Failed to fix dependency`,
+                new Error('No fixable dependency found for the selected item'),
             );
             return;
         }
 
-        await this.installDependency(
-            target,
-            [treeNode.dependency.name],
-            command,
-        );
+        await this.fixDependency(target, [treeNode.dependency.name], command);
     }
 
-    private async installDependency(
+    private async fixDependency(
         target: string,
         names: string[],
         command: string,
@@ -103,39 +98,36 @@ export class InstallDependency implements vscode.Disposable {
         const commandArgs = getFixCommandArgs(command);
         if (!commandArgs) {
             showAndLogError(
-                `Failed to install ${name} on target ${target}`,
-                new Error('No installable command found'),
+                `Failed to fix ${name} on target ${target}`,
+                new Error('No executable command found'),
             );
             return;
         }
 
         try {
-            await executeTask(`Install ${name} on ${target}`, commandArgs);
+            await executeTask(`Fix ${name} on ${target}`, commandArgs);
             vscode.window.showInformationMessage(
-                `${name} was installed on target ${target}`,
+                `${name} was fixed on target ${target}`,
             );
         } catch (err) {
-            showAndLogError(
-                `Failed to install ${name} on target ${target}`,
-                err,
-            );
+            showAndLogError(`Failed to fix ${name} on target ${target}`, err);
         }
     }
 
-    private async showInstallableNotification(
+    private async showFixableDependenciesPrompt(
         target: string,
-        installables: DependencyFixCommandGroup[],
+        fixableDependencies: DependencyFixCommandGroup[],
     ): Promise<void> {
         const choice = await vscode.window.showWarningMessage(
-            `${target} has missing or unhealthy dependencies: ${installables.flatMap(({ names }) => names).join(`, `)}`,
-            installAction,
+            `${target} has missing or unhealthy dependencies: ${fixableDependencies.flatMap(({ names }) => names).join(`, `)}`,
+            fixDependenciesAction,
         );
-        if (choice?.title === installAction.title) {
-            for (const installable of installables) {
-                await this.installDependency(
+        if (choice?.title === fixDependenciesAction.title) {
+            for (const fixableDependency of fixableDependencies) {
+                await this.fixDependency(
                     target,
-                    installable.names,
-                    installable.command,
+                    fixableDependency.names,
+                    fixableDependency.command,
                 );
             }
         }

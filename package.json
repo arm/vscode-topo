@@ -100,8 +100,8 @@
                 "category": "Arm Topo"
             },
             {
-                "command": "topo.installDependency",
-                "title": "Install",
+                "command": "topo.fixDependencies",
+                "title": "Fix",
                 "category": "Arm Topo"
             },
             {
@@ -209,7 +209,7 @@
                     "when": "false"
                 },
                 {
-                    "command": "topo.installDependency",
+                    "command": "topo.fixDependencies",
                     "when": "false"
                 },
                 {
@@ -280,8 +280,8 @@
                     "group": "topo/3_cleanup"
                 },
                 {
-                    "command": "topo.installDependency",
-                    "when": "view === topo.target-manager && viewItem =~ /Installable/",
+                    "command": "topo.fixDependencies",
+                    "when": "view === topo.target-manager && viewItem =~ /Fixable/",
                     "group": "topo/1_manage"
                 },
                 {
