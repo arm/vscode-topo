@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { HostHealthCheckResult } from '../topoCliSchema';
+import { Loadable } from '../util/types';
 
 const defaultHealthCheckResult: HostHealthCheckResult = {
     host: {
@@ -13,14 +14,16 @@ export class HostModel {
     public readonly onHealthChanged: vscode.Event<void> =
         this._onHealthChanged.event;
 
-    private _health?: Promise<HostHealthCheckResult>;
+    private _health?: Loadable<HostHealthCheckResult>;
 
-    public setHealth(healthPromise: Promise<HostHealthCheckResult>): void {
-        this._health = healthPromise;
+    public setHealth(health: Loadable<HostHealthCheckResult>): void {
+        this._health = health;
         this._onHealthChanged.fire();
     }
 
-    public get health(): Promise<HostHealthCheckResult> {
-        return this._health ?? Promise.resolve(defaultHealthCheckResult);
+    public get health(): Loadable<HostHealthCheckResult> {
+        return (
+            this._health ?? { status: 'loaded', data: defaultHealthCheckResult }
+        );
     }
 }
