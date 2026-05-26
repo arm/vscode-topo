@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as commands from './commands';
 import { TopoCli } from './topoCli';
 import { ProjectInit } from './actions/projectInit';
 import { TopoCliVersionChecker } from './topoCliVersionChecker';
@@ -21,12 +22,14 @@ import { ProtocolHandler } from './protocolHandler';
 import { SetupKeys } from './actions/setupKeys';
 import { TargetDescriptionStore } from './target/targetDescriptionStore';
 import { InstallDependency } from './actions/installDependency';
-import { HostDependenciesTreeDataProvider } from './hostTreeView/hostDependenciesTreeDataProvider';
+import { HostTreeView } from './views/hostTreeView';
 import { logger } from './util/logger';
 import { TargetHealth } from './actions/targetHealth';
 import { ShowOutput } from './actions/showOutput';
 import { SelectTarget } from './actions/selectTarget';
 import { RemoveTarget } from './actions/removeTarget';
+import { HostModel } from './models/hostModel';
+import { HostController } from './controllers/hostController';
 
 export async function activate(
     context: vscode.ExtensionContext,
@@ -44,6 +47,16 @@ export async function activate(
     if (!topoCliVersionChecker.checkTopoCliVersion()) {
         return;
     }
+
+    const hostModel = new HostModel();
+
+    const hostTreeView = new HostTreeView(hostModel);
+    context.subscriptions.push(hostTreeView);
+
+    const hostHealthController = new HostController(hostModel, topoCli);
+
+    const disposeCommands = commands.register(hostHealthController);
+    context.subscriptions.push(disposeCommands);
 
     const targetStore = new TargetStore(context);
     context.subscriptions.push(targetStore);
@@ -72,8 +85,6 @@ export async function activate(
         targetStore,
         targetDescriptionStore,
     );
-    const hostDependenciesTreeDataProvider =
-        new HostDependenciesTreeDataProvider(context, topoCli);
     const targetManager = new TargetManager(
         context,
         targetTreeDataProvider,
@@ -107,7 +118,6 @@ export async function activate(
     attachShell.activate();
     await containersManager.activate();
     targetTreeDataProvider.activate();
-    hostDependenciesTreeDataProvider.activate();
     targetManager.activate();
     containerStart.activate();
     containerStop.activate();
