@@ -7,14 +7,15 @@ import { exec } from '../util/exec';
 import { logger } from '../util/logger';
 import { DockerInspectItem } from '../util/types';
 import { WrappedError } from '../errors/wrappedError';
+import type { Mock } from 'vitest';
 
-jest.mock('../util/exec', () => ({
-    exec: jest.fn(),
+vi.mock('../util/exec', () => ({
+    exec: vi.fn(),
 }));
 
-jest.mock('../util/logger');
+vi.mock('../util/logger');
 
-const execMock: jest.Mock = jest.mocked(exec);
+const execMock: Mock = vi.mocked(exec);
 
 function makeDockerError(stdout: string, stderr: string): DockerError {
     const e = new Error('Command failed: docker something') as DockerError;
@@ -27,7 +28,7 @@ describe('DockerCommands', () => {
     let dockerCommands: DockerCommands;
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
         // default exec mock returns empty stdout/stderr to avoid leaking behavior between tests
         execMock.mockImplementation(async () => ({ stdout: '', stderr: '' }));
         dockerCommands = new DockerCommands();
@@ -144,7 +145,7 @@ describe('DockerCommands', () => {
 
     describe('executeWithContext', () => {
         it('switches context, runs operation and restores original context after timeout', async () => {
-            const op = jest.fn().mockResolvedValue('ok');
+            const op = vi.fn().mockResolvedValue('ok');
             execMock.mockImplementationOnce(async (cmd: string) => {
                 if (cmd === 'docker context show') {
                     return {
@@ -180,7 +181,7 @@ describe('DockerCommands', () => {
                 }
                 return { stdout: '', stderr: '' };
             });
-            const op = jest.fn().mockRejectedValue(new Error('op-fail'));
+            const op = vi.fn().mockRejectedValue(new Error('op-fail'));
 
             const executeWithContextOperation =
                 dockerCommands.executeWithContext(() => op(), 'target-ctx', 0);

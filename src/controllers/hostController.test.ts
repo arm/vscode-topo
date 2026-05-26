@@ -1,4 +1,4 @@
-import { mock } from 'jest-mock-extended';
+import { mock } from 'vitest-mock-extended';
 import { HostModel } from '../models/hostModel';
 import { TopoCli } from '../topoCli';
 import { HostController } from './hostController';
@@ -12,12 +12,12 @@ const hostHealth: HostHealthCheckResult = {
 
 describe('HostController', () => {
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('refreshes host health on creation', async () => {
         const topoCli = mock<TopoCli>({
-            hostHealth: jest.fn().mockResolvedValue(hostHealth),
+            hostHealth: vi.fn().mockResolvedValue(hostHealth),
         });
         const model = new HostModel();
 

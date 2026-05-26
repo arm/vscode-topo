@@ -1,15 +1,15 @@
-import { mock } from 'jest-mock-extended';
+import { mock } from 'vitest-mock-extended';
 import * as vscode from 'vscode';
 import { TargetStore } from '../target/targetStore';
 import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
 import { SelectTarget } from './selectTarget';
 import { executeCommand } from '../util/test/executeCommand';
 
-jest.mock('../util/logger');
+vi.mock('../util/logger');
 
 describe('SelectTarget', () => {
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('registers the select target command when activated', () => {

@@ -10,11 +10,11 @@ beforeEach(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ssh-test-'));
     sshDir = path.join(tmpDir, '.ssh');
     fs.mkdirSync(sshDir, { recursive: true });
-    jest.spyOn(os, 'homedir').mockReturnValue(tmpDir);
+    vi.spyOn(os, 'homedir').mockReturnValue(tmpDir);
 });
 
 afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
     fs.rmSync(tmpDir, { recursive: true, force: true });
 });
 

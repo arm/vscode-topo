@@ -6,11 +6,11 @@ import { failedToLoadHostDependenciesMessage } from '../treeItems/hostDependenci
 import { HostModel } from '../models/hostModel';
 import { showOutput } from '../commands';
 
-jest.mock('../util/logger');
+vi.mock('../util/logger');
 
 describe('HostDependenciesTreeDataProvider', () => {
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('registers the host dependencies tree', () => {
@@ -125,7 +125,7 @@ describe('HostDependenciesTreeDataProvider', () => {
     it('fires onDidChangeTreeData when host health changes', () => {
         const model = new HostModel();
         const provider = new HostTreeView(model);
-        const listener = jest.fn();
+        const listener = vi.fn();
         provider.onDidChangeTreeData(listener);
 
         model.setHealth({

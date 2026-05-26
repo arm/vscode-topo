@@ -1,16 +1,16 @@
 import { TopoCli } from '../topoCli';
 import { TargetDescriptionStore } from './targetDescriptionStore';
-import { mock } from 'jest-mock-extended';
+import { mock } from 'vitest-mock-extended';
 import { TargetDescription } from '../util/types';
 import { logger } from '../util/logger';
 
-jest.mock('../util/logger');
+vi.mock('../util/logger');
 
 describe('TargetDescriptionStore', () => {
     const topoCli = mock<TopoCli>();
 
     beforeEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('should load and parse target description correctly', async () => {

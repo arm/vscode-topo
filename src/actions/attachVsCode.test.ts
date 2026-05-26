@@ -6,13 +6,14 @@ import { DockerCommands } from '../target/dockerCommands';
 import { ContainerItem } from '../util/types';
 import { TargetContainerTreeItem } from '../targetTreeView/targetContainerTreeItem';
 import { WrappedError } from '../errors/wrappedError';
-import { mock, MockProxy } from 'jest-mock-extended';
+import { mock, MockProxy } from 'vitest-mock-extended';
 import { executeCommand } from '../util/test/executeCommand';
+import type { Mock } from 'vitest';
 
-jest.mock('../util/exec', () => ({
-    exec: jest.fn(),
+vi.mock('../util/exec', () => ({
+    exec: vi.fn(),
 }));
-jest.mock('../util/logger');
+vi.mock('../util/logger');
 
 describe('getDockerContextName', () => {
     it('keeps docker context characters that are already valid', () => {
@@ -35,10 +36,10 @@ describe('getDockerContextName', () => {
 });
 
 describe('attachVsCode', () => {
-    let execMock: jest.Mock;
+    let execMock: Mock;
     let context: MockProxy<vscode.ExtensionContext>;
     let attachVsCode: AttachVsCode;
-    const registerCommandMock = jest.mocked(vscode.commands.registerCommand);
+    const registerCommandMock = vi.mocked(vscode.commands.registerCommand);
     const dockerCommands = new DockerCommands();
     const target = 'user@topo.local';
     const containerItem: ContainerItem = {
@@ -59,16 +60,16 @@ describe('attachVsCode', () => {
     const dockerContext = getDockerContextName(target);
 
     beforeEach(() => {
-        execMock = jest.mocked(exec);
+        execMock = vi.mocked(exec);
         context = mock<vscode.ExtensionContext>({ subscriptions: [] });
         attachVsCode = new AttachVsCode(context, dockerCommands);
-        jest.useFakeTimers();
+        vi.useFakeTimers();
     });
 
     afterEach(() => {
-        jest.clearAllTimers();
-        jest.useRealTimers();
-        jest.resetAllMocks();
+        vi.clearAllTimers();
+        vi.useRealTimers();
+        vi.resetAllMocks();
     });
 
     it('registers the command', async () => {
@@ -102,7 +103,7 @@ describe('attachVsCode', () => {
             AttachVsCode.attachVsCodeCommand,
             treeItem,
         );
-        await jest.advanceTimersByTimeAsync(3000);
+        await vi.advanceTimersByTimeAsync(3000);
         await commandExecution;
 
         expect(execMock).toHaveBeenCalledWith('docker context show');
@@ -147,7 +148,7 @@ describe('attachVsCode', () => {
             AttachVsCode.attachVsCodeCommand,
             treeItem,
         );
-        await jest.advanceTimersByTimeAsync(3000);
+        await vi.advanceTimersByTimeAsync(3000);
         await commandExecution;
 
         expect(execMock).toHaveBeenCalledWith('docker context show');
@@ -177,7 +178,7 @@ describe('attachVsCode', () => {
             AttachVsCode.attachVsCodeCommand,
             treeItem,
         );
-        await jest.advanceTimersByTimeAsync(3000);
+        await vi.advanceTimersByTimeAsync(3000);
         await commandExecution;
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(

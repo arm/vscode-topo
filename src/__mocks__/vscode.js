@@ -11,8 +11,8 @@ class Uri extends URI {
 }
 
 // Classes
-const Disposable = jest.fn(() => {
-    return { dispose: jest.fn() };
+const Disposable = vi.fn(function () {
+    return { dispose: vi.fn() };
 });
 Disposable.from = (disposable) => disposable;
 class EventEmitter {
@@ -30,39 +30,43 @@ class EventEmitter {
         this._callbacks.forEach((cb) => cb(event));
     }
 }
-const RelativePattern = jest.fn();
-const ShellExecution = jest.fn((executablePath, executionArgs, options) => ({
-    executablePath,
-    executionArgs,
-    options,
-}));
-const Task = jest.fn((definition, scope, name, type, execution) => ({
-    definition,
-    scope,
-    name,
-    type,
-    execution,
-}));
+const RelativePattern = vi.fn(function () {});
+const ShellExecution = vi.fn(function (executablePath, executionArgs, options) {
+    return {
+        executablePath,
+        executionArgs,
+        options,
+    };
+});
+const Task = vi.fn(function (definition, scope, name, type, execution) {
+    return {
+        definition,
+        scope,
+        name,
+        type,
+        execution,
+    };
+});
 const ColorThemeKind = {
     Dark: 1,
 };
 
-const Position = jest.fn();
+const Position = vi.fn(function () {});
 
 const QuickPickItemKind = {
     Separator: -1,
 };
 
-const Range = jest.fn();
+const Range = vi.fn(function () {});
 
 const DiagnosticSeverity = {
     Error: 0,
 };
 
 const CodeActionKind = {
-    QuickFix: jest.fn(),
+    QuickFix: vi.fn(),
 };
-const CodeAction = jest.fn();
+const CodeAction = vi.fn(function () {});
 
 // Enums
 const ShellQuoting = { Escape: 'Escape' };
@@ -76,21 +80,21 @@ const ProgressLocation = { Notification: 1 };
 
 // Namespaces
 const commands = {
-    executeCommand: jest.fn(),
-    registerCommand: jest.fn(() => ({ dispose: jest.fn() })),
+    executeCommand: vi.fn(),
+    registerCommand: vi.fn(() => ({ dispose: vi.fn() })),
 };
 const debug = {
-    startDebugging: jest.fn(),
+    startDebugging: vi.fn(),
 };
 const env = {
-    openExternal: jest.fn(),
+    openExternal: vi.fn(),
 };
 const languages = {
-    createDiagnosticCollection: jest.fn(),
+    createDiagnosticCollection: vi.fn(),
 };
 const tasks = {
-    executeTask: jest.fn(),
-    fetchTasks: jest.fn(() => []),
+    executeTask: vi.fn(),
+    fetchTasks: vi.fn(() => []),
     onDidStartTaskProcess: new EventEmitter().event,
     onDidEndTaskProcess: new EventEmitter().event,
 };
@@ -104,82 +108,82 @@ const LogLevel = {
 };
 const window = {
     activeColorTheme: { kind: 1 },
-    createStatusBarItem: jest.fn(() => ({
-        show: jest.fn(),
-        hide: jest.fn(),
-        dispose: jest.fn(),
+    createStatusBarItem: vi.fn(() => ({
+        show: vi.fn(),
+        hide: vi.fn(),
+        dispose: vi.fn(),
     })),
-    showTextDocument: jest.fn(),
-    showInformationMessage: jest.fn(),
-    showWarningMessage: jest.fn(),
-    showErrorMessage: jest.fn(),
-    showOpenDialog: jest.fn(),
-    showWorkspaceFolderPick: jest.fn(),
-    showQuickPick: jest.fn(),
-    createQuickPick: jest.fn(),
-    showInputBox: jest.fn(),
-    withProgress: jest.fn(),
-    registerTreeDataProvider: jest.fn(),
-    registerCustomEditorProvider: jest.fn(() => ({ dispose: jest.fn() })),
-    registerUriHandler: jest.fn(() => ({ dispose: jest.fn() })),
+    showTextDocument: vi.fn(),
+    showInformationMessage: vi.fn(),
+    showWarningMessage: vi.fn(),
+    showErrorMessage: vi.fn(),
+    showOpenDialog: vi.fn(),
+    showWorkspaceFolderPick: vi.fn(),
+    showQuickPick: vi.fn(),
+    createQuickPick: vi.fn(),
+    showInputBox: vi.fn(),
+    withProgress: vi.fn(),
+    registerTreeDataProvider: vi.fn(),
+    registerCustomEditorProvider: vi.fn(() => ({ dispose: vi.fn() })),
+    registerUriHandler: vi.fn(() => ({ dispose: vi.fn() })),
     terminals: [],
-    createTerminal: jest.fn(() => ({
-        sendText: jest.fn(),
-        show: jest.fn(),
+    createTerminal: vi.fn(() => ({
+        sendText: vi.fn(),
+        show: vi.fn(),
     })),
-    createTreeView: jest.fn(() => ({
+    createTreeView: vi.fn(() => ({
         onDidExpandElement: new EventEmitter().event,
         onDidCollapseElement: new EventEmitter().event,
-        dispose: jest.fn(),
+        dispose: vi.fn(),
     })),
     state: { focused: true },
-    createOutputChannel: jest.fn(() => ({
-        appendLine: jest.fn(),
+    createOutputChannel: vi.fn(() => ({
+        appendLine: vi.fn(),
         name: '',
-        append: jest.fn(),
-        replace: jest.fn(),
-        clear: jest.fn(),
-        show: jest.fn(),
-        hide: jest.fn(),
-        dispose: jest.fn(),
+        append: vi.fn(),
+        replace: vi.fn(),
+        clear: vi.fn(),
+        show: vi.fn(),
+        hide: vi.fn(),
+        dispose: vi.fn(),
         logLevel: LogLevel.Warning,
         onDidChangeLogLevel: new EventEmitter().event,
-        trace: jest.fn(),
-        debug: jest.fn(),
-        info: jest.fn(),
-        warn: jest.fn(),
-        error: jest.fn(),
+        trace: vi.fn(),
+        debug: vi.fn(),
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
     })),
 };
 const fs = {
-    readFile: jest.fn(),
-    writeFile: jest.fn(),
+    readFile: vi.fn(),
+    writeFile: vi.fn(),
 };
 const workspace = {
     fs,
-    findFiles: jest.fn(async () => []),
-    getConfiguration: jest.fn(() => ({
-        get: jest.fn(),
-        has: jest.fn(),
-        inspect: jest.fn(),
-        update: jest.fn(),
+    findFiles: vi.fn(async () => []),
+    getConfiguration: vi.fn(() => ({
+        get: vi.fn(),
+        has: vi.fn(),
+        inspect: vi.fn(),
+        update: vi.fn(),
     })),
     onDidChangeConfiguration: new EventEmitter().event,
-    onDidChangeTextDocument: jest.fn(() => ({ dispose: jest.fn() })),
-    onDidChangeWorkspaceFolders: jest.fn(() => ({ dispose: jest.fn() })),
+    onDidChangeTextDocument: vi.fn(() => ({ dispose: vi.fn() })),
+    onDidChangeWorkspaceFolders: vi.fn(() => ({ dispose: vi.fn() })),
     onDidSaveTextDocument: new EventEmitter().event,
-    openTextDocument: jest.fn(),
-    registerTextDocumentContentProvider: jest.fn(() => ({
-        dispose: jest.fn(),
+    openTextDocument: vi.fn(),
+    registerTextDocumentContentProvider: vi.fn(() => ({
+        dispose: vi.fn(),
     })),
     workspaceFolders: undefined,
-    getWorkspaceFolder: jest.fn(),
-    updateWorkspaceFolders: jest.fn(),
-    createFileSystemWatcher: jest.fn(() => ({
+    getWorkspaceFolder: vi.fn(),
+    updateWorkspaceFolders: vi.fn(),
+    createFileSystemWatcher: vi.fn(() => ({
         onDidCreate: new EventEmitter().event,
         onDidChange: new EventEmitter().event,
         onDidDelete: new EventEmitter().event,
-        dispose: jest.fn(),
+        dispose: vi.fn(),
     })),
 };
 

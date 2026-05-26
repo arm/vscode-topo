@@ -25,7 +25,7 @@ const workspaceFolders = [
 
 describe('getCloneDestinationPath', () => {
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
         mutable(vscode.workspace).workspaceFolders = undefined;
     });
 
@@ -39,9 +39,9 @@ describe('getCloneDestinationPath', () => {
 
     it('prompts for a workspace when multiple workspaces are open', async () => {
         mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-        jest.mocked(
-            vscode.window.showWorkspaceFolderPick,
-        ).mockResolvedValueOnce(workspaceFolders[1] as never);
+        vi.mocked(vscode.window.showWorkspaceFolderPick).mockResolvedValueOnce(
+            workspaceFolders[1] as never,
+        );
 
         await expect(getCloneDestinationPath()).resolves.toBe(
             secondWorkspacePath,
@@ -54,16 +54,16 @@ describe('getCloneDestinationPath', () => {
 
     it('stops when workspace selection is cancelled', async () => {
         mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-        jest.mocked(
-            vscode.window.showWorkspaceFolderPick,
-        ).mockResolvedValueOnce(undefined);
+        vi.mocked(vscode.window.showWorkspaceFolderPick).mockResolvedValueOnce(
+            undefined,
+        );
 
         await expect(getCloneDestinationPath()).resolves.toBeUndefined();
         expect(vscode.window.showOpenDialog).not.toHaveBeenCalled();
     });
 
     it('prompts for a filesystem destination when no workspace is open', async () => {
-        jest.mocked(vscode.window.showOpenDialog).mockResolvedValueOnce([
+        vi.mocked(vscode.window.showOpenDialog).mockResolvedValueOnce([
             destinationUri,
         ]);
 
@@ -78,7 +78,7 @@ describe('getCloneDestinationPath', () => {
     });
 
     it('returns undefined when filesystem destination selection is cancelled', async () => {
-        jest.mocked(vscode.window.showOpenDialog).mockResolvedValueOnce(
+        vi.mocked(vscode.window.showOpenDialog).mockResolvedValueOnce(
             undefined,
         );
 

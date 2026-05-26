@@ -1,10 +1,12 @@
-import { mock } from 'jest-mock-extended';
+import { mock } from 'vitest-mock-extended';
 import * as vscode from 'vscode';
 import { HostController } from './controllers/hostController';
 import * as commands from './commands';
 import { executeCommand } from './util/test/executeCommand';
+import type { Mock } from 'vitest';
+import { logger } from './util/logger';
 
-jest.mock('./util/logger');
+vi.mock('./util/logger');
 
 describe('commands', () => {
     it('registers all exported commands', () => {
@@ -27,7 +29,7 @@ describe('commands', () => {
     it('disposes all registered commands', () => {
         const hostController = mock<HostController>();
         const disposables: vscode.Disposable[] = [];
-        jest.mocked(vscode.commands.registerCommand).mockImplementation(() => {
+        vi.mocked(vscode.commands.registerCommand).mockImplementation(() => {
             const disposable = mock<vscode.Disposable>();
             disposables.push(disposable);
             return disposable;
@@ -43,8 +45,9 @@ describe('commands', () => {
 
     describe('command handlers', () => {
         const hostController = mock<HostController>();
-        const cases: [string, jest.Mock][] = [
+        const cases: [string, Mock][] = [
             [commands.refreshHostHealth, hostController.refreshHealth],
+            [commands.showOutput, vi.mocked(logger.show)],
         ];
 
         it.each(cases)(

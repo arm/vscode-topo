@@ -4,12 +4,12 @@ import { TargetTreeDataProvider } from './targetTreeDataProvider';
 import { TargetStore } from '../target/targetStore';
 import { logger } from '../util/logger';
 import { ContainersManager } from '../target/containersManager';
-import { mock, MockProxy } from 'jest-mock-extended';
+import { mock, MockProxy } from 'vitest-mock-extended';
 import type { TopoCli } from '../topoCli';
 import type { HealthCheckResult } from '../topoCliSchema';
 import { executeCommand } from '../util/test/executeCommand';
 
-jest.mock('../util/logger');
+vi.mock('../util/logger');
 
 const healthyTarget: HealthCheckResult['target'] = {
     isLocalhost: false,
@@ -119,7 +119,7 @@ describe('buildQuickPickItems', () => {
 
 describe('TargetManager', () => {
     beforeEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     describe('activation', () => {
@@ -149,7 +149,7 @@ describe('TargetManager', () => {
                 onDidAccept: onDidAcceptEmitter.event,
                 onDidHide: onDidHideEmitter.event,
                 onDidChangeValue: onDidChangeValueEmitter.event,
-                show: jest.fn(() => {
+                show: vi.fn(() => {
                     if (selectedItem) {
                         onDidAcceptEmitter.fire();
                     } else {
@@ -157,7 +157,7 @@ describe('TargetManager', () => {
                     }
                 }),
             });
-            jest.mocked(vscode.window.createQuickPick).mockReturnValueOnce(
+            vi.mocked(vscode.window.createQuickPick).mockReturnValueOnce(
                 quickPick,
             );
             return quickPick;
@@ -191,7 +191,7 @@ describe('TargetManager', () => {
             mockQuickPick({ label: 'root@192.0.2.1' });
             const { targetStore, targetManager } = createTargetManager();
             const error = new Error('boom');
-            jest.mocked(targetStore.addTarget).mockRejectedValueOnce(error);
+            vi.mocked(targetStore.addTarget).mockRejectedValueOnce(error);
             targetManager.activate();
 
             await executeCommand(TargetManager.addTargetCommand);
@@ -212,12 +212,12 @@ describe('TargetManager', () => {
         it('shows an item in the status bar with the currently selected target', async () => {
             const target = 'root@localhost';
             const { targetManager, targetStore } = createTargetManager();
-            jest.mocked(targetStore.getSelectedTarget).mockReturnValue(target);
+            vi.mocked(targetStore.getSelectedTarget).mockReturnValue(target);
 
             targetManager.activate();
 
             expect(vscode.window.createStatusBarItem).toHaveBeenCalledTimes(1);
-            const statusBarItem = jest.mocked(vscode.window.createStatusBarItem)
+            const statusBarItem = vi.mocked(vscode.window.createStatusBarItem)
                 .mock.results[0].value;
             expect(statusBarItem.text).toBe(`$(loading~spin) ${target}`);
             expect(statusBarItem.command).toBe(TargetManager.FocusViewCommand);
@@ -235,7 +235,7 @@ describe('TargetManager', () => {
             targetManager.activate();
 
             expect(vscode.window.createStatusBarItem).toHaveBeenCalledTimes(1);
-            const statusBarItem = jest.mocked(vscode.window.createStatusBarItem)
+            const statusBarItem = vi.mocked(vscode.window.createStatusBarItem)
                 .mock.results[0].value;
             expect(statusBarItem.text).toBe(undefined);
             expect(statusBarItem.tooltip).toBe(undefined);
@@ -252,27 +252,27 @@ describe('TargetManager', () => {
                 containersManager,
                 onChangeEmitter,
             } = createTargetManager();
-            jest.mocked(targetStore.getSelectedTarget).mockReturnValue(target1);
-            jest.mocked(
-                containersManager.getTargetStateSnapshot,
-            ).mockReturnValue({
-                health: healthyTarget,
-                status: 'connected',
-            });
+            vi.mocked(targetStore.getSelectedTarget).mockReturnValue(target1);
+            vi.mocked(containersManager.getTargetStateSnapshot).mockReturnValue(
+                {
+                    health: healthyTarget,
+                    status: 'connected',
+                },
+            );
             targetManager.activate();
-            jest.mocked(targetStore.getSelectedTarget).mockReturnValue(target2);
-            jest.mocked(
-                containersManager.getTargetStateSnapshot,
-            ).mockReturnValue({
-                health: healthyTarget,
-                status: 'connected',
-            });
+            vi.mocked(targetStore.getSelectedTarget).mockReturnValue(target2);
+            vi.mocked(containersManager.getTargetStateSnapshot).mockReturnValue(
+                {
+                    health: healthyTarget,
+                    status: 'connected',
+                },
+            );
 
             onChangeEmitter.fire();
             await waitImmediate();
 
             expect(vscode.window.createStatusBarItem).toHaveBeenCalledTimes(1);
-            const statusBarItem = jest.mocked(vscode.window.createStatusBarItem)
+            const statusBarItem = vi.mocked(vscode.window.createStatusBarItem)
                 .mock.results[0].value;
             expect(statusBarItem.text).toBe(`$(pass-filled) ${target2}`);
             expect(statusBarItem.tooltip).toBe(

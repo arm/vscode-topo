@@ -1,4 +1,4 @@
-import { mock } from 'jest-mock-extended';
+import { mock } from 'vitest-mock-extended';
 import * as vscode from 'vscode';
 import { ContainersManager } from '../target/containersManager';
 import { TargetHealth } from './targetHealth';
@@ -6,7 +6,7 @@ import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
 import { TargetState } from '../util/types';
 import { executeCommand } from '../util/test/executeCommand';
 
-jest.mock('../util/logger');
+vi.mock('../util/logger');
 
 const targetState: TargetState = {
     health: {
@@ -34,7 +34,7 @@ const targetState: TargetState = {
 
 describe('TargetHealth', () => {
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('registers inspectHealth command and document provider when activated', async () => {
@@ -57,13 +57,13 @@ describe('TargetHealth', () => {
     it('opens a readonly health JSON virtual document for selected target', async () => {
         const targetHealth = new TargetHealth(
             mock<ContainersManager>({
-                getTargetState: jest.fn().mockResolvedValue(targetState),
+                getTargetState: vi.fn().mockResolvedValue(targetState),
             }),
         );
         targetHealth.activate();
         const targetItem = new TargetTreeItem('user@foobar', true, 'connected');
         const textDocument = mock<vscode.TextDocument>();
-        jest.mocked(vscode.workspace.openTextDocument).mockResolvedValueOnce(
+        vi.mocked(vscode.workspace.openTextDocument).mockResolvedValueOnce(
             textDocument,
         );
 
@@ -72,11 +72,11 @@ describe('TargetHealth', () => {
             targetItem,
         );
 
-        const providerRegistration = jest.mocked(
+        const providerRegistration = vi.mocked(
             vscode.workspace.registerTextDocumentContentProvider,
         ).mock.calls[0];
         const contentProvider = providerRegistration[1];
-        const uri = jest.mocked(vscode.workspace.openTextDocument).mock
+        const uri = vi.mocked(vscode.workspace.openTextDocument).mock
             .calls[0][0] as vscode.Uri;
         const content = await Promise.resolve(
             contentProvider.provideTextDocumentContent(

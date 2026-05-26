@@ -2,17 +2,17 @@ import { ContainerItem } from '../util/types';
 import { ContainerOpenInBrowser } from './containerOpenInBrowser';
 import * as vscode from 'vscode';
 import { TargetContainerTreeItem } from '../targetTreeView/targetContainerTreeItem';
-import { mock, MockProxy } from 'jest-mock-extended';
+import { mock, MockProxy } from 'vitest-mock-extended';
 import { executeCommand } from '../util/test/executeCommand';
 
-jest.mock('../util/logger');
+vi.mock('../util/logger');
 
 describe('ContainerOpenInBrowser', () => {
     let context: MockProxy<vscode.ExtensionContext>;
     const target = 'user@topo.local';
 
     beforeEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
         context = mock<vscode.ExtensionContext>({ subscriptions: [] });
     });
 

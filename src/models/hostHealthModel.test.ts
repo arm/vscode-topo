@@ -46,7 +46,7 @@ describe('HostModel', () => {
 
     it('fires onChanged when host health is updated', () => {
         const model = new HostModel();
-        const onChanged = jest.fn();
+        const onChanged = vi.fn();
         model.onHealthChanged(onChanged);
 
         model.setHealth({ status: 'loaded', data: hostHealth });
