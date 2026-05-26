@@ -28,7 +28,7 @@ import { TargetHealth } from './actions/targetHealth';
 import { ShowOutput } from './actions/showOutput';
 import { HostModel } from './models/hostModel';
 import { HostController } from './controllers/hostController';
-import { TargetsController } from './controllers/targetsController';
+import { TargetController } from './controllers/targetController';
 
 export async function activate(
     context: vscode.ExtensionContext,
@@ -56,7 +56,7 @@ export async function activate(
     context.subscriptions.push(hostTreeView);
 
     const hostHealthController = new HostController(hostModel, topoCli);
-    const targetsController = new TargetsController(targetStore);
+    const targetsController = new TargetController(targetStore);
 
     const disposeCommands = commands.register(
         hostHealthController,

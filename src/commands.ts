@@ -1,5 +1,5 @@
 import { HostController } from './controllers/hostController';
-import { TargetsController } from './controllers/targetsController';
+import { TargetController } from './controllers/targetController';
 import { PACKAGE_NAME } from './manifest';
 import * as vscode from 'vscode';
 
@@ -14,20 +14,20 @@ export const addTarget = command('addTarget');
 
 export function register(
     hostController: HostController,
-    targetsController: TargetsController,
+    targetController: TargetController,
 ): vscode.Disposable {
     const disposables = [
         vscode.commands.registerCommand(refreshHostHealth, () =>
             hostController.refreshHealth(),
         ),
         vscode.commands.registerCommand(selectTarget, (treeNode) =>
-            targetsController.selectTarget(treeNode),
+            targetController.select(treeNode),
         ),
         vscode.commands.registerCommand(removeTarget, (treeNode) =>
-            targetsController.removeTarget(treeNode),
+            targetController.remove(treeNode),
         ),
         vscode.commands.registerCommand(addTarget, () =>
-            targetsController.promptToAddTarget(),
+            targetController.promptToAdd(),
         ),
     ];
 

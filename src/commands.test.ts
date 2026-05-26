@@ -2,14 +2,14 @@ import { mock } from 'jest-mock-extended';
 import * as vscode from 'vscode';
 import { HostController } from './controllers/hostController';
 import * as commands from './commands';
-import { TargetsController } from './controllers/targetsController';
+import { TargetController } from './controllers/targetController';
 
 describe('commands', () => {
     const hostController = mock<HostController>();
-    const targetsController = mock<TargetsController>();
+    const targetController = mock<TargetController>();
 
     it('registers all exported commands', () => {
-        commands.register(hostController, targetsController);
+        commands.register(hostController, targetController);
 
         for (const command of Object.values(commands)) {
             if (typeof command !== 'string' || !command.startsWith('topo.')) {
@@ -32,7 +32,7 @@ describe('commands', () => {
         });
         const registration = commands.register(
             hostController,
-            targetsController,
+            targetController,
         );
 
         registration.dispose();
