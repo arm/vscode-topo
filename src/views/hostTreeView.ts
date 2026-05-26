@@ -19,6 +19,22 @@ function sortDependenciesByName(
     );
 }
 
+function getRootItem(health: Loadable<HostHealthCheckResult>): vscode.TreeItem {
+    if (health.status === 'error') {
+        logger.warn(failedToLoadHostDependenciesMessage, health.error);
+        return new HostDependenciesLoadErrorItem();
+    }
+
+    if (health.status === 'loading') {
+        const item = getRootItem(health.placeholder);
+        item.iconPath = new vscode.ThemeIcon('loading~spin');
+        return item;
+    }
+
+    const deps = sortDependenciesByName(health.data.host.dependencies);
+    return new HealthCheckDependencyGroupTreeItem(deps);
+}
+
 export class HostTreeView
     implements vscode.TreeDataProvider<vscode.TreeItem>, vscode.Disposable
 {
@@ -44,31 +60,13 @@ export class HostTreeView
         );
     }
 
-    private getRootItem(
-        health: Loadable<HostHealthCheckResult>,
-    ): vscode.TreeItem {
-        if (health.status === 'error') {
-            logger.warn(failedToLoadHostDependenciesMessage, health.error);
-            return new HostDependenciesLoadErrorItem();
-        }
-
-        if (health.status === 'loading') {
-            const item = this.getRootItem(health.placeholder);
-            item.iconPath = new vscode.ThemeIcon('loading~spin');
-            return item;
-        }
-
-        const deps = health.data.host.dependencies;
-        return new HealthCheckDependencyGroupTreeItem(deps);
-    }
-
     public getChildren(element?: vscode.TreeItem): vscode.TreeItem[] {
         if (!element) {
-            return [this.getRootItem(this.model.health)];
+            return [getRootItem(this.model.health)];
         }
 
         if (element instanceof HealthCheckDependencyGroupTreeItem) {
-            return sortDependenciesByName([...element.dependencies]).map(
+            return element.dependencies.map(
                 (dependency) => new HealthCheckDependencyTreeItem(dependency),
             );
         }
