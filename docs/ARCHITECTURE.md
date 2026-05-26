@@ -1,9 +1,5 @@
 # Codebase Architecture
 
-This document describes a standardized architecture for `vscode-topo`. The work to move the codebase over to this architecture is currently (as of 26/05/2026) in-progress and is being continuously integrated.
-
-All new behaviour should, where possible, attempt to conform to this architecture or at least be written with this architecture in mind to ease integration later.
-
 ## MVC
 
 The core tenet of this new architecture is MVC; model, view controller - a common pattern for UI applications. The intention behind moving to an MVC architecture is to keep data flowing strictly in one direction, making the application easier to reason about and change. Each component, as well as full concrete example of how they interact with eachother, is described below.
