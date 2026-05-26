@@ -2,6 +2,7 @@ import { mock } from 'jest-mock-extended';
 import * as vscode from 'vscode';
 import { HostController } from './controllers/hostController';
 import * as commands from './commands';
+import { executeCommand } from './util/test/executeCommand';
 
 describe('commands', () => {
     it('registers all exported commands', () => {
@@ -36,5 +37,23 @@ describe('commands', () => {
         for (const disposable of disposables) {
             expect(disposable.dispose).toHaveBeenCalledWith();
         }
+    });
+
+    describe('command handlers', () => {
+        const hostController = mock<HostController>();
+        const cases: [string, jest.Mock][] = [
+            [commands.refreshHostHealth, hostController.refreshHealth],
+        ];
+
+        it.each(cases)(
+            '%s calls the correct handler',
+            async (command, handler) => {
+                commands.register(hostController);
+
+                await executeCommand(command);
+
+                expect(handler).toHaveBeenCalled();
+            },
+        );
     });
 });
