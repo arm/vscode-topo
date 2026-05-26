@@ -9,7 +9,19 @@ export class HostController {
         this.refreshHealth();
     }
 
-    public refreshHealth(): void {
-        this.hostModel.setHealth(this.topoCli.hostHealth());
+    public async refreshHealth(): Promise<void> {
+        this.hostModel.setHealth({
+            status: 'loading',
+            placeholder: this.hostModel.health,
+        });
+        try {
+            const health = await this.topoCli.hostHealth();
+            this.hostModel.setHealth({ status: 'loaded', data: health });
+        } catch (e) {
+            this.hostModel.setHealth({
+                status: 'error',
+                error: e instanceof Error ? e : new Error(String(e)),
+            });
+        }
     }
 }

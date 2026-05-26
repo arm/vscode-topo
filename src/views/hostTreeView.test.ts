@@ -28,7 +28,7 @@ describe('HostDependenciesTreeDataProvider', () => {
     it('returns a Dependencies group at the root', async () => {
         const provider = new HostTreeView(new HostModel());
 
-        const children = await provider.getChildren();
+        const children = provider.getChildren();
 
         expect(children).toHaveLength(1);
         expect(children[0]).toBeInstanceOf(HealthCheckDependencyGroupTreeItem);
@@ -38,8 +38,8 @@ describe('HostDependenciesTreeDataProvider', () => {
 
     it('returns host dependency items sorted by name below the Dependencies group', async () => {
         const model = new HostModel();
-        model.setHealth(
-            Promise.resolve({
+        model.setHealth({
+            data: {
                 host: {
                     dependencies: [
                         {
@@ -59,12 +59,13 @@ describe('HostDependenciesTreeDataProvider', () => {
                         },
                     ],
                 },
-            }),
-        );
+            },
+            status: 'loaded',
+        });
         const provider = new HostTreeView(model);
 
-        const rootChildren = await provider.getChildren();
-        const children = await provider.getChildren(rootChildren[0]);
+        const rootChildren = provider.getChildren();
+        const children = provider.getChildren(rootChildren[0]);
 
         expect(children).toHaveLength(2);
         expect(
@@ -87,10 +88,13 @@ describe('HostDependenciesTreeDataProvider', () => {
 
     it('returns an error item when host health cannot be loaded', async () => {
         const model = new HostModel();
-        model.setHealth(Promise.reject(new Error('health unavailable')));
+        model.setHealth({
+            error: new Error('health unavailable'),
+            status: 'error',
+        });
         const provider = new HostTreeView(model);
 
-        const children = await provider.getChildren();
+        const children = provider.getChildren();
 
         expect(children).toHaveLength(1);
         expect(children[0]).toMatchObject({
