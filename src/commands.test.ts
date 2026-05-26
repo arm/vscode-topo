@@ -4,6 +4,8 @@ import { HostController } from './controllers/hostController';
 import * as commands from './commands';
 import { executeCommand } from './util/test/executeCommand';
 
+jest.mock('../util/logger');
+
 describe('commands', () => {
     it('registers all exported commands', () => {
         const hostController = mock<HostController>();

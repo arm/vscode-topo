@@ -8,14 +8,14 @@ function command(id: string): string {
 }
 
 export const refreshHostHealth = command('refreshHostHealth');
-export const showOutputCommand = command('showOutput');
+export const showOutput = command('showOutput');
 
 export function register(hostController: HostController): vscode.Disposable {
     const disposables = [
         vscode.commands.registerCommand(refreshHostHealth, () =>
             hostController.refreshHealth(),
         ),
-        vscode.commands.registerCommand(showOutputCommand, () => logger.show()),
+        vscode.commands.registerCommand(showOutput, () => logger.show()),
     ];
 
     return {
