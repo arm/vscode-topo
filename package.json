@@ -110,7 +110,7 @@
                 "category": "Arm Topo"
             },
             {
-                "command": "topo.refreshHostDependencies",
+                "command": "topo.refreshHostHealth",
                 "title": "Refresh",
                 "icon": "$(refresh)",
                 "category": "Arm Topo"
@@ -245,7 +245,7 @@
                     "when": "false"
                 },
                 {
-                    "command": "topo.refreshHostDependencies",
+                    "command": "topo.refreshHostHealth",
                     "when": "false"
                 },
                 {
@@ -322,7 +322,7 @@
                     "group": "navigation"
                 },
                 {
-                    "command": "topo.refreshHostDependencies",
+                    "command": "topo.refreshHostHealth",
                     "when": "view == topo.host-manager",
                     "group": "navigation"
                 }
