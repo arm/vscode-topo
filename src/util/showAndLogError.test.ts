@@ -3,18 +3,18 @@ import { showAndLogError } from './showAndLogError';
 import { logger } from './logger';
 import { WrappedError } from '../errors/wrappedError';
 
-jest.mock('./logger', () => ({
+vi.mock('./logger', () => ({
     logger: {
-        info: jest.fn(),
-        error: jest.fn(),
-        warn: jest.fn(),
-        debug: jest.fn(),
+        info: vi.fn(),
+        error: vi.fn(),
+        warn: vi.fn(),
+        debug: vi.fn(),
     },
 }));
 
 describe('showAndLogError', () => {
     beforeEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('shows error message and logs error for plain errors', () => {

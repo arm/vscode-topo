@@ -3,20 +3,21 @@ import * as vscode from 'vscode';
 import { getFirstSentence, ProjectClone } from './projectClone';
 import { mutable } from './util/mutable';
 import { TopoCli } from './topoCli';
-import { mock, MockProxy } from 'jest-mock-extended';
+import { mock, MockProxy } from 'vitest-mock-extended';
 import { TemplateDescription } from './topoCliSchema';
 import { showAndLogError } from './util/showAndLogError';
 import { TargetStore } from './target/targetStore';
 import { WrappedError } from './errors/wrappedError';
 import { executeTask } from './util/executeTask';
 import { executeCommand } from './util/test/executeCommand';
+import type { MockedFunction } from 'vitest';
 
-jest.mock('./util/showAndLogError', () => ({
-    showAndLogError: jest.fn(),
+vi.mock('./util/showAndLogError', () => ({
+    showAndLogError: vi.fn(),
 }));
-jest.mock('./util/executeTask');
+vi.mock('./util/executeTask');
 
-const executeTaskMock = jest.mocked(executeTask);
+const executeTaskMock = vi.mocked(executeTask);
 
 const subscriptions: vscode.Disposable[] = [];
 
@@ -35,11 +36,11 @@ describe('ProjectClone', () => {
     const targetStore = mock<TargetStore>();
     let context: MockProxy<vscode.ExtensionContext>;
     const localTemplateUri = vscode.Uri.file('/path/to/source');
-    const showInformationMessageMock: jest.MockedFunction<ShowInformationMessageWithStrings> =
-        jest.fn();
+    const showInformationMessageMock: MockedFunction<ShowInformationMessageWithStrings> =
+        vi.fn();
 
     beforeEach(async () => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
         subscriptions.length = 0;
         mutable(vscode.workspace).workspaceFolders = undefined;
         mutable(vscode.window).showInformationMessage =
@@ -52,14 +53,14 @@ describe('ProjectClone', () => {
     });
 
     it('registers the command on activate', async () => {
-        expect(jest.mocked(vscode.commands.registerCommand)).toHaveBeenCalled();
+        expect(vi.mocked(vscode.commands.registerCommand)).toHaveBeenCalled();
         expect(subscriptions.length).toBeGreaterThan(0);
     });
 
     describe('cloneRemoteProject', () => {
         it('return early when no clone url provided', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-            jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
+            vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
                 undefined,
             );
 
@@ -71,7 +72,7 @@ describe('ProjectClone', () => {
 
         it('shows error when invalid clone url provided', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-            jest.mocked(vscode.window.showInputBox)
+            vi.mocked(vscode.window.showInputBox)
                 .mockResolvedValueOnce('not-a-valid-url')
                 .mockResolvedValueOnce('repo');
 
@@ -90,7 +91,7 @@ describe('ProjectClone', () => {
 
         it('returns early when no project name provided', async () => {
             mutable(vscode.workspace).workspaceFolders = [];
-            jest.mocked(vscode.window.showInputBox)
+            vi.mocked(vscode.window.showInputBox)
                 .mockResolvedValueOnce('https://example.com/repo.git')
                 .mockResolvedValueOnce(undefined);
 
@@ -103,7 +104,7 @@ describe('ProjectClone', () => {
 
         it('returns early when destination folder selection is cancelled', async () => {
             mutable(vscode.workspace).workspaceFolders = [];
-            jest.mocked(vscode.window.showInputBox)
+            vi.mocked(vscode.window.showInputBox)
                 .mockResolvedValueOnce('https://example.com/repo.git')
                 .mockResolvedValueOnce('repo');
 
@@ -116,7 +117,7 @@ describe('ProjectClone', () => {
 
         it('creates task and runs clone command on valid https git URL', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-            jest.mocked(vscode.window.showInputBox)
+            vi.mocked(vscode.window.showInputBox)
                 .mockResolvedValueOnce('https://example.com/repo.git')
                 .mockResolvedValueOnce('repo');
             showInformationMessageMock.mockResolvedValueOnce(undefined);
@@ -133,7 +134,7 @@ describe('ProjectClone', () => {
 
         it('creates task and runs clone command on valid SSH git URL', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-            jest.mocked(vscode.window.showInputBox)
+            vi.mocked(vscode.window.showInputBox)
                 .mockResolvedValueOnce('git@example.com:repo.git')
                 .mockResolvedValueOnce('repo');
             showInformationMessageMock.mockResolvedValueOnce(undefined);
@@ -150,9 +151,7 @@ describe('ProjectClone', () => {
 
         it('passes arbitrary clone options through to topo clone', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-            jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
-                'repo',
-            );
+            vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
 
             await projectClone.cloneProjectFromSource(
                 {
@@ -174,7 +173,7 @@ describe('ProjectClone', () => {
 
         it('shows an error when executeTask throws', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-            jest.mocked(vscode.window.showInputBox)
+            vi.mocked(vscode.window.showInputBox)
                 .mockResolvedValueOnce('https://example.com/repo.git')
                 .mockResolvedValueOnce('repo');
             const err = new Error('task fail');
@@ -195,7 +194,7 @@ describe('ProjectClone', () => {
     describe('cloneLocalProject', () => {
         it('returns early when no folder selected', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-            jest.mocked(vscode.window.showOpenDialog).mockResolvedValueOnce(
+            vi.mocked(vscode.window.showOpenDialog).mockResolvedValueOnce(
                 undefined,
             );
 
@@ -207,10 +206,10 @@ describe('ProjectClone', () => {
 
         it('returns early when no project name provided', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-            jest.mocked(vscode.window.showOpenDialog).mockResolvedValueOnce([
+            vi.mocked(vscode.window.showOpenDialog).mockResolvedValueOnce([
                 localTemplateUri,
             ]);
-            jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
+            vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
                 undefined,
             );
 
@@ -222,10 +221,10 @@ describe('ProjectClone', () => {
 
         it('creates task and runs clone command for local path', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-            jest.mocked(vscode.window.showOpenDialog).mockResolvedValueOnce([
+            vi.mocked(vscode.window.showOpenDialog).mockResolvedValueOnce([
                 localTemplateUri,
             ]);
-            jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
+            vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
                 'myproj',
             );
             showInformationMessageMock.mockResolvedValueOnce(undefined);
@@ -266,7 +265,7 @@ describe('ProjectClone', () => {
             template,
         }));
 
-        const showQuickPickItemMock = jest.mocked(vscode.window.showQuickPick);
+        const showQuickPickItemMock = vi.mocked(vscode.window.showQuickPick);
 
         it('propagates generic from listTemplates', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
@@ -319,7 +318,7 @@ describe('ProjectClone', () => {
         it('returns early when no template selected', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
             topoCli.listTemplates.mockReturnValue(templateList);
-            jest.mocked(vscode.window.showQuickPick).mockResolvedValueOnce(
+            vi.mocked(vscode.window.showQuickPick).mockResolvedValueOnce(
                 undefined,
             );
 
@@ -334,7 +333,7 @@ describe('ProjectClone', () => {
             showQuickPickItemMock.mockResolvedValueOnce(
                 templateQuickPickItems[0],
             );
-            jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
+            vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
                 undefined,
             );
 
@@ -350,7 +349,7 @@ describe('ProjectClone', () => {
             showQuickPickItemMock.mockResolvedValueOnce(
                 templateQuickPickItems[0],
             );
-            jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
+            vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
                 'myproj',
             );
             showInformationMessageMock.mockResolvedValueOnce(undefined);
@@ -383,7 +382,7 @@ describe('ProjectClone', () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
             targetStore.getSelectedTarget.mockReturnValue(undefined);
             topoCli.listTemplates.mockReturnValue(templateList);
-            jest.mocked(vscode.window.showQuickPick).mockResolvedValueOnce(
+            vi.mocked(vscode.window.showQuickPick).mockResolvedValueOnce(
                 undefined,
             );
 
@@ -398,9 +397,7 @@ describe('ProjectClone', () => {
     describe('postCloneAction', () => {
         it('prompts for a post-clone action after starting the clone task', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-            jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
-                'repo',
-            );
+            vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
             showInformationMessageMock.mockResolvedValueOnce(undefined);
 
             await projectClone.cloneProjectFromSource(
@@ -419,9 +416,7 @@ describe('ProjectClone', () => {
 
         it('opens the cloned repository in the current window when user selects Open', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-            jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
-                'repo',
-            );
+            vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
             showInformationMessageMock.mockResolvedValueOnce('Open');
             await projectClone.cloneProjectFromSource(
                 { type: 'git', url: 'https://example.com/repo.git' },
@@ -437,9 +432,7 @@ describe('ProjectClone', () => {
 
         it('opens the cloned repository in a new window when user selects Open in New Window', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-            jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
-                'repo',
-            );
+            vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
             showInformationMessageMock.mockResolvedValueOnce(
                 'Open in New Window',
             );
@@ -457,9 +450,7 @@ describe('ProjectClone', () => {
 
         it('adds the cloned repository to the current workspace when user selects Add to Workspace', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-            jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
-                'repo',
-            );
+            vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
             showInformationMessageMock.mockResolvedValueOnce(
                 'Add to Workspace',
             );
@@ -478,9 +469,7 @@ describe('ProjectClone', () => {
 
         it('does not prompt for a post-clone action when the clone task throws', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-            jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
-                'repo',
-            );
+            vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
             const err = new Error('task fail');
             executeTaskMock.mockRejectedValueOnce(err);
 

@@ -1,14 +1,14 @@
-import { mock } from 'jest-mock-extended';
+import { mock } from 'vitest-mock-extended';
 import { buildQuickPickItems, TargetController } from './targetController';
 import * as vscode from 'vscode';
 import { logger } from '../util/logger';
 import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
 import { TargetStore } from '../target/targetStore';
 
-jest.mock('../util/logger');
+vi.mock('../util/logger');
 
 afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 });
 
 describe('buildQuickPickItems', () => {
@@ -69,7 +69,7 @@ describe('target addition', () => {
             onDidAccept: onDidAcceptEmitter.event,
             onDidHide: onDidHideEmitter.event,
             onDidChangeValue: onDidChangeValueEmitter.event,
-            show: jest.fn(() => {
+            show: vi.fn(() => {
                 if (selectedItem) {
                     onDidAcceptEmitter.fire();
                 } else {
@@ -77,9 +77,7 @@ describe('target addition', () => {
                 }
             }),
         });
-        jest.mocked(vscode.window.createQuickPick).mockReturnValueOnce(
-            quickPick,
-        );
+        vi.mocked(vscode.window.createQuickPick).mockReturnValueOnce(quickPick);
         return quickPick;
     }
 
@@ -111,7 +109,7 @@ describe('target addition', () => {
         const targetStore = mock<TargetStore>();
         const controller = new TargetController(targetStore);
         const error = new Error('boom');
-        jest.mocked(targetStore.addTarget).mockRejectedValueOnce(error);
+        vi.mocked(targetStore.addTarget).mockRejectedValueOnce(error);
         mockQuickPick({ label: 'root@192.0.2.1' });
 
         await controller.promptToAdd();

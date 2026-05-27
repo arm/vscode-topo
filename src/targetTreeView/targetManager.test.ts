@@ -3,11 +3,11 @@ import { TargetManager } from './targetManager';
 import { TargetTreeDataProvider } from './targetTreeDataProvider';
 import { TargetStore } from '../target/targetStore';
 import { ContainersManager } from '../target/containersManager';
-import { mock, MockProxy } from 'jest-mock-extended';
+import { mock, MockProxy } from 'vitest-mock-extended';
 import type { TopoCli } from '../topoCli';
 import type { HealthCheckResult } from '../topoCliSchema';
 
-jest.mock('../util/logger');
+vi.mock('../util/logger');
 
 const healthyTarget: HealthCheckResult['target'] = {
     isLocalhost: false,
@@ -72,7 +72,7 @@ const createTargetManager = () => {
 
 describe('TargetManager', () => {
     beforeEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     describe('activation', () => {
@@ -93,12 +93,12 @@ describe('TargetManager', () => {
         it('shows an item in the status bar with the currently selected target', async () => {
             const target = 'root@localhost';
             const { targetManager, targetStore } = createTargetManager();
-            jest.mocked(targetStore.getSelectedTarget).mockReturnValue(target);
+            vi.mocked(targetStore.getSelectedTarget).mockReturnValue(target);
 
             targetManager.activate();
 
             expect(vscode.window.createStatusBarItem).toHaveBeenCalledTimes(1);
-            const statusBarItem = jest.mocked(vscode.window.createStatusBarItem)
+            const statusBarItem = vi.mocked(vscode.window.createStatusBarItem)
                 .mock.results[0].value;
             expect(statusBarItem.text).toBe(`$(loading~spin) ${target}`);
             expect(statusBarItem.command).toBe(TargetManager.FocusViewCommand);
@@ -116,7 +116,7 @@ describe('TargetManager', () => {
             targetManager.activate();
 
             expect(vscode.window.createStatusBarItem).toHaveBeenCalledTimes(1);
-            const statusBarItem = jest.mocked(vscode.window.createStatusBarItem)
+            const statusBarItem = vi.mocked(vscode.window.createStatusBarItem)
                 .mock.results[0].value;
             expect(statusBarItem.text).toBe(undefined);
             expect(statusBarItem.tooltip).toBe(undefined);
@@ -133,27 +133,27 @@ describe('TargetManager', () => {
                 containersManager,
                 onChangeEmitter,
             } = createTargetManager();
-            jest.mocked(targetStore.getSelectedTarget).mockReturnValue(target1);
-            jest.mocked(
-                containersManager.getTargetStateSnapshot,
-            ).mockReturnValue({
-                health: healthyTarget,
-                status: 'connected',
-            });
+            vi.mocked(targetStore.getSelectedTarget).mockReturnValue(target1);
+            vi.mocked(containersManager.getTargetStateSnapshot).mockReturnValue(
+                {
+                    health: healthyTarget,
+                    status: 'connected',
+                },
+            );
             targetManager.activate();
-            jest.mocked(targetStore.getSelectedTarget).mockReturnValue(target2);
-            jest.mocked(
-                containersManager.getTargetStateSnapshot,
-            ).mockReturnValue({
-                health: healthyTarget,
-                status: 'connected',
-            });
+            vi.mocked(targetStore.getSelectedTarget).mockReturnValue(target2);
+            vi.mocked(containersManager.getTargetStateSnapshot).mockReturnValue(
+                {
+                    health: healthyTarget,
+                    status: 'connected',
+                },
+            );
 
             onChangeEmitter.fire();
             await waitImmediate();
 
             expect(vscode.window.createStatusBarItem).toHaveBeenCalledTimes(1);
-            const statusBarItem = jest.mocked(vscode.window.createStatusBarItem)
+            const statusBarItem = vi.mocked(vscode.window.createStatusBarItem)
                 .mock.results[0].value;
             expect(statusBarItem.text).toBe(`$(pass-filled) ${target2}`);
             expect(statusBarItem.tooltip).toBe(

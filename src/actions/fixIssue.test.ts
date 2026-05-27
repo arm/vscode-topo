@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { mock } from 'jest-mock-extended';
+import { mock } from 'vitest-mock-extended';
 import { FixIssue } from './fixIssue';
 import { TargetStore } from '../target/targetStore';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
@@ -8,10 +8,10 @@ import { ContainersManager } from '../target/containersManager';
 import { executeTask } from '../util/executeTask';
 import { executeCommand } from '../util/test/executeCommand';
 
-jest.mock('../util/logger');
-jest.mock('../util/executeTask');
+vi.mock('../util/logger');
+vi.mock('../util/executeTask');
 
-const executeTaskMock = jest.mocked(executeTask);
+const executeTaskMock = vi.mocked(executeTask);
 
 const waitImmediate = async () => {
     await Promise.resolve();
@@ -52,7 +52,7 @@ describe('FixIssue', () => {
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('registers fix issue command', async () => {
@@ -142,7 +142,7 @@ describe('FixIssue', () => {
     });
 
     it('lists every missing dependency when multiple dependencies share a fix command', async () => {
-        jest.mocked(vscode.window.showWarningMessage).mockResolvedValue({
+        vi.mocked(vscode.window.showWarningMessage).mockResolvedValue({
             title: 'Fix',
         });
         containersManager.getTargetState.mockResolvedValue({

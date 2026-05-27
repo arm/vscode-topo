@@ -3,14 +3,15 @@ import * as vscode from 'vscode';
 import { ContainerStart } from './containerStart';
 import { TargetContainerTreeItem } from '../targetTreeView/targetContainerTreeItem';
 import { WrappedError } from '../errors/wrappedError';
-import { mock, MockProxy } from 'jest-mock-extended';
+import { mock, MockProxy } from 'vitest-mock-extended';
 import { ContainerItem } from '../util/types';
 import { ContainerCommands } from '../target/containerCommands';
 import { executeCommand } from '../util/test/executeCommand';
+import type { MockInstance } from 'vitest';
 
 describe('ContainerStart', () => {
     let context: MockProxy<vscode.ExtensionContext>;
-    let showErrorMessageSpy: jest.SpyInstance;
+    let showErrorMessageSpy: MockInstance;
     const target = 'user@topo.local';
     const container: ContainerItem = {
         id: 'abc123',
@@ -30,13 +31,13 @@ describe('ContainerStart', () => {
 
     beforeEach(() => {
         context = mock<vscode.ExtensionContext>({ subscriptions: [] });
-        showErrorMessageSpy = jest
+        showErrorMessageSpy = vi
             .spyOn(vscode.window, 'showErrorMessage')
-            .mockImplementation(jest.fn());
+            .mockImplementation(vi.fn());
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('calls startContainer and shows info message on success', async () => {

@@ -2,14 +2,15 @@ import path from 'node:path';
 import os from 'node:os';
 import * as vscode from 'vscode';
 import { Stop } from './stop';
-import { mock, MockProxy } from 'jest-mock-extended';
+import { mock, MockProxy } from 'vitest-mock-extended';
 import { TargetStore } from '../target/targetStore';
 import { executeTask } from '../util/executeTask';
+import type { MockInstance } from 'vitest';
 
-jest.mock('../util/logger');
-jest.mock('../util/executeTask');
+vi.mock('../util/logger');
+vi.mock('../util/executeTask');
 
-const executeTaskMock = jest.mocked(executeTask);
+const executeTaskMock = vi.mocked(executeTask);
 
 describe('Stop', () => {
     let stop: Stop;
@@ -21,14 +22,14 @@ describe('Stop', () => {
     let targetStore: MockProxy<TargetStore>;
     let context: MockProxy<vscode.ExtensionContext>;
     let stopHandler: ((resource?: vscode.Uri) => Promise<void>) | undefined;
-    let registerSpy: jest.SpyInstance;
+    let registerSpy: MockInstance;
 
     beforeEach(() => {
         context = mock<vscode.ExtensionContext>({ subscriptions: [] });
         targetStore = mock<TargetStore>();
         targetStore.getSelectedTarget.mockReturnValue(target);
         stop = new Stop(context, targetStore);
-        registerSpy = jest
+        registerSpy = vi
             .spyOn(vscode.commands, 'registerCommand')
             .mockImplementation(
                 (_, handler: (...args: unknown[]) => Promise<void>) => {
@@ -40,7 +41,7 @@ describe('Stop', () => {
 
     afterEach(() => {
         stopHandler = undefined;
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('registers the stop command on activate', () => {

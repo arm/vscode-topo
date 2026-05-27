@@ -1,18 +1,20 @@
-import { mock } from 'jest-mock-extended';
+import { mock } from 'vitest-mock-extended';
 import * as vscode from 'vscode';
 import { HostController } from './controllers/hostController';
 import * as commands from './commands';
 import { executeCommand } from './util/test/executeCommand';
+import type { Mock } from 'vitest';
+import { logger } from './util/logger';
 import { TargetController } from './controllers/targetController';
 
-jest.mock('./util/logger');
+vi.mock('./util/logger');
 
 describe('commands', () => {
     const hostController = mock<HostController>();
     const targetController = mock<TargetController>();
 
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('registers all exported commands', () => {
@@ -33,7 +35,7 @@ describe('commands', () => {
     it('disposes all registered commands', () => {
         const hostController = mock<HostController>();
         const disposables: vscode.Disposable[] = [];
-        jest.mocked(vscode.commands.registerCommand).mockImplementation(() => {
+        vi.mocked(vscode.commands.registerCommand).mockImplementation(() => {
             const disposable = mock<vscode.Disposable>();
             disposables.push(disposable);
             return disposable;
@@ -51,8 +53,12 @@ describe('commands', () => {
     });
 
     describe('command handlers', () => {
-        const cases: [string, jest.Mock][] = [
+        const cases: [string, Mock][] = [
             [commands.refreshHostHealth, hostController.refreshHealth],
+            [commands.showOutput, vi.mocked(logger.show)],
+            [commands.selectTarget, targetController.select],
+            [commands.removeTarget, targetController.remove],
+            [commands.addTarget, targetController.promptToAdd],
         ];
 
         it.each(cases)(
@@ -60,7 +66,7 @@ describe('commands', () => {
             async (command, handler) => {
                 commands.register(hostController, targetController);
 
-                await executeCommand(command);
+                await executeCommand(command, 'argument');
 
                 expect(handler).toHaveBeenCalled();
             },

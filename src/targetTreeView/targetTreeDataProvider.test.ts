@@ -6,7 +6,7 @@ import * as vscode from 'vscode';
 import * as manifest from '../manifest';
 import { ContainersManager } from '../target/containersManager';
 import { TargetState, ContainerItem, TargetDescription } from '../util/types';
-import { mock, MockProxy } from 'jest-mock-extended';
+import { mock, MockProxy } from 'vitest-mock-extended';
 import { TargetStore } from '../target/targetStore';
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
 import { TargetSubsystemGroupTreeItem } from './targetSubsystemGroupTreeItem';
@@ -125,8 +125,8 @@ describe('TargetTreeDataProvider', () => {
             targetStoreMock,
             targetDescriptionStoreMock,
         );
-        jest.clearAllTimers();
-        jest.clearAllMocks();
+        vi.clearAllTimers();
+        vi.clearAllMocks();
     });
 
     describe('activation', () => {
@@ -294,7 +294,7 @@ describe('TargetTreeDataProvider', () => {
 
     describe('refresh', () => {
         it('refresh fires the event', () => {
-            const spy = jest.fn();
+            const spy = vi.fn();
             provider.onDidChangeTreeData(spy);
 
             provider.refresh();
