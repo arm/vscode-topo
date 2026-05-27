@@ -24,16 +24,24 @@ export class FixIssue implements vscode.Disposable {
         private readonly containersManager: ContainersManager,
     ) {}
 
-    public async activate(): Promise<void> {
+    public activate(): void {
         this.disposables.push(
             vscode.commands.registerCommand(
                 FixIssue.fixIssueCommand,
                 this.fixIssueFromTreeItem.bind(this),
             ),
-            this.targetStore.onChanged(this.promptToFixIssues.bind(this)),
+            this.targetStore.onChanged(() =>
+                this.promptToFixIssuesInBackground(),
+            ),
         );
 
-        await this.promptToFixIssues();
+        this.promptToFixIssuesInBackground();
+    }
+
+    private promptToFixIssuesInBackground(): void {
+        this.promptToFixIssues().catch((error) => {
+            logger.error(`Failed to prompt to fix target dependencies`, error);
+        });
     }
 
     private async promptToFixIssues(): Promise<void> {
