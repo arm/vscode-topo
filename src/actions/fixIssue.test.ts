@@ -13,11 +13,6 @@ vi.mock('../util/executeTask');
 
 const executeTaskMock = vi.mocked(executeTask);
 
-const waitImmediate = async () => {
-    await Promise.resolve();
-    await Promise.resolve();
-};
-
 const loadedHealth: HealthCheckResult = {
     host: { dependencies: [] },
     target: {
@@ -133,12 +128,13 @@ describe('FixIssue', () => {
         const fixIssue = new FixIssue(targetStore, containersManager);
 
         fixIssue.activate();
-        await waitImmediate();
 
-        expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
-            `${target} has missing or unhealthy dependencies: Remoteproc Runtime, Debugger`,
-            { title: 'Fix' },
-        );
+        await vi.waitFor(() => {
+            expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
+                `${target} has missing or unhealthy dependencies: Remoteproc Runtime, Debugger`,
+                { title: 'Fix' },
+            );
+        });
     });
 
     it('lists every missing dependency when multiple dependencies share a fix command', async () => {
@@ -173,8 +169,11 @@ describe('FixIssue', () => {
         });
         const fixIssue = new FixIssue(targetStore, containersManager);
 
-        await fixIssue.activate();
+        fixIssue.activate();
 
+        await vi.waitFor(() => {
+            expect(executeTaskMock).toHaveBeenCalledTimes(1);
+        });
         expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
             `${target} has missing or unhealthy dependencies: Remoteproc Runtime, Remoteproc Shim`,
             { title: 'Fix' },

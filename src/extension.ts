@@ -121,5 +121,5 @@ export async function activate(
     hostHealth.activate();
     targetHealth.activate();
     setupKeys.activate();
-    await fixIssue.activate();
+    fixIssue.activate();
 }
