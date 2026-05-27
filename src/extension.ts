@@ -25,7 +25,6 @@ import { InstallDependency } from './actions/installDependency';
 import { HostTreeView } from './views/hostTreeView';
 import { logger } from './util/logger';
 import { TargetHealth } from './actions/targetHealth';
-import { ShowOutput } from './actions/showOutput';
 import { SelectTarget } from './actions/selectTarget';
 import { RemoveTarget } from './actions/removeTarget';
 import { HostModel } from './models/hostModel';
@@ -66,8 +65,6 @@ export async function activate(
     const projectClone = new ProjectClone(context, topoCli, targetStore);
     const deploy = new Deploy(context, targetStore);
     const stop = new Stop(context, targetStore);
-    const showOutput = new ShowOutput();
-    context.subscriptions.push(showOutput);
     const containerOpenInBrowser = new ContainerOpenInBrowser(context);
     const dockerCommands = new DockerCommands();
     const attachVsCode = new AttachVsCode(context, dockerCommands);
@@ -127,6 +124,5 @@ export async function activate(
     selectTarget.activate();
     removeTarget.activate();
     setupKeys.activate();
-    showOutput.activate();
     await installDependency.activate();
 }
