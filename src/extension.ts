@@ -17,7 +17,6 @@ import { TargetStore } from './target/targetStore';
 import { ProjectClone } from './projectClone';
 import { Deploy } from './actions/deploy';
 import { Stop } from './actions/stop';
-import { HostHealth } from './actions/hostHealth';
 import { ProtocolHandler } from './protocolHandler';
 import { SetupKeys } from './actions/setupKeys';
 import { TargetDescriptionStore } from './target/targetDescriptionStore';
@@ -27,6 +26,7 @@ import { logger } from './util/logger';
 import { TargetHealth } from './actions/targetHealth';
 import { HostModel } from './models/hostModel';
 import { HostController } from './controllers/hostController';
+import { TransientDocumentProvider } from './util/transientDocumentProvider';
 import { TargetController } from './controllers/targetController';
 
 export async function activate(
@@ -46,6 +46,7 @@ export async function activate(
         return;
     }
 
+    const hostHealthDocProvider = new TransientDocumentProvider('host-health');
     const dockerCommands = new DockerCommands();
     const targetStore = new TargetStore(context);
     const containersManager = new ContainersManager(
@@ -55,7 +56,11 @@ export async function activate(
     );
     await containersManager.activate();
     const targetDescriptionStore = new TargetDescriptionStore(topoCli);
-    context.subscriptions.push(targetStore, containersManager);
+    context.subscriptions.push(
+        targetStore,
+        containersManager,
+        hostHealthDocProvider,
+    );
 
     const hostModel = new HostModel();
 
@@ -75,7 +80,11 @@ export async function activate(
         targetStatusBarItemView,
     );
 
-    const hostHealthController = new HostController(hostModel, topoCli);
+    const hostHealthController = new HostController(
+        hostModel,
+        topoCli,
+        hostHealthDocProvider,
+    );
     const targetsController = new TargetController(targetStore);
 
     const disposeCommands = commands.register(
@@ -96,7 +105,6 @@ export async function activate(
     const containerStart = new ContainerStart(context, dockerCommands);
     const containerStop = new ContainerStop(context, dockerCommands);
     const containerDelete = new ContainerDelete(context, dockerCommands);
-    const hostHealth = new HostHealth(context, topoCli);
     const targetHealth = new TargetHealth(containersManager);
     context.subscriptions.push(targetHealth);
     const protocolHandler = new ProtocolHandler(projectClone);
@@ -116,7 +124,6 @@ export async function activate(
     containerStart.activate();
     containerStop.activate();
     containerDelete.activate();
-    hostHealth.activate();
     targetHealth.activate();
     setupKeys.activate();
     fixIssue.activate();
