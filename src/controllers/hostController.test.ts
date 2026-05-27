@@ -6,7 +6,7 @@ import { HostHealthCheckResult } from '../topoCliSchema';
 import { showAndLogError } from '../util/showAndLogError';
 import { TransientDocumentProvider } from '../util/transientDocumentProvider';
 
-jest.mock('../util/showAndLogError');
+vi.mock('../util/showAndLogError');
 
 const hostHealth: HostHealthCheckResult = {
     host: {
@@ -44,9 +44,9 @@ describe('HostController', () => {
     });
 
     it('opens a host health document with the latest host health JSON', async () => {
-        jest.spyOn(Date, 'now').mockReturnValue(123);
+        vi.spyOn(Date, 'now').mockReturnValue(123);
         const topoCli = mock<TopoCli>({
-            hostHealth: jest.fn().mockResolvedValue(hostHealth),
+            hostHealth: vi.fn().mockResolvedValue(hostHealth),
         });
         const controller = new HostController(
             new HostModel(),

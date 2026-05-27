@@ -1,10 +1,10 @@
-import { mock } from 'jest-mock-extended';
+import { mock } from 'vitest-mock-extended';
 import * as vscode from 'vscode';
 import { TransientDocumentProvider } from './transientDocumentProvider';
 
 describe('TransientDocumentProvider', () => {
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('registers itself as a content provider for the supplied scheme', () => {
@@ -21,13 +21,13 @@ describe('TransientDocumentProvider', () => {
         const path = '/host-health.json';
         const provider = new TransientDocumentProvider(scheme);
         const document = mock<vscode.TextDocument>();
-        jest.mocked(vscode.workspace.openTextDocument).mockResolvedValueOnce(
+        vi.mocked(vscode.workspace.openTextDocument).mockResolvedValueOnce(
             document,
         );
 
         await provider.open(path, content);
 
-        const uri = jest.mocked(vscode.workspace.openTextDocument).mock
+        const uri = vi.mocked(vscode.workspace.openTextDocument).mock
             .calls[0][0] as vscode.Uri;
         expect(uri.scheme).toBe(scheme);
         expect(uri.path).toBe(path);
@@ -39,16 +39,16 @@ describe('TransientDocumentProvider', () => {
 
     it('only keeps content for the most recently opened document', async () => {
         const provider = new TransientDocumentProvider('topo-health');
-        jest.mocked(vscode.workspace.openTextDocument).mockResolvedValue(
+        vi.mocked(vscode.workspace.openTextDocument).mockResolvedValue(
             mock<vscode.TextDocument>(),
         );
 
         await provider.open('/first.json', 'first');
-        const firstUri = jest.mocked(vscode.workspace.openTextDocument).mock
+        const firstUri = vi.mocked(vscode.workspace.openTextDocument).mock
             .calls[0][0] as vscode.Uri;
 
         await provider.open('/second.json', 'second');
-        const secondUri = jest.mocked(vscode.workspace.openTextDocument).mock
+        const secondUri = vi.mocked(vscode.workspace.openTextDocument).mock
             .calls[1][0] as vscode.Uri;
 
         expect(provider.provideTextDocumentContent(firstUri)).toBeUndefined();
@@ -57,7 +57,7 @@ describe('TransientDocumentProvider', () => {
 
     it('disposes the content provider registration', () => {
         const registration = mock<vscode.Disposable>();
-        jest.mocked(
+        vi.mocked(
             vscode.workspace.registerTextDocumentContentProvider,
         ).mockReturnValueOnce(registration);
         const provider = new TransientDocumentProvider('topo-health');
