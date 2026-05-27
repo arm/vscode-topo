@@ -3,8 +3,8 @@ import { HostTreeView } from './hostTreeView';
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 import { failedToLoadHostDependenciesMessage } from '../treeItems/hostDependenciesLoadErrorItem';
-import { ShowOutput } from '../actions/showOutput';
 import { HostModel } from '../models/hostModel';
+import { showOutput } from '../commands';
 
 jest.mock('../util/logger');
 
@@ -101,7 +101,7 @@ describe('HostDependenciesTreeDataProvider', () => {
             label: failedToLoadHostDependenciesMessage,
             collapsibleState: vscode.TreeItemCollapsibleState.None,
             command: {
-                command: ShowOutput.showOutputCommand,
+                command: showOutput,
                 title: 'Open Arm Topo Output',
             },
             contextValue: 'Dependencies Error',
