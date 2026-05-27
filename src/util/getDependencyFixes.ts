@@ -1,8 +1,13 @@
-import { HealthCheckDependency } from '../topoCliSchema';
+import { HealthCheckDependency, HealthCheckFix } from '../topoCliSchema';
 
 export type DependencyFixCommandGroup = {
     names: string[];
     command: string;
+};
+
+export type IssueFix = {
+    dependency: HealthCheckDependency;
+    fix: HealthCheckFix;
 };
 
 export function getDependencyFixCommandGroups(
@@ -29,4 +34,31 @@ export function getDependencyFixCommandGroups(
     }
 
     return [...groups.values()];
+}
+
+export function getFixableDependencyFixes(
+    dependencies: HealthCheckDependency[],
+): IssueFix[] {
+    const fixes: IssueFix[] = [];
+
+    for (const dependency of dependencies) {
+        if (dependency.status === 'ok') {
+            continue;
+        }
+
+        const fix = dependency.fix;
+        if (!fix?.command) {
+            continue;
+        }
+
+        fixes.push({ dependency, fix });
+    }
+
+    return fixes;
+}
+
+export function hasFixableDependencies(
+    dependencies: HealthCheckDependency[],
+): boolean {
+    return getFixableDependencyFixes(dependencies).length > 0;
 }

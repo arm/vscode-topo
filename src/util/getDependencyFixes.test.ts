@@ -1,5 +1,9 @@
 import { HealthCheckDependency } from '../topoCliSchema';
-import { getDependencyFixCommandGroups } from './getDependencyFixes';
+import {
+    getDependencyFixCommandGroups,
+    getFixableDependencyFixes,
+    hasFixableDependencies,
+} from './getDependencyFixes';
 
 describe('getDependencyFixes', () => {
     it('ignores dependencies without executable fixes', () => {
@@ -63,5 +67,76 @@ describe('getDependencyFixes', () => {
                 command: 'topo install debugger',
             },
         ]);
+    });
+
+    it('returns fixable dependency fixes for unhealthy dependencies only', () => {
+        const fixableDependency: HealthCheckDependency = {
+            name: 'Container Engine',
+            status: 'error',
+            value: 'missing',
+            fix: {
+                description: 'Install Docker',
+                command: 'topo install docker',
+            },
+        };
+        const healthyDependency: HealthCheckDependency = {
+            name: 'Debugger',
+            status: 'ok',
+            value: 'installed',
+            fix: {
+                description: 'Install debugger',
+                command: 'topo install debugger',
+            },
+        };
+        const manualDependency: HealthCheckDependency = {
+            name: 'Runtime',
+            status: 'warning',
+            value: 'missing',
+            fix: {
+                description: 'Manual setup required',
+            },
+        };
+
+        expect(
+            getFixableDependencyFixes([
+                fixableDependency,
+                healthyDependency,
+                manualDependency,
+            ]),
+        ).toEqual([
+            {
+                dependency: fixableDependency,
+                fix: fixableDependency.fix,
+            },
+        ]);
+    });
+
+    it('checks if dependencies have fixes', () => {
+        expect(
+            hasFixableDependencies([
+                {
+                    name: 'Container Engine',
+                    status: 'error',
+                    value: 'missing',
+                    fix: {
+                        description: 'Install Docker',
+                        command: 'topo install docker',
+                    },
+                },
+            ]),
+        ).toBe(true);
+
+        expect(
+            hasFixableDependencies([
+                {
+                    name: 'Container Engine',
+                    status: 'error',
+                    value: 'missing',
+                    fix: {
+                        description: 'Manual setup required',
+                    },
+                },
+            ]),
+        ).toBe(false);
     });
 });
