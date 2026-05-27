@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { mock } from 'jest-mock-extended';
-import { FixDependency } from './fixDependency';
+import { FixIssue } from './fixIssue';
 import { TargetStore } from '../target/targetStore';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 import { HealthCheckResult } from '../topoCliSchema';
@@ -38,7 +38,7 @@ const loadedHealth: HealthCheckResult = {
     },
 };
 
-describe('FixDependency', () => {
+describe('FixIssue', () => {
     const targetStore = mock<TargetStore>();
     const containersManager = mock<ContainersManager>();
     const target = 'user@topo.local';
@@ -55,19 +55,19 @@ describe('FixDependency', () => {
         jest.clearAllMocks();
     });
 
-    it('registers fix dependencies command', async () => {
-        const fixDependency = new FixDependency(targetStore, containersManager);
+    it('registers fix issue command', async () => {
+        const fixIssue = new FixIssue(targetStore, containersManager);
 
-        fixDependency.activate();
+        fixIssue.activate();
 
         expect(vscode.commands.registerCommand).toHaveBeenCalledWith(
-            FixDependency.fixDependenciesCommand,
+            FixIssue.fixIssueCommand,
             expect.any(Function),
         );
     });
 
     it('runs fix task for dependency with executable fix', async () => {
-        const fixDependency = new FixDependency(targetStore, containersManager);
+        const fixIssue = new FixIssue(targetStore, containersManager);
         const dependencyItem = new HealthCheckDependencyTreeItem({
             name: 'Remoteproc Runtime',
             status: 'error',
@@ -78,12 +78,9 @@ describe('FixDependency', () => {
             },
         });
 
-        fixDependency.activate();
+        fixIssue.activate();
 
-        await executeCommand(
-            FixDependency.fixDependenciesCommand,
-            dependencyItem,
-        );
+        await executeCommand(FixIssue.fixIssueCommand, dependencyItem);
 
         expect(executeTaskMock).toHaveBeenCalledWith(
             `Fix Remoteproc Runtime on ${target}`,
@@ -92,18 +89,15 @@ describe('FixDependency', () => {
     });
 
     it('does nothing for a healthy dependency', async () => {
-        const fixDependency = new FixDependency(targetStore, containersManager);
+        const fixIssue = new FixIssue(targetStore, containersManager);
         const dependencyItem = new HealthCheckDependencyTreeItem({
             name: 'Remoteproc Runtime',
             status: 'ok',
             value: 'installed',
         });
 
-        fixDependency.activate();
-        await executeCommand(
-            FixDependency.fixDependenciesCommand,
-            dependencyItem,
-        );
+        fixIssue.activate();
+        await executeCommand(FixIssue.fixIssueCommand, dependencyItem);
 
         expect(executeTaskMock).not.toHaveBeenCalled();
     });
@@ -136,20 +130,20 @@ describe('FixDependency', () => {
             },
             status: 'connected',
         });
-        const fixDependency = new FixDependency(targetStore, containersManager);
+        const fixIssue = new FixIssue(targetStore, containersManager);
 
-        fixDependency.activate();
+        fixIssue.activate();
         await waitImmediate();
 
         expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
             `${target} has missing or unhealthy dependencies: Remoteproc Runtime, Debugger`,
-            { title: 'Fix dependencies' },
+            { title: 'Fix' },
         );
     });
 
     it('lists every missing dependency when multiple dependencies share a fix command', async () => {
         jest.mocked(vscode.window.showWarningMessage).mockResolvedValue({
-            title: 'Fix dependencies',
+            title: 'Fix',
         });
         containersManager.getTargetState.mockResolvedValue({
             health: {
@@ -177,13 +171,13 @@ describe('FixDependency', () => {
             },
             status: 'connected',
         });
-        const fixDependency = new FixDependency(targetStore, containersManager);
+        const fixIssue = new FixIssue(targetStore, containersManager);
 
-        await fixDependency.activate();
+        await fixIssue.activate();
 
         expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
             `${target} has missing or unhealthy dependencies: Remoteproc Runtime, Remoteproc Shim`,
-            { title: 'Fix dependencies' },
+            { title: 'Fix' },
         );
         expect(executeTaskMock).toHaveBeenCalledTimes(1);
         expect(executeTaskMock).toHaveBeenCalledWith(

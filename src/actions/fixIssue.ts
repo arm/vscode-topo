@@ -12,12 +12,12 @@ import {
     getDependencyFixCommandGroups,
 } from '../util/getDependencyFixes';
 
-const fixDependenciesAction = { title: 'Fix dependencies' };
+const fixAction = { title: 'Fix' };
 
-export class FixDependency implements vscode.Disposable {
+export class FixIssue implements vscode.Disposable {
     private disposables: vscode.Disposable[] = [];
     private targetChangedAbortController: AbortController | undefined;
-    public static readonly fixDependenciesCommand = `${PACKAGE_NAME}.fixDependencies`;
+    public static readonly fixIssueCommand = `${PACKAGE_NAME}.fixIssue`;
 
     constructor(
         private readonly targetStore: TargetStore,
@@ -27,18 +27,18 @@ export class FixDependency implements vscode.Disposable {
     public async activate(): Promise<void> {
         this.disposables.push(
             vscode.commands.registerCommand(
-                FixDependency.fixDependenciesCommand,
-                this.fixDependencyFromTreeItem.bind(this),
+                FixIssue.fixIssueCommand,
+                this.fixIssueFromTreeItem.bind(this),
             ),
             this.targetStore.onChanged(
-                this.promptToFixMissingDependencies.bind(this),
+                this.promptToFixIssues.bind(this),
             ),
         );
 
-        await this.promptToFixMissingDependencies();
+        await this.promptToFixIssues();
     }
 
-    private async promptToFixMissingDependencies(): Promise<void> {
+    private async promptToFixIssues(): Promise<void> {
         this.targetChangedAbortController?.abort();
         const abortController = new AbortController();
         this.targetChangedAbortController = abortController;
@@ -61,9 +61,9 @@ export class FixDependency implements vscode.Disposable {
         }
     }
 
-    private async fixDependencyFromTreeItem(treeNode: unknown): Promise<void> {
+    private async fixIssueFromTreeItem(treeNode: unknown): Promise<void> {
         if (!(treeNode instanceof HealthCheckDependencyTreeItem)) {
-            const errMsg = `Invalid dependency item for fix dependencies: expected HealthCheckDependencyTreeItem but received:`;
+            const errMsg = `Invalid dependency item for fix issue: expected HealthCheckDependencyTreeItem but received:`;
             logger.error(errMsg, treeNode);
             return;
         }
@@ -86,10 +86,10 @@ export class FixDependency implements vscode.Disposable {
             return;
         }
 
-        await this.fixDependency(target, [treeNode.dependency.name], command);
+        await this.executeFixCommand(target, [treeNode.dependency.name], command);
     }
 
-    private async fixDependency(
+    private async executeFixCommand(
         target: string,
         names: string[],
         command: string,
@@ -120,11 +120,11 @@ export class FixDependency implements vscode.Disposable {
     ): Promise<void> {
         const choice = await vscode.window.showWarningMessage(
             `${target} has missing or unhealthy dependencies: ${fixableDependencies.flatMap(({ names }) => names).join(`, `)}`,
-            fixDependenciesAction,
+            fixAction,
         );
-        if (choice?.title === fixDependenciesAction.title) {
+        if (choice?.title === fixAction.title) {
             for (const fixableDependency of fixableDependencies) {
-                await this.fixDependency(
+                await this.executeFixCommand(
                     target,
                     fixableDependency.names,
                     fixableDependency.command,

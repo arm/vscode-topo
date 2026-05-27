@@ -21,7 +21,7 @@ import { HostHealth } from './actions/hostHealth';
 import { ProtocolHandler } from './protocolHandler';
 import { SetupKeys } from './actions/setupKeys';
 import { TargetDescriptionStore } from './target/targetDescriptionStore';
-import { FixDependency } from './actions/fixDependency';
+import { FixIssue } from './actions/fixIssue';
 import { HostTreeView } from './views/hostTreeView';
 import { logger } from './util/logger';
 import { TargetHealth } from './actions/targetHealth';
@@ -100,8 +100,8 @@ export async function activate(
     const removeTarget = new RemoveTarget(targetStore);
     context.subscriptions.push(targetHealth, selectTarget, removeTarget);
     const protocolHandler = new ProtocolHandler(projectClone);
-    const fixDependency = new FixDependency(targetStore, containersManager);
-    context.subscriptions.push(fixDependency);
+    const fixIssue = new FixIssue(targetStore, containersManager);
+    context.subscriptions.push(fixIssue);
     context.subscriptions.push(logger);
 
     protocolHandler.activate(context);
@@ -125,5 +125,5 @@ export async function activate(
     removeTarget.activate();
     setupKeys.activate();
     showOutput.activate();
-    await fixDependency.activate();
+    await fixIssue.activate();
 }

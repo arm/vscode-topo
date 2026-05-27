@@ -100,7 +100,7 @@
                 "category": "Arm Topo"
             },
             {
-                "command": "topo.fixDependencies",
+                "command": "topo.fixIssue",
                 "title": "Fix",
                 "category": "Arm Topo"
             },
@@ -209,7 +209,7 @@
                     "when": "false"
                 },
                 {
-                    "command": "topo.fixDependencies",
+                    "command": "topo.fixIssue",
                     "when": "false"
                 },
                 {
@@ -280,7 +280,7 @@
                     "group": "topo/3_cleanup"
                 },
                 {
-                    "command": "topo.fixDependencies",
+                    "command": "topo.fixIssue",
                     "when": "view === topo.target-manager && viewItem =~ /Fixable/",
                     "group": "topo/1_manage"
                 },
