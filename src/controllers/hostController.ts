@@ -1,10 +1,14 @@
+import { PACKAGE_NAME } from '../manifest';
 import { HostModel } from '../models/hostModel';
 import { TopoCli } from '../topoCli';
+import { showAndLogError } from '../util/showAndLogError';
+import { TransientDocumentProvider } from '../util/transientDocumentProvider';
 
 export class HostController {
     constructor(
         private readonly hostModel: HostModel,
         private readonly topoCli: TopoCli,
+        private readonly healthDocumentProvider: TransientDocumentProvider,
     ) {
         this.refreshHealth();
     }
@@ -22,6 +26,18 @@ export class HostController {
                 status: 'error',
                 error: e instanceof Error ? e : new Error(String(e)),
             });
+        }
+    }
+
+    public async openHealthDocument(): Promise<void> {
+        const fileName = `${PACKAGE_NAME}-host-health-${Date.now()}.json`;
+
+        try {
+            const health = await this.topoCli.hostHealth();
+            const content = JSON.stringify(health?.host ?? null, null, 4);
+            await this.healthDocumentProvider.open(fileName, content);
+        } catch (err) {
+            showAndLogError('Failed to inspect host health', err);
         }
     }
 }

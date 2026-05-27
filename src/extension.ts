@@ -17,7 +17,6 @@ import { TargetStore } from './target/targetStore';
 import { ProjectClone } from './projectClone';
 import { Deploy } from './actions/deploy';
 import { Stop } from './actions/stop';
-import { HostHealth } from './actions/hostHealth';
 import { ProtocolHandler } from './protocolHandler';
 import { SetupKeys } from './actions/setupKeys';
 import { TargetDescriptionStore } from './target/targetDescriptionStore';
@@ -29,6 +28,7 @@ import { SelectTarget } from './actions/selectTarget';
 import { RemoveTarget } from './actions/removeTarget';
 import { HostModel } from './models/hostModel';
 import { HostController } from './controllers/hostController';
+import { TransientDocumentProvider } from './util/transientDocumentProvider';
 
 export async function activate(
     context: vscode.ExtensionContext,
@@ -47,12 +47,19 @@ export async function activate(
         return;
     }
 
+    const hostHealthDocProvider = new TransientDocumentProvider('host-health');
+    context.subscriptions.push(hostHealthDocProvider);
+
     const hostModel = new HostModel();
 
     const hostTreeView = new HostTreeView(hostModel);
     context.subscriptions.push(hostTreeView);
 
-    const hostHealthController = new HostController(hostModel, topoCli);
+    const hostHealthController = new HostController(
+        hostModel,
+        topoCli,
+        hostHealthDocProvider,
+    );
 
     const disposeCommands = commands.register(hostHealthController);
     context.subscriptions.push(disposeCommands);
@@ -91,7 +98,6 @@ export async function activate(
     const containerStart = new ContainerStart(context, dockerCommands);
     const containerStop = new ContainerStop(context, dockerCommands);
     const containerDelete = new ContainerDelete(context, dockerCommands);
-    const hostHealth = new HostHealth(context, topoCli);
     const targetHealth = new TargetHealth(containersManager);
     const selectTarget = new SelectTarget(targetStore);
     const removeTarget = new RemoveTarget(targetStore);
@@ -116,7 +122,6 @@ export async function activate(
     containerStart.activate();
     containerStop.activate();
     containerDelete.activate();
-    hostHealth.activate();
     targetHealth.activate();
     selectTarget.activate();
     removeTarget.activate();

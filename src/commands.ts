@@ -9,6 +9,7 @@ function command(id: string): string {
 
 export const refreshHostHealth = command('refreshHostHealth');
 export const showOutput = command('showOutput');
+export const inspectHostHealth = command('inspectHostHealth');
 
 export function register(hostController: HostController): vscode.Disposable {
     const disposables = [
@@ -16,6 +17,9 @@ export function register(hostController: HostController): vscode.Disposable {
             hostController.refreshHealth(),
         ),
         vscode.commands.registerCommand(showOutput, () => logger.show()),
+        vscode.commands.registerCommand(inspectHostHealth, () =>
+            hostController.openHealthDocument(),
+        ),
     ];
 
     return {

@@ -45,6 +45,7 @@ describe('commands', () => {
         const hostController = mock<HostController>();
         const cases: [string, jest.Mock][] = [
             [commands.refreshHostHealth, hostController.refreshHealth],
+            [commands.inspectHostHealth, hostController.openHealthDocument],
         ];
 
         it.each(cases)(
