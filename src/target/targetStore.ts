@@ -78,17 +78,7 @@ export class TargetStore {
         await this.saveTargets(targets);
     }
 
-    public async updateTarget(target: string): Promise<void> {
-        const targets = this.loadTargets();
-        if (!targets.has(target)) {
-            throw new Error(`Target "${target}" does not exist`);
-        }
-        targets.add(target);
-        await this.saveTargets(targets);
-        this._onChanged.fire();
-    }
-
-    public async getSelectedTarget(): Promise<string | undefined> {
+    public getSelectedTarget(): string | undefined {
         const targets = this.getTargets();
         return targets.find((target) => target === this.selected);
     }
@@ -107,6 +97,8 @@ export class TargetStore {
                 ? remaining.sort((a, b) => a.localeCompare(b))[0]
                 : undefined;
             await this.setSelected(newSelected);
+        } else {
+            this._onChanged.fire();
         }
     }
 

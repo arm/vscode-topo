@@ -29,19 +29,32 @@ const healthCheckStatusSchema = enums(['ok', 'warning', 'error', 'info']);
 
 export type HealthCheckStatus = Infer<typeof healthCheckStatusSchema>;
 
+const healthCheckFixSchema = type({
+    description: trimmed(string()),
+    command: optional(trimmed(string())),
+});
+
 export const healthCheckDependencySchema = type({
     name: trimmed(string()),
     status: healthCheckStatusSchema,
     value: trimmed(string()),
-    fix: optional(trimmed(string())),
+    fix: optional(healthCheckFixSchema),
 });
 
 export type HealthCheckDependency = Infer<typeof healthCheckDependencySchema>;
 
+const healthCheckHostSchema = type({
+    dependencies: array(healthCheckDependencySchema),
+});
+
+export const hostHealthCheckResultSchema = type({
+    host: healthCheckHostSchema,
+});
+
+export type HostHealthCheckResult = Infer<typeof hostHealthCheckResultSchema>;
+
 export const healthCheckResultSchema = type({
-    host: type({
-        dependencies: array(healthCheckDependencySchema),
-    }),
+    host: healthCheckHostSchema,
     target: type({
         isLocalhost: boolean(),
         connectivity: healthCheckDependencySchema,

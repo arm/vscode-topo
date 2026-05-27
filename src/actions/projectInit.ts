@@ -1,17 +1,15 @@
-import * as manifest from './manifest';
+import * as manifest from '../manifest';
 import * as vscode from 'vscode';
-import { TopoCli } from './topoCli';
+import { TopoCli } from '../topoCli';
 
-export class ProjectInit {
+export class ProjectInit implements vscode.Disposable {
+    private disposables: vscode.Disposable[] = [];
     public static initProjectCommand = `${manifest.PACKAGE_NAME}.initProject`;
 
-    constructor(
-        private readonly context: vscode.ExtensionContext,
-        private readonly topoCli: TopoCli,
-    ) {}
+    constructor(private readonly topoCli: TopoCli) {}
 
-    public async activate() {
-        this.context.subscriptions.push(
+    public activate() {
+        this.disposables.push(
             vscode.commands.registerCommand(
                 ProjectInit.initProjectCommand,
                 this.handleInitProjectCommand.bind(this),
@@ -42,5 +40,12 @@ export class ProjectInit {
                 `Failed to initialize project: ${errorMsg}`,
             );
         }
+    }
+
+    public dispose(): void {
+        for (const disposable of [...this.disposables].reverse()) {
+            disposable.dispose();
+        }
+        this.disposables = [];
     }
 }

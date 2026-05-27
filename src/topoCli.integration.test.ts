@@ -13,7 +13,7 @@ const topoCli = new TopoCli(
 
 // The real `topo health localhost` integration path can take longer on
 // Windows CI runners because it probes the local host environment.
-jest.setTimeout(process.platform === 'win32' ? 60_000 : 15_000);
+vi.setConfig({ testTimeout: process.platform === 'win32' ? 60_000 : 15_000 });
 
 describe('getVersion', () => {
     it('parses output', async () => {
@@ -51,7 +51,17 @@ describe('listTemplates', () => {
 });
 
 describe('health', () => {
-    it('parses health check result correctly', async () => {
+    it('parses host health check result correctly', async () => {
+        const health = await topoCli.hostHealth();
+
+        expect(health).toEqual({
+            host: {
+                dependencies: expect.any(Array),
+            },
+        });
+    });
+
+    it('parses target health check result correctly', async () => {
         const health = await topoCli.health('localhost');
 
         expect(health).toEqual({

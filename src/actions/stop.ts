@@ -35,7 +35,7 @@ export class Stop {
         let target: string | undefined;
 
         try {
-            target = await this.targetStore.getSelectedTarget();
+            target = this.targetStore.getSelectedTarget();
         } catch (err) {
             if (isWrappedError(err, ['TARGET'])) {
                 showAndLogError('Error executing stop command', err);

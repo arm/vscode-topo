@@ -1,25 +1,19 @@
 import * as vscode from 'vscode';
 import { ProjectInit } from './projectInit';
-import { mutable } from './util/mutable';
-import { mock, MockProxy } from 'jest-mock-extended';
-import { TopoCli } from './topoCli';
+import { mutable } from '../util/mutable';
+import { mock } from 'vitest-mock-extended';
+import { TopoCli } from '../topoCli';
+import { executeCommand } from '../util/test/executeCommand';
 
 describe('ProjectInit', () => {
-    let context: MockProxy<vscode.ExtensionContext>;
-    let topoCli: MockProxy<TopoCli>;
-    let projectInit: ProjectInit;
-    const workspacePath = '/fake/workspace';
-
     beforeEach(() => {
-        context = mock<vscode.ExtensionContext>({ subscriptions: [] });
-        topoCli = mock<TopoCli>();
-        jest.resetAllMocks();
+        vi.resetAllMocks();
         mutable(vscode.workspace).workspaceFolders = undefined;
-        projectInit = new ProjectInit(context, topoCli);
     });
 
     it('registers the initProject command on activate', async () => {
-        await projectInit.activate();
+        const projectInit = new ProjectInit(mock<TopoCli>());
+        projectInit.activate();
 
         expect(vscode.commands.registerCommand).toHaveBeenCalledWith(
             ProjectInit.initProjectCommand,
@@ -28,13 +22,15 @@ describe('ProjectInit', () => {
     });
 
     it('calls topoCli.init with currently opened workspace path', async () => {
-        const workspaceUri = vscode.Uri.file(workspacePath);
+        const workspaceUri = vscode.Uri.file('/fake/workspace');
         mutable(vscode.workspace).workspaceFolders = [
             { uri: workspaceUri, name: 'workspace', index: 0 },
         ];
-        await projectInit.activate();
+        const topoCli = mock<TopoCli>();
+        const projectInit = new ProjectInit(topoCli);
+        projectInit.activate();
 
-        await jest.mocked(vscode.commands.registerCommand).mock.calls[0][1]();
+        await executeCommand(ProjectInit.initProjectCommand);
 
         expect(topoCli.init).toHaveBeenCalledWith(workspaceUri.fsPath);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
@@ -43,14 +39,16 @@ describe('ProjectInit', () => {
     });
 
     it('shows error message if topoCli.init throws', async () => {
-        const workspaceUri = vscode.Uri.file(workspacePath);
+        const workspaceUri = vscode.Uri.file('/fake/workspace');
         mutable(vscode.workspace).workspaceFolders = [
             { uri: workspaceUri, name: 'workspace', index: 0 },
         ];
+        const topoCli = mock<TopoCli>();
         topoCli.init.mockRejectedValue(new Error('fail'));
-        await projectInit.activate();
+        const projectInit = new ProjectInit(topoCli);
+        projectInit.activate();
 
-        await jest.mocked(vscode.commands.registerCommand).mock.calls[0][1]();
+        await executeCommand(ProjectInit.initProjectCommand);
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
             'Failed to initialize project: fail',
@@ -58,9 +56,11 @@ describe('ProjectInit', () => {
     });
 
     it('shows error message if no workspace folder is open', async () => {
-        await projectInit.activate();
+        const topoCli = mock<TopoCli>();
+        const projectInit = new ProjectInit(topoCli);
+        projectInit.activate();
 
-        await jest.mocked(vscode.commands.registerCommand).mock.calls[0][1]();
+        await executeCommand(ProjectInit.initProjectCommand);
 
         expect(topoCli.init).not.toHaveBeenCalled();
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(

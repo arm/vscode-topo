@@ -1,14 +1,17 @@
 import * as vscode from 'vscode';
-import { mock } from 'jest-mock-extended';
+import { mock } from 'vitest-mock-extended';
 import { activate } from './extension';
 
-jest.mock('child_process');
-jest.mock('./util/logger');
-jest.mock('./topoCliVersionChecker', () => {
+vi.mock('child_process');
+vi.mock('./util/logger');
+vi.mock('./topoCli');
+vi.mock('./topoCliVersionChecker', () => {
     return {
-        TopoCliVersionChecker: jest.fn().mockImplementation(() => ({
-            checkTopoCliVersion: jest.fn(() => true),
-        })),
+        TopoCliVersionChecker: vi.fn().mockImplementation(function () {
+            return {
+                checkTopoCliVersion: vi.fn(() => true),
+            };
+        }),
     };
 });
 
@@ -16,7 +19,7 @@ describe('extension activation', () => {
     let subscriptions: vscode.Disposable[];
 
     beforeEach(() => {
-        jest.useFakeTimers();
+        vi.useFakeTimers();
         subscriptions = [];
     });
 
@@ -24,9 +27,9 @@ describe('extension activation', () => {
         for (const sub of subscriptions) {
             sub.dispose();
         }
-        jest.clearAllTimers();
-        jest.useRealTimers();
-        jest.resetAllMocks();
+        vi.clearAllTimers();
+        vi.useRealTimers();
+        vi.resetAllMocks();
     });
 
     it('registers commands and prepares disposables', async () => {

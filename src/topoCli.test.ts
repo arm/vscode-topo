@@ -5,7 +5,7 @@ import { TopoCli, parseWrappedError, parseTopoLogEntries } from './topoCli';
 import { Mutable } from './util/types';
 import * as manifest from './manifest';
 import { ChildProcessWithoutNullStreams } from 'node:child_process';
-import { mock } from 'jest-mock-extended';
+import { mock } from 'vitest-mock-extended';
 import { Writable } from 'node:stream';
 import { WrappedError } from './errors/wrappedError';
 import {
@@ -15,16 +15,16 @@ import {
 } from './topoCliSchema';
 import { TargetDescription } from './util/types';
 
-jest.mock('node:child_process');
-jest.mock('node:fs');
-jest.mock('node:process');
+vi.mock('node:child_process');
+vi.mock('node:fs');
+vi.mock('node:process');
 
 function errorWithStderr(stderr: string): Error & { stderr: string } {
     return Object.assign(new Error('Command failed'), { stderr });
 }
 
-const execSyncMock = jest.mocked(childProcess.execFileSync);
-const execMock = jest.mocked(childProcess.execFile);
+const execSyncMock = vi.mocked(childProcess.execFileSync);
+const execMock = vi.mocked(childProcess.execFile);
 
 describe('TopoCli', () => {
     const ext = '/fake/ext';
@@ -36,7 +36,7 @@ describe('TopoCli', () => {
     beforeAll(() => {
         origPlatform = process.platform;
         Object.defineProperty(process, 'platform', { value: 'linux' });
-        jest.resetModules();
+        vi.resetModules();
         process.env = {};
     });
     afterAll(() => {
@@ -44,7 +44,7 @@ describe('TopoCli', () => {
     });
 
     beforeEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
         topoCli = new TopoCli(ext, env);
         cp = mock<ChildProcessWithoutNullStreams>();
         cp.stdin = mock<Writable>() as ChildProcessWithoutNullStreams['stdin'];
@@ -364,6 +364,28 @@ describe('TopoCli', () => {
                 'health',
                 '--target',
                 'hostname',
+                '--skip-version-checks',
+                '--accept-new-host-keys',
+                '-o',
+                'json',
+            ],
+            {
+                env: {},
+                windowsHide: true,
+            },
+            expect.any(Function),
+        );
+        expect(cp.stdin.end).toHaveBeenCalledTimes(1);
+    });
+
+    it('hostHealth omits --target', async () => {
+        await topoCli.hostHealth();
+
+        expect(execMock).toHaveBeenCalledTimes(1);
+        expect(execMock).toHaveBeenCalledWith(
+            topoCli.getBinaryPath(),
+            [
+                'health',
                 '--skip-version-checks',
                 '--accept-new-host-keys',
                 '-o',

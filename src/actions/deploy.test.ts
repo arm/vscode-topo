@@ -2,15 +2,16 @@ import path from 'node:path';
 import os from 'node:os';
 import * as vscode from 'vscode';
 import { Deploy } from './deploy';
-import { mock, MockProxy } from 'jest-mock-extended';
+import { mock, MockProxy } from 'vitest-mock-extended';
 import { TargetStore } from '../target/targetStore';
 import { executeTask } from '../util/executeTask';
 import { WrappedError } from '../errors/wrappedError';
+import type { MockInstance } from 'vitest';
 
-jest.mock('../util/logger');
-jest.mock('../util/executeTask');
+vi.mock('../util/logger');
+vi.mock('../util/executeTask');
 
-const executeTaskMock = jest.mocked(executeTask);
+const executeTaskMock = vi.mocked(executeTask);
 
 describe('Deploy', () => {
     let deploy: Deploy;
@@ -22,16 +23,16 @@ describe('Deploy', () => {
     let targetStore: MockProxy<TargetStore>;
     let context: MockProxy<vscode.ExtensionContext>;
     let deployHandler: ((resource?: vscode.Uri) => Promise<void>) | undefined;
-    let registerSpy: jest.SpyInstance;
+    let registerSpy: MockInstance;
 
     beforeEach(() => {
         context = mock<vscode.ExtensionContext>({ subscriptions: [] });
         targetStore = mock<TargetStore>();
-        targetStore.getSelectedTarget.mockResolvedValue(target);
+        targetStore.getSelectedTarget.mockReturnValue(target);
         executeTaskMock.mockReset();
-        jest.mocked(vscode.window.showErrorMessage).mockClear();
+        vi.mocked(vscode.window.showErrorMessage).mockClear();
         deploy = new Deploy(context, targetStore);
-        registerSpy = jest
+        registerSpy = vi
             .spyOn(vscode.commands, 'registerCommand')
             .mockImplementation(
                 (_, handler: (...args: unknown[]) => Promise<void>) => {
@@ -43,7 +44,7 @@ describe('Deploy', () => {
 
     afterEach(() => {
         deployHandler = undefined;
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('registers the deploy command on activate', () => {
@@ -57,7 +58,7 @@ describe('Deploy', () => {
     });
 
     it('shows an error in the command handler with no target selected', async () => {
-        targetStore.getSelectedTarget.mockResolvedValueOnce(undefined);
+        targetStore.getSelectedTarget.mockReturnValueOnce(undefined);
         deploy.activate();
 
         const deployOperation = deployHandler!(composeFileUri);
@@ -70,11 +71,11 @@ describe('Deploy', () => {
     });
 
     it('shows an error when target lookup fails with a TARGET error', async () => {
-        targetStore.getSelectedTarget.mockRejectedValueOnce(
-            new WrappedError('TARGET', 'target store failed'),
-        );
+        targetStore.getSelectedTarget.mockImplementationOnce(() => {
+            throw new WrappedError('TARGET', 'target store failed');
+        });
         deploy.activate();
-        jest.mocked(vscode.window.showErrorMessage).mockClear();
+        vi.mocked(vscode.window.showErrorMessage).mockClear();
 
         const deployOperation = deployHandler!(composeFileUri);
 
@@ -86,9 +87,9 @@ describe('Deploy', () => {
     });
 
     it('rethrows non-TARGET target lookup errors in the command handler', async () => {
-        targetStore.getSelectedTarget.mockRejectedValueOnce(
-            new Error('target store failed'),
-        );
+        targetStore.getSelectedTarget.mockImplementationOnce(() => {
+            throw new Error('target store failed');
+        });
         deploy.activate();
 
         const deployOperation = deployHandler!(composeFileUri);

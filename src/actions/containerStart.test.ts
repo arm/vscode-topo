@@ -3,17 +3,15 @@ import * as vscode from 'vscode';
 import { ContainerStart } from './containerStart';
 import { TargetContainerTreeItem } from '../targetTreeView/targetContainerTreeItem';
 import { WrappedError } from '../errors/wrappedError';
-import { mock, MockProxy } from 'jest-mock-extended';
+import { mock, MockProxy } from 'vitest-mock-extended';
 import { ContainerItem } from '../util/types';
 import { ContainerCommands } from '../target/containerCommands';
+import { executeCommand } from '../util/test/executeCommand';
+import type { MockInstance } from 'vitest';
 
 describe('ContainerStart', () => {
     let context: MockProxy<vscode.ExtensionContext>;
-    let showErrorMessageSpy: jest.SpyInstance;
-    let commandHandler:
-        | { command: string; callback: (...args: unknown[]) => void }
-        | undefined;
-    const registerCommandMock = jest.mocked(vscode.commands.registerCommand);
+    let showErrorMessageSpy: MockInstance;
     const target = 'user@topo.local';
     const container: ContainerItem = {
         id: 'abc123',
@@ -33,32 +31,13 @@ describe('ContainerStart', () => {
 
     beforeEach(() => {
         context = mock<vscode.ExtensionContext>({ subscriptions: [] });
-        commandHandler = undefined;
-        showErrorMessageSpy = jest
+        showErrorMessageSpy = vi
             .spyOn(vscode.window, 'showErrorMessage')
-            .mockImplementation(jest.fn());
-        registerCommandMock.mockImplementation((command, callback) => {
-            if (command !== ContainerStart.startContainerCommand) {
-                throw Error('Unexpected command registration');
-            }
-            commandHandler = { command, callback };
-            return { dispose: jest.fn() };
-        });
-        jest.mocked(vscode.commands.executeCommand).mockImplementation(
-            async (command, ...args) => {
-                if (
-                    command === ContainerStart.startContainerCommand &&
-                    commandHandler
-                ) {
-                    return commandHandler.callback(...args);
-                }
-                return Promise.resolve();
-            },
-        );
+            .mockImplementation(vi.fn());
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('calls startContainer and shows info message on success', async () => {
@@ -66,11 +45,7 @@ describe('ContainerStart', () => {
         const containerStart = new ContainerStart(context, containerCommands);
         containerStart.activate();
 
-        // Simulate command handler
-        await vscode.commands.executeCommand(
-            ContainerStart.startContainerCommand,
-            treeItem,
-        );
+        await executeCommand(ContainerStart.startContainerCommand, treeItem);
 
         expect(containerCommands.startContainer).toHaveBeenCalledWith(
             'abc123',
@@ -86,10 +61,7 @@ describe('ContainerStart', () => {
         const containerStart = new ContainerStart(context, containerCommands);
         containerStart.activate();
 
-        await vscode.commands.executeCommand(
-            ContainerStart.startContainerCommand,
-            treeItem,
-        );
+        await executeCommand(ContainerStart.startContainerCommand, treeItem);
 
         expect(showErrorMessageSpy).toHaveBeenCalledWith(
             expect.stringContaining(
@@ -107,10 +79,7 @@ describe('ContainerStart', () => {
         containerStart.activate();
 
         await expect(
-            vscode.commands.executeCommand(
-                ContainerStart.startContainerCommand,
-                treeItem,
-            ),
+            executeCommand(ContainerStart.startContainerCommand, treeItem),
         ).rejects.toThrow('generic error');
     });
 });

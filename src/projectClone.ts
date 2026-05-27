@@ -229,7 +229,7 @@ export class ProjectClone {
         };
     }
 
-    public async activate() {
+    public activate() {
         this.context.subscriptions.push(
             vscode.commands.registerCommand(
                 ProjectClone.remoteCloneCommand,
@@ -272,7 +272,7 @@ export class ProjectClone {
     private async handleTemplateCloneCommand(): Promise<void> {
         let selectedTarget: string | undefined;
         try {
-            selectedTarget = await this.targetStore.getSelectedTarget();
+            selectedTarget = this.targetStore.getSelectedTarget();
         } catch (error) {
             if (isWrappedError(error, ['TARGET'])) {
                 return showAndLogError('Failed to clone project', error);

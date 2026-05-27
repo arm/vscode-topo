@@ -49,18 +49,21 @@ describe('HealthCheckDependencyTreeItem', () => {
         expect(item.contextValue).toBe('Dependency Error');
     });
 
-    it('marks dependency with `topo install` fix as installable', () => {
+    it('marks dependency with an executable fix command as fixable', () => {
         const item = new HealthCheckDependencyTreeItem({
             name: 'Container Engine',
             value: 'missing',
             status: 'warning',
-            fix: 'run `topo install container-engine`',
+            fix: {
+                description: 'Install the container engine',
+                command: 'topo install container-engine --target ssh://imx93',
+            },
         });
 
-        expect(item.contextValue).toBe('Dependency Warning Installable');
+        expect(item.contextValue).toBe('Dependency Warning Fixable');
     });
 
-    it('does not mark healthy remoteproc dependencies as installable', () => {
+    it('does not mark healthy remoteproc dependencies as fixable', () => {
         const item = new HealthCheckDependencyTreeItem({
             name: 'Remoteproc Runtime',
             value: 'installed',

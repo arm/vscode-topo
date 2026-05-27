@@ -13,7 +13,7 @@ export class ContainerStop {
         private readonly containerCommands: ContainerCommands,
     ) {}
 
-    public async activate() {
+    public activate() {
         this.context.subscriptions.push(
             vscode.commands.registerCommand(
                 ContainerStop.stopContainerCommand,

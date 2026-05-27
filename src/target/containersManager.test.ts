@@ -5,20 +5,21 @@ import { exec } from '../util/exec';
 import { DockerCommands } from './dockerCommands';
 import * as vscode from 'vscode';
 import { TargetStore } from './targetStore';
-import { mock } from 'jest-mock-extended';
+import { mock } from 'vitest-mock-extended';
 import { TopoCli } from '../topoCli';
 import type { ContainerCommands } from './containerCommands';
 import type { HealthCheckResult } from '../topoCliSchema';
+import type { Mock } from 'vitest';
 
 const waitImmediate = async () => {
     await Promise.resolve();
     await Promise.resolve();
 };
 
-jest.mock('../util/exec', () => ({
-    exec: jest.fn(),
+vi.mock('../util/exec', () => ({
+    exec: vi.fn(),
 }));
-jest.mock('../util/logger');
+vi.mock('../util/logger');
 
 const webServerPortInfo = {
     '80/tcp': [
@@ -84,7 +85,7 @@ const defaultInfoOutput = {
     stdout: 'Server Version: 8',
     stderr: '',
 };
-const execMock = exec as jest.Mock;
+const execMock = exec as Mock;
 const target = 'user@topo.local';
 const loadedHealth: HealthCheckResult = {
     host: { dependencies: [] },
@@ -124,16 +125,16 @@ describe('ContainersManager', () => {
     };
 
     beforeEach(() => {
-        jest.useFakeTimers();
-        jest.resetAllMocks();
+        vi.useFakeTimers();
+        vi.resetAllMocks();
         topoCli.health.mockResolvedValue(loadedHealth);
         containersManager = undefined;
     });
 
     afterEach(() => {
         containersManager?.dispose();
-        jest.useRealTimers();
-        jest.clearAllTimers();
+        vi.useRealTimers();
+        vi.clearAllTimers();
     });
 
     it('getContainersData returns containers with runtime', async () => {
@@ -152,9 +153,9 @@ describe('ContainersManager', () => {
             }
         });
         const targetStore = mock<TargetStore>();
-        targetStore.getSelectedTarget.mockResolvedValue(target);
+        targetStore.getSelectedTarget.mockReturnValue(target);
         const manager = createContainersManager(targetStore);
-        await manager.activate();
+        manager.activate();
 
         const result = await manager.getContainersData(target);
 
@@ -204,9 +205,9 @@ describe('ContainersManager', () => {
             }
         });
         const targetStore = mock<TargetStore>();
-        targetStore.getSelectedTarget.mockResolvedValue(target);
+        targetStore.getSelectedTarget.mockReturnValue(target);
         const manager = createContainersManager(targetStore);
-        await manager.activate();
+        manager.activate();
 
         const result = await manager.getContainersData(target);
         expect(result).toEqual([]);
@@ -229,10 +230,10 @@ describe('ContainersManager', () => {
             }
         });
         const targetStore = mock<TargetStore>();
-        targetStore.getSelectedTarget.mockResolvedValue(target);
+        targetStore.getSelectedTarget.mockReturnValue(target);
         const manager = createContainersManager(targetStore);
 
-        await manager.activate();
+        manager.activate();
 
         const result = await manager.getContainersData(target);
         expect(result).toEqual([]);
@@ -254,9 +255,9 @@ describe('ContainersManager', () => {
             }
         });
         const targetStore = mock<TargetStore>();
-        targetStore.getSelectedTarget.mockResolvedValue(target);
+        targetStore.getSelectedTarget.mockReturnValue(target);
         const manager = createContainersManager(targetStore);
-        await manager.activate();
+        manager.activate();
 
         const first = await manager.getContainersData(target);
         expect(first).toHaveLength(2);
@@ -291,18 +292,18 @@ describe('ContainersManager', () => {
             .mockResolvedValueOnce(loadedHealth)
             .mockResolvedValueOnce(unhealthyContainerEngine);
         const targetStore = mock<TargetStore>();
-        targetStore.getSelectedTarget.mockResolvedValue(target);
+        targetStore.getSelectedTarget.mockReturnValue(target);
         const containerCommands = mock<ContainerCommands>();
         containerCommands.getContainers.mockResolvedValue(mockContainers);
         containerCommands.inspectContainers.mockResolvedValue([]);
         const manager = createContainersManager(targetStore, containerCommands);
-        await manager.activate();
+        manager.activate();
         await expect(manager.getContainersData(target)).resolves.toHaveLength(
             mockContainers.length,
         );
 
         containerCommands.getContainers.mockClear();
-        await jest.advanceTimersByTimeAsync(3000);
+        await vi.advanceTimersByTimeAsync(3000);
 
         await expect(manager.getContainersData(target)).resolves.toEqual([]);
         expect(containerCommands.getContainers).not.toHaveBeenCalled();
@@ -324,15 +325,15 @@ describe('ContainersManager', () => {
             }
         });
         const targetStore = mock<TargetStore>();
-        targetStore.getSelectedTarget.mockResolvedValue(target);
+        targetStore.getSelectedTarget.mockReturnValue(target);
         const manager = createContainersManager(targetStore);
-        await manager.activate();
+        manager.activate();
 
-        const spy = jest.fn();
+        const spy = vi.fn();
         manager.onDataUpdate(spy);
         expect(spy).not.toHaveBeenCalled();
 
-        await jest.advanceTimersByTimeAsync(4000);
+        await vi.advanceTimersByTimeAsync(4000);
         expect(spy).toHaveBeenCalled();
     });
 
@@ -352,14 +353,14 @@ describe('ContainersManager', () => {
             }
         });
         const targetStore = mock<TargetStore>();
-        targetStore.getSelectedTarget.mockResolvedValue(target);
+        targetStore.getSelectedTarget.mockReturnValue(target);
         const manager = createContainersManager(targetStore);
-        await manager.activate();
+        manager.activate();
 
-        const spy = jest.fn();
+        const spy = vi.fn();
         manager.onDataUpdate(spy);
 
-        await jest.advanceTimersByTimeAsync(3000);
+        await vi.advanceTimersByTimeAsync(3000);
         expect(spy).toHaveBeenCalled();
     });
 
@@ -368,7 +369,7 @@ describe('ContainersManager', () => {
             new Promise<HealthCheckResult>(() => {}),
         );
         const targetStore = mock<TargetStore>();
-        targetStore.getSelectedTarget.mockResolvedValue(target);
+        targetStore.getSelectedTarget.mockReturnValue(target);
         const containerCommands = mock<ContainerCommands>();
         containerCommands.getContainers.mockResolvedValue([]);
         containerCommands.inspectContainers.mockResolvedValue([]);
@@ -390,19 +391,18 @@ describe('ContainersManager', () => {
         );
         topoCli.health.mockReturnValueOnce(pendingHealth);
         const targetStore = mock<TargetStore>();
-        targetStore.getSelectedTarget.mockResolvedValue(target);
+        targetStore.getSelectedTarget.mockReturnValue(target);
         const containerCommands = mock<ContainerCommands>();
         containerCommands.getContainers.mockResolvedValue([]);
         containerCommands.inspectContainers.mockResolvedValue([]);
         const manager = createContainersManager(targetStore, containerCommands);
 
-        const activation = manager.activate();
+        manager.activate();
         await waitImmediate();
 
         const targetStatePromise = manager.getTargetState(target);
         resolveHealth!(loadedHealth);
 
-        await activation;
         await expect(targetStatePromise).resolves.toEqual({
             health: loadedHealth.target,
             status: 'connected',
@@ -429,15 +429,13 @@ describe('ContainersManager', () => {
         const onChangeEmitter = new vscode.EventEmitter<void>();
         const targetStore = mock<TargetStore>();
         targetStore.onChanged.mockImplementation(onChangeEmitter.event);
-        targetStore.getSelectedTarget.mockImplementation(
-            async () => selectedTarget,
-        );
+        targetStore.getSelectedTarget.mockImplementation(() => selectedTarget);
         const manager = createContainersManager(targetStore);
-        await manager.activate();
+        manager.activate();
         expect(
             targetStore.getSelectedTarget.mock.calls.length,
         ).toBeGreaterThanOrEqual(1);
-        const dataUpdateSpy = jest.fn();
+        const dataUpdateSpy = vi.fn();
         manager.onDataUpdate(dataUpdateSpy);
         selectedTarget = newTarget;
 
@@ -455,9 +453,7 @@ describe('ContainersManager', () => {
         const onChangeEmitter = new vscode.EventEmitter<void>();
         const targetStore = mock<TargetStore>();
         targetStore.onChanged.mockImplementation(onChangeEmitter.event);
-        targetStore.getSelectedTarget.mockImplementation(
-            async () => selectedTarget,
-        );
+        targetStore.getSelectedTarget.mockImplementation(() => selectedTarget);
 
         let resolveOldHealth: (result: HealthCheckResult) => void;
         const pendingOldHealth = new Promise<HealthCheckResult>(
@@ -503,7 +499,7 @@ describe('ContainersManager', () => {
             targetStore,
         );
 
-        const activation = manager.activate();
+        manager.activate();
         await waitImmediate();
         selectedTarget = newTarget;
 
@@ -529,12 +525,11 @@ describe('ContainersManager', () => {
                 },
             },
         });
-        await activation;
         await waitImmediate();
 
         topoCli.health.mockClear();
 
-        await jest.advanceTimersByTimeAsync(9000);
+        await vi.advanceTimersByTimeAsync(9000);
 
         expect(topoCli.health).toHaveBeenCalled();
         expect(topoCli.health).toHaveBeenCalledWith(newTarget);

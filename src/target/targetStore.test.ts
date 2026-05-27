@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
 import { TargetStore } from './targetStore';
 import { mutable } from '../util/mutable';
-import { mock, MockProxy } from 'jest-mock-extended';
 import { WrappedError } from '../errors/wrappedError';
+import { mock, MockProxy } from 'vitest-mock-extended';
 
-jest.mock('../util/logger');
+vi.mock('../util/logger');
 
 const waitImmediate = async () => {
     await Promise.resolve();
@@ -66,7 +66,7 @@ describe('TargetStore', () => {
         pattern: vscode.GlobPattern;
         watcher: vscode.FileSystemWatcher;
     }[] = [];
-    jest.mocked(vscode.workspace.createFileSystemWatcher).mockImplementation(
+    vi.mocked(vscode.workspace.createFileSystemWatcher).mockImplementation(
         (pattern) => {
             const watcher: vscode.FileSystemWatcher = {
                 onDidCreate: emitter.event,
@@ -81,7 +81,7 @@ describe('TargetStore', () => {
             return watcher;
         },
     );
-    jest.mocked(vscode.workspace.fs.writeFile).mockImplementation(
+    vi.mocked(vscode.workspace.fs.writeFile).mockImplementation(
         async (uri, _content) => {
             for (const _entry of fsWatchers) {
                 emitter.fire(uri);
@@ -94,7 +94,7 @@ describe('TargetStore', () => {
             focused: true,
             active: true,
         };
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('adds a target successfully and persists it', async () => {
@@ -147,7 +147,7 @@ describe('TargetStore', () => {
         const store = new TargetStore(context);
         const t = 'bob@example.com';
         await store.addTarget(t);
-        const cb = jest.fn();
+        const cb = vi.fn();
         store.onChanged(cb);
 
         await store.setSelected('bob@example.com');
@@ -166,7 +166,7 @@ describe('TargetStore', () => {
         await store.addTarget(t);
         await store.setSelected('carol@example.com');
 
-        const selected = await store.getSelectedTarget();
+        const selected = store.getSelectedTarget();
         expect(selected).toBeDefined();
         expect(selected).toBe('carol@example.com');
     });
@@ -198,7 +198,7 @@ describe('TargetStore', () => {
     it('fires onChanged when signal file is modified externally and window is not focused', async () => {
         const { context } = createMockContext();
         const store = new TargetStore(context);
-        const cb = jest.fn();
+        const cb = vi.fn();
         store.onChanged(cb);
         mutable(vscode.window.state).focused = false;
         const signalUri = vscode.Uri.joinPath(
@@ -218,22 +218,22 @@ describe('TargetStore', () => {
     it('deactivates the store, disposing resources', () => {
         const eventWithDisposable = (
             dispose: () => void,
-        ): vscode.Event<vscode.Uri> => jest.fn(() => ({ dispose }));
-        const watcherDispose = jest.fn();
-        const onDidCreateDispose = jest.fn();
-        const onDidChangeDispose = jest.fn();
+        ): vscode.Event<vscode.Uri> => vi.fn(() => ({ dispose }));
+        const watcherDispose = vi.fn();
+        const onDidCreateDispose = vi.fn();
+        const onDidChangeDispose = vi.fn();
         const watcher: vscode.FileSystemWatcher = {
             onDidCreate: eventWithDisposable(onDidCreateDispose),
             onDidChange: eventWithDisposable(onDidChangeDispose),
-            onDidDelete: eventWithDisposable(jest.fn()),
+            onDidDelete: eventWithDisposable(vi.fn()),
             dispose: watcherDispose,
             ignoreCreateEvents: false,
             ignoreChangeEvents: false,
             ignoreDeleteEvents: false,
         };
-        jest.mocked(
-            vscode.workspace.createFileSystemWatcher,
-        ).mockReturnValueOnce(watcher);
+        vi.mocked(vscode.workspace.createFileSystemWatcher).mockReturnValueOnce(
+            watcher,
+        );
         const { context } = createMockContext();
         const store = new TargetStore(context);
 
@@ -257,7 +257,7 @@ describe('TargetStore', () => {
 
         const targets = store.getTargets();
         expect(targets.some((t) => t === t2)).toBe(false);
-        const selected = await store.getSelectedTarget();
+        const selected = store.getSelectedTarget();
         expect(selected).toBeDefined();
     });
 
@@ -276,7 +276,7 @@ describe('TargetStore', () => {
 
         const targets = store.getTargets();
         expect(targets.some((t) => t === t2)).toBe(false);
-        const selected = await store.getSelectedTarget();
+        const selected = store.getSelectedTarget();
         expect(selected).toBeDefined();
         expect(selected).toBe(t1);
     });
@@ -292,7 +292,7 @@ describe('TargetStore', () => {
 
         const targets = store.getTargets();
         expect(targets.length).toBe(0);
-        const selected = await store.getSelectedTarget();
+        const selected = store.getSelectedTarget();
         expect(selected).toBeUndefined();
     });
 

@@ -1,30 +1,30 @@
 import * as vscode from 'vscode';
 import { AttachShell } from '../actions/attachShell';
+import { mock, MockProxy } from 'vitest-mock-extended';
+import { ContainerItem } from '../util/types';
+import { TargetStore } from '../target/targetStore';
 import { DockerCommands } from '../target/dockerCommands';
 import { TargetContainerTreeItem } from '../targetTreeView/targetContainerTreeItem';
-import { mock, MockProxy } from 'jest-mock-extended';
-import { TargetStore } from '../target/targetStore';
-import { ContainerItem } from '../util/types';
 import { WrappedError } from '../errors/wrappedError';
+import { executeCommand } from '../util/test/executeCommand';
 
-jest.mock('../util/logger');
+vi.mock('../util/logger');
 
 describe('AttachShell', () => {
-    const registerCommandMock = jest.mocked(vscode.commands.registerCommand);
     const dockerCommands = new DockerCommands();
     const target = 'user@topo.local';
     const targetStore = mock<TargetStore>();
     let context: MockProxy<vscode.ExtensionContext>;
 
     beforeEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
         targetStore.getSelectedTarget.mockReset();
-        targetStore.getSelectedTarget.mockResolvedValue(target);
+        targetStore.getSelectedTarget.mockReturnValue(target);
         context = mock<vscode.ExtensionContext>({ subscriptions: [] });
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('registers attachShell command on activate', () => {
@@ -40,18 +40,13 @@ describe('AttachShell', () => {
         );
     });
 
-    it('attachShell command opens terminal and sends docker exec', () => {
+    it('attachShell command opens terminal and sends docker exec', async () => {
         const attachShell = new AttachShell(
             context,
             dockerCommands,
             targetStore,
         );
         attachShell.activate();
-        const attachShellCall = registerCommandMock.mock.calls.find(
-            ([cmd]) => cmd === AttachShell.attachShellCommand,
-        );
-        expect(attachShellCall).toBeDefined();
-        const handler = attachShellCall![1];
         const fakeItem = mock<ContainerItem>({
             id: 'cid',
             image: 'clabel',
@@ -60,13 +55,13 @@ describe('AttachShell', () => {
         });
         const treeItem = new TargetContainerTreeItem(fakeItem);
 
-        handler(treeItem);
+        await executeCommand(AttachShell.attachShellCommand, treeItem);
 
         expect(vscode.window.createTerminal).toHaveBeenCalledWith({
             name: 'Shell: clabel',
         });
-        const terminal = jest.mocked(vscode.window.createTerminal).mock
-            .results[0].value;
+        const terminal = vi.mocked(vscode.window.createTerminal).mock.results[0]
+            .value;
         expect(terminal.sendText).toHaveBeenCalledWith(
             `docker --host ssh://${target} exec -it cid sh`,
         );
@@ -80,28 +75,28 @@ describe('AttachShell', () => {
             targetStore,
         );
 
-        await attachShell.attachSSH();
+        attachShell.attachSSH();
 
         expect(vscode.window.createTerminal).toHaveBeenCalledWith({
             name: `SSH: ${target}`,
         });
-        const terminal = jest.mocked(vscode.window.createTerminal).mock
-            .results[0].value;
+        const terminal = vi.mocked(vscode.window.createTerminal).mock.results[0]
+            .value;
         expect(terminal.sendText).toHaveBeenCalledWith(`ssh ${target}`);
         expect(terminal.show).toHaveBeenCalled();
     });
 
     it('shows an error when attachSSH cannot load the selected target', async () => {
-        targetStore.getSelectedTarget.mockRejectedValueOnce(
-            new WrappedError('TARGET', 'target store failed'),
-        );
+        targetStore.getSelectedTarget.mockImplementationOnce(() => {
+            throw new WrappedError('TARGET', 'target store failed');
+        });
         const attachShell = new AttachShell(
             context,
             dockerCommands,
             targetStore,
         );
 
-        await attachShell.attachSSH();
+        attachShell.attachSSH();
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
             'Failed to attach SSH. target store failed',
@@ -110,18 +105,16 @@ describe('AttachShell', () => {
     });
 
     it('rethrows non-TARGET errors from attachSSH target lookup', async () => {
-        targetStore.getSelectedTarget.mockRejectedValueOnce(
-            new Error('target lookup failed'),
-        );
+        targetStore.getSelectedTarget.mockImplementationOnce(() => {
+            throw new Error('target lookup failed');
+        });
         const attachShell = new AttachShell(
             context,
             dockerCommands,
             targetStore,
         );
 
-        await expect(attachShell.attachSSH()).rejects.toThrow(
-            'target lookup failed',
-        );
+        expect(() => attachShell.attachSSH()).toThrow('target lookup failed');
         expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
         expect(vscode.window.createTerminal).not.toHaveBeenCalled();
     });

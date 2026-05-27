@@ -35,7 +35,7 @@ export class Deploy {
         let target: string | undefined;
 
         try {
-            target = await this.targetStore.getSelectedTarget();
+            target = this.targetStore.getSelectedTarget();
         } catch (err) {
             if (isWrappedError(err, ['TARGET'])) {
                 showAndLogError('Error executing deploy command', err);

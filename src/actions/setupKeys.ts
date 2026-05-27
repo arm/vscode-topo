@@ -34,7 +34,7 @@ export class SetupKeys {
 
         let selectedTarget: string | undefined;
         try {
-            selectedTarget = await this.targetStore.getSelectedTarget();
+            selectedTarget = this.targetStore.getSelectedTarget();
         } catch (err) {
             if (isWrappedError(err, ['TARGET'])) {
                 showAndLogError('Failed to set up keys on target', err);

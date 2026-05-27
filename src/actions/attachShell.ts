@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
-import { ContainerCommands } from '../target/containerCommands';
 import * as manifest from '../manifest';
+import { ContainerItem } from '../util/types';
+import { ContainerCommands } from '../target/containerCommands';
 import { TargetStore } from '../target/targetStore';
 import { assertTargetContainerTreeItem } from '../targetTreeView/assertTargetContainerTreeItem';
-import { ContainerItem } from '../util/types';
 import { showAndLogError } from '../util/showAndLogError';
 import { isWrappedError, WrappedError } from '../errors/wrappedError';
 
@@ -40,10 +40,10 @@ export class AttachShell {
         terminal.show();
     }
 
-    public async attachSSH() {
+    public attachSSH(): void {
         let target: string | undefined;
         try {
-            target = await this.targetStore.getSelectedTarget();
+            target = this.targetStore.getSelectedTarget();
         } catch (err) {
             if (isWrappedError(err, ['TARGET'])) {
                 showAndLogError('Failed to attach SSH', err);
@@ -51,7 +51,6 @@ export class AttachShell {
             }
             throw err;
         }
-
         if (!target) {
             showAndLogError(
                 'Failed to attach SSH',

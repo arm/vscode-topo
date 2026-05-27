@@ -31,7 +31,7 @@ module.exports = [
         files: ['src/**/__mocks__/**/*.js'],
         languageOptions: {
             globals: {
-                ...globals.jest,
+                ...globals.vitest,
             },
         },
     },
