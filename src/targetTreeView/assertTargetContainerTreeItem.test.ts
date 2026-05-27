@@ -3,11 +3,11 @@ import { TargetContainerTreeItem } from './targetContainerTreeItem';
 import { logger } from '../util/logger';
 import { ContainerItem } from '../util/types';
 
-jest.mock('../util/logger', () => ({
+vi.mock('../util/logger', () => ({
     logger: {
-        error: jest.fn(),
-        info: jest.fn(),
-        warn: jest.fn(),
+        error: vi.fn(),
+        info: vi.fn(),
+        warn: vi.fn(),
     },
 }));
 
@@ -16,7 +16,7 @@ describe('assertTargetContainerTreeItem', () => {
     const loggerErrMsg = `Expected TargetContainerTreeItem but received`;
 
     beforeEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('does not throw for an object that is an instance of TargetContainerTreeItem', () => {

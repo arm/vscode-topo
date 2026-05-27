@@ -4,13 +4,14 @@ import { ContainerStop } from './containerStop';
 import { ContainerItem } from '../util/types';
 import { TargetContainerTreeItem } from '../targetTreeView/targetContainerTreeItem';
 import { WrappedError } from '../errors/wrappedError';
-import { mock, MockProxy } from 'jest-mock-extended';
+import { mock, MockProxy } from 'vitest-mock-extended';
 import { ContainerCommands } from '../target/containerCommands';
 import { executeCommand } from '../util/test/executeCommand';
+import type { MockInstance } from 'vitest';
 
 describe('ContainerStop', () => {
     let context: MockProxy<vscode.ExtensionContext>;
-    let showErrorMessageSpy: jest.SpyInstance;
+    let showErrorMessageSpy: MockInstance;
     const target = 'user@topo.local';
     const container: ContainerItem = {
         id: 'abc123',
@@ -30,9 +31,9 @@ describe('ContainerStop', () => {
 
     beforeEach(() => {
         context = mock<vscode.ExtensionContext>({ subscriptions: [] });
-        showErrorMessageSpy = jest
+        showErrorMessageSpy = vi
             .spyOn(vscode.window, 'showErrorMessage')
-            .mockImplementation(jest.fn());
+            .mockImplementation(vi.fn());
     });
     it('calls stopContainer and shows info message on success', async () => {
         const containerCommands = mock<ContainerCommands>();

@@ -7,12 +7,12 @@ export enum Verbosity {
 }
 
 export const logger = {
-    log: jest.fn((_verbosity: Verbosity, _message: unknown): void => {}),
-    error: jest.fn((_message: unknown): void => {}),
-    warn: jest.fn((_message: unknown): void => {}),
-    info: jest.fn((_message: unknown): void => {}),
-    debug: jest.fn((_message: unknown): void => {}),
-    getVerbosity: jest.fn(),
-    show: jest.fn(),
-    dispose: jest.fn(),
+    log: vi.fn((_verbosity: Verbosity, _message: unknown): void => {}),
+    error: vi.fn((_message: unknown): void => {}),
+    warn: vi.fn((_message: unknown): void => {}),
+    info: vi.fn((_message: unknown): void => {}),
+    debug: vi.fn((_message: unknown): void => {}),
+    getVerbosity: vi.fn(),
+    show: vi.fn(),
+    dispose: vi.fn(),
 };

@@ -1,11 +1,11 @@
 import * as vscode from 'vscode';
-import { mock, MockProxy } from 'jest-mock-extended';
+import { mock, MockProxy } from 'vitest-mock-extended';
 import { HostHealth } from './hostHealth';
 import { TopoCli } from '../topoCli';
 import { HealthCheckResult, HostHealthCheckResult } from '../topoCliSchema';
 import { executeCommand } from '../util/test/executeCommand';
 
-jest.mock('../util/logger');
+vi.mock('../util/logger');
 
 describe('HostHealth', () => {
     let context: MockProxy<vscode.ExtensionContext>;
@@ -17,7 +17,7 @@ describe('HostHealth', () => {
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('registers host health command and content provider', () => {
@@ -55,17 +55,17 @@ describe('HostHealth', () => {
         const health = new HostHealth(context, topoCli);
         health.activate();
         const document = mock<vscode.TextDocument>();
-        jest.mocked(vscode.workspace.openTextDocument).mockResolvedValueOnce(
+        vi.mocked(vscode.workspace.openTextDocument).mockResolvedValueOnce(
             document,
         );
 
         await executeCommand(HostHealth.inspectHostHealthCommand);
 
-        const providerRegistration = jest.mocked(
+        const providerRegistration = vi.mocked(
             vscode.workspace.registerTextDocumentContentProvider,
         ).mock.calls[0];
         const contentProvider = providerRegistration[1];
-        const uri = jest.mocked(vscode.workspace.openTextDocument).mock
+        const uri = vi.mocked(vscode.workspace.openTextDocument).mock
             .calls[0][0];
         const content = await Promise.resolve(
             contentProvider.provideTextDocumentContent(

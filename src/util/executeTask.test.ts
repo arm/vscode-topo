@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { PACKAGE_NAME } from '../manifest';
 import { executeTask } from './executeTask';
 import { mutable } from './mutable';
+import type { Mock } from 'vitest';
 
 type TaskEndListener = (event: vscode.TaskProcessEndEvent) => void;
 
@@ -9,18 +10,18 @@ describe('executeTask', () => {
     const cwd = '/workspace/app';
     const taskExecution: vscode.TaskExecution = {
         task: {} as vscode.Task,
-        terminate: jest.fn(),
+        terminate: vi.fn(),
     };
 
     let taskEndListener: TaskEndListener | undefined;
-    let dispose: jest.Mock;
+    let dispose: Mock;
 
     beforeEach(() => {
-        jest.clearAllMocks();
-        dispose = jest.fn();
+        vi.clearAllMocks();
+        dispose = vi.fn();
         taskEndListener = undefined;
 
-        jest.mocked(vscode.tasks.executeTask).mockResolvedValue(taskExecution);
+        vi.mocked(vscode.tasks.executeTask).mockResolvedValue(taskExecution);
         mutable(vscode.tasks).onDidEndTaskProcess = (callback, thisArg) => {
             taskEndListener = thisArg ? callback.bind(thisArg) : callback;
             return { dispose };
@@ -72,7 +73,7 @@ describe('executeTask', () => {
         const runningTask = executeTask('Setup keys', ['topo', 'setup-keys']);
         await Promise.resolve();
         taskEndListener?.({
-            execution: { task: {} as vscode.Task, terminate: jest.fn() },
+            execution: { task: {} as vscode.Task, terminate: vi.fn() },
             exitCode: 0,
         });
         taskEndListener?.({ execution: taskExecution, exitCode: 1 });
@@ -89,7 +90,7 @@ describe('executeTask', () => {
             name: 'app',
             index: 0,
         };
-        jest.mocked(vscode.workspace.getWorkspaceFolder).mockReturnValue(
+        vi.mocked(vscode.workspace.getWorkspaceFolder).mockReturnValue(
             workspaceFolder,
         );
 
