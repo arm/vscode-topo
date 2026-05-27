@@ -3,8 +3,8 @@ import * as commands from './commands';
 import { TopoCli } from './topoCli';
 import { ProjectInit } from './actions/projectInit';
 import { TopoCliVersionChecker } from './topoCliVersionChecker';
-import { TargetManager } from './targetTreeView/targetManager';
-import { TargetTreeDataProvider } from './targetTreeView/targetTreeDataProvider';
+import { TargetStatusBarItemView } from './views/targetStatusBarItemView';
+import { TargetTreeView } from './views/targetTreeView';
 import { ContainersManager } from './target/containersManager';
 import { ContainerStart } from './actions/containerStart';
 import { ContainerStop } from './actions/containerStop';
@@ -46,13 +46,34 @@ export async function activate(
         return;
     }
 
+    const dockerCommands = new DockerCommands();
     const targetStore = new TargetStore(context);
-    context.subscriptions.push(targetStore);
+    const containersManager = new ContainersManager(
+        topoCli,
+        dockerCommands,
+        targetStore,
+    );
+    await containersManager.activate();
+    const targetDescriptionStore = new TargetDescriptionStore(topoCli);
+    context.subscriptions.push(targetStore, containersManager);
 
     const hostModel = new HostModel();
 
     const hostTreeView = new HostTreeView(hostModel);
-    context.subscriptions.push(hostTreeView);
+    const targetTreeView = new TargetTreeView(
+        containersManager,
+        targetStore,
+        targetDescriptionStore,
+    );
+    const targetStatusBarItemView = new TargetStatusBarItemView(
+        targetStore,
+        containersManager,
+    );
+    context.subscriptions.push(
+        hostTreeView,
+        targetTreeView,
+        targetStatusBarItemView,
+    );
 
     const hostHealthController = new HostController(hostModel, topoCli);
     const targetsController = new TargetController(targetStore);
@@ -63,35 +84,15 @@ export async function activate(
     );
     context.subscriptions.push(disposeCommands);
 
-    const targetDescriptionStore = new TargetDescriptionStore(topoCli);
     const projectInit = new ProjectInit(topoCli);
     context.subscriptions.push(projectInit);
     const projectClone = new ProjectClone(context, topoCli, targetStore);
     const deploy = new Deploy(context, targetStore);
     const stop = new Stop(context, targetStore);
     const containerOpenInBrowser = new ContainerOpenInBrowser(context);
-    const dockerCommands = new DockerCommands();
     const attachVsCode = new AttachVsCode(context, dockerCommands);
     const attachShell = new AttachShell(context, dockerCommands, targetStore);
     const setupKeys = new SetupKeys(context, targetStore);
-    const containersManager = new ContainersManager(
-        topoCli,
-        dockerCommands,
-        targetStore,
-    );
-    context.subscriptions.push(containersManager);
-    const targetTreeDataProvider = new TargetTreeDataProvider(
-        context,
-        containersManager,
-        targetStore,
-        targetDescriptionStore,
-    );
-    const targetManager = new TargetManager(
-        context,
-        targetTreeDataProvider,
-        targetStore,
-        containersManager,
-    );
     const containerStart = new ContainerStart(context, dockerCommands);
     const containerStop = new ContainerStop(context, dockerCommands);
     const containerDelete = new ContainerDelete(context, dockerCommands);
@@ -112,9 +113,6 @@ export async function activate(
     containerOpenInBrowser.activate();
     attachVsCode.activate();
     attachShell.activate();
-    await containersManager.activate();
-    targetTreeDataProvider.activate();
-    targetManager.activate();
     containerStart.activate();
     containerStop.activate();
     containerDelete.activate();
