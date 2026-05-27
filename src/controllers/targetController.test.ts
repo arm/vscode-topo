@@ -1,5 +1,5 @@
 import { mock } from 'jest-mock-extended';
-import { buildQuickPickItems, TargetsController } from './targetsController';
+import { buildQuickPickItems, TargetController } from './targetController';
 import * as vscode from 'vscode';
 import { logger } from '../util/logger';
 import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
@@ -86,10 +86,10 @@ describe('target addition', () => {
     it('prompts for ssh, stores and selects new target', async () => {
         const targetSsh = 'root@192.0.2.1';
         const targetStore = mock<TargetStore>();
-        const controller = new TargetsController(targetStore);
+        const controller = new TargetController(targetStore);
         mockQuickPick({ label: targetSsh });
 
-        await controller.promptToAddTarget();
+        await controller.promptToAdd();
 
         expect(targetStore.addTarget).toHaveBeenCalledTimes(1);
         expect(targetStore.addTarget).toHaveBeenCalledWith(targetSsh);
@@ -98,10 +98,10 @@ describe('target addition', () => {
 
     it('does nothing when quick pick is dismissed', async () => {
         const targetStore = mock<TargetStore>();
-        const controller = new TargetsController(targetStore);
+        const controller = new TargetController(targetStore);
         mockQuickPick(undefined);
 
-        await controller.promptToAddTarget();
+        await controller.promptToAdd();
 
         expect(targetStore.addTarget).not.toHaveBeenCalled();
         expect(targetStore.setSelected).not.toHaveBeenCalled();
@@ -109,12 +109,12 @@ describe('target addition', () => {
 
     it('shows error when targetStore.addTarget fails', async () => {
         const targetStore = mock<TargetStore>();
-        const controller = new TargetsController(targetStore);
+        const controller = new TargetController(targetStore);
         const error = new Error('boom');
         jest.mocked(targetStore.addTarget).mockRejectedValueOnce(error);
         mockQuickPick({ label: 'root@192.0.2.1' });
 
-        await controller.promptToAddTarget();
+        await controller.promptToAdd();
 
         expect(targetStore.addTarget).toHaveBeenCalled();
         expect(logger.warn).toHaveBeenCalledWith(
@@ -131,19 +131,19 @@ describe('target addition', () => {
 describe('target selection', () => {
     it('invokes targetStore.setSelected when select command is executed with a target item', async () => {
         const targetStore = mock<TargetStore>();
-        const controller = new TargetsController(targetStore);
+        const controller = new TargetController(targetStore);
         const targetItem = new TargetTreeItem('user@board', true, 'connected');
 
-        await controller.selectTarget(targetItem);
+        await controller.select(targetItem);
 
         expect(targetStore.setSelected).toHaveBeenCalledWith(targetItem.target);
     });
 
     it('does not call setSelected when select command is executed with a non-target item', async () => {
         const targetStore = mock<TargetStore>();
-        const controller = new TargetsController(targetStore);
+        const controller = new TargetController(targetStore);
 
-        await controller.selectTarget();
+        await controller.select();
 
         expect(targetStore.setSelected).not.toHaveBeenCalled();
     });
@@ -152,10 +152,10 @@ describe('target selection', () => {
 describe('target removal', () => {
     it('invokes targetStore.deleteTarget when removeTarget is invoked with a target item', async () => {
         const targetStore = mock<TargetStore>();
-        const controller = new TargetsController(targetStore);
+        const controller = new TargetController(targetStore);
         const targetItem = new TargetTreeItem('foo@bar.co', true, 'connected');
 
-        await controller.removeTarget(targetItem);
+        await controller.remove(targetItem);
 
         expect(targetStore.deleteTarget).toHaveBeenCalledWith(
             targetItem.target,
@@ -164,21 +164,21 @@ describe('target removal', () => {
 
     it('does not call deleteTarget when removeTarget is invoked with a non-target item', async () => {
         const targetStore = mock<TargetStore>();
-        const controller = new TargetsController(targetStore);
+        const controller = new TargetController(targetStore);
 
-        await controller.removeTarget();
+        await controller.remove();
 
         expect(targetStore.deleteTarget).not.toHaveBeenCalled();
     });
 
     it('shows an error when deleteTarget fails', async () => {
         const targetStore = mock<TargetStore>();
-        const controller = new TargetsController(targetStore);
+        const controller = new TargetController(targetStore);
         const targetItem = new TargetTreeItem('foo@bar.co', true, 'connected');
         targetStore.deleteTarget.mockRejectedValue(
             new Error('Target not found'),
         );
-        await controller.removeTarget(targetItem);
+        await controller.remove(targetItem);
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
             expect.stringContaining('Failed to remove target'),

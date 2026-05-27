@@ -6,7 +6,7 @@ This extension is [free to use](LICENSE) and can be installed from the VS Code M
 
 ## Requirements
 
-- Visual Studio Code v1.99.0 or newer
+- Visual Studio Code v1.101.0 or newer
 
 ## Getting Started
 

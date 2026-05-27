@@ -10,6 +10,7 @@ import { TargetSubsystemGroupTreeItem } from '../targetTreeView/targetSubsystemG
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 import { HealthCheckDependency } from '../topoCliSchema';
 import { TargetDescriptionStore } from '../target/targetDescriptionStore';
+import { getVisibleTargetDependencies } from '../target/getVisibleTargetDependencies';
 
 function sortDependenciesByName(
     deps: HealthCheckDependency[],
@@ -83,10 +84,10 @@ export class TargetTreeView
                 return [];
             }
 
-            const dependencies = [...targetState.health.dependencies];
-            if (selectedTargetDescription?.remoteProcessors.length) {
-                dependencies.push(targetState.health.subsystemDriver);
-            }
+            const dependencies = getVisibleTargetDependencies(
+                targetState.health,
+                selectedTargetDescription,
+            );
 
             const dependenciesGroup = new HealthCheckDependencyGroupTreeItem(
                 dependencies,

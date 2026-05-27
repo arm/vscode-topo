@@ -15,6 +15,40 @@ function isTargetTreeItem(node: unknown): node is TargetTreeItem {
     return false;
 }
 
+async function promptForSshTarget(
+    currentTargets: string[],
+): Promise<string | undefined> {
+    const sshHosts = await getHosts(defaultSshConfigPath);
+    const existingTargets = new Set(currentTargets);
+    const availableHosts = sshHosts.filter(
+        (host) => !existingTargets.has(host),
+    );
+
+    const quickPick = vscode.window.createQuickPick();
+    quickPick.title = 'Add new target';
+    quickPick.placeholder =
+        'Select a host or type a connection string (e.g. root@192.168.1.1)';
+    quickPick.items = buildQuickPickItems(availableHosts, '');
+
+    quickPick.onDidChangeValue((value) => {
+        quickPick.items = buildQuickPickItems(availableHosts, value);
+    });
+
+    return new Promise<string | undefined>((resolve) => {
+        quickPick.onDidAccept(async () => {
+            const selected = quickPick.selectedItems[0]?.label?.trim();
+            quickPick.hide();
+            resolve(selected);
+        });
+
+        quickPick.onDidHide(() => {
+            resolve(undefined);
+        });
+
+        quickPick.show();
+    }).finally(() => quickPick.dispose());
+}
+
 export function buildQuickPickItems(
     availableHosts: string[],
     filter: string,
@@ -32,10 +66,10 @@ export function buildQuickPickItems(
     return [...(manualItem ? [manualItem] : []), ...hostItems];
 }
 
-export class TargetsController {
+export class TargetController {
     constructor(private readonly targetStore: TargetStore) {}
 
-    public async selectTarget(treeNode?: unknown): Promise<void> {
+    public async select(treeNode?: unknown): Promise<void> {
         if (!isTargetTreeItem(treeNode)) {
             return;
         }
@@ -43,7 +77,7 @@ export class TargetsController {
         await this.targetStore.setSelected(treeNode.target);
     }
 
-    public async removeTarget(treeNode?: unknown): Promise<void> {
+    public async remove(treeNode?: unknown): Promise<void> {
         if (!isTargetTreeItem(treeNode)) {
             return;
         }
@@ -56,8 +90,8 @@ export class TargetsController {
         }
     }
 
-    public async promptToAddTarget(): Promise<string | undefined> {
-        const target = await this.promptForSshTarget();
+    public async promptToAdd(): Promise<void> {
+        const target = await promptForSshTarget(this.targetStore.getTargets());
         if (!target) {
             return;
         }
@@ -71,38 +105,5 @@ export class TargetsController {
             return;
         }
         await this.targetStore.setSelected(target);
-        return target;
-    }
-
-    private async promptForSshTarget(): Promise<string | undefined> {
-        const sshHosts = await getHosts(defaultSshConfigPath);
-        const existingTargets = new Set(this.targetStore.getTargets());
-        const availableHosts = sshHosts.filter(
-            (host) => !existingTargets.has(host),
-        );
-
-        const quickPick = vscode.window.createQuickPick();
-        quickPick.title = 'Add new target';
-        quickPick.placeholder =
-            'Select a host or type a connection string (e.g. root@192.168.1.1)';
-        quickPick.items = buildQuickPickItems(availableHosts, '');
-
-        quickPick.onDidChangeValue((value) => {
-            quickPick.items = buildQuickPickItems(availableHosts, value);
-        });
-
-        return new Promise<string | undefined>((resolve) => {
-            quickPick.onDidAccept(async () => {
-                const selected = quickPick.selectedItems[0]?.label?.trim();
-                quickPick.hide();
-                resolve(selected);
-            });
-
-            quickPick.onDidHide(() => {
-                resolve(undefined);
-            });
-
-            quickPick.show();
-        }).finally(() => quickPick.dispose());
     }
 }

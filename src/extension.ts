@@ -25,10 +25,9 @@ import { InstallDependency } from './actions/installDependency';
 import { HostTreeView } from './views/hostTreeView';
 import { logger } from './util/logger';
 import { TargetHealth } from './actions/targetHealth';
-import { ShowOutput } from './actions/showOutput';
 import { HostModel } from './models/hostModel';
 import { HostController } from './controllers/hostController';
-import { TargetsController } from './controllers/targetsController';
+import { TargetController } from './controllers/targetController';
 
 export async function activate(
     context: vscode.ExtensionContext,
@@ -77,7 +76,7 @@ export async function activate(
     );
 
     const hostHealthController = new HostController(hostModel, topoCli);
-    const targetsController = new TargetsController(targetStore);
+    const targetsController = new TargetController(targetStore);
 
     const disposeCommands = commands.register(
         hostHealthController,
@@ -90,8 +89,6 @@ export async function activate(
     const projectClone = new ProjectClone(context, topoCli, targetStore);
     const deploy = new Deploy(context, targetStore);
     const stop = new Stop(context, targetStore);
-    const showOutput = new ShowOutput();
-    context.subscriptions.push(showOutput);
     const containerOpenInBrowser = new ContainerOpenInBrowser(context);
     const attachVsCode = new AttachVsCode(context, dockerCommands);
     const attachShell = new AttachShell(context, dockerCommands, targetStore);
@@ -125,6 +122,5 @@ export async function activate(
     hostHealth.activate();
     targetHealth.activate();
     setupKeys.activate();
-    showOutput.activate();
     await installDependency.activate();
 }
