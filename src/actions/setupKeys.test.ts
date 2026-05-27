@@ -17,6 +17,7 @@ describe('SetupKeys', () => {
     const target = 'user@topo.local';
 
     beforeEach(() => {
+        vi.clearAllMocks();
         context = mock<vscode.ExtensionContext>({ subscriptions: [] });
         targetStore = mock<TargetStore>();
         targetStore.getSelectedTarget.mockReturnValue(target);
@@ -48,6 +49,7 @@ describe('SetupKeys', () => {
             `Setup keys on ${target}`,
             ['topo', 'setup-keys', '--target', target],
         );
+        expect(targetStore.getSelectedTarget).not.toHaveBeenCalled();
         expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
             `Keys were set up on target ${target}.`,
         );
@@ -74,6 +76,34 @@ describe('SetupKeys', () => {
             `Setup keys on ${target}`,
             ['topo', 'setup-keys', '--target', target],
         );
+    });
+
+    it('shows error when no target is available for setup-keys', async () => {
+        targetStore.getSelectedTarget.mockReturnValueOnce(undefined);
+        const setupKeys = new SetupKeys(context, targetStore);
+        setupKeys.activate();
+
+        await executeCommand(SetupKeys.setupKeysCommand, undefined);
+
+        expect(executeTaskMock).not.toHaveBeenCalled();
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
+            'Failed to set up keys on target. No selected target found',
+        );
+    });
+
+    it('rethrows errors from selected target lookup', async () => {
+        targetStore.getSelectedTarget.mockImplementationOnce(() => {
+            throw new Error('target lookup failed');
+        });
+        const setupKeys = new SetupKeys(context, targetStore);
+        setupKeys.activate();
+
+        await expect(
+            executeCommand(SetupKeys.setupKeysCommand, undefined),
+        ).rejects.toThrow('target lookup failed');
+
+        expect(executeTaskMock).not.toHaveBeenCalled();
+        expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
     });
 
     it('shows error when setup-keys fails', async () => {

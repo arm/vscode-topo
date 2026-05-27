@@ -22,30 +22,31 @@ export class Stop {
         this.context.subscriptions.push(
             vscode.commands.registerCommand(
                 Stop.stopCommand,
-                this.handleStopCommand.bind(this),
+                this.stopCommandHandler.bind(this),
             ),
         );
     }
 
-    private async handleStopCommand(resource?: vscode.Uri): Promise<void> {
+    private async stopCommandHandler(resource?: vscode.Uri): Promise<void> {
         if (!resource) {
             throw new Error('No compose file selected for stop');
         }
-        try {
-            await this.stop(resource.fsPath);
-        } catch (err) {
-            showAndLogError('Error executing stop command', err);
+        const target = this.targetStore.getSelectedTarget();
+
+        if (!target) {
+            showAndLogError(
+                'Error executing stop command',
+                new Error(
+                    'No target selected. Please select a target before stopping.',
+                ),
+            );
+            return;
         }
+
+        await this.stop(resource.fsPath, target);
     }
 
-    public async stop(composeFilePath: string): Promise<void> {
-        const target = this.targetStore.getSelectedTarget();
-        if (!target) {
-            throw new Error(
-                'No target selected. Please select a target before stopping.',
-            );
-        }
-
+    public async stop(composeFilePath: string, target: string): Promise<void> {
         const taskName = `Stop services on ${target}`;
 
         try {

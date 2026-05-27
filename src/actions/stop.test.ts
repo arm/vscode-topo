@@ -28,6 +28,8 @@ describe('Stop', () => {
         context = mock<vscode.ExtensionContext>({ subscriptions: [] });
         targetStore = mock<TargetStore>();
         targetStore.getSelectedTarget.mockReturnValue(target);
+        executeTaskMock.mockReset();
+        vi.mocked(vscode.window.showErrorMessage).mockClear();
         stop = new Stop(context, targetStore);
         registerSpy = vi
             .spyOn(vscode.commands, 'registerCommand')
@@ -54,16 +56,34 @@ describe('Stop', () => {
         expect(context.subscriptions.length).toBeGreaterThan(0);
     });
 
-    it('fails with no target selected', async () => {
-        targetStore.getSelectedTarget.mockReturnValue(undefined);
+    it('shows an error in the command handler with no target selected', async () => {
+        targetStore.getSelectedTarget.mockReturnValueOnce(undefined);
+        stop.activate();
 
-        const stopOperation = stop.stop(composeFilePath);
+        const stopOperation = stopHandler!(composeFileUri);
 
-        await expect(stopOperation).rejects.toThrow('No target selected');
+        await expect(stopOperation).resolves.toBeUndefined();
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
+            'Error executing stop command. No target selected. Please select a target before stopping.',
+        );
+        expect(executeTaskMock).not.toHaveBeenCalled();
+    });
+
+    it('rethrows target lookup errors in the command handler', async () => {
+        targetStore.getSelectedTarget.mockImplementationOnce(() => {
+            throw new Error('target store failed');
+        });
+        stop.activate();
+
+        const stopOperation = stopHandler!(composeFileUri);
+
+        await expect(stopOperation).rejects.toThrow('target store failed');
+        expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
+        expect(executeTaskMock).not.toHaveBeenCalled();
     });
 
     it('handles successful stop operation', async () => {
-        await stop.stop(composeFilePath);
+        await stop.stop(composeFilePath, target);
 
         expect(executeTaskMock).toHaveBeenCalledWith(
             'Stop services on topo.local',
@@ -74,7 +94,7 @@ describe('Stop', () => {
 
     it('handles task failure', async () => {
         executeTaskMock.mockRejectedValueOnce(new Error('stop failed'));
-        await stop.stop(composeFilePath);
+        await stop.stop(composeFilePath, target);
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
             'Stopping services on topo.local failed: stop failed',
@@ -87,6 +107,7 @@ describe('Stop', () => {
         const op = stopHandler!(composeFileUri);
 
         await expect(op).resolves.toBeUndefined();
+        expect(targetStore.getSelectedTarget).toHaveBeenCalled();
         expect(executeTaskMock).toHaveBeenCalledWith(
             'Stop services on topo.local',
             ['topo', 'stop', '--target', 'topo.local'],

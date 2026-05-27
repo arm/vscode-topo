@@ -28,6 +28,8 @@ describe('Deploy', () => {
         context = mock<vscode.ExtensionContext>({ subscriptions: [] });
         targetStore = mock<TargetStore>();
         targetStore.getSelectedTarget.mockReturnValue(target);
+        executeTaskMock.mockReset();
+        vi.mocked(vscode.window.showErrorMessage).mockClear();
         deploy = new Deploy(context, targetStore);
         registerSpy = vi
             .spyOn(vscode.commands, 'registerCommand')
@@ -54,16 +56,34 @@ describe('Deploy', () => {
         expect(context.subscriptions.length).toBeGreaterThan(0);
     });
 
-    it('fails with no target selected', async () => {
+    it('shows an error in the command handler with no target selected', async () => {
         targetStore.getSelectedTarget.mockReturnValueOnce(undefined);
+        deploy.activate();
 
-        const deployOperation = deploy.deploy(composeFilePath);
+        const deployOperation = deployHandler!(composeFileUri);
 
-        await expect(deployOperation).rejects.toThrow('No target selected');
+        await expect(deployOperation).resolves.toBeUndefined();
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
+            'Error executing deploy command. No target selected. Please select a target before deploying.',
+        );
+        expect(executeTaskMock).not.toHaveBeenCalled();
+    });
+
+    it('rethrows target lookup errors in the command handler', async () => {
+        targetStore.getSelectedTarget.mockImplementationOnce(() => {
+            throw new Error('target store failed');
+        });
+        deploy.activate();
+
+        const deployOperation = deployHandler!(composeFileUri);
+
+        await expect(deployOperation).rejects.toThrow('target store failed');
+        expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
+        expect(executeTaskMock).not.toHaveBeenCalled();
     });
 
     it('handles successful deploy operation', async () => {
-        await deploy.deploy(composeFilePath);
+        await deploy.deploy(composeFilePath, target);
 
         expect(executeTaskMock).toHaveBeenCalledWith(
             'Deploy to topo.local',
@@ -74,7 +94,7 @@ describe('Deploy', () => {
 
     it('handles task failure', async () => {
         executeTaskMock.mockRejectedValueOnce(new Error('deploy failed'));
-        await deploy.deploy(composeFilePath);
+        await deploy.deploy(composeFilePath, target);
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
             'Deployment to topo.local failed: deploy failed',
@@ -87,6 +107,7 @@ describe('Deploy', () => {
         const op = deployHandler!(composeFileUri);
 
         await expect(op).resolves.toBeUndefined();
+        expect(targetStore.getSelectedTarget).toHaveBeenCalled();
         expect(executeTaskMock).toHaveBeenCalledWith(
             'Deploy to topo.local',
             ['topo', 'deploy', '--target', 'topo.local'],

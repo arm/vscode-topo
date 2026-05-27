@@ -38,7 +38,7 @@ export class AttachShell {
         terminal.show();
     }
 
-    public attachSSH() {
+    public attachSSH(): void {
         const target = this.targetStore.getSelectedTarget();
         if (!target) {
             throw new Error('No target is currently selected');

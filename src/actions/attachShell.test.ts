@@ -16,6 +16,9 @@ describe('AttachShell', () => {
     let context: MockProxy<vscode.ExtensionContext>;
 
     beforeEach(() => {
+        vi.clearAllMocks();
+        targetStore.getSelectedTarget.mockReset();
+        targetStore.getSelectedTarget.mockReturnValue(target);
         context = mock<vscode.ExtensionContext>({ subscriptions: [] });
     });
 
@@ -62,5 +65,38 @@ describe('AttachShell', () => {
             `docker --host ssh://${target} exec -it cid sh`,
         );
         expect(terminal.show).toHaveBeenCalled();
+    });
+
+    it('attachSSH opens terminal for the selected target', async () => {
+        const attachShell = new AttachShell(
+            context,
+            dockerCommands,
+            targetStore,
+        );
+
+        attachShell.attachSSH();
+
+        expect(vscode.window.createTerminal).toHaveBeenCalledWith({
+            name: `SSH: ${target}`,
+        });
+        const terminal = vi.mocked(vscode.window.createTerminal).mock.results[0]
+            .value;
+        expect(terminal.sendText).toHaveBeenCalledWith(`ssh ${target}`);
+        expect(terminal.show).toHaveBeenCalled();
+    });
+
+    it('rethrows errors from attachSSH target lookup', async () => {
+        targetStore.getSelectedTarget.mockImplementationOnce(() => {
+            throw new Error('target lookup failed');
+        });
+        const attachShell = new AttachShell(
+            context,
+            dockerCommands,
+            targetStore,
+        );
+
+        expect(() => attachShell.attachSSH()).toThrow('target lookup failed');
+        expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
+        expect(vscode.window.createTerminal).not.toHaveBeenCalled();
     });
 });
