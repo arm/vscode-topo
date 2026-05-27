@@ -6,13 +6,10 @@ import { TargetTreeView } from './targetTreeView';
 import { TargetStatus } from '../util/types';
 
 function renderStatusBarItem(
-    statusBarItem: vscode.StatusBarItem | undefined,
+    statusBarItem: vscode.StatusBarItem,
     target: string | undefined,
     status: TargetStatus,
 ): void {
-    if (!statusBarItem) {
-        return;
-    }
     if (target) {
         const targetTreeIcon = getTargetTreeItemIcon(true, status);
         const iconId = targetTreeIcon?.id || 'pass-filled';
@@ -30,7 +27,7 @@ export class TargetStatusBarItemView {
 
     private disposables: vscode.Disposable[] = [];
 
-    private statusBarItem: vscode.StatusBarItem | undefined;
+    private statusBarItem: vscode.StatusBarItem;
 
     constructor(
         private readonly targetStore: TargetStore,
