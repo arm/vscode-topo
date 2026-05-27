@@ -5,20 +5,21 @@ import { exec } from '../util/exec';
 import { DockerCommands } from './dockerCommands';
 import * as vscode from 'vscode';
 import { TargetStore } from './targetStore';
-import { mock } from 'jest-mock-extended';
+import { mock } from 'vitest-mock-extended';
 import { TopoCli } from '../topoCli';
 import type { ContainerCommands } from './containerCommands';
 import type { HealthCheckResult } from '../topoCliSchema';
+import type { Mock } from 'vitest';
 
 const waitImmediate = async () => {
     await Promise.resolve();
     await Promise.resolve();
 };
 
-jest.mock('../util/exec', () => ({
-    exec: jest.fn(),
+vi.mock('../util/exec', () => ({
+    exec: vi.fn(),
 }));
-jest.mock('../util/logger');
+vi.mock('../util/logger');
 
 const webServerPortInfo = {
     '80/tcp': [
@@ -84,7 +85,7 @@ const defaultInfoOutput = {
     stdout: 'Server Version: 8',
     stderr: '',
 };
-const execMock = exec as jest.Mock;
+const execMock = exec as Mock;
 const target = 'user@topo.local';
 const loadedHealth: HealthCheckResult = {
     host: { dependencies: [] },
@@ -124,16 +125,16 @@ describe('ContainersManager', () => {
     };
 
     beforeEach(() => {
-        jest.useFakeTimers();
-        jest.resetAllMocks();
+        vi.useFakeTimers();
+        vi.resetAllMocks();
         topoCli.health.mockResolvedValue(loadedHealth);
         containersManager = undefined;
     });
 
     afterEach(() => {
         containersManager?.dispose();
-        jest.useRealTimers();
-        jest.clearAllTimers();
+        vi.useRealTimers();
+        vi.clearAllTimers();
     });
 
     it('getContainersData returns containers with runtime', async () => {
@@ -302,7 +303,7 @@ describe('ContainersManager', () => {
         );
 
         containerCommands.getContainers.mockClear();
-        await jest.advanceTimersByTimeAsync(3000);
+        await vi.advanceTimersByTimeAsync(3000);
 
         await expect(manager.getContainersData(target)).resolves.toEqual([]);
         expect(containerCommands.getContainers).not.toHaveBeenCalled();
@@ -328,11 +329,11 @@ describe('ContainersManager', () => {
         const manager = createContainersManager(targetStore);
         manager.activate();
 
-        const spy = jest.fn();
+        const spy = vi.fn();
         manager.onDataUpdate(spy);
         expect(spy).not.toHaveBeenCalled();
 
-        await jest.advanceTimersByTimeAsync(4000);
+        await vi.advanceTimersByTimeAsync(4000);
         expect(spy).toHaveBeenCalled();
     });
 
@@ -356,10 +357,10 @@ describe('ContainersManager', () => {
         const manager = createContainersManager(targetStore);
         manager.activate();
 
-        const spy = jest.fn();
+        const spy = vi.fn();
         manager.onDataUpdate(spy);
 
-        await jest.advanceTimersByTimeAsync(3000);
+        await vi.advanceTimersByTimeAsync(3000);
         expect(spy).toHaveBeenCalled();
     });
 
@@ -434,7 +435,7 @@ describe('ContainersManager', () => {
         expect(
             targetStore.getSelectedTarget.mock.calls.length,
         ).toBeGreaterThanOrEqual(1);
-        const dataUpdateSpy = jest.fn();
+        const dataUpdateSpy = vi.fn();
         manager.onDataUpdate(dataUpdateSpy);
         selectedTarget = newTarget;
 
@@ -528,7 +529,7 @@ describe('ContainersManager', () => {
 
         topoCli.health.mockClear();
 
-        await jest.advanceTimersByTimeAsync(9000);
+        await vi.advanceTimersByTimeAsync(9000);
 
         expect(topoCli.health).toHaveBeenCalled();
         expect(topoCli.health).toHaveBeenCalledWith(newTarget);

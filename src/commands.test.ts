@@ -1,16 +1,24 @@
-import { mock } from 'jest-mock-extended';
+import { mock } from 'vitest-mock-extended';
 import * as vscode from 'vscode';
 import { HostController } from './controllers/hostController';
 import * as commands from './commands';
 import { executeCommand } from './util/test/executeCommand';
+import type { Mock } from 'vitest';
+import { logger } from './util/logger';
+import { TargetController } from './controllers/targetController';
 
-jest.mock('./util/logger');
+vi.mock('./util/logger');
 
 describe('commands', () => {
-    it('registers all exported commands', () => {
-        const hostController = mock<HostController>();
+    const hostController = mock<HostController>();
+    const targetController = mock<TargetController>();
 
-        commands.register(hostController);
+    afterEach(() => {
+        vi.clearAllMocks();
+    });
+
+    it('registers all exported commands', () => {
+        commands.register(hostController, targetController);
 
         for (const command of Object.values(commands)) {
             if (typeof command !== 'string' || !command.startsWith('topo.')) {
@@ -27,12 +35,15 @@ describe('commands', () => {
     it('disposes all registered commands', () => {
         const hostController = mock<HostController>();
         const disposables: vscode.Disposable[] = [];
-        jest.mocked(vscode.commands.registerCommand).mockImplementation(() => {
+        vi.mocked(vscode.commands.registerCommand).mockImplementation(() => {
             const disposable = mock<vscode.Disposable>();
             disposables.push(disposable);
             return disposable;
         });
-        const registration = commands.register(hostController);
+        const registration = commands.register(
+            hostController,
+            targetController,
+        );
 
         registration.dispose();
 
@@ -42,18 +53,21 @@ describe('commands', () => {
     });
 
     describe('command handlers', () => {
-        const hostController = mock<HostController>();
-        const cases: [string, jest.Mock][] = [
+        const cases: [string, Mock][] = [
             [commands.refreshHostHealth, hostController.refreshHealth],
+            [commands.showOutput, vi.mocked(logger.show)],
+            [commands.selectTarget, targetController.select],
+            [commands.removeTarget, targetController.remove],
+            [commands.addTarget, targetController.promptToAdd],
             [commands.inspectHostHealth, hostController.openHealthDocument],
         ];
 
         it.each(cases)(
             '%s calls the correct handler',
             async (command, handler) => {
-                commands.register(hostController);
+                commands.register(hostController, targetController);
 
-                await executeCommand(command);
+                await executeCommand(command, 'argument');
 
                 expect(handler).toHaveBeenCalled();
             },

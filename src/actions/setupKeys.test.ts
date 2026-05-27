@@ -1,15 +1,15 @@
 import * as vscode from 'vscode';
-import { mock, MockProxy } from 'jest-mock-extended';
+import { mock, MockProxy } from 'vitest-mock-extended';
 import { SetupKeys } from './setupKeys';
 import { TargetStore } from '../target/targetStore';
 import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
 import { executeTask } from '../util/executeTask';
 import { executeCommand } from '../util/test/executeCommand';
 
-jest.mock('../util/logger');
-jest.mock('../util/executeTask');
+vi.mock('../util/logger');
+vi.mock('../util/executeTask');
 
-const executeTaskMock = jest.mocked(executeTask);
+const executeTaskMock = vi.mocked(executeTask);
 
 describe('SetupKeys', () => {
     let context: MockProxy<vscode.ExtensionContext>;
@@ -23,7 +23,7 @@ describe('SetupKeys', () => {
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('registers setup keys command', () => {

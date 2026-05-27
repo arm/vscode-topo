@@ -1,7 +1,7 @@
 import { OutputChannelLogger, stringifyMessage } from './logger';
 import * as vscode from 'vscode';
 import { mutable } from './mutable';
-import { mock, MockProxy } from 'jest-mock-extended';
+import { mock, MockProxy } from 'vitest-mock-extended';
 
 describe('OutputChannelLogger', () => {
     let outputChannelMock: MockProxy<vscode.LogOutputChannel>;
@@ -11,16 +11,16 @@ describe('OutputChannelLogger', () => {
         outputChannelMock = mock<vscode.LogOutputChannel>();
         configurationMock = mock<vscode.WorkspaceConfiguration>();
 
-        jest.mocked(vscode.window.createOutputChannel).mockReturnValue(
+        vi.mocked(vscode.window.createOutputChannel).mockReturnValue(
             outputChannelMock,
         );
-        jest.mocked(vscode.workspace.getConfiguration).mockReturnValue(
+        vi.mocked(vscode.workspace.getConfiguration).mockReturnValue(
             configurationMock,
         );
     });
 
     afterEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     it('does not log when verbosity is off', () => {
@@ -89,7 +89,7 @@ describe('OutputChannelLogger', () => {
     it('disposes configuration listener and output channel', () => {
         configurationMock.get.mockReturnValue('warn');
         const configurationChangeDisposable = mock<vscode.Disposable>();
-        mutable(vscode.workspace).onDidChangeConfiguration = jest.fn(
+        mutable(vscode.workspace).onDidChangeConfiguration = vi.fn(
             () => configurationChangeDisposable,
         );
         const logger = new OutputChannelLogger();

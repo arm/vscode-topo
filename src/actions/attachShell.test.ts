@@ -1,13 +1,13 @@
 import * as vscode from 'vscode';
 import { AttachShell } from '../actions/attachShell';
-import { mock, MockProxy } from 'jest-mock-extended';
+import { mock, MockProxy } from 'vitest-mock-extended';
 import { ContainerItem } from '../util/types';
 import { TargetStore } from '../target/targetStore';
 import { DockerCommands } from '../target/dockerCommands';
 import { TargetContainerTreeItem } from '../targetTreeView/targetContainerTreeItem';
 import { executeCommand } from '../util/test/executeCommand';
 
-jest.mock('../util/logger');
+vi.mock('../util/logger');
 
 describe('AttachShell', () => {
     const dockerCommands = new DockerCommands();
@@ -20,7 +20,7 @@ describe('AttachShell', () => {
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('registers attachShell command on activate', () => {
@@ -56,8 +56,8 @@ describe('AttachShell', () => {
         expect(vscode.window.createTerminal).toHaveBeenCalledWith({
             name: 'Shell: clabel',
         });
-        const terminal = jest.mocked(vscode.window.createTerminal).mock
-            .results[0].value;
+        const terminal = vi.mocked(vscode.window.createTerminal).mock.results[0]
+            .value;
         expect(terminal.sendText).toHaveBeenCalledWith(
             `docker --host ssh://${target} exec -it cid sh`,
         );

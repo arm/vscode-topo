@@ -1,13 +1,13 @@
 import * as vscode from 'vscode';
 import { ProjectInit } from './projectInit';
 import { mutable } from '../util/mutable';
-import { mock } from 'jest-mock-extended';
+import { mock } from 'vitest-mock-extended';
 import { TopoCli } from '../topoCli';
 import { executeCommand } from '../util/test/executeCommand';
 
 describe('ProjectInit', () => {
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     it('registers the initProject command on activate', async () => {
