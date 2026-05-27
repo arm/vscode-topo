@@ -7,13 +7,12 @@ import { ContainersManager } from '../target/containersManager';
 import { logger } from '../util/logger';
 import { executeTask } from '../util/executeTask';
 import { getFixCommandArgs } from '../util/getFixCommandArgs';
+import {
+    type DependencyFixCommandGroup,
+    getDependencyFixCommandGroups,
+} from '../util/getDependencyFixes';
 
 const installAction = { title: 'Install missing dependencies' };
-
-type InstallableDependencyGroup = {
-    names: string[];
-    command: string;
-};
 
 export class InstallDependency implements vscode.Disposable {
     private disposables: vscode.Disposable[] = [];
@@ -50,25 +49,12 @@ export class InstallDependency implements vscode.Disposable {
         }
         const { health } = await this.containersManager.getTargetState(target);
 
-        const installables = new Map<string, InstallableDependencyGroup>();
-        for (const dependency of health?.dependencies ?? []) {
-            if (dependency.fix?.command) {
-                const installable = installables.get(dependency.fix.command);
-                if (installable) {
-                    installable.names.push(dependency.name);
-                } else {
-                    installables.set(dependency.fix.command, {
-                        names: [dependency.name],
-                        command: dependency.fix.command,
-                    });
-                }
-            }
-        }
+        const installables = health?.dependencies
+            ? getDependencyFixCommandGroups(health.dependencies)
+            : [];
 
-        if (installables.size > 0 && !abortController.signal.aborted) {
-            await this.showInstallableNotification(target, [
-                ...installables.values(),
-            ]);
+        if (installables.length > 0 && !abortController.signal.aborted) {
+            await this.showInstallableNotification(target, installables);
         }
     }
 
@@ -91,7 +77,7 @@ export class InstallDependency implements vscode.Disposable {
         }
 
         const command = treeNode.dependency.fix?.command;
-        if (!command || !getFixCommandArgs(command)) {
+        if (!command) {
             showAndLogError(
                 `Failed to install dependency`,
                 new Error(
@@ -138,7 +124,7 @@ export class InstallDependency implements vscode.Disposable {
 
     private async showInstallableNotification(
         target: string,
-        installables: InstallableDependencyGroup[],
+        installables: DependencyFixCommandGroup[],
     ): Promise<void> {
         const choice = await vscode.window.showWarningMessage(
             `${target} has missing or unhealthy dependencies: ${installables.flatMap(({ names }) => names).join(`, `)}`,
