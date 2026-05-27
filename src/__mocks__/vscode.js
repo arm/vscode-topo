@@ -10,8 +10,7 @@ class Uri extends URI {
     static joinPath = UriUtils.joinPath;
 }
 
-// Classes
-const Disposable = vi.fn(function () {
+const Disposable = vi.fn(() => {
     return { dispose: vi.fn() };
 });
 Disposable.from = (disposable) => disposable;
@@ -30,34 +29,42 @@ class EventEmitter {
         this._callbacks.forEach((cb) => cb(event));
     }
 }
-const RelativePattern = vi.fn(function () {});
-const ShellExecution = vi.fn(function (executablePath, executionArgs, options) {
-    return {
-        executablePath,
-        executionArgs,
-        options,
-    };
-});
-const Task = vi.fn(function (definition, scope, name, type, execution) {
-    return {
-        definition,
-        scope,
-        name,
-        type,
-        execution,
-    };
-});
+class MockRelativePattern {
+    constructor(base, pattern) {
+        this.base = base;
+        this.pattern = pattern;
+    }
+}
+const RelativePattern = vi.fn(MockRelativePattern);
+class MockShellExecution {
+    constructor(executablePath, executionArgs, options) {
+        this.executablePath = executablePath;
+        this.executionArgs = executionArgs;
+        this.options = options;
+    }
+}
+const ShellExecution = vi.fn(MockShellExecution);
+class MockTask {
+    constructor(definition, scope, name, type, execution) {
+        this.definition = definition;
+        this.scope = scope;
+        this.name = name;
+        this.type = type;
+        this.execution = execution;
+    }
+}
+const Task = vi.fn(MockTask);
 const ColorThemeKind = {
     Dark: 1,
 };
 
-const Position = vi.fn(function () {});
+const Position = vi.fn((line, character) => ({ line, character }));
 
 const QuickPickItemKind = {
     Separator: -1,
 };
 
-const Range = vi.fn(function () {});
+const Range = vi.fn((start, end) => ({ start, end }));
 
 const DiagnosticSeverity = {
     Error: 0,
@@ -66,7 +73,7 @@ const DiagnosticSeverity = {
 const CodeActionKind = {
     QuickFix: vi.fn(),
 };
-const CodeAction = vi.fn(function () {});
+const CodeAction = vi.fn((title, kind) => ({ title, kind }));
 
 // Enums
 const ShellQuoting = { Escape: 'Escape' };
