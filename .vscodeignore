@@ -4,6 +4,8 @@ src/**
 .gitignore
 .yarnrc
 vite.config.mts
+vitest.config.mts
+vitest.setup.ts
 vsc-extension-quickstart.md
 **/tsconfig.json
 **/eslint.config.mjs
@@ -14,7 +16,6 @@ __mocks__
 test-workspace/**
 coverage
 .github
-jest.config.js
 tsconfig.eslint.json
 tsconfig.json
 .eslintignore
