@@ -25,10 +25,9 @@ import { FixIssue } from './actions/fixIssue';
 import { HostTreeView } from './views/hostTreeView';
 import { logger } from './util/logger';
 import { TargetHealth } from './actions/targetHealth';
-import { SelectTarget } from './actions/selectTarget';
-import { RemoveTarget } from './actions/removeTarget';
 import { HostModel } from './models/hostModel';
 import { HostController } from './controllers/hostController';
+import { TargetController } from './controllers/targetController';
 
 export async function activate(
     context: vscode.ExtensionContext,
@@ -47,18 +46,23 @@ export async function activate(
         return;
     }
 
+    const targetStore = new TargetStore(context);
+    context.subscriptions.push(targetStore);
+
     const hostModel = new HostModel();
 
     const hostTreeView = new HostTreeView(hostModel);
     context.subscriptions.push(hostTreeView);
 
     const hostHealthController = new HostController(hostModel, topoCli);
+    const targetsController = new TargetController(targetStore);
 
-    const disposeCommands = commands.register(hostHealthController);
+    const disposeCommands = commands.register(
+        hostHealthController,
+        targetsController,
+    );
     context.subscriptions.push(disposeCommands);
 
-    const targetStore = new TargetStore(context);
-    context.subscriptions.push(targetStore);
     const targetDescriptionStore = new TargetDescriptionStore(topoCli);
     const projectInit = new ProjectInit(topoCli);
     context.subscriptions.push(projectInit);
@@ -93,9 +97,7 @@ export async function activate(
     const containerDelete = new ContainerDelete(context, dockerCommands);
     const hostHealth = new HostHealth(context, topoCli);
     const targetHealth = new TargetHealth(containersManager);
-    const selectTarget = new SelectTarget(targetStore);
-    const removeTarget = new RemoveTarget(targetStore);
-    context.subscriptions.push(targetHealth, selectTarget, removeTarget);
+    context.subscriptions.push(targetHealth);
     const protocolHandler = new ProtocolHandler(projectClone);
     const fixIssue = new FixIssue(targetStore, containersManager);
     context.subscriptions.push(fixIssue);
@@ -118,8 +120,6 @@ export async function activate(
     containerDelete.activate();
     hostHealth.activate();
     targetHealth.activate();
-    selectTarget.activate();
-    removeTarget.activate();
     setupKeys.activate();
     await fixIssue.activate();
 }
