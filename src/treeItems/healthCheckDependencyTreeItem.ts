@@ -38,7 +38,7 @@ export class HealthCheckDependencyTreeItem extends vscode.TreeItem {
         this.contextValue = [
             'Dependency',
             statusCapitalized,
-            dependency.fix?.command ? 'Installable' : undefined,
+            dependency.fix?.command ? 'Fixable' : undefined,
         ]
             .filter(Boolean)
             .join(' ');
