@@ -21,14 +21,19 @@ describe('TransientDocumentProvider', () => {
         const path = '/host-health.json';
         const provider = new TransientDocumentProvider(scheme);
         const document = mock<vscode.TextDocument>();
-        vi.mocked(vscode.workspace.openTextDocument).mockResolvedValueOnce(
-            document,
+        const openedUris: vscode.Uri[] = [];
+        vi.mocked(vscode.workspace.openTextDocument).mockImplementationOnce(
+            async (uri) => {
+                openedUris.push(uri as vscode.Uri);
+                return document;
+            },
         );
 
         await provider.open(path, content);
 
-        const uri = vi.mocked(vscode.workspace.openTextDocument).mock
-            .calls[0][0] as vscode.Uri;
+        expect(vscode.workspace.openTextDocument).toHaveBeenCalledTimes(1);
+        expect(openedUris).toHaveLength(1);
+        const uri = openedUris[0];
         expect(uri.scheme).toBe(scheme);
         expect(uri.path).toBe(path);
         expect(provider.provideTextDocumentContent(uri)).toBe(content);
@@ -38,19 +43,27 @@ describe('TransientDocumentProvider', () => {
     });
 
     it('only keeps content for the most recently opened document', async () => {
-        const provider = new TransientDocumentProvider('topo-health');
-        vi.mocked(vscode.workspace.openTextDocument).mockResolvedValue(
-            mock<vscode.TextDocument>(),
+        const scheme = 'topo-health';
+        const provider = new TransientDocumentProvider(scheme);
+        const openedUris: vscode.Uri[] = [];
+        vi.mocked(vscode.workspace.openTextDocument).mockImplementation(
+            async (uri) => {
+                openedUris.push(uri as vscode.Uri);
+                return mock<vscode.TextDocument>();
+            },
         );
 
         await provider.open('/first.json', 'first');
-        const firstUri = vi.mocked(vscode.workspace.openTextDocument).mock
-            .calls[0][0] as vscode.Uri;
-
         await provider.open('/second.json', 'second');
-        const secondUri = vi.mocked(vscode.workspace.openTextDocument).mock
-            .calls[1][0] as vscode.Uri;
 
+        expect(vscode.workspace.openTextDocument).toHaveBeenCalledTimes(2);
+        expect(openedUris).toHaveLength(2);
+        const firstUri = openedUris[0];
+        const secondUri = openedUris[1];
+        expect(firstUri.scheme).toBe(scheme);
+        expect(firstUri.path).toBe('/first.json');
+        expect(secondUri.scheme).toBe(scheme);
+        expect(secondUri.path).toBe('/second.json');
         expect(provider.provideTextDocumentContent(firstUri)).toBeUndefined();
         expect(provider.provideTextDocumentContent(secondUri)).toBe('second');
     });
