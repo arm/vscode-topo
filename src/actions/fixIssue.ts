@@ -30,9 +30,7 @@ export class FixIssue implements vscode.Disposable {
                 FixIssue.fixIssueCommand,
                 this.fixIssueFromTreeItem.bind(this),
             ),
-            this.targetStore.onChanged(
-                this.promptToFixIssues.bind(this),
-            ),
+            this.targetStore.onChanged(this.promptToFixIssues.bind(this)),
         );
 
         await this.promptToFixIssues();
@@ -86,7 +84,11 @@ export class FixIssue implements vscode.Disposable {
             return;
         }
 
-        await this.executeFixCommand(target, [treeNode.dependency.name], command);
+        await this.executeFixCommand(
+            target,
+            [treeNode.dependency.name],
+            command,
+        );
     }
 
     private async executeFixCommand(
