@@ -3,9 +3,9 @@ import os from 'node:os';
 import * as vscode from 'vscode';
 import { Deploy } from './deploy';
 import { mock, MockProxy } from 'vitest-mock-extended';
-import { TargetStore } from '../target/targetStore';
 import { executeTask } from '../util/executeTask';
 import type { MockInstance } from 'vitest';
+import { TargetModel } from '../models/targetModel';
 
 vi.mock('../util/logger');
 vi.mock('../util/executeTask');
@@ -19,16 +19,16 @@ describe('Deploy', () => {
     );
     const composeFilePath = composeFileUri.fsPath;
     const target = 'topo.local';
-    let targetStore: MockProxy<TargetStore>;
+    let targetModel: TargetModel;
     let context: MockProxy<vscode.ExtensionContext>;
     let deployHandler: ((resource?: vscode.Uri) => Promise<void>) | undefined;
     let registerSpy: MockInstance;
 
     beforeEach(() => {
         context = mock<vscode.ExtensionContext>({ subscriptions: [] });
-        targetStore = mock<TargetStore>();
-        targetStore.getSelectedTarget.mockReturnValue(target);
-        deploy = new Deploy(context, targetStore);
+        targetModel = new TargetModel();
+        targetModel.setSelected(target);
+        deploy = new Deploy(context, targetModel);
         registerSpy = vi
             .spyOn(vscode.commands, 'registerCommand')
             .mockImplementation(
@@ -55,7 +55,7 @@ describe('Deploy', () => {
     });
 
     it('fails with no target selected', async () => {
-        targetStore.getSelectedTarget.mockReturnValueOnce(undefined);
+        targetModel.setSelected(undefined);
 
         const deployOperation = deploy.deploy(composeFilePath);
 

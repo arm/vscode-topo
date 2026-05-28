@@ -7,10 +7,10 @@ import type {
     DockerInspectItem,
 } from '../util/types';
 import type { ContainerCommands } from './containerCommands';
-import { TargetStore } from './targetStore';
 import type { TopoCli } from '../topoCli';
 import { future, type Future } from '../util/future';
 import { RefreshLoop } from '../util/refreshLoop';
+import { TargetModel } from '../models/targetModel';
 
 const refreshInterval = 3000;
 
@@ -70,13 +70,15 @@ export class ContainersManager implements vscode.Disposable {
     constructor(
         private readonly topoCli: TopoCli,
         private readonly containerCommands: ContainerCommands,
-        private readonly targetStore: TargetStore,
+        private readonly targetModel: TargetModel,
     ) {
-        const onChangedDisposable = this.targetStore.onChanged(async () => {
-            await this.updateTarget().catch((err) => {
-                logger.error(`Failed to update the target`, err);
-            });
-        });
+        const onChangedDisposable = this.targetModel.onSelectedChanged(
+            async () => {
+                await this.updateTarget().catch((err) => {
+                    logger.error(`Failed to update the target`, err);
+                });
+            },
+        );
         this.disposables.push(this._onDataUpdate, onChangedDisposable);
     }
 
@@ -85,7 +87,7 @@ export class ContainersManager implements vscode.Disposable {
     }
 
     private async updateTarget(): Promise<void> {
-        const selectedTarget = this.targetStore.getSelectedTarget();
+        const selectedTarget = this.targetModel.selected;
         this.unsetTarget();
         if (selectedTarget) {
             await this.startAutoRefresh(selectedTarget);

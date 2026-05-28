@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
 import { mock, MockProxy } from 'vitest-mock-extended';
 import { SetupKeys } from './setupKeys';
-import { TargetStore } from '../target/targetStore';
 import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
 import { executeTask } from '../util/executeTask';
 import { executeCommand } from '../util/test/executeCommand';
+import { TargetModel } from '../models/targetModel';
 
 vi.mock('../util/logger');
 vi.mock('../util/executeTask');
@@ -13,13 +13,13 @@ const executeTaskMock = vi.mocked(executeTask);
 
 describe('SetupKeys', () => {
     let context: MockProxy<vscode.ExtensionContext>;
-    let targetStore: MockProxy<TargetStore>;
+    let targetStore: TargetModel;
     const target = 'user@topo.local';
 
     beforeEach(() => {
         context = mock<vscode.ExtensionContext>({ subscriptions: [] });
-        targetStore = mock<TargetStore>();
-        targetStore.getSelectedTarget.mockReturnValue(target);
+        targetStore = new TargetModel();
+        targetStore.setSelected(target);
     });
 
     afterEach(() => {
@@ -69,7 +69,6 @@ describe('SetupKeys', () => {
 
         await executeCommand(SetupKeys.setupKeysCommand, undefined);
 
-        expect(targetStore.getSelectedTarget).toHaveBeenCalled();
         expect(executeTaskMock).toHaveBeenCalledWith(
             `Setup keys on ${target}`,
             ['topo', 'setup-keys', '--target', target],

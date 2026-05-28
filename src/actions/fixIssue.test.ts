@@ -1,12 +1,12 @@
 import * as vscode from 'vscode';
 import { mock } from 'vitest-mock-extended';
 import { FixIssue } from './fixIssue';
-import { TargetStore } from '../target/targetStore';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 import { HealthCheckResult } from '../topoCliSchema';
 import { ContainersManager } from '../target/containersManager';
 import { executeTask } from '../util/executeTask';
 import { executeCommand } from '../util/test/executeCommand';
+import { TargetModel } from '../models/targetModel';
 
 vi.mock('../util/logger');
 vi.mock('../util/executeTask');
@@ -34,12 +34,12 @@ const loadedHealth: HealthCheckResult = {
 };
 
 describe('FixIssue', () => {
-    const targetStore = mock<TargetStore>();
+    const targetModel = new TargetModel();
     const containersManager = mock<ContainersManager>();
     const target = 'user@topo.local';
 
     beforeEach(() => {
-        targetStore.getSelectedTarget.mockReturnValue(target);
+        targetModel.setSelected(target);
         containersManager.getTargetState.mockResolvedValue({
             health: loadedHealth.target,
             status: 'connected',
@@ -51,7 +51,7 @@ describe('FixIssue', () => {
     });
 
     it('registers fix issue command', async () => {
-        const fixIssue = new FixIssue(targetStore, containersManager);
+        const fixIssue = new FixIssue(targetModel, containersManager);
 
         fixIssue.activate();
 
@@ -62,7 +62,7 @@ describe('FixIssue', () => {
     });
 
     it('runs fix task for dependency with executable fix', async () => {
-        const fixIssue = new FixIssue(targetStore, containersManager);
+        const fixIssue = new FixIssue(targetModel, containersManager);
         const dependencyItem = new HealthCheckDependencyTreeItem({
             name: 'Remoteproc Runtime',
             status: 'error',
@@ -84,7 +84,7 @@ describe('FixIssue', () => {
     });
 
     it('does nothing for a healthy dependency', async () => {
-        const fixIssue = new FixIssue(targetStore, containersManager);
+        const fixIssue = new FixIssue(targetModel, containersManager);
         const dependencyItem = new HealthCheckDependencyTreeItem({
             name: 'Remoteproc Runtime',
             status: 'ok',
@@ -125,7 +125,7 @@ describe('FixIssue', () => {
             },
             status: 'connected',
         });
-        const fixIssue = new FixIssue(targetStore, containersManager);
+        const fixIssue = new FixIssue(targetModel, containersManager);
 
         fixIssue.activate();
 
@@ -167,7 +167,7 @@ describe('FixIssue', () => {
             },
             status: 'connected',
         });
-        const fixIssue = new FixIssue(targetStore, containersManager);
+        const fixIssue = new FixIssue(targetModel, containersManager);
 
         fixIssue.activate();
 

@@ -7,7 +7,7 @@ import { TopoCli } from './topoCli';
 import { mutable } from './util/mutable';
 import { showAndLogError } from './util/showAndLogError';
 import { executeTask } from './util/executeTask';
-import { TargetStore } from './target/targetStore';
+import { TargetModel } from './models/targetModel';
 
 vi.mock('./util/showAndLogError', () => ({
     showAndLogError: vi.fn(),
@@ -29,14 +29,14 @@ describe('ProtocolHandler', () => {
     let protocolHandler: ProtocolHandler;
     let context: MockProxy<vscode.ExtensionContext>;
     const topoCli = mock<TopoCli>();
-    const targetStore = mock<TargetStore>();
+    const targetModel = new TargetModel();
 
     beforeEach(() => {
         vi.clearAllMocks();
         context = mock<vscode.ExtensionContext>({
             subscriptions,
         });
-        projectClone = new ProjectClone(context, topoCli, targetStore);
+        projectClone = new ProjectClone(context, topoCli, targetModel);
         protocolHandler = new ProtocolHandler(projectClone);
         mutable(vscode.workspace).workspaceFolders = undefined;
     });

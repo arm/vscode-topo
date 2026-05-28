@@ -3,9 +3,9 @@ import os from 'node:os';
 import * as vscode from 'vscode';
 import { Stop } from './stop';
 import { mock, MockProxy } from 'vitest-mock-extended';
-import { TargetStore } from '../target/targetStore';
 import { executeTask } from '../util/executeTask';
 import type { MockInstance } from 'vitest';
+import { TargetModel } from '../models/targetModel';
 
 vi.mock('../util/logger');
 vi.mock('../util/executeTask');
@@ -19,15 +19,15 @@ describe('Stop', () => {
     );
     const composeFilePath = composeFileUri.fsPath;
     const target = 'topo.local';
-    let targetStore: MockProxy<TargetStore>;
+    let targetStore: TargetModel;
     let context: MockProxy<vscode.ExtensionContext>;
     let stopHandler: ((resource?: vscode.Uri) => Promise<void>) | undefined;
     let registerSpy: MockInstance;
 
     beforeEach(() => {
         context = mock<vscode.ExtensionContext>({ subscriptions: [] });
-        targetStore = mock<TargetStore>();
-        targetStore.getSelectedTarget.mockReturnValue(target);
+        targetStore = new TargetModel();
+        targetStore.setSelected(target);
         stop = new Stop(context, targetStore);
         registerSpy = vi
             .spyOn(vscode.commands, 'registerCommand')
@@ -55,7 +55,7 @@ describe('Stop', () => {
     });
 
     it('fails with no target selected', async () => {
-        targetStore.getSelectedTarget.mockReturnValue(undefined);
+        targetStore.setSelected(undefined);
 
         const stopOperation = stop.stop(composeFilePath);
 

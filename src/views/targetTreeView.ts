@@ -2,7 +2,6 @@ import * as vscode from 'vscode';
 import { TargetContainerTreeItem } from '../targetTreeView/targetContainerTreeItem';
 import { ContainersManager } from '../target/containersManager';
 import * as manifest from '../manifest';
-import { TargetStore } from '../target/targetStore';
 import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
 import { TargetSubsystemTreeItem } from '../targetTreeView/targetSubsystemTreeItem';
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
@@ -11,6 +10,7 @@ import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependenc
 import { HealthCheckDependency } from '../topoCliSchema';
 import { TargetDescriptionStore } from '../target/targetDescriptionStore';
 import { getVisibleTargetDependencies } from '../target/getVisibleTargetDependencies';
+import { TargetModel } from '../models/targetModel';
 import { getFixableDependencyFixes } from '../util/getDependencyFixes';
 import { getTargetDependencies } from '../target/getTargetDependencies';
 
@@ -35,7 +35,7 @@ export class TargetTreeView
 
     constructor(
         private readonly containersManager: ContainersManager,
-        private readonly targetStore: TargetStore,
+        private readonly targetModel: TargetModel,
         private readonly targetDescriptionStore: TargetDescriptionStore,
     ) {
         const treeView = vscode.window.createTreeView(TargetTreeView.viewId, {
@@ -45,7 +45,10 @@ export class TargetTreeView
 
         this.disposables.push(
             treeView,
-            this.targetStore.onChanged(() => {
+            this.targetModel.onSelectedChanged(() => {
+                this._onDidChangeTreeData.fire(undefined);
+            }),
+            this.targetModel.onTargetsChanged(() => {
                 this._onDidChangeTreeData.fire(undefined);
             }),
             this.containersManager.onDataUpdate(() => {
@@ -59,9 +62,9 @@ export class TargetTreeView
         element?: vscode.TreeItem,
     ): Promise<vscode.TreeItem[]> {
         if (!element) {
-            const selectedTarget = this.targetStore.getSelectedTarget();
+            const selectedTarget = this.targetModel.selected;
             const targetTreeItems: TargetTreeItem[] = [];
-            for (const target of this.targetStore.getTargets()) {
+            for (const target of this.targetModel.targets) {
                 const selected = target === selectedTarget;
                 const { status } =
                     this.containersManager.getTargetStateSnapshot(target);

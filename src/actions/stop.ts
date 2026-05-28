@@ -2,9 +2,9 @@ import * as vscode from 'vscode';
 import * as manifest from '../manifest';
 import { getErrorMessage } from '../util/getErrorMessage';
 import path from 'node:path';
-import { TargetStore } from '../target/targetStore';
 import { executeTask } from '../util/executeTask';
 import { showAndLogError } from '../util/showAndLogError';
+import { TargetModel } from '../models/targetModel';
 
 const viewLogsItem: vscode.MessageItem = {
     title: 'View Logs',
@@ -15,7 +15,7 @@ export class Stop {
 
     constructor(
         private readonly context: vscode.ExtensionContext,
-        private readonly targetStore: TargetStore,
+        private readonly targetModel: TargetModel,
     ) {}
 
     public activate(): void {
@@ -39,7 +39,7 @@ export class Stop {
     }
 
     public async stop(composeFilePath: string): Promise<void> {
-        const target = this.targetStore.getSelectedTarget();
+        const target = this.targetModel.selected;
         if (!target) {
             throw new Error(
                 'No target selected. Please select a target before stopping.',

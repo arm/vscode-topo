@@ -2,17 +2,17 @@ import * as vscode from 'vscode';
 import { AttachShell } from '../actions/attachShell';
 import { mock, MockProxy } from 'vitest-mock-extended';
 import { ContainerItem } from '../util/types';
-import { TargetStore } from '../target/targetStore';
 import { DockerCommands } from '../target/dockerCommands';
 import { TargetContainerTreeItem } from '../targetTreeView/targetContainerTreeItem';
 import { executeCommand } from '../util/test/executeCommand';
+import { TargetModel } from '../models/targetModel';
 
 vi.mock('../util/logger');
 
 describe('AttachShell', () => {
     const dockerCommands = new DockerCommands();
     const target = 'user@topo.local';
-    const targetStore = mock<TargetStore>();
+    const targetModel = new TargetModel();
     let context: MockProxy<vscode.ExtensionContext>;
 
     beforeEach(() => {
@@ -27,7 +27,7 @@ describe('AttachShell', () => {
         const attachShell = new AttachShell(
             context,
             dockerCommands,
-            targetStore,
+            targetModel,
         );
         attachShell.activate();
         expect(vscode.commands.registerCommand).toHaveBeenCalledWith(
@@ -40,7 +40,7 @@ describe('AttachShell', () => {
         const attachShell = new AttachShell(
             context,
             dockerCommands,
-            targetStore,
+            targetModel,
         );
         attachShell.activate();
         const fakeItem = mock<ContainerItem>({

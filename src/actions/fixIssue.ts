@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { PACKAGE_NAME } from '../manifest';
-import { TargetStore } from '../target/targetStore';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 import { showAndLogError } from '../util/showAndLogError';
 import { ContainersManager } from '../target/containersManager';
@@ -11,6 +10,7 @@ import {
     type DependencyFixCommandGroup,
     getDependencyFixCommandGroups,
 } from '../util/getDependencyFixes';
+import { TargetModel } from '../models/targetModel';
 
 const fixAction = { title: 'Fix' };
 
@@ -20,7 +20,7 @@ export class FixIssue implements vscode.Disposable {
     public static readonly fixIssueCommand = `${PACKAGE_NAME}.fixIssue`;
 
     constructor(
-        private readonly targetStore: TargetStore,
+        private readonly targetModel: TargetModel,
         private readonly containersManager: ContainersManager,
     ) {}
 
@@ -30,7 +30,7 @@ export class FixIssue implements vscode.Disposable {
                 FixIssue.fixIssueCommand,
                 this.fixIssueFromTreeItem.bind(this),
             ),
-            this.targetStore.onChanged(() =>
+            this.targetModel.onSelectedChanged(() =>
                 this.promptToFixIssuesInBackground(),
             ),
         );
@@ -49,7 +49,7 @@ export class FixIssue implements vscode.Disposable {
         const abortController = new AbortController();
         this.targetChangedAbortController = abortController;
 
-        const target = this.targetStore.getSelectedTarget();
+        const target = this.targetModel.selected;
         if (!target) {
             return;
         }
@@ -74,7 +74,7 @@ export class FixIssue implements vscode.Disposable {
             return;
         }
 
-        const target = this.targetStore.getSelectedTarget();
+        const target = this.targetModel.selected;
         if (!target) {
             showAndLogError(
                 `Failed to fix dependency`,
