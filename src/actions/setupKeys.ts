@@ -17,46 +17,44 @@ export class SetupKeys {
         this.context.subscriptions.push(
             vscode.commands.registerCommand(
                 SetupKeys.setupKeysCommand,
-                (treeNode: unknown) => this.setupKeys(treeNode),
+                this.setupKeysCommandHandler.bind(this),
             ),
         );
     }
 
-    private async setupKeys(treeNode: unknown): Promise<void> {
-        let ssh: string | undefined;
-
+    private async setupKeysCommandHandler(treeNode: unknown): Promise<void> {
         if (treeNode instanceof TargetTreeItem) {
             if (!treeNode.contextValue?.includes('Selected')) {
                 return;
             }
-            ssh = treeNode.target;
-        } else {
-            const selectedTarget = this.targetStore.getSelectedTarget();
-            if (!selectedTarget) {
-                showAndLogError(
-                    'Failed to set up keys on target',
-                    new Error('No selected target found'),
-                );
-                return;
-            }
-            ssh = selectedTarget;
-        }
-        if (!ssh) {
+            await setupKeys(treeNode.target);
             return;
         }
 
-        try {
-            await executeTask(`Setup keys on ${ssh}`, [
-                'topo',
-                'setup-keys',
-                '--target',
-                ssh,
-            ]);
-            vscode.window.showInformationMessage(
-                `Keys were set up on target ${ssh}.`,
+        const selectedTarget = this.targetStore.getSelectedTarget();
+        if (!selectedTarget) {
+            showAndLogError(
+                'Failed to set up keys on target',
+                new Error('No selected target found'),
             );
-        } catch (err) {
-            showAndLogError(`Failed to set up keys on target ${ssh}`, err);
+            return;
         }
+        await setupKeys(selectedTarget);
+    }
+}
+
+export async function setupKeys(ssh: string): Promise<void> {
+    try {
+        await executeTask(`Setup keys on ${ssh}`, [
+            'topo',
+            'setup-keys',
+            '--target',
+            ssh,
+        ]);
+        vscode.window.showInformationMessage(
+            `Keys were set up on target ${ssh}.`,
+        );
+    } catch (err) {
+        showAndLogError(`Failed to set up keys on target ${ssh}`, err);
     }
 }

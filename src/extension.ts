@@ -100,7 +100,7 @@ export async function activate(
     const stop = new Stop(context, targetStore);
     const containerOpenInBrowser = new ContainerOpenInBrowser(context);
     const attachVsCode = new AttachVsCode(context, dockerCommands);
-    const attachShell = new AttachShell(context, dockerCommands, targetStore);
+    const attachShell = new AttachShell(context, dockerCommands);
     const setupKeys = new SetupKeys(context, targetStore);
     const containerStart = new ContainerStart(context, dockerCommands);
     const containerStop = new ContainerStop(context, dockerCommands);

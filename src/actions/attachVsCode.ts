@@ -27,7 +27,7 @@ export class AttachVsCode {
         );
     }
 
-    private async attachVsCodeCommandHandler(treeNode: unknown) {
+    private async attachVsCodeCommandHandler(treeNode: unknown): Promise<void> {
         assertTargetContainerTreeItem(treeNode);
         try {
             await this.attachVsCode(treeNode.containerItem);

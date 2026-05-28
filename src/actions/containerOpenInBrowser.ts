@@ -16,12 +16,12 @@ export class ContainerOpenInBrowser {
         this.context.subscriptions.push(
             vscode.commands.registerCommand(
                 ContainerOpenInBrowser.openInBrowserCommand,
-                this.openContainerInBrowserCommandHandler.bind(this),
+                this.openInBrowserCommandHandler.bind(this),
             ),
         );
     }
 
-    private async openContainerInBrowserCommandHandler(
+    private async openInBrowserCommandHandler(
         treeNode: unknown,
     ): Promise<void> {
         assertTargetContainerTreeItem(treeNode);
