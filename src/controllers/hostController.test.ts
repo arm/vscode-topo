@@ -1,4 +1,5 @@
 import { mock } from 'vitest-mock-extended';
+import * as vscode from 'vscode';
 import { HostModel } from '../models/hostModel';
 import { TopoCli } from '../topoCli';
 import { HostController } from './hostController';
@@ -45,6 +46,8 @@ describe('HostController', () => {
 
     it('opens a host health document with the latest host health JSON', async () => {
         vi.spyOn(Date, 'now').mockReturnValue(123);
+        const documentUri = mock<vscode.Uri>();
+        healthDocumentProvider.createUri.mockReturnValue(documentUri);
         const topoCli = mock<TopoCli>({
             hostHealth: vi.fn().mockResolvedValue(hostHealth),
         });
@@ -57,8 +60,11 @@ describe('HostController', () => {
         await controller.openHealthDocument();
 
         expect(topoCli.hostHealth).toHaveBeenCalledWith();
-        expect(healthDocumentProvider.open).toHaveBeenCalledWith(
+        expect(healthDocumentProvider.createUri).toHaveBeenCalledWith(
             'topo-host-health-123.json',
+        );
+        expect(healthDocumentProvider.open).toHaveBeenCalledWith(
+            documentUri,
             JSON.stringify(hostHealth.host, null, 4),
         );
     });

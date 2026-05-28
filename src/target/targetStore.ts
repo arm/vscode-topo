@@ -3,6 +3,8 @@ import { logger } from '../util/logger';
 import debounce from 'lodash.debounce';
 import { string, type, assert, record } from 'superstruct';
 import { DisposableCollector } from '../util/disposableCollector';
+import { WrappedError } from '../errors/wrappedError';
+import { getErrorMessage } from '../util/getErrorMessage';
 
 type GlobalStoreKeys = 'targets';
 type WorkspaceStoreKeys = 'selectedTarget';
@@ -102,15 +104,19 @@ export class TargetStore {
     }
 
     protected loadTargets(): Set<string> {
+        const rawTargets = this.getGlobal('targets');
         try {
-            const rawTargets = this.getGlobal('targets');
             const targets = rawTargets ? JSON.parse(rawTargets) : {};
             assert(targets, serializedTargetsSchema);
             return new Set(Object.keys(targets));
         } catch (err) {
             const errorMsg = 'Failed to load targets';
-            logger.error(errorMsg, err);
-            throw Error(errorMsg, { cause: err });
+            throw new WrappedError(
+                'STORAGE',
+                errorMsg,
+                [{ level: 'Error', msg: getErrorMessage(err) }],
+                { cause: err },
+            );
         }
     }
 

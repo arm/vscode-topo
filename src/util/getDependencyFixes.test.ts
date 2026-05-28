@@ -1,5 +1,8 @@
 import { HealthCheckDependency } from '../topoCliSchema';
-import { getDependencyFixCommandGroups } from './getDependencyFixes';
+import {
+    getDependencyFixCommandGroups,
+    getFixableDependencyFixes,
+} from './getDependencyFixes';
 
 describe('getDependencyFixes', () => {
     it('ignores dependencies without executable fixes', () => {
@@ -61,6 +64,50 @@ describe('getDependencyFixes', () => {
             {
                 names: ['Debugger'],
                 command: 'topo install debugger',
+            },
+        ]);
+    });
+
+    it('returns fixable dependency fixes for unhealthy dependencies only', () => {
+        const fixableDependency: HealthCheckDependency = {
+            name: 'Container Engine',
+            status: 'error',
+            value: 'missing',
+            fix: {
+                description: 'Install Docker',
+                command: 'topo install docker',
+            },
+        };
+        const healthyDependency: HealthCheckDependency = {
+            name: 'Debugger',
+            status: 'ok',
+            value: 'installed',
+        };
+        const infoDependency: HealthCheckDependency = {
+            name: 'Runtime',
+            status: 'info',
+            value: 'available',
+        };
+        const manualDependency: HealthCheckDependency = {
+            name: 'Runtime',
+            status: 'warning',
+            value: 'missing',
+            fix: {
+                description: 'Manual setup required',
+            },
+        };
+
+        expect(
+            getFixableDependencyFixes([
+                fixableDependency,
+                healthyDependency,
+                infoDependency,
+                manualDependency,
+            ]),
+        ).toEqual([
+            {
+                dependency: fixableDependency,
+                fix: fixableDependency.fix,
             },
         ]);
     });

@@ -214,6 +214,133 @@ describe('TargetTreeView', () => {
             );
         });
 
+        it('marks target with executable dependency fixes as fixable', async () => {
+            targetStoreMock.getTargets.mockReturnValue([target]);
+            targetStoreMock.getSelectedTarget.mockReturnValue(target);
+            const targetState: TargetState = {
+                health: {
+                    ...targetHealth,
+                    dependencies: [
+                        {
+                            name: 'Container Engine',
+                            status: 'error',
+                            value: 'missing',
+                            fix: {
+                                description: 'Install container engine',
+                                command: 'topo install container-engine',
+                            },
+                        },
+                    ],
+                },
+                status: 'connected',
+            };
+            containersManagerMock.getTargetStateSnapshot.mockReturnValue(
+                targetState,
+            );
+            containersManagerMock.getTargetState.mockResolvedValue(targetState);
+
+            const rootChildren = await view.getChildren();
+
+            expect(rootChildren).toHaveLength(1);
+            expect(rootChildren[0].contextValue).toContain(
+                'HasFixableDependencies',
+            );
+        });
+
+        it('marks target with executable subsystem driver fix as fixable when remote processors exist', async () => {
+            targetStoreMock.getTargets.mockReturnValue([target]);
+            targetStoreMock.getSelectedTarget.mockReturnValue(target);
+            const targetState: TargetState = {
+                health: {
+                    ...targetHealth,
+                    subsystemDriver: {
+                        name: 'SubsystemDriver',
+                        status: 'error',
+                        value: 'missing',
+                        fix: {
+                            description: 'Install subsystem driver',
+                            command: 'topo install subsystem-driver',
+                        },
+                    },
+                },
+                status: 'connected',
+            };
+            containersManagerMock.getTargetStateSnapshot.mockReturnValue(
+                targetState,
+            );
+            containersManagerMock.getTargetState.mockResolvedValue(targetState);
+
+            const rootChildren = await view.getChildren();
+
+            expect(rootChildren).toHaveLength(1);
+            expect(rootChildren[0].contextValue).toContain(
+                'HasFixableDependencies',
+            );
+        });
+
+        it('does not mark target as fixable for hidden subsystem driver fixes', async () => {
+            targetStoreMock.getTargets.mockReturnValue([target]);
+            targetStoreMock.getSelectedTarget.mockReturnValue(target);
+            targetDescriptionStoreMock.getDescription.mockResolvedValue({
+                hostProcessors: [],
+                remoteProcessors: [],
+            });
+            const targetState: TargetState = {
+                health: {
+                    ...targetHealth,
+                    subsystemDriver: {
+                        name: 'SubsystemDriver',
+                        status: 'error',
+                        value: 'missing',
+                        fix: {
+                            description: 'Install subsystem driver',
+                            command: 'topo install subsystem-driver',
+                        },
+                    },
+                },
+                status: 'connected',
+            };
+            containersManagerMock.getTargetStateSnapshot.mockReturnValue(
+                targetState,
+            );
+            containersManagerMock.getTargetState.mockResolvedValue(targetState);
+
+            const rootChildren = await view.getChildren();
+
+            expect(rootChildren).toHaveLength(1);
+            expect(rootChildren[0].contextValue).not.toContain(
+                'HasFixableDependencies',
+            );
+        });
+
+        it('does not mark target as fixable when no executable dependency fixes exist', async () => {
+            targetStoreMock.getTargets.mockReturnValue([target]);
+            targetStoreMock.getSelectedTarget.mockReturnValue(target);
+            containersManagerMock.getTargetStateSnapshot.mockReturnValue({
+                health: {
+                    ...targetHealth,
+                    dependencies: [
+                        {
+                            name: 'Container Engine',
+                            status: 'error',
+                            value: 'missing',
+                            fix: {
+                                description: 'Manual setup required',
+                            },
+                        },
+                    ],
+                },
+                status: 'connected',
+            });
+
+            const rootChildren = await view.getChildren();
+
+            expect(rootChildren).toHaveLength(1);
+            expect(rootChildren[0].contextValue).not.toContain(
+                'HasFixableDependencies',
+            );
+        });
+
         it('returns containers for Host and remoteproc groups', async () => {
             const hostGroup = new TargetSubsystemTreeItem('Host', target);
             const hostChildren = await view.getChildren(hostGroup);
