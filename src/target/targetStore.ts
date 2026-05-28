@@ -12,9 +12,10 @@ type WorkspaceStoreKeys = 'selectedTarget';
 const serializedTargetsSchema = record(string(), type({}));
 
 export class TargetStore {
-    private _onChanged: vscode.EventEmitter<void> =
-        new vscode.EventEmitter<void>();
-    public readonly onChanged: vscode.Event<void> = this._onChanged.event;
+    private readonly _onGlobalWrite = new vscode.EventEmitter<void>();
+    public readonly onGlobalWrite: vscode.Event<void> =
+        this._onGlobalWrite.event;
+
     private disposables: vscode.Disposable[] = [];
 
     constructor(protected context: vscode.ExtensionContext) {
@@ -25,19 +26,19 @@ export class TargetStore {
         const watcher = vscode.workspace.createFileSystemWatcher(pattern);
         const onDidCreate = watcher.onDidCreate(() => {
             if (!vscode.window.state.focused) {
-                this._onChanged.fire();
+                this._onGlobalWrite.fire();
             }
         });
         const onDidChange = watcher.onDidChange(() => {
             if (!vscode.window.state.focused) {
-                this._onChanged.fire();
+                this._onGlobalWrite.fire();
             }
         });
         this.disposables.push(
             watcher,
             onDidCreate,
             onDidChange,
-            this._onChanged,
+            this._onGlobalWrite,
         );
     }
 
@@ -55,54 +56,15 @@ export class TargetStore {
         }
     }, 500);
 
-    public get selected(): string | undefined {
+    public loadSelected(): string | undefined {
         return this.getWorkspace('selectedTarget');
     }
 
-    public async setSelected(id: string | undefined): Promise<void> {
+    public async saveSelected(id: string | undefined): Promise<void> {
         await this.setWorkspace('selectedTarget', id);
-        this._onChanged.fire();
     }
 
-    public getTargets(): string[] {
-        const targets = this.loadTargets();
-        return [...targets.values()];
-    }
-
-    public async addTarget(target: string): Promise<void> {
-        const targets = this.loadTargets();
-        if (targets.has(target)) {
-            throw new Error(`Target "${target}" already exists`);
-        }
-        targets.add(target);
-        await this.saveTargets(targets);
-    }
-
-    public getSelectedTarget(): string | undefined {
-        const targets = this.getTargets();
-        return targets.find((target) => target === this.selected);
-    }
-
-    public async deleteTarget(ssh: string): Promise<void> {
-        const targets = this.loadTargets();
-        if (!targets.has(ssh)) {
-            throw new Error(`Target "${ssh}" does not exist`);
-        }
-        targets.delete(ssh);
-        await this.saveTargets(targets);
-        const currentSelected = this.selected;
-        if (currentSelected === ssh) {
-            const remaining = [...targets];
-            const newSelected = remaining.length
-                ? remaining.sort((a, b) => a.localeCompare(b))[0]
-                : undefined;
-            await this.setSelected(newSelected);
-        } else {
-            this._onChanged.fire();
-        }
-    }
-
-    protected loadTargets(): Set<string> {
+    public loadTargets(): Set<string> {
         const rawTargets = this.getGlobal('targets');
         try {
             const targets = rawTargets ? JSON.parse(rawTargets) : {};
@@ -119,7 +81,7 @@ export class TargetStore {
         }
     }
 
-    protected async saveTargets(targets: Set<string>): Promise<void> {
+    public async saveTargets(targets: Set<string>): Promise<void> {
         const json = JSON.stringify(
             Object.fromEntries([...targets].map((k) => [k, {}])),
         );
@@ -128,6 +90,10 @@ export class TargetStore {
 
     protected getGlobal(key: GlobalStoreKeys): string | undefined {
         return this.get(this.context.globalState, key);
+    }
+
+    protected getWorkspace(key: WorkspaceStoreKeys): string | undefined {
+        return this.get(this.context.workspaceState, key);
     }
 
     protected async setGlobal(
@@ -139,10 +105,6 @@ export class TargetStore {
         if (vscode.env.uiKind === vscode.UIKind.Desktop) {
             this.publishChange();
         }
-    }
-
-    protected getWorkspace(key: WorkspaceStoreKeys): string | undefined {
-        return this.get(this.context.workspaceState, key);
     }
 
     protected setWorkspace(

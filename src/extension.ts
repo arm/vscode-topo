@@ -87,7 +87,7 @@ export async function activate(
     );
     const targetsController = new TargetController(targetModel, targetStore);
     context.subscriptions.push(
-        targetStore.onChanged(() => targetsController.updateFromStore()),
+        targetStore.onGlobalWrite(() => targetsController.updateFromStore()),
     );
 
     const disposeCommands = commands.register(

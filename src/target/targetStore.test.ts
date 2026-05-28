@@ -90,85 +90,78 @@ describe('TargetStore', () => {
     );
 
     beforeEach(() => {
+        mutable(vscode.env).uiKind = vscode.UIKind.Desktop;
         mutable(vscode.window).state = {
             focused: true,
             active: true,
         };
+        fsWatchers.length = 0;
         vi.clearAllMocks();
     });
 
-    it('adds a target successfully and persists it', async () => {
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    it('saves targets and exposes them via loadTargets', async () => {
+        mutable(vscode.env).uiKind = vscode.UIKind.Web;
         const { context } = createMockContext();
         const store = new TargetStore(context);
         const t = 'success@example.com';
 
-        const addTargetOperation = store.addTarget(t);
+        await store.saveTargets(new Set([t]));
 
-        await expect(addTargetOperation).resolves.toBeUndefined();
-        const targets = store.getTargets();
-        expect(targets.some((x) => x === t)).toBe(true);
+        const targets = store.loadTargets();
+        expect(targets.has(t)).toBe(true);
         const raw = context.globalState.get('targets') as string | undefined;
         expect(typeof raw).toBe('string');
         const parsed = JSON.parse(raw || '{}');
         expect(parsed[t]).toEqual({});
     });
 
-    it('throws an error when addTarget fails', async () => {
+    it('throws an error when saveTargets fails', async () => {
         const { context, globalState } = createMockContext();
         globalState.update.mockRejectedValue(new Error('persist-fail'));
         const store = new TargetStore(context);
         const t = 'fail@example.com';
 
-        const addTargetOperation = store.addTarget(t);
+        const saveTargetsOperation = store.saveTargets(new Set([t]));
 
-        await expect(addTargetOperation).rejects.toThrow('persist-fail');
+        await expect(saveTargetsOperation).rejects.toThrow('persist-fail');
         const raw = context.globalState.get('targets') as string | undefined;
         expect(raw).toBeUndefined();
     });
 
-    it('persists targets via setTarget and exposes them via getTargets', async () => {
+    it('loads an empty target set when no targets have been saved', () => {
         const { context } = createMockContext();
         const store = new TargetStore(context);
 
-        const t = 'alice@example.com';
-        await store.addTarget(t);
+        const targets = store.loadTargets();
 
-        const targets = store.getTargets();
-        expect(targets.some((x) => x === t)).toBe(true);
-
-        const raw = context.globalState.get('targets') as string | undefined;
-        expect(typeof raw).toBe('string');
-        const parsed = JSON.parse(raw || '{}');
-        expect(parsed[t]).toEqual({});
+        expect(targets).toEqual(new Set());
     });
 
-    it('stores selected target and fires onChanged when setSelected is called', async () => {
+    it('stores selected target and exposes it via loadSelected', async () => {
         const { context } = createMockContext();
         const store = new TargetStore(context);
-        const t = 'bob@example.com';
-        await store.addTarget(t);
-        const cb = vi.fn();
-        store.onChanged(cb);
 
-        await store.setSelected('bob@example.com');
+        await store.saveSelected('bob@example.com');
 
         expect(context.workspaceState.get('selectedTarget')).toBe(
             'bob@example.com',
         );
-        expect(cb).toHaveBeenCalled();
+        expect(store.loadSelected()).toBe('bob@example.com');
     });
 
-    it('returns the selected Target via getSelectedTarget', async () => {
+    it('clears the selected target when saveSelected is given undefined', async () => {
         const { context } = createMockContext();
         const store = new TargetStore(context);
+        await store.saveSelected('bob@example.com');
 
-        const t = 'carol@example.com';
-        await store.addTarget(t);
-        await store.setSelected('carol@example.com');
+        await store.saveSelected(undefined);
 
-        const selected = store.getSelectedTarget();
-        expect(selected).toBeDefined();
-        expect(selected).toBe('carol@example.com');
+        expect(context.workspaceState.get('selectedTarget')).toBeUndefined();
+        expect(store.loadSelected()).toBeUndefined();
     });
 
     it('throws a STORAGE WrappedError when stored targets are malformed JSON', () => {
@@ -180,7 +173,7 @@ describe('TargetStore', () => {
 
         let thrown: unknown;
         try {
-            store.getTargets();
+            store.loadTargets();
         } catch (err) {
             thrown = err;
         }
@@ -206,7 +199,7 @@ describe('TargetStore', () => {
 
         let thrown: unknown;
         try {
-            store.getTargets();
+            store.loadTargets();
         } catch (err) {
             thrown = err;
         }
@@ -226,15 +219,15 @@ describe('TargetStore', () => {
         });
         const store = new TargetStore(context);
 
-        expect(() => store.getTargets()).toThrow(error);
-        expect(() => store.getTargets()).not.toThrow(WrappedError);
+        expect(() => store.loadTargets()).toThrow(error);
+        expect(() => store.loadTargets()).not.toThrow(WrappedError);
     });
 
-    it('fires onChanged when signal file is modified externally and window is not focused', async () => {
+    it('fires onGlobalWrite when signal file is modified externally and window is not focused', async () => {
         const { context } = createMockContext();
         const store = new TargetStore(context);
         const cb = vi.fn();
-        store.onChanged(cb);
+        store.onGlobalWrite(cb);
         mutable(vscode.window.state).focused = false;
         const signalUri = vscode.Uri.joinPath(
             context.globalStorageUri,
@@ -248,6 +241,56 @@ describe('TargetStore', () => {
         await waitImmediate();
 
         expect(cb).toHaveBeenCalled();
+    });
+
+    it('does not fire onGlobalWrite when signal file is modified while focused', async () => {
+        const { context } = createMockContext();
+        const store = new TargetStore(context);
+        const cb = vi.fn();
+        store.onGlobalWrite(cb);
+        const signalUri = vscode.Uri.joinPath(
+            context.globalStorageUri,
+            'targets-update.signal',
+        );
+
+        await vscode.workspace.fs.writeFile(
+            signalUri,
+            new TextEncoder().encode('1'),
+        );
+        await waitImmediate();
+
+        expect(cb).not.toHaveBeenCalled();
+    });
+
+    it('publishes one debounced signal after targets are saved on desktop', async () => {
+        vi.useFakeTimers();
+        const { context } = createMockContext();
+        const store = new TargetStore(context);
+
+        await store.saveTargets(new Set(['root@192.0.2.1']));
+        await store.saveTargets(new Set(['root@192.0.2.2']));
+        await vi.advanceTimersByTimeAsync(500);
+
+        expect(vscode.workspace.fs.writeFile).toHaveBeenCalledTimes(1);
+        expect(vscode.workspace.fs.writeFile).toHaveBeenCalledWith(
+            vscode.Uri.joinPath(
+                context.globalStorageUri,
+                'targets-update.signal',
+            ),
+            expect.any(Uint8Array),
+        );
+    });
+
+    it('does not publish a signal after targets are saved outside desktop', async () => {
+        vi.useFakeTimers();
+        mutable(vscode.env).uiKind = vscode.UIKind.Web;
+        const { context } = createMockContext();
+        const store = new TargetStore(context);
+
+        await store.saveTargets(new Set(['root@192.0.2.1']));
+        await vi.runAllTimersAsync();
+
+        expect(vscode.workspace.fs.writeFile).not.toHaveBeenCalled();
     });
 
     it('deactivates the store, disposing resources', () => {
@@ -279,64 +322,15 @@ describe('TargetStore', () => {
         expect(onDidChangeDispose).toHaveBeenCalled();
     });
 
-    it('removes a non-selected target without changing selection', async () => {
-        const { context } = createMockContext();
-        const store = new TargetStore(context);
-        const t1 = 'a@example.com';
-        const t2 = 'b@example.com';
-        await store.addTarget(t1);
-        await store.addTarget(t2);
-        await store.setSelected(t1);
-
-        await store.deleteTarget(t2);
-
-        const targets = store.getTargets();
-        expect(targets.some((t) => t === t2)).toBe(false);
-        const selected = store.getSelectedTarget();
-        expect(selected).toBeDefined();
-    });
-
-    it('removes the selected target and falls back to the first remaining target', async () => {
-        const { context } = createMockContext();
-        const store = new TargetStore(context);
-        const t1 = 'one@example.com';
-        const t2 = 'two@example.com';
-        const t3 = 'three@example.com';
-        await store.addTarget(t1);
-        await store.addTarget(t2);
-        await store.addTarget(t3);
-        await store.setSelected(t2);
-
-        await store.deleteTarget(t2);
-
-        const targets = store.getTargets();
-        expect(targets.some((t) => t === t2)).toBe(false);
-        const selected = store.getSelectedTarget();
-        expect(selected).toBeDefined();
-        expect(selected).toBe(t1);
-    });
-
-    it('removes the only selected target and clears selection when none remain', async () => {
-        const { context } = createMockContext();
-        const store = new TargetStore(context);
-        const lone = 'only@example.com';
-        await store.addTarget(lone);
-        await store.setSelected(lone);
-
-        await store.deleteTarget(lone);
-
-        const targets = store.getTargets();
-        expect(targets.length).toBe(0);
-        const selected = store.getSelectedTarget();
-        expect(selected).toBeUndefined();
-    });
-
-    it('throws when deleting a non-existent target id', async () => {
+    it('cancels pending signal publication on dispose', async () => {
+        vi.useFakeTimers();
         const { context } = createMockContext();
         const store = new TargetStore(context);
 
-        const deleteTargetOperation = store.deleteTarget('no-such-id');
+        await store.saveTargets(new Set(['root@192.0.2.1']));
+        store.dispose();
+        await vi.runAllTimersAsync();
 
-        await expect(deleteTargetOperation).rejects.toThrow('does not exist');
+        expect(vscode.workspace.fs.writeFile).not.toHaveBeenCalled();
     });
 });

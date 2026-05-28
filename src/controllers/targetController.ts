@@ -17,10 +17,9 @@ function isTargetTreeItem(node: unknown): node is TargetTreeItem {
 }
 
 async function promptForSshTarget(
-    currentTargets: string[],
+    existingTargets: Set<string>,
 ): Promise<string | undefined> {
     const sshHosts = await getHosts(defaultSshConfigPath);
-    const existingTargets = new Set(currentTargets);
     const availableHosts = sshHosts.filter(
         (host) => !existingTargets.has(host),
     );
@@ -75,9 +74,25 @@ export class TargetController {
         this.updateFromStore();
     }
 
+    private loadTargetsSafe(): Set<string> | null {
+        try {
+            const v = this.targetStore.loadTargets();
+            logger.info(`Loaded targets:`, [...v]);
+            return v;
+        } catch (error) {
+            showAndLogError(`Failed to load targets`, error);
+            return null;
+        }
+    }
+
     public updateFromStore(): void {
-        this.model.setTargets(this.targetStore.getTargets());
-        this.model.setSelected(this.targetStore.getSelectedTarget());
+        const targets = this.loadTargetsSafe();
+        if (targets) {
+            this.model.setTargets([...targets]);
+        }
+
+        const selected = this.targetStore.loadSelected();
+        this.model.setSelected(selected);
     }
 
     public async select(treeNode?: unknown): Promise<void> {
@@ -85,8 +100,9 @@ export class TargetController {
             return;
         }
 
-        await this.targetStore.setSelected(treeNode.target);
-        this.updateFromStore();
+        const target = treeNode.target;
+        await this.targetStore.saveSelected(target);
+        this.model.setSelected(target);
     }
 
     public async remove(treeNode?: unknown): Promise<void> {
@@ -94,30 +110,39 @@ export class TargetController {
             return;
         }
 
-        try {
-            await this.targetStore.deleteTarget(treeNode.target);
-            this.updateFromStore();
-        } catch (err) {
-            const errorMessage = `Failed to remove target`;
-            showAndLogError(errorMessage, err);
+        const target = treeNode.target;
+        const targets = this.loadTargetsSafe();
+        if (!targets) {
+            return;
+        }
+        if (!targets.has(target)) {
+            logger.warn(`Attempted to remove non-existent target: ${target}`);
+            return;
+        }
+        targets.delete(target);
+        await this.targetStore.saveTargets(targets);
+        this.model.setTargets([...targets]);
+        if (this.model.selected === target) {
+            const newSelected = targets.size > 0 ? [...targets][0] : undefined;
+            await this.targetStore.saveSelected(newSelected);
+            this.model.setSelected(newSelected);
         }
     }
 
     public async promptToAdd(): Promise<void> {
-        const target = await promptForSshTarget(this.targetStore.getTargets());
-        if (!target) {
+        const targets = this.loadTargetsSafe();
+        if (!targets) {
+            return;
+        }
+        const target = await promptForSshTarget(targets);
+        if (!target || targets.has(target)) {
             return;
         }
 
-        try {
-            await this.targetStore.addTarget(target);
-        } catch (error) {
-            const errorMsg = `Failed to add target`;
-            logger.warn(errorMsg, error);
-            vscode.window.showWarningMessage(errorMsg);
-            return;
-        }
-        await this.targetStore.setSelected(target);
-        this.updateFromStore();
+        await this.targetStore.saveTargets(new Set([...targets, target]));
+        this.model.setTargets([...targets, target]);
+
+        await this.targetStore.saveSelected(target);
+        this.model.setSelected(target);
     }
 }
