@@ -65,25 +65,17 @@ export class TargetTreeView
                 const selected = target === selectedTarget;
                 const { status } =
                     this.containersManager.getTargetStateSnapshot(target);
-                if (!selected) {
-                    targetTreeItems.push(
-                        new TargetTreeItem(target, selected, status),
-                    );
-                    continue;
-                }
+                const dependencies = selected
+                    ? await getTargetDependencies(
+                          target,
+                          this.containersManager,
+                          this.targetDescriptionStore,
+                      )
+                    : [];
+                const hasFixable = hasFixableDependencies(dependencies);
 
-                const dependencies = await getTargetDependencies(
-                    target,
-                    this.containersManager,
-                    this.targetDescriptionStore,
-                );
                 targetTreeItems.push(
-                    new TargetTreeItem(
-                        target,
-                        selected,
-                        status,
-                        hasFixableDependencies(dependencies ?? []),
-                    ),
+                    new TargetTreeItem(target, selected, status, hasFixable),
                 );
             }
             const sortedTargetTreeItems = targetTreeItems.sort((a, b) =>

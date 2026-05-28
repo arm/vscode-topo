@@ -7,10 +7,10 @@ export async function getTargetDependencies(
     target: string,
     containersManager: ContainersManager,
     targetDescriptionStore: TargetDescriptionStore,
-): Promise<HealthCheckDependency[] | undefined> {
+): Promise<HealthCheckDependency[]> {
     const targetState = await containersManager.getTargetState(target);
     if (!targetState.health) {
-        return;
+        return [];
     }
 
     const targetDescription =
