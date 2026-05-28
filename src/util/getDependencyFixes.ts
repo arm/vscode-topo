@@ -42,15 +42,10 @@ export function getFixableDependencyFixes(
     const fixes: IssueFix[] = [];
 
     for (const dependency of dependencies) {
-        if (dependency.status === 'ok') {
-            continue;
-        }
-
         const fix = dependency.fix;
         if (!fix?.command) {
             continue;
         }
-
         fixes.push({ dependency, fix });
     }
 
