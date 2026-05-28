@@ -4,12 +4,12 @@ import * as manifest from '../manifest';
 import { exec } from '../util/exec';
 import { DockerCommands } from './dockerCommands';
 import * as vscode from 'vscode';
-import { TargetStore } from './targetStore';
 import { mock } from 'vitest-mock-extended';
 import { TopoCli } from '../topoCli';
 import type { ContainerCommands } from './containerCommands';
 import type { HealthCheckResult } from '../topoCliSchema';
 import type { Mock } from 'vitest';
+import { TargetModel } from '../models/targetModel';
 
 const waitImmediate = async () => {
     await Promise.resolve();
@@ -112,13 +112,13 @@ describe('ContainersManager', () => {
     let containersManager: ContainersManager | undefined;
 
     const createContainersManager = (
-        targetStore: TargetStore,
+        targetModel: TargetModel,
         containerCommands: ContainerCommands = dockerCommands,
     ): ContainersManager => {
         const manager = new ContainersManager(
             topoCli,
             containerCommands,
-            targetStore,
+            targetModel,
         );
         containersManager = manager;
         return manager;
@@ -152,9 +152,9 @@ describe('ContainersManager', () => {
                     throw Error(`Unexpected command: ${command}`);
             }
         });
-        const targetStore = mock<TargetStore>();
-        targetStore.getSelectedTarget.mockReturnValue(target);
-        const manager = createContainersManager(targetStore);
+        const targetModel = new TargetModel();
+        targetModel.setSelected(target);
+        const manager = createContainersManager(targetModel);
         manager.activate();
 
         const result = await manager.getContainersData(target);
@@ -204,9 +204,9 @@ describe('ContainersManager', () => {
                     throw Error(`Unexpected command: ${command}`);
             }
         });
-        const targetStore = mock<TargetStore>();
-        targetStore.getSelectedTarget.mockReturnValue(target);
-        const manager = createContainersManager(targetStore);
+        const targetModel = new TargetModel();
+        targetModel.setSelected(target);
+        const manager = createContainersManager(targetModel);
         manager.activate();
 
         const result = await manager.getContainersData(target);
@@ -229,9 +229,9 @@ describe('ContainersManager', () => {
                     throw Error(`Unexpected command: ${command}`);
             }
         });
-        const targetStore = mock<TargetStore>();
-        targetStore.getSelectedTarget.mockReturnValue(target);
-        const manager = createContainersManager(targetStore);
+        const targetModel = new TargetModel();
+        targetModel.setSelected(target);
+        const manager = createContainersManager(targetModel);
 
         manager.activate();
 
@@ -254,9 +254,9 @@ describe('ContainersManager', () => {
                     throw Error(`Unexpected command: ${command}`);
             }
         });
-        const targetStore = mock<TargetStore>();
-        targetStore.getSelectedTarget.mockReturnValue(target);
-        const manager = createContainersManager(targetStore);
+        const targetModel = new TargetModel();
+        targetModel.setSelected(target);
+        const manager = createContainersManager(targetModel);
         manager.activate();
 
         const first = await manager.getContainersData(target);
@@ -291,12 +291,12 @@ describe('ContainersManager', () => {
         topoCli.health
             .mockResolvedValueOnce(loadedHealth)
             .mockResolvedValueOnce(unhealthyContainerEngine);
-        const targetStore = mock<TargetStore>();
-        targetStore.getSelectedTarget.mockReturnValue(target);
+        const targetModel = new TargetModel();
+        targetModel.setSelected(target);
         const containerCommands = mock<ContainerCommands>();
         containerCommands.getContainers.mockResolvedValue(mockContainers);
         containerCommands.inspectContainers.mockResolvedValue([]);
-        const manager = createContainersManager(targetStore, containerCommands);
+        const manager = createContainersManager(targetModel, containerCommands);
         manager.activate();
         await expect(manager.getContainersData(target)).resolves.toHaveLength(
             mockContainers.length,
@@ -324,9 +324,9 @@ describe('ContainersManager', () => {
                     throw Error(`Unexpected command: ${command}`);
             }
         });
-        const targetStore = mock<TargetStore>();
-        targetStore.getSelectedTarget.mockReturnValue(target);
-        const manager = createContainersManager(targetStore);
+        const targetModel = new TargetModel();
+        targetModel.setSelected(target);
+        const manager = createContainersManager(targetModel);
         manager.activate();
 
         const spy = vi.fn();
@@ -352,9 +352,9 @@ describe('ContainersManager', () => {
                     throw Error(`Unexpected command: ${command}`);
             }
         });
-        const targetStore = mock<TargetStore>();
-        targetStore.getSelectedTarget.mockReturnValue(target);
-        const manager = createContainersManager(targetStore);
+        const targetModel = new TargetModel();
+        targetModel.setSelected(target);
+        const manager = createContainersManager(targetModel);
         manager.activate();
 
         const spy = vi.fn();
@@ -368,12 +368,12 @@ describe('ContainersManager', () => {
         topoCli.health.mockReturnValueOnce(
             new Promise<HealthCheckResult>(() => {}),
         );
-        const targetStore = mock<TargetStore>();
-        targetStore.getSelectedTarget.mockReturnValue(target);
+        const targetModel = new TargetModel();
+        targetModel.setSelected(target);
         const containerCommands = mock<ContainerCommands>();
         containerCommands.getContainers.mockResolvedValue([]);
         containerCommands.inspectContainers.mockResolvedValue([]);
-        const manager = createContainersManager(targetStore, containerCommands);
+        const manager = createContainersManager(targetModel, containerCommands);
 
         manager.activate();
         await waitImmediate();
@@ -390,12 +390,12 @@ describe('ContainersManager', () => {
             (resolve) => (resolveHealth = resolve),
         );
         topoCli.health.mockReturnValueOnce(pendingHealth);
-        const targetStore = mock<TargetStore>();
-        targetStore.getSelectedTarget.mockReturnValue(target);
+        const targetModel = new TargetModel();
+        targetModel.setSelected(target);
         const containerCommands = mock<ContainerCommands>();
         containerCommands.getContainers.mockResolvedValue([]);
         containerCommands.inspectContainers.mockResolvedValue([]);
-        const manager = createContainersManager(targetStore, containerCommands);
+        const manager = createContainersManager(targetModel, containerCommands);
 
         manager.activate();
         await waitImmediate();
@@ -425,35 +425,24 @@ describe('ContainersManager', () => {
                     throw Error(`Unexpected command: ${command}`);
             }
         });
-        let selectedTarget: string | undefined = target;
-        const onChangeEmitter = new vscode.EventEmitter<void>();
-        const targetStore = mock<TargetStore>();
-        targetStore.onChanged.mockImplementation(onChangeEmitter.event);
-        targetStore.getSelectedTarget.mockImplementation(() => selectedTarget);
-        const manager = createContainersManager(targetStore);
-        manager.activate();
-        expect(
-            targetStore.getSelectedTarget.mock.calls.length,
-        ).toBeGreaterThanOrEqual(1);
+        const targetModel = new TargetModel();
+        targetModel.setSelected(target);
+        const manager = createContainersManager(targetModel);
         const dataUpdateSpy = vi.fn();
         manager.onDataUpdate(dataUpdateSpy);
-        selectedTarget = newTarget;
+        manager.activate();
+        expect(dataUpdateSpy.mock.calls.length).toBeGreaterThanOrEqual(1);
 
-        onChangeEmitter.fire();
-        await waitImmediate();
+        targetModel.setSelected(newTarget);
 
-        expect(
-            targetStore.getSelectedTarget.mock.calls.length,
-        ).toBeGreaterThanOrEqual(2);
+        expect(dataUpdateSpy.mock.calls.length).toBeGreaterThanOrEqual(2);
     });
 
     it('refreshes the newly selected target after target change', async () => {
         const newTarget = 'bob@other.local';
-        let selectedTarget: string | undefined = target;
         const onChangeEmitter = new vscode.EventEmitter<void>();
-        const targetStore = mock<TargetStore>();
-        targetStore.onChanged.mockImplementation(onChangeEmitter.event);
-        targetStore.getSelectedTarget.mockImplementation(() => selectedTarget);
+        const targetModel = new TargetModel();
+        targetModel.setSelected(target);
 
         let resolveOldHealth: (result: HealthCheckResult) => void;
         const pendingOldHealth = new Promise<HealthCheckResult>(
@@ -496,12 +485,12 @@ describe('ContainersManager', () => {
         const manager = new ContainersManager(
             topoCli,
             containerCommands,
-            targetStore,
+            targetModel,
         );
 
         manager.activate();
         await waitImmediate();
-        selectedTarget = newTarget;
+        targetModel.setSelected(newTarget);
 
         onChangeEmitter.fire();
         await waitImmediate();

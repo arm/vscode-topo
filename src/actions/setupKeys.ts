@@ -1,16 +1,16 @@
 import * as vscode from 'vscode';
 import { PACKAGE_NAME } from '../manifest';
-import { TargetStore } from '../target/targetStore';
 import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
 import { showAndLogError } from '../util/showAndLogError';
 import { executeTask } from '../util/executeTask';
+import { TargetModel } from '../models/targetModel';
 
 export class SetupKeys {
     public static readonly setupKeysCommand = `${PACKAGE_NAME}.setupKeys`;
 
     constructor(
         private readonly context: vscode.ExtensionContext,
-        private readonly targetStore: TargetStore,
+        private readonly targetModel: TargetModel,
     ) {}
 
     public activate(): void {
@@ -31,7 +31,7 @@ export class SetupKeys {
             return;
         }
 
-        const selectedTarget = this.targetStore.getSelectedTarget();
+        const selectedTarget = this.targetModel.selected;
         if (!selectedTarget) {
             showAndLogError(
                 'Failed to set up keys on target',
