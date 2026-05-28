@@ -2,7 +2,6 @@ import { HealthCheckDependency } from '../topoCliSchema';
 import {
     getDependencyFixCommandGroups,
     getFixableDependencyFixes,
-    hasFixableDependencies,
 } from './getDependencyFixes';
 
 describe('getDependencyFixes', () => {
@@ -83,10 +82,11 @@ describe('getDependencyFixes', () => {
             name: 'Debugger',
             status: 'ok',
             value: 'installed',
-            fix: {
-                description: 'Install debugger',
-                command: 'topo install debugger',
-            },
+        };
+        const infoDependency: HealthCheckDependency = {
+            name: 'Runtime',
+            status: 'info',
+            value: 'available',
         };
         const manualDependency: HealthCheckDependency = {
             name: 'Runtime',
@@ -101,6 +101,7 @@ describe('getDependencyFixes', () => {
             getFixableDependencyFixes([
                 fixableDependency,
                 healthyDependency,
+                infoDependency,
                 manualDependency,
             ]),
         ).toEqual([
@@ -109,34 +110,5 @@ describe('getDependencyFixes', () => {
                 fix: fixableDependency.fix,
             },
         ]);
-    });
-
-    it('checks if dependencies have fixes', () => {
-        expect(
-            hasFixableDependencies([
-                {
-                    name: 'Container Engine',
-                    status: 'error',
-                    value: 'missing',
-                    fix: {
-                        description: 'Install Docker',
-                        command: 'topo install docker',
-                    },
-                },
-            ]),
-        ).toBe(true);
-
-        expect(
-            hasFixableDependencies([
-                {
-                    name: 'Container Engine',
-                    status: 'error',
-                    value: 'missing',
-                    fix: {
-                        description: 'Manual setup required',
-                    },
-                },
-            ]),
-        ).toBe(false);
     });
 });

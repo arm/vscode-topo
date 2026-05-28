@@ -11,7 +11,7 @@ import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependenc
 import { HealthCheckDependency } from '../topoCliSchema';
 import { TargetDescriptionStore } from '../target/targetDescriptionStore';
 import { getVisibleTargetDependencies } from '../target/getVisibleTargetDependencies';
-import { hasFixableDependencies } from '../util/getDependencyFixes';
+import { getFixableDependencyFixes } from '../util/getDependencyFixes';
 import { getTargetDependencies } from '../target/getTargetDependencies';
 
 function sortDependenciesByName(
@@ -72,11 +72,14 @@ export class TargetTreeView
                           this.targetDescriptionStore,
                       )
                     : [];
-                const hasFixable = hasFixableDependencies(dependencies);
-
-                targetTreeItems.push(
-                    new TargetTreeItem(target, selected, status, hasFixable),
+                const fixes = getFixableDependencyFixes(dependencies);
+                const targetTreeItem = new TargetTreeItem(
+                    target,
+                    selected,
+                    status,
+                    fixes.length > 0,
                 );
+                targetTreeItems.push(targetTreeItem);
             }
             const sortedTargetTreeItems = targetTreeItems.sort((a, b) =>
                 a.displayName.localeCompare(b.displayName),

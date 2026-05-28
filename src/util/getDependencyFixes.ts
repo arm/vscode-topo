@@ -56,9 +56,3 @@ export function getFixableDependencyFixes(
 
     return fixes;
 }
-
-export function hasFixableDependencies(
-    dependencies: HealthCheckDependency[],
-): boolean {
-    return getFixableDependencyFixes(dependencies).length > 0;
-}
