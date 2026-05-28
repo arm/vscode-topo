@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { TargetStore } from './targetStore';
 import { mutable } from '../util/mutable';
+import { WrappedError } from '../errors/wrappedError';
 import { mock, MockProxy } from 'vitest-mock-extended';
 
 vi.mock('../util/logger');
@@ -168,6 +169,65 @@ describe('TargetStore', () => {
         const selected = store.getSelectedTarget();
         expect(selected).toBeDefined();
         expect(selected).toBe('carol@example.com');
+    });
+
+    it('throws a STORAGE WrappedError when stored targets are malformed JSON', () => {
+        const { context, globalState } = createMockContext();
+        globalState.get.mockImplementation((key: string) =>
+            key === 'targets' ? 'not-json' : undefined,
+        );
+        const store = new TargetStore(context);
+
+        let thrown: unknown;
+        try {
+            store.getTargets();
+        } catch (err) {
+            thrown = err;
+        }
+        expect(thrown).toBeInstanceOf(WrappedError);
+        expect((thrown as WrappedError).code).toBe('STORAGE');
+        expect((thrown as WrappedError).message).toBe('Failed to load targets');
+        expect((thrown as WrappedError).logs).toEqual([
+            {
+                level: 'Error',
+                msg: expect.stringContaining('Unexpected token'),
+            },
+        ]);
+    });
+
+    it('throws a STORAGE WrappedError when stored targets fail schema validation', () => {
+        const { context, globalState } = createMockContext();
+        globalState.get.mockImplementation((key: string) =>
+            key === 'targets'
+                ? JSON.stringify({ 'target@example.com': 'not-object' })
+                : undefined,
+        );
+        const store = new TargetStore(context);
+
+        let thrown: unknown;
+        try {
+            store.getTargets();
+        } catch (err) {
+            thrown = err;
+        }
+        expect(thrown).toBeInstanceOf(WrappedError);
+        expect((thrown as WrappedError).code).toBe('STORAGE');
+        expect((thrown as WrappedError).message).toBe('Failed to load targets');
+    });
+
+    it('does not wrap errors when reading stored targets fails', () => {
+        const { context, globalState } = createMockContext();
+        const error = new Error('read failed');
+        globalState.get.mockImplementation((key: string) => {
+            if (key === 'targets') {
+                throw error;
+            }
+            return undefined;
+        });
+        const store = new TargetStore(context);
+
+        expect(() => store.getTargets()).toThrow(error);
+        expect(() => store.getTargets()).not.toThrow(WrappedError);
     });
 
     it('fires onChanged when signal file is modified externally and window is not focused', async () => {
