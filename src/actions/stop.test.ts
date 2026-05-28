@@ -1,7 +1,7 @@
 import path from 'node:path';
 import os from 'node:os';
 import * as vscode from 'vscode';
-import { Stop } from './stop';
+import { Stop, stop as stopServices } from './stop';
 import { mock, MockProxy } from 'vitest-mock-extended';
 import { TargetStore } from '../target/targetStore';
 import { executeTask } from '../util/executeTask';
@@ -13,7 +13,7 @@ vi.mock('../util/executeTask');
 const executeTaskMock = vi.mocked(executeTask);
 
 describe('Stop', () => {
-    let stop: Stop;
+    let stopAction: Stop;
     const composeFileUri = vscode.Uri.file(
         path.join(os.tmpdir(), 'compose.yaml'),
     );
@@ -30,7 +30,7 @@ describe('Stop', () => {
         targetStore.getSelectedTarget.mockReturnValue(target);
         executeTaskMock.mockReset();
         vi.mocked(vscode.window.showErrorMessage).mockClear();
-        stop = new Stop(context, targetStore);
+        stopAction = new Stop(context, targetStore);
         registerSpy = vi
             .spyOn(vscode.commands, 'registerCommand')
             .mockImplementation(
@@ -47,7 +47,7 @@ describe('Stop', () => {
     });
 
     it('registers the stop command on activate', () => {
-        stop.activate();
+        stopAction.activate();
 
         expect(registerSpy).toHaveBeenCalledWith(
             Stop.stopCommand,
@@ -58,7 +58,7 @@ describe('Stop', () => {
 
     it('shows an error in the command handler with no target selected', async () => {
         targetStore.getSelectedTarget.mockReturnValueOnce(undefined);
-        stop.activate();
+        stopAction.activate();
 
         const stopOperation = stopHandler!(composeFileUri);
 
@@ -73,7 +73,7 @@ describe('Stop', () => {
         targetStore.getSelectedTarget.mockImplementationOnce(() => {
             throw new Error('target store failed');
         });
-        stop.activate();
+        stopAction.activate();
 
         const stopOperation = stopHandler!(composeFileUri);
 
@@ -83,7 +83,7 @@ describe('Stop', () => {
     });
 
     it('handles successful stop operation', async () => {
-        await stop.stop(composeFilePath, target);
+        await stopServices(composeFilePath, target);
 
         expect(executeTaskMock).toHaveBeenCalledWith(
             'Stop services on topo.local',
@@ -94,7 +94,7 @@ describe('Stop', () => {
 
     it('handles task failure', async () => {
         executeTaskMock.mockRejectedValueOnce(new Error('stop failed'));
-        await stop.stop(composeFilePath, target);
+        await stopServices(composeFilePath, target);
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
             'Stopping services on topo.local failed: stop failed',
@@ -102,7 +102,7 @@ describe('Stop', () => {
     });
 
     it('invokes handler when command called', async () => {
-        stop.activate();
+        stopAction.activate();
 
         const op = stopHandler!(composeFileUri);
 

@@ -43,34 +43,37 @@ export class Stop {
             return;
         }
 
-        await this.stop(resource.fsPath, target);
+        await stop(resource.fsPath, target);
     }
+}
 
-    public async stop(composeFilePath: string, target: string): Promise<void> {
-        const taskName = `Stop services on ${target}`;
+export async function stop(
+    composeFilePath: string,
+    target: string,
+): Promise<void> {
+    const taskName = `Stop services on ${target}`;
 
-        try {
-            await executeTask(taskName, ['topo', 'stop', '--target', target], {
-                cwd: path.dirname(composeFilePath),
-            });
-            vscode.window.showInformationMessage(
-                `Services on ${target} stopped successfully.`,
-            );
-        } catch (e) {
-            const terminal = vscode.window.terminals.find(
-                (t) => t.name === taskName,
-            );
-            const actions: vscode.MessageItem[] = [];
-            if (terminal) {
-                actions.push(viewLogsItem);
-            }
-            const choice = await vscode.window.showErrorMessage(
-                `Stopping services on ${target} failed: ${getErrorMessage(e)}`,
-                ...actions,
-            );
-            if (choice?.title === viewLogsItem.title) {
-                terminal?.show();
-            }
+    try {
+        await executeTask(taskName, ['topo', 'stop', '--target', target], {
+            cwd: path.dirname(composeFilePath),
+        });
+        vscode.window.showInformationMessage(
+            `Services on ${target} stopped successfully.`,
+        );
+    } catch (e) {
+        const terminal = vscode.window.terminals.find(
+            (t) => t.name === taskName,
+        );
+        const actions: vscode.MessageItem[] = [];
+        if (terminal) {
+            actions.push(viewLogsItem);
+        }
+        const choice = await vscode.window.showErrorMessage(
+            `Stopping services on ${target} failed: ${getErrorMessage(e)}`,
+            ...actions,
+        );
+        if (choice?.title === viewLogsItem.title) {
+            terminal?.show();
         }
     }
 }

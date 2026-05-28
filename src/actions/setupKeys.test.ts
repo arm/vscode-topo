@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { mock, MockProxy } from 'vitest-mock-extended';
-import { SetupKeys } from './setupKeys';
+import { SetupKeys, setupKeys as setupKeysOnTarget } from './setupKeys';
 import { TargetStore } from '../target/targetStore';
 import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
 import { executeTask } from '../util/executeTask';
@@ -110,10 +110,8 @@ describe('SetupKeys', () => {
         executeTaskMock.mockRejectedValueOnce(
             new Error('setup-keys failed with exit code 1'),
         );
-        const setupKeys = new SetupKeys(context, targetStore);
-        setupKeys.activate();
 
-        await executeCommand(SetupKeys.setupKeysCommand, undefined);
+        await setupKeysOnTarget(target);
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
             expect.stringContaining(

@@ -25,21 +25,7 @@ export class ProjectInit implements vscode.Disposable {
             );
             return;
         }
-        await this.initProject(projectPath);
-    }
-
-    private async initProject(projectPath: string): Promise<void> {
-        try {
-            await this.topoCli.init(projectPath);
-            vscode.window.showInformationMessage(
-                `Project initialized successfully.`,
-            );
-        } catch (err: unknown) {
-            const errorMsg = err instanceof Error ? err.message : String(err);
-            vscode.window.showErrorMessage(
-                `Failed to initialize project: ${errorMsg}`,
-            );
-        }
+        await initProject(this.topoCli, projectPath);
     }
 
     public dispose(): void {
@@ -47,5 +33,22 @@ export class ProjectInit implements vscode.Disposable {
             disposable.dispose();
         }
         this.disposables = [];
+    }
+}
+
+export async function initProject(
+    topoCli: TopoCli,
+    projectPath: string,
+): Promise<void> {
+    try {
+        await topoCli.init(projectPath);
+        vscode.window.showInformationMessage(
+            `Project initialized successfully.`,
+        );
+    } catch (err: unknown) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        vscode.window.showErrorMessage(
+            `Failed to initialize project: ${errorMsg}`,
+        );
     }
 }

@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { ProjectInit } from './projectInit';
+import { ProjectInit, initProject } from './projectInit';
 import { mutable } from '../util/mutable';
 import { mock } from 'vitest-mock-extended';
 import { TopoCli } from '../topoCli';
@@ -39,16 +39,10 @@ describe('ProjectInit', () => {
     });
 
     it('shows error message if topoCli.init throws', async () => {
-        const workspaceUri = vscode.Uri.file('/fake/workspace');
-        mutable(vscode.workspace).workspaceFolders = [
-            { uri: workspaceUri, name: 'workspace', index: 0 },
-        ];
         const topoCli = mock<TopoCli>();
         topoCli.init.mockRejectedValue(new Error('fail'));
-        const projectInit = new ProjectInit(topoCli);
-        projectInit.activate();
 
-        await executeCommand(ProjectInit.initProjectCommand);
+        await initProject(topoCli, '/fake/workspace');
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
             'Failed to initialize project: fail',

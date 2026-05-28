@@ -27,7 +27,7 @@ export class SetupKeys {
             if (!treeNode.contextValue?.includes('Selected')) {
                 return;
             }
-            await this.setupKeys(treeNode.target);
+            await setupKeys(treeNode.target);
             return;
         }
 
@@ -39,22 +39,22 @@ export class SetupKeys {
             );
             return;
         }
-        await this.setupKeys(selectedTarget);
+        await setupKeys(selectedTarget);
     }
+}
 
-    private async setupKeys(ssh: string): Promise<void> {
-        try {
-            await executeTask(`Setup keys on ${ssh}`, [
-                'topo',
-                'setup-keys',
-                '--target',
-                ssh,
-            ]);
-            vscode.window.showInformationMessage(
-                `Keys were set up on target ${ssh}.`,
-            );
-        } catch (err) {
-            showAndLogError(`Failed to set up keys on target ${ssh}`, err);
-        }
+export async function setupKeys(ssh: string): Promise<void> {
+    try {
+        await executeTask(`Setup keys on ${ssh}`, [
+            'topo',
+            'setup-keys',
+            '--target',
+            ssh,
+        ]);
+        vscode.window.showInformationMessage(
+            `Keys were set up on target ${ssh}.`,
+        );
+    } catch (err) {
+        showAndLogError(`Failed to set up keys on target ${ssh}`, err);
     }
 }

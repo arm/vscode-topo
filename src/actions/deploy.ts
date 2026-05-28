@@ -43,41 +43,37 @@ export class Deploy {
             return;
         }
 
-        await this.deploy(resource.fsPath, target);
+        await deploy(resource.fsPath, target);
     }
+}
 
-    public async deploy(
-        composeFilePath: string,
-        target: string,
-    ): Promise<void> {
-        const taskName = `Deploy to ${target}`;
+export async function deploy(
+    composeFilePath: string,
+    target: string,
+): Promise<void> {
+    const taskName = `Deploy to ${target}`;
 
-        try {
-            await executeTask(
-                taskName,
-                ['topo', 'deploy', '--target', target],
-                {
-                    cwd: path.dirname(composeFilePath),
-                },
-            );
-            vscode.window.showInformationMessage(
-                `Deployment to ${target} completed successfully.`,
-            );
-        } catch (e) {
-            const terminal = vscode.window.terminals.find(
-                (t) => t.name === taskName,
-            );
-            const actions: vscode.MessageItem[] = [];
-            if (terminal) {
-                actions.push(viewLogsItem);
-            }
-            const choice = await vscode.window.showErrorMessage(
-                `Deployment to ${target} failed: ${getErrorMessage(e)}`,
-                ...actions,
-            );
-            if (choice?.title === viewLogsItem.title) {
-                terminal?.show();
-            }
+    try {
+        await executeTask(taskName, ['topo', 'deploy', '--target', target], {
+            cwd: path.dirname(composeFilePath),
+        });
+        vscode.window.showInformationMessage(
+            `Deployment to ${target} completed successfully.`,
+        );
+    } catch (e) {
+        const terminal = vscode.window.terminals.find(
+            (t) => t.name === taskName,
+        );
+        const actions: vscode.MessageItem[] = [];
+        if (terminal) {
+            actions.push(viewLogsItem);
+        }
+        const choice = await vscode.window.showErrorMessage(
+            `Deployment to ${target} failed: ${getErrorMessage(e)}`,
+            ...actions,
+        );
+        if (choice?.title === viewLogsItem.title) {
+            terminal?.show();
         }
     }
 }
