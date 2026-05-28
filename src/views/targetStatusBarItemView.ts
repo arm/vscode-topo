@@ -3,17 +3,41 @@ import { TargetStore } from '../target/targetStore';
 import { ContainersManager } from '../target/containersManager';
 import { getTargetTreeItemIcon } from '../targetTreeView/targetTreeItem';
 import { TargetTreeView } from './targetTreeView';
-import { TargetStatus } from '../util/types';
+import { TargetState } from '../util/types';
 import { DisposableCollector } from '../util/disposableCollector';
+import { getWorstDependencyStatus } from '../util/getWorstDependencyStatus';
+import { getDependencyGroupIcon } from './util/getDependencyStatusIcon';
+
+function getDependencyStatusIconId(state: TargetState): string | undefined {
+    const dependencies = state.health?.dependencies;
+    if (!dependencies) {
+        return undefined;
+    }
+
+    const status = getWorstDependencyStatus(dependencies);
+    if (status === 'ok') {
+        return undefined;
+    }
+
+    return getDependencyGroupIcon(status).id;
+}
+
+function getStatusIconId(state: TargetState): string {
+    const targetTreeIcon = getTargetTreeItemIcon(true, state.status);
+    if (targetTreeIcon) {
+        return targetTreeIcon.id;
+    }
+
+    return getDependencyStatusIconId(state) || 'pass-filled';
+}
 
 function renderStatusBarItem(
     statusBarItem: vscode.StatusBarItem,
     target: string | undefined,
-    status: TargetStatus,
+    state: TargetState,
 ): void {
     if (target) {
-        const targetTreeIcon = getTargetTreeItemIcon(true, status);
-        const iconId = targetTreeIcon?.id || 'pass-filled';
+        const iconId = getStatusIconId(state);
         statusBarItem.text = `$(${iconId}) ${target}`;
         statusBarItem.tooltip = `Connection String: ${target}`;
         statusBarItem.show();
@@ -51,11 +75,10 @@ export class TargetStatusBarItemView implements vscode.Disposable {
 
     private refresh(): void {
         const selectedTarget = this.targetStore.getSelectedTarget();
-        const status = selectedTarget
+        const state: TargetState = selectedTarget
             ? this.containersManager.getTargetStateSnapshot(selectedTarget)
-                  .status
-            : 'disconnected';
-        renderStatusBarItem(this.statusBarItem, selectedTarget, status);
+            : { health: undefined, status: 'disconnected' };
+        renderStatusBarItem(this.statusBarItem, selectedTarget, state);
     }
 
     public dispose(): void {

@@ -1,28 +1,6 @@
 import * as vscode from 'vscode';
-import { HealthCheckDependency, HealthCheckStatus } from '../topoCliSchema';
-
-export const getDependencyItemIcon = (
-    status: HealthCheckStatus,
-): vscode.ThemeIcon => {
-    if (status === 'ok') {
-        return new vscode.ThemeIcon(
-            'check',
-            new vscode.ThemeColor('testing.iconPassed'),
-        );
-    }
-
-    if (status === 'warning') {
-        return new vscode.ThemeIcon(
-            'warning',
-            new vscode.ThemeColor('testing.iconQueued'),
-        );
-    }
-
-    return new vscode.ThemeIcon(
-        'close',
-        new vscode.ThemeColor('testing.iconFailed'),
-    );
-};
+import { HealthCheckDependency } from '../topoCliSchema';
+import { getDependencyItemIcon } from '../views/util/getDependencyStatusIcon';
 
 const capitalizeFirstLetter = (s: string) => {
     return s.charAt(0).toUpperCase() + s.slice(1);

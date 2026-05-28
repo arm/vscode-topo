@@ -94,4 +94,32 @@ describe('TargetStatusBarItemView', () => {
         expect(statusBarItem.show).toHaveBeenCalledTimes(2);
         expect(statusBarItem.hide).not.toHaveBeenCalled();
     });
+
+    it('shows unhealthy target dependencies with an icon only', async () => {
+        const target = 'root@localhost';
+        const targetStore = mock<TargetStore>();
+        targetStore.getSelectedTarget.mockReturnValue(target);
+        const containersManager = mock<ContainersManager>({
+            getTargetStateSnapshot: vi.fn().mockReturnValue({
+                health: {
+                    ...healthyTarget,
+                    dependencies: [
+                        {
+                            status: 'warning',
+                            name: 'Container Engine',
+                            value: 'missing',
+                        },
+                    ],
+                },
+                status: 'connected',
+            }),
+        });
+
+        new TargetStatusBarItemView(targetStore, containersManager);
+
+        const statusBarItem = vi.mocked(vscode.window.createStatusBarItem).mock
+            .results[0].value;
+        expect(statusBarItem.text).toBe(`$(warning) ${target}`);
+        expect(statusBarItem.tooltip).toBe('Connection String: root@localhost');
+    });
 });
