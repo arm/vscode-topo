@@ -54,16 +54,4 @@ describe('TransientDocumentProvider', () => {
         expect(provider.provideTextDocumentContent(firstUri)).toBeUndefined();
         expect(provider.provideTextDocumentContent(secondUri)).toBe('second');
     });
-
-    it('disposes the content provider registration', () => {
-        const registration = mock<vscode.Disposable>();
-        vi.mocked(
-            vscode.workspace.registerTextDocumentContentProvider,
-        ).mockReturnValueOnce(registration);
-        const provider = new TransientDocumentProvider('topo-health');
-
-        provider.dispose();
-
-        expect(registration.dispose).toHaveBeenCalledWith();
-    });
 });

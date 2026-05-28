@@ -11,6 +11,7 @@ import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependenc
 import { HealthCheckDependency } from '../topoCliSchema';
 import { TargetDescriptionStore } from '../target/targetDescriptionStore';
 import { getVisibleTargetDependencies } from '../target/getVisibleTargetDependencies';
+import { DisposableCollector } from '../util/disposableCollector';
 
 function sortDependenciesByName(
     deps: HealthCheckDependency[],
@@ -29,7 +30,7 @@ export class TargetTreeView
     private _onDidChangeTreeData = new vscode.EventEmitter<undefined>();
     public readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
-    private disposables: vscode.Disposable[] = [];
+    private readonly disposables = new DisposableCollector();
 
     constructor(
         private readonly containersManager: ContainersManager,
@@ -41,7 +42,7 @@ export class TargetTreeView
             showCollapseAll: true,
         });
 
-        this.disposables.push(
+        this.disposables.collect(
             treeView,
             this.targetStore.onChanged(() => {
                 this._onDidChangeTreeData.fire(undefined);
@@ -150,9 +151,6 @@ export class TargetTreeView
     }
 
     public dispose(): void {
-        for (const disposable of [...this.disposables].reverse()) {
-            disposable.dispose();
-        }
-        this.disposables = [];
+        this.disposables.dispose();
     }
 }

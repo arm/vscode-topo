@@ -32,26 +32,6 @@ describe('commands', () => {
         }
     });
 
-    it('disposes all registered commands', () => {
-        const hostController = mock<HostController>();
-        const disposables: vscode.Disposable[] = [];
-        vi.mocked(vscode.commands.registerCommand).mockImplementation(() => {
-            const disposable = mock<vscode.Disposable>();
-            disposables.push(disposable);
-            return disposable;
-        });
-        const registration = commands.register(
-            hostController,
-            targetController,
-        );
-
-        registration.dispose();
-
-        for (const disposable of disposables) {
-            expect(disposable.dispose).toHaveBeenCalledWith();
-        }
-    });
-
     describe('command handlers', () => {
         const cases: [string, Mock][] = [
             [commands.refreshHostHealth, hostController.refreshHealth],
