@@ -3,68 +3,21 @@ import { PACKAGE_NAME } from '../manifest';
 import { TargetStore } from '../target/targetStore';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 import { showAndLogError } from '../util/showAndLogError';
-import { ContainersManager } from '../target/containersManager';
 import { logger } from '../util/logger';
 import { executeTask } from '../util/executeTask';
 import { getFixCommandArgs } from '../util/getFixCommandArgs';
-import {
-    type DependencyFixCommandGroup,
-    getDependencyFixCommandGroups,
-} from '../util/getDependencyFixes';
-
-const fixAction = { title: 'Fix' };
 
 export class FixIssue implements vscode.Disposable {
     private disposables: vscode.Disposable[] = [];
-    private targetChangedAbortController: AbortController | undefined;
     public static readonly fixIssueCommand = `${PACKAGE_NAME}.fixIssue`;
 
-    constructor(
-        private readonly targetStore: TargetStore,
-        private readonly containersManager: ContainersManager,
-    ) {}
-
-    public activate(): void {
+    constructor(private readonly targetStore: TargetStore) {
         this.disposables.push(
             vscode.commands.registerCommand(
                 FixIssue.fixIssueCommand,
                 this.fixIssueFromTreeItem.bind(this),
             ),
-            this.targetStore.onChanged(() =>
-                this.promptToFixIssuesInBackground(),
-            ),
         );
-
-        this.promptToFixIssuesInBackground();
-    }
-
-    private promptToFixIssuesInBackground(): void {
-        this.promptToFixIssues().catch((error) => {
-            logger.error(`Failed to prompt to fix target dependencies`, error);
-        });
-    }
-
-    private async promptToFixIssues(): Promise<void> {
-        this.targetChangedAbortController?.abort();
-        const abortController = new AbortController();
-        this.targetChangedAbortController = abortController;
-
-        const target = this.targetStore.getSelectedTarget();
-        if (!target) {
-            return;
-        }
-        const { health } = await this.containersManager.getTargetState(target);
-
-        const fixableDependencies = health?.dependencies
-            ? getDependencyFixCommandGroups(health.dependencies)
-            : [];
-
-        if (fixableDependencies.length > 0 && !abortController.signal.aborted) {
-            await this.showFixableDependenciesPrompt(
-                target,
-                fixableDependencies,
-            );
-        }
     }
 
     private async fixIssueFromTreeItem(treeNode: unknown): Promise<void> {
@@ -124,28 +77,7 @@ export class FixIssue implements vscode.Disposable {
         }
     }
 
-    private async showFixableDependenciesPrompt(
-        target: string,
-        fixableDependencies: DependencyFixCommandGroup[],
-    ): Promise<void> {
-        const choice = await vscode.window.showWarningMessage(
-            `${target} has missing or unhealthy dependencies: ${fixableDependencies.flatMap(({ names }) => names).join(`, `)}`,
-            fixAction,
-        );
-        if (choice?.title === fixAction.title) {
-            for (const fixableDependency of fixableDependencies) {
-                await this.executeFixCommand(
-                    target,
-                    fixableDependency.names,
-                    fixableDependency.command,
-                );
-            }
-        }
-    }
-
     public dispose(): void {
-        this.targetChangedAbortController?.abort();
-        this.targetChangedAbortController = undefined;
         for (const disposable of [...this.disposables].reverse()) {
             disposable.dispose();
         }
