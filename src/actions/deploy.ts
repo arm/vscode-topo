@@ -22,58 +22,58 @@ export class Deploy {
         this.context.subscriptions.push(
             vscode.commands.registerCommand(
                 Deploy.deployCommand,
-                this.handleDeployCommand.bind(this),
+                this.deployCommandHandler.bind(this),
             ),
         );
     }
 
-    private async handleDeployCommand(resource?: vscode.Uri): Promise<void> {
+    private async deployCommandHandler(resource?: vscode.Uri): Promise<void> {
         if (!resource) {
             throw new Error('No compose file selected for deployment');
         }
-        try {
-            await this.deploy(resource.fsPath);
-        } catch (err) {
-            showAndLogError('Error executing deploy command', err);
-        }
-    }
-
-    public async deploy(composeFilePath: string): Promise<void> {
         const target = this.targetStore.getSelectedTarget();
+
         if (!target) {
-            throw new Error(
-                'No target selected. Please select a target before deploying.',
+            showAndLogError(
+                'Error executing deploy command',
+                new Error(
+                    'No target selected. Please select a target before deploying.',
+                ),
             );
+            return;
         }
 
-        const taskName = `Deploy to ${target}`;
+        await deploy(resource.fsPath, target);
+    }
+}
 
-        try {
-            await executeTask(
-                taskName,
-                ['topo', 'deploy', '--target', target],
-                {
-                    cwd: path.dirname(composeFilePath),
-                },
-            );
-            vscode.window.showInformationMessage(
-                `Deployment to ${target} completed successfully.`,
-            );
-        } catch (e) {
-            const terminal = vscode.window.terminals.find(
-                (t) => t.name === taskName,
-            );
-            const actions: vscode.MessageItem[] = [];
-            if (terminal) {
-                actions.push(viewLogsItem);
-            }
-            const choice = await vscode.window.showErrorMessage(
-                `Deployment to ${target} failed: ${getErrorMessage(e)}`,
-                ...actions,
-            );
-            if (choice?.title === viewLogsItem.title) {
-                terminal?.show();
-            }
+export async function deploy(
+    composeFilePath: string,
+    target: string,
+): Promise<void> {
+    const taskName = `Deploy to ${target}`;
+
+    try {
+        await executeTask(taskName, ['topo', 'deploy', '--target', target], {
+            cwd: path.dirname(composeFilePath),
+        });
+        vscode.window.showInformationMessage(
+            `Deployment to ${target} completed successfully.`,
+        );
+    } catch (e) {
+        const terminal = vscode.window.terminals.find(
+            (t) => t.name === taskName,
+        );
+        const actions: vscode.MessageItem[] = [];
+        if (terminal) {
+            actions.push(viewLogsItem);
+        }
+        const choice = await vscode.window.showErrorMessage(
+            `Deployment to ${target} failed: ${getErrorMessage(e)}`,
+            ...actions,
+        );
+        if (choice?.title === viewLogsItem.title) {
+            terminal?.show();
         }
     }
 }

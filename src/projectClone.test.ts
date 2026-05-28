@@ -315,6 +315,22 @@ describe('ProjectClone', () => {
             expect(executeTaskMock).not.toHaveBeenCalled();
         });
 
+        it('rethrows errors from selected target lookup', async () => {
+            mutable(vscode.workspace).workspaceFolders = workspaceFolders;
+            targetStore.getSelectedTarget.mockImplementationOnce(() => {
+                throw new Error('target lookup failed');
+            });
+
+            await expect(
+                executeCommand(ProjectClone.templateCloneCommand),
+            ).rejects.toThrow('target lookup failed');
+
+            expect(showAndLogError).not.toHaveBeenCalled();
+            expect(topoCli.listTemplates).not.toHaveBeenCalled();
+            expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
+            expect(executeTaskMock).not.toHaveBeenCalled();
+        });
+
         it('returns early when no template selected', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
             topoCli.listTemplates.mockReturnValue(templateList);
