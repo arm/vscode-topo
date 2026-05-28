@@ -11,6 +11,8 @@ import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependenc
 import { HealthCheckDependency } from '../topoCliSchema';
 import { TargetDescriptionStore } from '../target/targetDescriptionStore';
 import { getVisibleTargetDependencies } from '../target/getVisibleTargetDependencies';
+import { getFixableDependencyFixes } from '../util/getDependencyFixes';
+import { getTargetDependencies } from '../target/getTargetDependencies';
 
 function sortDependenciesByName(
     deps: HealthCheckDependency[],
@@ -58,14 +60,27 @@ export class TargetTreeView
     ): Promise<vscode.TreeItem[]> {
         if (!element) {
             const selectedTarget = this.targetStore.getSelectedTarget();
-            const targetTreeItems = this.targetStore
-                .getTargets()
-                .map((target) => {
-                    const selected = target === selectedTarget;
-                    const { status } =
-                        this.containersManager.getTargetStateSnapshot(target);
-                    return new TargetTreeItem(target, selected, status);
-                });
+            const targetTreeItems: TargetTreeItem[] = [];
+            for (const target of this.targetStore.getTargets()) {
+                const selected = target === selectedTarget;
+                const { status } =
+                    this.containersManager.getTargetStateSnapshot(target);
+                const dependencies = selected
+                    ? await getTargetDependencies(
+                          target,
+                          this.containersManager,
+                          this.targetDescriptionStore,
+                      )
+                    : [];
+                const fixes = getFixableDependencyFixes(dependencies);
+                const targetTreeItem = new TargetTreeItem(
+                    target,
+                    selected,
+                    status,
+                    fixes.length > 0,
+                );
+                targetTreeItems.push(targetTreeItem);
+            }
             const sortedTargetTreeItems = targetTreeItems.sort((a, b) =>
                 a.displayName.localeCompare(b.displayName),
             );

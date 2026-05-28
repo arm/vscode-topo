@@ -7,6 +7,7 @@ export class TargetTreeItem extends vscode.TreeItem {
         public readonly target: string,
         public readonly selected: boolean,
         public readonly status: TargetStatus,
+        public readonly hasFixableDependencies = false,
     ) {
         super(target, vscode.TreeItemCollapsibleState.Expanded);
         this.id = target;
@@ -17,6 +18,9 @@ export class TargetTreeItem extends vscode.TreeItem {
         }
         if (status === 'connected') {
             contextValues.push('Connected');
+        }
+        if (hasFixableDependencies) {
+            contextValues.push('HasFixableDependencies');
         }
         this.contextValue = contextValues.join(' ');
         this.collapsibleState = getTargetTreeItemState(selected, status);
