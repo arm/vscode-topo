@@ -11,11 +11,12 @@ import {
     getDependencyFixCommandGroups,
 } from '../util/getDependencyFixes';
 import { TargetModel } from '../models/targetModel';
+import { DisposableCollector } from '../util/disposableCollector';
 
 const fixAction = { title: 'Fix' };
 
 export class FixIssue implements vscode.Disposable {
-    private disposables: vscode.Disposable[] = [];
+    private readonly disposables = new DisposableCollector();
     private targetChangedAbortController: AbortController | undefined;
     public static readonly fixIssueCommand = `${PACKAGE_NAME}.fixIssue`;
 
@@ -25,7 +26,7 @@ export class FixIssue implements vscode.Disposable {
     ) {}
 
     public activate(): void {
-        this.disposables.push(
+        this.disposables.collect(
             vscode.commands.registerCommand(
                 FixIssue.fixIssueCommand,
                 this.fixIssueFromTreeItem.bind(this),
@@ -146,9 +147,6 @@ export class FixIssue implements vscode.Disposable {
     public dispose(): void {
         this.targetChangedAbortController?.abort();
         this.targetChangedAbortController = undefined;
-        for (const disposable of [...this.disposables].reverse()) {
-            disposable.dispose();
-        }
-        this.disposables = [];
+        this.disposables.dispose();
     }
 }

@@ -11,6 +11,7 @@ import type { TopoCli } from '../topoCli';
 import { future, type Future } from '../util/future';
 import { RefreshLoop } from '../util/refreshLoop';
 import { TargetModel } from '../models/targetModel';
+import { DisposableCollector } from '../util/disposableCollector';
 
 const refreshInterval = 3000;
 
@@ -65,7 +66,7 @@ export class ContainersManager implements vscode.Disposable {
     private readonly _onDataUpdate = new vscode.EventEmitter<void>();
     public readonly onDataUpdate = this._onDataUpdate.event;
 
-    private disposables: vscode.Disposable[] = [];
+    private readonly disposables = new DisposableCollector();
 
     constructor(
         private readonly topoCli: TopoCli,
@@ -79,7 +80,7 @@ export class ContainersManager implements vscode.Disposable {
                 });
             },
         );
-        this.disposables.push(this._onDataUpdate, onChangedDisposable);
+        this.disposables.collect(this._onDataUpdate, onChangedDisposable);
     }
 
     public async activate(): Promise<void> {
@@ -206,13 +207,6 @@ export class ContainersManager implements vscode.Disposable {
 
     public dispose(): void {
         this.stopAutoRefresh();
-        [...this.disposables].reverse().forEach((d) => {
-            try {
-                d.dispose();
-            } catch (error) {
-                logger.error(`Error disposing resource`, error);
-            }
-        });
-        this.disposables = [];
+        this.disposables.dispose();
     }
 }

@@ -1,13 +1,14 @@
 import * as vscode from 'vscode';
+import { DisposableCollector } from './disposableCollector';
 
 export class TransientDocumentProvider
     implements vscode.TextDocumentContentProvider, vscode.Disposable
 {
-    private disposables: vscode.Disposable[] = [];
+    private readonly disposables = new DisposableCollector();
     private readonly docs = new Map<string, string>();
 
     constructor(private readonly scheme: string) {
-        this.disposables.push(
+        this.disposables.collect(
             vscode.workspace.registerTextDocumentContentProvider(
                 this.scheme,
                 this,
@@ -35,9 +36,6 @@ export class TransientDocumentProvider
     }
 
     public dispose(): void {
-        for (const disposable of [...this.disposables].reverse()) {
-            disposable.dispose();
-        }
-        this.disposables = [];
+        this.disposables.dispose();
     }
 }

@@ -4,6 +4,7 @@ import { getTargetTreeItemIcon } from '../targetTreeView/targetTreeItem';
 import { TargetTreeView } from './targetTreeView';
 import { TargetStatus } from '../util/types';
 import { TargetModel } from '../models/targetModel';
+import { DisposableCollector } from '../util/disposableCollector';
 
 function renderStatusBarItem(
     statusBarItem: vscode.StatusBarItem,
@@ -21,11 +22,11 @@ function renderStatusBarItem(
     }
 }
 
-export class TargetStatusBarItemView {
+export class TargetStatusBarItemView implements vscode.Disposable {
     public static readonly priority = 100;
     public static readonly id = 'topo-target-status-bar-item';
 
-    private disposables: vscode.Disposable[] = [];
+    private readonly disposables = new DisposableCollector();
 
     private statusBarItem: vscode.StatusBarItem;
 
@@ -41,7 +42,7 @@ export class TargetStatusBarItemView {
         this.statusBarItem.command = TargetTreeView.focusViewCommand;
         this.refresh();
 
-        this.disposables.push(
+        this.disposables.collect(
             this.statusBarItem,
             this.targetModel.onSelectedChanged(() => this.refresh()),
             this.containersManager.onDataUpdate(() => this.refresh()),
@@ -58,9 +59,6 @@ export class TargetStatusBarItemView {
     }
 
     public dispose(): void {
-        for (const disposable of [...this.disposables].reverse()) {
-            disposable.dispose();
-        }
-        this.disposables = [];
+        this.disposables.dispose();
     }
 }
