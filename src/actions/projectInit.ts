@@ -1,15 +1,16 @@
 import * as manifest from '../manifest';
 import * as vscode from 'vscode';
 import { TopoCli } from '../topoCli';
+import { DisposableCollector } from '../util/disposableCollector';
 
 export class ProjectInit implements vscode.Disposable {
-    private disposables: vscode.Disposable[] = [];
+    private readonly disposables = new DisposableCollector();
     public static initProjectCommand = `${manifest.PACKAGE_NAME}.initProject`;
 
     constructor(private readonly topoCli: TopoCli) {}
 
     public activate() {
-        this.disposables.push(
+        this.disposables.collect(
             vscode.commands.registerCommand(
                 ProjectInit.initProjectCommand,
                 this.initProjectCommandHandler.bind(this),
@@ -29,10 +30,7 @@ export class ProjectInit implements vscode.Disposable {
     }
 
     public dispose(): void {
-        for (const disposable of [...this.disposables].reverse()) {
-            disposable.dispose();
-        }
-        this.disposables = [];
+        this.disposables.dispose();
     }
 }
 

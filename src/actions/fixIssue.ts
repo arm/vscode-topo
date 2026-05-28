@@ -6,13 +6,14 @@ import { showAndLogError } from '../util/showAndLogError';
 import { logger } from '../util/logger';
 import { executeTask } from '../util/executeTask';
 import { getFixCommandArgs } from '../util/getFixCommandArgs';
+import { DisposableCollector } from '../util/disposableCollector';
 
 export class FixIssue implements vscode.Disposable {
-    private disposables: vscode.Disposable[] = [];
+    private readonly disposables = new DisposableCollector();
     public static readonly fixIssueCommand = `${PACKAGE_NAME}.fixIssue`;
 
     constructor(private readonly targetStore: TargetStore) {
-        this.disposables.push(
+        this.disposables.collect(
             vscode.commands.registerCommand(
                 FixIssue.fixIssueCommand,
                 this.fixIssueFromTreeItem.bind(this),
@@ -78,9 +79,6 @@ export class FixIssue implements vscode.Disposable {
     }
 
     public dispose(): void {
-        for (const disposable of [...this.disposables].reverse()) {
-            disposable.dispose();
-        }
-        this.disposables = [];
+        this.disposables.dispose();
     }
 }
