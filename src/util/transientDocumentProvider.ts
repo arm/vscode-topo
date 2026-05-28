@@ -19,12 +19,14 @@ export class TransientDocumentProvider
         return this.docs.get(uri.toString());
     }
 
-    public async open(path: string, content: string): Promise<void> {
-        const documentUri = vscode.Uri.from({
+    public createUri(path: string): vscode.Uri {
+        return vscode.Uri.from({
             scheme: this.scheme,
             path,
         });
+    }
 
+    public async open(documentUri: vscode.Uri, content: string): Promise<void> {
         this.docs.clear();
         this.docs.set(documentUri.toString(), content);
 
