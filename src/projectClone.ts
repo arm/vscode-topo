@@ -234,19 +234,19 @@ export class ProjectClone {
             vscode.commands.registerCommand(
                 ProjectClone.remoteCloneCommand,
                 this.wrapCloneCommandWithCloneErrorHandling(
-                    this.cloneRemoteProject,
+                    this.remoteCloneCommandHandler,
                 ),
             ),
             vscode.commands.registerCommand(
                 ProjectClone.localCloneCommand,
                 this.wrapCloneCommandWithCloneErrorHandling(
-                    this.cloneLocalProject,
+                    this.localCloneCommandHandler,
                 ),
             ),
             vscode.commands.registerCommand(
                 ProjectClone.templateCloneCommand,
                 this.wrapCloneCommandWithCloneErrorHandling(
-                    this.cloneTemplateProject,
+                    this.templateCloneCommandHandler,
                 ),
             ),
         );
@@ -269,7 +269,7 @@ export class ProjectClone {
         return cloneResult.success;
     }
 
-    private async cloneTemplateProject(): Promise<void> {
+    private async templateCloneCommandHandler(): Promise<void> {
         const selectedTarget = this.targetModel.selected;
         const selectedTemplate = await getTemplateOfChoice(
             this.topoCli,
@@ -287,7 +287,7 @@ export class ProjectClone {
         );
     }
 
-    private async cloneLocalProject(): Promise<void> {
+    private async localCloneCommandHandler(): Promise<void> {
         const cloneSourcePath = await getLocalSourcePath();
         if (!cloneSourcePath) {
             return;
@@ -301,7 +301,7 @@ export class ProjectClone {
         );
     }
 
-    private async cloneRemoteProject(): Promise<void> {
+    private async remoteCloneCommandHandler(): Promise<void> {
         const cloneSourceRemoteUrl = await vscode.window.showInputBox({
             prompt: 'Enter the git URL to clone from',
         });

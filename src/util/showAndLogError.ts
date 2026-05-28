@@ -5,8 +5,9 @@ import * as vscode from 'vscode';
 
 export const showAndLogError = (message: string, err: unknown) => {
     vscode.window.showErrorMessage(`${message}. ${getErrorMessage(err)}`);
-    if (isWrappedError(err) && err.logs.length > 0) {
+    if (isWrappedError(err)) {
         logger.error(message);
+        logger.error(getErrorMessage(err));
         for (const entry of err.logs) {
             switch (entry.level) {
                 case 'Error':

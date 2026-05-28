@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { ProjectInit } from './projectInit';
+import { ProjectInit, initProject } from './projectInit';
 import { mutable } from '../util/mutable';
 import { mock } from 'vitest-mock-extended';
 import { TopoCli } from '../topoCli';
@@ -8,6 +8,7 @@ import { executeCommand } from '../util/test/executeCommand';
 describe('ProjectInit', () => {
     beforeEach(() => {
         vi.resetAllMocks();
+        mutable(vscode.workspace).workspaceFolders = undefined;
     });
 
     it('registers the initProject command on activate', async () => {
@@ -40,13 +41,24 @@ describe('ProjectInit', () => {
     it('shows error message if topoCli.init throws', async () => {
         const topoCli = mock<TopoCli>();
         topoCli.init.mockRejectedValue(new Error('fail'));
+
+        await initProject(topoCli, '/fake/workspace');
+
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
+            'Failed to initialize project: fail',
+        );
+    });
+
+    it('shows error message if no workspace folder is open', async () => {
+        const topoCli = mock<TopoCli>();
         const projectInit = new ProjectInit(topoCli);
         projectInit.activate();
 
         await executeCommand(ProjectInit.initProjectCommand);
 
+        expect(topoCli.init).not.toHaveBeenCalled();
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-            'Failed to initialize project: fail',
+            'No workspace folder is open. Please open a folder to initialize the project.',
         );
     });
 });

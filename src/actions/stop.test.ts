@@ -1,7 +1,7 @@
 import path from 'node:path';
 import os from 'node:os';
 import * as vscode from 'vscode';
-import { Stop } from './stop';
+import { Stop, stop as stopServices } from './stop';
 import { mock, MockProxy } from 'vitest-mock-extended';
 import { executeTask } from '../util/executeTask';
 import type { MockInstance } from 'vitest';
@@ -13,22 +13,24 @@ vi.mock('../util/executeTask');
 const executeTaskMock = vi.mocked(executeTask);
 
 describe('Stop', () => {
-    let stop: Stop;
+    let stopAction: Stop;
     const composeFileUri = vscode.Uri.file(
         path.join(os.tmpdir(), 'compose.yaml'),
     );
     const composeFilePath = composeFileUri.fsPath;
     const target = 'topo.local';
-    let targetStore: TargetModel;
+    let targetModel: TargetModel;
     let context: MockProxy<vscode.ExtensionContext>;
     let stopHandler: ((resource?: vscode.Uri) => Promise<void>) | undefined;
     let registerSpy: MockInstance;
 
     beforeEach(() => {
         context = mock<vscode.ExtensionContext>({ subscriptions: [] });
-        targetStore = new TargetModel();
-        targetStore.setSelected(target);
-        stop = new Stop(context, targetStore);
+        targetModel = new TargetModel();
+        targetModel.setSelected(target);
+        executeTaskMock.mockReset();
+        vi.mocked(vscode.window.showErrorMessage).mockClear();
+        stopAction = new Stop(context, targetModel);
         registerSpy = vi
             .spyOn(vscode.commands, 'registerCommand')
             .mockImplementation(
@@ -45,7 +47,7 @@ describe('Stop', () => {
     });
 
     it('registers the stop command on activate', () => {
-        stop.activate();
+        stopAction.activate();
 
         expect(registerSpy).toHaveBeenCalledWith(
             Stop.stopCommand,
@@ -54,16 +56,21 @@ describe('Stop', () => {
         expect(context.subscriptions.length).toBeGreaterThan(0);
     });
 
-    it('fails with no target selected', async () => {
-        targetStore.setSelected(undefined);
+    it('shows an error in the command handler with no target selected', async () => {
+        targetModel.setSelected(undefined);
+        stopAction.activate();
 
-        const stopOperation = stop.stop(composeFilePath);
+        const stopOperation = stopHandler!(composeFileUri);
 
-        await expect(stopOperation).rejects.toThrow('No target selected');
+        await expect(stopOperation).resolves.toBeUndefined();
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
+            'Error executing stop command. No target selected. Please select a target before stopping.',
+        );
+        expect(executeTaskMock).not.toHaveBeenCalled();
     });
 
     it('handles successful stop operation', async () => {
-        await stop.stop(composeFilePath);
+        await stopServices(composeFilePath, target);
 
         expect(executeTaskMock).toHaveBeenCalledWith(
             'Stop services on topo.local',
@@ -74,7 +81,7 @@ describe('Stop', () => {
 
     it('handles task failure', async () => {
         executeTaskMock.mockRejectedValueOnce(new Error('stop failed'));
-        await stop.stop(composeFilePath);
+        await stopServices(composeFilePath, target);
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
             'Stopping services on topo.local failed: stop failed',
@@ -82,7 +89,7 @@ describe('Stop', () => {
     });
 
     it('invokes handler when command called', async () => {
-        stop.activate();
+        stopAction.activate();
 
         const op = stopHandler!(composeFileUri);
 
