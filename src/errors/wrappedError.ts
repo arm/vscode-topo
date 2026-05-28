@@ -1,4 +1,4 @@
-export type WrappedErrorCode = 'DOCKER' | 'CLONE' | 'CLI' | 'TARGET';
+export type WrappedErrorCode = 'DOCKER' | 'CLONE' | 'CLI' | 'STORAGE';
 
 export type WrappedErrorLogLevel = 'Error' | 'Warning' | 'Info' | 'Debug';
 

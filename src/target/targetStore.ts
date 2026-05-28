@@ -111,7 +111,7 @@ export class TargetStore {
         } catch (err) {
             const errorMsg = 'Failed to load targets';
             throw new WrappedError(
-                'TARGET',
+                'STORAGE',
                 errorMsg,
                 [{ level: 'Error', msg: getErrorMessage(err) }],
                 { cause: err },

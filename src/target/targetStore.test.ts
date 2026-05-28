@@ -171,7 +171,7 @@ describe('TargetStore', () => {
         expect(selected).toBe('carol@example.com');
     });
 
-    it('throws a TARGET WrappedError when stored targets are malformed JSON', () => {
+    it('throws a STORAGE WrappedError when stored targets are malformed JSON', () => {
         const { context, globalState } = createMockContext();
         globalState.get.mockImplementation((key: string) =>
             key === 'targets' ? 'not-json' : undefined,
@@ -185,7 +185,7 @@ describe('TargetStore', () => {
             thrown = err;
         }
         expect(thrown).toBeInstanceOf(WrappedError);
-        expect((thrown as WrappedError).code).toBe('TARGET');
+        expect((thrown as WrappedError).code).toBe('STORAGE');
         expect((thrown as WrappedError).message).toBe('Failed to load targets');
         expect((thrown as WrappedError).logs).toEqual([
             {
@@ -195,7 +195,7 @@ describe('TargetStore', () => {
         ]);
     });
 
-    it('throws a TARGET WrappedError when stored targets fail schema validation', () => {
+    it('throws a STORAGE WrappedError when stored targets fail schema validation', () => {
         const { context, globalState } = createMockContext();
         globalState.get.mockImplementation((key: string) =>
             key === 'targets'
@@ -211,7 +211,7 @@ describe('TargetStore', () => {
             thrown = err;
         }
         expect(thrown).toBeInstanceOf(WrappedError);
-        expect((thrown as WrappedError).code).toBe('TARGET');
+        expect((thrown as WrappedError).code).toBe('STORAGE');
         expect((thrown as WrappedError).message).toBe('Failed to load targets');
     });
 
