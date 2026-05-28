@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { logger } from '../util/logger';
 import debounce from 'lodash.debounce';
 import { string, type, assert, record } from 'superstruct';
+import { DisposableCollector } from '../util/disposableCollector';
 import { WrappedError } from '../errors/wrappedError';
 import { getErrorMessage } from '../util/getErrorMessage';
 
@@ -16,7 +17,7 @@ export class TargetStore {
     public readonly onGlobalWrite: vscode.Event<void> =
         this._onGlobalWrite.event;
 
-    private disposables: vscode.Disposable[] = [];
+    private readonly disposables = new DisposableCollector();
 
     constructor(protected context: vscode.ExtensionContext) {
         const pattern = new vscode.RelativePattern(
@@ -34,7 +35,7 @@ export class TargetStore {
                 this._onGlobalWrite.fire();
             }
         });
-        this.disposables.push(
+        this.disposables.collect(
             watcher,
             onDidCreate,
             onDidChange,
@@ -134,13 +135,6 @@ export class TargetStore {
 
     public dispose(): void {
         this.publishChange.cancel();
-        for (const d of [...this.disposables].reverse()) {
-            try {
-                d.dispose();
-            } catch (err) {
-                logger.error(`Error disposing TargetStore disposable`, err);
-            }
-        }
-        this.disposables = [];
+        this.disposables.dispose();
     }
 }

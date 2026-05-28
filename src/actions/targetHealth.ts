@@ -3,12 +3,13 @@ import * as manifest from '../manifest';
 import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
 import { logger } from '../util/logger';
 import { ContainersManager } from '../target/containersManager';
+import { DisposableCollector } from '../util/disposableCollector';
 
-export class TargetHealth {
+export class TargetHealth implements vscode.Disposable {
     public static readonly inspectTargetHealthCommand = `${manifest.PACKAGE_NAME}.inspectTargetHealth`;
     public static readonly inspectTargetHealthScheme = `${manifest.PACKAGE_NAME}-inspect-target-health`;
 
-    private disposables: vscode.Disposable[] = [];
+    private readonly disposables = new DisposableCollector();
     private readonly inspectHealthDocuments = new Map<string, string>();
     private readonly inspectHealthContentProvider: vscode.TextDocumentContentProvider =
         {
@@ -22,7 +23,7 @@ export class TargetHealth {
     constructor(private readonly containersManager: ContainersManager) {}
 
     public activate(): void {
-        this.disposables.push(
+        this.disposables.collect(
             vscode.commands.registerCommand(
                 TargetHealth.inspectTargetHealthCommand,
                 (node: unknown) => this.inspectHealth(node),
@@ -65,9 +66,6 @@ export class TargetHealth {
     }
 
     public dispose(): void {
-        for (const disposable of [...this.disposables].reverse()) {
-            disposable.dispose();
-        }
-        this.disposables = [];
+        this.disposables.dispose();
     }
 }
