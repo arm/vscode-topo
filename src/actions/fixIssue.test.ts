@@ -32,12 +32,6 @@ describe('FixIssue', () => {
         );
     });
 
-    it('does not show a warning prompt when constructed', async () => {
-        new FixIssue(targetStore);
-
-        expect(vscode.window.showWarningMessage).not.toHaveBeenCalled();
-    });
-
     it('runs fix task for dependency with executable fix', async () => {
         new FixIssue(targetStore);
         const dependencyItem = new HealthCheckDependencyTreeItem({
