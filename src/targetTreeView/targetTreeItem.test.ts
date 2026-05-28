@@ -71,4 +71,10 @@ describe('TargetTreeItem', () => {
             vscode.TreeItemCollapsibleState.Expanded,
         );
     });
+
+    it('adds HasFixableDependencies context when target has fixable dependencies', () => {
+        const item = new TargetTreeItem(baseTarget, true, 'connected', true);
+
+        expect(item.contextValue).toContain('HasFixableDependencies');
+    });
 });

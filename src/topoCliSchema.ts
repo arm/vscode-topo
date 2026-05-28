@@ -29,10 +29,12 @@ const healthCheckStatusSchema = enums(['ok', 'warning', 'error', 'info']);
 
 export type HealthCheckStatus = Infer<typeof healthCheckStatusSchema>;
 
-const healthCheckFixSchema = type({
+export const healthCheckFixSchema = type({
     description: trimmed(string()),
     command: optional(trimmed(string())),
 });
+
+export type HealthCheckFix = Infer<typeof healthCheckFixSchema>;
 
 export const healthCheckDependencySchema = type({
     name: trimmed(string()),
