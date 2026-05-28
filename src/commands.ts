@@ -3,6 +3,7 @@ import { TargetController } from './controllers/targetController';
 import { PACKAGE_NAME } from './manifest';
 import * as vscode from 'vscode';
 import { logger } from './util/logger';
+import { DisposableCollector } from './util/disposableCollector';
 
 function command(id: string): string {
     return `${PACKAGE_NAME}.${id}`;
@@ -19,7 +20,8 @@ export function register(
     hostController: HostController,
     targetController: TargetController,
 ): vscode.Disposable {
-    const disposables = [
+    const disposables = new DisposableCollector();
+    disposables.collect(
         vscode.commands.registerCommand(refreshHostHealth, () =>
             hostController.refreshHealth(),
         ),
@@ -36,13 +38,7 @@ export function register(
         vscode.commands.registerCommand(inspectHostHealth, () =>
             hostController.openHealthDocument(),
         ),
-    ];
+    );
 
-    return {
-        dispose: () => {
-            for (const disposable of [...disposables].reverse()) {
-                disposable.dispose();
-            }
-        },
-    };
+    return disposables;
 }

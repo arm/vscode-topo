@@ -10,6 +10,7 @@ import {
 } from '../treeItems/hostDependenciesLoadErrorItem';
 import { HostModel } from '../models/hostModel';
 import { Loadable } from '../util/types';
+import { DisposableCollector } from '../util/disposableCollector';
 
 function sortDependenciesByName(
     deps: HealthCheckDependency[],
@@ -40,7 +41,7 @@ export class HostTreeView
 {
     public static readonly viewId = `${PACKAGE_NAME}.host-manager`;
 
-    private disposables: vscode.Disposable[] = [];
+    private readonly disposables = new DisposableCollector();
 
     private _onDidChangeTreeData = new vscode.EventEmitter<undefined>();
     public readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
@@ -51,7 +52,7 @@ export class HostTreeView
             showCollapseAll: false,
         });
 
-        this.disposables.push(
+        this.disposables.collect(
             treeView,
             this._onDidChangeTreeData,
             this.model.onHealthChanged(() => {
@@ -81,9 +82,6 @@ export class HostTreeView
     }
 
     public dispose(): void {
-        for (const disposable of [...this.disposables].reverse()) {
-            disposable.dispose();
-        }
-        this.disposables = [];
+        this.disposables.dispose();
     }
 }

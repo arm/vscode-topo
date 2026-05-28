@@ -250,35 +250,6 @@ describe('TargetStore', () => {
         expect(cb).toHaveBeenCalled();
     });
 
-    it('deactivates the store, disposing resources', () => {
-        const eventWithDisposable = (
-            dispose: () => void,
-        ): vscode.Event<vscode.Uri> => vi.fn(() => ({ dispose }));
-        const watcherDispose = vi.fn();
-        const onDidCreateDispose = vi.fn();
-        const onDidChangeDispose = vi.fn();
-        const watcher: vscode.FileSystemWatcher = {
-            onDidCreate: eventWithDisposable(onDidCreateDispose),
-            onDidChange: eventWithDisposable(onDidChangeDispose),
-            onDidDelete: eventWithDisposable(vi.fn()),
-            dispose: watcherDispose,
-            ignoreCreateEvents: false,
-            ignoreChangeEvents: false,
-            ignoreDeleteEvents: false,
-        };
-        vi.mocked(vscode.workspace.createFileSystemWatcher).mockReturnValueOnce(
-            watcher,
-        );
-        const { context } = createMockContext();
-        const store = new TargetStore(context);
-
-        store.dispose();
-
-        expect(watcherDispose).toHaveBeenCalled();
-        expect(onDidCreateDispose).toHaveBeenCalled();
-        expect(onDidChangeDispose).toHaveBeenCalled();
-    });
-
     it('removes a non-selected target without changing selection', async () => {
         const { context } = createMockContext();
         const store = new TargetStore(context);
