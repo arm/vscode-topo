@@ -1,15 +1,41 @@
 import { mock } from 'vitest-mock-extended';
 import { buildQuickPickItems, TargetController } from './targetController';
 import * as vscode from 'vscode';
-import { logger } from '../util/logger';
 import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
 import { TargetStore } from '../target/targetStore';
+import { TargetModel } from '../models/targetModel';
 
 vi.mock('../util/logger');
 
 afterEach(() => {
     vi.clearAllMocks();
 });
+
+function mockTargetStore(
+    initialTargets: string[] = [],
+    initialSelected?: string,
+) {
+    let targets = initialTargets;
+    let selected = initialSelected;
+    const targetStore = mock<TargetStore>();
+    targetStore.getTargets.mockImplementation(() => targets);
+    targetStore.getSelectedTarget.mockImplementation(() =>
+        targets.includes(selected ?? '') ? selected : undefined,
+    );
+    targetStore.addTarget.mockImplementation(async (target) => {
+        targets = [...targets, target];
+    });
+    targetStore.setSelected.mockImplementation(async (target) => {
+        selected = target;
+    });
+    targetStore.deleteTarget.mockImplementation(async (target) => {
+        targets = targets.filter((existing) => existing !== target);
+        if (selected === target) {
+            selected = [...targets].sort((a, b) => a.localeCompare(b))[0];
+        }
+    });
+    return targetStore;
+}
 
 describe('buildQuickPickItems', () => {
     it('returns hosts', () => {
@@ -56,6 +82,18 @@ describe('buildQuickPickItems', () => {
     });
 });
 
+describe('target construction', () => {
+    it('loads targets and selected target into the model', () => {
+        const targetStore = mockTargetStore(['host-a', 'host-b'], 'host-b');
+        const targetModel = new TargetModel();
+
+        new TargetController(targetModel, targetStore);
+
+        expect(targetModel.targets).toEqual(['host-a', 'host-b']);
+        expect(targetModel.selected).toBe('host-b');
+    });
+});
+
 describe('target addition', () => {
     function mockQuickPick(selectedItem: vscode.QuickPickItem | undefined) {
         const onDidAcceptEmitter = new vscode.EventEmitter<void>();
@@ -83,42 +121,44 @@ describe('target addition', () => {
 
     it('prompts for ssh, stores and selects new target', async () => {
         const targetSsh = 'root@192.0.2.1';
-        const targetStore = mock<TargetStore>();
-        const controller = new TargetController(targetStore);
+        const targetStore = mockTargetStore();
+        const targetModel = new TargetModel();
+        const controller = new TargetController(targetModel, targetStore);
         mockQuickPick({ label: targetSsh });
 
         await controller.promptToAdd();
 
-        expect(targetStore.addTarget).toHaveBeenCalledTimes(1);
         expect(targetStore.addTarget).toHaveBeenCalledWith(targetSsh);
         expect(targetStore.setSelected).toHaveBeenCalledWith(targetSsh);
+        expect(targetModel.selected).toBe(targetSsh);
+        expect(targetModel.targets).toEqual([targetSsh]);
     });
 
     it('does nothing when quick pick is dismissed', async () => {
-        const targetStore = mock<TargetStore>();
-        const controller = new TargetController(targetStore);
+        const targetStore = mockTargetStore();
+        const targetModel = new TargetModel();
+        const controller = new TargetController(targetModel, targetStore);
         mockQuickPick(undefined);
 
         await controller.promptToAdd();
 
         expect(targetStore.addTarget).not.toHaveBeenCalled();
         expect(targetStore.setSelected).not.toHaveBeenCalled();
+        expect(targetModel.selected).toBeUndefined();
+        expect(targetModel.targets).toEqual([]);
     });
 
     it('shows error when targetStore.addTarget fails', async () => {
-        const targetStore = mock<TargetStore>();
-        const controller = new TargetController(targetStore);
+        const targetStore = mockTargetStore();
+        const targetModel = new TargetModel();
+        const controller = new TargetController(targetModel, targetStore);
         const error = new Error('boom');
-        vi.mocked(targetStore.addTarget).mockRejectedValueOnce(error);
+        targetStore.addTarget.mockRejectedValueOnce(error);
         mockQuickPick({ label: 'root@192.0.2.1' });
 
         await controller.promptToAdd();
 
         expect(targetStore.addTarget).toHaveBeenCalled();
-        expect(logger.warn).toHaveBeenCalledWith(
-            expect.stringContaining('Failed to add target'),
-            error,
-        );
         expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
             expect.stringContaining('Failed to add target'),
         );
@@ -127,55 +167,82 @@ describe('target addition', () => {
 });
 
 describe('target selection', () => {
-    it('invokes targetStore.setSelected when select command is executed with a target item', async () => {
-        const targetStore = mock<TargetStore>();
-        const controller = new TargetController(targetStore);
+    it('saves the selected target and updates model when select command is executed with a target item', async () => {
+        const targetStore = mockTargetStore(['user@board']);
+        const targetModel = new TargetModel();
+        const controller = new TargetController(targetModel, targetStore);
         const targetItem = new TargetTreeItem('user@board', true, 'connected');
 
         await controller.select(targetItem);
 
         expect(targetStore.setSelected).toHaveBeenCalledWith(targetItem.target);
+        expect(targetModel.selected).toBe(targetItem.target);
     });
 
-    it('does not call setSelected when select command is executed with a non-target item', async () => {
-        const targetStore = mock<TargetStore>();
-        const controller = new TargetController(targetStore);
+    it('does nothing when select command is executed with a non-target item', async () => {
+        const targetStore = mockTargetStore();
+        const targetModel = new TargetModel();
+        const controller = new TargetController(targetModel, targetStore);
 
         await controller.select();
 
         expect(targetStore.setSelected).not.toHaveBeenCalled();
+        expect(targetModel.selected).toBeUndefined();
     });
 });
 
 describe('target removal', () => {
-    it('invokes targetStore.deleteTarget when removeTarget is invoked with a target item', async () => {
-        const targetStore = mock<TargetStore>();
-        const controller = new TargetController(targetStore);
+    it('deletes the target from the store when removeTarget is invoked with a target item', async () => {
         const targetItem = new TargetTreeItem('foo@bar.co', true, 'connected');
+        const targetStore = mockTargetStore([targetItem.target]);
+        const targetModel = new TargetModel();
+        const controller = new TargetController(targetModel, targetStore);
 
         await controller.remove(targetItem);
 
         expect(targetStore.deleteTarget).toHaveBeenCalledWith(
             targetItem.target,
         );
+        expect(targetModel.targets).toEqual([]);
     });
 
-    it('does not call deleteTarget when removeTarget is invoked with a non-target item', async () => {
-        const targetStore = mock<TargetStore>();
-        const controller = new TargetController(targetStore);
+    it('selects a remaining target when the removed target was selected', async () => {
+        const removedTarget = 'foo@bar.co';
+        const remainingTarget = 'bar@bar.co';
+        const targetStore = mockTargetStore(
+            [removedTarget, remainingTarget],
+            removedTarget,
+        );
+        const targetModel = new TargetModel();
+        const controller = new TargetController(targetModel, targetStore);
+        const targetItem = new TargetTreeItem(removedTarget, true, 'connected');
+
+        await controller.remove(targetItem);
+
+        expect(targetStore.deleteTarget).toHaveBeenCalledWith(removedTarget);
+        expect(targetModel.selected).toBe(remainingTarget);
+    });
+
+    it('does nothing when removeTarget is invoked with a non-target item', async () => {
+        const targetStore = mockTargetStore();
+        const targetModel = new TargetModel();
+        const controller = new TargetController(targetModel, targetStore);
 
         await controller.remove();
 
         expect(targetStore.deleteTarget).not.toHaveBeenCalled();
+        expect(targetModel.targets).toEqual([]);
     });
 
     it('shows an error when deleteTarget fails', async () => {
-        const targetStore = mock<TargetStore>();
-        const controller = new TargetController(targetStore);
+        const targetStore = mockTargetStore();
+        const targetModel = new TargetModel();
+        const controller = new TargetController(targetModel, targetStore);
         const targetItem = new TargetTreeItem('foo@bar.co', true, 'connected');
         targetStore.deleteTarget.mockRejectedValue(
             new Error('Target not found'),
         );
+
         await controller.remove(targetItem);
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(

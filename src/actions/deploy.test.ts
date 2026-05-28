@@ -3,9 +3,9 @@ import os from 'node:os';
 import * as vscode from 'vscode';
 import { Deploy, deploy as deployServices } from './deploy';
 import { mock, MockProxy } from 'vitest-mock-extended';
-import { TargetStore } from '../target/targetStore';
 import { executeTask } from '../util/executeTask';
 import type { MockInstance } from 'vitest';
+import { TargetModel } from '../models/targetModel';
 
 vi.mock('../util/logger');
 vi.mock('../util/executeTask');
@@ -19,18 +19,18 @@ describe('Deploy', () => {
     );
     const composeFilePath = composeFileUri.fsPath;
     const target = 'topo.local';
-    let targetStore: MockProxy<TargetStore>;
+    let targetModel: TargetModel;
     let context: MockProxy<vscode.ExtensionContext>;
     let deployHandler: ((resource?: vscode.Uri) => Promise<void>) | undefined;
     let registerSpy: MockInstance;
 
     beforeEach(() => {
         context = mock<vscode.ExtensionContext>({ subscriptions: [] });
-        targetStore = mock<TargetStore>();
-        targetStore.getSelectedTarget.mockReturnValue(target);
+        targetModel = new TargetModel();
+        targetModel.setSelected(target);
         executeTaskMock.mockReset();
         vi.mocked(vscode.window.showErrorMessage).mockClear();
-        deployAction = new Deploy(context, targetStore);
+        deployAction = new Deploy(context, targetModel);
         registerSpy = vi
             .spyOn(vscode.commands, 'registerCommand')
             .mockImplementation(
@@ -57,7 +57,7 @@ describe('Deploy', () => {
     });
 
     it('shows an error in the command handler with no target selected', async () => {
-        targetStore.getSelectedTarget.mockReturnValueOnce(undefined);
+        targetModel.setSelected(undefined);
         deployAction.activate();
 
         const deployOperation = deployHandler!(composeFileUri);
@@ -66,19 +66,6 @@ describe('Deploy', () => {
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
             'Error executing deploy command. No target selected. Please select a target before deploying.',
         );
-        expect(executeTaskMock).not.toHaveBeenCalled();
-    });
-
-    it('rethrows target lookup errors in the command handler', async () => {
-        targetStore.getSelectedTarget.mockImplementationOnce(() => {
-            throw new Error('target store failed');
-        });
-        deployAction.activate();
-
-        const deployOperation = deployHandler!(composeFileUri);
-
-        await expect(deployOperation).rejects.toThrow('target store failed');
-        expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
         expect(executeTaskMock).not.toHaveBeenCalled();
     });
 
@@ -107,7 +94,6 @@ describe('Deploy', () => {
         const op = deployHandler!(composeFileUri);
 
         await expect(op).resolves.toBeUndefined();
-        expect(targetStore.getSelectedTarget).toHaveBeenCalled();
         expect(executeTaskMock).toHaveBeenCalledWith(
             'Deploy to topo.local',
             ['topo', 'deploy', '--target', 'topo.local'],

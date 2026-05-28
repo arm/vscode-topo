@@ -2,9 +2,9 @@ import * as vscode from 'vscode';
 import * as manifest from '../manifest';
 import { getErrorMessage } from '../util/getErrorMessage';
 import path from 'node:path';
-import { TargetStore } from '../target/targetStore';
 import { executeTask } from '../util/executeTask';
 import { showAndLogError } from '../util/showAndLogError';
+import { TargetModel } from '../models/targetModel';
 
 const viewLogsItem: vscode.MessageItem = {
     title: 'View Logs',
@@ -15,7 +15,7 @@ export class Deploy {
 
     constructor(
         private readonly context: vscode.ExtensionContext,
-        private readonly targetStore: TargetStore,
+        private readonly targetModel: TargetModel,
     ) {}
 
     public activate(): void {
@@ -31,7 +31,7 @@ export class Deploy {
         if (!resource) {
             throw new Error('No compose file selected for deployment');
         }
-        const target = this.targetStore.getSelectedTarget();
+        const target = this.targetModel.selected;
 
         if (!target) {
             showAndLogError(
