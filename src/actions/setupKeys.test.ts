@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { mock, MockProxy } from 'vitest-mock-extended';
-import { SetupKeys } from './setupKeys';
+import { SetupKeys, setupKeys as setupKeysOnTarget } from './setupKeys';
 import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
 import { executeTask } from '../util/executeTask';
 import { executeCommand } from '../util/test/executeCommand';
@@ -13,13 +13,14 @@ const executeTaskMock = vi.mocked(executeTask);
 
 describe('SetupKeys', () => {
     let context: MockProxy<vscode.ExtensionContext>;
-    let targetStore: TargetModel;
+    let targetModel: TargetModel;
     const target = 'user@topo.local';
 
     beforeEach(() => {
+        vi.clearAllMocks();
         context = mock<vscode.ExtensionContext>({ subscriptions: [] });
-        targetStore = new TargetModel();
-        targetStore.setSelected(target);
+        targetModel = new TargetModel();
+        targetModel.setSelected(target);
     });
 
     afterEach(() => {
@@ -27,7 +28,7 @@ describe('SetupKeys', () => {
     });
 
     it('registers setup keys command', () => {
-        const setupKeys = new SetupKeys(context, targetStore);
+        const setupKeys = new SetupKeys(context, targetModel);
 
         setupKeys.activate();
 
@@ -38,7 +39,7 @@ describe('SetupKeys', () => {
     });
 
     it('runs setup-keys task for selected board item', async () => {
-        const setupKeys = new SetupKeys(context, targetStore);
+        const setupKeys = new SetupKeys(context, targetModel);
         setupKeys.activate();
         const boardItem = new TargetTreeItem(target, true, 'connected');
 
@@ -54,7 +55,7 @@ describe('SetupKeys', () => {
     });
 
     it('does nothing for non-selected board item', async () => {
-        const setupKeys = new SetupKeys(context, targetStore);
+        const setupKeys = new SetupKeys(context, targetModel);
         setupKeys.activate();
         const boardItem = new TargetTreeItem(target, false, 'disconnected');
 
@@ -64,7 +65,7 @@ describe('SetupKeys', () => {
     });
 
     it('falls back to selected target when no tree node is provided', async () => {
-        const setupKeys = new SetupKeys(context, targetStore);
+        const setupKeys = new SetupKeys(context, targetModel);
         setupKeys.activate();
 
         await executeCommand(SetupKeys.setupKeysCommand, undefined);
@@ -75,14 +76,25 @@ describe('SetupKeys', () => {
         );
     });
 
+    it('shows error when no target is available for setup-keys', async () => {
+        targetModel.setSelected(undefined);
+        const setupKeys = new SetupKeys(context, targetModel);
+        setupKeys.activate();
+
+        await executeCommand(SetupKeys.setupKeysCommand, undefined);
+
+        expect(executeTaskMock).not.toHaveBeenCalled();
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
+            'Failed to set up keys on target. No selected target found',
+        );
+    });
+
     it('shows error when setup-keys fails', async () => {
         executeTaskMock.mockRejectedValueOnce(
             new Error('setup-keys failed with exit code 1'),
         );
-        const setupKeys = new SetupKeys(context, targetStore);
-        setupKeys.activate();
 
-        await executeCommand(SetupKeys.setupKeysCommand, undefined);
+        await setupKeysOnTarget(target);
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
             expect.stringContaining(

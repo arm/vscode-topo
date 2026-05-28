@@ -22,54 +22,58 @@ export class Stop {
         this.context.subscriptions.push(
             vscode.commands.registerCommand(
                 Stop.stopCommand,
-                this.handleStopCommand.bind(this),
+                this.stopCommandHandler.bind(this),
             ),
         );
     }
 
-    private async handleStopCommand(resource?: vscode.Uri): Promise<void> {
+    private async stopCommandHandler(resource?: vscode.Uri): Promise<void> {
         if (!resource) {
             throw new Error('No compose file selected for stop');
         }
-        try {
-            await this.stop(resource.fsPath);
-        } catch (err) {
-            showAndLogError('Error executing stop command', err);
-        }
-    }
-
-    public async stop(composeFilePath: string): Promise<void> {
         const target = this.targetModel.selected;
+
         if (!target) {
-            throw new Error(
-                'No target selected. Please select a target before stopping.',
+            showAndLogError(
+                'Error executing stop command',
+                new Error(
+                    'No target selected. Please select a target before stopping.',
+                ),
             );
+            return;
         }
 
-        const taskName = `Stop services on ${target}`;
+        await stop(resource.fsPath, target);
+    }
+}
 
-        try {
-            await executeTask(taskName, ['topo', 'stop', '--target', target], {
-                cwd: path.dirname(composeFilePath),
-            });
-            vscode.window.showInformationMessage(
-                `Services on ${target} stopped successfully.`,
-            );
-        } catch (e) {
-            const terminal = vscode.window.terminals.find(
-                (t) => t.name === taskName,
-            );
-            const actions: vscode.MessageItem[] = [];
-            if (terminal) {
-                actions.push(viewLogsItem);
-            }
-            const choice = await vscode.window.showErrorMessage(
-                `Stopping services on ${target} failed: ${getErrorMessage(e)}`,
-                ...actions,
-            );
-            if (choice?.title === viewLogsItem.title) {
-                terminal?.show();
-            }
+export async function stop(
+    composeFilePath: string,
+    target: string,
+): Promise<void> {
+    const taskName = `Stop services on ${target}`;
+
+    try {
+        await executeTask(taskName, ['topo', 'stop', '--target', target], {
+            cwd: path.dirname(composeFilePath),
+        });
+        vscode.window.showInformationMessage(
+            `Services on ${target} stopped successfully.`,
+        );
+    } catch (e) {
+        const terminal = vscode.window.terminals.find(
+            (t) => t.name === taskName,
+        );
+        const actions: vscode.MessageItem[] = [];
+        if (terminal) {
+            actions.push(viewLogsItem);
+        }
+        const choice = await vscode.window.showErrorMessage(
+            `Stopping services on ${target} failed: ${getErrorMessage(e)}`,
+            ...actions,
+        );
+        if (choice?.title === viewLogsItem.title) {
+            terminal?.show();
         }
     }
 }
