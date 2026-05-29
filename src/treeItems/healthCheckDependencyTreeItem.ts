@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { HealthCheckDependency } from '../topoCliSchema';
-import { getDependencyItemIcon } from '../views/util/getDependencyStatusIcon';
+import { getDependencyItemIcon } from '../views/util/dependencyIcons';
 
 const capitalizeFirstLetter = (s: string) => {
     return s.charAt(0).toUpperCase() + s.slice(1);

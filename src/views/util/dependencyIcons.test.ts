@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import {
     getDependencyGroupIcon,
     getDependencyItemIcon,
-} from './getDependencyStatusIcon';
+} from './dependencyIcons';
 
 describe('getDependencyItemIcon', () => {
     it('maps ok to a passed check icon', () => {

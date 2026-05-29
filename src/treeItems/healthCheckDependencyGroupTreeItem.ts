@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { HealthCheckDependency } from '../topoCliSchema';
 import { getWorstDependencyStatus } from '../util/getWorstDependencyStatus';
-import { getDependencyGroupIcon } from '../views/util/getDependencyStatusIcon';
+import { getDependencyGroupIcon } from '../views/util/dependencyIcons';
 
 export class HealthCheckDependencyGroupTreeItem extends vscode.TreeItem {
     public readonly dependencies: HealthCheckDependency[];

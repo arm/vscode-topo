@@ -6,7 +6,7 @@ import { TargetTreeView } from './targetTreeView';
 import { TargetState } from '../util/types';
 import { DisposableCollector } from '../util/disposableCollector';
 import { getWorstDependencyStatus } from '../util/getWorstDependencyStatus';
-import { getDependencyGroupIcon } from './util/getDependencyStatusIcon';
+import { getDependencyGroupIcon } from './util/dependencyIcons';
 
 function getDependencyStatusIconId(state: TargetState): string | undefined {
     const dependencies = state.health?.dependencies;
