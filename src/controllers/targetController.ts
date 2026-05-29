@@ -1,3 +1,4 @@
+import { TargetModel } from '../models/targetModel';
 import { TargetStore } from '../target/targetStore';
 import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
 import { logger } from '../util/logger';
@@ -67,7 +68,17 @@ export function buildQuickPickItems(
 }
 
 export class TargetController {
-    constructor(private readonly targetStore: TargetStore) {}
+    constructor(
+        private readonly model: TargetModel,
+        private readonly targetStore: TargetStore,
+    ) {
+        this.updateFromStore();
+    }
+
+    public updateFromStore(): void {
+        this.model.setTargets(this.targetStore.getTargets());
+        this.model.setSelected(this.targetStore.getSelectedTarget());
+    }
 
     public async select(treeNode?: unknown): Promise<void> {
         if (!isTargetTreeItem(treeNode)) {
@@ -75,6 +86,7 @@ export class TargetController {
         }
 
         await this.targetStore.setSelected(treeNode.target);
+        this.updateFromStore();
     }
 
     public async remove(treeNode?: unknown): Promise<void> {
@@ -84,6 +96,7 @@ export class TargetController {
 
         try {
             await this.targetStore.deleteTarget(treeNode.target);
+            this.updateFromStore();
         } catch (err) {
             const errorMessage = `Failed to remove target`;
             showAndLogError(errorMessage, err);
@@ -105,5 +118,6 @@ export class TargetController {
             return;
         }
         await this.targetStore.setSelected(target);
+        this.updateFromStore();
     }
 }

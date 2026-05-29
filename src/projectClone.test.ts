@@ -6,11 +6,11 @@ import { TopoCli } from './topoCli';
 import { mock, MockProxy } from 'vitest-mock-extended';
 import { TemplateDescription } from './topoCliSchema';
 import { showAndLogError } from './util/showAndLogError';
-import { TargetStore } from './target/targetStore';
 import { WrappedError } from './errors/wrappedError';
 import { executeTask } from './util/executeTask';
 import { executeCommand } from './util/test/executeCommand';
 import type { MockedFunction } from 'vitest';
+import { TargetModel } from './models/targetModel';
 
 vi.mock('./util/showAndLogError', () => ({
     showAndLogError: vi.fn(),
@@ -33,7 +33,7 @@ type ShowInformationMessageWithStrings = (
 describe('ProjectClone', () => {
     let projectClone: ProjectClone;
     const topoCli = mock<TopoCli>();
-    const targetStore = mock<TargetStore>();
+    const targetModel = new TargetModel();
     let context: MockProxy<vscode.ExtensionContext>;
     const localTemplateUri = vscode.Uri.file('/path/to/source');
     const showInformationMessageMock: MockedFunction<ShowInformationMessageWithStrings> =
@@ -48,7 +48,7 @@ describe('ProjectClone', () => {
         context = mock<vscode.ExtensionContext>({
             subscriptions: subscriptions,
         });
-        projectClone = new ProjectClone(context, topoCli, targetStore);
+        projectClone = new ProjectClone(context, topoCli, targetModel);
         projectClone.activate();
     });
 
@@ -315,22 +315,6 @@ describe('ProjectClone', () => {
             expect(executeTaskMock).not.toHaveBeenCalled();
         });
 
-        it('rethrows errors from selected target lookup', async () => {
-            mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-            targetStore.getSelectedTarget.mockImplementationOnce(() => {
-                throw new Error('target lookup failed');
-            });
-
-            await expect(
-                executeCommand(ProjectClone.templateCloneCommand),
-            ).rejects.toThrow('target lookup failed');
-
-            expect(showAndLogError).not.toHaveBeenCalled();
-            expect(topoCli.listTemplates).not.toHaveBeenCalled();
-            expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
-            expect(executeTaskMock).not.toHaveBeenCalled();
-        });
-
         it('returns early when no template selected', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
             topoCli.listTemplates.mockReturnValue(templateList);
@@ -360,7 +344,7 @@ describe('ProjectClone', () => {
 
         it('creates task and runs clone command for template selection', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-            targetStore.getSelectedTarget.mockReturnValue('me@example.com');
+            targetModel.setSelected('me@example.com');
             topoCli.listTemplates.mockReturnValue(templateList);
             showQuickPickItemMock.mockResolvedValueOnce(
                 templateQuickPickItems[0],
@@ -396,7 +380,7 @@ describe('ProjectClone', () => {
 
         it('lists templates without a target when none is selected', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-            targetStore.getSelectedTarget.mockReturnValue(undefined);
+            targetModel.setSelected(undefined);
             topoCli.listTemplates.mockReturnValue(templateList);
             vi.mocked(vscode.window.showQuickPick).mockResolvedValueOnce(
                 undefined,
