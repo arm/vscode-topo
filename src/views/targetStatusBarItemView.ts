@@ -8,27 +8,18 @@ import { DisposableCollector } from '../util/disposableCollector';
 import { getWorstDependencyStatus } from '../util/getWorstDependencyStatus';
 import { getDependencyGroupIcon } from './util/dependencyIcons';
 
-function getDependencyStatusIconId(state: TargetState): string | undefined {
-    const dependencies = state.health?.dependencies;
-    if (!dependencies) {
-        return undefined;
-    }
-
-    const status = getWorstDependencyStatus(dependencies);
-    if (status === 'ok') {
-        return undefined;
-    }
-
-    return getDependencyGroupIcon(status).id;
-}
-
 function getStatusIconId(state: TargetState): string {
     const targetTreeIcon = getTargetTreeItemIcon(true, state.status);
     if (targetTreeIcon) {
         return targetTreeIcon.id;
     }
 
-    return getDependencyStatusIconId(state) || 'pass-filled';
+    const status = getWorstDependencyStatus(state.health?.dependencies ?? []);
+    if (status === 'ok') {
+        return 'pass-filled';
+    }
+
+    return getDependencyGroupIcon(status).id;
 }
 
 function renderStatusBarItem(
