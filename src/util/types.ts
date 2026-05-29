@@ -1,7 +1,4 @@
-import {
-    ServiceDescription,
-    TargetHealthCheckResult,
-} from '../topoCliSchema';
+import { ServiceDescription, TargetHealthCheckResult } from '../topoCliSchema';
 
 export interface HostProcessor {
     model: string;
