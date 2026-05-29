@@ -99,19 +99,19 @@ export async function activate(
     const projectInit = new ProjectInit(topoCli);
     context.subscriptions.push(projectInit);
     const projectClone = new ProjectClone(context, topoCli, targetModel);
-    const deploy = new Deploy(context, targetModel);
-    const stop = new Stop(context, targetModel);
+    const deploy = new Deploy(context, topoCli, targetModel);
+    const stop = new Stop(context, topoCli, targetModel);
     const containerOpenInBrowser = new ContainerOpenInBrowser(context);
     const attachVsCode = new AttachVsCode(context, dockerCommands);
     const attachShell = new AttachShell(context, dockerCommands);
-    const setupKeys = new SetupKeys(context, targetModel);
+    const setupKeys = new SetupKeys(context, topoCli, targetModel);
     const containerStart = new ContainerStart(context, dockerCommands);
     const containerStop = new ContainerStop(context, dockerCommands);
     const containerDelete = new ContainerDelete(context, dockerCommands);
     const targetHealth = new TargetHealth(containersManager);
     context.subscriptions.push(targetHealth);
     const protocolHandler = new ProtocolHandler(projectClone);
-    const fixIssue = new FixIssue(targetModel);
+    const fixIssue = new FixIssue(topoCli, targetModel);
     context.subscriptions.push(fixIssue);
     context.subscriptions.push(logger);
 
