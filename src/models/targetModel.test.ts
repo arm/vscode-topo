@@ -19,11 +19,14 @@ describe('TargetModel', () => {
 
     it('clears the selected target', () => {
         const model = new TargetModel();
+        const onChanged = vi.fn();
+        model.onSelectedChanged(onChanged);
 
         model.setSelected('user@host');
         model.setSelected(undefined);
 
         expect(model.selected).toBeUndefined();
+        expect(onChanged).toHaveBeenCalledTimes(2);
     });
 
     it('stores the latest target list', () => {
@@ -34,7 +37,6 @@ describe('TargetModel', () => {
         model.setTargets(targets);
 
         expect(model.targets).toBe(targets);
-        expect(model.targets).toEqual(['user@host-a', 'user@host-b']);
     });
 
     it('fires onSelectedChanged when selected target is updated', () => {
@@ -45,6 +47,18 @@ describe('TargetModel', () => {
         model.setSelected('user@host');
 
         expect(onChanged).toHaveBeenCalledTimes(1);
+    });
+
+    it('clears the targets', () => {
+        const model = new TargetModel();
+        const onChanged = vi.fn();
+        model.onTargetsChanged(onChanged);
+
+        model.setTargets(['user@host']);
+        model.setTargets([]);
+
+        expect(model.targets).toEqual([]);
+        expect(onChanged).toHaveBeenCalledTimes(2);
     });
 
     it('fires onTargetsChanged when targets are updated', () => {
