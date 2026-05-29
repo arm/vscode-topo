@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
-import { TargetStore } from '../target/targetStore';
 import { ContainersManager } from '../target/containersManager';
 import { getTargetTreeItemIcon } from '../targetTreeView/targetTreeItem';
 import { TargetTreeView } from './targetTreeView';
 import { TargetStatus } from '../util/types';
+import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
 
 function renderStatusBarItem(
@@ -31,7 +31,7 @@ export class TargetStatusBarItemView implements vscode.Disposable {
     private statusBarItem: vscode.StatusBarItem;
 
     constructor(
-        private readonly targetStore: TargetStore,
+        private readonly targetModel: TargetModel,
         private readonly containersManager: ContainersManager,
     ) {
         this.statusBarItem = vscode.window.createStatusBarItem(
@@ -44,13 +44,13 @@ export class TargetStatusBarItemView implements vscode.Disposable {
 
         this.disposables.collect(
             this.statusBarItem,
-            this.targetStore.onChanged(() => this.refresh()),
+            this.targetModel.onSelectedChanged(() => this.refresh()),
             this.containersManager.onDataUpdate(() => this.refresh()),
         );
     }
 
     private refresh(): void {
-        const selectedTarget = this.targetStore.getSelectedTarget();
+        const selectedTarget = this.targetModel.selected;
         const status = selectedTarget
             ? this.containersManager.getTargetStateSnapshot(selectedTarget)
                   .status
