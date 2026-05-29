@@ -96,6 +96,10 @@ describe('TargetStatusBarItemView', () => {
     });
 
     it('shows unhealthy target dependencies with an icon only', async () => {
+        const statusBarItem = mock<vscode.StatusBarItem>();
+        vi.mocked(vscode.window).createStatusBarItem.mockReturnValue(
+            statusBarItem,
+        );
         const target = 'root@localhost';
         const targetStore = mock<TargetStore>();
         targetStore.getSelectedTarget.mockReturnValue(target);
@@ -117,8 +121,6 @@ describe('TargetStatusBarItemView', () => {
 
         new TargetStatusBarItemView(targetStore, containersManager);
 
-        const statusBarItem = vi.mocked(vscode.window.createStatusBarItem).mock
-            .results[0].value;
         expect(statusBarItem.text).toBe(`$(warning) ${target}`);
         expect(statusBarItem.tooltip).toBe('Connection String: root@localhost');
     });
