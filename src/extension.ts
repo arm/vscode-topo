@@ -83,7 +83,7 @@ export async function activate(
         topoCli,
         hostHealthDocProvider,
     );
-    const projectController = new ProjectController(topoCli, targetStore);
+    const projectController = new ProjectController(topoCli, targetModel);
     const targetsController = new TargetController(targetModel, targetStore);
     context.subscriptions.push(
         targetStore.onChanged(() => targetsController.updateFromStore()),

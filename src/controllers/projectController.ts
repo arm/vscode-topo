@@ -1,20 +1,20 @@
 import * as vscode from 'vscode';
 import { showAndLogError } from '../util/showAndLogError';
-import { TargetStore } from '../target/targetStore';
 import { TopoCli } from '../topoCli';
 import * as projectUtil from '../util/project';
+import { TargetModel } from '../models/targetModel';
 
 export class ProjectController {
     constructor(
         private readonly topoCli: TopoCli,
-        private readonly targetStore: TargetStore,
+        private readonly targetModel: TargetModel,
     ) {}
 
     public async stop(resource?: vscode.Uri): Promise<void> {
         if (!resource) {
             throw new Error('No compose file selected for stop');
         }
-        const target = this.targetStore.getSelectedTarget();
+        const target = this.targetModel.selected;
 
         if (!target) {
             showAndLogError(
@@ -44,7 +44,7 @@ export class ProjectController {
         if (!resource) {
             throw new Error('No compose file selected for deployment');
         }
-        const target = this.targetStore.getSelectedTarget();
+        const target = this.targetModel.selected;
 
         if (!target) {
             showAndLogError(

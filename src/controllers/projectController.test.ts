@@ -3,11 +3,11 @@ import os from 'node:os';
 import * as vscode from 'vscode';
 import { mock, MockProxy } from 'vitest-mock-extended';
 import { ProjectController } from './projectController';
-import { TargetStore } from '../target/targetStore';
 import { TopoCli } from '../topoCli';
 import { mutable } from '../util/mutable';
 import * as projectUtil from '../util/project';
 import { showAndLogError } from '../util/showAndLogError';
+import { TargetModel } from '../models/targetModel';
 
 vi.mock('../util/project');
 vi.mock('../util/showAndLogError');
@@ -23,16 +23,16 @@ describe('ProjectController', () => {
     );
     const target = 'topo.local';
     let topoCli: MockProxy<TopoCli>;
-    let targetStore: MockProxy<TargetStore>;
+    let targetModel: TargetModel;
     let controller: ProjectController;
 
     beforeEach(() => {
         vi.resetAllMocks();
         mutable(vscode.workspace).workspaceFolders = undefined;
         topoCli = mock<TopoCli>();
-        targetStore = mock<TargetStore>();
-        targetStore.getSelectedTarget.mockReturnValue(target);
-        controller = new ProjectController(topoCli, targetStore);
+        targetModel = new TargetModel();
+        targetModel.setSelected(target);
+        controller = new ProjectController(topoCli, targetModel);
     });
 
     describe('stop', () => {
@@ -44,7 +44,7 @@ describe('ProjectController', () => {
         });
 
         it('shows an error when no target is selected', async () => {
-            targetStore.getSelectedTarget.mockReturnValueOnce(undefined);
+            targetModel.setSelected(undefined);
 
             await controller.stop(composeFileUri);
 
@@ -55,18 +55,6 @@ describe('ProjectController', () => {
                         'No target selected. Please select a target before stopping.',
                 }),
             );
-            expect(projectStopMock).not.toHaveBeenCalled();
-        });
-
-        it('rethrows target lookup errors', async () => {
-            targetStore.getSelectedTarget.mockImplementationOnce(() => {
-                throw new Error('target store failed');
-            });
-
-            await expect(controller.stop(composeFileUri)).rejects.toThrow(
-                'target store failed',
-            );
-            expect(showAndLogErrorMock).not.toHaveBeenCalled();
             expect(projectStopMock).not.toHaveBeenCalled();
         });
 
@@ -89,7 +77,7 @@ describe('ProjectController', () => {
         });
 
         it('shows an error when no target is selected', async () => {
-            targetStore.getSelectedTarget.mockReturnValueOnce(undefined);
+            targetModel.setSelected(undefined);
 
             await controller.deploy(composeFileUri);
 
@@ -100,18 +88,6 @@ describe('ProjectController', () => {
                         'No target selected. Please select a target before deploying.',
                 }),
             );
-            expect(projectDeployMock).not.toHaveBeenCalled();
-        });
-
-        it('rethrows target lookup errors', async () => {
-            targetStore.getSelectedTarget.mockImplementationOnce(() => {
-                throw new Error('target store failed');
-            });
-
-            await expect(controller.deploy(composeFileUri)).rejects.toThrow(
-                'target store failed',
-            );
-            expect(showAndLogErrorMock).not.toHaveBeenCalled();
             expect(projectDeployMock).not.toHaveBeenCalled();
         });
 
