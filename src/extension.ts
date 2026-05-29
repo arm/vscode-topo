@@ -107,7 +107,7 @@ export async function activate(
     const targetHealth = new TargetHealth(containersManager);
     context.subscriptions.push(targetHealth);
     const protocolHandler = new ProtocolHandler(projectClone);
-    const fixIssue = new FixIssue(targetModel, containersManager);
+    const fixIssue = new FixIssue(targetModel);
     context.subscriptions.push(fixIssue);
     context.subscriptions.push(logger);
 
@@ -122,5 +122,4 @@ export async function activate(
     containerDelete.activate();
     targetHealth.activate();
     setupKeys.activate();
-    fixIssue.activate();
 }
