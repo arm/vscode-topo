@@ -85,13 +85,24 @@ export class TargetController {
         }
     }
 
-    public updateFromStore(): void {
+    private loadSelectedSafe(): string | undefined {
+        try {
+            const v = this.targetStore.loadSelected();
+            logger.info(`Loaded selected target:`, v);
+            return v;
+        } catch (error) {
+            showAndLogError(`Failed to load selected target`, error);
+            return undefined;
+        }
+    }
+
+    public async updateFromStore(): Promise<void> {
         const targets = this.loadTargetsSafe();
         if (targets) {
             this.model.setTargets([...targets]);
         }
 
-        const selected = this.targetStore.loadSelected();
+        const selected = this.loadSelectedSafe();
         this.model.setSelected(selected);
     }
 

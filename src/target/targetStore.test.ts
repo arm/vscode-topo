@@ -144,13 +144,13 @@ describe('TargetStore', () => {
     it('stores selected target and exposes it via loadSelected', async () => {
         const { context } = createMockContext();
         const store = new TargetStore(context);
+        const target = 'bob@example.com';
+        await store.saveTargets(new Set([target]));
 
-        await store.saveSelected('bob@example.com');
+        await store.saveSelected(target);
 
-        expect(context.workspaceState.get('selectedTarget')).toBe(
-            'bob@example.com',
-        );
-        expect(store.loadSelected()).toBe('bob@example.com');
+        expect(context.workspaceState.get('selectedTarget')).toBe(target);
+        expect(store.loadSelected()).toBe(target);
     });
 
     it('clears the selected target when saveSelected is given undefined', async () => {
@@ -162,6 +162,18 @@ describe('TargetStore', () => {
 
         expect(context.workspaceState.get('selectedTarget')).toBeUndefined();
         expect(store.loadSelected()).toBeUndefined();
+    });
+
+    it('loading selected targets returns undefined if not in target list', async () => {
+        const { context } = createMockContext();
+        const store = new TargetStore(context);
+
+        await store.saveSelected('bob@example.com');
+
+        expect(context.workspaceState.get('selectedTarget')).toBe(
+            'bob@example.com',
+        );
+        expect(store.loadSelected()).toBe(undefined);
     });
 
     it('throws a STORAGE WrappedError when stored targets are malformed JSON', () => {

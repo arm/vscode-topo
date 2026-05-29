@@ -58,7 +58,12 @@ export class TargetStore {
     }, 500);
 
     public loadSelected(): string | undefined {
-        return this.getWorkspace('selectedTarget');
+        const targets = this.loadTargets();
+        const target = this.getWorkspace('selectedTarget');
+        if (target && !targets.has(target)) {
+            return undefined;
+        }
+        return target;
     }
 
     public async saveSelected(id: string | undefined): Promise<void> {
