@@ -1,9 +1,9 @@
-import { HealthCheckResult } from '../topoCliSchema';
+import { TargetHealthCheckResult } from '../topoCliSchema';
 import { TargetDescription } from '../util/types';
 import { getVisibleTargetDependencies } from './getVisibleTargetDependencies';
 
 describe('getVisibleTargetDependencies', () => {
-    const health: HealthCheckResult['target'] = {
+    const health: TargetHealthCheckResult = {
         isLocalhost: false,
         connectivity: {
             name: 'Connectivity',

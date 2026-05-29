@@ -59,11 +59,11 @@ Right-click a service in the Targets tree to manage individual containers:
 
 ## Deploy and Stop
 
-Deploy or stop a compose file on the selected target. You can trigger either operation from:
+Deploy or stop the `compose.yaml` or `compose.yml` file in a project directory on the selected target. You can trigger either operation from:
 
-- Right-clicking a compose YAML file in the Explorer or editor tab and selecting **Topo Deploy** or **Topo Stop**.
+- Right-clicking `compose.yaml` or `compose.yml` in the Explorer or editor tab and selecting **Topo Deploy** or **Topo Stop**.
 
-The extension runs the equivalent of `topo deploy --target <ssh>` or `topo stop --target <ssh>` in a task terminal and reports success or failure.
+The extension runs `topo deploy --target <ssh>` or `topo stop --target <ssh>` from the directory containing `compose.yaml` or `compose.yml` in a task terminal and reports success or failure.
 
 ## Project Management
 
