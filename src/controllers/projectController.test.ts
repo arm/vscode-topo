@@ -37,7 +37,7 @@ describe('ProjectController', () => {
 
     describe('stop', () => {
         it('requires a compose file resource', async () => {
-            await expect(controller.stop()).rejects.toThrow(
+            await expect(controller.stopCommandHandler()).rejects.toThrow(
                 'No compose file selected for stop',
             );
             expect(projectStopMock).not.toHaveBeenCalled();
@@ -46,7 +46,7 @@ describe('ProjectController', () => {
         it('shows an error when no target is selected', async () => {
             targetModel.setSelected(undefined);
 
-            await controller.stop(composeFileUri);
+            await controller.stopCommandHandler(composeFileUri);
 
             expect(showAndLogErrorMock).toHaveBeenCalledWith(
                 'Error executing stop command',
@@ -59,7 +59,7 @@ describe('ProjectController', () => {
         });
 
         it('stops the project for the selected target', async () => {
-            await controller.stop(composeFileUri);
+            await controller.stopCommandHandler(composeFileUri);
 
             expect(projectStopMock).toHaveBeenCalledWith(
                 composeFileUri.fsPath,
@@ -70,7 +70,7 @@ describe('ProjectController', () => {
 
     describe('deploy', () => {
         it('requires a compose file resource', async () => {
-            await expect(controller.deploy()).rejects.toThrow(
+            await expect(controller.deployCommandHandler()).rejects.toThrow(
                 'No compose file selected for deployment',
             );
             expect(projectDeployMock).not.toHaveBeenCalled();
@@ -79,7 +79,7 @@ describe('ProjectController', () => {
         it('shows an error when no target is selected', async () => {
             targetModel.setSelected(undefined);
 
-            await controller.deploy(composeFileUri);
+            await controller.deployCommandHandler(composeFileUri);
 
             expect(showAndLogErrorMock).toHaveBeenCalledWith(
                 'Error executing deploy command',
@@ -92,7 +92,7 @@ describe('ProjectController', () => {
         });
 
         it('deploys the project for the selected target', async () => {
-            await controller.deploy(composeFileUri);
+            await controller.deployCommandHandler(composeFileUri);
 
             expect(projectDeployMock).toHaveBeenCalledWith(
                 composeFileUri.fsPath,
@@ -103,7 +103,7 @@ describe('ProjectController', () => {
 
     describe('initProject', () => {
         it('shows an error if no workspace folder is open', async () => {
-            await controller.initProject();
+            await controller.initCommandHandler();
 
             expect(projectInitMock).not.toHaveBeenCalled();
             expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
@@ -117,7 +117,7 @@ describe('ProjectController', () => {
                 { uri: workspaceUri, name: 'workspace', index: 0 },
             ];
 
-            await controller.initProject();
+            await controller.initCommandHandler();
 
             expect(projectInitMock).toHaveBeenCalledWith(
                 topoCli,

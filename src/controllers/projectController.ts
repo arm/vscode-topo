@@ -10,7 +10,7 @@ export class ProjectController {
         private readonly targetModel: TargetModel,
     ) {}
 
-    public async stop(resource?: vscode.Uri): Promise<void> {
+    public async stopCommandHandler(resource?: vscode.Uri): Promise<void> {
         if (!resource) {
             throw new Error('No compose file selected for stop');
         }
@@ -29,7 +29,7 @@ export class ProjectController {
         await projectUtil.stop(resource.fsPath, target);
     }
 
-    public async initProject(): Promise<void> {
+    public async initCommandHandler(): Promise<void> {
         const projectPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
         if (!projectPath) {
             vscode.window.showErrorMessage(
@@ -40,7 +40,7 @@ export class ProjectController {
         await projectUtil.initProject(this.topoCli, projectPath);
     }
 
-    public async deploy(resource?: vscode.Uri): Promise<void> {
+    public async deployCommandHandler(resource?: vscode.Uri): Promise<void> {
         if (!resource) {
             throw new Error('No compose file selected for deployment');
         }

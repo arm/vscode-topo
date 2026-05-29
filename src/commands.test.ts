@@ -42,9 +42,9 @@ describe('commands', () => {
             [commands.removeTarget, targetController.remove],
             [commands.addTarget, targetController.promptToAdd],
             [commands.inspectHostHealth, hostController.openHealthDocument],
-            [commands.initProject, projectController.initProject],
-            [commands.deploy, projectController.deploy],
-            [commands.stop, projectController.stop],
+            [commands.initProject, projectController.initCommandHandler],
+            [commands.deploy, projectController.deployCommandHandler],
+            [commands.stop, projectController.stopCommandHandler],
         ];
 
         it.each(cases)(

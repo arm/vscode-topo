@@ -44,13 +44,13 @@ export function register(
             hostController.openHealthDocument(),
         ),
         vscode.commands.registerCommand(initProject, () =>
-            projectController.initProject(),
+            projectController.initCommandHandler(),
         ),
         vscode.commands.registerCommand(deploy, (resource?: vscode.Uri) =>
-            projectController.deploy(resource),
+            projectController.deployCommandHandler(resource),
         ),
         vscode.commands.registerCommand(stop, (resource?: vscode.Uri) =>
-            projectController.stop(resource),
+            projectController.stopCommandHandler(resource),
         ),
     );
 
