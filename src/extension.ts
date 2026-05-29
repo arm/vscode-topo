@@ -28,6 +28,7 @@ import { HostModel } from './models/hostModel';
 import { HostController } from './controllers/hostController';
 import { TransientDocumentProvider } from './util/transientDocumentProvider';
 import { TargetController } from './controllers/targetController';
+import { TargetModel } from './models/targetModel';
 
 export async function activate(
     context: vscode.ExtensionContext,
@@ -49,29 +50,28 @@ export async function activate(
     const hostHealthDocProvider = new TransientDocumentProvider('host-health');
     const dockerCommands = new DockerCommands();
     const targetStore = new TargetStore(context);
+    const targetDescriptionStore = new TargetDescriptionStore(topoCli);
+    context.subscriptions.push(targetStore, hostHealthDocProvider);
+
+    const targetModel = new TargetModel();
+    const hostModel = new HostModel();
+
     const containersManager = new ContainersManager(
         topoCli,
         dockerCommands,
-        targetStore,
+        targetModel,
     );
     await containersManager.activate();
-    const targetDescriptionStore = new TargetDescriptionStore(topoCli);
-    context.subscriptions.push(
-        targetStore,
-        containersManager,
-        hostHealthDocProvider,
-    );
-
-    const hostModel = new HostModel();
+    context.subscriptions.push(containersManager);
 
     const hostTreeView = new HostTreeView(hostModel);
     const targetTreeView = new TargetTreeView(
         containersManager,
-        targetStore,
+        targetModel,
         targetDescriptionStore,
     );
     const targetStatusBarItemView = new TargetStatusBarItemView(
-        targetStore,
+        targetModel,
         containersManager,
     );
     context.subscriptions.push(
@@ -85,7 +85,10 @@ export async function activate(
         topoCli,
         hostHealthDocProvider,
     );
-    const targetsController = new TargetController(targetStore);
+    const targetsController = new TargetController(targetModel, targetStore);
+    context.subscriptions.push(
+        targetStore.onChanged(() => targetsController.updateFromStore()),
+    );
 
     const disposeCommands = commands.register(
         hostHealthController,
@@ -95,20 +98,20 @@ export async function activate(
 
     const projectInit = new ProjectInit(topoCli);
     context.subscriptions.push(projectInit);
-    const projectClone = new ProjectClone(context, topoCli, targetStore);
-    const deploy = new Deploy(context, targetStore);
-    const stop = new Stop(context, targetStore);
+    const projectClone = new ProjectClone(context, topoCli, targetModel);
+    const deploy = new Deploy(context, targetModel);
+    const stop = new Stop(context, targetModel);
     const containerOpenInBrowser = new ContainerOpenInBrowser(context);
     const attachVsCode = new AttachVsCode(context, dockerCommands);
     const attachShell = new AttachShell(context, dockerCommands);
-    const setupKeys = new SetupKeys(context, targetStore);
+    const setupKeys = new SetupKeys(context, targetModel);
     const containerStart = new ContainerStart(context, dockerCommands);
     const containerStop = new ContainerStop(context, dockerCommands);
     const containerDelete = new ContainerDelete(context, dockerCommands);
     const targetHealth = new TargetHealth(containersManager);
     context.subscriptions.push(targetHealth);
     const protocolHandler = new ProtocolHandler(projectClone);
-    const fixIssue = new FixIssue(targetStore);
+    const fixIssue = new FixIssue(targetModel);
     context.subscriptions.push(fixIssue);
     context.subscriptions.push(logger);
 

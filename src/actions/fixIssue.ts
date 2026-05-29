@@ -1,18 +1,18 @@
 import * as vscode from 'vscode';
 import { PACKAGE_NAME } from '../manifest';
-import { TargetStore } from '../target/targetStore';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 import { showAndLogError } from '../util/showAndLogError';
 import { logger } from '../util/logger';
 import { executeTask } from '../util/executeTask';
 import { getFixCommandArgs } from '../util/getFixCommandArgs';
+import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
 
 export class FixIssue implements vscode.Disposable {
     private readonly disposables = new DisposableCollector();
     public static readonly fixIssueCommand = `${PACKAGE_NAME}.fixIssue`;
 
-    constructor(private readonly targetStore: TargetStore) {
+    constructor(private readonly targetModel: TargetModel) {
         this.disposables.collect(
             vscode.commands.registerCommand(
                 FixIssue.fixIssueCommand,
@@ -28,7 +28,7 @@ export class FixIssue implements vscode.Disposable {
             return;
         }
 
-        const target = this.targetStore.getSelectedTarget();
+        const target = this.targetModel.selected;
         if (!target) {
             showAndLogError(
                 `Failed to fix dependency`,

@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
 import { TargetStatusBarItemView } from './targetStatusBarItemView';
 import { TargetTreeView } from './targetTreeView';
-import { TargetStore } from '../target/targetStore';
 import { ContainersManager } from '../target/containersManager';
 import { mock } from 'vitest-mock-extended';
 import { HealthCheckResult } from '../topoCliSchema';
+import { TargetModel } from '../models/targetModel';
 
 vi.mock('../util/logger');
 
@@ -30,15 +30,15 @@ describe('TargetStatusBarItemView', () => {
 
     it('shows an item in the status bar with the currently selected target', async () => {
         const target = 'root@localhost';
-        const targetStore = mock<TargetStore>();
-        targetStore.getSelectedTarget.mockReturnValue(target);
+        const targetModel = new TargetModel();
+        targetModel.setSelected(target);
         const containersManager = mock<ContainersManager>({
             getTargetStateSnapshot: vi.fn().mockReturnValue({
                 health: healthyTarget,
                 status: 'disconnected',
             }),
         });
-        new TargetStatusBarItemView(targetStore, containersManager);
+        new TargetStatusBarItemView(targetModel, containersManager);
 
         expect(vscode.window.createStatusBarItem).toHaveBeenCalledTimes(1);
         const statusBarItem = vi.mocked(vscode.window.createStatusBarItem).mock
@@ -53,7 +53,7 @@ describe('TargetStatusBarItemView', () => {
 
     it("doesn't show an item in the status bar when no target is selected", async () => {
         new TargetStatusBarItemView(
-            mock<TargetStore>(),
+            new TargetModel(),
             mock<ContainersManager>(),
         );
 
@@ -69,9 +69,7 @@ describe('TargetStatusBarItemView', () => {
     it('changes the item in the status bar when the currently selected target changes', async () => {
         const target1 = 'root@localhost';
         const target2 = 'root@other-host';
-        const targetStore = mock<TargetStore>();
-        const onChangeEmitter = new vscode.EventEmitter<void>();
-        targetStore.onChanged.mockImplementation(onChangeEmitter.event);
+        const targetModel = new TargetModel();
         const containersManager = mock<ContainersManager>({
             getTargetStateSnapshot: vi.fn().mockReturnValue({
                 health: healthyTarget,
@@ -79,15 +77,13 @@ describe('TargetStatusBarItemView', () => {
             }),
         });
 
-        vi.mocked(targetStore.getSelectedTarget).mockReturnValue(target1);
-        new TargetStatusBarItemView(targetStore, containersManager);
+        targetModel.setSelected(target1);
+        new TargetStatusBarItemView(targetModel, containersManager);
         const statusBarItem = vi.mocked(vscode.window.createStatusBarItem).mock
             .results[0].value;
         expect(statusBarItem.text).toBe(`$(pass-filled) ${target1}`);
 
-        vi.mocked(targetStore.getSelectedTarget).mockReturnValue(target2);
-        onChangeEmitter.fire();
-        await Promise.resolve();
+        targetModel.setSelected(target2);
 
         expect(vscode.window.createStatusBarItem).toHaveBeenCalledTimes(1);
         expect(statusBarItem.text).toBe(`$(pass-filled) ${target2}`);

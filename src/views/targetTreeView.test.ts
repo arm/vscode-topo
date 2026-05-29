@@ -7,16 +7,16 @@ import * as manifest from '../manifest';
 import { ContainersManager } from '../target/containersManager';
 import { TargetState, ContainerItem, TargetDescription } from '../util/types';
 import { mock, MockProxy } from 'vitest-mock-extended';
-import { TargetStore } from '../target/targetStore';
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
 import { TargetSubsystemGroupTreeItem } from '../targetTreeView/targetSubsystemGroupTreeItem';
 import { HealthCheckDependency, HealthCheckResult } from '../topoCliSchema';
 import { TargetDescriptionStore } from '../target/targetDescriptionStore';
+import { TargetModel } from '../models/targetModel';
 
 describe('TargetTreeView', () => {
     let view: TargetTreeView;
     let containersManagerMock: MockProxy<ContainersManager>;
-    let targetStoreMock: MockProxy<TargetStore>;
+    let targetModel: TargetModel;
     let targetDescriptionStoreMock: MockProxy<TargetDescriptionStore>;
     const target = 'user@topo.local';
     const targetDescription: TargetDescription = {
@@ -92,7 +92,6 @@ describe('TargetTreeView', () => {
             target,
         },
     ];
-    const onChangedEmitter = new vscode.EventEmitter<void>();
     const onDataUpdateEmitter = new vscode.EventEmitter<void>();
 
     beforeEach(() => {
@@ -110,16 +109,16 @@ describe('TargetTreeView', () => {
             onDataUpdateEmitter.event,
         );
 
-        targetStoreMock = mock<TargetStore>();
-        targetStoreMock.getSelectedTarget.mockReturnValue(target);
+        targetModel = new TargetModel();
+        targetModel.setTargets([target]);
+        targetModel.setSelected(target);
         targetDescriptionStoreMock = mock<TargetDescriptionStore>();
         targetDescriptionStoreMock.getDescription.mockResolvedValue(
             targetDescription,
         );
-        targetStoreMock.onChanged.mockImplementation(onChangedEmitter.event);
         view = new TargetTreeView(
             containersManagerMock,
-            targetStoreMock,
+            targetModel,
             targetDescriptionStoreMock,
         );
         vi.clearAllTimers();
@@ -128,7 +127,6 @@ describe('TargetTreeView', () => {
 
     describe('getChildren', () => {
         it('returns Target at root and Dependencies/Subsystems as its children', async () => {
-            targetStoreMock.getTargets.mockReturnValue([target]);
             containersManagerMock.getTargetStateSnapshot.mockReturnValue({
                 health: undefined,
                 status: 'disconnected',
@@ -175,7 +173,6 @@ describe('TargetTreeView', () => {
                 },
             });
             containersManagerMock.getTargetState.mockResolvedValue(targetState);
-            targetStoreMock.getTargets.mockReturnValue([target]);
             containersManagerMock.getTargetStateSnapshot.mockReturnValue(
                 targetState,
             );
@@ -195,8 +192,6 @@ describe('TargetTreeView', () => {
         });
 
         it('marks selected target as disconnected when health is undefined', async () => {
-            targetStoreMock.getTargets.mockReturnValue([target]);
-            targetStoreMock.getSelectedTarget.mockReturnValue(target);
             containersManagerMock.getTargetStateSnapshot.mockReturnValue({
                 health: undefined,
                 status: 'disconnected',
@@ -215,8 +210,6 @@ describe('TargetTreeView', () => {
         });
 
         it('marks target with executable dependency fixes as fixable', async () => {
-            targetStoreMock.getTargets.mockReturnValue([target]);
-            targetStoreMock.getSelectedTarget.mockReturnValue(target);
             const targetState: TargetState = {
                 health: {
                     ...targetHealth,
@@ -248,8 +241,6 @@ describe('TargetTreeView', () => {
         });
 
         it('marks target with executable subsystem driver fix as fixable when remote processors exist', async () => {
-            targetStoreMock.getTargets.mockReturnValue([target]);
-            targetStoreMock.getSelectedTarget.mockReturnValue(target);
             const targetState: TargetState = {
                 health: {
                     ...targetHealth,
@@ -279,8 +270,6 @@ describe('TargetTreeView', () => {
         });
 
         it('does not mark target as fixable for hidden subsystem driver fixes', async () => {
-            targetStoreMock.getTargets.mockReturnValue([target]);
-            targetStoreMock.getSelectedTarget.mockReturnValue(target);
             targetDescriptionStoreMock.getDescription.mockResolvedValue({
                 hostProcessors: [],
                 remoteProcessors: [],
@@ -314,8 +303,6 @@ describe('TargetTreeView', () => {
         });
 
         it('does not mark target as fixable when no executable dependency fixes exist', async () => {
-            targetStoreMock.getTargets.mockReturnValue([target]);
-            targetStoreMock.getSelectedTarget.mockReturnValue(target);
             containersManagerMock.getTargetStateSnapshot.mockReturnValue({
                 health: {
                     ...targetHealth,
@@ -384,7 +371,7 @@ describe('TargetTreeView', () => {
         });
 
         it('returns empty array when there are no targets', async () => {
-            targetStoreMock.getTargets.mockReturnValue([]);
+            targetModel.setTargets([]);
             containersManagerMock.getTargetState.mockResolvedValueOnce({
                 health: undefined,
                 status: 'disconnected',

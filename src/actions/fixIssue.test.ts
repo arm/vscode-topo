@@ -1,10 +1,9 @@
 import * as vscode from 'vscode';
-import { mock } from 'vitest-mock-extended';
 import { FixIssue } from './fixIssue';
-import { TargetStore } from '../target/targetStore';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 import { executeTask } from '../util/executeTask';
 import { executeCommand } from '../util/test/executeCommand';
+import { TargetModel } from '../models/targetModel';
 
 vi.mock('../util/logger');
 vi.mock('../util/executeTask');
@@ -12,11 +11,11 @@ vi.mock('../util/executeTask');
 const executeTaskMock = vi.mocked(executeTask);
 
 describe('FixIssue', () => {
-    const targetStore = mock<TargetStore>();
+    const targetModel = new TargetModel();
     const target = 'user@topo.local';
 
     beforeEach(() => {
-        targetStore.getSelectedTarget.mockReturnValue(target);
+        targetModel.setSelected(target);
     });
 
     afterEach(() => {
@@ -24,7 +23,7 @@ describe('FixIssue', () => {
     });
 
     it('registers fix issue command', async () => {
-        new FixIssue(targetStore);
+        new FixIssue(targetModel);
 
         expect(vscode.commands.registerCommand).toHaveBeenCalledWith(
             FixIssue.fixIssueCommand,
@@ -32,8 +31,14 @@ describe('FixIssue', () => {
         );
     });
 
+    it('does not prompt to fix issues on construction', async () => {
+        new FixIssue(targetModel);
+
+        expect(vscode.window.showWarningMessage).not.toHaveBeenCalled();
+    });
+
     it('runs fix task for dependency with executable fix', async () => {
-        new FixIssue(targetStore);
+        new FixIssue(targetModel);
         const dependencyItem = new HealthCheckDependencyTreeItem({
             name: 'Remoteproc Runtime',
             status: 'error',
@@ -53,7 +58,7 @@ describe('FixIssue', () => {
     });
 
     it('does nothing for a healthy dependency', async () => {
-        new FixIssue(targetStore);
+        new FixIssue(targetModel);
         const dependencyItem = new HealthCheckDependencyTreeItem({
             name: 'Remoteproc Runtime',
             status: 'ok',

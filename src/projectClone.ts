@@ -5,10 +5,10 @@ import * as path from 'node:path';
 import { TemplateDescription } from './topoCliSchema';
 import { isWrappedError, WrappedError } from './errors/wrappedError';
 import { showAndLogError } from './util/showAndLogError';
-import { TargetStore } from './target/targetStore';
 import { getCloneDestinationPath } from './util/getCloneDestinationPath';
 import { executeTask } from './util/executeTask';
 import { getErrorMessage } from './util/getErrorMessage';
+import { TargetModel } from './models/targetModel';
 
 type CloneResult =
     | {
@@ -211,7 +211,7 @@ export class ProjectClone {
     constructor(
         private readonly context: vscode.ExtensionContext,
         private readonly topoCli: TopoCli,
-        private readonly targetStore: TargetStore,
+        private readonly targetModel: TargetModel,
     ) {}
 
     private wrapCloneCommandWithCloneErrorHandling(
@@ -270,7 +270,7 @@ export class ProjectClone {
     }
 
     private async templateCloneCommandHandler(): Promise<void> {
-        const selectedTarget = this.targetStore.getSelectedTarget();
+        const selectedTarget = this.targetModel.selected;
         const selectedTemplate = await getTemplateOfChoice(
             this.topoCli,
             selectedTarget,
