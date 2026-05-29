@@ -12,7 +12,7 @@ describe('HealthCheckDependencyTreeItem', () => {
         expect(item.description).toBe('docker');
     });
 
-    it('sets context value for an ok dependency', () => {
+    it('sets context value and icon for an ok dependency', () => {
         const item = new HealthCheckDependencyTreeItem({
             name: 'Container Engine',
             value: 'docker',
@@ -23,7 +23,7 @@ describe('HealthCheckDependencyTreeItem', () => {
         expect(item.iconPath).toBeDefined();
     });
 
-    it('sets context value for a dependency with a warning', () => {
+    it('sets context value and icon for a dependency with a warning', () => {
         const item = new HealthCheckDependencyTreeItem({
             name: 'Container Engine',
             value: 'docker',
@@ -34,7 +34,7 @@ describe('HealthCheckDependencyTreeItem', () => {
         expect(item.iconPath).toBeDefined();
     });
 
-    it('sets context value for a dependency with an error', () => {
+    it('sets context value and icon for a dependency with an error', () => {
         const item = new HealthCheckDependencyTreeItem({
             name: 'Container Engine',
             value: 'missing',
