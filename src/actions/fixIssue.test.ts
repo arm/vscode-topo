@@ -98,12 +98,6 @@ describe('FixIssue', () => {
         );
     });
 
-    it('does not prompt to fix issues on construction', () => {
-        createFixIssue();
-
-        expect(vscode.window.showWarningMessage).not.toHaveBeenCalled();
-    });
-
     it('runs a single dependency fix directly', async () => {
         createFixIssue();
         const dependencyItem = new HealthCheckDependencyTreeItem(

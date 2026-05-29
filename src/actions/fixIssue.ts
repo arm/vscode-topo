@@ -75,7 +75,7 @@ export class FixIssue implements vscode.Disposable {
         treeNode: unknown,
     ): Promise<void> {
         if (!(treeNode instanceof TargetTreeItem)) {
-            const errMsg = `Invalid target item for fix issues: expected TargetTreeItem but received:`;
+            const errMsg = `Invalid target item for fix an issue: expected TargetTreeItem but received:`;
             logger.error(errMsg, treeNode);
             return;
         }

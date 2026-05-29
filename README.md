@@ -43,7 +43,7 @@ Right-click a target in the tree to access these actions:
 | **Remove Target**  | Delete the target from the configuration.                       |
 | **Inspect Health** | Run a health check and display the JSON results.                |
 | **Setup Keys**     | Configure SSH key-based authentication for passwordless access. |
-| **Fix issues**     | Select and run an available fix for a target dependency issue.  |
+| **Fix An Issue**   | Select and run an available fix for a target dependency issue.  |
 
 ## Container Actions
 

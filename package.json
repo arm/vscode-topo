@@ -106,7 +106,7 @@
             },
             {
                 "command": "topo.fixTargetIssues",
-                "title": "Fix issues",
+                "title": "Fix An Issue",
                 "category": "Arm Topo"
             },
             {
