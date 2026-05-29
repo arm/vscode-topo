@@ -130,17 +130,20 @@ export class TargetController {
     }
 
     public async promptToAdd(): Promise<void> {
-        const targets = this.loadTargetsSafe();
-        if (!targets) {
+        const prepromptTargets = this.loadTargetsSafe();
+        if (!prepromptTargets) {
             return;
         }
-        const target = await promptForSshTarget(targets);
-        if (!target || targets.has(target)) {
+        const target = await promptForSshTarget(prepromptTargets);
+        const postPromptTargets = this.loadTargetsSafe();
+        if (!postPromptTargets || !target || postPromptTargets.has(target)) {
             return;
         }
 
-        await this.targetStore.saveTargets(new Set([...targets, target]));
-        this.model.setTargets([...targets, target]);
+        await this.targetStore.saveTargets(
+            new Set([...postPromptTargets, target]),
+        );
+        this.model.setTargets([...postPromptTargets, target]);
 
         await this.targetStore.saveSelected(target);
         this.model.setSelected(target);
