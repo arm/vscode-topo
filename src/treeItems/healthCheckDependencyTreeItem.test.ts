@@ -57,6 +57,7 @@ describe('HealthCheckDependencyTreeItem', () => {
         });
 
         expect(item.contextValue).toBe('Dependency Warning Fixable');
+        expect(item.command).toBeUndefined();
     });
 
     it('does not mark healthy remoteproc dependencies as fixable', () => {

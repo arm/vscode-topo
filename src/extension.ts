@@ -111,7 +111,11 @@ export async function activate(
     const targetHealth = new TargetHealth(containersManager);
     context.subscriptions.push(targetHealth);
     const protocolHandler = new ProtocolHandler(projectClone);
-    const fixIssue = new FixIssue(targetModel);
+    const fixIssue = new FixIssue(
+        targetModel,
+        containersManager,
+        targetDescriptionStore,
+    );
     context.subscriptions.push(fixIssue);
     context.subscriptions.push(logger);
 
