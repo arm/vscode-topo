@@ -29,7 +29,9 @@ export class Deploy {
 
     private async deployCommandHandler(resource?: vscode.Uri): Promise<void> {
         if (!resource) {
-            throw new Error('No compose file selected for deployment');
+            throw new Error(
+                'No compose.yaml or compose.yml selected for deployment',
+            );
         }
         const target = this.targetModel.selected;
 
