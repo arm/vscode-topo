@@ -57,7 +57,7 @@ describe('HostController', () => {
             healthDocumentProvider,
         );
 
-        await controller.openHealthDocument();
+        await controller.openHealthDocumentCommandHandler();
 
         expect(topoCli.hostHealth).toHaveBeenCalledWith();
         expect(healthDocumentProvider.createUri).toHaveBeenCalledWith(
@@ -79,7 +79,7 @@ describe('HostController', () => {
         );
         topoCli.hostHealth.mockRejectedValue(error);
 
-        await controller.openHealthDocument();
+        await controller.openHealthDocumentCommandHandler();
 
         expect(showAndLogError).toHaveBeenCalledWith(
             'Failed to inspect host health',

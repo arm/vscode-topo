@@ -10,10 +10,10 @@ export class HostController {
         private readonly topoCli: TopoCli,
         private readonly healthDocumentProvider: TransientDocumentProvider,
     ) {
-        this.refreshHealth();
+        this.refreshHealthCommandHandler();
     }
 
-    public async refreshHealth(): Promise<void> {
+    public async refreshHealthCommandHandler(): Promise<void> {
         this.hostModel.setHealth({
             status: 'loading',
             placeholder: this.hostModel.health,
@@ -29,7 +29,7 @@ export class HostController {
         }
     }
 
-    public async openHealthDocument(): Promise<void> {
+    public async openHealthDocumentCommandHandler(): Promise<void> {
         const fileName = `${PACKAGE_NAME}-host-health-${Date.now()}.json`;
 
         try {
