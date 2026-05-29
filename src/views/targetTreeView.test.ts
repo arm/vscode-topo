@@ -9,7 +9,10 @@ import { TargetState, ContainerItem, TargetDescription } from '../util/types';
 import { mock, MockProxy } from 'vitest-mock-extended';
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
 import { TargetSubsystemGroupTreeItem } from '../targetTreeView/targetSubsystemGroupTreeItem';
-import { HealthCheckDependency, HealthCheckResult } from '../topoCliSchema';
+import {
+    HealthCheckDependency,
+    TargetHealthCheckResult,
+} from '../topoCliSchema';
 import { TargetDescriptionStore } from '../target/targetDescriptionStore';
 import { TargetModel } from '../models/targetModel';
 
@@ -23,7 +26,7 @@ describe('TargetTreeView', () => {
         hostProcessors: [],
         remoteProcessors: [{ name: 'imx-rproc' }, { name: 'other-rproc' }],
     };
-    const targetHealth: HealthCheckResult['target'] = {
+    const targetHealth: TargetHealthCheckResult = {
         isLocalhost: false,
         connectivity: {
             name: 'Connectivity',
