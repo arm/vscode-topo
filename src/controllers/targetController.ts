@@ -120,13 +120,13 @@ export class TargetController {
             return;
         }
         targets.delete(target);
-        await this.targetStore.saveTargets(targets);
-        this.model.setTargets([...targets]);
         if (this.model.selected === target) {
             const newSelected = targets.size > 0 ? [...targets][0] : undefined;
             await this.targetStore.saveSelected(newSelected);
             this.model.setSelected(newSelected);
         }
+        await this.targetStore.saveTargets(targets);
+        this.model.setTargets([...targets]);
     }
 
     public async promptToAdd(): Promise<void> {
