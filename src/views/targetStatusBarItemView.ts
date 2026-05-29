@@ -2,18 +2,33 @@ import * as vscode from 'vscode';
 import { ContainersManager } from '../target/containersManager';
 import { getTargetTreeItemIcon } from '../targetTreeView/targetTreeItem';
 import { TargetTreeView } from './targetTreeView';
-import { TargetStatus } from '../util/types';
+import { TargetState } from '../util/types';
 import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
+import { getWorstDependencyStatus } from '../util/getWorstDependencyStatus';
+import { getDependencyGroupIcon } from './util/dependencyIcons';
+
+function getStatusIconId(state: TargetState): string {
+    const targetTreeIcon = getTargetTreeItemIcon(true, state.status);
+    if (targetTreeIcon) {
+        return targetTreeIcon.id;
+    }
+
+    const status = getWorstDependencyStatus(state.health?.dependencies ?? []);
+    if (status === 'ok') {
+        return 'pass-filled';
+    }
+
+    return getDependencyGroupIcon(status).id;
+}
 
 function renderStatusBarItem(
     statusBarItem: vscode.StatusBarItem,
     target: string | undefined,
-    status: TargetStatus,
+    state: TargetState,
 ): void {
     if (target) {
-        const targetTreeIcon = getTargetTreeItemIcon(true, status);
-        const iconId = targetTreeIcon?.id || 'pass-filled';
+        const iconId = getStatusIconId(state);
         statusBarItem.text = `$(${iconId}) ${target}`;
         statusBarItem.tooltip = `Connection String: ${target}`;
         statusBarItem.show();
@@ -51,11 +66,10 @@ export class TargetStatusBarItemView implements vscode.Disposable {
 
     private refresh(): void {
         const selectedTarget = this.targetModel.selected;
-        const status = selectedTarget
+        const state: TargetState = selectedTarget
             ? this.containersManager.getTargetStateSnapshot(selectedTarget)
-                  .status
-            : 'disconnected';
-        renderStatusBarItem(this.statusBarItem, selectedTarget, status);
+            : { health: undefined, status: 'disconnected' };
+        renderStatusBarItem(this.statusBarItem, selectedTarget, state);
     }
 
     public dispose(): void {
