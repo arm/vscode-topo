@@ -74,14 +74,14 @@ export class TargetController {
         this.updateFromStore();
     }
 
-    private loadTargetsSafe(): Set<string> | null {
+    private loadTargetsSafe(): Set<string> | undefined {
         try {
             const v = this.targetStore.loadTargets();
             logger.info(`Loaded targets:`, [...v]);
             return v;
         } catch (error) {
             showAndLogError(`Failed to load targets`, error);
-            return null;
+            return undefined;
         }
     }
 
