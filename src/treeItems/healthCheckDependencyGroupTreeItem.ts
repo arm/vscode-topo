@@ -1,30 +1,7 @@
 import * as vscode from 'vscode';
-import { HealthCheckDependency, HealthCheckStatus } from '../topoCliSchema';
-import { getDependencyItemIcon } from './healthCheckDependencyTreeItem';
-
-const getDependencyGroupIcon = (
-    status: HealthCheckStatus,
-): vscode.ThemeIcon => {
-    if (status === 'ok') {
-        return new vscode.ThemeIcon('library');
-    }
-
-    return getDependencyItemIcon(status);
-};
-
-const getWorstDependencyStatus = (
-    dependencies: HealthCheckDependency[],
-): HealthCheckStatus => {
-    return dependencies.reduce((acc: HealthCheckStatus, dependency) => {
-        if (dependency.status === 'error') {
-            return 'error';
-        }
-        if (dependency.status === 'warning' && acc !== 'error') {
-            return 'warning';
-        }
-        return acc;
-    }, 'ok');
-};
+import { HealthCheckDependency } from '../topoCliSchema';
+import { getWorstDependencyStatus } from '../util/getWorstDependencyStatus';
+import { getDependencyGroupIcon } from '../views/util/dependencyIcons';
 
 export class HealthCheckDependencyGroupTreeItem extends vscode.TreeItem {
     public readonly dependencies: HealthCheckDependency[];
