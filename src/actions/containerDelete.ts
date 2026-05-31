@@ -1,28 +1,12 @@
-import * as vscode from 'vscode';
-import * as manifest from '../manifest';
 import { assertTargetContainerTreeItem } from '../targetTreeView/assertTargetContainerTreeItem';
 import { showAndLogError } from '../util/showAndLogError';
 import { isWrappedError } from '../errors/wrappedError';
 import { ContainerCommands } from '../target/containerCommands';
 
 export class ContainerDelete {
-    public static readonly deleteContainerCommand = `${manifest.PACKAGE_NAME}.deleteContainer`;
+    constructor(private readonly containerCommands: ContainerCommands) {}
 
-    constructor(
-        private readonly context: vscode.ExtensionContext,
-        private readonly containerCommands: ContainerCommands,
-    ) {}
-
-    public activate() {
-        this.context.subscriptions.push(
-            vscode.commands.registerCommand(
-                ContainerDelete.deleteContainerCommand,
-                this.deleteContainerCommandHandler.bind(this),
-            ),
-        );
-    }
-
-    private async deleteContainerCommandHandler(
+    public async deleteContainerCommandHandler(
         treeNode: unknown,
     ): Promise<void> {
         assertTargetContainerTreeItem(treeNode);

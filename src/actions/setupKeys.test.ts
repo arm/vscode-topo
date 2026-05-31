@@ -1,11 +1,10 @@
 import * as vscode from 'vscode';
-import { mock, MockProxy } from 'vitest-mock-extended';
 import { SetupKeys, setupKeys as setupKeysOnTarget } from './setupKeys';
 import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
 import { executeTask } from '../util/executeTask';
-import { executeCommand } from '../util/test/executeCommand';
 import { TargetModel } from '../models/targetModel';
 import { TopoCli } from '../topoCli';
+import { MockProxy, mock } from 'vitest-mock-extended';
 
 vi.mock('../util/logger');
 vi.mock('../util/executeTask');
@@ -13,7 +12,6 @@ vi.mock('../util/executeTask');
 const executeTaskMock = vi.mocked(executeTask);
 
 describe('SetupKeys', () => {
-    let context: MockProxy<vscode.ExtensionContext>;
     let topoCli: MockProxy<TopoCli>;
     let targetModel: TargetModel;
     const target = 'user@topo.local';
@@ -21,7 +19,6 @@ describe('SetupKeys', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-        context = mock<vscode.ExtensionContext>({ subscriptions: [] });
         topoCli = mock<TopoCli>();
         topoCli.getBinaryPath.mockReturnValue(topoBinaryPath);
         targetModel = new TargetModel();
@@ -32,23 +29,11 @@ describe('SetupKeys', () => {
         vi.clearAllMocks();
     });
 
-    it('registers setup keys command', () => {
-        const setupKeys = new SetupKeys(context, topoCli, targetModel);
-
-        setupKeys.activate();
-
-        expect(vscode.commands.registerCommand).toHaveBeenCalledWith(
-            SetupKeys.setupKeysCommand,
-            expect.any(Function),
-        );
-    });
-
     it('runs setup-keys task for selected board item', async () => {
-        const setupKeys = new SetupKeys(context, topoCli, targetModel);
-        setupKeys.activate();
+        const setupKeys = new SetupKeys(topoCli, targetModel);
         const boardItem = new TargetTreeItem(target, true, 'connected');
 
-        await executeCommand(SetupKeys.setupKeysCommand, boardItem);
+        await setupKeys.setupKeysCommandHandler(boardItem);
 
         expect(executeTaskMock).toHaveBeenCalledWith(
             `Setup keys on ${target}`,
@@ -60,20 +45,18 @@ describe('SetupKeys', () => {
     });
 
     it('does nothing for non-selected board item', async () => {
-        const setupKeys = new SetupKeys(context, topoCli, targetModel);
-        setupKeys.activate();
+        const setupKeys = new SetupKeys(topoCli, targetModel);
         const boardItem = new TargetTreeItem(target, false, 'disconnected');
 
-        await executeCommand(SetupKeys.setupKeysCommand, boardItem);
+        await setupKeys.setupKeysCommandHandler(boardItem);
 
         expect(executeTaskMock).not.toHaveBeenCalled();
     });
 
     it('falls back to selected target when no tree node is provided', async () => {
-        const setupKeys = new SetupKeys(context, topoCli, targetModel);
-        setupKeys.activate();
+        const setupKeys = new SetupKeys(topoCli, targetModel);
 
-        await executeCommand(SetupKeys.setupKeysCommand, undefined);
+        await setupKeys.setupKeysCommandHandler(undefined);
 
         expect(executeTaskMock).toHaveBeenCalledWith(
             `Setup keys on ${target}`,
@@ -83,10 +66,10 @@ describe('SetupKeys', () => {
 
     it('shows error when no target is available for setup-keys', async () => {
         targetModel.setSelected(undefined);
-        const setupKeys = new SetupKeys(context, topoCli, targetModel);
-        setupKeys.activate();
+        const setupKeys = new SetupKeys(topoCli, targetModel);
 
-        await executeCommand(SetupKeys.setupKeysCommand, undefined);
+
+        await setupKeys.setupKeysCommandHandler(undefined);
 
         expect(executeTaskMock).not.toHaveBeenCalled();
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
