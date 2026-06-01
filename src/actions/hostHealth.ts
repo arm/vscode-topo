@@ -26,11 +26,11 @@ export class HostHealth implements vscode.Disposable {
 
     private async inspectHealth(): Promise<void> {
         const fileName = `${manifest.PACKAGE_NAME}-host-health-${Date.now()}.json`;
+        const documentUri = this.healthDocumentProvider.createUri(fileName);
 
         try {
             const health = await this.topoCli.hostHealth();
             const content = JSON.stringify(health.host, null, 4);
-            const documentUri = this.healthDocumentProvider.createUri(fileName);
             await this.healthDocumentProvider.open(documentUri, content);
         } catch (err) {
             showAndLogError('Failed to inspect host health', err);
