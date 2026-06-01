@@ -55,7 +55,11 @@ export async function activate(
     const dockerCommands = new DockerCommands();
     const targetStore = new TargetStore(context);
     const targetDescriptionStore = new TargetDescriptionStore(topoCli);
-    context.subscriptions.push(targetStore, hostHealthDocProvider);
+    context.subscriptions.push(
+        targetStore,
+        hostHealthDocProvider,
+        targetHealthDocProvider,
+    );
 
     const targetModel = new TargetModel();
     const hostModel = new HostModel();
