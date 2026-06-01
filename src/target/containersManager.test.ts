@@ -1,7 +1,7 @@
 import { ContainersManager } from './containersManager';
 import { ContainerItem, DockerPsItem } from '../util/types';
 import * as manifest from '../manifest';
-import { exec } from '../util/exec';
+import { execFile } from '../util/exec';
 import { DockerCommands } from './dockerCommands';
 import * as vscode from 'vscode';
 import { mock } from 'vitest-mock-extended';
@@ -17,7 +17,7 @@ const waitImmediate = async () => {
 };
 
 vi.mock('../util/exec', () => ({
-    exec: vi.fn(),
+    execFile: vi.fn(),
 }));
 vi.mock('../util/logger');
 
@@ -85,8 +85,32 @@ const defaultInfoOutput = {
     stdout: 'Server Version: 8',
     stderr: '',
 };
-const execMock = exec as Mock;
+const execFileMock = execFile as Mock;
 const target = 'user@topo.local';
+const getDockerArgsKey = (args: string[]): string => args.join('\0');
+const dockerContextsCommand = getDockerArgsKey([
+    'context',
+    'ls',
+    '--format',
+    '{{.Name}}',
+]);
+const dockerPsCommand = getDockerArgsKey([
+    '--host',
+    `ssh://${target}`,
+    'ps',
+    '-a',
+    '--format',
+    '{{json .}}',
+]);
+const dockerInspectCommand = getDockerArgsKey([
+    '--host',
+    `ssh://${target}`,
+    'inspect',
+    mockContainers[0].ID,
+    mockContainers[1].ID,
+    '--format',
+    '{{json .}}',
+]);
 const loadedHealth: HealthCheckResult = {
     host: { dependencies: [] },
     target: {
@@ -138,20 +162,22 @@ describe('ContainersManager', () => {
     });
 
     it('getContainersData returns containers with runtime', async () => {
-        execMock.mockImplementation(async (command: string) => {
-            switch (command) {
-                case "docker context ls --format '{{.Name}}'":
-                    return defaultContextOutput;
-                case `docker --host ssh://${target} ps -a --format "{{json .}}"`:
-                    return defaultPsOutput;
-                case `docker --host ssh://${target} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{json .}}'`:
-                    return defaultInspectOutput;
-                case `ssh ${target} 'docker info'`:
-                    return defaultInfoOutput;
-                default:
-                    throw Error(`Unexpected command: ${command}`);
-            }
-        });
+        execFileMock.mockImplementation(
+            async (_command: string, args: string[]) => {
+                switch (getDockerArgsKey(args)) {
+                    case dockerContextsCommand:
+                        return defaultContextOutput;
+                    case dockerPsCommand:
+                        return defaultPsOutput;
+                    case dockerInspectCommand:
+                        return defaultInspectOutput;
+                    default:
+                        throw Error(
+                            `Unexpected docker args: ${args.join(' ')}`,
+                        );
+                }
+            },
+        );
         const targetModel = new TargetModel();
         targetModel.setSelected(target);
         const manager = createContainersManager(targetModel);
@@ -192,18 +218,20 @@ describe('ContainersManager', () => {
     });
 
     it('getContainersData returns empty array on ps error', async () => {
-        execMock.mockImplementation(async (command: string) => {
-            switch (command) {
-                case "docker context ls --format '{{.Name}}'":
-                    return defaultContextOutput;
-                case `docker --host ssh://${target} ps -a --format "{{json .}}"`:
-                    throw Error('ps error');
-                case `ssh ${target} 'docker info'`:
-                    return defaultInfoOutput;
-                default:
-                    throw Error(`Unexpected command: ${command}`);
-            }
-        });
+        execFileMock.mockImplementation(
+            async (_command: string, args: string[]) => {
+                switch (getDockerArgsKey(args)) {
+                    case dockerContextsCommand:
+                        return defaultContextOutput;
+                    case dockerPsCommand:
+                        throw Error('ps error');
+                    default:
+                        throw Error(
+                            `Unexpected docker args: ${args.join(' ')}`,
+                        );
+                }
+            },
+        );
         const targetModel = new TargetModel();
         targetModel.setSelected(target);
         const manager = createContainersManager(targetModel);
@@ -214,21 +242,23 @@ describe('ContainersManager', () => {
     });
 
     it('getContainersData returns empty array on parse error', async () => {
-        execMock.mockImplementation(async (command: string) => {
-            switch (command) {
-                case "docker context ls --format '{{.Name}}'":
-                    return defaultContextOutput;
-                case `docker --host ssh://${target} ps -a --format "{{json .}}"`:
-                    return {
-                        stdout: 'not-json\n',
-                        stderr: '',
-                    };
-                case `ssh ${target} 'docker info'`:
-                    return defaultInfoOutput;
-                default:
-                    throw Error(`Unexpected command: ${command}`);
-            }
-        });
+        execFileMock.mockImplementation(
+            async (_command: string, args: string[]) => {
+                switch (getDockerArgsKey(args)) {
+                    case dockerContextsCommand:
+                        return defaultContextOutput;
+                    case dockerPsCommand:
+                        return {
+                            stdout: 'not-json\n',
+                            stderr: '',
+                        };
+                    default:
+                        throw Error(
+                            `Unexpected docker args: ${args.join(' ')}`,
+                        );
+                }
+            },
+        );
         const targetModel = new TargetModel();
         targetModel.setSelected(target);
         const manager = createContainersManager(targetModel);
@@ -240,20 +270,22 @@ describe('ContainersManager', () => {
     });
 
     it('getContainersData caches result after first call', async () => {
-        execMock.mockImplementation(async (command: string) => {
-            switch (command) {
-                case "docker context ls --format '{{.Name}}'":
-                    return defaultContextOutput;
-                case `docker --host ssh://${target} ps -a --format "{{json .}}"`:
-                    return defaultPsOutput;
-                case `docker --host ssh://${target} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{json .}}'`:
-                    return defaultInspectOutput;
-                case `ssh ${target} 'docker info'`:
-                    return defaultInfoOutput;
-                default:
-                    throw Error(`Unexpected command: ${command}`);
-            }
-        });
+        execFileMock.mockImplementation(
+            async (_command: string, args: string[]) => {
+                switch (getDockerArgsKey(args)) {
+                    case dockerContextsCommand:
+                        return defaultContextOutput;
+                    case dockerPsCommand:
+                        return defaultPsOutput;
+                    case dockerInspectCommand:
+                        return defaultInspectOutput;
+                    default:
+                        throw Error(
+                            `Unexpected docker args: ${args.join(' ')}`,
+                        );
+                }
+            },
+        );
         const targetModel = new TargetModel();
         targetModel.setSelected(target);
         const manager = createContainersManager(targetModel);
@@ -262,10 +294,10 @@ describe('ContainersManager', () => {
         const first = await manager.getContainersData(target);
         expect(first).toHaveLength(2);
 
-        execMock.mockClear();
+        execFileMock.mockClear();
         const second = await manager.getContainersData(target);
         expect(second).toBe(first);
-        expect(execMock).not.toHaveBeenCalled();
+        expect(execFileMock).not.toHaveBeenCalled();
     });
 
     it('clears cached containers when the container engine becomes unhealthy', async () => {
@@ -310,20 +342,22 @@ describe('ContainersManager', () => {
     });
 
     it('startAutoRefresh and stopAutoRefresh manage timer and update data', async () => {
-        execMock.mockImplementation(async (command: string) => {
-            switch (command) {
-                case "docker context ls --format '{{.Name}}'":
-                    return defaultContextOutput;
-                case `docker --host ssh://${target} ps -a --format "{{json .}}"`:
-                    return defaultPsOutput;
-                case `docker --host ssh://${target} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{json .}}'`:
-                    return defaultInspectOutput;
-                case `ssh ${target} 'docker info'`:
-                    return defaultInfoOutput;
-                default:
-                    throw Error(`Unexpected command: ${command}`);
-            }
-        });
+        execFileMock.mockImplementation(
+            async (_command: string, args: string[]) => {
+                switch (getDockerArgsKey(args)) {
+                    case dockerContextsCommand:
+                        return defaultContextOutput;
+                    case dockerPsCommand:
+                        return defaultPsOutput;
+                    case dockerInspectCommand:
+                        return defaultInspectOutput;
+                    default:
+                        throw Error(
+                            `Unexpected docker args: ${args.join(' ')}`,
+                        );
+                }
+            },
+        );
         const targetModel = new TargetModel();
         targetModel.setSelected(target);
         const manager = createContainersManager(targetModel);
@@ -338,20 +372,22 @@ describe('ContainersManager', () => {
     });
 
     it('fires onDataUpdate event', async () => {
-        execMock.mockImplementation(async (command: string) => {
-            switch (command) {
-                case "docker context ls --format '{{.Name}}'":
-                    return defaultContextOutput;
-                case `docker --host ssh://${target} ps -a --format "{{json .}}"`:
-                    return defaultPsOutput;
-                case `docker --host ssh://${target} inspect ${mockContainers[0].ID} ${mockContainers[1].ID} --format '{{json .}}'`:
-                    return defaultInspectOutput;
-                case `ssh ${target} 'docker info'`:
-                    return defaultInfoOutput;
-                default:
-                    throw Error(`Unexpected command: ${command}`);
-            }
-        });
+        execFileMock.mockImplementation(
+            async (_command: string, args: string[]) => {
+                switch (getDockerArgsKey(args)) {
+                    case dockerContextsCommand:
+                        return defaultContextOutput;
+                    case dockerPsCommand:
+                        return defaultPsOutput;
+                    case dockerInspectCommand:
+                        return defaultInspectOutput;
+                    default:
+                        throw Error(
+                            `Unexpected docker args: ${args.join(' ')}`,
+                        );
+                }
+            },
+        );
         const targetModel = new TargetModel();
         targetModel.setSelected(target);
         const manager = createContainersManager(targetModel);
@@ -415,16 +451,7 @@ describe('ContainersManager', () => {
 
     it('updates when targetStore onChanged fires (re-queries selected target)', async () => {
         const newTarget = 'bob@other.local';
-        execMock.mockImplementation(async (command: string) => {
-            switch (command) {
-                case `ssh ${target} 'docker info'`:
-                    return defaultInfoOutput;
-                case `ssh ${newTarget} 'docker info'`:
-                    return defaultInfoOutput;
-                default:
-                    throw Error(`Unexpected command: ${command}`);
-            }
-        });
+        execFileMock.mockResolvedValue(defaultInfoOutput);
         const targetModel = new TargetModel();
         targetModel.setSelected(target);
         const manager = createContainersManager(targetModel);
