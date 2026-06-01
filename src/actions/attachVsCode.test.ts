@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { AttachVsCode, getDockerContextName } from './attachVsCode';
-import { exec } from '../util/exec';
+import { execFile } from '../util/exec';
 import { TARGET_HOST_RUNTIME } from '../manifest';
 import { DockerCommands } from '../target/dockerCommands';
 import { ContainerItem } from '../util/types';
@@ -11,7 +11,7 @@ import { executeCommand } from '../util/test/executeCommand';
 import type { Mock } from 'vitest';
 
 vi.mock('../util/exec', () => ({
-    exec: vi.fn(),
+    execFile: vi.fn(),
 }));
 vi.mock('../util/logger');
 
@@ -36,7 +36,7 @@ describe('getDockerContextName', () => {
 });
 
 describe('attachVsCode', () => {
-    let execMock: Mock;
+    let execFileMock: Mock;
     let context: MockProxy<vscode.ExtensionContext>;
     let attachVsCode: AttachVsCode;
     const registerCommandMock = vi.mocked(vscode.commands.registerCommand);
@@ -60,7 +60,7 @@ describe('attachVsCode', () => {
     const dockerContext = getDockerContextName(target);
 
     beforeEach(() => {
-        execMock = vi.mocked(exec);
+        execFileMock = vi.mocked(execFile);
         context = mock<vscode.ExtensionContext>({ subscriptions: [] });
         attachVsCode = new AttachVsCode(context, dockerCommands);
         vi.useFakeTimers();
@@ -83,21 +83,27 @@ describe('attachVsCode', () => {
 
     it("executes attachVsCode command that doesn't create context and calls remote-containers.attachToRunningContainer with container id", async () => {
         attachVsCode.activate();
-        execMock.mockImplementation(async (command) => {
-            if (command === 'docker context show') {
-                return { stdout: 'default\n', stderr: '' };
-            }
-            if (command === "docker context ls --format '{{.Name}}'") {
-                return { stdout: `default\n${dockerContext}\n`, stderr: '' };
-            }
-            if (command === `docker context use ${dockerContext}`) {
-                return { stdout: `${dockerContext}\n`, stderr: '' };
-            }
-            if (command === 'docker context use default') {
-                return { stdout: 'default\n', stderr: '' };
-            }
-            throw new Error(`Unknown command: ${command}`);
-        });
+        execFileMock.mockImplementation(
+            async (_command: string, args: string[]) => {
+                const dockerArgs = args;
+                if (dockerArgs.join(' ') === 'context show') {
+                    return { stdout: 'default\n', stderr: '' };
+                }
+                if (dockerArgs.join(' ') === 'context ls --format {{.Name}}') {
+                    return {
+                        stdout: `default\n${dockerContext}\n`,
+                        stderr: '',
+                    };
+                }
+                if (dockerArgs.join(' ') === `context use ${dockerContext}`) {
+                    return { stdout: `${dockerContext}\n`, stderr: '' };
+                }
+                if (dockerArgs.join(' ') === 'context use default') {
+                    return { stdout: 'default\n', stderr: '' };
+                }
+                throw new Error(`Unknown docker args: ${dockerArgs.join(' ')}`);
+            },
+        );
 
         const commandExecution = executeCommand(
             AttachVsCode.attachVsCodeCommand,
@@ -106,43 +112,58 @@ describe('attachVsCode', () => {
         await vi.advanceTimersByTimeAsync(3000);
         await commandExecution;
 
-        expect(execMock).toHaveBeenCalledWith('docker context show');
-        expect(execMock).toHaveBeenCalledWith(
-            "docker context ls --format '{{.Name}}'",
-        );
-        expect(execMock).toHaveBeenCalledWith(
-            `docker context use ${dockerContext}`,
-        );
+        expect(execFileMock).toHaveBeenCalledWith('docker', [
+            'context',
+            'show',
+        ]);
+        expect(execFileMock).toHaveBeenCalledWith('docker', [
+            'context',
+            'ls',
+            '--format',
+            '{{.Name}}',
+        ]);
+        expect(execFileMock).toHaveBeenCalledWith('docker', [
+            'context',
+            'use',
+            dockerContext,
+        ]);
         expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
             'remote-containers.attachToRunningContainer',
             containerItem.id,
         );
-        expect(execMock).toHaveBeenLastCalledWith('docker context use default');
+        expect(execFileMock).toHaveBeenLastCalledWith('docker', [
+            'context',
+            'use',
+            'default',
+        ]);
     });
 
     it('executes attachVsCode command that creates context and calls remote-containers.attachToRunningContainer with container id', async () => {
         attachVsCode.activate();
-        execMock.mockImplementation(async (command) => {
-            if (command === 'docker context show') {
-                return { stdout: 'default\n', stderr: '' };
-            }
-            if (command === "docker context ls --format '{{.Name}}'") {
-                return { stdout: 'default\n', stderr: '' };
-            }
-            if (command === `docker context use ${dockerContext}`) {
-                return { stdout: `${dockerContext}\n`, stderr: '' };
-            }
-            if (command === 'docker context use default') {
-                return { stdout: 'default\n', stderr: '' };
-            }
-            if (
-                command ===
-                `docker context create ${dockerContext} --docker host=ssh://${target}`
-            ) {
-                return { stdout: '', stderr: '' };
-            }
-            throw new Error(`Unknown command: ${command}`);
-        });
+        execFileMock.mockImplementation(
+            async (_command: string, args: string[]) => {
+                const dockerArgs = args;
+                if (dockerArgs.join(' ') === 'context show') {
+                    return { stdout: 'default\n', stderr: '' };
+                }
+                if (dockerArgs.join(' ') === 'context ls --format {{.Name}}') {
+                    return { stdout: 'default\n', stderr: '' };
+                }
+                if (dockerArgs.join(' ') === `context use ${dockerContext}`) {
+                    return { stdout: `${dockerContext}\n`, stderr: '' };
+                }
+                if (dockerArgs.join(' ') === 'context use default') {
+                    return { stdout: 'default\n', stderr: '' };
+                }
+                if (
+                    dockerArgs.join(' ') ===
+                    `context create ${dockerContext} --docker host=ssh://${target}`
+                ) {
+                    return { stdout: '', stderr: '' };
+                }
+                throw new Error(`Unknown docker args: ${dockerArgs.join(' ')}`);
+            },
+        );
 
         const commandExecution = executeCommand(
             AttachVsCode.attachVsCodeCommand,
@@ -151,26 +172,42 @@ describe('attachVsCode', () => {
         await vi.advanceTimersByTimeAsync(3000);
         await commandExecution;
 
-        expect(execMock).toHaveBeenCalledWith('docker context show');
-        expect(execMock).toHaveBeenCalledWith(
-            "docker context ls --format '{{.Name}}'",
-        );
-        expect(execMock).toHaveBeenCalledWith(
-            `docker context create ${dockerContext} --docker host=ssh://${target}`,
-        );
-        expect(execMock).toHaveBeenCalledWith(
-            `docker context use ${dockerContext}`,
-        );
+        expect(execFileMock).toHaveBeenCalledWith('docker', [
+            'context',
+            'show',
+        ]);
+        expect(execFileMock).toHaveBeenCalledWith('docker', [
+            'context',
+            'ls',
+            '--format',
+            '{{.Name}}',
+        ]);
+        expect(execFileMock).toHaveBeenCalledWith('docker', [
+            'context',
+            'create',
+            dockerContext,
+            '--docker',
+            `host=ssh://${target}`,
+        ]);
+        expect(execFileMock).toHaveBeenCalledWith('docker', [
+            'context',
+            'use',
+            dockerContext,
+        ]);
         expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
             'remote-containers.attachToRunningContainer',
             containerItem.id,
         );
-        expect(execMock).toHaveBeenLastCalledWith('docker context use default');
+        expect(execFileMock).toHaveBeenLastCalledWith('docker', [
+            'context',
+            'use',
+            'default',
+        ]);
     });
 
     it('shows an error if the attachVsCode command fails', async () => {
         attachVsCode.activate();
-        execMock.mockImplementation(async () => {
+        execFileMock.mockImplementation(async () => {
             throw new WrappedError('DOCKER', 'fail');
         });
 
