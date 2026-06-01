@@ -41,11 +41,11 @@ export class TargetHealth implements vscode.Disposable {
 
         const safeTargetSsh = treeNode.target.replace(/[^a-zA-Z0-9._-]/g, '_');
         const fileName = `${manifest.PACKAGE_NAME}-${safeTargetSsh}-health-${Date.now()}.json`;
+        const documentUri = this.healthDocumentProvider.createUri(fileName);
 
         try {
             const health = await this.topoCli.health(treeNode.target);
             const content = JSON.stringify(health.target, null, 4);
-            const documentUri = this.healthDocumentProvider.createUri(fileName);
             await this.healthDocumentProvider.open(documentUri, content);
         } catch (err) {
             return showAndLogError('Failed to get health for target', err);
