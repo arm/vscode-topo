@@ -24,6 +24,7 @@ const subscriptions: vscode.Disposable[] = [];
 const workspacePath = path.join('home', 'workspace');
 const workspaceUri = vscode.Uri.file(workspacePath);
 const workspaceFolders = [{ uri: workspaceUri, name: 'workspace', index: 0 }];
+const topoBinaryPath = path.join('fake', 'extension', 'resources', 'topo');
 type ShowInformationMessageWithStrings = (
     message: string,
     options: vscode.MessageOptions,
@@ -48,6 +49,7 @@ describe('ProjectClone', () => {
         context = mock<vscode.ExtensionContext>({
             subscriptions: subscriptions,
         });
+        topoCli.getBinaryPath.mockReturnValue(topoBinaryPath);
         projectClone = new ProjectClone(context, topoCli, targetModel);
         projectClone.activate();
     });
@@ -125,7 +127,7 @@ describe('ProjectClone', () => {
             await executeCommand(ProjectClone.remoteCloneCommand);
 
             expect(executeTaskMock).toHaveBeenCalledWith('Clone repo', [
-                'topo',
+                topoBinaryPath,
                 'clone',
                 'git:https://example.com/repo.git',
                 path.join(workspaceUri.fsPath, 'repo'),
@@ -142,7 +144,7 @@ describe('ProjectClone', () => {
             await executeCommand(ProjectClone.remoteCloneCommand);
 
             expect(executeTaskMock).toHaveBeenCalledWith('Clone repo', [
-                'topo',
+                topoBinaryPath,
                 'clone',
                 'git:git@example.com:repo.git',
                 path.join(workspaceUri.fsPath, 'repo'),
@@ -163,7 +165,7 @@ describe('ProjectClone', () => {
             );
 
             expect(executeTaskMock).toHaveBeenCalledWith('Clone repo', [
-                'topo',
+                topoBinaryPath,
                 'clone',
                 'https://example.com/repo.git',
                 path.join(workspaceUri.fsPath, 'repo'),
@@ -232,7 +234,7 @@ describe('ProjectClone', () => {
             await executeCommand(ProjectClone.localCloneCommand);
 
             expect(executeTaskMock).toHaveBeenCalledWith('Clone myproj', [
-                'topo',
+                topoBinaryPath,
                 'clone',
                 `dir:${localTemplateUri.fsPath}`,
                 path.join(workspaceUri.fsPath, 'myproj'),
@@ -371,7 +373,7 @@ describe('ProjectClone', () => {
                 value: 'template-alpha',
             });
             expect(executeTaskMock).toHaveBeenCalledWith('Clone myproj', [
-                'topo',
+                topoBinaryPath,
                 'clone',
                 'git:https://example.com/templates/template-alpha.git',
                 path.join(workspaceUri.fsPath, 'myproj'),
