@@ -24,6 +24,7 @@ import { FixIssue } from './actions/fixIssue';
 import { HostTreeView } from './views/hostTreeView';
 import { logger } from './util/logger';
 import { TargetHealth } from './actions/targetHealth';
+import { HostHealth } from './actions/hostHealth';
 import { HostModel } from './models/hostModel';
 import { HostController } from './controllers/hostController';
 import { TransientDocumentProvider } from './util/transientDocumentProvider';
@@ -80,11 +81,7 @@ export async function activate(
         targetStatusBarItemView,
     );
 
-    const hostHealthController = new HostController(
-        hostModel,
-        topoCli,
-        hostHealthDocProvider,
-    );
+    const hostHealthController = new HostController(hostModel, topoCli);
     const targetsController = new TargetController(targetModel, targetStore);
     context.subscriptions.push(
         targetStore.onExternalTargetsChanged(() =>
@@ -101,19 +98,20 @@ export async function activate(
     const projectInit = new ProjectInit(topoCli);
     context.subscriptions.push(projectInit);
     const projectClone = new ProjectClone(context, topoCli, targetModel);
-    const deploy = new Deploy(context, targetModel);
-    const stop = new Stop(context, targetModel);
+    const deploy = new Deploy(context, topoCli, targetModel);
+    const stop = new Stop(context, topoCli, targetModel);
     const containerOpenInBrowser = new ContainerOpenInBrowser(context);
     const attachVsCode = new AttachVsCode(context, dockerCommands);
     const attachShell = new AttachShell(context, dockerCommands);
-    const setupKeys = new SetupKeys(context, targetModel);
+    const setupKeys = new SetupKeys(context, topoCli, targetModel);
     const containerStart = new ContainerStart(context, dockerCommands);
     const containerStop = new ContainerStop(context, dockerCommands);
     const containerDelete = new ContainerDelete(context, dockerCommands);
     const targetHealth = new TargetHealth(containersManager);
-    context.subscriptions.push(targetHealth);
+    const hostHealth = new HostHealth(topoCli, hostHealthDocProvider);
+    context.subscriptions.push(targetHealth, hostHealth);
     const protocolHandler = new ProtocolHandler(projectClone);
-    const fixIssue = new FixIssue(targetModel);
+    const fixIssue = new FixIssue(topoCli, targetModel);
     context.subscriptions.push(fixIssue);
     context.subscriptions.push(logger);
 
@@ -130,5 +128,6 @@ export async function activate(
     containerStop.activate();
     containerDelete.activate();
     targetHealth.activate();
+    hostHealth.activate();
     setupKeys.activate();
 }

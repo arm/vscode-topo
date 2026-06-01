@@ -6,6 +6,7 @@ import { mock, MockProxy } from 'vitest-mock-extended';
 import { executeTask } from '../util/executeTask';
 import type { MockInstance } from 'vitest';
 import { TargetModel } from '../models/targetModel';
+import { TopoCli } from '../topoCli';
 
 vi.mock('../util/logger');
 vi.mock('../util/executeTask');
@@ -19,6 +20,8 @@ describe('Deploy', () => {
     );
     const composeFilePath = composeFileUri.fsPath;
     const target = 'topo.local';
+    const topoBinaryPath = '/fake/extension/resources/topo';
+    let topoCli: MockProxy<TopoCli>;
     let targetModel: TargetModel;
     let context: MockProxy<vscode.ExtensionContext>;
     let deployHandler: ((resource?: vscode.Uri) => Promise<void>) | undefined;
@@ -26,11 +29,13 @@ describe('Deploy', () => {
 
     beforeEach(() => {
         context = mock<vscode.ExtensionContext>({ subscriptions: [] });
+        topoCli = mock<TopoCli>();
+        topoCli.getBinaryPath.mockReturnValue(topoBinaryPath);
         targetModel = new TargetModel();
         targetModel.setSelected(target);
         executeTaskMock.mockReset();
         vi.mocked(vscode.window.showErrorMessage).mockClear();
-        deployAction = new Deploy(context, targetModel);
+        deployAction = new Deploy(context, topoCli, targetModel);
         registerSpy = vi
             .spyOn(vscode.commands, 'registerCommand')
             .mockImplementation(
@@ -70,18 +75,18 @@ describe('Deploy', () => {
     });
 
     it('handles successful deploy operation', async () => {
-        await deployServices(composeFilePath, target);
+        await deployServices(topoBinaryPath, composeFilePath, target);
 
         expect(executeTaskMock).toHaveBeenCalledWith(
             'Deploy to topo.local',
-            ['topo', 'deploy', '--target', 'topo.local'],
+            [topoBinaryPath, 'deploy', '--target', 'topo.local'],
             { cwd: path.dirname(composeFilePath) },
         );
     });
 
     it('handles task failure', async () => {
         executeTaskMock.mockRejectedValueOnce(new Error('deploy failed'));
-        await deployServices(composeFilePath, target);
+        await deployServices(topoBinaryPath, composeFilePath, target);
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
             'Deployment to topo.local failed: deploy failed',
@@ -96,7 +101,7 @@ describe('Deploy', () => {
         await expect(op).resolves.toBeUndefined();
         expect(executeTaskMock).toHaveBeenCalledWith(
             'Deploy to topo.local',
-            ['topo', 'deploy', '--target', 'topo.local'],
+            [topoBinaryPath, 'deploy', '--target', 'topo.local'],
             { cwd: path.dirname(composeFilePath) },
         );
     });

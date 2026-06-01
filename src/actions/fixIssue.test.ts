@@ -4,6 +4,8 @@ import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependenc
 import { executeTask } from '../util/executeTask';
 import { executeCommand } from '../util/test/executeCommand';
 import { TargetModel } from '../models/targetModel';
+import { TopoCli } from '../topoCli';
+import { mock, MockProxy } from 'vitest-mock-extended';
 
 vi.mock('../util/logger');
 vi.mock('../util/executeTask');
@@ -13,8 +15,12 @@ const executeTaskMock = vi.mocked(executeTask);
 describe('FixIssue', () => {
     const targetModel = new TargetModel();
     const target = 'user@topo.local';
+    const topoBinaryPath = '/fake/extension/resources/topo';
+    let topoCli: MockProxy<TopoCli>;
 
     beforeEach(() => {
+        topoCli = mock<TopoCli>();
+        topoCli.getBinaryPath.mockReturnValue(topoBinaryPath);
         targetModel.setSelected(target);
     });
 
@@ -23,7 +29,7 @@ describe('FixIssue', () => {
     });
 
     it('registers fix issue command', async () => {
-        new FixIssue(targetModel);
+        new FixIssue(topoCli, targetModel);
 
         expect(vscode.commands.registerCommand).toHaveBeenCalledWith(
             FixIssue.fixIssueCommand,
@@ -32,13 +38,13 @@ describe('FixIssue', () => {
     });
 
     it('does not prompt to fix issues on construction', async () => {
-        new FixIssue(targetModel);
+        new FixIssue(topoCli, targetModel);
 
         expect(vscode.window.showWarningMessage).not.toHaveBeenCalled();
     });
 
     it('runs fix task for dependency with executable fix', async () => {
-        new FixIssue(targetModel);
+        new FixIssue(topoCli, targetModel);
         const dependencyItem = new HealthCheckDependencyTreeItem({
             name: 'Remoteproc Runtime',
             status: 'error',
@@ -53,12 +59,18 @@ describe('FixIssue', () => {
 
         expect(executeTaskMock).toHaveBeenCalledWith(
             `Fix Remoteproc Runtime on ${target}`,
-            ['topo', 'install', 'remoteproc-runtime', '--target', target],
+            [
+                topoBinaryPath,
+                'install',
+                'remoteproc-runtime',
+                '--target',
+                target,
+            ],
         );
     });
 
     it('does nothing for a healthy dependency', async () => {
-        new FixIssue(targetModel);
+        new FixIssue(topoCli, targetModel);
         const dependencyItem = new HealthCheckDependencyTreeItem({
             name: 'Remoteproc Runtime',
             status: 'ok',

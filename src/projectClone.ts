@@ -121,6 +121,7 @@ const getDefaultProjectNameFromSourceString = (
 };
 
 const getCloneCommandFromSourceString = (
+    topoBinaryPath: string,
     workspacePath: string,
     projectName: string,
     cloneSourceString: string,
@@ -131,7 +132,13 @@ const getCloneCommandFromSourceString = (
         ([key, value]) => `${key}=${value}`,
     );
 
-    return ['topo', 'clone', cloneSourceString, projectPath, ...buildArgs];
+    return [
+        topoBinaryPath,
+        'clone',
+        cloneSourceString,
+        projectPath,
+        ...buildArgs,
+    ];
 };
 
 const getCloneSourceString = (cloneSource: CloneSource): string => {
@@ -146,6 +153,7 @@ const getCloneSourceString = (cloneSource: CloneSource): string => {
 };
 
 const cloneWithSource = async (
+    topoBinaryPath: string,
     cloneSource: CloneSource,
     defaultProjectName: string,
     cloneBuildArgs: CloneBuildArgs = {},
@@ -164,6 +172,7 @@ const cloneWithSource = async (
     const repositoryPath = path.join(workspacePath, projectName);
     const cloneSourceString = getCloneSourceString(cloneSource);
     const cloneCommand = getCloneCommandFromSourceString(
+        topoBinaryPath,
         workspacePath,
         projectName,
         cloneSourceString,
@@ -259,6 +268,7 @@ export class ProjectClone {
         const defaultProjectName =
             getDefaultProjectNameFromSourceString(cloneSource);
         const cloneResult = await cloneWithSource(
+            this.topoCli.getBinaryPath(),
             cloneSource,
             defaultProjectName,
             cloneBuildArgs,
