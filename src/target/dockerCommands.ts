@@ -4,6 +4,7 @@ import { logger } from '../util/logger';
 import type { DockerInspectItem, DockerPsItem } from '../util/types';
 import type { ContainerCommands } from './containerCommands';
 import { getErrorMessage } from '../util/getErrorMessage';
+import { quoteShellArgument } from '../util/quoteShellArgument';
 
 export interface DockerError extends Error {
     stderr: ExecResult['stderr'];
@@ -223,6 +224,14 @@ export class DockerCommands implements ContainerCommands {
         containerId: string,
         targetSshConnection: string,
     ): string {
-        return `docker --host ${getSshUri(targetSshConnection)} exec -it ${containerId} sh`;
+        return [
+            'docker',
+            '--host',
+            quoteShellArgument(getSshUri(targetSshConnection)),
+            'exec',
+            '-it',
+            quoteShellArgument(containerId),
+            'sh',
+        ].join(' ');
     }
 }

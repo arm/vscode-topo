@@ -399,7 +399,18 @@ describe('DockerCommands', () => {
         it('builds the exec command string', () => {
             const cmd = dockerCommands.getAttachShellCommand('abc', 'ctx');
 
-            expect(cmd).toBe('docker --host ssh://ctx exec -it abc sh');
+            expect(cmd).toBe("docker --host 'ssh://ctx' exec -it 'abc' sh");
+        });
+
+        it('quotes shell metacharacters in the exec command string', () => {
+            const cmd = dockerCommands.getAttachShellCommand(
+                `abc'; touch /tmp/pwned`,
+                `ctx'; touch /tmp/pwned`,
+            );
+
+            expect(cmd).toBe(
+                "docker --host 'ssh://ctx'\\''; touch /tmp/pwned' exec -it 'abc'\\''; touch /tmp/pwned' sh",
+            );
         });
     });
 });

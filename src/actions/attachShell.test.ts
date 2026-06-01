@@ -41,7 +41,7 @@ describe('AttachShell', () => {
         const terminal = vi.mocked(vscode.window.createTerminal).mock.results[0]
             .value;
         expect(terminal.sendText).toHaveBeenCalledWith(
-            `docker --host ssh://${target} exec -it cid sh`,
+            `docker --host 'ssh://${target}' exec -it 'cid' sh`,
         );
         expect(terminal.show).toHaveBeenCalled();
     });
@@ -62,7 +62,7 @@ describe('AttachShell', () => {
         const terminal = vi.mocked(vscode.window.createTerminal).mock.results[0]
             .value;
         expect(terminal.sendText).toHaveBeenCalledWith(
-            `docker --host ssh://${target} exec -it cid sh`,
+            `docker --host 'ssh://${target}' exec -it 'cid' sh`,
         );
         expect(terminal.show).toHaveBeenCalled();
     });
@@ -75,7 +75,20 @@ describe('AttachShell', () => {
         });
         const terminal = vi.mocked(vscode.window.createTerminal).mock.results[0]
             .value;
-        expect(terminal.sendText).toHaveBeenCalledWith(`ssh ${target}`);
+        expect(terminal.sendText).toHaveBeenCalledWith(`ssh '${target}'`);
+        expect(terminal.show).toHaveBeenCalled();
+    });
+
+    it('attachSSH quotes shell metacharacters in the target', () => {
+        const targetWithShellSyntax = `user@topo.local'; touch /tmp/pwned`;
+
+        attachSSH(targetWithShellSyntax);
+
+        const terminal = vi.mocked(vscode.window.createTerminal).mock.results[0]
+            .value;
+        expect(terminal.sendText).toHaveBeenCalledWith(
+            `ssh 'user@topo.local'\\''; touch /tmp/pwned'`,
+        );
         expect(terminal.show).toHaveBeenCalled();
     });
 });
