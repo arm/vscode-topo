@@ -44,6 +44,14 @@ class MockShellExecution {
     }
 }
 const ShellExecution = vi.fn(MockShellExecution);
+class MockProcessExecution {
+    constructor(executablePath, executionArgs, options) {
+        this.executablePath = executablePath;
+        this.executionArgs = executionArgs;
+        this.options = options;
+    }
+}
+const ProcessExecution = vi.fn(MockProcessExecution);
 class MockTask {
     constructor(definition, scope, name, type, execution) {
         this.definition = definition;
@@ -277,6 +285,7 @@ module.exports = {
     QuickPickItemKind,
     Range,
     RelativePattern,
+    ProcessExecution,
     ShellExecution,
     Task,
     Uri,

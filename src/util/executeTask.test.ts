@@ -28,17 +28,17 @@ describe('executeTask', () => {
         };
     });
 
-    it('creates a VS Code shell task', async () => {
+    it('creates a VS Code process task', async () => {
         executeTask('Poto', ['topo', 'poto'], {
             cwd,
         });
         await Promise.resolve();
 
-        expect(vscode.ShellExecution).toHaveBeenCalledWith('topo', ['poto'], {
+        expect(vscode.ProcessExecution).toHaveBeenCalledWith('topo', ['poto'], {
             cwd,
         });
         expect(vscode.Task).toHaveBeenCalledWith(
-            { type: 'shell' },
+            { type: 'process' },
             vscode.TaskScope.Workspace,
             'Poto',
             PACKAGE_NAME,
