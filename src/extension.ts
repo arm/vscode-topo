@@ -24,6 +24,7 @@ import { FixIssue } from './actions/fixIssue';
 import { HostTreeView } from './views/hostTreeView';
 import { logger } from './util/logger';
 import { TargetHealth } from './actions/targetHealth';
+import { HostHealth } from './actions/hostHealth';
 import { HostModel } from './models/hostModel';
 import { HostController } from './controllers/hostController';
 import { TransientDocumentProvider } from './util/transientDocumentProvider';
@@ -83,11 +84,7 @@ export async function activate(
         targetStatusBarItemView,
     );
 
-    const hostHealthController = new HostController(
-        hostModel,
-        topoCli,
-        hostHealthDocProvider,
-    );
+    const hostHealthController = new HostController(hostModel, topoCli);
     const targetsController = new TargetController(targetModel, targetStore);
     context.subscriptions.push(
         targetStore.onChanged(() => targetsController.updateFromStore()),
@@ -112,7 +109,8 @@ export async function activate(
     const containerStop = new ContainerStop(context, dockerCommands);
     const containerDelete = new ContainerDelete(context, dockerCommands);
     const targetHealth = new TargetHealth(topoCli, targetHealthDocProvider);
-    context.subscriptions.push(targetHealth);
+    const hostHealth = new HostHealth(topoCli, hostHealthDocProvider);
+    context.subscriptions.push(targetHealth, hostHealth);
     const protocolHandler = new ProtocolHandler(projectClone);
     const fixIssue = new FixIssue(topoCli, targetModel);
     context.subscriptions.push(fixIssue);
@@ -131,5 +129,6 @@ export async function activate(
     containerStop.activate();
     containerDelete.activate();
     targetHealth.activate();
+    hostHealth.activate();
     setupKeys.activate();
 }
