@@ -47,6 +47,9 @@ export async function activate(
         return;
     }
 
+    const targetHealthDocProvider = new TransientDocumentProvider(
+        'target-health',
+    );
     const hostHealthDocProvider = new TransientDocumentProvider('host-health');
     const dockerCommands = new DockerCommands();
     const targetStore = new TargetStore(context);
@@ -108,7 +111,7 @@ export async function activate(
     const containerStart = new ContainerStart(context, dockerCommands);
     const containerStop = new ContainerStop(context, dockerCommands);
     const containerDelete = new ContainerDelete(context, dockerCommands);
-    const targetHealth = new TargetHealth(containersManager);
+    const targetHealth = new TargetHealth(topoCli, targetHealthDocProvider);
     context.subscriptions.push(targetHealth);
     const protocolHandler = new ProtocolHandler(projectClone);
     const fixIssue = new FixIssue(topoCli, targetModel);

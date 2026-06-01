@@ -34,7 +34,7 @@ export class HostController {
 
         try {
             const health = await this.topoCli.hostHealth();
-            const content = JSON.stringify(health?.host ?? null, null, 4);
+            const content = JSON.stringify(health.host, null, 4);
             const documentUri = this.healthDocumentProvider.createUri(fileName);
             await this.healthDocumentProvider.open(documentUri, content);
         } catch (err) {
