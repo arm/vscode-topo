@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import path from 'node:path';
-import { mock, MockProxy } from 'vitest-mock-extended';
+import { mock } from 'vitest-mock-extended';
 import { ProjectClone } from './projectClone';
 import { ProtocolHandler } from './protocolHandler';
 import { TopoCli } from './topoCli';
@@ -17,7 +17,6 @@ vi.mock('./util/executeTask');
 const showAndLogErrorSpy = vi.mocked(showAndLogError);
 const executeTaskMock = vi.mocked(executeTask);
 
-const subscriptions: vscode.Disposable[] = [];
 const workspacePath = path.join('home', 'workspace');
 const workspaceUri = vscode.Uri.file(workspacePath);
 const workspaceFolders = [{ uri: workspaceUri, name: 'workspace', index: 0 }];
