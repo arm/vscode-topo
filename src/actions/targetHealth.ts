@@ -6,6 +6,7 @@ import { DisposableCollector } from '../util/disposableCollector';
 import { TopoCli } from '../topoCli';
 import { TransientDocumentProvider } from '../util/transientDocumentProvider';
 import { showAndLogError } from '../util/showAndLogError';
+import { HealthCheckResult } from '../topoCliSchema';
 
 export class TargetHealth implements vscode.Disposable {
     public static readonly inspectTargetHealthCommand = `${manifest.PACKAGE_NAME}.inspectTargetHealth`;
@@ -39,17 +40,18 @@ export class TargetHealth implements vscode.Disposable {
             return;
         }
 
-        const safeTargetSsh = treeNode.target.replace(/[^a-zA-Z0-9._-]/g, '_');
-        const fileName = `${manifest.PACKAGE_NAME}-${safeTargetSsh}-health-${Date.now()}.json`;
-        const documentUri = this.healthDocumentProvider.createUri(fileName);
-
+        let health: HealthCheckResult;
         try {
-            const health = await this.topoCli.health(treeNode.target);
-            const content = JSON.stringify(health.target, null, 4);
-            await this.healthDocumentProvider.open(documentUri, content);
+            health = await this.topoCli.health(treeNode.target);
         } catch (err) {
             return showAndLogError('Failed to get health for target', err);
         }
+
+        const safeTargetSsh = treeNode.target.replace(/[^a-zA-Z0-9._-]/g, '_');
+        const fileName = `${manifest.PACKAGE_NAME}-${safeTargetSsh}-health-${Date.now()}.json`;
+        const documentUri = this.healthDocumentProvider.createUri(fileName);
+        const content = JSON.stringify(health.target, null, 4);
+        await this.healthDocumentProvider.open(documentUri, content);
     }
 
     public dispose(): void {
