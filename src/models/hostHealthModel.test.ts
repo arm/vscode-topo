@@ -28,7 +28,7 @@ describe('HostModel', () => {
         });
     });
 
-    it('stores the latest host health promise', async () => {
+    it('stores the latest host health loadable', async () => {
         const model = new HostModel();
         const healthLoadable: Loadable<HostHealthCheckResult> = {
             status: 'loaded',

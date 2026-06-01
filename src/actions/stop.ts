@@ -31,7 +31,7 @@ export class Stop {
 
     private async stopCommandHandler(resource?: vscode.Uri): Promise<void> {
         if (!resource) {
-            throw new Error('No compose file selected for stop');
+            throw new Error('No compose.yaml or compose.yml selected for stop');
         }
         const target = this.targetModel.selected;
 
