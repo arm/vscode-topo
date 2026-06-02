@@ -171,7 +171,15 @@ describe('target selection', () => {
         const targetStore = mockTargetStore(['user@board']);
         const targetModel = new TargetModel();
         const controller = new TargetController(targetModel, targetStore);
-        const targetItem = new TargetTreeItem('user@board', true, 'connected');
+        const targetItem = new TargetTreeItem(
+            'user@board',
+            true,
+            {
+                health: undefined,
+                status: 'connected',
+            },
+            undefined,
+        );
 
         await controller.selectCommandHandler(targetItem);
 
@@ -193,7 +201,15 @@ describe('target selection', () => {
 
 describe('target removal', () => {
     it('deletes the target from the store when removeTarget is invoked with a target item', async () => {
-        const targetItem = new TargetTreeItem('foo@bar.co', true, 'connected');
+        const targetItem = new TargetTreeItem(
+            'foo@bar.co',
+            true,
+            {
+                health: undefined,
+                status: 'connected',
+            },
+            undefined,
+        );
         const targetStore = mockTargetStore([targetItem.target]);
         const targetModel = new TargetModel();
         const controller = new TargetController(targetModel, targetStore);
@@ -215,7 +231,15 @@ describe('target removal', () => {
         );
         const targetModel = new TargetModel();
         const controller = new TargetController(targetModel, targetStore);
-        const targetItem = new TargetTreeItem(removedTarget, true, 'connected');
+        const targetItem = new TargetTreeItem(
+            removedTarget,
+            true,
+            {
+                health: undefined,
+                status: 'connected',
+            },
+            undefined,
+        );
 
         await controller.removeCommandHandler(targetItem);
 
@@ -238,7 +262,15 @@ describe('target removal', () => {
         const targetStore = mockTargetStore();
         const targetModel = new TargetModel();
         const controller = new TargetController(targetModel, targetStore);
-        const targetItem = new TargetTreeItem('foo@bar.co', true, 'connected');
+        const targetItem = new TargetTreeItem(
+            'foo@bar.co',
+            true,
+            {
+                health: undefined,
+                status: 'connected',
+            },
+            undefined,
+        );
         targetStore.deleteTarget.mockRejectedValue(
             new Error('Target not found'),
         );

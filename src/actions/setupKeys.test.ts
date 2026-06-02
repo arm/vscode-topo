@@ -46,7 +46,15 @@ describe('SetupKeys', () => {
     it('runs setup-keys task for selected board item', async () => {
         const setupKeys = new SetupKeys(context, topoCli, targetModel);
         setupKeys.activate();
-        const boardItem = new TargetTreeItem(target, true, 'connected');
+        const boardItem = new TargetTreeItem(
+            target,
+            true,
+            {
+                health: undefined,
+                status: 'connected',
+            },
+            undefined,
+        );
 
         await executeCommand(SetupKeys.setupKeysCommand, boardItem);
 
@@ -62,7 +70,15 @@ describe('SetupKeys', () => {
     it('does nothing for non-selected board item', async () => {
         const setupKeys = new SetupKeys(context, topoCli, targetModel);
         setupKeys.activate();
-        const boardItem = new TargetTreeItem(target, false, 'disconnected');
+        const boardItem = new TargetTreeItem(
+            target,
+            false,
+            {
+                health: undefined,
+                status: 'disconnected',
+            },
+            undefined,
+        );
 
         await executeCommand(SetupKeys.setupKeysCommand, boardItem);
 

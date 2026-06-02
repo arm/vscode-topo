@@ -61,7 +61,15 @@ describe('TargetHealth', () => {
             }),
         );
         targetHealth.activate();
-        const targetItem = new TargetTreeItem('user@foobar', true, 'connected');
+        const targetItem = new TargetTreeItem(
+            'user@foobar',
+            true,
+            {
+                health: undefined,
+                status: 'connected',
+            },
+            undefined,
+        );
         const textDocument = mock<vscode.TextDocument>();
         vi.mocked(vscode.workspace.openTextDocument).mockResolvedValueOnce(
             textDocument,
@@ -97,7 +105,15 @@ describe('TargetHealth', () => {
     it('does not open health document for non-selected target', async () => {
         const targetHealth = new TargetHealth(mock<ContainersManager>());
         targetHealth.activate();
-        const targetItem = new TargetTreeItem('abc.com', false, 'disconnected');
+        const targetItem = new TargetTreeItem(
+            'abc.com',
+            false,
+            {
+                health: undefined,
+                status: 'disconnected',
+            },
+            undefined,
+        );
 
         await executeCommand(
             TargetHealth.inspectTargetHealthCommand,

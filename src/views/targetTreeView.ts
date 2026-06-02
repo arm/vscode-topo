@@ -111,7 +111,7 @@ export class TargetTreeView
         }
 
         if (element instanceof TargetTreeItem) {
-            if (element.visibleDependencies.length === 0) {
+            if (!element.state.health) {
                 return [];
             }
 
