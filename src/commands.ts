@@ -14,7 +14,6 @@ export const showOutput = command('showOutput');
 export const selectTarget = command('selectTarget');
 export const removeTarget = command('removeTarget');
 export const addTarget = command('addTarget');
-export const inspectHostHealth = command('inspectHostHealth');
 
 export function register(
     hostController: HostController,
@@ -23,20 +22,17 @@ export function register(
     const disposables = new DisposableCollector();
     disposables.collect(
         vscode.commands.registerCommand(refreshHostHealth, () =>
-            hostController.refreshHealth(),
+            hostController.refreshHealthCommandHandler(),
         ),
         vscode.commands.registerCommand(showOutput, () => logger.show()),
         vscode.commands.registerCommand(selectTarget, (treeNode) =>
-            targetController.select(treeNode),
+            targetController.selectCommandHandler(treeNode),
         ),
         vscode.commands.registerCommand(removeTarget, (treeNode) =>
-            targetController.remove(treeNode),
+            targetController.removeCommandHandler(treeNode),
         ),
         vscode.commands.registerCommand(addTarget, () =>
-            targetController.promptToAdd(),
-        ),
-        vscode.commands.registerCommand(inspectHostHealth, () =>
-            hostController.openHealthDocument(),
+            targetController.addCommandHandler(),
         ),
     );
 

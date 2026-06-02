@@ -5,6 +5,7 @@ import path from 'node:path';
 import { executeTask } from '../util/executeTask';
 import { showAndLogError } from '../util/showAndLogError';
 import { TargetModel } from '../models/targetModel';
+import { TopoCli } from '../topoCli';
 
 const viewLogsItem: vscode.MessageItem = {
     title: 'View Logs',
@@ -15,6 +16,7 @@ export class Stop {
 
     constructor(
         private readonly context: vscode.ExtensionContext,
+        private readonly topoCli: TopoCli,
         private readonly targetModel: TargetModel,
     ) {}
 
@@ -43,20 +45,25 @@ export class Stop {
             return;
         }
 
-        await stop(resource.fsPath, target);
+        await stop(this.topoCli.getBinaryPath(), resource.fsPath, target);
     }
 }
 
 export async function stop(
+    topoBinaryPath: string,
     composeFilePath: string,
     target: string,
 ): Promise<void> {
     const taskName = `Stop services on ${target}`;
 
     try {
-        await executeTask(taskName, ['topo', 'stop', '--target', target], {
-            cwd: path.dirname(composeFilePath),
-        });
+        await executeTask(
+            taskName,
+            [topoBinaryPath, 'stop', '--target', target],
+            {
+                cwd: path.dirname(composeFilePath),
+            },
+        );
         vscode.window.showInformationMessage(
             `Services on ${target} stopped successfully.`,
         );

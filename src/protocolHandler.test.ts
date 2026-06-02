@@ -23,6 +23,7 @@ const workspaceUri = vscode.Uri.file(workspacePath);
 const workspaceFolders = [{ uri: workspaceUri, name: 'workspace', index: 0 }];
 const destinationPath = path.join('home', 'destination');
 const destinationUri = vscode.Uri.file(destinationPath);
+const topoBinaryPath = path.join('fake', 'extension', 'resources', 'topo');
 
 describe('ProtocolHandler', () => {
     let projectClone: ProjectClone;
@@ -36,6 +37,7 @@ describe('ProtocolHandler', () => {
         context = mock<vscode.ExtensionContext>({
             subscriptions,
         });
+        topoCli.getBinaryPath.mockReturnValue(topoBinaryPath);
         projectClone = new ProjectClone(context, topoCli, targetModel);
         protocolHandler = new ProtocolHandler(projectClone);
         mutable(vscode.workspace).workspaceFolders = undefined;
@@ -62,7 +64,7 @@ describe('ProtocolHandler', () => {
 
         expect(vscode.window.showOpenDialog).not.toHaveBeenCalled();
         expect(executeTaskMock).toHaveBeenCalledWith('Clone repo', [
-            'topo',
+            topoBinaryPath,
             'clone',
             'git:https://example.com/repo.git',
             path.join(workspaceUri.fsPath, 'repo'),
@@ -92,7 +94,7 @@ describe('ProtocolHandler', () => {
             openLabel: 'Select Destination Folder',
         });
         expect(executeTaskMock).toHaveBeenCalledWith('Clone repo', [
-            'topo',
+            topoBinaryPath,
             'clone',
             'git:https://example.com/repo.git',
             path.join(destinationUri.fsPath, 'repo'),
@@ -131,7 +133,7 @@ describe('ProtocolHandler', () => {
         );
 
         expect(executeTaskMock).toHaveBeenCalledWith('Clone repo', [
-            'topo',
+            topoBinaryPath,
             'clone',
             'https://example.com/repo.git',
             path.join(workspaceUri.fsPath, 'repo'),
@@ -153,7 +155,7 @@ describe('ProtocolHandler', () => {
         );
 
         expect(executeTaskMock).toHaveBeenCalledWith('Clone repo', [
-            'topo',
+            topoBinaryPath,
             'clone',
             'https://example.com/repo.git',
             path.join(workspaceUri.fsPath, 'repo'),
@@ -178,7 +180,7 @@ describe('ProtocolHandler', () => {
         expect(executeTaskMock).toHaveBeenCalledWith(
             'Clone topo-lightbulb-moment',
             [
-                'topo',
+                topoBinaryPath,
                 'clone',
                 'https://github.com/Arm-Examples/topo-lightbulb-moment',
                 path.join(workspaceUri.fsPath, 'topo-lightbulb-moment'),
@@ -234,7 +236,7 @@ describe('ProtocolHandler', () => {
         );
 
         expect(executeTaskMock).toHaveBeenCalledWith('Clone repo', [
-            'topo',
+            topoBinaryPath,
             'clone',
             'https://github.com/Arm-Examples/topo-lightbulb-moment',
             path.join(workspaceUri.fsPath, 'repo'),

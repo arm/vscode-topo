@@ -34,12 +34,14 @@ describe('commands', () => {
 
     describe('command handlers', () => {
         const cases: [string, Mock][] = [
-            [commands.refreshHostHealth, hostController.refreshHealth],
+            [
+                commands.refreshHostHealth,
+                hostController.refreshHealthCommandHandler,
+            ],
             [commands.showOutput, vi.mocked(logger.show)],
-            [commands.selectTarget, targetController.select],
-            [commands.removeTarget, targetController.remove],
-            [commands.addTarget, targetController.promptToAdd],
-            [commands.inspectHostHealth, hostController.openHealthDocument],
+            [commands.selectTarget, targetController.selectCommandHandler],
+            [commands.removeTarget, targetController.removeCommandHandler],
+            [commands.addTarget, targetController.addCommandHandler],
         ];
 
         it.each(cases)(
