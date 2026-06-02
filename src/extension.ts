@@ -82,6 +82,7 @@ export async function activate(
     );
 
     const hostController = new HostController(hostModel, topoCli);
+    const hostHealth = new HostHealth(topoCli, hostHealthDocProvider);
     const targetController = new TargetController(targetModel, targetStore);
     context.subscriptions.push(
         targetStore.onExternalTargetsChanged(() =>
@@ -107,6 +108,7 @@ export async function activate(
     context.subscriptions.push(
         commands.register({
             hostController,
+            hostHealth,
             targetController,
             projectInit,
             deploy,

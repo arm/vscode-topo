@@ -18,12 +18,14 @@ import { ContainerStop } from './actions/containerStop';
 import { ContainerDelete } from './actions/containerDelete';
 import { TargetHealth } from './actions/targetHealth';
 import { FixIssue } from './actions/fixIssue';
+import { HostHealth } from './actions/hostHealth';
 
 vi.mock('./util/logger');
 
 describe('commands', () => {
     const handlers = {
         hostController: mock<HostController>(),
+        hostHealth: mock<HostHealth>(),
         targetController: mock<TargetController>(),
         projectInit: mock<ProjectInit>(),
         deploy: mock<Deploy>(),
@@ -76,7 +78,7 @@ describe('commands', () => {
             [commands.addTarget, handlers.targetController.addCommandHandler],
             [
                 commands.inspectHostHealth,
-                handlers.hostController.inspectHealthCommandHandler,
+                handlers.hostHealth.inspectHealthCommandHandler,
             ],
             [
                 commands.initProject,

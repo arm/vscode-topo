@@ -16,6 +16,7 @@ import { ContainerStop } from './actions/containerStop';
 import { ContainerDelete } from './actions/containerDelete';
 import { TargetHealth } from './actions/targetHealth';
 import { FixIssue } from './actions/fixIssue';
+import { HostHealth } from './actions/hostHealth';
 
 function command(id: string): string {
     return `${PACKAGE_NAME}.${id}`;
@@ -42,6 +43,7 @@ export const fixIssue = command('fixIssue');
 
 export interface CommandHandlers {
     hostController: HostController;
+    hostHealth: HostHealth;
     targetController: TargetController;
     projectInit: ProjectInit;
     deploy: Deploy;
@@ -74,7 +76,7 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
             handlers.targetController.addCommandHandler(),
         ),
         vscode.commands.registerCommand(inspectHostHealth, () =>
-            handlers.hostController.inspectHealthCommandHandler(),
+            handlers.hostHealth.inspectHealthCommandHandler(),
         ),
         vscode.commands.registerCommand(initProject, () =>
             handlers.projectInit.initProjectCommandHandler(),
