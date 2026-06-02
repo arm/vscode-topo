@@ -91,7 +91,9 @@ export async function activate(
     const hostHealthController = new HostController(hostModel, topoCli);
     const targetsController = new TargetController(targetModel, targetStore);
     context.subscriptions.push(
-        targetStore.onChanged(() => targetsController.updateFromStore()),
+        targetStore.onExternalTargetsChanged(() =>
+            targetsController.updateFromStore(),
+        ),
     );
 
     const disposeCommands = commands.register(

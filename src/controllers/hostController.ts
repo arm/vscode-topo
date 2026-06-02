@@ -6,10 +6,10 @@ export class HostController {
         private readonly hostModel: HostModel,
         private readonly topoCli: TopoCli,
     ) {
-        this.refreshHealth();
+        this.refreshHealthCommandHandler();
     }
 
-    public async refreshHealth(): Promise<void> {
+    public async refreshHealthCommandHandler(): Promise<void> {
         this.hostModel.setHealth({
             status: 'loading',
             placeholder: this.hostModel.health,
