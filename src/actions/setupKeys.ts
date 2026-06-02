@@ -6,7 +6,6 @@ import { TargetModel } from '../models/targetModel';
 import { TopoCli } from '../topoCli';
 
 export class SetupKeys {
-
     constructor(
         private readonly topoCli: TopoCli,
         private readonly targetModel: TargetModel,

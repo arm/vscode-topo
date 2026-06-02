@@ -9,8 +9,8 @@ import { TopoCli } from '../topoCli';
 
 export class FixIssue {
     constructor(
-         private readonly topoCli: TopoCli,
-        private readonly targetModel: TargetModel
+        private readonly topoCli: TopoCli,
+        private readonly targetModel: TargetModel,
     ) {}
 
     public async fixIssueCommandHandler(treeNode: unknown): Promise<void> {

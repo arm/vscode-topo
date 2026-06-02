@@ -60,10 +60,19 @@ describe('commands', () => {
 
     describe('command handlers', () => {
         const cases: [string, Mock][] = [
-            [commands.refreshHostHealth, handlers.hostController.refreshHealthCommandHandler],
+            [
+                commands.refreshHostHealth,
+                handlers.hostController.refreshHealthCommandHandler,
+            ],
             [commands.showOutput, vi.mocked(logger.show)],
-            [commands.selectTarget, handlers.targetController.selectCommandHandler],
-            [commands.removeTarget, handlers.targetController.removeCommandHandler],
+            [
+                commands.selectTarget,
+                handlers.targetController.selectCommandHandler,
+            ],
+            [
+                commands.removeTarget,
+                handlers.targetController.removeCommandHandler,
+            ],
             [commands.addTarget, handlers.targetController.addCommandHandler],
             [
                 commands.inspectHostHealth,

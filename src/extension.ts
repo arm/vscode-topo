@@ -81,28 +81,27 @@ export async function activate(
         targetStatusBarItemView,
     );
 
-    const hostController = new HostController(
-        hostModel,
-        topoCli,
-    );
+    const hostController = new HostController(hostModel, topoCli);
     const targetController = new TargetController(targetModel, targetStore);
     context.subscriptions.push(
-        targetStore.onChanged(() => targetController.updateFromStore()),
+        targetStore.onExternalTargetsChanged(() =>
+            targetController.updateFromStore(),
+        ),
     );
 
     const projectInit = new ProjectInit(topoCli);
     const projectClone = new ProjectClone(context, topoCli, targetModel);
-    const deploy = new Deploy(targetModel);
-    const stop = new Stop(targetModel);
+    const deploy = new Deploy(topoCli, targetModel);
+    const stop = new Stop(topoCli, targetModel);
     const containerOpenInBrowser = new ContainerOpenInBrowser();
     const attachVsCode = new AttachVsCode(dockerCommands);
     const attachShell = new AttachShell(dockerCommands);
-    const setupKeys = new SetupKeys(targetModel);
+    const setupKeys = new SetupKeys(topoCli, targetModel);
     const containerStart = new ContainerStart(dockerCommands);
     const containerStop = new ContainerStop(dockerCommands);
     const containerDelete = new ContainerDelete(dockerCommands);
     const targetHealth = new TargetHealth(containersManager);
-    const fixIssue = new FixIssue(targetModel);
+    const fixIssue = new FixIssue(topoCli, targetModel);
     const protocolHandler = new ProtocolHandler(projectClone);
 
     context.subscriptions.push(

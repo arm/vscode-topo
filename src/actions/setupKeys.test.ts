@@ -68,7 +68,6 @@ describe('SetupKeys', () => {
         targetModel.setSelected(undefined);
         const setupKeys = new SetupKeys(topoCli, targetModel);
 
-
         await setupKeys.setupKeysCommandHandler(undefined);
 
         expect(executeTaskMock).not.toHaveBeenCalled();
