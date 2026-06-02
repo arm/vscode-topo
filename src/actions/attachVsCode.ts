@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import { ContainerItem } from '../util/types';
 import { ContainerCommands } from '../target/containerCommands';
-import * as manifest from '../manifest';
 import { assertTargetContainerTreeItem } from '../targetTreeView/assertTargetContainerTreeItem';
 import { isWrappedError } from '../errors/wrappedError';
 import { showAndLogError } from '../util/showAndLogError';
@@ -11,23 +10,9 @@ export function getDockerContextName(ssh: string): string {
 }
 
 export class AttachVsCode {
-    public static readonly attachVsCodeCommand = `${manifest.PACKAGE_NAME}.attachVsCode`;
+    constructor(private readonly containerCommands: ContainerCommands) {}
 
-    constructor(
-        private readonly context: vscode.ExtensionContext,
-        private readonly containerCommands: ContainerCommands,
-    ) {}
-
-    public activate(): void {
-        this.context.subscriptions.push(
-            vscode.commands.registerCommand(
-                AttachVsCode.attachVsCodeCommand,
-                this.attachVsCodeCommandHandler.bind(this),
-            ),
-        );
-    }
-
-    private async attachVsCodeCommandHandler(treeNode: unknown): Promise<void> {
+    public async attachVsCodeCommandHandler(treeNode: unknown): Promise<void> {
         assertTargetContainerTreeItem(treeNode);
         try {
             await this.attachVsCode(treeNode.containerItem);

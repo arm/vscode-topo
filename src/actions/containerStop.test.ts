@@ -4,13 +4,11 @@ import { ContainerStop } from './containerStop';
 import { ContainerItem } from '../util/types';
 import { TargetContainerTreeItem } from '../targetTreeView/targetContainerTreeItem';
 import { WrappedError } from '../errors/wrappedError';
-import { mock, MockProxy } from 'vitest-mock-extended';
+import { mock } from 'vitest-mock-extended';
 import { ContainerCommands } from '../target/containerCommands';
-import { executeCommand } from '../util/test/executeCommand';
 import type { MockInstance } from 'vitest';
 
 describe('ContainerStop', () => {
-    let context: MockProxy<vscode.ExtensionContext>;
     let showErrorMessageSpy: MockInstance;
     const target = 'user@topo.local';
     const container: ContainerItem = {
@@ -30,17 +28,16 @@ describe('ContainerStop', () => {
     const treeItem = new TargetContainerTreeItem(container);
 
     beforeEach(() => {
-        context = mock<vscode.ExtensionContext>({ subscriptions: [] });
         showErrorMessageSpy = vi
             .spyOn(vscode.window, 'showErrorMessage')
             .mockImplementation(vi.fn());
     });
+
     it('calls stopContainer and shows info message on success', async () => {
         const containerCommands = mock<ContainerCommands>();
-        const containerStop = new ContainerStop(context, containerCommands);
-        containerStop.activate();
+        const containerStop = new ContainerStop(containerCommands);
 
-        await executeCommand(ContainerStop.stopContainerCommand, treeItem);
+        await containerStop.stopContainerCommandHandler(treeItem);
 
         expect(containerCommands.stopContainer).toHaveBeenCalledWith(
             'abc123',
@@ -53,10 +50,9 @@ describe('ContainerStop', () => {
         containerCommands.stopContainer.mockRejectedValue(
             new WrappedError('DOCKER', 'fail'),
         );
-        const containerStop = new ContainerStop(context, containerCommands);
-        containerStop.activate();
+        const containerStop = new ContainerStop(containerCommands);
 
-        await executeCommand(ContainerStop.stopContainerCommand, treeItem);
+        await containerStop.stopContainerCommandHandler(treeItem);
 
         expect(showErrorMessageSpy).toHaveBeenCalledWith(
             expect.stringContaining(
@@ -70,11 +66,10 @@ describe('ContainerStop', () => {
         containerCommands.stopContainer.mockRejectedValue(
             new Error('generic error'),
         );
-        const containerStop = new ContainerStop(context, containerCommands);
-        containerStop.activate();
+        const containerStop = new ContainerStop(containerCommands);
 
         await expect(
-            executeCommand(ContainerStop.stopContainerCommand, treeItem),
+            containerStop.stopContainerCommandHandler(treeItem),
         ).rejects.toThrow('generic error');
     });
 });

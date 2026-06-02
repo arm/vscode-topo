@@ -4,7 +4,6 @@ import { ContainersManager } from '../target/containersManager';
 import { TargetHealth } from './targetHealth';
 import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
 import { TargetState } from '../util/types';
-import { executeCommand } from '../util/test/executeCommand';
 
 vi.mock('../util/logger');
 
@@ -37,15 +36,11 @@ describe('TargetHealth', () => {
         vi.clearAllMocks();
     });
 
-    it('registers inspectHealth command and document provider when activated', async () => {
+    it('registers document provider when activated', async () => {
         const targetHealth = new TargetHealth(mock<ContainersManager>());
 
         targetHealth.activate();
 
-        expect(vscode.commands.registerCommand).toHaveBeenCalledWith(
-            TargetHealth.inspectTargetHealthCommand,
-            expect.any(Function),
-        );
         expect(
             vscode.workspace.registerTextDocumentContentProvider,
         ).toHaveBeenCalledWith(
@@ -67,10 +62,7 @@ describe('TargetHealth', () => {
             textDocument,
         );
 
-        await executeCommand(
-            TargetHealth.inspectTargetHealthCommand,
-            targetItem,
-        );
+        await targetHealth.inspectHealthCommandHandler(targetItem);
 
         const providerRegistration = vi.mocked(
             vscode.workspace.registerTextDocumentContentProvider,
@@ -99,10 +91,7 @@ describe('TargetHealth', () => {
         targetHealth.activate();
         const targetItem = new TargetTreeItem('abc.com', false, 'disconnected');
 
-        await executeCommand(
-            TargetHealth.inspectTargetHealthCommand,
-            targetItem,
-        );
+        await targetHealth.inspectHealthCommandHandler(targetItem);
 
         expect(vscode.workspace.openTextDocument).not.toHaveBeenCalled();
         expect(vscode.window.showTextDocument).not.toHaveBeenCalled();

@@ -17,10 +17,6 @@ import { showAndLogError } from './util/showAndLogError';
 export class ProtocolHandler implements vscode.UriHandler {
     constructor(private readonly projectClone: ProjectClone) {}
 
-    public activate(context: vscode.ExtensionContext): void {
-        context.subscriptions.push(vscode.window.registerUriHandler(this));
-    }
-
     public async handleUri(uri: vscode.Uri): Promise<void> {
         logger.info(`ProtocolHandler.handleUri(${uri.toString()})`);
         const data = this.parseQuery(uri.query);
