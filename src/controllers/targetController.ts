@@ -81,7 +81,7 @@ export class TargetController {
         this.model.setSelected(this.targetStore.getSelectedTarget());
     }
 
-    public async select(treeNode?: unknown): Promise<void> {
+    public async selectCommandHandler(treeNode?: unknown): Promise<void> {
         if (!isTargetTreeItem(treeNode)) {
             return;
         }
@@ -90,7 +90,7 @@ export class TargetController {
         this.updateFromStore();
     }
 
-    public async remove(treeNode?: unknown): Promise<void> {
+    public async removeCommandHandler(treeNode?: unknown): Promise<void> {
         if (!isTargetTreeItem(treeNode)) {
             return;
         }
@@ -104,7 +104,7 @@ export class TargetController {
         }
     }
 
-    public async promptToAdd(): Promise<void> {
+    public async addCommandHandler(): Promise<void> {
         const target = await promptForSshTarget(this.model.targets);
         if (!target) {
             return;
