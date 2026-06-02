@@ -14,6 +14,7 @@ import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
 import { getFixableDependencyFixes } from '../util/getDependencyFixes';
 import { getTargetDependencies } from '../target/getTargetDependencies';
+import { ContainerItem } from '../util/types';
 
 function sortDependenciesByName(
     deps: HealthCheckDependency[],
@@ -21,6 +22,32 @@ function sortDependenciesByName(
     return deps.sort((a, b) =>
         a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
     );
+}
+
+function filterAndSortContainerItemsForGroup(
+    containers: ContainerItem[],
+    group: string,
+): ContainerItem[] {
+    const subsystemContainers = containers.filter((item) => {
+        if (group === 'Host') {
+            return item.runtime === manifest.TARGET_HOST_RUNTIME;
+        }
+
+        return (
+            item.runtime === manifest.TARGET_REMOTEPROC_RUNTIME &&
+            item.annotations?.['remoteproc.name'] === group
+        );
+    });
+
+    return subsystemContainers.sort((a, b) => {
+        if (a.state === 'running' && b.state !== 'running') {
+            return -1;
+        }
+        if (a.state !== 'running' && b.state === 'running') {
+            return 1;
+        }
+        return a.name.localeCompare(b.name);
+    });
 }
 
 export class TargetTreeView
@@ -140,25 +167,10 @@ export class TargetTreeView
             const containers = await this.containersManager.getContainersData(
                 element.target,
             );
-            const subsystemContainers = containers.filter((item) =>
-                element.group === 'Host'
-                    ? item.runtime === manifest.TARGET_HOST_RUNTIME
-                    : item.runtime === manifest.TARGET_REMOTEPROC_RUNTIME &&
-                      item.annotations?.['remoteproc.name'] === element.group,
-            );
-            const subsystemTreeItems = subsystemContainers.map(
-                (info) => new TargetContainerTreeItem(info),
-            );
-            const sortedSubsystemTreeItems = subsystemTreeItems.sort((a, b) => {
-                if (a.state === 'running' && b.state !== 'running') {
-                    return -1;
-                }
-                if (a.state !== 'running' && b.state === 'running') {
-                    return 1;
-                }
-                return a.name.localeCompare(b.name);
-            });
-            return sortedSubsystemTreeItems;
+            return filterAndSortContainerItemsForGroup(
+                containers,
+                element.group,
+            ).map((container) => new TargetContainerTreeItem(container));
         }
 
         return [];
