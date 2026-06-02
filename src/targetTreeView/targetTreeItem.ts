@@ -1,29 +1,37 @@
 import * as vscode from 'vscode';
-import { TargetStatus } from '../util/types';
+import { TargetDescription, TargetState, TargetStatus } from '../util/types';
+import { getFixableDependencyFixes } from '../util/getDependencyFixes';
+import { HealthCheckDependency } from '../topoCliSchema';
+import { getVisibleTargetDependencies } from '../target/getVisibleTargetDependencies';
 
 /** Represents a target */
 export class TargetTreeItem extends vscode.TreeItem {
+    public readonly visibleDependencies: HealthCheckDependency[];
+
     constructor(
         public readonly target: string,
         public readonly selected: boolean,
-        public readonly status: TargetStatus,
-        public readonly hasFixableDependencies = false,
+        public readonly state: TargetState,
+        public readonly targetDescription: TargetDescription | undefined,
     ) {
         super(target, vscode.TreeItemCollapsibleState.Expanded);
         this.id = target;
-        this.iconPath = getTargetTreeItemIcon(selected, status);
+        this.iconPath = getTargetTreeItemIcon(selected, state.status);
+        this.visibleDependencies = state.health
+            ? getVisibleTargetDependencies(state.health, targetDescription)
+            : [];
         const contextValues = ['Target'];
         if (selected) {
             contextValues.push('Selected');
         }
-        if (status === 'connected') {
+        if (state.status === 'connected') {
             contextValues.push('Connected');
         }
-        if (hasFixableDependencies) {
+        if (getFixableDependencyFixes(this.visibleDependencies).length > 0) {
             contextValues.push('HasFixableDependencies');
         }
         this.contextValue = contextValues.join(' ');
-        this.collapsibleState = getTargetTreeItemState(selected, status);
+        this.collapsibleState = getTargetTreeItemState(selected, state.status);
     }
 
     public get displayName(): string {

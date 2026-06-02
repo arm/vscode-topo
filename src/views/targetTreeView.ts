@@ -9,12 +9,9 @@ import { TargetSubsystemGroupTreeItem } from '../targetTreeView/targetSubsystemG
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 import { HealthCheckDependency } from '../topoCliSchema';
 import { TargetDescriptionStore } from '../target/targetDescriptionStore';
-import { getVisibleTargetDependencies } from '../target/getVisibleTargetDependencies';
 import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
-import { getFixableDependencyFixes } from '../util/getDependencyFixes';
-import { getTargetDependencies } from '../target/getTargetDependencies';
-import { ContainerItem } from '../util/types';
+import { ContainerItem, TargetState } from '../util/types';
 
 function sortDependenciesByName(
     deps: HealthCheckDependency[],
@@ -94,23 +91,18 @@ export class TargetTreeView
             const targetTreeItems: TargetTreeItem[] = [];
             for (const target of this.targetModel.targets) {
                 const selected = target === selectedTarget;
-                const { status } =
-                    this.containersManager.getTargetStateSnapshot(target);
-                const dependencies = selected
-                    ? await getTargetDependencies(
-                          target,
-                          this.containersManager,
-                          this.targetDescriptionStore,
-                      )
-                    : [];
-                const fixes = getFixableDependencyFixes(dependencies);
-                const targetTreeItem = new TargetTreeItem(
-                    target,
-                    selected,
-                    status,
-                    fixes.length > 0,
+
+                const state: TargetState = selected
+                    ? this.containersManager.getTargetStateSnapshot(target)
+                    : { status: 'disconnected', health: undefined };
+
+                const description = selected
+                    ? await this.targetDescriptionStore.getDescription(target)
+                    : undefined;
+
+                targetTreeItems.push(
+                    new TargetTreeItem(target, selected, state, description),
                 );
-                targetTreeItems.push(targetTreeItem);
             }
             const sortedTargetTreeItems = targetTreeItems.sort((a, b) =>
                 a.displayName.localeCompare(b.displayName),
@@ -119,27 +111,16 @@ export class TargetTreeView
         }
 
         if (element instanceof TargetTreeItem) {
-            if (!element.selected) {
+            if (element.visibleDependencies.length === 0) {
                 return [];
             }
-            const [targetState, selectedTargetDescription] = await Promise.all([
-                this.containersManager.getTargetState(element.target),
-                this.targetDescriptionStore.getDescription(element.target),
-            ]);
-            if (targetState.health === undefined) {
-                return [];
-            }
-
-            const dependencies = getVisibleTargetDependencies(
-                targetState.health,
-                selectedTargetDescription,
-            );
 
             const dependenciesGroup = new HealthCheckDependencyGroupTreeItem(
-                dependencies,
+                element.visibleDependencies,
             );
             const subsystemsGroup = new TargetSubsystemGroupTreeItem(
                 element.target,
+                element.targetDescription,
             );
             return [dependenciesGroup, subsystemsGroup];
         }
@@ -151,26 +132,32 @@ export class TargetTreeView
         }
 
         if (element instanceof TargetSubsystemGroupTreeItem) {
-            const targetDescription =
-                await this.targetDescriptionStore.getDescription(
-                    element.target,
-                );
+            const allContainers =
+                await this.containersManager.getContainersData(element.target);
+
             const remoteProcessors =
-                targetDescription?.remoteProcessors.map((rp) => rp.name) || [];
-            const subsystemNames = ['Host', ...remoteProcessors];
-            return subsystemNames.map(
-                (name) => new TargetSubsystemTreeItem(name, element.target),
-            );
+                element.targetDescription?.remoteProcessors.map(
+                    (rp) => rp.name,
+                ) ?? [];
+            const groupNames = ['Host', ...remoteProcessors];
+            return groupNames.map((group) => {
+                const containers = filterAndSortContainerItemsForGroup(
+                    allContainers,
+                    group,
+                );
+
+                return new TargetSubsystemTreeItem(
+                    group,
+                    element.target,
+                    containers,
+                );
+            });
         }
 
         if (element instanceof TargetSubsystemTreeItem) {
-            const containers = await this.containersManager.getContainersData(
-                element.target,
+            return element.containers.map(
+                (container) => new TargetContainerTreeItem(container),
             );
-            return filterAndSortContainerItemsForGroup(
-                containers,
-                element.group,
-            ).map((container) => new TargetContainerTreeItem(container));
         }
 
         return [];
