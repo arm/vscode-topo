@@ -27,10 +27,10 @@ export async function executeTask(
     }
 
     const taskDefinition: vscode.TaskDefinition = {
-        type: 'shell',
+        type: 'process',
     };
 
-    const shellExecution = new vscode.ShellExecution(cmd, args, {
+    const processExecution = new vscode.ProcessExecution(cmd, args, {
         cwd: opts?.cwd,
     });
 
@@ -40,7 +40,7 @@ export async function executeTask(
         taskScope,
         taskName,
         PACKAGE_NAME,
-        shellExecution,
+        processExecution,
     );
     task.presentationOptions = {
         reveal: vscode.TaskRevealKind.Always,

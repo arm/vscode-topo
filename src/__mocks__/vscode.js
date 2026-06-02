@@ -44,6 +44,14 @@ class MockShellExecution {
     }
 }
 const ShellExecution = vi.fn(MockShellExecution);
+class MockProcessExecution {
+    constructor(process, args, options) {
+        this.process = process;
+        this.args = args;
+        this.options = options;
+    }
+}
+const ProcessExecution = vi.fn(MockProcessExecution);
 class MockTask {
     constructor(definition, scope, name, type, execution) {
         this.definition = definition;
@@ -274,6 +282,7 @@ module.exports = {
     EventEmitter,
     LogLevel,
     Position,
+    ProcessExecution,
     QuickPickItemKind,
     Range,
     RelativePattern,
