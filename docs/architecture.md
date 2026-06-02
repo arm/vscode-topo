@@ -1,8 +1,10 @@
 # Codebase Architecture
 
-As a VSCode extension, interaction is mostly [command](https://code.visualstudio.com/api/extension-guides/command)-based. Our responsibility is to handle commands from the user, their agent(s) or other parts of the extension and do something useful.
+As a VSCode extension, interaction is mostly done via [commands](https://code.visualstudio.com/api/extension-guides/command)-based. Our responsibility is to handle commands from the user, their agent(s) or other parts of the extension and do something useful.
 
 There are two primary types of command - ones that need to directly update the UI by querying the outside world, and those that are side-effect only that are mostly designed to surface useful operations the user may want to perform in VSCode. The former type of commands are handled by **controllers**, while the latter are handled by **actions**.
+
+At the top-level of the extension we create a command registry which is responsible for routing VSCode command strings to action/controller command handlers. At this same level, the extension has the option to register any method of invoking command handlers that it needs. For example, we run a periodic refresh event of certain target state every few seconds. We register such systems alongside the command router than making use of it for type safety guarantees and to skip the VSCode plumbing where it is unneeded.
 
 ```mermaid
 flowchart LR
@@ -36,6 +38,8 @@ flowchart LR
         viewY["ViewY"]
         viewZ["ViewZ"]
     end
+
+    scheduled["Scheduled jobs<br/>i.e. automatic refreshes"] --> controllerX
 
     router --> controllerX
     router --> controllerY
