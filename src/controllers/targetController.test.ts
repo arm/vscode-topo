@@ -18,7 +18,7 @@ function mockTargetStore(
     let targets = initialTargets;
     let selected = initialSelected;
     const targetStore = mock<TargetStore>();
-    targetStore.getTargets.mockImplementation(() => targets);
+    targetStore.getTargets.mockImplementation(() => new Set(targets));
     targetStore.getSelectedTarget.mockImplementation(() =>
         targets.includes(selected ?? '') ? selected : undefined,
     );

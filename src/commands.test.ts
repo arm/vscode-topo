@@ -42,10 +42,6 @@ describe('commands', () => {
             [commands.selectTarget, targetController.selectCommandHandler],
             [commands.removeTarget, targetController.removeCommandHandler],
             [commands.addTarget, targetController.addCommandHandler],
-            [
-                commands.inspectHostHealth,
-                hostController.openHealthDocumentCommandHandler,
-            ],
         ];
 
         it.each(cases)(

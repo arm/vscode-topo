@@ -7,12 +7,16 @@ import { executeTask } from '../util/executeTask';
 import { getFixCommandArgs } from '../util/getFixCommandArgs';
 import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
+import { TopoCli } from '../topoCli';
 
 export class FixIssue implements vscode.Disposable {
     private readonly disposables = new DisposableCollector();
     public static readonly fixIssueCommand = `${PACKAGE_NAME}.fixIssue`;
 
-    constructor(private readonly targetModel: TargetModel) {
+    constructor(
+        private readonly topoCli: TopoCli,
+        private readonly targetModel: TargetModel,
+    ) {
         this.disposables.collect(
             vscode.commands.registerCommand(
                 FixIssue.fixIssueCommand,
@@ -66,6 +70,9 @@ export class FixIssue implements vscode.Disposable {
                 new Error('No executable command found'),
             );
             return;
+        }
+        if (commandArgs[0] === 'topo') {
+            commandArgs[0] = this.topoCli.getBinaryPath();
         }
 
         try {
