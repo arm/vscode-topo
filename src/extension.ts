@@ -48,11 +48,18 @@ export async function activate(
         return;
     }
 
+    const targetHealthDocProvider = new TransientDocumentProvider(
+        'target-health',
+    );
     const hostHealthDocProvider = new TransientDocumentProvider('host-health');
     const dockerCommands = new DockerCommands();
     const targetStore = new TargetStore(context);
     const targetDescriptionStore = new TargetDescriptionStore(topoCli);
-    context.subscriptions.push(targetStore, hostHealthDocProvider);
+    context.subscriptions.push(
+        targetStore,
+        hostHealthDocProvider,
+        targetHealthDocProvider,
+    );
 
     const targetModel = new TargetModel();
     const hostModel = new HostModel();
@@ -101,7 +108,7 @@ export async function activate(
     const containerStart = new ContainerStart(dockerCommands);
     const containerStop = new ContainerStop(dockerCommands);
     const containerDelete = new ContainerDelete(dockerCommands);
-    const targetHealth = new TargetHealth(containersManager);
+    const targetHealth = new TargetHealth(topoCli, targetHealthDocProvider);
     const fixIssue = new FixIssue(topoCli, targetModel);
     const protocolHandler = new ProtocolHandler(projectClone);
 
@@ -123,12 +130,10 @@ export async function activate(
             targetHealth,
             fixIssue,
         }),
-        targetHealth,
         logger,
         vscode.window.registerUriHandler(protocolHandler),
     );
 
     topoCli.activate();
     projectClone.activate();
-    targetHealth.activate();
 }
