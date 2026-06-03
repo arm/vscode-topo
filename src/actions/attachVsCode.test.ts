@@ -6,8 +6,6 @@ import { DockerCommands } from '../target/dockerCommands';
 import { ContainerItem } from '../util/types';
 import { TargetContainerTreeItem } from '../targetTreeView/targetContainerTreeItem';
 import { WrappedError } from '../errors/wrappedError';
-import { mock, MockProxy } from 'vitest-mock-extended';
-import { executeCommand } from '../util/test/executeCommand';
 import type { Mock } from 'vitest';
 
 vi.mock('../util/exec', () => ({
@@ -37,9 +35,7 @@ describe('getDockerContextName', () => {
 
 describe('attachVsCode', () => {
     let execMock: Mock;
-    let context: MockProxy<vscode.ExtensionContext>;
     let attachVsCode: AttachVsCode;
-    const registerCommandMock = vi.mocked(vscode.commands.registerCommand);
     const dockerCommands = new DockerCommands();
     const target = 'user@topo.local';
     const containerItem: ContainerItem = {
@@ -61,8 +57,7 @@ describe('attachVsCode', () => {
 
     beforeEach(() => {
         execMock = vi.mocked(exec);
-        context = mock<vscode.ExtensionContext>({ subscriptions: [] });
-        attachVsCode = new AttachVsCode(context, dockerCommands);
+        attachVsCode = new AttachVsCode(dockerCommands);
         vi.useFakeTimers();
     });
 
@@ -72,17 +67,7 @@ describe('attachVsCode', () => {
         vi.resetAllMocks();
     });
 
-    it('registers the command', async () => {
-        attachVsCode.activate();
-
-        expect(registerCommandMock).toHaveBeenCalledWith(
-            AttachVsCode.attachVsCodeCommand,
-            expect.any(Function),
-        );
-    });
-
     it("executes attachVsCode command that doesn't create context and calls remote-containers.attachToRunningContainer with container id", async () => {
-        attachVsCode.activate();
         execMock.mockImplementation(async (command) => {
             if (command === 'docker context show') {
                 return { stdout: 'default\n', stderr: '' };
@@ -99,10 +84,8 @@ describe('attachVsCode', () => {
             throw new Error(`Unknown command: ${command}`);
         });
 
-        const commandExecution = executeCommand(
-            AttachVsCode.attachVsCodeCommand,
-            treeItem,
-        );
+        const commandExecution =
+            attachVsCode.attachVsCodeCommandHandler(treeItem);
         await vi.advanceTimersByTimeAsync(3000);
         await commandExecution;
 
@@ -121,7 +104,6 @@ describe('attachVsCode', () => {
     });
 
     it('executes attachVsCode command that creates context and calls remote-containers.attachToRunningContainer with container id', async () => {
-        attachVsCode.activate();
         execMock.mockImplementation(async (command) => {
             if (command === 'docker context show') {
                 return { stdout: 'default\n', stderr: '' };
@@ -144,10 +126,8 @@ describe('attachVsCode', () => {
             throw new Error(`Unknown command: ${command}`);
         });
 
-        const commandExecution = executeCommand(
-            AttachVsCode.attachVsCodeCommand,
-            treeItem,
-        );
+        const commandExecution =
+            attachVsCode.attachVsCodeCommandHandler(treeItem);
         await vi.advanceTimersByTimeAsync(3000);
         await commandExecution;
 
@@ -169,15 +149,12 @@ describe('attachVsCode', () => {
     });
 
     it('shows an error if the attachVsCode command fails', async () => {
-        attachVsCode.activate();
         execMock.mockImplementation(async () => {
             throw new WrappedError('DOCKER', 'fail');
         });
 
-        const commandExecution = executeCommand(
-            AttachVsCode.attachVsCodeCommand,
-            treeItem,
-        );
+        const commandExecution =
+            attachVsCode.attachVsCodeCommandHandler(treeItem);
         await vi.advanceTimersByTimeAsync(3000);
         await commandExecution;
 

@@ -2,7 +2,6 @@ import { mock } from 'vitest-mock-extended';
 import * as vscode from 'vscode';
 import { TargetHealth } from './targetHealth';
 import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
-import { executeCommand } from '../util/test/executeCommand';
 import { TopoCli } from '../topoCli';
 import { HealthCheckResult } from '../topoCliSchema';
 import { TransientDocumentProvider } from '../util/transientDocumentProvider';
@@ -44,20 +43,6 @@ describe('TargetHealth', () => {
         vi.clearAllMocks();
     });
 
-    it('registers inspectHealth command when activated', async () => {
-        const targetHealth = new TargetHealth(
-            mock<TopoCli>(),
-            healthDocumentProvider,
-        );
-
-        targetHealth.activate();
-
-        expect(vscode.commands.registerCommand).toHaveBeenCalledWith(
-            TargetHealth.inspectTargetHealthCommand,
-            expect.any(Function),
-        );
-    });
-
     it('opens a target health document with the selected target health JSON', async () => {
         vi.spyOn(Date, 'now').mockReturnValue(123);
         const documentUri = mock<vscode.Uri>();
@@ -66,13 +51,9 @@ describe('TargetHealth', () => {
             health: vi.fn().mockResolvedValue(health),
         });
         const targetHealth = new TargetHealth(topoCli, healthDocumentProvider);
-        targetHealth.activate();
         const targetItem = new TargetTreeItem('user@foobar', true, 'connected');
 
-        await executeCommand(
-            TargetHealth.inspectTargetHealthCommand,
-            targetItem,
-        );
+        await targetHealth.inspectHealthCommandHandler(targetItem);
 
         expect(topoCli.health).toHaveBeenCalledWith('user@foobar');
         expect(healthDocumentProvider.createUri).toHaveBeenCalledWith(
@@ -87,13 +68,9 @@ describe('TargetHealth', () => {
     it('does not open health document for non-selected target', async () => {
         const topoCli = mock<TopoCli>();
         const targetHealth = new TargetHealth(topoCli, healthDocumentProvider);
-        targetHealth.activate();
         const targetItem = new TargetTreeItem('abc.com', false, 'disconnected');
 
-        await executeCommand(
-            TargetHealth.inspectTargetHealthCommand,
-            targetItem,
-        );
+        await targetHealth.inspectHealthCommandHandler(targetItem);
 
         expect(topoCli.health).not.toHaveBeenCalled();
         expect(healthDocumentProvider.open).not.toHaveBeenCalled();
@@ -103,14 +80,10 @@ describe('TargetHealth', () => {
         const error = new Error('health unavailable');
         const topoCli = mock<TopoCli>();
         const targetHealth = new TargetHealth(topoCli, healthDocumentProvider);
-        targetHealth.activate();
         topoCli.health.mockRejectedValue(error);
         const targetItem = new TargetTreeItem('abc.com', true, 'connected');
 
-        await executeCommand(
-            TargetHealth.inspectTargetHealthCommand,
-            targetItem,
-        );
+        await targetHealth.inspectHealthCommandHandler(targetItem);
 
         expect(showAndLogError).toHaveBeenCalledWith(
             'Failed to get health for target',

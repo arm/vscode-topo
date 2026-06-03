@@ -1,27 +1,12 @@
 import * as vscode from 'vscode';
-import * as manifest from '../manifest';
 import { ContainerItem } from '../util/types';
 import { ContainerCommands } from '../target/containerCommands';
 import { assertTargetContainerTreeItem } from '../targetTreeView/assertTargetContainerTreeItem';
 
 export class AttachShell {
-    public static readonly attachShellCommand = `${manifest.PACKAGE_NAME}.attachShell`;
+    constructor(private readonly containerCommands: ContainerCommands) {}
 
-    constructor(
-        private readonly context: vscode.ExtensionContext,
-        private readonly containerCommands: ContainerCommands,
-    ) {}
-
-    public activate() {
-        this.context.subscriptions.push(
-            vscode.commands.registerCommand(
-                AttachShell.attachShellCommand,
-                this.attachShellCommandHandler.bind(this),
-            ),
-        );
-    }
-
-    private async attachShellCommandHandler(treeNode: unknown): Promise<void> {
+    public async attachShellCommandHandler(treeNode: unknown): Promise<void> {
         assertTargetContainerTreeItem(treeNode);
         attachShell(treeNode.containerItem, this.containerCommands);
     }

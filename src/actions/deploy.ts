@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import * as manifest from '../manifest';
 import { getErrorMessage } from '../util/getErrorMessage';
 import path from 'node:path';
 import { executeTask } from '../util/executeTask';
@@ -12,24 +11,12 @@ const viewLogsItem: vscode.MessageItem = {
 };
 
 export class Deploy {
-    public static readonly deployCommand = `${manifest.PACKAGE_NAME}.deploy.context`;
-
     constructor(
-        private readonly context: vscode.ExtensionContext,
         private readonly topoCli: TopoCli,
         private readonly targetModel: TargetModel,
     ) {}
 
-    public activate(): void {
-        this.context.subscriptions.push(
-            vscode.commands.registerCommand(
-                Deploy.deployCommand,
-                this.deployCommandHandler.bind(this),
-            ),
-        );
-    }
-
-    private async deployCommandHandler(resource?: vscode.Uri): Promise<void> {
+    public async deployCommandHandler(resource?: vscode.Uri): Promise<void> {
         if (!resource) {
             throw new Error(
                 'No compose.yaml or compose.yml selected for deployment',
