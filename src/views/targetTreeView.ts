@@ -121,6 +121,10 @@ export class TargetTreeView
             if (!element.selected || element.status !== 'connected') {
                 return [];
             }
+            const containers = await this.containersManager.getContainersData(
+                element.target,
+            );
+            const sortedContainers = [...containers].sort(compareContainers);
 
             const dependenciesGroup = new HealthCheckDependencyGroupTreeItem(
                 element.visibleDependencies,
@@ -128,6 +132,7 @@ export class TargetTreeView
             const subsystemsGroup = new TargetSubsystemGroupTreeItem(
                 element.target,
                 element.remoteProcessorNames,
+                sortedContainers,
             );
             return [dependenciesGroup, subsystemsGroup];
         }
@@ -138,14 +143,10 @@ export class TargetTreeView
         }
 
         if (element instanceof TargetSubsystemGroupTreeItem) {
-            const allContainers = (
-                await this.containersManager.getContainersData(element.target)
-            ).sort(compareContainers);
-
             const groupNames = ['Host', ...element.remoteProcessorNames];
             return groupNames.map((group) => {
                 const containers = filterContainersForGroup(
-                    allContainers,
+                    element.containers,
                     group,
                 );
 

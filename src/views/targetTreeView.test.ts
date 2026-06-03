@@ -16,16 +16,6 @@ import {
 import { TargetDescriptionStore } from '../target/targetDescriptionStore';
 import { TargetModel } from '../models/targetModel';
 
-function findTreeItem<T extends vscode.TreeItem>(
-    items: vscode.TreeItem[],
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    clazz: new (...args: any[]) => T,
-): T {
-    const item = items.find((candidate) => candidate instanceof clazz);
-    expect(item).toBeDefined();
-    return item as T;
-}
-
 describe('TargetTreeView', () => {
     let view: TargetTreeView;
     let containersManagerMock: MockProxy<ContainersManager>;
@@ -188,9 +178,8 @@ describe('TargetTreeView', () => {
             );
             const rootChildren = await view.getChildren();
             const targetChildren = await view.getChildren(rootChildren[0]);
-            const dependenciesGroup = findTreeItem(
-                targetChildren,
-                HealthCheckDependencyGroupTreeItem,
+            const dependenciesGroup = targetChildren.find(
+                (v) => v instanceof HealthCheckDependencyGroupTreeItem,
             );
 
             const got = await view.getChildren(dependenciesGroup);
@@ -339,9 +328,8 @@ describe('TargetTreeView', () => {
         it('returns containers for Host and remoteproc groups', async () => {
             const rootChildren = await view.getChildren();
             const targetChildren = await view.getChildren(rootChildren[0]);
-            const subsystemsGroup = findTreeItem(
-                targetChildren,
-                TargetSubsystemGroupTreeItem,
+            const subsystemsGroup = targetChildren.find(
+                (v) => v instanceof TargetSubsystemGroupTreeItem,
             );
             const subsystemItems = await view.getChildren(subsystemsGroup);
             const hostGroup = subsystemItems.find(
