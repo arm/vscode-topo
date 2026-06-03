@@ -7,26 +7,31 @@ import { TargetSubsystemTreeItem } from '../targetTreeView/targetSubsystemTreeIt
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
 import { TargetSubsystemGroupTreeItem } from '../targetTreeView/targetSubsystemGroupTreeItem';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
-import { HealthCheckDependency } from '../topoCliSchema';
 import { TargetDescriptionStore } from '../target/targetDescriptionStore';
 import { getVisibleTargetDependencies } from '../target/getVisibleTargetDependencies';
 import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
 import { ContainerItem, TargetState } from '../util/types';
 
-function sortDependenciesByName(
-    deps: HealthCheckDependency[],
-): HealthCheckDependency[] {
-    return deps.sort((a, b) =>
-        a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
-    );
+function compareByName(a: { name: string }, b: { name: string }): number {
+    return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
 }
 
-function filterAndSortContainerItemsForGroup(
+function compareContainers(a: ContainerItem, b: ContainerItem): number {
+    if (a.state === 'running' && b.state !== 'running') {
+        return -1;
+    }
+    if (a.state !== 'running' && b.state === 'running') {
+        return 1;
+    }
+    return compareByName(a, b);
+}
+
+function filterContainersForGroup(
     containers: ContainerItem[],
     group: string,
 ): ContainerItem[] {
-    const subsystemContainers = containers.filter((item) => {
+    return containers.filter((item) => {
         if (group === 'Host') {
             return item.runtime === manifest.TARGET_HOST_RUNTIME;
         }
@@ -35,16 +40,6 @@ function filterAndSortContainerItemsForGroup(
             item.runtime === manifest.TARGET_REMOTEPROC_RUNTIME &&
             item.annotations?.['remoteproc.name'] === group
         );
-    });
-
-    return subsystemContainers.sort((a, b) => {
-        if (a.state === 'running' && b.state !== 'running') {
-            return -1;
-        }
-        if (a.state !== 'running' && b.state === 'running') {
-            return 1;
-        }
-        return a.name.localeCompare(b.name);
     });
 }
 
@@ -138,18 +133,18 @@ export class TargetTreeView
         }
 
         if (element instanceof HealthCheckDependencyGroupTreeItem) {
-            return sortDependenciesByName(element.dependencies).map(
-                (d) => new HealthCheckDependencyTreeItem(d),
-            );
+            const deps = [...element.dependencies].sort(compareByName);
+            return deps.map((d) => new HealthCheckDependencyTreeItem(d));
         }
 
         if (element instanceof TargetSubsystemGroupTreeItem) {
-            const allContainers =
-                await this.containersManager.getContainersData(element.target);
+            const allContainers = (
+                await this.containersManager.getContainersData(element.target)
+            ).sort(compareContainers);
 
             const groupNames = ['Host', ...element.remoteProcessorNames];
             return groupNames.map((group) => {
-                const containers = filterAndSortContainerItemsForGroup(
+                const containers = filterContainersForGroup(
                     allContainers,
                     group,
                 );
