@@ -1,31 +1,19 @@
 import * as vscode from 'vscode';
-import { PACKAGE_NAME } from '../manifest';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 import { showAndLogError } from '../util/showAndLogError';
 import { logger } from '../util/logger';
 import { executeTask } from '../util/executeTask';
 import { getFixCommandArgs } from '../util/getFixCommandArgs';
 import { TargetModel } from '../models/targetModel';
-import { DisposableCollector } from '../util/disposableCollector';
 import { TopoCli } from '../topoCli';
 
-export class FixIssue implements vscode.Disposable {
-    private readonly disposables = new DisposableCollector();
-    public static readonly fixIssueCommand = `${PACKAGE_NAME}.fixIssue`;
-
+export class FixIssue {
     constructor(
         private readonly topoCli: TopoCli,
         private readonly targetModel: TargetModel,
-    ) {
-        this.disposables.collect(
-            vscode.commands.registerCommand(
-                FixIssue.fixIssueCommand,
-                this.fixIssueFromTreeItem.bind(this),
-            ),
-        );
-    }
+    ) {}
 
-    private async fixIssueFromTreeItem(treeNode: unknown): Promise<void> {
+    public async fixIssueCommandHandler(treeNode: unknown): Promise<void> {
         if (!(treeNode instanceof HealthCheckDependencyTreeItem)) {
             const errMsg = `Invalid dependency item for fix issue: expected HealthCheckDependencyTreeItem but received:`;
             logger.error(errMsg, treeNode);
@@ -83,9 +71,5 @@ export class FixIssue implements vscode.Disposable {
         } catch (err) {
             showAndLogError(`Failed to fix ${name} on target ${target}`, err);
         }
-    }
-
-    public dispose(): void {
-        this.disposables.dispose();
     }
 }

@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { ContainerItem } from '../util/types';
-import * as manifest from '../manifest';
 import { assertTargetContainerTreeItem } from '../targetTreeView/assertTargetContainerTreeItem';
 import { logger } from '../util/logger';
 import { getContainerHostPorts } from '../util/getContainerHostPorts';
@@ -8,22 +7,7 @@ import { getContainerHostPorts } from '../util/getContainerHostPorts';
 type OperationResult = 'success' | 'no-web-ports';
 
 export class ContainerOpenInBrowser {
-    public static readonly openInBrowserCommand = `${manifest.PACKAGE_NAME}.openInBrowser`;
-
-    constructor(private readonly context: vscode.ExtensionContext) {}
-
-    public activate(): void {
-        this.context.subscriptions.push(
-            vscode.commands.registerCommand(
-                ContainerOpenInBrowser.openInBrowserCommand,
-                this.openInBrowserCommandHandler.bind(this),
-            ),
-        );
-    }
-
-    private async openInBrowserCommandHandler(
-        treeNode: unknown,
-    ): Promise<void> {
+    public async openInBrowserCommandHandler(treeNode: unknown): Promise<void> {
         assertTargetContainerTreeItem(treeNode);
         try {
             const result = await this.openContainerInBrowser(

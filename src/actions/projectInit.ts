@@ -1,24 +1,10 @@
-import * as manifest from '../manifest';
 import * as vscode from 'vscode';
 import { TopoCli } from '../topoCli';
-import { DisposableCollector } from '../util/disposableCollector';
 
-export class ProjectInit implements vscode.Disposable {
-    private readonly disposables = new DisposableCollector();
-    public static initProjectCommand = `${manifest.PACKAGE_NAME}.initProject`;
-
+export class ProjectInit {
     constructor(private readonly topoCli: TopoCli) {}
 
-    public activate() {
-        this.disposables.collect(
-            vscode.commands.registerCommand(
-                ProjectInit.initProjectCommand,
-                this.initProjectCommandHandler.bind(this),
-            ),
-        );
-    }
-
-    private async initProjectCommandHandler(): Promise<void> {
+    public async initProjectCommandHandler(): Promise<void> {
         const projectPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
         if (!projectPath) {
             vscode.window.showErrorMessage(
@@ -27,10 +13,6 @@ export class ProjectInit implements vscode.Disposable {
             return;
         }
         await initProject(this.topoCli, projectPath);
-    }
-
-    public dispose(): void {
-        this.disposables.dispose();
     }
 }
 

@@ -6,7 +6,6 @@ import { ContainersManager } from '../target/containersManager';
 import { DisposableCollector } from '../util/disposableCollector';
 
 export class TargetHealth implements vscode.Disposable {
-    public static readonly inspectTargetHealthCommand = `${manifest.PACKAGE_NAME}.inspectTargetHealth`;
     public static readonly inspectTargetHealthScheme = `${manifest.PACKAGE_NAME}-inspect-target-health`;
 
     private readonly disposables = new DisposableCollector();
@@ -24,10 +23,6 @@ export class TargetHealth implements vscode.Disposable {
 
     public activate(): void {
         this.disposables.collect(
-            vscode.commands.registerCommand(
-                TargetHealth.inspectTargetHealthCommand,
-                (node: unknown) => this.inspectHealth(node),
-            ),
             vscode.workspace.registerTextDocumentContentProvider(
                 TargetHealth.inspectTargetHealthScheme,
                 this.inspectHealthContentProvider,
@@ -35,7 +30,7 @@ export class TargetHealth implements vscode.Disposable {
         );
     }
 
-    private async inspectHealth(treeNode: unknown): Promise<void> {
+    public async inspectHealthCommandHandler(treeNode: unknown): Promise<void> {
         if (!(treeNode instanceof TargetTreeItem)) {
             const errMsg = `Invalid target type for inspect health: expected TargetTreeItem but received:`;
             logger.error(errMsg, treeNode);

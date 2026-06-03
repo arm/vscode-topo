@@ -4,13 +4,11 @@ import { ContainerDelete } from './containerDelete';
 import { ContainerItem } from '../util/types';
 import { TargetContainerTreeItem } from '../targetTreeView/targetContainerTreeItem';
 import { WrappedError } from '../errors/wrappedError';
-import { mock, MockProxy } from 'vitest-mock-extended';
+import { mock } from 'vitest-mock-extended';
 import { ContainerCommands } from '../target/containerCommands';
-import { executeCommand } from '../util/test/executeCommand';
 import type { MockInstance } from 'vitest';
 
 describe('ContainerDelete', () => {
-    let context: MockProxy<vscode.ExtensionContext>;
     let showErrorMessageSpy: MockInstance;
 
     const target = 'user@topo.local';
@@ -31,7 +29,6 @@ describe('ContainerDelete', () => {
     const treeItem = new TargetContainerTreeItem(container);
 
     beforeEach(() => {
-        context = mock<vscode.ExtensionContext>({ subscriptions: [] });
         showErrorMessageSpy = vi
             .spyOn(vscode.window, 'showErrorMessage')
             .mockImplementation(vi.fn());
@@ -43,10 +40,9 @@ describe('ContainerDelete', () => {
 
     it('calls deleteContainer on success', async () => {
         const containerCommands = mock<ContainerCommands>();
-        const containerDelete = new ContainerDelete(context, containerCommands);
-        containerDelete.activate();
+        const containerDelete = new ContainerDelete(containerCommands);
 
-        await executeCommand(ContainerDelete.deleteContainerCommand, treeItem);
+        await containerDelete.deleteContainerCommandHandler(treeItem);
 
         expect(containerCommands.deleteContainer).toHaveBeenCalledWith(
             'abc123',
@@ -59,10 +55,9 @@ describe('ContainerDelete', () => {
         containerCommands.deleteContainer.mockRejectedValue(
             new WrappedError('DOCKER', 'fail'),
         );
-        const containerDelete = new ContainerDelete(context, containerCommands);
-        containerDelete.activate();
+        const containerDelete = new ContainerDelete(containerCommands);
 
-        await executeCommand(ContainerDelete.deleteContainerCommand, treeItem);
+        await containerDelete.deleteContainerCommandHandler(treeItem);
 
         expect(showErrorMessageSpy).toHaveBeenCalledWith(
             expect.stringContaining(
@@ -76,11 +71,10 @@ describe('ContainerDelete', () => {
         containerCommands.deleteContainer.mockRejectedValue(
             new Error('generic error'),
         );
-        const containerDelete = new ContainerDelete(context, containerCommands);
-        containerDelete.activate();
+        const containerDelete = new ContainerDelete(containerCommands);
 
         await expect(
-            executeCommand(ContainerDelete.deleteContainerCommand, treeItem),
+            containerDelete.deleteContainerCommandHandler(treeItem),
         ).rejects.toThrow('generic error');
     });
 });

@@ -3,14 +3,12 @@ import * as vscode from 'vscode';
 import { ContainerStart } from './containerStart';
 import { TargetContainerTreeItem } from '../targetTreeView/targetContainerTreeItem';
 import { WrappedError } from '../errors/wrappedError';
-import { mock, MockProxy } from 'vitest-mock-extended';
+import { mock } from 'vitest-mock-extended';
 import { ContainerItem } from '../util/types';
 import { ContainerCommands } from '../target/containerCommands';
-import { executeCommand } from '../util/test/executeCommand';
 import type { MockInstance } from 'vitest';
 
 describe('ContainerStart', () => {
-    let context: MockProxy<vscode.ExtensionContext>;
     let showErrorMessageSpy: MockInstance;
     const target = 'user@topo.local';
     const container: ContainerItem = {
@@ -30,7 +28,6 @@ describe('ContainerStart', () => {
     const treeItem = new TargetContainerTreeItem(container);
 
     beforeEach(() => {
-        context = mock<vscode.ExtensionContext>({ subscriptions: [] });
         showErrorMessageSpy = vi
             .spyOn(vscode.window, 'showErrorMessage')
             .mockImplementation(vi.fn());
@@ -42,10 +39,9 @@ describe('ContainerStart', () => {
 
     it('calls startContainer and shows info message on success', async () => {
         const containerCommands = mock<ContainerCommands>();
-        const containerStart = new ContainerStart(context, containerCommands);
-        containerStart.activate();
+        const containerStart = new ContainerStart(containerCommands);
 
-        await executeCommand(ContainerStart.startContainerCommand, treeItem);
+        await containerStart.startContainerCommandHandler(treeItem);
 
         expect(containerCommands.startContainer).toHaveBeenCalledWith(
             'abc123',
@@ -58,10 +54,9 @@ describe('ContainerStart', () => {
         containerCommands.startContainer.mockRejectedValue(
             new WrappedError('DOCKER', 'fail'),
         );
-        const containerStart = new ContainerStart(context, containerCommands);
-        containerStart.activate();
+        const containerStart = new ContainerStart(containerCommands);
 
-        await executeCommand(ContainerStart.startContainerCommand, treeItem);
+        await containerStart.startContainerCommandHandler(treeItem);
 
         expect(showErrorMessageSpy).toHaveBeenCalledWith(
             expect.stringContaining(
@@ -75,11 +70,10 @@ describe('ContainerStart', () => {
         containerCommands.startContainer.mockRejectedValue(
             new Error('generic error'),
         );
-        const containerStart = new ContainerStart(context, containerCommands);
-        containerStart.activate();
+        const containerStart = new ContainerStart(containerCommands);
 
         await expect(
-            executeCommand(ContainerStart.startContainerCommand, treeItem),
+            containerStart.startContainerCommandHandler(treeItem),
         ).rejects.toThrow('generic error');
     });
 });

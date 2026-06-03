@@ -20,12 +20,12 @@ export class HostHealth implements vscode.Disposable {
         this.disposables.collect(
             vscode.commands.registerCommand(
                 HostHealth.inspectHostHealthCommand,
-                () => this.inspectHealth(),
+                () => this.inspectHealthCommandHandler(),
             ),
         );
     }
 
-    private async inspectHealth(): Promise<void> {
+    public async inspectHealthCommandHandler(): Promise<void> {
         let health: HostHealthCheckResult;
         try {
             health = await this.topoCli.hostHealth();

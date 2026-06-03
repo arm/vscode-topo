@@ -1,28 +1,12 @@
-import * as vscode from 'vscode';
-import * as manifest from '../manifest';
 import { assertTargetContainerTreeItem } from '../targetTreeView/assertTargetContainerTreeItem';
 import { showAndLogError } from '../util/showAndLogError';
 import { isWrappedError } from '../errors/wrappedError';
 import { ContainerCommands } from '../target/containerCommands';
 
 export class ContainerStart {
-    public static readonly startContainerCommand = `${manifest.PACKAGE_NAME}.startContainer`;
+    constructor(private readonly containerCommands: ContainerCommands) {}
 
-    constructor(
-        private readonly context: vscode.ExtensionContext,
-        private readonly containerCommands: ContainerCommands,
-    ) {}
-
-    public activate() {
-        this.context.subscriptions.push(
-            vscode.commands.registerCommand(
-                ContainerStart.startContainerCommand,
-                this.startContainerCommandHandler.bind(this),
-            ),
-        );
-    }
-
-    private async startContainerCommandHandler(
+    public async startContainerCommandHandler(
         treeNode: unknown,
     ): Promise<void> {
         assertTargetContainerTreeItem(treeNode);

@@ -4,40 +4,27 @@ import {
     attachShell as openAttachShell,
     attachSSH,
 } from '../actions/attachShell';
-import { mock, MockProxy } from 'vitest-mock-extended';
+import { mock } from 'vitest-mock-extended';
 import { ContainerItem } from '../util/types';
 import { DockerCommands } from '../target/dockerCommands';
 import { TargetContainerTreeItem } from '../targetTreeView/targetContainerTreeItem';
-import { executeCommand } from '../util/test/executeCommand';
 
 vi.mock('../util/logger');
 
 describe('AttachShell', () => {
     const dockerCommands = new DockerCommands();
     const target = 'user@topo.local';
-    let context: MockProxy<vscode.ExtensionContext>;
 
     beforeEach(() => {
         vi.clearAllMocks();
-        context = mock<vscode.ExtensionContext>({ subscriptions: [] });
     });
 
     afterEach(() => {
         vi.clearAllMocks();
     });
 
-    it('registers attachShell command on activate', () => {
-        const attachShell = new AttachShell(context, dockerCommands);
-        attachShell.activate();
-        expect(vscode.commands.registerCommand).toHaveBeenCalledWith(
-            AttachShell.attachShellCommand,
-            expect.any(Function),
-        );
-    });
-
     it('attachShell command opens terminal and sends docker exec', async () => {
-        const attachShell = new AttachShell(context, dockerCommands);
-        attachShell.activate();
+        const attachShell = new AttachShell(dockerCommands);
         const fakeItem = mock<ContainerItem>({
             id: 'cid',
             image: 'clabel',
@@ -46,7 +33,7 @@ describe('AttachShell', () => {
         });
         const treeItem = new TargetContainerTreeItem(fakeItem);
 
-        await executeCommand(AttachShell.attachShellCommand, treeItem);
+        await attachShell.attachShellCommandHandler(treeItem);
 
         expect(vscode.window.createTerminal).toHaveBeenCalledWith({
             name: 'Shell: clabel',
