@@ -6,13 +6,11 @@ import {
 } from '../actions/attachShell';
 import { mock } from 'vitest-mock-extended';
 import { ContainerItem } from '../util/types';
-import { DockerCommands } from '../target/dockerCommands';
 import { TargetContainerTreeItem } from '../targetTreeView/targetContainerTreeItem';
 
 vi.mock('../util/logger');
 
 describe('AttachShell', () => {
-    const dockerCommands = new DockerCommands();
     const target = 'user@topo.local';
 
     beforeEach(() => {
@@ -23,8 +21,8 @@ describe('AttachShell', () => {
         vi.clearAllMocks();
     });
 
-    it('attachShell command opens terminal and sends docker exec', async () => {
-        const attachShell = new AttachShell(dockerCommands);
+    it('attachShell command opens a docker exec terminal', async () => {
+        const attachShell = new AttachShell();
         const fakeItem = mock<ContainerItem>({
             id: 'cid',
             image: 'clabel',
@@ -37,16 +35,23 @@ describe('AttachShell', () => {
 
         expect(vscode.window.createTerminal).toHaveBeenCalledWith({
             name: 'Shell: clabel',
+            shellPath: 'docker',
+            shellArgs: [
+                '--host',
+                `ssh://${target}`,
+                'exec',
+                '-it',
+                'cid',
+                'sh',
+            ],
         });
         const terminal = vi.mocked(vscode.window.createTerminal).mock.results[0]
             .value;
-        expect(terminal.sendText).toHaveBeenCalledWith(
-            `docker --host 'ssh://${target}' exec -it 'cid' sh`,
-        );
+        expect(terminal.sendText).not.toHaveBeenCalled();
         expect(terminal.show).toHaveBeenCalled();
     });
 
-    it('attachShell opens terminal and sends docker exec', () => {
+    it('attachShell opens a docker exec terminal', () => {
         const fakeItem = mock<ContainerItem>({
             id: 'cid',
             image: 'clabel',
@@ -54,16 +59,23 @@ describe('AttachShell', () => {
             state: 'running',
         });
 
-        openAttachShell(fakeItem, dockerCommands);
+        openAttachShell(fakeItem);
 
         expect(vscode.window.createTerminal).toHaveBeenCalledWith({
             name: 'Shell: clabel',
+            shellPath: 'docker',
+            shellArgs: [
+                '--host',
+                `ssh://${target}`,
+                'exec',
+                '-it',
+                'cid',
+                'sh',
+            ],
         });
         const terminal = vi.mocked(vscode.window.createTerminal).mock.results[0]
             .value;
-        expect(terminal.sendText).toHaveBeenCalledWith(
-            `docker --host 'ssh://${target}' exec -it 'cid' sh`,
-        );
+        expect(terminal.sendText).not.toHaveBeenCalled();
         expect(terminal.show).toHaveBeenCalled();
     });
 
@@ -72,23 +84,12 @@ describe('AttachShell', () => {
 
         expect(vscode.window.createTerminal).toHaveBeenCalledWith({
             name: `SSH: ${target}`,
+            shellPath: 'ssh',
+            shellArgs: [target],
         });
         const terminal = vi.mocked(vscode.window.createTerminal).mock.results[0]
             .value;
-        expect(terminal.sendText).toHaveBeenCalledWith(`ssh '${target}'`);
-        expect(terminal.show).toHaveBeenCalled();
-    });
-
-    it('attachSSH quotes shell metacharacters in the target', () => {
-        const targetWithShellSyntax = `user@topo.local'; touch /tmp/pwned`;
-
-        attachSSH(targetWithShellSyntax);
-
-        const terminal = vi.mocked(vscode.window.createTerminal).mock.results[0]
-            .value;
-        expect(terminal.sendText).toHaveBeenCalledWith(
-            `ssh 'user@topo.local'\\''; touch /tmp/pwned'`,
-        );
+        expect(terminal.sendText).not.toHaveBeenCalled();
         expect(terminal.show).toHaveBeenCalled();
     });
 });

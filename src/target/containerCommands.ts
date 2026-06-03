@@ -30,8 +30,4 @@ export interface ContainerCommands {
         containerIds: string[],
         targetSshConnection: string,
     ): Promise<DockerInspectItem[]>;
-    getAttachShellCommand(
-        containerId: string,
-        targetSshConnection: string,
-    ): string;
 }

@@ -4,7 +4,6 @@ import { logger } from '../util/logger';
 import type { DockerInspectItem, DockerPsItem } from '../util/types';
 import type { ContainerCommands } from './containerCommands';
 import { getErrorMessage } from '../util/getErrorMessage';
-import { quoteShellArgument } from '../util/quoteShellArgument';
 
 export interface DockerError extends Error {
     stderr: ExecResult['stderr'];
@@ -218,20 +217,5 @@ export class DockerCommands implements ContainerCommands {
         const cmd = `docker --host ${getSshUri(targetSshConnection)} rm -f ${containerId}`;
         const warnMsg = `Warnings emitted when deleting container ${containerId}`;
         await runDockerCmd(cmd, warnMsg);
-    }
-
-    public getAttachShellCommand(
-        containerId: string,
-        targetSshConnection: string,
-    ): string {
-        return [
-            'docker',
-            '--host',
-            quoteShellArgument(getSshUri(targetSshConnection)),
-            'exec',
-            '-it',
-            quoteShellArgument(containerId),
-            'sh',
-        ].join(' ');
     }
 }
