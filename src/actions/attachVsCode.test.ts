@@ -54,6 +54,31 @@ describe('attachVsCode', () => {
     };
     const treeItem = new TargetContainerTreeItem(containerItem);
     const dockerContext = getDockerContextName(target);
+    const commandString = (args: string[]): string => args.join('\0');
+    const dockerContextShowCommand = commandString(['context', 'show']);
+    const dockerContextsCommand = commandString([
+        'context',
+        'ls',
+        '--format',
+        '{{.Name}}',
+    ]);
+    const dockerContextUseCommand = commandString([
+        'context',
+        'use',
+        dockerContext,
+    ]);
+    const dockerContextUseDefaultCommand = commandString([
+        'context',
+        'use',
+        'default',
+    ]);
+    const dockerContextCreateCommand = commandString([
+        'context',
+        'create',
+        dockerContext,
+        '--docker',
+        `host=ssh://${target}`,
+    ]);
 
     beforeEach(() => {
         execFileMock = vi.mocked(execFile);
@@ -70,23 +95,23 @@ describe('attachVsCode', () => {
     it("executes attachVsCode command that doesn't create context and calls remote-containers.attachToRunningContainer with container id", async () => {
         execFileMock.mockImplementation(
             async (_command: string, args: string[]) => {
-                const dockerArgs = args;
-                if (dockerArgs.join(' ') === 'context show') {
+                const dockerCommandString = commandString(args);
+                if (dockerCommandString === dockerContextShowCommand) {
                     return { stdout: 'default\n', stderr: '' };
                 }
-                if (dockerArgs.join(' ') === 'context ls --format {{.Name}}') {
+                if (dockerCommandString === dockerContextsCommand) {
                     return {
                         stdout: `default\n${dockerContext}\n`,
                         stderr: '',
                     };
                 }
-                if (dockerArgs.join(' ') === `context use ${dockerContext}`) {
+                if (dockerCommandString === dockerContextUseCommand) {
                     return { stdout: `${dockerContext}\n`, stderr: '' };
                 }
-                if (dockerArgs.join(' ') === 'context use default') {
+                if (dockerCommandString === dockerContextUseDefaultCommand) {
                     return { stdout: 'default\n', stderr: '' };
                 }
-                throw new Error(`Unknown docker args: ${dockerArgs.join(' ')}`);
+                throw new Error(`Unknown docker args: ${args.join(' ')}`);
             },
         );
 
@@ -124,26 +149,23 @@ describe('attachVsCode', () => {
     it('executes attachVsCode command that creates context and calls remote-containers.attachToRunningContainer with container id', async () => {
         execFileMock.mockImplementation(
             async (_command: string, args: string[]) => {
-                const dockerArgs = args;
-                if (dockerArgs.join(' ') === 'context show') {
+                const dockerCommandString = commandString(args);
+                if (dockerCommandString === dockerContextShowCommand) {
                     return { stdout: 'default\n', stderr: '' };
                 }
-                if (dockerArgs.join(' ') === 'context ls --format {{.Name}}') {
+                if (dockerCommandString === dockerContextsCommand) {
                     return { stdout: 'default\n', stderr: '' };
                 }
-                if (dockerArgs.join(' ') === `context use ${dockerContext}`) {
+                if (dockerCommandString === dockerContextUseCommand) {
                     return { stdout: `${dockerContext}\n`, stderr: '' };
                 }
-                if (dockerArgs.join(' ') === 'context use default') {
+                if (dockerCommandString === dockerContextUseDefaultCommand) {
                     return { stdout: 'default\n', stderr: '' };
                 }
-                if (
-                    dockerArgs.join(' ') ===
-                    `context create ${dockerContext} --docker host=ssh://${target}`
-                ) {
+                if (dockerCommandString === dockerContextCreateCommand) {
                     return { stdout: '', stderr: '' };
                 }
-                throw new Error(`Unknown docker args: ${dockerArgs.join(' ')}`);
+                throw new Error(`Unknown docker args: ${args.join(' ')}`);
             },
         );
 

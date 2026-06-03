@@ -87,14 +87,14 @@ const defaultInfoOutput = {
 };
 const execFileMock = execFile as Mock;
 const target = 'user@topo.local';
-const getDockerArgsKey = (args: string[]): string => args.join('\0');
-const dockerContextsCommand = getDockerArgsKey([
+const commandString = (args: string[]): string => args.join('\0');
+const dockerContextsCommand = commandString([
     'context',
     'ls',
     '--format',
     '{{.Name}}',
 ]);
-const dockerPsCommand = getDockerArgsKey([
+const dockerPsCommand = commandString([
     '--host',
     `ssh://${target}`,
     'ps',
@@ -102,7 +102,7 @@ const dockerPsCommand = getDockerArgsKey([
     '--format',
     '{{json .}}',
 ]);
-const dockerInspectCommand = getDockerArgsKey([
+const dockerInspectCommand = commandString([
     '--host',
     `ssh://${target}`,
     'inspect',
@@ -164,7 +164,7 @@ describe('ContainersManager', () => {
     it('getContainersData returns containers with runtime', async () => {
         execFileMock.mockImplementation(
             async (_command: string, args: string[]) => {
-                switch (getDockerArgsKey(args)) {
+                switch (commandString(args)) {
                     case dockerContextsCommand:
                         return defaultContextOutput;
                     case dockerPsCommand:
@@ -220,7 +220,7 @@ describe('ContainersManager', () => {
     it('getContainersData returns empty array on ps error', async () => {
         execFileMock.mockImplementation(
             async (_command: string, args: string[]) => {
-                switch (getDockerArgsKey(args)) {
+                switch (commandString(args)) {
                     case dockerContextsCommand:
                         return defaultContextOutput;
                     case dockerPsCommand:
@@ -244,7 +244,7 @@ describe('ContainersManager', () => {
     it('getContainersData returns empty array on parse error', async () => {
         execFileMock.mockImplementation(
             async (_command: string, args: string[]) => {
-                switch (getDockerArgsKey(args)) {
+                switch (commandString(args)) {
                     case dockerContextsCommand:
                         return defaultContextOutput;
                     case dockerPsCommand:
@@ -272,7 +272,7 @@ describe('ContainersManager', () => {
     it('getContainersData caches result after first call', async () => {
         execFileMock.mockImplementation(
             async (_command: string, args: string[]) => {
-                switch (getDockerArgsKey(args)) {
+                switch (commandString(args)) {
                     case dockerContextsCommand:
                         return defaultContextOutput;
                     case dockerPsCommand:
@@ -344,7 +344,7 @@ describe('ContainersManager', () => {
     it('startAutoRefresh and stopAutoRefresh manage timer and update data', async () => {
         execFileMock.mockImplementation(
             async (_command: string, args: string[]) => {
-                switch (getDockerArgsKey(args)) {
+                switch (commandString(args)) {
                     case dockerContextsCommand:
                         return defaultContextOutput;
                     case dockerPsCommand:
@@ -374,7 +374,7 @@ describe('ContainersManager', () => {
     it('fires onDataUpdate event', async () => {
         execFileMock.mockImplementation(
             async (_command: string, args: string[]) => {
-                switch (getDockerArgsKey(args)) {
+                switch (commandString(args)) {
                     case dockerContextsCommand:
                         return defaultContextOutput;
                     case dockerPsCommand:
