@@ -102,10 +102,10 @@ describe('HostDependenciesTreeDataProvider', () => {
             collapsibleState: vscode.TreeItemCollapsibleState.None,
             command: {
                 command: showOutput,
-                title: 'Open Arm Topo Output',
+                title: 'Open Topo Output',
             },
             contextValue: 'Dependencies Error',
-            tooltip: 'Open the Arm Topo output channel for details.',
+            tooltip: 'Open the Topo output channel for details.',
         });
     });
 
