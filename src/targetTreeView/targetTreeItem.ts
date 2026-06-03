@@ -1,37 +1,32 @@
 import * as vscode from 'vscode';
-import { TargetDescription, TargetState, TargetStatus } from '../util/types';
+import { TargetStatus } from '../util/types';
 import { getFixableDependencyFixes } from '../util/getDependencyFixes';
 import { HealthCheckDependency } from '../topoCliSchema';
-import { getVisibleTargetDependencies } from '../target/getVisibleTargetDependencies';
 
 /** Represents a target */
 export class TargetTreeItem extends vscode.TreeItem {
-    public readonly visibleDependencies: HealthCheckDependency[];
-
     constructor(
         public readonly target: string,
         public readonly selected: boolean,
-        public readonly state: TargetState,
-        public readonly targetDescription: TargetDescription | undefined,
+        public readonly status: TargetStatus,
+        public readonly visibleDependencies: HealthCheckDependency[] = [],
+        public readonly remoteProcessorNames: string[] = [],
     ) {
         super(target, vscode.TreeItemCollapsibleState.Expanded);
         this.id = target;
-        this.iconPath = getTargetTreeItemIcon(selected, state.status);
-        this.visibleDependencies = state.health
-            ? getVisibleTargetDependencies(state.health, targetDescription)
-            : [];
+        this.iconPath = getTargetTreeItemIcon(selected, status);
         const contextValues = ['Target'];
         if (selected) {
             contextValues.push('Selected');
         }
-        if (state.status === 'connected') {
+        if (status === 'connected') {
             contextValues.push('Connected');
         }
-        if (getFixableDependencyFixes(this.visibleDependencies).length > 0) {
+        if (getFixableDependencyFixes(visibleDependencies).length > 0) {
             contextValues.push('HasFixableDependencies');
         }
         this.contextValue = contextValues.join(' ');
-        this.collapsibleState = getTargetTreeItemState(selected, state.status);
+        this.collapsibleState = getTargetTreeItemState(selected, status);
     }
 
     public get displayName(): string {

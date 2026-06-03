@@ -1,22 +1,17 @@
 import * as vscode from 'vscode';
 import { TargetSubsystemGroupTreeItem } from './targetSubsystemGroupTreeItem';
-import { TargetDescription } from '../util/types';
-
-const targetDescription: TargetDescription = {
-    hostProcessors: [],
-    remoteProcessors: [{ name: 'imx-rproc' }],
-};
 
 describe('TargetSubsystemGroupTreeItem', () => {
-    it('sets label, contextValue, icon, and target description reference', () => {
+    it('sets label, contextValue, icon, and remote processor names', () => {
+        const remoteProcessorNames = ['imx-rproc'];
         const item = new TargetSubsystemGroupTreeItem(
             'root@host.local',
-            targetDescription,
+            remoteProcessorNames,
         );
 
         expect(item.label).toBe('Subsystems');
         expect(item.contextValue).toBe('Subsystems');
-        expect(item.targetDescription).toBe(targetDescription);
+        expect(item.remoteProcessorNames).toBe(remoteProcessorNames);
         expect(item.iconPath).toBeInstanceOf(vscode.ThemeIcon);
         expect(item.collapsibleState).toBe(
             vscode.TreeItemCollapsibleState.Expanded,

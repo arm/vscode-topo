@@ -380,7 +380,7 @@ describe('TargetTreeView', () => {
             containersManagerMock.getContainersData.mockResolvedValueOnce([]);
             const subsystemGroup = new TargetSubsystemGroupTreeItem(
                 target,
-                targetDescription,
+                targetDescription.remoteProcessors.map((rp) => rp.name),
             );
 
             const subsystemItems = await view.getChildren(subsystemGroup);
@@ -403,7 +403,7 @@ describe('TargetTreeView', () => {
 
     describe('getTreeItem', () => {
         it('getTreeItem returns the element itself', () => {
-            const item = new TargetSubsystemTreeItem('Host', target, []);
+            const item = new TargetSubsystemTreeItem('Host', target);
 
             const treeItem = view.getTreeItem(item);
 

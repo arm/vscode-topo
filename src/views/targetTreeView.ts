@@ -9,6 +9,7 @@ import { TargetSubsystemGroupTreeItem } from '../targetTreeView/targetSubsystemG
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 import { HealthCheckDependency } from '../topoCliSchema';
 import { TargetDescriptionStore } from '../target/targetDescriptionStore';
+import { getVisibleTargetDependencies } from '../target/getVisibleTargetDependencies';
 import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
 import { ContainerItem, TargetState } from '../util/types';
@@ -96,12 +97,23 @@ export class TargetTreeView
                     ? this.containersManager.getTargetStateSnapshot(target)
                     : { status: 'disconnected', health: undefined };
 
-                const description = selected
+                const description = state.health
                     ? await this.targetDescriptionStore.getDescription(target)
                     : undefined;
+                const visibleDependencies = state.health
+                    ? getVisibleTargetDependencies(state.health, description)
+                    : [];
+                const remoteProcessorNames =
+                    description?.remoteProcessors.map((rp) => rp.name) ?? [];
 
                 targetTreeItems.push(
-                    new TargetTreeItem(target, selected, state, description),
+                    new TargetTreeItem(
+                        target,
+                        selected,
+                        state.status,
+                        visibleDependencies,
+                        remoteProcessorNames,
+                    ),
                 );
             }
             const sortedTargetTreeItems = targetTreeItems.sort((a, b) =>
@@ -111,7 +123,7 @@ export class TargetTreeView
         }
 
         if (element instanceof TargetTreeItem) {
-            if (!element.state.health) {
+            if (!element.selected || element.status !== 'connected') {
                 return [];
             }
 
@@ -120,7 +132,7 @@ export class TargetTreeView
             );
             const subsystemsGroup = new TargetSubsystemGroupTreeItem(
                 element.target,
-                element.targetDescription,
+                element.remoteProcessorNames,
             );
             return [dependenciesGroup, subsystemsGroup];
         }
@@ -135,11 +147,7 @@ export class TargetTreeView
             const allContainers =
                 await this.containersManager.getContainersData(element.target);
 
-            const remoteProcessors =
-                element.targetDescription?.remoteProcessors.map(
-                    (rp) => rp.name,
-                ) ?? [];
-            const groupNames = ['Host', ...remoteProcessors];
+            const groupNames = ['Host', ...element.remoteProcessorNames];
             return groupNames.map((group) => {
                 const containers = filterAndSortContainerItemsForGroup(
                     allContainers,
