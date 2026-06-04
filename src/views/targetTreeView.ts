@@ -7,20 +7,40 @@ import { TargetSubsystemTreeItem } from '../targetTreeView/targetSubsystemTreeIt
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
 import { TargetSubsystemGroupTreeItem } from '../targetTreeView/targetSubsystemGroupTreeItem';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
-import { HealthCheckDependency } from '../topoCliSchema';
 import { TargetDescriptionStore } from '../target/targetDescriptionStore';
 import { getVisibleTargetDependencies } from '../target/getVisibleTargetDependencies';
 import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
-import { getFixableDependencyFixes } from '../util/getDependencyFixes';
-import { getTargetDependencies } from '../target/getTargetDependencies';
+import { ContainerItem, TargetState } from '../util/types';
 
-function sortDependenciesByName(
-    deps: HealthCheckDependency[],
-): HealthCheckDependency[] {
-    return deps.sort((a, b) =>
-        a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
-    );
+function compareByName(a: { name: string }, b: { name: string }): number {
+    return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+}
+
+function compareContainers(a: ContainerItem, b: ContainerItem): number {
+    if (a.state === 'running' && b.state !== 'running') {
+        return -1;
+    }
+    if (a.state !== 'running' && b.state === 'running') {
+        return 1;
+    }
+    return compareByName(a, b);
+}
+
+function filterContainersForGroup(
+    containers: ContainerItem[],
+    group: string,
+): ContainerItem[] {
+    return containers.filter((item) => {
+        if (group === 'Host') {
+            return item.runtime === manifest.TARGET_HOST_RUNTIME;
+        }
+
+        return (
+            item.runtime === manifest.TARGET_REMOTEPROC_RUNTIME &&
+            item.annotations?.['remoteproc.name'] === group
+        );
+    });
 }
 
 export class TargetTreeView
@@ -67,23 +87,29 @@ export class TargetTreeView
             const targetTreeItems: TargetTreeItem[] = [];
             for (const target of this.targetModel.targets) {
                 const selected = target === selectedTarget;
-                const { status } =
-                    this.containersManager.getTargetStateSnapshot(target);
-                const dependencies = selected
-                    ? await getTargetDependencies(
-                          target,
-                          this.containersManager,
-                          this.targetDescriptionStore,
-                      )
+
+                const state: TargetState = selected
+                    ? this.containersManager.getTargetStateSnapshot(target)
+                    : { status: 'disconnected', health: undefined };
+
+                const description = state.health
+                    ? await this.targetDescriptionStore.getDescription(target)
+                    : undefined;
+                const visibleDependencies = state.health
+                    ? getVisibleTargetDependencies(state.health, description)
                     : [];
-                const fixes = getFixableDependencyFixes(dependencies);
-                const targetTreeItem = new TargetTreeItem(
-                    target,
-                    selected,
-                    status,
-                    fixes.length > 0,
+                const remoteProcessorNames =
+                    description?.remoteProcessors.map((rp) => rp.name) ?? [];
+
+                targetTreeItems.push(
+                    new TargetTreeItem(
+                        target,
+                        selected,
+                        state.status,
+                        visibleDependencies,
+                        remoteProcessorNames,
+                    ),
                 );
-                targetTreeItems.push(targetTreeItem);
             }
             const sortedTargetTreeItems = targetTreeItems.sort((a, b) =>
                 a.displayName.localeCompare(b.displayName),
@@ -92,73 +118,50 @@ export class TargetTreeView
         }
 
         if (element instanceof TargetTreeItem) {
-            if (!element.selected) {
+            if (!element.selected || element.status !== 'connected') {
                 return [];
             }
-            const [targetState, selectedTargetDescription] = await Promise.all([
-                this.containersManager.getTargetState(element.target),
-                this.targetDescriptionStore.getDescription(element.target),
-            ]);
-            if (targetState.health === undefined) {
-                return [];
-            }
-
-            const dependencies = getVisibleTargetDependencies(
-                targetState.health,
-                selectedTargetDescription,
+            const containers = await this.containersManager.getContainersData(
+                element.target,
             );
+            const sortedContainers = [...containers].sort(compareContainers);
 
             const dependenciesGroup = new HealthCheckDependencyGroupTreeItem(
-                dependencies,
+                element.visibleDependencies,
             );
             const subsystemsGroup = new TargetSubsystemGroupTreeItem(
                 element.target,
+                element.remoteProcessorNames,
+                sortedContainers,
             );
             return [dependenciesGroup, subsystemsGroup];
         }
 
         if (element instanceof HealthCheckDependencyGroupTreeItem) {
-            return sortDependenciesByName(element.dependencies).map(
-                (d) => new HealthCheckDependencyTreeItem(d),
-            );
+            const deps = [...element.dependencies].sort(compareByName);
+            return deps.map((d) => new HealthCheckDependencyTreeItem(d));
         }
 
         if (element instanceof TargetSubsystemGroupTreeItem) {
-            const targetDescription =
-                await this.targetDescriptionStore.getDescription(
-                    element.target,
+            const groupNames = ['Host', ...element.remoteProcessorNames];
+            return groupNames.map((group) => {
+                const containers = filterContainersForGroup(
+                    element.containers,
+                    group,
                 );
-            const remoteProcessors =
-                targetDescription?.remoteProcessors.map((rp) => rp.name) || [];
-            const subsystemNames = ['Host', ...remoteProcessors];
-            return subsystemNames.map(
-                (name) => new TargetSubsystemTreeItem(name, element.target),
-            );
+
+                return new TargetSubsystemTreeItem(
+                    group,
+                    element.target,
+                    containers,
+                );
+            });
         }
 
         if (element instanceof TargetSubsystemTreeItem) {
-            const containers = await this.containersManager.getContainersData(
-                element.target,
+            return element.containers.map(
+                (container) => new TargetContainerTreeItem(container),
             );
-            const subsystemContainers = containers.filter((item) =>
-                element.group === 'Host'
-                    ? item.runtime === manifest.TARGET_HOST_RUNTIME
-                    : item.runtime === manifest.TARGET_REMOTEPROC_RUNTIME &&
-                      item.annotations?.['remoteproc.name'] === element.group,
-            );
-            const subsystemTreeItems = subsystemContainers.map(
-                (info) => new TargetContainerTreeItem(info),
-            );
-            const sortedSubsystemTreeItems = subsystemTreeItems.sort((a, b) => {
-                if (a.state === 'running' && b.state !== 'running') {
-                    return -1;
-                }
-                if (a.state !== 'running' && b.state === 'running') {
-                    return 1;
-                }
-                return a.name.localeCompare(b.name);
-            });
-            return sortedSubsystemTreeItems;
         }
 
         return [];
