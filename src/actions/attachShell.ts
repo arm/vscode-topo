@@ -18,9 +18,12 @@ const getSshUri = (targetSshConnection: string): string => {
 
 export function attachShell(
     item: ContainerItem,
-    containerCommands: ContainerCommands
+    containerCommands: ContainerCommands,
 ): void {
-    const fullCommand = containerCommands.getAttachShellCommand(item.id, item.target);
+    const fullCommand = containerCommands.getAttachShellCommand(
+        item.id,
+        item.target,
+    );
     const terminal = vscode.window.createTerminal({
         name: `Shell: ${item.image}`,
         shellPath: fullCommand[0],
