@@ -4,6 +4,11 @@ All notable changes to the "vscode-topo" extension will be documented in this fi
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## 0.3.0
+
+**Full Changelog**: https://github.com/arm/vscode-topo/compare/v0.1.0...v0.3.0
+
+
 ## 0.1.0
 
 ## What's Changed
