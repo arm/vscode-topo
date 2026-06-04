@@ -234,6 +234,7 @@ jobs:
         if: needs.prepare-version.outputs.version && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/release-test')
         runs-on: ubuntu-latest
         steps:
+            - uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e
             - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
               with:
                   pattern: vsix-package-*
