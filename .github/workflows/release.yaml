@@ -48,10 +48,15 @@ jobs:
                       exit 0
                   fi
 
-                  CURRENT_VERSION=$(go run github.com/caarlos0/svu/v3@v3.4.0 current --strip-prefix || echo "0.0.0")
-                  NEXT_VERSION=$(go run github.com/caarlos0/svu/v3@v3.4.0 next --strip-prefix)
-                  IFS=. read -r CURRENT_MAJOR CURRENT_MINOR CURRENT_PATCH <<< "$CURRENT_VERSION"
-                  IFS=. read -r NEXT_MAJOR NEXT_MINOR NEXT_PATCH <<< "$NEXT_VERSION"
+                  CURRENT_VERSION=$(go run github.com/caarlos0/svu/v3@v3.4.0 current --json || echo '{"major":0,"minor":0,"patch":0}')
+                  NEXT_VERSION=$(go run github.com/caarlos0/svu/v3@v3.4.0 next --json)
+
+                  CURRENT_MAJOR=$(jq -r .major <<< "$CURRENT_VERSION")
+                  CURRENT_MINOR=$(jq -r .minor <<< "$CURRENT_VERSION")
+                  CURRENT_PATCH=$(jq -r .patch <<< "$CURRENT_VERSION")
+                  NEXT_MAJOR=$(jq -r .major <<< "$NEXT_VERSION")
+                  NEXT_MINOR=$(jq -r .minor <<< "$NEXT_VERSION")
+                  NEXT_PATCH=$(jq -r .patch <<< "$NEXT_VERSION")
 
                   if [ "$NEXT_MAJOR" -gt "$CURRENT_MAJOR" ]; then
                       RELEASE_TYPE=Major
