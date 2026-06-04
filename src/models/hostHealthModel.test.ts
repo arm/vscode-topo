@@ -1,6 +1,6 @@
 import { HostModel } from './hostModel';
 import { HostHealthCheckResult } from '../topoCliSchema';
-import { Loadable } from '../util/types';
+import { loaded } from '../util/loadable';
 
 const hostHealth: HostHealthCheckResult = {
     host: {
@@ -30,18 +30,11 @@ describe('HostModel', () => {
 
     it('stores the latest host health loadable', async () => {
         const model = new HostModel();
-        const healthLoadable: Loadable<HostHealthCheckResult> = {
-            status: 'loaded',
-            data: hostHealth,
-        };
+        const healthLoadable = loaded(hostHealth);
 
         model.setHealth(healthLoadable);
 
         expect(model.health).toBe(healthLoadable);
-        expect(model.health).toStrictEqual({
-            status: 'loaded',
-            data: hostHealth,
-        });
     });
 
     it('fires onChanged when host health is updated', () => {
@@ -49,7 +42,7 @@ describe('HostModel', () => {
         const onChanged = vi.fn();
         model.onHealthChanged(onChanged);
 
-        model.setHealth({ status: 'loaded', data: hostHealth });
+        model.setHealth(loaded(hostHealth));
 
         expect(onChanged).toHaveBeenCalledTimes(1);
     });

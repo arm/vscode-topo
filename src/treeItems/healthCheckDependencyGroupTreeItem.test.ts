@@ -10,7 +10,7 @@ describe('HealthCheckDependencyGroupTreeItem', () => {
                 value: 'docker',
             },
         ];
-        const item = new HealthCheckDependencyGroupTreeItem(dependencies);
+        const item = new HealthCheckDependencyGroupTreeItem(dependencies, true);
 
         expect(item.label).toBe('Dependencies');
         expect(item.contextValue).toBe('Dependencies');
@@ -19,5 +19,13 @@ describe('HealthCheckDependencyGroupTreeItem', () => {
             vscode.TreeItemCollapsibleState.Collapsed,
         );
         expect(item.iconPath).toBeInstanceOf(vscode.ThemeIcon);
+    });
+
+    it('sets loading icon when loading', () => {
+        const item = new HealthCheckDependencyGroupTreeItem([], true);
+
+        expect(item.iconPath).toBeInstanceOf(vscode.ThemeIcon);
+        const icon = item.iconPath as vscode.ThemeIcon;
+        expect(icon.id).toBe('loading~spin');
     });
 });

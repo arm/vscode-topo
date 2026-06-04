@@ -128,6 +128,7 @@ export class TargetTreeView
 
             const dependenciesGroup = new HealthCheckDependencyGroupTreeItem(
                 element.visibleDependencies,
+                false,
             );
             const subsystemsGroup = new TargetSubsystemGroupTreeItem(
                 element.target,

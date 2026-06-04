@@ -5,6 +5,7 @@ import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependenc
 import { failedToLoadHostDependenciesMessage } from '../treeItems/hostDependenciesLoadErrorItem';
 import { HostModel } from '../models/hostModel';
 import { showOutput } from '../commands';
+import { errored, loaded } from '../util/loadable';
 
 vi.mock('../util/logger');
 
@@ -38,8 +39,8 @@ describe('HostDependenciesTreeDataProvider', () => {
 
     it('returns host dependency items sorted by name below the Dependencies group', async () => {
         const model = new HostModel();
-        model.setHealth({
-            data: {
+        model.setHealth(
+            loaded({
                 host: {
                     dependencies: [
                         {
@@ -59,9 +60,8 @@ describe('HostDependenciesTreeDataProvider', () => {
                         },
                     ],
                 },
-            },
-            status: 'loaded',
-        });
+            }),
+        );
         const provider = new HostTreeView(model);
 
         const rootChildren = provider.getChildren();
@@ -88,10 +88,7 @@ describe('HostDependenciesTreeDataProvider', () => {
 
     it('returns an error item when host health cannot be loaded', async () => {
         const model = new HostModel();
-        model.setHealth({
-            error: new Error('health unavailable'),
-            status: 'error',
-        });
+        model.setHealth(errored('Failed to load host health'));
         const provider = new HostTreeView(model);
 
         const children = provider.getChildren();
@@ -128,10 +125,7 @@ describe('HostDependenciesTreeDataProvider', () => {
         const listener = vi.fn();
         provider.onDidChangeTreeData(listener);
 
-        model.setHealth({
-            status: 'error',
-            error: new Error('unimportant'),
-        });
+        model.setHealth(errored('irrelevant error'));
 
         expect(listener).toHaveBeenCalled();
     });

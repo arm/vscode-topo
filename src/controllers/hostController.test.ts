@@ -3,6 +3,7 @@ import { HostModel } from '../models/hostModel';
 import { TopoCli } from '../topoCli';
 import { HostController } from './hostController';
 import { HostHealthCheckResult } from '../topoCliSchema';
+import { loaded } from '../util/loadable';
 
 const hostHealth: HostHealthCheckResult = {
     host: {
@@ -31,9 +32,6 @@ describe('HostController', () => {
         await Promise.resolve();
 
         expect(topoCli.hostHealth).toHaveBeenCalled();
-        expect(model.health).toStrictEqual({
-            status: 'loaded',
-            data: hostHealth,
-        });
+        expect(model.health).toStrictEqual(loaded(hostHealth));
     });
 });
