@@ -15,7 +15,7 @@ import { TopoCli } from '../topoCli';
 
 type IssueFixQuickPickItem = vscode.QuickPickItem & IssueFix;
 
-function getFixableDependencyItems(
+function getFixableDependencyQuickPickItems(
     dependencies: HealthCheckDependency[],
 ): IssueFixQuickPickItem[] {
     return getFixableDependencyFixes(dependencies).map(
@@ -83,7 +83,9 @@ export class FixIssue {
             return;
         }
 
-        const fixes = getFixableDependencyItems(treeNode.visibleDependencies);
+        const fixes = getFixableDependencyQuickPickItems(
+            treeNode.visibleDependencies,
+        );
 
         if (fixes.length === 0) {
             showAndLogError(
