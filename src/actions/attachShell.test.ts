@@ -7,7 +7,6 @@ import {
 import { mock } from 'vitest-mock-extended';
 import { ContainerItem } from '../util/types';
 import { DockerCommands } from '../target/dockerCommands';
-import { ContainerCommands } from '../target/containerCommands';
 import { TargetContainerTreeItem } from '../targetTreeView/targetContainerTreeItem';
 
 vi.mock('../util/logger');
@@ -36,17 +35,14 @@ describe('AttachShell', () => {
 
         await attachShell.attachShellCommandHandler(treeItem);
 
+        const expectedCommand = dockerCommands.getAttachShellCommand(
+            fakeItem.id,
+            fakeItem.target,
+        );
         expect(vscode.window.createTerminal).toHaveBeenCalledWith({
             name: 'Shell: clabel',
-            shellPath: 'docker',
-            shellArgs: [
-                '--host',
-                `ssh://${target}`,
-                'exec',
-                '-it',
-                'cid',
-                'sh',
-            ],
+            shellPath: expectedCommand[0],
+            shellArgs: expectedCommand.slice(1),
         });
         const terminal = vi.mocked(vscode.window.createTerminal).mock.results[0]
             .value;
@@ -64,17 +60,14 @@ describe('AttachShell', () => {
 
         openAttachShell(fakeItem, dockerCommands);
 
+        const expectedCommand = dockerCommands.getAttachShellCommand(
+            fakeItem.id,
+            fakeItem.target,
+        );
         expect(vscode.window.createTerminal).toHaveBeenCalledWith({
             name: 'Shell: clabel',
-            shellPath: 'docker',
-            shellArgs: [
-                '--host',
-                `ssh://${target}`,
-                'exec',
-                '-it',
-                'cid',
-                'sh',
-            ],
+            shellPath: expectedCommand[0],
+            shellArgs: expectedCommand.slice(1),
         });
         const terminal = vi.mocked(vscode.window.createTerminal).mock.results[0]
             .value;

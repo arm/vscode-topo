@@ -12,10 +12,6 @@ export class AttachShell {
     }
 }
 
-const getSshUri = (targetSshConnection: string): string => {
-    return `ssh://${targetSshConnection}`;
-};
-
 export function attachShell(
     item: ContainerItem,
     containerCommands: ContainerCommands,
