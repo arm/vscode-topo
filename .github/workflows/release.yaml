@@ -167,7 +167,7 @@ jobs:
         needs:
             - prepare-version
             - build
-        if: needs.prepare-version.outputs.version && github.ref == 'refs/heads/main'
+        if: needs.prepare-version.outputs.version && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/release-test')
         runs-on: ubuntu-latest
         outputs:
             release_commit: ${{ inputs.pre-release && github.sha || steps.commit-version.outputs.release_commit }}
@@ -192,7 +192,7 @@ jobs:
                   echo "release_commit=$COMMIT" >> "$GITHUB_OUTPUT"
             - name: Push changes
               if: ${{ !inputs.pre-release }}
-              run: git push
+              run: git push origin HEAD:${{ github.ref_name }}
 
     release:
         name: Release
