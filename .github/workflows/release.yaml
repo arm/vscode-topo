@@ -191,7 +191,6 @@ jobs:
                   COMMIT=$(git rev-parse HEAD)
                   echo "release_commit=$COMMIT" >> "$GITHUB_OUTPUT"
             - name: Push changes
-              if: ${{ !inputs.pre-release }}
               run: git push origin HEAD:${{ github.ref_name }}
 
     release:
