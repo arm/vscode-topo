@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { TargetTreeItem } from './targetTreeItem';
+import { HealthCheckDependency } from '../topoCliSchema';
 
 describe('TargetTreeItem', () => {
     const baseTarget = 'root@host.local';
@@ -73,8 +74,20 @@ describe('TargetTreeItem', () => {
     });
 
     it('adds HasFixableDependencies context when target has fixable dependencies', () => {
-        const item = new TargetTreeItem(baseTarget, true, 'connected', true);
+        const dependency: HealthCheckDependency = {
+            name: 'Container Engine',
+            status: 'error',
+            value: 'missing',
+            fix: {
+                description: 'Install container engine',
+                command: 'topo install container-engine',
+            },
+        };
+        const item = new TargetTreeItem(baseTarget, true, 'connected', [
+            dependency,
+        ]);
 
         expect(item.contextValue).toContain('HasFixableDependencies');
+        expect(item.visibleDependencies).toEqual([dependency]);
     });
 });

@@ -1,5 +1,7 @@
 import * as vscode from 'vscode';
 import { TargetStatus } from '../util/types';
+import { getFixableDependencyFixes } from '../util/getDependencyFixes';
+import { HealthCheckDependency } from '../topoCliSchema';
 
 /** Represents a target */
 export class TargetTreeItem extends vscode.TreeItem {
@@ -7,7 +9,8 @@ export class TargetTreeItem extends vscode.TreeItem {
         public readonly target: string,
         public readonly selected: boolean,
         public readonly status: TargetStatus,
-        public readonly hasFixableDependencies = false,
+        public readonly visibleDependencies: HealthCheckDependency[] = [],
+        public readonly remoteProcessorNames: string[] = [],
     ) {
         super(target, vscode.TreeItemCollapsibleState.Expanded);
         this.id = target;
@@ -19,7 +22,7 @@ export class TargetTreeItem extends vscode.TreeItem {
         if (status === 'connected') {
             contextValues.push('Connected');
         }
-        if (hasFixableDependencies) {
+        if (getFixableDependencyFixes(visibleDependencies).length > 0) {
             contextValues.push('HasFixableDependencies');
         }
         this.contextValue = contextValues.join(' ');
