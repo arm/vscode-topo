@@ -5,7 +5,7 @@ on:
         inputs:
             pre-release:
                 type: boolean
-                description: Whether to create a pre-release instead of a stable release
+                description: Pre-release
                 default: false
 
 env:
