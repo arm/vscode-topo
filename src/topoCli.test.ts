@@ -365,7 +365,6 @@ describe('TopoCli', () => {
                 '--target',
                 'hostname',
                 '--skip-version-checks',
-                '--accept-new-host-keys',
                 '-o',
                 'json',
             ],
@@ -384,13 +383,7 @@ describe('TopoCli', () => {
         expect(execMock).toHaveBeenCalledTimes(1);
         expect(execMock).toHaveBeenCalledWith(
             topoCli.getBinaryPath(),
-            [
-                'health',
-                '--skip-version-checks',
-                '--accept-new-host-keys',
-                '-o',
-                'json',
-            ],
+            ['health', '--skip-version-checks', '-o', 'json'],
             {
                 env: {},
                 windowsHide: true,

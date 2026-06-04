@@ -271,12 +271,7 @@ export class TopoCli {
         if (sshTarget) {
             cmd.push('--target', sshTarget);
         }
-        cmd.push(
-            '--skip-version-checks',
-            '--accept-new-host-keys',
-            '-o',
-            'json',
-        );
+        cmd.push('--skip-version-checks', '-o', 'json');
         const promise = await new Promise<string>((resolve, reject) => {
             const child = childProcess.execFile(
                 bin,
