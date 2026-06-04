@@ -15,6 +15,20 @@ import { TopoCli } from '../topoCli';
 
 type IssueFixQuickPickItem = vscode.QuickPickItem & IssueFix;
 
+function getFixableDependencyItems(
+    dependencies: HealthCheckDependency[],
+): IssueFixQuickPickItem[] {
+    return getFixableDependencyFixes(dependencies).map(
+        ({ dependency, fix }) => ({
+            label: dependency.name,
+            description: fix.description,
+            detail: `Command: ${fix.command}`,
+            dependency,
+            fix,
+        }),
+    );
+}
+
 export class FixIssue {
     constructor(
         private readonly topoCli: TopoCli,
@@ -69,9 +83,7 @@ export class FixIssue {
             return;
         }
 
-        const fixes = this.getFixableDependencyItems(
-            treeNode.visibleDependencies,
-        );
+        const fixes = getFixableDependencyItems(treeNode.visibleDependencies);
 
         if (fixes.length === 0) {
             showAndLogError(
@@ -84,20 +96,6 @@ export class FixIssue {
         }
 
         await this.selectAndFixTargetIssue(treeNode.target, fixes);
-    }
-
-    private getFixableDependencyItems(
-        dependencies: HealthCheckDependency[],
-    ): IssueFixQuickPickItem[] {
-        return getFixableDependencyFixes(dependencies).map(
-            ({ dependency, fix }) => ({
-                label: dependency.name,
-                description: fix.description,
-                detail: `Command: ${fix.command}`,
-                dependency,
-                fix,
-            }),
-        );
     }
 
     private async selectAndFixTargetIssue(
