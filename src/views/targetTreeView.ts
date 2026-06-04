@@ -108,6 +108,7 @@ export class TargetTreeView
                         state.status,
                         visibleDependencies,
                         remoteProcessorNames,
+                        state.health?.connectivity,
                     ),
                 );
             }

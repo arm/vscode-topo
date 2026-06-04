@@ -90,4 +90,26 @@ describe('TargetTreeItem', () => {
         expect(item.contextValue).toContain('HasFixableDependencies');
         expect(item.visibleDependencies).toEqual([dependency]);
     });
+
+    it('shows diagnostics as a description and tooltip when provided', () => {
+        const item = new TargetTreeItem(baseTarget, true, 'error', [], [], {
+            name: 'Connectivity',
+            status: 'error',
+            value: 'ssh connection failed',
+        });
+
+        expect(item.description).toBe('ssh connection failed');
+        expect(item.tooltip).toBe(`${baseTarget}: ssh connection failed`);
+    });
+
+    it('does not show connectivity diagnostics when target is unselected', () => {
+        const item = new TargetTreeItem(baseTarget, false, 'error', [], [], {
+            name: 'Connectivity',
+            status: 'error',
+            value: 'ssh connection failed',
+        });
+
+        expect(item.description).toBeUndefined();
+        expect(item.tooltip).toBeUndefined();
+    });
 });

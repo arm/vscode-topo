@@ -209,6 +209,52 @@ describe('TargetTreeView', () => {
             );
         });
 
+        it('shows connectivity diagnostics on selected target when connectivity has an error', async () => {
+            const diagnostics = '"ssh" not found on remote target\'s $PATH';
+            containersManagerMock.getTargetStateSnapshot.mockReturnValue({
+                health: {
+                    ...targetHealth,
+                    connectivity: {
+                        name: 'Connectivity',
+                        status: 'error',
+                        value: diagnostics,
+                    },
+                },
+                status: 'error',
+            });
+
+            const rootChildren = await view.getChildren();
+
+            expect(rootChildren).toHaveLength(1);
+            expect(rootChildren[0].label).toBe(target);
+            expect(rootChildren[0].description).toBe(diagnostics);
+            expect(rootChildren[0].tooltip).toBe(`${target}: ${diagnostics}`);
+        });
+
+        it('does not show connectivity diagnostics on unselected targets', async () => {
+            const otherTarget = 'user@other.local';
+            targetModel.setTargets([target, otherTarget]);
+            targetModel.setSelected(otherTarget);
+            containersManagerMock.getTargetStateSnapshot.mockReturnValue({
+                health: {
+                    ...targetHealth,
+                    connectivity: {
+                        name: 'Connectivity',
+                        status: 'error',
+                        value: 'ssh connection failed',
+                    },
+                },
+                status: 'error',
+            });
+
+            const rootChildren = await view.getChildren();
+            const unselectedTarget = rootChildren.find(
+                (item) => item.label === target,
+            );
+
+            expect(unselectedTarget?.description).toBeUndefined();
+        });
+
         it('marks target with executable dependency fixes as fixable', async () => {
             const targetState: TargetState = {
                 health: {
