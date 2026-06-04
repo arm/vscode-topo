@@ -1,16 +1,11 @@
 import * as vscode from 'vscode';
 import { PACKAGE_NAME } from '../manifest';
-import { HealthCheckDependency, HostHealthCheckResult } from '../topoCliSchema';
+import { HealthCheckDependency } from '../topoCliSchema';
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
-import { logger } from '../util/logger';
-import {
-    failedToLoadHostDependenciesMessage,
-    HostDependenciesLoadErrorItem,
-} from '../treeItems/hostDependenciesLoadErrorItem';
+import { ErrorTreeItem } from '../treeItems/errorTreeItem';
 import { HostModel } from '../models/hostModel';
 import { DisposableCollector } from '../util/disposableCollector';
-import { Loadable } from '../util/loadable';
 
 function sortDependenciesByName(
     deps: HealthCheckDependency[],
@@ -49,8 +44,12 @@ export class HostTreeView
         if (!element) {
             const health = this.model.health;
             if (health.status === 'errored') {
-                logger.warn(failedToLoadHostDependenciesMessage, health.error);
-                return [new HostDependenciesLoadErrorItem()];
+                return [
+                    new ErrorTreeItem(
+                        'Failed to load dependencies',
+                        health.error.message,
+                    ),
+                ];
             }
 
             const deps = sortDependenciesByName(health.data.host.dependencies);

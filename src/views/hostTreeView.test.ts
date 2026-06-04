@@ -2,12 +2,9 @@ import * as vscode from 'vscode';
 import { HostTreeView } from './hostTreeView';
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
-import { failedToLoadHostDependenciesMessage } from '../treeItems/hostDependenciesLoadErrorItem';
 import { HostModel } from '../models/hostModel';
-import { showOutput } from '../commands';
 import { errored, loaded } from '../util/loadable';
-
-vi.mock('../util/logger');
+import { ErrorTreeItem } from '../treeItems/errorTreeItem';
 
 describe('HostDependenciesTreeDataProvider', () => {
     afterEach(() => {
@@ -88,22 +85,15 @@ describe('HostDependenciesTreeDataProvider', () => {
 
     it('returns an error item when host health cannot be loaded', async () => {
         const model = new HostModel();
-        model.setHealth(errored('Failed to load host health'));
+        model.setHealth(errored('uh oh'));
         const provider = new HostTreeView(model);
 
         const children = provider.getChildren();
 
         expect(children).toHaveLength(1);
-        expect(children[0]).toMatchObject({
-            label: failedToLoadHostDependenciesMessage,
-            collapsibleState: vscode.TreeItemCollapsibleState.None,
-            command: {
-                command: showOutput,
-                title: 'Open Arm Topo Output',
-            },
-            contextValue: 'Dependencies Error',
-            tooltip: 'Open the Arm Topo output channel for details.',
-        });
+        expect(children[0]).toMatchObject(
+            new ErrorTreeItem('Failed to load dependencies', 'uh oh'),
+        );
     });
 
     it('getTreeItem returns the element itself', () => {

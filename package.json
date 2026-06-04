@@ -256,7 +256,7 @@
             "view/item/context": [
                 {
                     "command": "topo.showOutput",
-                    "when": "view == topo.host-manager && viewItem =~ /Dependencies/ && viewItem =~ /Error/",
+                    "when": "viewItem =~ /OpenableError/",
                     "group": "topo/1_output"
                 },
                 {

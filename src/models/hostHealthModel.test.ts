@@ -18,14 +18,13 @@ describe('HostModel', () => {
     it('defaults to an empty host dependency list', async () => {
         const model = new HostModel();
 
-        expect(model.health).toStrictEqual({
-            status: 'loaded',
-            data: {
+        expect(model.health).toStrictEqual(
+            loaded({
                 host: {
                     dependencies: [],
                 },
-            },
-        });
+            }),
+        );
     });
 
     it('stores the latest host health loadable', async () => {

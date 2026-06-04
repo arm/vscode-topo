@@ -2,20 +2,15 @@ import * as vscode from 'vscode';
 import { DISPLAY_NAME } from '../manifest';
 import { showOutput } from '../commands';
 
-export const failedToLoadHostDependenciesMessage =
-    'Failed to load host dependencies';
-
-export class HostDependenciesLoadErrorItem extends vscode.TreeItem {
-    constructor() {
-        super(
-            failedToLoadHostDependenciesMessage,
-            vscode.TreeItemCollapsibleState.None,
-        );
+export class ErrorTreeItem extends vscode.TreeItem {
+    constructor(message: string, description?: string) {
+        super(message, vscode.TreeItemCollapsibleState.None);
+        this.description = description;
         this.iconPath = new vscode.ThemeIcon(
             'error',
             new vscode.ThemeColor('testing.iconFailed'),
         );
-        this.contextValue = 'Dependencies Error';
+        this.contextValue = 'OpenableError';
         this.command = {
             command: showOutput,
             title: `Open ${DISPLAY_NAME} Output`,
