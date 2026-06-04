@@ -9,7 +9,10 @@ import { TargetState, ContainerItem, TargetDescription } from '../util/types';
 import { mock, MockProxy } from 'vitest-mock-extended';
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
 import { TargetSubsystemGroupTreeItem } from '../targetTreeView/targetSubsystemGroupTreeItem';
-import { HealthCheckDependency, HealthCheckResult } from '../topoCliSchema';
+import {
+    HealthCheckDependency,
+    TargetHealthCheckResult,
+} from '../topoCliSchema';
 import { TargetDescriptionStore } from '../target/targetDescriptionStore';
 import { TargetModel } from '../models/targetModel';
 
@@ -23,7 +26,7 @@ describe('TargetTreeView', () => {
         hostProcessors: [],
         remoteProcessors: [{ name: 'imx-rproc' }, { name: 'other-rproc' }],
     };
-    const targetHealth: HealthCheckResult['target'] = {
+    const targetHealth: TargetHealthCheckResult = {
         isLocalhost: false,
         connectivity: {
             name: 'Connectivity',
@@ -105,6 +108,9 @@ describe('TargetTreeView', () => {
             mockContainers,
         );
         containersManagerMock.getTargetState.mockResolvedValue(targetState);
+        containersManagerMock.getTargetStateSnapshot.mockReturnValue(
+            targetState,
+        );
         containersManagerMock.onDataUpdate.mockImplementation(
             onDataUpdateEmitter.event,
         );
@@ -127,15 +133,6 @@ describe('TargetTreeView', () => {
 
     describe('getChildren', () => {
         it('returns Target at root and Dependencies/Subsystems as its children', async () => {
-            containersManagerMock.getTargetStateSnapshot.mockReturnValue({
-                health: undefined,
-                status: 'disconnected',
-            });
-            containersManagerMock.getTargetState.mockResolvedValue({
-                health: targetHealth,
-                status: 'connected',
-            });
-
             const rootChildren = await view.getChildren();
             const targetChildren = await view.getChildren(rootChildren[0]);
 
@@ -148,6 +145,10 @@ describe('TargetTreeView', () => {
             );
             expect(targetChildren[0].label).toBe('Dependencies');
             expect(targetChildren[1].label).toBe('Subsystems');
+            expect(containersManagerMock.getTargetState).not.toHaveBeenCalled();
+            expect(
+                targetDescriptionStoreMock.getDescription,
+            ).toHaveBeenCalledTimes(1);
         });
 
         it('returns dependency items for Dependencies group', async () => {
@@ -172,7 +173,6 @@ describe('TargetTreeView', () => {
                     subsystemDriver: subsystemDriverHealth,
                 },
             });
-            containersManagerMock.getTargetState.mockResolvedValue(targetState);
             containersManagerMock.getTargetStateSnapshot.mockReturnValue(
                 targetState,
             );
@@ -230,7 +230,6 @@ describe('TargetTreeView', () => {
             containersManagerMock.getTargetStateSnapshot.mockReturnValue(
                 targetState,
             );
-            containersManagerMock.getTargetState.mockResolvedValue(targetState);
 
             const rootChildren = await view.getChildren();
 
@@ -259,7 +258,6 @@ describe('TargetTreeView', () => {
             containersManagerMock.getTargetStateSnapshot.mockReturnValue(
                 targetState,
             );
-            containersManagerMock.getTargetState.mockResolvedValue(targetState);
 
             const rootChildren = await view.getChildren();
 
@@ -292,7 +290,6 @@ describe('TargetTreeView', () => {
             containersManagerMock.getTargetStateSnapshot.mockReturnValue(
                 targetState,
             );
-            containersManagerMock.getTargetState.mockResolvedValue(targetState);
 
             const rootChildren = await view.getChildren();
 
@@ -329,20 +326,29 @@ describe('TargetTreeView', () => {
         });
 
         it('returns containers for Host and remoteproc groups', async () => {
-            const hostGroup = new TargetSubsystemTreeItem('Host', target);
-            const hostChildren = await view.getChildren(hostGroup);
-            const remoteprocGroup = new TargetSubsystemTreeItem(
-                'imx-rproc',
-                target,
+            const rootChildren = await view.getChildren();
+            const targetChildren = await view.getChildren(rootChildren[0]);
+            const subsystemsGroup = targetChildren.find(
+                (v) => v instanceof TargetSubsystemGroupTreeItem,
             );
-            const otherRprocGroup = new TargetSubsystemTreeItem(
-                'other-rproc',
-                target,
-            );
+            const subsystemItems = await view.getChildren(subsystemsGroup);
+            const hostGroup = subsystemItems.find(
+                (item) => item.label === 'Host',
+            ) as TargetSubsystemTreeItem;
+            const remoteprocGroup = subsystemItems.find(
+                (item) => item.label === 'imx-rproc',
+            ) as TargetSubsystemTreeItem;
+            const otherRprocGroup = subsystemItems.find(
+                (item) => item.label === 'other-rproc',
+            ) as TargetSubsystemTreeItem;
 
+            const hostChildren = await view.getChildren(hostGroup);
             const imxRprocChildren = await view.getChildren(remoteprocGroup);
             const otherRprocChildren = await view.getChildren(otherRprocGroup);
 
+            expect(
+                containersManagerMock.getContainersData,
+            ).toHaveBeenCalledTimes(1);
             expect(hostChildren).toHaveLength(1);
             expect(hostChildren[0]).toBeInstanceOf(TargetContainerTreeItem);
             expect((hostChildren[0] as TargetContainerTreeItem).name).toBe(
@@ -354,17 +360,21 @@ describe('TargetTreeView', () => {
                 imxRprocChildren.map(
                     (c) => (c as TargetContainerTreeItem).name,
                 ),
-            ).toEqual(expect.arrayContaining(['cont1', 'cont3']));
+            ).toEqual(['cont1', 'cont3']);
             expect(otherRprocChildren).toHaveLength(0);
         });
 
         it('handles parsing error in getContainersData gracefully', async () => {
             containersManagerMock.getContainersData.mockResolvedValueOnce([]);
-            const remoteprocGroup = new TargetSubsystemTreeItem(
-                'imx-rproc',
+            const subsystemGroup = new TargetSubsystemGroupTreeItem(
                 target,
+                targetDescription.remoteProcessors.map((rp) => rp.name),
             );
 
+            const subsystemItems = await view.getChildren(subsystemGroup);
+            const remoteprocGroup = subsystemItems.find(
+                (item) => item.label === 'imx-rproc',
+            ) as TargetSubsystemTreeItem;
             const children = await view.getChildren(remoteprocGroup);
 
             expect(children).toEqual([]);
@@ -372,10 +382,6 @@ describe('TargetTreeView', () => {
 
         it('returns empty array when there are no targets', async () => {
             targetModel.setTargets([]);
-            containersManagerMock.getTargetState.mockResolvedValueOnce({
-                health: undefined,
-                status: 'disconnected',
-            });
 
             const rootChildren = await view.getChildren();
 

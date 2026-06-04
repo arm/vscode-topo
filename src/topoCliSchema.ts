@@ -49,20 +49,26 @@ const healthCheckHostSchema = type({
     dependencies: array(healthCheckDependencySchema),
 });
 
+const targetHealthCheckResultSchema = type({
+    isLocalhost: boolean(),
+    connectivity: healthCheckDependencySchema,
+    subsystemDriver: healthCheckDependencySchema,
+    dependencies: array(healthCheckDependencySchema),
+});
+
 export const hostHealthCheckResultSchema = type({
     host: healthCheckHostSchema,
 });
 
 export type HostHealthCheckResult = Infer<typeof hostHealthCheckResultSchema>;
 
+export type TargetHealthCheckResult = Infer<
+    typeof targetHealthCheckResultSchema
+>;
+
 export const healthCheckResultSchema = type({
     host: healthCheckHostSchema,
-    target: type({
-        isLocalhost: boolean(),
-        connectivity: healthCheckDependencySchema,
-        subsystemDriver: healthCheckDependencySchema,
-        dependencies: array(healthCheckDependencySchema),
-    }),
+    target: targetHealthCheckResultSchema,
 });
 
 export type HealthCheckResult = Infer<typeof healthCheckResultSchema>;

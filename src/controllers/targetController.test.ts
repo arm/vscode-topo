@@ -18,7 +18,7 @@ function mockTargetStore(
     let targets = initialTargets;
     let selected = initialSelected;
     const targetStore = mock<TargetStore>();
-    targetStore.getTargets.mockImplementation(() => targets);
+    targetStore.getTargets.mockImplementation(() => new Set(targets));
     targetStore.getSelectedTarget.mockImplementation(() =>
         targets.includes(selected ?? '') ? selected : undefined,
     );
@@ -126,7 +126,7 @@ describe('target addition', () => {
         const controller = new TargetController(targetModel, targetStore);
         mockQuickPick({ label: targetSsh });
 
-        await controller.promptToAdd();
+        await controller.addCommandHandler();
 
         expect(targetStore.addTarget).toHaveBeenCalledWith(targetSsh);
         expect(targetStore.setSelected).toHaveBeenCalledWith(targetSsh);
@@ -140,7 +140,7 @@ describe('target addition', () => {
         const controller = new TargetController(targetModel, targetStore);
         mockQuickPick(undefined);
 
-        await controller.promptToAdd();
+        await controller.addCommandHandler();
 
         expect(targetStore.addTarget).not.toHaveBeenCalled();
         expect(targetStore.setSelected).not.toHaveBeenCalled();
@@ -156,7 +156,7 @@ describe('target addition', () => {
         targetStore.addTarget.mockRejectedValueOnce(error);
         mockQuickPick({ label: 'root@192.0.2.1' });
 
-        await controller.promptToAdd();
+        await controller.addCommandHandler();
 
         expect(targetStore.addTarget).toHaveBeenCalled();
         expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
@@ -173,7 +173,7 @@ describe('target selection', () => {
         const controller = new TargetController(targetModel, targetStore);
         const targetItem = new TargetTreeItem('user@board', true, 'connected');
 
-        await controller.select(targetItem);
+        await controller.selectCommandHandler(targetItem);
 
         expect(targetStore.setSelected).toHaveBeenCalledWith(targetItem.target);
         expect(targetModel.selected).toBe(targetItem.target);
@@ -184,7 +184,7 @@ describe('target selection', () => {
         const targetModel = new TargetModel();
         const controller = new TargetController(targetModel, targetStore);
 
-        await controller.select();
+        await controller.selectCommandHandler();
 
         expect(targetStore.setSelected).not.toHaveBeenCalled();
         expect(targetModel.selected).toBeUndefined();
@@ -198,7 +198,7 @@ describe('target removal', () => {
         const targetModel = new TargetModel();
         const controller = new TargetController(targetModel, targetStore);
 
-        await controller.remove(targetItem);
+        await controller.removeCommandHandler(targetItem);
 
         expect(targetStore.deleteTarget).toHaveBeenCalledWith(
             targetItem.target,
@@ -217,7 +217,7 @@ describe('target removal', () => {
         const controller = new TargetController(targetModel, targetStore);
         const targetItem = new TargetTreeItem(removedTarget, true, 'connected');
 
-        await controller.remove(targetItem);
+        await controller.removeCommandHandler(targetItem);
 
         expect(targetStore.deleteTarget).toHaveBeenCalledWith(removedTarget);
         expect(targetModel.selected).toBe(remainingTarget);
@@ -228,7 +228,7 @@ describe('target removal', () => {
         const targetModel = new TargetModel();
         const controller = new TargetController(targetModel, targetStore);
 
-        await controller.remove();
+        await controller.removeCommandHandler();
 
         expect(targetStore.deleteTarget).not.toHaveBeenCalled();
         expect(targetModel.targets).toEqual([]);
@@ -243,7 +243,7 @@ describe('target removal', () => {
             new Error('Target not found'),
         );
 
-        await controller.remove(targetItem);
+        await controller.removeCommandHandler(targetItem);
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
             expect.stringContaining('Failed to remove target'),

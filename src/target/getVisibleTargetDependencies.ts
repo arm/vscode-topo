@@ -1,8 +1,11 @@
-import { HealthCheckDependency, HealthCheckResult } from '../topoCliSchema';
+import {
+    HealthCheckDependency,
+    TargetHealthCheckResult,
+} from '../topoCliSchema';
 import { TargetDescription } from '../util/types';
 
 export function getVisibleTargetDependencies(
-    health: HealthCheckResult['target'],
+    health: TargetHealthCheckResult,
     targetDescription: TargetDescription | undefined,
 ): HealthCheckDependency[] {
     const dependencies = [...health.dependencies];

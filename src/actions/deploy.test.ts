@@ -2,10 +2,10 @@ import path from 'node:path';
 import os from 'node:os';
 import * as vscode from 'vscode';
 import { Deploy, deploy as deployServices } from './deploy';
-import { mock, MockProxy } from 'vitest-mock-extended';
 import { executeTask } from '../util/executeTask';
-import type { MockInstance } from 'vitest';
 import { TargetModel } from '../models/targetModel';
+import { TopoCli } from '../topoCli';
+import { MockProxy, mock } from 'vitest-mock-extended';
 
 vi.mock('../util/logger');
 vi.mock('../util/executeTask');
@@ -19,48 +19,29 @@ describe('Deploy', () => {
     );
     const composeFilePath = composeFileUri.fsPath;
     const target = 'topo.local';
+    const topoBinaryPath = '/fake/extension/resources/topo';
+    let topoCli: MockProxy<TopoCli>;
     let targetModel: TargetModel;
-    let context: MockProxy<vscode.ExtensionContext>;
-    let deployHandler: ((resource?: vscode.Uri) => Promise<void>) | undefined;
-    let registerSpy: MockInstance;
 
     beforeEach(() => {
-        context = mock<vscode.ExtensionContext>({ subscriptions: [] });
+        topoCli = mock<TopoCli>();
+        topoCli.getBinaryPath.mockReturnValue(topoBinaryPath);
         targetModel = new TargetModel();
         targetModel.setSelected(target);
         executeTaskMock.mockReset();
         vi.mocked(vscode.window.showErrorMessage).mockClear();
-        deployAction = new Deploy(context, targetModel);
-        registerSpy = vi
-            .spyOn(vscode.commands, 'registerCommand')
-            .mockImplementation(
-                (_, handler: (...args: unknown[]) => Promise<void>) => {
-                    deployHandler = handler;
-                    return { dispose: () => {} } as vscode.Disposable;
-                },
-            );
+        deployAction = new Deploy(topoCli, targetModel);
     });
 
     afterEach(() => {
-        deployHandler = undefined;
         vi.restoreAllMocks();
-    });
-
-    it('registers the deploy command on activate', () => {
-        deployAction.activate();
-
-        expect(registerSpy).toHaveBeenCalledWith(
-            Deploy.deployCommand,
-            expect.any(Function),
-        );
-        expect(context.subscriptions.length).toBeGreaterThan(0);
     });
 
     it('shows an error in the command handler with no target selected', async () => {
         targetModel.setSelected(undefined);
-        deployAction.activate();
 
-        const deployOperation = deployHandler!(composeFileUri);
+        const deployOperation =
+            deployAction.deployCommandHandler(composeFileUri);
 
         await expect(deployOperation).resolves.toBeUndefined();
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
@@ -70,18 +51,18 @@ describe('Deploy', () => {
     });
 
     it('handles successful deploy operation', async () => {
-        await deployServices(composeFilePath, target);
+        await deployServices(topoBinaryPath, composeFilePath, target);
 
         expect(executeTaskMock).toHaveBeenCalledWith(
             'Deploy to topo.local',
-            ['topo', 'deploy', '--target', 'topo.local'],
+            [topoBinaryPath, 'deploy', '--target', 'topo.local'],
             { cwd: path.dirname(composeFilePath) },
         );
     });
 
     it('handles task failure', async () => {
         executeTaskMock.mockRejectedValueOnce(new Error('deploy failed'));
-        await deployServices(composeFilePath, target);
+        await deployServices(topoBinaryPath, composeFilePath, target);
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
             'Deployment to topo.local failed: deploy failed',
@@ -89,14 +70,12 @@ describe('Deploy', () => {
     });
 
     it('invokes handler when command called', async () => {
-        deployAction.activate();
-
-        const op = deployHandler!(composeFileUri);
+        const op = deployAction.deployCommandHandler(composeFileUri);
 
         await expect(op).resolves.toBeUndefined();
         expect(executeTaskMock).toHaveBeenCalledWith(
             'Deploy to topo.local',
-            ['topo', 'deploy', '--target', 'topo.local'],
+            [topoBinaryPath, 'deploy', '--target', 'topo.local'],
             { cwd: path.dirname(composeFilePath) },
         );
     });

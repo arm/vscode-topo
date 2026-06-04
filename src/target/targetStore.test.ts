@@ -106,7 +106,7 @@ describe('TargetStore', () => {
 
         await expect(addTargetOperation).resolves.toBeUndefined();
         const targets = store.getTargets();
-        expect(targets.some((x) => x === t)).toBe(true);
+        expect(targets.has(t)).toBe(true);
         const raw = context.globalState.get('targets') as string | undefined;
         expect(typeof raw).toBe('string');
         const parsed = JSON.parse(raw || '{}');
@@ -134,7 +134,7 @@ describe('TargetStore', () => {
         await store.addTarget(t);
 
         const targets = store.getTargets();
-        expect(targets.some((x) => x === t)).toBe(true);
+        expect(targets.has(t)).toBe(true);
 
         const raw = context.globalState.get('targets') as string | undefined;
         expect(typeof raw).toBe('string');
@@ -142,20 +142,17 @@ describe('TargetStore', () => {
         expect(parsed[t]).toEqual({});
     });
 
-    it('stores selected target and fires onChanged when setSelected is called', async () => {
+    it('stores selected target', async () => {
         const { context } = createMockContext();
         const store = new TargetStore(context);
         const t = 'bob@example.com';
         await store.addTarget(t);
-        const cb = vi.fn();
-        store.onChanged(cb);
 
         await store.setSelected('bob@example.com');
 
         expect(context.workspaceState.get('selectedTarget')).toBe(
             'bob@example.com',
         );
-        expect(cb).toHaveBeenCalled();
     });
 
     it('returns the selected Target via getSelectedTarget', async () => {
@@ -234,7 +231,7 @@ describe('TargetStore', () => {
         const { context } = createMockContext();
         const store = new TargetStore(context);
         const cb = vi.fn();
-        store.onChanged(cb);
+        store.onExternalTargetsChanged(cb);
         mutable(vscode.window.state).focused = false;
         const signalUri = vscode.Uri.joinPath(
             context.globalStorageUri,
@@ -262,7 +259,7 @@ describe('TargetStore', () => {
         await store.deleteTarget(t2);
 
         const targets = store.getTargets();
-        expect(targets.some((t) => t === t2)).toBe(false);
+        expect(targets.has(t2)).toBe(false);
         const selected = store.getSelectedTarget();
         expect(selected).toBeDefined();
     });
@@ -281,7 +278,7 @@ describe('TargetStore', () => {
         await store.deleteTarget(t2);
 
         const targets = store.getTargets();
-        expect(targets.some((t) => t === t2)).toBe(false);
+        expect(targets.has(t2)).toBe(false);
         const selected = store.getSelectedTarget();
         expect(selected).toBeDefined();
         expect(selected).toBe(t1);
@@ -297,7 +294,7 @@ describe('TargetStore', () => {
         await store.deleteTarget(lone);
 
         const targets = store.getTargets();
-        expect(targets.length).toBe(0);
+        expect(targets.size).toBe(0);
         const selected = store.getSelectedTarget();
         expect(selected).toBeUndefined();
     });

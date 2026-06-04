@@ -24,6 +24,7 @@ import { FixIssue } from './actions/fixIssue';
 import { HostTreeView } from './views/hostTreeView';
 import { logger } from './util/logger';
 import { TargetHealth } from './actions/targetHealth';
+import { HostHealth } from './actions/hostHealth';
 import { HostModel } from './models/hostModel';
 import { HostController } from './controllers/hostController';
 import { TransientDocumentProvider } from './util/transientDocumentProvider';
@@ -47,11 +48,18 @@ export async function activate(
         return;
     }
 
+    const targetHealthDocProvider = new TransientDocumentProvider(
+        'target-health',
+    );
     const hostHealthDocProvider = new TransientDocumentProvider('host-health');
     const dockerCommands = new DockerCommands();
     const targetStore = new TargetStore(context);
     const targetDescriptionStore = new TargetDescriptionStore(topoCli);
-    context.subscriptions.push(targetStore, hostHealthDocProvider);
+    context.subscriptions.push(
+        targetStore,
+        hostHealthDocProvider,
+        targetHealthDocProvider,
+    );
 
     const targetModel = new TargetModel();
     const hostModel = new HostModel();
@@ -80,57 +88,52 @@ export async function activate(
         targetStatusBarItemView,
     );
 
-    const hostHealthController = new HostController(
-        hostModel,
-        topoCli,
-        hostHealthDocProvider,
-    );
-    const targetsController = new TargetController(targetModel, targetStore);
+    const hostController = new HostController(hostModel, topoCli);
+    const hostHealth = new HostHealth(topoCli, hostHealthDocProvider);
+    const targetController = new TargetController(targetModel, targetStore);
     context.subscriptions.push(
-        targetStore.onChanged(() => targetsController.updateFromStore()),
+        targetStore.onExternalTargetsChanged(() =>
+            targetController.updateFromStore(),
+        ),
     );
-
-    const disposeCommands = commands.register(
-        hostHealthController,
-        targetsController,
-    );
-    context.subscriptions.push(disposeCommands);
 
     const projectInit = new ProjectInit(topoCli);
-    context.subscriptions.push(projectInit);
     const projectClone = new ProjectClone(context, topoCli, targetModel);
-    const deploy = new Deploy(context, targetModel);
-    const stop = new Stop(context, targetModel);
-    const containerOpenInBrowser = new ContainerOpenInBrowser(context);
-    const attachVsCode = new AttachVsCode(context, dockerCommands);
-    const attachShell = new AttachShell(context, dockerCommands);
-    const setupKeys = new SetupKeys(context, targetModel);
-    const containerStart = new ContainerStart(context, dockerCommands);
-    const containerStop = new ContainerStop(context, dockerCommands);
-    const containerDelete = new ContainerDelete(context, dockerCommands);
-    const targetHealth = new TargetHealth(containersManager);
-    context.subscriptions.push(targetHealth);
+    const deploy = new Deploy(topoCli, targetModel);
+    const stop = new Stop(topoCli, targetModel);
+    const containerOpenInBrowser = new ContainerOpenInBrowser();
+    const attachVsCode = new AttachVsCode(dockerCommands);
+    const attachShell = new AttachShell(dockerCommands);
+    const setupKeys = new SetupKeys(topoCli, targetModel);
+    const containerStart = new ContainerStart(dockerCommands);
+    const containerStop = new ContainerStop(dockerCommands);
+    const containerDelete = new ContainerDelete(dockerCommands);
+    const targetHealth = new TargetHealth(topoCli, targetHealthDocProvider);
+    const fixIssue = new FixIssue(topoCli, targetModel);
     const protocolHandler = new ProtocolHandler(projectClone);
-    const fixIssue = new FixIssue(
-        targetModel,
-        containersManager,
-        targetDescriptionStore,
-    );
-    context.subscriptions.push(fixIssue);
-    context.subscriptions.push(logger);
 
-    protocolHandler.activate(context);
+    context.subscriptions.push(
+        commands.register({
+            hostController,
+            hostHealth,
+            targetController,
+            projectInit,
+            deploy,
+            stop,
+            containerOpenInBrowser,
+            attachVsCode,
+            attachShell,
+            setupKeys,
+            containerStart,
+            containerStop,
+            containerDelete,
+            targetHealth,
+            fixIssue,
+        }),
+        logger,
+        vscode.window.registerUriHandler(protocolHandler),
+    );
+
     topoCli.activate();
-    projectInit.activate();
     projectClone.activate();
-    deploy.activate();
-    stop.activate();
-    containerOpenInBrowser.activate();
-    attachVsCode.activate();
-    attachShell.activate();
-    containerStart.activate();
-    containerStop.activate();
-    containerDelete.activate();
-    targetHealth.activate();
-    setupKeys.activate();
 }

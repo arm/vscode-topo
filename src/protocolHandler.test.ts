@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import path from 'node:path';
-import { mock, MockProxy } from 'vitest-mock-extended';
+import { mock } from 'vitest-mock-extended';
 import { ProjectClone } from './projectClone';
 import { ProtocolHandler } from './protocolHandler';
 import { TopoCli } from './topoCli';
@@ -17,37 +17,26 @@ vi.mock('./util/executeTask');
 const showAndLogErrorSpy = vi.mocked(showAndLogError);
 const executeTaskMock = vi.mocked(executeTask);
 
-const subscriptions: vscode.Disposable[] = [];
 const workspacePath = path.join('home', 'workspace');
 const workspaceUri = vscode.Uri.file(workspacePath);
 const workspaceFolders = [{ uri: workspaceUri, name: 'workspace', index: 0 }];
 const destinationPath = path.join('home', 'destination');
 const destinationUri = vscode.Uri.file(destinationPath);
+const topoBinaryPath = path.join('fake', 'extension', 'resources', 'topo');
 
 describe('ProtocolHandler', () => {
     let projectClone: ProjectClone;
     let protocolHandler: ProtocolHandler;
-    let context: MockProxy<vscode.ExtensionContext>;
     const topoCli = mock<TopoCli>();
     const targetModel = new TargetModel();
 
     beforeEach(() => {
         vi.clearAllMocks();
-        context = mock<vscode.ExtensionContext>({
-            subscriptions,
-        });
+        const context = mock<vscode.ExtensionContext>();
+        topoCli.getBinaryPath.mockReturnValue(topoBinaryPath);
         projectClone = new ProjectClone(context, topoCli, targetModel);
         protocolHandler = new ProtocolHandler(projectClone);
         mutable(vscode.workspace).workspaceFolders = undefined;
-    });
-
-    it('registers the URI handler on activate', () => {
-        protocolHandler.activate(context);
-
-        expect(vscode.window.registerUriHandler).toHaveBeenCalledWith(
-            protocolHandler,
-        );
-        expect(context.subscriptions).toHaveLength(1);
     });
 
     it('runs a topo clone task for explicit git sources', async () => {
@@ -62,7 +51,7 @@ describe('ProtocolHandler', () => {
 
         expect(vscode.window.showOpenDialog).not.toHaveBeenCalled();
         expect(executeTaskMock).toHaveBeenCalledWith('Clone repo', [
-            'topo',
+            topoBinaryPath,
             'clone',
             'git:https://example.com/repo.git',
             path.join(workspaceUri.fsPath, 'repo'),
@@ -92,7 +81,7 @@ describe('ProtocolHandler', () => {
             openLabel: 'Select Destination Folder',
         });
         expect(executeTaskMock).toHaveBeenCalledWith('Clone repo', [
-            'topo',
+            topoBinaryPath,
             'clone',
             'git:https://example.com/repo.git',
             path.join(destinationUri.fsPath, 'repo'),
@@ -131,7 +120,7 @@ describe('ProtocolHandler', () => {
         );
 
         expect(executeTaskMock).toHaveBeenCalledWith('Clone repo', [
-            'topo',
+            topoBinaryPath,
             'clone',
             'https://example.com/repo.git',
             path.join(workspaceUri.fsPath, 'repo'),
@@ -153,7 +142,7 @@ describe('ProtocolHandler', () => {
         );
 
         expect(executeTaskMock).toHaveBeenCalledWith('Clone repo', [
-            'topo',
+            topoBinaryPath,
             'clone',
             'https://example.com/repo.git',
             path.join(workspaceUri.fsPath, 'repo'),
@@ -178,7 +167,7 @@ describe('ProtocolHandler', () => {
         expect(executeTaskMock).toHaveBeenCalledWith(
             'Clone topo-lightbulb-moment',
             [
-                'topo',
+                topoBinaryPath,
                 'clone',
                 'https://github.com/Arm-Examples/topo-lightbulb-moment',
                 path.join(workspaceUri.fsPath, 'topo-lightbulb-moment'),
@@ -234,7 +223,7 @@ describe('ProtocolHandler', () => {
         );
 
         expect(executeTaskMock).toHaveBeenCalledWith('Clone repo', [
-            'topo',
+            topoBinaryPath,
             'clone',
             'https://github.com/Arm-Examples/topo-lightbulb-moment',
             path.join(workspaceUri.fsPath, 'repo'),

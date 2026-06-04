@@ -1,6 +1,6 @@
 # Arm Topo
 
-The Arm® Topo extension for Visual Studio Code provides a graphical interface for managing [Topo](https://github.com/Arm/topo) projects. Use the extension to edit compose files visually, manage remote targets, deploy services, and monitor running containers — all from within VS Code.
+The Arm® Topo extension for Visual Studio Code provides a graphical interface for managing [Topo](https://github.com/Arm/topo) projects. Use the extension to manage remote targets, deploy services, and monitor running containers — all from within VS Code.
 
 This extension is [free to use](LICENSE) and can be installed from the VS Code Marketplace or from a `.vsix` package.
 
@@ -41,30 +41,34 @@ Right-click a target in the tree to access these actions:
 | ------------------ | --------------------------------------------------------------- |
 | **Select Target**  | Make the target active for deployments and actions.             |
 | **Remove Target**  | Delete the target from the configuration.                       |
-| **Inspect Health** | Run a health check and display the JSON results.                |
-| **Setup Keys**     | Configure SSH key-based authentication for passwordless access. |
+| **Inspect Health** | Display health-check JSON results for the selected target.      |
+| **Setup Keys**     | Configure SSH key-based authentication for the selected target. |
 | **Fix An Issue**   | Select and run an available fix for a target dependency issue.  |
+
+### Dependency Actions
+
+Right-click a fixable dependency item and select **Fix** to run the executable fix command reported by the Topo health check.
 
 ## Container Actions
 
 Right-click a service in the Targets tree to manage individual containers:
 
-| Command             | Description                                                              |
-| ------------------- | ------------------------------------------------------------------------ |
-| **Start**           | Start a stopped container.                                               |
-| **Stop**            | Stop a running container.                                                |
-| **Delete**          | Remove a container.                                                      |
-| **Attach Shell**    | Open a VS Code terminal connected to the container.                      |
-| **Attach VS Code**  | Open the container in a VS Code Remote Containers session.               |
-| **Open in Browser** | Open the service in the default browser (auto-detects common web ports). |
+| Command             | Description                                                                                  |
+| ------------------- | -------------------------------------------------------------------------------------------- |
+| **Start**           | Start a stopped container.                                                                   |
+| **Stop**            | Stop a running container.                                                                    |
+| **Delete**          | Remove a container.                                                                          |
+| **Attach Shell**    | Open a VS Code terminal connected to a running Host container.                               |
+| **Attach VS Code**  | Open a running Host container in a VS Code Remote Containers session.                        |
+| **Open in Browser** | Open a running Host service in the default browser by auto-detecting common published ports. |
 
 ## Deploy and Stop
 
-Deploy or stop a compose file on the selected target. You can trigger either operation from:
+Deploy or stop the `compose.yaml` or `compose.yml` file in a project directory on the selected target. You can trigger either operation from:
 
-- Right-clicking a compose YAML file in the Explorer or editor tab and selecting **Topo Deploy** or **Topo Stop**.
+- Right-clicking `compose.yaml` or `compose.yml` in the Explorer or editor tab and selecting **Topo Deploy** or **Topo Stop**.
 
-The extension runs the equivalent of `topo deploy --target <ssh>` or `topo stop --target <ssh>` in a task terminal and reports success or failure.
+The extension runs `topo deploy --target <ssh>` or `topo stop --target <ssh>` from the directory containing `compose.yaml` or `compose.yml` in a task terminal and reports success or failure.
 
 ## Project Management
 

@@ -1,35 +1,24 @@
 import * as vscode from 'vscode';
-import * as manifest from '../manifest';
 import { getErrorMessage } from '../util/getErrorMessage';
 import path from 'node:path';
 import { executeTask } from '../util/executeTask';
 import { showAndLogError } from '../util/showAndLogError';
 import { TargetModel } from '../models/targetModel';
+import { TopoCli } from '../topoCli';
 
 const viewLogsItem: vscode.MessageItem = {
     title: 'View Logs',
 };
 
 export class Stop {
-    public static readonly stopCommand = `${manifest.PACKAGE_NAME}.stop.context`;
-
     constructor(
-        private readonly context: vscode.ExtensionContext,
+        private readonly topoCli: TopoCli,
         private readonly targetModel: TargetModel,
     ) {}
 
-    public activate(): void {
-        this.context.subscriptions.push(
-            vscode.commands.registerCommand(
-                Stop.stopCommand,
-                this.stopCommandHandler.bind(this),
-            ),
-        );
-    }
-
-    private async stopCommandHandler(resource?: vscode.Uri): Promise<void> {
+    public async stopCommandHandler(resource?: vscode.Uri): Promise<void> {
         if (!resource) {
-            throw new Error('No compose file selected for stop');
+            throw new Error('No compose.yaml or compose.yml selected for stop');
         }
         const target = this.targetModel.selected;
 
@@ -43,20 +32,25 @@ export class Stop {
             return;
         }
 
-        await stop(resource.fsPath, target);
+        await stop(this.topoCli.getBinaryPath(), resource.fsPath, target);
     }
 }
 
 export async function stop(
+    topoBinaryPath: string,
     composeFilePath: string,
     target: string,
 ): Promise<void> {
     const taskName = `Stop services on ${target}`;
 
     try {
-        await executeTask(taskName, ['topo', 'stop', '--target', target], {
-            cwd: path.dirname(composeFilePath),
-        });
+        await executeTask(
+            taskName,
+            [topoBinaryPath, 'stop', '--target', target],
+            {
+                cwd: path.dirname(composeFilePath),
+            },
+        );
         vscode.window.showInformationMessage(
             `Services on ${target} stopped successfully.`,
         );

@@ -1,6 +1,7 @@
 import { TargetModel } from '../models/targetModel';
 import { TargetStore } from '../target/targetStore';
 import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
+import { getErrorMessage } from '../util/getErrorMessage';
 import { logger } from '../util/logger';
 import { showAndLogError } from '../util/showAndLogError';
 import { defaultSshConfigPath, getHosts } from '../util/ssh';
@@ -76,11 +77,11 @@ export class TargetController {
     }
 
     public updateFromStore(): void {
-        this.model.setTargets(this.targetStore.getTargets());
+        this.model.setTargets([...this.targetStore.getTargets()]);
         this.model.setSelected(this.targetStore.getSelectedTarget());
     }
 
-    public async select(treeNode?: unknown): Promise<void> {
+    public async selectCommandHandler(treeNode?: unknown): Promise<void> {
         if (!isTargetTreeItem(treeNode)) {
             return;
         }
@@ -89,7 +90,7 @@ export class TargetController {
         this.updateFromStore();
     }
 
-    public async remove(treeNode?: unknown): Promise<void> {
+    public async removeCommandHandler(treeNode?: unknown): Promise<void> {
         if (!isTargetTreeItem(treeNode)) {
             return;
         }
@@ -103,8 +104,8 @@ export class TargetController {
         }
     }
 
-    public async promptToAdd(): Promise<void> {
-        const target = await promptForSshTarget(this.targetStore.getTargets());
+    public async addCommandHandler(): Promise<void> {
+        const target = await promptForSshTarget(this.model.targets);
         if (!target) {
             return;
         }
@@ -112,7 +113,7 @@ export class TargetController {
         try {
             await this.targetStore.addTarget(target);
         } catch (error) {
-            const errorMsg = `Failed to add target`;
+            const errorMsg = `Failed to add target: ${getErrorMessage(error)}`;
             logger.warn(errorMsg, error);
             vscode.window.showWarningMessage(errorMsg);
             return;

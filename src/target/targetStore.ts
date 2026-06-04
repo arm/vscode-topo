@@ -12,10 +12,29 @@ type WorkspaceStoreKeys = 'selectedTarget';
 // serialized as { [target: string]: {} }; values are empty objects for backwards compatibility
 const serializedTargetsSchema = record(string(), type({}));
 
+function get(
+    memento: vscode.Memento,
+    key: GlobalStoreKeys | WorkspaceStoreKeys,
+): string | undefined {
+    const value = memento.get<string>(key);
+    logger.debug(`Reading state ${key}: ${value}`);
+    return value;
+}
+
+async function set(
+    memento: vscode.Memento,
+    key: GlobalStoreKeys | WorkspaceStoreKeys,
+    value: string | undefined,
+): Promise<void> {
+    logger.debug(`Writing state ${key}: ${value}`);
+    await memento.update(key, value);
+}
+
 export class TargetStore {
-    private _onChanged: vscode.EventEmitter<void> =
+    private _onExternalTargetsChanged: vscode.EventEmitter<void> =
         new vscode.EventEmitter<void>();
-    public readonly onChanged: vscode.Event<void> = this._onChanged.event;
+    public readonly onExternalTargetsChanged: vscode.Event<void> =
+        this._onExternalTargetsChanged.event;
     private readonly disposables = new DisposableCollector();
 
     constructor(protected context: vscode.ExtensionContext) {
@@ -26,24 +45,23 @@ export class TargetStore {
         const watcher = vscode.workspace.createFileSystemWatcher(pattern);
         const onDidCreate = watcher.onDidCreate(() => {
             if (!vscode.window.state.focused) {
-                this._onChanged.fire();
+                this._onExternalTargetsChanged.fire();
             }
         });
         const onDidChange = watcher.onDidChange(() => {
             if (!vscode.window.state.focused) {
-                this._onChanged.fire();
+                this._onExternalTargetsChanged.fire();
             }
         });
         this.disposables.collect(
             watcher,
             onDidCreate,
             onDidChange,
-            this._onChanged,
+            this._onExternalTargetsChanged,
         );
     }
 
-    // Debounced function to publish a change to other VS Code instances
-    protected publishChange = debounce(async () => {
+    protected publishExternalTargetsChange = debounce(async () => {
         try {
             const signalUri = vscode.Uri.joinPath(
                 this.context.globalStorageUri,
@@ -56,22 +74,12 @@ export class TargetStore {
         }
     }, 500);
 
-    public get selected(): string | undefined {
-        return this.getWorkspace('selectedTarget');
-    }
-
-    public async setSelected(id: string | undefined): Promise<void> {
-        await this.setWorkspace('selectedTarget', id);
-        this._onChanged.fire();
-    }
-
-    public getTargets(): string[] {
-        const targets = this.loadTargets();
-        return [...targets.values()];
+    public async setSelected(target: string | undefined): Promise<void> {
+        await this.setWorkspace('selectedTarget', target);
     }
 
     public async addTarget(target: string): Promise<void> {
-        const targets = this.loadTargets();
+        const targets = this.getTargets();
         if (targets.has(target)) {
             throw new Error(`Target "${target}" already exists`);
         }
@@ -80,30 +88,29 @@ export class TargetStore {
     }
 
     public getSelectedTarget(): string | undefined {
+        const selected = this.getWorkspace('selectedTarget');
         const targets = this.getTargets();
-        return targets.find((target) => target === this.selected);
+        return selected && targets.has(selected) ? selected : undefined;
     }
 
-    public async deleteTarget(ssh: string): Promise<void> {
-        const targets = this.loadTargets();
-        if (!targets.has(ssh)) {
-            throw new Error(`Target "${ssh}" does not exist`);
+    public async deleteTarget(target: string): Promise<void> {
+        const targets = this.getTargets();
+        if (!targets.has(target)) {
+            throw new Error(`Target "${target}" does not exist`);
         }
-        targets.delete(ssh);
+        targets.delete(target);
+        const currentSelected = this.getSelectedTarget();
         await this.saveTargets(targets);
-        const currentSelected = this.selected;
-        if (currentSelected === ssh) {
+        if (currentSelected === target) {
             const remaining = [...targets];
             const newSelected = remaining.length
                 ? remaining.sort((a, b) => a.localeCompare(b))[0]
                 : undefined;
             await this.setSelected(newSelected);
-        } else {
-            this._onChanged.fire();
         }
     }
 
-    protected loadTargets(): Set<string> {
+    public getTargets(): Set<string> {
         const rawTargets = this.getGlobal('targets');
         try {
             const targets = rawTargets ? JSON.parse(rawTargets) : {};
@@ -128,51 +135,33 @@ export class TargetStore {
     }
 
     protected getGlobal(key: GlobalStoreKeys): string | undefined {
-        return this.get(this.context.globalState, key);
+        return get(this.context.globalState, key);
     }
 
     protected async setGlobal(
         key: GlobalStoreKeys,
         value: string | undefined,
     ): Promise<void> {
-        await this.set(this.context.globalState, key, value);
+        await set(this.context.globalState, key, value);
 
         if (vscode.env.uiKind === vscode.UIKind.Desktop) {
-            this.publishChange();
+            this.publishExternalTargetsChange();
         }
     }
 
     protected getWorkspace(key: WorkspaceStoreKeys): string | undefined {
-        return this.get(this.context.workspaceState, key);
+        return get(this.context.workspaceState, key);
     }
 
     protected setWorkspace(
         key: WorkspaceStoreKeys,
         value: string | undefined,
     ): Promise<void> {
-        return this.set(this.context.workspaceState, key, value);
-    }
-
-    protected get(
-        memento: vscode.Memento,
-        key: GlobalStoreKeys | WorkspaceStoreKeys,
-    ): string | undefined {
-        const value = memento.get<string>(key);
-        logger.debug(`Reading state ${key}: ${value}`);
-        return value;
-    }
-
-    protected async set(
-        memento: vscode.Memento,
-        key: GlobalStoreKeys | WorkspaceStoreKeys,
-        value: string | undefined,
-    ): Promise<void> {
-        logger.debug(`Writing state ${key}: ${value}`);
-        await memento.update(key, value);
+        return set(this.context.workspaceState, key, value);
     }
 
     public dispose(): void {
-        this.publishChange.cancel();
+        this.publishExternalTargetsChange.cancel();
         this.disposables.dispose();
     }
 }

@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import { PACKAGE_NAME } from '../manifest';
 import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 import { showAndLogError } from '../util/showAndLogError';
@@ -10,46 +9,36 @@ import {
     getFixableDependencyFixes,
     IssueFix,
 } from '../util/getDependencyFixes';
-import { ContainersManager } from '../target/containersManager';
 import { HealthCheckDependency, HealthCheckFix } from '../topoCliSchema';
-import { TargetDescriptionStore } from '../target/targetDescriptionStore';
-import { getTargetDependencies } from '../target/getTargetDependencies';
 import { TargetModel } from '../models/targetModel';
-import { DisposableCollector } from '../util/disposableCollector';
+import { TopoCli } from '../topoCli';
 
 type IssueFixQuickPickItem = vscode.QuickPickItem & IssueFix;
 
-export class FixIssue implements vscode.Disposable {
-    private readonly disposables = new DisposableCollector();
-    public static readonly fixDependencyIssueCommand = `${PACKAGE_NAME}.fixDependencyIssue`;
-    public static readonly fixTargetIssuesCommand = `${PACKAGE_NAME}.fixTargetIssues`;
-
+export class FixIssue {
     constructor(
+        private readonly topoCli: TopoCli,
         private readonly targetModel: TargetModel,
-        private readonly containersManager: ContainersManager,
-        private readonly targetDescriptionStore: TargetDescriptionStore,
-    ) {
-        this.disposables.collect(
-            vscode.commands.registerCommand(
-                FixIssue.fixDependencyIssueCommand,
-                this.fixDependencyIssueFromTreeItem.bind(this),
-            ),
-            vscode.commands.registerCommand(
-                FixIssue.fixTargetIssuesCommand,
-                this.fixTargetIssuesFromTreeItem.bind(this),
-            ),
-        );
-    }
+    ) {}
 
-    private async fixDependencyIssueFromTreeItem(
-        treeNode: unknown,
-    ): Promise<void> {
-        if (!(treeNode instanceof HealthCheckDependencyTreeItem)) {
-            const errMsg = `Invalid dependency item for fix issue: expected HealthCheckDependencyTreeItem but received:`;
-            logger.error(errMsg, treeNode);
+    public async fixIssueCommandHandler(treeNode: unknown): Promise<void> {
+        if (treeNode instanceof HealthCheckDependencyTreeItem) {
+            await this.fixDependencyIssueFromTreeItem(treeNode);
             return;
         }
 
+        if (treeNode instanceof TargetTreeItem) {
+            await this.fixTargetIssuesFromTreeItem(treeNode);
+            return;
+        }
+
+        const errMsg = `Invalid item for fix issue: expected HealthCheckDependencyTreeItem or TargetTreeItem but received:`;
+        logger.error(errMsg, treeNode);
+    }
+
+    private async fixDependencyIssueFromTreeItem(
+        treeNode: HealthCheckDependencyTreeItem,
+    ): Promise<void> {
         const target = this.targetModel.selected;
         if (!target) {
             showAndLogError(
@@ -72,20 +61,17 @@ export class FixIssue implements vscode.Disposable {
     }
 
     private async fixTargetIssuesFromTreeItem(
-        treeNode: unknown,
+        treeNode: TargetTreeItem,
     ): Promise<void> {
-        if (!(treeNode instanceof TargetTreeItem)) {
-            const errMsg = `Invalid target item for fix an issue: expected TargetTreeItem but received:`;
+        if (!treeNode.selected) {
+            const errMsg = `Invalid target item for fix an issue: expected selected TargetTreeItem but received:`;
             logger.error(errMsg, treeNode);
             return;
         }
 
-        const dependencies = await getTargetDependencies(
-            treeNode.target,
-            this.containersManager,
-            this.targetDescriptionStore,
+        const fixes = this.getFixableDependencyItems(
+            treeNode.visibleDependencies,
         );
-        const fixes = this.getFixableDependencyItems(dependencies);
 
         if (fixes.length === 0) {
             showAndLogError(
@@ -146,15 +132,17 @@ export class FixIssue implements vscode.Disposable {
             );
             return;
         }
+        if (commandArgs[0] === 'topo') {
+            commandArgs[0] = this.topoCli.getBinaryPath();
+        }
 
         try {
             await executeTask(`Fix ${name} on ${target}`, commandArgs);
+            vscode.window.showInformationMessage(
+                `${name} was fixed on target ${target}`,
+            );
         } catch (err) {
             showAndLogError(`Failed to fix ${name} on target ${target}`, err);
         }
-    }
-
-    public dispose(): void {
-        this.disposables.dispose();
     }
 }

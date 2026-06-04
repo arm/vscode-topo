@@ -2,10 +2,10 @@ import path from 'node:path';
 import os from 'node:os';
 import * as vscode from 'vscode';
 import { Stop, stop as stopServices } from './stop';
-import { mock, MockProxy } from 'vitest-mock-extended';
 import { executeTask } from '../util/executeTask';
-import type { MockInstance } from 'vitest';
 import { TargetModel } from '../models/targetModel';
+import { TopoCli } from '../topoCli';
+import { mock, MockProxy } from 'vitest-mock-extended';
 
 vi.mock('../util/logger');
 vi.mock('../util/executeTask');
@@ -19,48 +19,28 @@ describe('Stop', () => {
     );
     const composeFilePath = composeFileUri.fsPath;
     const target = 'topo.local';
+    const topoBinaryPath = '/fake/extension/resources/topo';
+    let topoCli: MockProxy<TopoCli>;
     let targetModel: TargetModel;
-    let context: MockProxy<vscode.ExtensionContext>;
-    let stopHandler: ((resource?: vscode.Uri) => Promise<void>) | undefined;
-    let registerSpy: MockInstance;
 
     beforeEach(() => {
-        context = mock<vscode.ExtensionContext>({ subscriptions: [] });
+        topoCli = mock<TopoCli>();
+        topoCli.getBinaryPath.mockReturnValue(topoBinaryPath);
         targetModel = new TargetModel();
         targetModel.setSelected(target);
         executeTaskMock.mockReset();
         vi.mocked(vscode.window.showErrorMessage).mockClear();
-        stopAction = new Stop(context, targetModel);
-        registerSpy = vi
-            .spyOn(vscode.commands, 'registerCommand')
-            .mockImplementation(
-                (_, handler: (...args: unknown[]) => Promise<void>) => {
-                    stopHandler = handler;
-                    return { dispose: () => {} } as vscode.Disposable;
-                },
-            );
+        stopAction = new Stop(topoCli, targetModel);
     });
 
     afterEach(() => {
-        stopHandler = undefined;
         vi.restoreAllMocks();
-    });
-
-    it('registers the stop command on activate', () => {
-        stopAction.activate();
-
-        expect(registerSpy).toHaveBeenCalledWith(
-            Stop.stopCommand,
-            expect.any(Function),
-        );
-        expect(context.subscriptions.length).toBeGreaterThan(0);
     });
 
     it('shows an error in the command handler with no target selected', async () => {
         targetModel.setSelected(undefined);
-        stopAction.activate();
 
-        const stopOperation = stopHandler!(composeFileUri);
+        const stopOperation = stopAction.stopCommandHandler(composeFileUri);
 
         await expect(stopOperation).resolves.toBeUndefined();
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
@@ -70,18 +50,18 @@ describe('Stop', () => {
     });
 
     it('handles successful stop operation', async () => {
-        await stopServices(composeFilePath, target);
+        await stopServices(topoBinaryPath, composeFilePath, target);
 
         expect(executeTaskMock).toHaveBeenCalledWith(
             'Stop services on topo.local',
-            ['topo', 'stop', '--target', 'topo.local'],
+            [topoBinaryPath, 'stop', '--target', 'topo.local'],
             { cwd: path.dirname(composeFilePath) },
         );
     });
 
     it('handles task failure', async () => {
         executeTaskMock.mockRejectedValueOnce(new Error('stop failed'));
-        await stopServices(composeFilePath, target);
+        await stopServices(topoBinaryPath, composeFilePath, target);
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
             'Stopping services on topo.local failed: stop failed',
@@ -89,14 +69,12 @@ describe('Stop', () => {
     });
 
     it('invokes handler when command called', async () => {
-        stopAction.activate();
-
-        const op = stopHandler!(composeFileUri);
+        const op = stopAction.stopCommandHandler(composeFileUri);
 
         await expect(op).resolves.toBeUndefined();
         expect(executeTaskMock).toHaveBeenCalledWith(
             'Stop services on topo.local',
-            ['topo', 'stop', '--target', 'topo.local'],
+            [topoBinaryPath, 'stop', '--target', 'topo.local'],
             { cwd: path.dirname(composeFilePath) },
         );
     });

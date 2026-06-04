@@ -141,7 +141,7 @@
                 {
                     "id": "topo",
                     "title": "Topo",
-                    "icon": "media/device.svg"
+                    "icon": "media/topo.svg"
                 }
             ]
         },
@@ -157,7 +157,7 @@
                     "id": "topo.target-manager",
                     "name": "Targets",
                     "visibility": "visible",
-                    "icon": "media/device.svg"
+                    "icon": "media/topo.svg"
                 }
             ]
         },
@@ -172,24 +172,24 @@
                 {
                     "command": "topo.deploy.context",
                     "group": "topo@1",
-                    "when": "resourceFilename =~ /compose(\\..*)?\\.yaml$/"
+                    "when": "resourceFilename =~ /^compose\\.ya?ml$/"
                 },
                 {
                     "command": "topo.stop.context",
                     "group": "topo@2",
-                    "when": "resourceFilename =~ /compose(\\..*)?\\.yaml$/"
+                    "when": "resourceFilename =~ /^compose\\.ya?ml$/"
                 }
             ],
             "explorer/context": [
                 {
                     "command": "topo.deploy.context",
                     "group": "topo@1",
-                    "when": "resourceFilename =~ /compose(\\..*)?\\.yaml$/"
+                    "when": "resourceFilename =~ /^compose\\.ya?ml$/"
                 },
                 {
                     "command": "topo.stop.context",
                     "group": "topo@2",
-                    "when": "resourceFilename =~ /compose(\\..*)?\\.yaml$/"
+                    "when": "resourceFilename =~ /^compose\\.ya?ml$/"
                 }
             ],
             "commandPalette": [
