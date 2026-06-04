@@ -6,11 +6,14 @@ import {
 } from '../actions/attachShell';
 import { mock } from 'vitest-mock-extended';
 import { ContainerItem } from '../util/types';
+import { DockerCommands } from '../target/dockerCommands';
+import { ContainerCommands } from '../target/containerCommands';
 import { TargetContainerTreeItem } from '../targetTreeView/targetContainerTreeItem';
 
 vi.mock('../util/logger');
 
 describe('AttachShell', () => {
+    const dockerCommands = new DockerCommands();
     const target = 'user@topo.local';
 
     beforeEach(() => {
@@ -22,7 +25,7 @@ describe('AttachShell', () => {
     });
 
     it('attachShell command opens a docker exec terminal', async () => {
-        const attachShell = new AttachShell();
+        const attachShell = new AttachShell(dockerCommands);
         const fakeItem = mock<ContainerItem>({
             id: 'cid',
             image: 'clabel',
@@ -59,7 +62,7 @@ describe('AttachShell', () => {
             state: 'running',
         });
 
-        openAttachShell(fakeItem);
+        openAttachShell(fakeItem, dockerCommands);
 
         expect(vscode.window.createTerminal).toHaveBeenCalledWith({
             name: 'Shell: clabel',

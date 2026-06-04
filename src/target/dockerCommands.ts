@@ -218,4 +218,19 @@ export class DockerCommands implements ContainerCommands {
         const warnMsg = `Warnings emitted when deleting container ${containerId}`;
         await runDockerCmd(cmd, warnMsg);
     }
+
+    public getAttachShellCommand(
+        containerId: string,
+        targetSshConnection: string,
+    ): string[] {
+        return [
+            'docker',
+            '--host',
+            getSshUri(targetSshConnection),
+            'exec',
+            '-it',
+            containerId,
+            'sh',
+        ];
+    }
 }

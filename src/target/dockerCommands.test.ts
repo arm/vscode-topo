@@ -394,6 +394,13 @@ describe('DockerCommands', () => {
             await expect(deleteContainerOperation).rejects.toThrow('fail');
         });
     });
+
+    describe('getAttachShellCommand', () => {
+        it('builds the exec command string', () => {
+            const cmd = dockerCommands.getAttachShellCommand('abc', 'ctx');
+            expect(cmd.join(' ')).toBe("docker --host ssh://ctx exec -it abc sh");
+        });
+    });
 });
 
 describe('parseDockerStderr', () => {

@@ -96,7 +96,7 @@ export async function activate(
     const stop = new Stop(topoCli, targetModel);
     const containerOpenInBrowser = new ContainerOpenInBrowser();
     const attachVsCode = new AttachVsCode(dockerCommands);
-    const attachShell = new AttachShell();
+    const attachShell = new AttachShell(dockerCommands);
     const setupKeys = new SetupKeys(topoCli, targetModel);
     const containerStart = new ContainerStart(dockerCommands);
     const containerStop = new ContainerStop(dockerCommands);
