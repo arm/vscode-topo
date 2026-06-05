@@ -68,7 +68,7 @@ describe('getDependencyFixes', () => {
         ]);
     });
 
-    it('returns fixable dependency fixes for unhealthy dependencies only', () => {
+    it('returns fixable dependency fixes for dependencies with executable fixes', () => {
         const fixableDependency: HealthCheckDependency = {
             name: 'Container Engine',
             status: 'error',
@@ -82,6 +82,10 @@ describe('getDependencyFixes', () => {
             name: 'Debugger',
             status: 'ok',
             value: 'installed',
+            fix: {
+                description: 'Install debugger',
+                command: 'topo install debugger',
+            },
         };
         const infoDependency: HealthCheckDependency = {
             name: 'Runtime',
@@ -108,6 +112,10 @@ describe('getDependencyFixes', () => {
             {
                 dependency: fixableDependency,
                 fix: fixableDependency.fix,
+            },
+            {
+                dependency: healthyDependency,
+                fix: healthyDependency.fix,
             },
         ]);
     });

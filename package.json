@@ -100,8 +100,13 @@
                 "category": "Arm Topo"
             },
             {
-                "command": "topo.fixIssue",
+                "command": "topo.fixDependencyIssue",
                 "title": "Fix",
+                "category": "Arm Topo"
+            },
+            {
+                "command": "topo.fixTargetIssues",
+                "title": "Fix An Issue",
                 "category": "Arm Topo"
             },
             {
@@ -209,7 +214,11 @@
                     "when": "false"
                 },
                 {
-                    "command": "topo.fixIssue",
+                    "command": "topo.fixDependencyIssue",
+                    "when": "false"
+                },
+                {
+                    "command": "topo.fixTargetIssues",
                     "when": "false"
                 },
                 {
@@ -275,13 +284,18 @@
                     "group": "topo/2_actions"
                 },
                 {
+                    "command": "topo.fixTargetIssues",
+                    "when": "view === topo.target-manager && viewItem =~ /Target/ && viewItem =~ /Selected/ && viewItem =~ /HasFixableDependencies/",
+                    "group": "topo/2_actions"
+                },
+                {
                     "command": "topo.removeTarget",
                     "when": "view == topo.target-manager && viewItem =~ /Target/",
                     "group": "topo/3_cleanup"
                 },
                 {
-                    "command": "topo.fixIssue",
-                    "when": "view === topo.target-manager && viewItem =~ /Fixable/",
+                    "command": "topo.fixDependencyIssue",
+                    "when": "view === topo.target-manager && viewItem =~ /Dependency/ && viewItem =~ /Fixable/",
                     "group": "topo/1_manage"
                 },
                 {
