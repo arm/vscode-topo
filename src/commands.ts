@@ -39,7 +39,8 @@ export const startContainer = command('startContainer');
 export const stopContainer = command('stopContainer');
 export const deleteContainer = command('deleteContainer');
 export const inspectTargetHealth = command('inspectTargetHealth');
-export const fixIssue = command('fixIssue');
+export const fixDependencyIssue = command('fixDependencyIssue');
+export const fixTargetIssues = command('fixTargetIssues');
 
 export interface CommandHandlers {
     hostController: HostController;
@@ -113,7 +114,10 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
         vscode.commands.registerCommand(inspectTargetHealth, (treeNode) =>
             handlers.targetHealth.inspectHealthCommandHandler(treeNode),
         ),
-        vscode.commands.registerCommand(fixIssue, (treeNode) =>
+        vscode.commands.registerCommand(fixDependencyIssue, (treeNode) =>
+            handlers.fixIssue.fixIssueCommandHandler(treeNode),
+        ),
+        vscode.commands.registerCommand(fixTargetIssues, (treeNode) =>
             handlers.fixIssue.fixIssueCommandHandler(treeNode),
         ),
     );
