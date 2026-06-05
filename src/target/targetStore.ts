@@ -5,7 +5,7 @@ import { string, type, assert, record } from 'superstruct';
 import { DisposableCollector } from '../util/disposableCollector';
 import { WrappedError } from '../errors/wrappedError';
 import { getErrorMessage } from '../util/getErrorMessage';
-import { assertValidSshDestination } from '../util/assertValidSshTarget';
+import { assertValidSshDestination } from '../util/assertValidSshDestination';
 
 type GlobalStoreKeys = 'targets';
 type WorkspaceStoreKeys = 'selectedTarget';

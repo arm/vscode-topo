@@ -1,5 +1,5 @@
 import { WrappedError } from '../errors/wrappedError';
-import { assertValidSshDestination } from './assertValidSshTarget';
+import { assertValidSshDestination } from './assertValidSshDestination';
 
 describe('assertValidSshDestination', () => {
     it.each([
