@@ -502,8 +502,15 @@ describe('DockerCommands', () => {
     describe('getAttachShellCommand', () => {
         it('builds the exec command string', () => {
             const cmd = dockerCommands.getAttachShellCommand('abc', 'ctx');
-
-            expect(cmd).toBe('docker --host ssh://ctx exec -it abc sh');
+            expect(cmd).toEqual([
+                'docker',
+                '--host',
+                'ssh://ctx',
+                'exec',
+                '-it',
+                'abc',
+                'sh',
+            ]);
         });
     });
 });
