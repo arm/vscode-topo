@@ -62,6 +62,9 @@ export class TargetStore {
     }
 
     protected publishExternalTargetsChange = debounce(async () => {
+        if (vscode.env.uiKind !== vscode.UIKind.Desktop) {
+            return;
+        }
         try {
             const signalUri = vscode.Uri.joinPath(
                 this.context.globalStorageUri,
