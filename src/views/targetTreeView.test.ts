@@ -255,7 +255,8 @@ describe('TargetTreeView', () => {
                 (item) => item.label === target,
             );
 
-            expect(unselectedTarget?.description).toBeUndefined();
+            expect(unselectedTarget).toBeDefined();
+            expect(unselectedTarget!.description).toBeUndefined();
         });
 
         it('marks target with executable dependency fixes as fixable', async () => {
