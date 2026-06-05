@@ -121,7 +121,10 @@ export class FixIssue {
         }
 
         try {
-            await executeTask(`Fix ${dependencyName} on ${target}`, commandArgs);
+            await executeTask(
+                `Fix ${dependencyName} on ${target}`,
+                commandArgs,
+            );
             vscode.window.showInformationMessage(
                 `${dependencyName} was fixed on target ${target}`,
             );

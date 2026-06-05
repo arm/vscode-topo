@@ -79,9 +79,7 @@ describe('FixIssue', () => {
 
         await expect(
             fixIssue.fixIssueCommandHandler(dependencyItem),
-        ).rejects.toThrow(
-            'No executable fix found for the selected item',
-        );
+        ).rejects.toThrow('No executable fix found for the selected item');
 
         expect(executeTaskMock).not.toHaveBeenCalled();
     });
@@ -211,9 +209,7 @@ describe('FixIssue', () => {
 
         await expect(
             fixIssue.fixIssueCommandHandler(targetItem),
-        ).rejects.toThrow(
-            'No executable fix found for the selected item',
-        );
+        ).rejects.toThrow('No executable fix found for the selected item');
 
         expect(executeTaskMock).not.toHaveBeenCalled();
     });
