@@ -3,6 +3,17 @@ import { TargetStatus } from '../util/types';
 import { getFixableDependencyFixes } from '../util/getDependencyFixes';
 import { HealthCheckDependency } from '../topoCliSchema';
 
+function getConnectivityDiagnosticsMessage(
+    selected: boolean,
+    connectivity?: HealthCheckDependency,
+): string | undefined {
+    if (!selected || connectivity?.status === 'ok' || !connectivity?.value) {
+        return undefined;
+    }
+
+    return connectivity.value;
+}
+
 /** Represents a target */
 export class TargetTreeItem extends vscode.TreeItem {
     constructor(
@@ -11,9 +22,18 @@ export class TargetTreeItem extends vscode.TreeItem {
         public readonly status: TargetStatus,
         public readonly visibleDependencies: HealthCheckDependency[] = [],
         public readonly remoteProcessorNames: string[] = [],
+        connectivity?: HealthCheckDependency,
     ) {
         super(target, vscode.TreeItemCollapsibleState.Expanded);
+        const diagnosticsMessage = getConnectivityDiagnosticsMessage(
+            selected,
+            connectivity,
+        );
         this.id = target;
+        this.description = diagnosticsMessage;
+        this.tooltip = diagnosticsMessage
+            ? `${target}: ${diagnosticsMessage}`
+            : undefined;
         this.iconPath = getTargetTreeItemIcon(selected, status);
         const contextValues = ['Target'];
         if (selected) {
