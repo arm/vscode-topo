@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { HealthCheckDependencyGroupTreeItem } from './healthCheckDependencyGroupTreeItem';
+import { loaded, loading } from '../util/loadable';
 
 describe('HealthCheckDependencyGroupTreeItem', () => {
     it('sets group metadata for dependencies', () => {
@@ -10,7 +11,9 @@ describe('HealthCheckDependencyGroupTreeItem', () => {
                 value: 'docker',
             },
         ];
-        const item = new HealthCheckDependencyGroupTreeItem(dependencies, true);
+        const item = new HealthCheckDependencyGroupTreeItem(
+            loaded(dependencies),
+        );
 
         expect(item.label).toBe('Dependencies');
         expect(item.contextValue).toBe('Dependencies');
@@ -18,14 +21,14 @@ describe('HealthCheckDependencyGroupTreeItem', () => {
         expect(item.collapsibleState).toBe(
             vscode.TreeItemCollapsibleState.Collapsed,
         );
-        expect(item.iconPath).toBeInstanceOf(vscode.ThemeIcon);
+        expect(item.iconPath).toEqual(new vscode.ThemeIcon('library'));
     });
 
     it('sets loading icon when loading', () => {
-        const item = new HealthCheckDependencyGroupTreeItem([], true);
+        const item = new HealthCheckDependencyGroupTreeItem(
+            loading(loaded([])),
+        );
 
-        expect(item.iconPath).toBeInstanceOf(vscode.ThemeIcon);
-        const icon = item.iconPath as vscode.ThemeIcon;
-        expect(icon.id).toBe('loading~spin');
+        expect(item.iconPath).toEqual(new vscode.ThemeIcon('loading~spin'));
     });
 });

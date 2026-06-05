@@ -85,14 +85,15 @@ describe('HostDependenciesTreeDataProvider', () => {
 
     it('returns an error item when host health cannot be loaded', async () => {
         const model = new HostModel();
-        model.setHealth(errored('uh oh'));
+        const erroredValue = errored('uh oh');
+        model.setHealth(erroredValue);
         const provider = new HostTreeView(model);
 
         const children = provider.getChildren();
 
         expect(children).toHaveLength(1);
         expect(children[0]).toMatchObject(
-            new ErrorTreeItem('Failed to load dependencies', 'uh oh'),
+            new ErrorTreeItem('Failed to load dependencies', erroredValue),
         );
     });
 

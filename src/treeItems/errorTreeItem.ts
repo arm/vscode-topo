@@ -1,15 +1,19 @@
 import * as vscode from 'vscode';
 import { DISPLAY_NAME } from '../manifest';
 import { showOutput } from '../commands';
+import { Errored } from '../util/loadable';
 
 export class ErrorTreeItem extends vscode.TreeItem {
-    constructor(message: string, description?: string) {
-        super(message, vscode.TreeItemCollapsibleState.None);
-        this.description = description;
+    constructor(label: string, errored?: Errored) {
+        super(label, vscode.TreeItemCollapsibleState.None);
+        this.description = errored?.error.message;
         this.iconPath = new vscode.ThemeIcon(
             'error',
             new vscode.ThemeColor('testing.iconFailed'),
         );
+        if (errored?.loading) {
+            this.iconPath = new vscode.ThemeIcon('loading~spin');
+        }
         this.contextValue = 'OpenableError';
         this.command = {
             command: showOutput,

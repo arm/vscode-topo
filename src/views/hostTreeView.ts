@@ -6,6 +6,7 @@ import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependenc
 import { ErrorTreeItem } from '../treeItems/errorTreeItem';
 import { HostModel } from '../models/hostModel';
 import { DisposableCollector } from '../util/disposableCollector';
+import { loaded, loading } from '../util/loadable';
 
 function sortDependenciesByName(
     deps: HealthCheckDependency[],
@@ -45,16 +46,13 @@ export class HostTreeView
             const health = this.model.health;
             if (health.status === 'errored') {
                 return [
-                    new ErrorTreeItem(
-                        'Failed to load dependencies',
-                        health.error.message,
-                    ),
+                    new ErrorTreeItem('Failed to load dependencies', health),
                 ];
             }
 
             const deps = sortDependenciesByName(health.data.host.dependencies);
             return [
-                new HealthCheckDependencyGroupTreeItem(deps, health.loading),
+                new HealthCheckDependencyGroupTreeItem(loading(loaded(deps))),
             ];
         }
 
