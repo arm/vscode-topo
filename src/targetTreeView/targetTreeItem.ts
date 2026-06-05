@@ -8,6 +8,7 @@ import { HealthCheckDependency } from '../topoCliSchema';
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
 import { TargetSubsystemGroupTreeItem } from './targetSubsystemGroupTreeItem';
 import { ContainerItem } from '../util/types';
+import { loaded } from '../util/loadable';
 
 function getConnectivityDiagnosticsMessage(
     selected: boolean,
@@ -61,7 +62,7 @@ export class TargetTreeItem extends vscode.TreeItem {
         }
         this.fixableIssues = issues.filter(hasFixableIssueFix);
         this.dependencyGroup = new HealthCheckDependencyGroupTreeItem(
-            visibleDependencies,
+            loaded(visibleDependencies),
         );
         if (this.fixableIssues.length > 0) {
             contextValues.push('HasFixableDependencies');
