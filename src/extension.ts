@@ -30,6 +30,9 @@ import { HostController } from './controllers/hostController';
 import { TransientDocumentProvider } from './util/transientDocumentProvider';
 import { TargetController } from './controllers/targetController';
 import { TargetModel } from './models/targetModel';
+import { RefreshLoop } from './util/refreshLoop';
+import { SelectedTargetModel } from './models/selectedTargetModel';
+import { SelectedTargetController } from './controllers/selectedTargetController';
 
 export async function activate(
     context: vscode.ExtensionContext,
@@ -63,6 +66,7 @@ export async function activate(
 
     const targetModel = new TargetModel();
     const hostModel = new HostModel();
+    const selectedTargetModel = new SelectedTargetModel();
 
     const containersManager = new ContainersManager(
         topoCli,
@@ -80,7 +84,7 @@ export async function activate(
     );
     const targetStatusBarItemView = new TargetStatusBarItemView(
         targetModel,
-        containersManager,
+        selectedTargetModel,
     );
     context.subscriptions.push(
         hostTreeView,
@@ -91,7 +95,26 @@ export async function activate(
     const hostController = new HostController(hostModel, topoCli);
     const hostHealth = new HostHealth(topoCli, hostHealthDocProvider);
     const targetController = new TargetController(targetModel, targetStore);
+    const selectedTargetController = new SelectedTargetController(
+        selectedTargetModel,
+        targetModel,
+        topoCli,
+        dockerCommands,
+    );
+
+    const selectedTargetRefreshLoop = new RefreshLoop(async () => {
+        if (!selectedTargetController.isRefreshing()) {
+            await selectedTargetController.refreshCommandHandler();
+        }
+    }, 3000);
+
     context.subscriptions.push(
+        selectedTargetController,
+        selectedTargetRefreshLoop,
+        targetModel.onSelectedChanged(() => {
+            selectedTargetModel.clear();
+            selectedTargetController.refreshCommandHandler();
+        }),
         targetStore.onExternalTargetsChanged(() =>
             targetController.updateFromStore(),
         ),
@@ -136,4 +159,5 @@ export async function activate(
 
     topoCli.activate();
     projectClone.activate();
+    selectedTargetRefreshLoop.start();
 }
