@@ -111,8 +111,3 @@ export interface TargetState {
     health: TargetHealthCheckResult | undefined;
     status: TargetStatus;
 }
-
-export type Loadable<T> =
-    | { status: 'loading'; placeholder: Loadable<T> }
-    | { status: 'loaded'; data: T }
-    | { status: 'error'; error: Error };
