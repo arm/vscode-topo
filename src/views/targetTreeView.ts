@@ -8,11 +8,11 @@ import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDepe
 import { TargetSubsystemGroupTreeItem } from '../targetTreeView/targetSubsystemGroupTreeItem';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 import { TargetDescriptionStore } from '../target/targetDescriptionStore';
-import { getVisibleTargetDependencies } from '../target/getVisibleTargetDependencies';
 import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
 import { ContainerItem, TargetState } from '../util/types';
-import { loaded } from '../util/loadable';
+import { errored, Loadable, loaded } from '../util/loadable';
+import { TargetHealthCheckResult } from '../topoCliSchema';
 
 function compareByName(a: { name: string }, b: { name: string }): number {
     return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
@@ -42,6 +42,20 @@ function filterContainersForGroup(
             item.annotations?.['remoteproc.name'] === group
         );
     });
+}
+
+function targetHealthLoadable(
+    state: TargetState,
+): Loadable<TargetHealthCheckResult | undefined> {
+    if (state.status === 'connected') {
+        return loaded(state.health);
+    }
+    if (state.status === 'error') {
+        return errored(
+            state.health?.connectivity.value ?? 'Target health not available',
+        );
+    }
+    return loaded(undefined, true);
 }
 
 export class TargetTreeView
@@ -88,29 +102,28 @@ export class TargetTreeView
             const targetTreeItems: TargetTreeItem[] = [];
             for (const target of this.targetModel.targets) {
                 const selected = target === selectedTarget;
-
                 const state: TargetState = selected
                     ? this.containersManager.getTargetStateSnapshot(target)
                     : { status: 'disconnected', health: undefined };
-
-                const description = state.health
-                    ? await this.targetDescriptionStore.getDescription(target)
+                const health = selected
+                    ? targetHealthLoadable(state)
                     : undefined;
-                const visibleDependencies = state.health
-                    ? getVisibleTargetDependencies(state.health, description)
-                    : [];
-                const remoteProcessorNames =
-                    description?.remoteProcessors.map((rp) => rp.name) ?? [];
+                const description =
+                    health?.status === 'loaded' && health.data
+                        ? await this.targetDescriptionStore.getDescription(
+                              target,
+                          )
+                        : undefined;
 
                 targetTreeItems.push(
-                    new TargetTreeItem(
+                    new TargetTreeItem({
                         target,
                         selected,
-                        state.status,
-                        visibleDependencies,
-                        remoteProcessorNames,
-                        state.health?.connectivity,
-                    ),
+                        health,
+                        targetDescription: description
+                            ? loaded(description)
+                            : undefined,
+                    }),
                 );
             }
             const sortedTargetTreeItems = targetTreeItems.sort((a, b) =>
@@ -120,7 +133,11 @@ export class TargetTreeView
         }
 
         if (element instanceof TargetTreeItem) {
-            if (!element.selected || element.status !== 'connected') {
+            if (
+                !element.selected ||
+                element.health.status !== 'loaded' ||
+                !element.health.data
+            ) {
                 return [];
             }
             const containers = await this.containersManager.getContainersData(
@@ -129,7 +146,7 @@ export class TargetTreeView
             const sortedContainers = [...containers].sort(compareContainers);
 
             const dependenciesGroup = new HealthCheckDependencyGroupTreeItem(
-                loaded(element.visibleDependencies),
+                loaded(element.visibleDependencies, element.health.loading),
             );
             const subsystemsGroup = new TargetSubsystemGroupTreeItem(
                 element.target,

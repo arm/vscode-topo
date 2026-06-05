@@ -7,14 +7,34 @@ import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
 import { getWorstDependencyStatus } from '../util/getWorstDependencyStatus';
 import { getDependencyGroupIcon } from './util/dependencyIcons';
+import { errored, Loadable, loaded } from '../util/loadable';
+import { TargetHealthCheckResult } from '../topoCliSchema';
 
-function getStatusIconId(state: TargetState): string {
-    const targetTreeIcon = getTargetTreeItemIcon(true, state.status);
+function targetHealthLoadable(
+    state: TargetState,
+): Loadable<TargetHealthCheckResult | undefined> {
+    if (state.status === 'connected') {
+        return loaded(state.health);
+    }
+    if (state.status === 'error') {
+        return errored(
+            state.health?.connectivity.value ?? 'Target health not available',
+        );
+    }
+    return loaded(undefined, true);
+}
+
+function getStatusIconId(
+    state: Loadable<TargetHealthCheckResult | undefined>,
+): string {
+    const targetTreeIcon = getTargetTreeItemIcon(true, state);
     if (targetTreeIcon) {
         return targetTreeIcon.id;
     }
 
-    const status = getWorstDependencyStatus(state.health?.dependencies ?? []);
+    const deps =
+        state.status === 'loaded' && state.data ? state.data.dependencies : [];
+    const status = getWorstDependencyStatus(deps);
     if (status === 'ok') {
         return 'pass-filled';
     }
@@ -25,7 +45,7 @@ function getStatusIconId(state: TargetState): string {
 function renderStatusBarItem(
     statusBarItem: vscode.StatusBarItem,
     target: string | undefined,
-    state: TargetState,
+    state: Loadable<TargetHealthCheckResult | undefined>,
 ): void {
     if (target) {
         const iconId = getStatusIconId(state);
@@ -66,9 +86,11 @@ export class TargetStatusBarItemView implements vscode.Disposable {
 
     private refresh(): void {
         const selectedTarget = this.targetModel.selected;
-        const state: TargetState = selectedTarget
-            ? this.containersManager.getTargetStateSnapshot(selectedTarget)
-            : { health: undefined, status: 'disconnected' };
+        const state = selectedTarget
+            ? targetHealthLoadable(
+                  this.containersManager.getTargetStateSnapshot(selectedTarget),
+              )
+            : loaded(undefined);
         renderStatusBarItem(this.statusBarItem, selectedTarget, state);
     }
 

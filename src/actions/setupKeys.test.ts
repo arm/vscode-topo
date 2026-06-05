@@ -31,7 +31,7 @@ describe('SetupKeys', () => {
 
     it('runs setup-keys task for selected board item', async () => {
         const setupKeys = new SetupKeys(topoCli, targetModel);
-        const boardItem = new TargetTreeItem(target, true, 'connected');
+        const boardItem = new TargetTreeItem({ target, selected: true });
 
         await setupKeys.setupKeysCommandHandler(boardItem);
 
@@ -46,7 +46,7 @@ describe('SetupKeys', () => {
 
     it('does nothing for non-selected board item', async () => {
         const setupKeys = new SetupKeys(topoCli, targetModel);
-        const boardItem = new TargetTreeItem(target, false, 'disconnected');
+        const boardItem = new TargetTreeItem({ target, selected: false });
 
         await setupKeys.setupKeysCommandHandler(boardItem);
 

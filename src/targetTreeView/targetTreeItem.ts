@@ -1,64 +1,99 @@
 import * as vscode from 'vscode';
-import { TargetStatus } from '../util/types';
 import { getFixableDependencyFixes } from '../util/getDependencyFixes';
-import { HealthCheckDependency } from '../topoCliSchema';
+import {
+    HealthCheckDependency,
+    TargetHealthCheckResult,
+} from '../topoCliSchema';
+import { errored, Loadable } from '../util/loadable';
+import { getVisibleTargetDependencies } from '../target/getVisibleTargetDependencies';
+import { TargetDescription } from '../util/types';
 
-function getConnectivityDiagnosticsMessage(
-    selected: boolean,
-    connectivity?: HealthCheckDependency,
-): string | undefined {
-    if (!selected || connectivity?.status === 'ok' || !connectivity?.value) {
-        return undefined;
-    }
-
-    return connectivity.value;
+export interface TargetTreeItemOptions {
+    readonly target: string;
+    readonly selected: boolean;
+    readonly health?: Loadable<TargetHealthCheckResult | undefined>;
+    readonly targetDescription?: Loadable<TargetDescription>;
+    readonly otherLoadables?: Loadable<unknown>[];
 }
+
+const defaultTargetHealth = errored('Target health not available');
+const defaultTargetDescription = errored('Target description not available');
 
 /** Represents a target */
 export class TargetTreeItem extends vscode.TreeItem {
-    constructor(
-        public readonly target: string,
-        public readonly selected: boolean,
-        public readonly status: TargetStatus,
-        public readonly visibleDependencies: HealthCheckDependency[] = [],
-        public readonly remoteProcessorNames: string[] = [],
-        connectivity?: HealthCheckDependency,
-    ) {
+    public readonly target: string;
+    public readonly selected: boolean;
+    public readonly health: Loadable<TargetHealthCheckResult | undefined>;
+    public readonly targetDescription: Loadable<TargetDescription>;
+
+    constructor({
+        target,
+        selected,
+        health = defaultTargetHealth,
+        targetDescription = defaultTargetDescription,
+        otherLoadables = [],
+    }: TargetTreeItemOptions) {
         super(target, vscode.TreeItemCollapsibleState.Expanded);
-        const diagnosticsMessage = getConnectivityDiagnosticsMessage(
-            selected,
-            connectivity,
-        );
+        this.target = target;
+        this.selected = selected;
+        this.health = health;
+        this.targetDescription = targetDescription;
         this.id = target;
-        this.description = diagnosticsMessage;
-        this.tooltip = diagnosticsMessage
-            ? `${target}: ${diagnosticsMessage}`
-            : undefined;
-        this.iconPath = getTargetTreeItemIcon(selected, status);
+        if (selected && health.status === 'errored') {
+            this.description = health.error.message;
+            this.tooltip = `${target}: ${health.error.message}`;
+        }
+        this.iconPath = getTargetTreeItemIcon(
+            selected,
+            health,
+            targetDescription,
+            ...otherLoadables,
+        );
         const contextValues = ['Target'];
         if (selected) {
             contextValues.push('Selected');
         }
-        if (status === 'connected') {
+        if (health.status === 'loaded' && health.data !== undefined) {
             contextValues.push('Connected');
         }
-        if (getFixableDependencyFixes(visibleDependencies).length > 0) {
+        if (getFixableDependencyFixes(this.visibleDependencies).length > 0) {
             contextValues.push('HasFixableDependencies');
         }
         this.contextValue = contextValues.join(' ');
-        this.collapsibleState = getTargetTreeItemState(selected, status);
+        this.collapsibleState = getTargetTreeItemState(selected, health);
     }
 
     public get displayName(): string {
         return this.label?.toString() ?? '';
     }
+
+    public get visibleDependencies(): HealthCheckDependency[] {
+        if (this.health.status !== 'loaded' || this.health.data === undefined) {
+            return [];
+        }
+
+        const description =
+            this.targetDescription.status === 'loaded'
+                ? this.targetDescription.data
+                : undefined;
+        return getVisibleTargetDependencies(this.health.data, description);
+    }
+
+    public get remoteProcessorNames(): string[] {
+        if (this.targetDescription.status !== 'loaded') {
+            return [];
+        }
+        return this.targetDescription.data.remoteProcessors.map(
+            (rp) => rp.name,
+        );
+    }
 }
 
 export const getTargetTreeItemState = (
     targetSelected: boolean,
-    status: TargetStatus,
+    health: Loadable<unknown>,
 ): vscode.TreeItemCollapsibleState => {
-    if (targetSelected && status === 'connected') {
+    if (targetSelected && health.status === 'loaded' && health.data) {
         return vscode.TreeItemCollapsibleState.Expanded;
     }
     return vscode.TreeItemCollapsibleState.None;
@@ -66,18 +101,18 @@ export const getTargetTreeItemState = (
 
 export const getTargetTreeItemIcon = (
     targetSelected: boolean,
-    status: TargetStatus,
+    ...loadables: Loadable<unknown>[]
 ): vscode.ThemeIcon | undefined => {
     if (!targetSelected) {
         return undefined;
     }
-    if (status === 'disconnected' && targetSelected) {
+    if (loadables.some((l) => l.loading)) {
         return new vscode.ThemeIcon('loading~spin');
     }
-    if (status === 'error') {
+    if (loadables.some((l) => l.status === 'errored')) {
         return new vscode.ThemeIcon(
             'error',
-            new vscode.ThemeColor('terminal.ansiRed'),
+            new vscode.ThemeColor('testing.iconFailed'),
         );
     }
     return undefined;
