@@ -13,12 +13,9 @@ vi.mock('../util/executeTask');
 
 const executeTaskMock = vi.mocked(executeTask);
 
-const mockSelectedQuickPickItem = (item: unknown) => {
-    vi.mocked(vscode.window.showQuickPick).mockResolvedValueOnce(
-        item as vscode.QuickPickItem,
-    );
+const mockSelectedQuickPickItem = <T extends vscode.QuickPickItem>(item: T) => {
+    vi.mocked(vscode.window.showQuickPick).mockResolvedValueOnce(item);
 };
-
 describe('FixIssue', () => {
     let targetModel: TargetModel;
     let topoCli: MockProxy<TopoCli>;
