@@ -184,7 +184,7 @@ describe('target addition', () => {
         expect(targetStore.setSelected).not.toHaveBeenCalled();
     });
 
-    it('throws when targetStore.addTarget fails with a non-storage error', async () => {
+    it('throws when targetStore.addTarget fails with a non-invalid-target error', async () => {
         const targetStore = mockTargetStore();
         const targetModel = new TargetModel();
         const controller = new TargetController(targetModel, targetStore);
