@@ -5,7 +5,6 @@ import { ProjectInit } from './actions/projectInit';
 import { TopoCliVersionChecker } from './topoCliVersionChecker';
 import { TargetStatusBarItemView } from './views/targetStatusBarItemView';
 import { TargetTreeView } from './views/targetTreeView';
-import { ContainersManager } from './target/containersManager';
 import { ContainerStart } from './actions/containerStart';
 import { ContainerStop } from './actions/containerStop';
 import { ContainerOpenInBrowser } from './actions/containerOpenInBrowser';
@@ -68,17 +67,9 @@ export async function activate(
     const hostModel = new HostModel();
     const selectedTargetModel = new SelectedTargetModel();
 
-    const containersManager = new ContainersManager(
-        topoCli,
-        dockerCommands,
-        targetModel,
-    );
-    await containersManager.activate();
-    context.subscriptions.push(containersManager);
-
     const hostTreeView = new HostTreeView(hostModel);
     const targetTreeView = new TargetTreeView(
-        containersManager,
+        selectedTargetModel,
         targetModel,
         targetDescriptionStore,
     );
