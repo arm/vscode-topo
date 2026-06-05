@@ -18,7 +18,6 @@ import { ProjectClone } from './projectClone';
 import { Deploy } from './actions/deploy';
 import { Stop } from './actions/stop';
 import { ProtocolHandler } from './protocolHandler';
-import { SetupKeys } from './actions/setupKeys';
 import { TargetDescriptionStore } from './target/targetDescriptionStore';
 import { FixIssue } from './actions/fixIssue';
 import { HostTreeView } from './views/hostTreeView';
@@ -104,7 +103,6 @@ export async function activate(
     const containerOpenInBrowser = new ContainerOpenInBrowser();
     const attachVsCode = new AttachVsCode(dockerCommands);
     const attachShell = new AttachShell(dockerCommands);
-    const setupKeys = new SetupKeys(topoCli, targetModel);
     const containerStart = new ContainerStart(dockerCommands);
     const containerStop = new ContainerStop(dockerCommands);
     const containerDelete = new ContainerDelete(dockerCommands);
@@ -123,7 +121,6 @@ export async function activate(
             containerOpenInBrowser,
             attachVsCode,
             attachShell,
-            setupKeys,
             containerStart,
             containerStop,
             containerDelete,

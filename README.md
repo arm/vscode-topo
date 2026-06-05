@@ -37,13 +37,12 @@ Each target in the tree shows:
 
 Right-click a target in the tree to access these actions:
 
-| Command            | Description                                                     |
-| ------------------ | --------------------------------------------------------------- |
-| **Select Target**  | Make the target active for deployments and actions.             |
-| **Remove Target**  | Delete the target from the configuration.                       |
-| **Inspect Health** | Display health-check JSON results for the selected target.      |
-| **Setup Keys**     | Configure SSH key-based authentication for the selected target. |
-| **Fix An Issue**   | Select and run an available fix for a target dependency issue.  |
+| Command            | Description                                                    |
+| ------------------ | -------------------------------------------------------------- |
+| **Select Target**  | Make the target active for deployments and actions.            |
+| **Remove Target**  | Delete the target from the configuration.                      |
+| **Inspect Health** | Display health-check JSON results for the selected target.     |
+| **Fix An Issue**   | Select and run an available fix for a target dependency issue. |
 
 ### Dependency Actions
 
