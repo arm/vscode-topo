@@ -115,7 +115,14 @@ describe('commands', () => {
                 commands.inspectTargetHealth,
                 handlers.targetHealth.inspectHealthCommandHandler,
             ],
-            [commands.fixIssue, handlers.fixIssue.fixIssueCommandHandler],
+            [
+                commands.fixDependencyIssue,
+                handlers.fixIssue.fixIssueCommandHandler,
+            ],
+            [
+                commands.fixTargetIssues,
+                handlers.fixIssue.fixIssueCommandHandler,
+            ],
         ];
 
         it.each(cases)(
