@@ -114,8 +114,11 @@ export class TargetController {
         try {
             await this.targetStore.addTarget(target);
         } catch (error) {
-            if (isWrappedError(error, ['INVALID_TARGET'])) {
-                showAndLogError('Failed to add target', error);
+            if (isWrappedError(error, ['INVALID_SSH_DESTINATION'])) {
+                showAndLogError(
+                    'Cannot add target. Enter a valid SSH destination',
+                    error,
+                );
                 return;
             }
             throw error;

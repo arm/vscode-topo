@@ -3,7 +3,7 @@ export type WrappedErrorCode =
     | 'CLONE'
     | 'CLI'
     | 'STORAGE'
-    | 'INVALID_TARGET';
+    | 'INVALID_SSH_DESTINATION';
 
 export type WrappedErrorLogLevel = 'Error' | 'Warning' | 'Info' | 'Debug';
 

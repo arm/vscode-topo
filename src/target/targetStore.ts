@@ -5,7 +5,7 @@ import { string, type, assert, record } from 'superstruct';
 import { DisposableCollector } from '../util/disposableCollector';
 import { WrappedError } from '../errors/wrappedError';
 import { getErrorMessage } from '../util/getErrorMessage';
-import { assertValidSshTarget } from '../util/assertValidSshTarget';
+import { assertValidSshDestination } from '../util/assertValidSshTarget';
 
 type GlobalStoreKeys = 'targets';
 type WorkspaceStoreKeys = 'selectedTarget';
@@ -80,7 +80,7 @@ export class TargetStore {
     }
 
     public async addTarget(target: string): Promise<void> {
-        assertValidSshTarget(target);
+        assertValidSshDestination(target);
         const targets = this.getTargets();
         if (targets.has(target)) {
             throw new Error(`Target "${target}" already exists`);

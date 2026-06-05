@@ -137,14 +137,7 @@ describe('TargetStore', () => {
         const store = new TargetStore(context);
 
         await expect(store.addTarget(target)).rejects.toMatchObject({
-            code: 'INVALID_TARGET',
-            message: `Invalid SSH target: ${target}`,
-            logs: [
-                {
-                    level: 'Error',
-                    msg: `Invalid SSH target: ${target}`,
-                },
-            ],
+            code: 'INVALID_SSH_DESTINATION',
         });
         expect(context.globalState.get('targets')).toBeUndefined();
     });

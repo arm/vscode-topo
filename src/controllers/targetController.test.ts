@@ -169,7 +169,7 @@ describe('target addition', () => {
         const targetStore = mockTargetStore();
         const targetModel = new TargetModel();
         const controller = new TargetController(targetModel, targetStore);
-        const error = new WrappedError('INVALID_TARGET', 'boom');
+        const error = new WrappedError('INVALID_SSH_DESTINATION', 'boom');
         targetStore.addTarget.mockRejectedValueOnce(error);
         mockQuickPick({ label: 'root@192.0.2.1' });
 
@@ -177,7 +177,7 @@ describe('target addition', () => {
 
         expect(targetStore.addTarget).toHaveBeenCalled();
         expect(showAndLogError).toHaveBeenCalledWith(
-            'Failed to add target',
+            'Cannot add target. Enter a valid SSH destination',
             error,
         );
         expect(vscode.window.showWarningMessage).not.toHaveBeenCalled();

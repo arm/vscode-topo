@@ -1,21 +1,11 @@
 import { WrappedError } from '../errors/wrappedError';
 
-const hasControlCharacter = (value: string): boolean => {
-    return [...value].some((char) => {
-        const code = char.charCodeAt(0);
-        return code < 0x20 || code === 0x7f;
-    });
-};
+const supportedSshTargetCharacters = /^[A-Za-z0-9._~@:%+\-[\]]+$/;
 
-export function assertValidSshTarget(target: string): void {
-    if (
-        target.length === 0 ||
-        target.startsWith('-') ||
-        /\s/.test(target) ||
-        hasControlCharacter(target)
-    ) {
+export function assertValidSshDestination(target: string): void {
+    if (target.startsWith('-') || !supportedSshTargetCharacters.test(target)) {
         const message = `Invalid SSH target: ${target}`;
-        throw new WrappedError('INVALID_TARGET', message, [
+        throw new WrappedError('INVALID_SSH_DESTINATION', message, [
             { level: 'Error', msg: message },
         ]);
     }
