@@ -88,7 +88,8 @@ describe('TargetTreeItem', () => {
         ]);
 
         expect(item.contextValue).toContain('HasFixableDependencies');
-        expect(item.visibleDependencies).toEqual([dependency]);
+        expect(item.dependencyGroup.dependencies).toEqual([dependency]);
+        expect(item.fixableIssues).toEqual([dependency]);
     });
 
     it('shows diagnostics as a description and tooltip when provided', () => {

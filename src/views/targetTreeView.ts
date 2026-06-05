@@ -127,15 +127,10 @@ export class TargetTreeView
             );
             const sortedContainers = [...containers].sort(compareContainers);
 
-            const dependenciesGroup = new HealthCheckDependencyGroupTreeItem(
-                element.visibleDependencies,
-            );
-            const subsystemsGroup = new TargetSubsystemGroupTreeItem(
-                element.target,
-                element.remoteProcessorNames,
-                sortedContainers,
-            );
-            return [dependenciesGroup, subsystemsGroup];
+            return [
+                element.dependencyGroup,
+                element.createSubsystemGroup(sortedContainers),
+            ];
         }
 
         if (element instanceof HealthCheckDependencyGroupTreeItem) {

@@ -1,33 +1,46 @@
 import * as vscode from 'vscode';
 import { TargetStatus } from '../util/types';
-import { getFixableDependencyFixes } from '../util/getDependencyFixes';
+import {
+    hasFixableIssueFix,
+    type FixableHealthCheckIssue,
+} from '../util/getIssueFixes';
 import { HealthCheckDependency } from '../topoCliSchema';
+import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
+import { TargetSubsystemGroupTreeItem } from './targetSubsystemGroupTreeItem';
+import { ContainerItem } from '../util/types';
 
 function getConnectivityDiagnosticsMessage(
     selected: boolean,
-    connectivity?: HealthCheckDependency,
+    connectivityCheck?: HealthCheckDependency,
 ): string | undefined {
-    if (!selected || connectivity?.status === 'ok' || !connectivity?.value) {
+    if (
+        !selected ||
+        connectivityCheck?.status === 'ok' ||
+        !connectivityCheck?.value
+    ) {
         return undefined;
     }
 
-    return connectivity.value;
+    return connectivityCheck.value;
 }
 
 /** Represents a target */
 export class TargetTreeItem extends vscode.TreeItem {
+    public readonly dependencyGroup: HealthCheckDependencyGroupTreeItem;
+    public readonly fixableIssues: FixableHealthCheckIssue[];
+
     constructor(
         public readonly target: string,
         public readonly selected: boolean,
         public readonly status: TargetStatus,
-        public readonly visibleDependencies: HealthCheckDependency[] = [],
-        public readonly remoteProcessorNames: string[] = [],
-        connectivity?: HealthCheckDependency,
+        visibleDependencies: HealthCheckDependency[] = [],
+        private readonly remoteProcessorNames: string[] = [],
+        connectivityCheck?: HealthCheckDependency,
     ) {
         super(target, vscode.TreeItemCollapsibleState.Expanded);
         const diagnosticsMessage = getConnectivityDiagnosticsMessage(
             selected,
-            connectivity,
+            connectivityCheck,
         );
         this.id = target;
         this.description = diagnosticsMessage;
@@ -42,7 +55,15 @@ export class TargetTreeItem extends vscode.TreeItem {
         if (status === 'connected') {
             contextValues.push('Connected');
         }
-        if (getFixableDependencyFixes(visibleDependencies).length > 0) {
+        const issues = [...visibleDependencies];
+        if (connectivityCheck) {
+            issues.unshift(connectivityCheck);
+        }
+        this.fixableIssues = issues.filter(hasFixableIssueFix);
+        this.dependencyGroup = new HealthCheckDependencyGroupTreeItem(
+            visibleDependencies,
+        );
+        if (this.fixableIssues.length > 0) {
             contextValues.push('HasFixableDependencies');
         }
         this.contextValue = contextValues.join(' ');
@@ -51,6 +72,16 @@ export class TargetTreeItem extends vscode.TreeItem {
 
     public get displayName(): string {
         return this.label?.toString() ?? '';
+    }
+
+    public createSubsystemGroup(
+        containers: ContainerItem[] = [],
+    ): TargetSubsystemGroupTreeItem {
+        return new TargetSubsystemGroupTreeItem(
+            this.target,
+            this.remoteProcessorNames,
+            containers,
+        );
     }
 }
 

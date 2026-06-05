@@ -289,6 +289,35 @@ describe('TargetTreeView', () => {
             );
         });
 
+        it('marks target with executable connectivity fixes as fixable', async () => {
+            const targetState: TargetState = {
+                health: {
+                    ...targetHealth,
+                    connectivity: {
+                        name: 'Connectivity',
+                        status: 'error',
+                        value: 'unreachable',
+                        fix: {
+                            description: 'Set up connectivity',
+                            command: 'topo setup-keys',
+                        },
+                    },
+                },
+                status: 'error',
+            };
+            containersManagerMock.getTargetStateSnapshot.mockReturnValue(
+                targetState,
+            );
+            containersManagerMock.getTargetState.mockResolvedValue(targetState);
+
+            const rootChildren = await view.getChildren();
+
+            expect(rootChildren).toHaveLength(1);
+            expect(rootChildren[0].contextValue).toContain(
+                'HasFixableDependencies',
+            );
+        });
+
         it('marks target with executable subsystem driver fix as fixable when remote processors exist', async () => {
             const targetState: TargetState = {
                 health: {
