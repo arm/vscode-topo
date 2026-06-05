@@ -225,10 +225,13 @@ describe('TargetTreeView', () => {
 
             const rootChildren = await view.getChildren();
 
-            expect(rootChildren).toHaveLength(1);
-            expect(rootChildren[0].label).toBe(target);
-            expect(rootChildren[0].description).toBe(diagnostics);
-            expect(rootChildren[0].tooltip).toBe(`${target}: ${diagnostics}`);
+            expect(rootChildren).toStrictEqual([
+                expect.objectContaining({
+                    label: target,
+                    description: diagnostics,
+                    tooltip: `${target}: ${diagnostics}`,
+                }),
+            ]);
         });
 
         it('does not show connectivity diagnostics on unselected targets', async () => {
