@@ -256,7 +256,15 @@ export class DockerCommands implements ContainerCommands {
     public getAttachShellCommand(
         containerId: string,
         targetSshConnection: string,
-    ): string {
-        return `docker --host ${getSshUri(targetSshConnection)} exec -it ${containerId} sh`;
+    ): string[] {
+        return [
+            'docker',
+            '--host',
+            getSshUri(targetSshConnection),
+            'exec',
+            '-it',
+            containerId,
+            'sh',
+        ];
     }
 }
