@@ -33,5 +33,5 @@ export interface ContainerCommands {
     getAttachShellCommand(
         containerId: string,
         targetSshConnection: string,
-    ): string;
+    ): string[];
 }
