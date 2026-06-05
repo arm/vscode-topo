@@ -56,17 +56,15 @@ describe('FixIssue', () => {
         targetModel.setSelected(target);
     });
 
-    const createFixIssue = () => new FixIssue(topoCli, targetModel);
-
     it('does not prompt to fix issues on construction', async () => {
-        createFixIssue();
+        new FixIssue(topoCli, targetModel);
 
         expect(vscode.window.showWarningMessage).not.toHaveBeenCalled();
         expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
     });
 
     it('runs a single dependency fix directly', async () => {
-        const fixIssue = createFixIssue();
+        const fixIssue = new FixIssue(topoCli, targetModel);
         const dependencyItem = new HealthCheckDependencyTreeItem(
             dependencies[0],
         );
@@ -81,7 +79,7 @@ describe('FixIssue', () => {
     });
 
     it('does not run a single dependency fix without an executable command', async () => {
-        const fixIssue = createFixIssue();
+        const fixIssue = new FixIssue(topoCli, targetModel);
         const dependencyItem = new HealthCheckDependencyTreeItem(
             dependencies[2],
         );
@@ -92,7 +90,7 @@ describe('FixIssue', () => {
     });
 
     it('shows a quick pick when only one target dependency fix is available', async () => {
-        const fixIssue = createFixIssue();
+        const fixIssue = new FixIssue(topoCli, targetModel);
         const targetItem = new TargetTreeItem(target, true, 'connected', [
             dependencies[0],
         ]);
@@ -127,7 +125,7 @@ describe('FixIssue', () => {
     });
 
     it('shows target dependency fixes in a quick pick and runs the selected fix', async () => {
-        const fixIssue = createFixIssue();
+        const fixIssue = new FixIssue(topoCli, targetModel);
         const targetItem = new TargetTreeItem(
             target,
             true,
@@ -172,7 +170,7 @@ describe('FixIssue', () => {
     });
 
     it('does not run a target dependency fix when quick pick is cancelled', async () => {
-        const fixIssue = createFixIssue();
+        const fixIssue = new FixIssue(topoCli, targetModel);
         const targetItem = new TargetTreeItem(
             target,
             true,
@@ -187,7 +185,7 @@ describe('FixIssue', () => {
     });
 
     it('does not prompt when a target has no executable dependency fixes', async () => {
-        const fixIssue = createFixIssue();
+        const fixIssue = new FixIssue(topoCli, targetModel);
         const targetItem = new TargetTreeItem(target, true, 'connected', [
             dependencies[2],
         ]);
