@@ -4,12 +4,11 @@ import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependenc
 import { showAndLogError } from '../util/showAndLogError';
 import { logger } from '../util/logger';
 import { executeTask } from '../util/executeTask';
-import { getFixCommandArgs } from '../util/getFixCommandArgs';
 import {
     getFixableDependencyFixes,
     IssueFix,
 } from '../util/getDependencyFixes';
-import { HealthCheckDependency, HealthCheckFix } from '../topoCliSchema';
+import { HealthCheckDependency } from '../topoCliSchema';
 import { TargetModel } from '../models/targetModel';
 import { TopoCli } from '../topoCli';
 
@@ -71,7 +70,7 @@ export class FixIssue {
             return;
         }
 
-        await this.executeFix(target, [treeNode.dependency.name], fix);
+        await this.executeFix(target, [treeNode.dependency.name], fix.command);
     }
 
     private async fixTargetIssuesFromTreeItem(
@@ -111,38 +110,42 @@ export class FixIssue {
             return;
         }
 
+        if (!selectedFix.fix.command) {
+            showAndLogError(
+                `Failed to fix issue`,
+                new Error('No executable fix found for the selected item'),
+            );
+            return;
+        }
+
         await this.executeFix(
             target,
             [selectedFix.dependency.name],
-            selectedFix.fix,
+            selectedFix.fix.command,
         );
     }
 
     private async executeFix(
         target: string,
-        names: string[],
-        fix: HealthCheckFix,
+        dependencyNames: string[],
+        command: string,
     ): Promise<void> {
-        const name = names.join(', ');
-        const commandArgs = getFixCommandArgs(fix.command);
-        if (!commandArgs) {
-            showAndLogError(
-                `Failed to fix ${name} on target ${target}`,
-                new Error('No executable command found'),
-            );
-            return;
-        }
+        const dependencyName = dependencyNames.join(', ');
+        const commandArgs = command.split(/\s+/);
         if (commandArgs[0] === 'topo') {
             commandArgs[0] = this.topoCli.getBinaryPath();
         }
 
         try {
-            await executeTask(`Fix ${name} on ${target}`, commandArgs);
+            await executeTask(`Fix ${dependencyName} on ${target}`, commandArgs);
             vscode.window.showInformationMessage(
-                `${name} was fixed on target ${target}`,
+                `${dependencyName} was fixed on target ${target}`,
             );
         } catch (err) {
-            showAndLogError(`Failed to fix ${name} on target ${target}`, err);
+            showAndLogError(
+                `Failed to fix ${dependencyName} on target ${target}`,
+                err,
+            );
         }
     }
 }
