@@ -2,7 +2,6 @@ import * as vscode from 'vscode';
 import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 import { showAndLogError } from '../util/showAndLogError';
-import { logger } from '../util/logger';
 import { executeTask } from '../util/executeTask';
 import {
     getFixableDependencyFixes,
@@ -45,8 +44,9 @@ export class FixIssue {
             return;
         }
 
-        const errMsg = `Invalid item for fix issue: expected HealthCheckDependencyTreeItem or TargetTreeItem but received:`;
-        logger.error(errMsg, treeNode);
+        throw new Error(
+            `Invalid item for fix issue: expected HealthCheckDependencyTreeItem or TargetTreeItem but received: ${String(treeNode)}`,
+        );
     }
 
     private async fixDependencyIssueFromTreeItem(
@@ -54,20 +54,12 @@ export class FixIssue {
     ): Promise<void> {
         const target = this.targetModel.selected;
         if (!target) {
-            showAndLogError(
-                `Failed to fix issue`,
-                new Error('No selected target found'),
-            );
-            return;
+            throw new Error('No selected target found');
         }
 
         const fix = treeNode.dependency.fix;
         if (!fix?.command) {
-            showAndLogError(
-                `Failed to fix issue`,
-                new Error('No executable fix found for the selected item'),
-            );
-            return;
+            throw new Error('No executable fix found for the selected item');
         }
 
         await this.executeFix(target, [treeNode.dependency.name], fix.command);
@@ -77,9 +69,9 @@ export class FixIssue {
         treeNode: TargetTreeItem,
     ): Promise<void> {
         if (!treeNode.selected) {
-            const errMsg = `Invalid target item for fix an issue: expected selected TargetTreeItem but received:`;
-            logger.error(errMsg, treeNode);
-            return;
+            throw new Error(
+                `Invalid target item for fix an issue: expected selected TargetTreeItem but received: ${String(treeNode)}`,
+            );
         }
 
         const fixes = getFixableDependencyQuickPickItems(
@@ -87,13 +79,9 @@ export class FixIssue {
         );
 
         if (fixes.length === 0) {
-            showAndLogError(
-                `Failed to fix issue`,
-                new Error(
-                    `No executable dependency fixes found for target ${treeNode.target}`,
-                ),
+            throw new Error(
+                `No executable dependency fixes found for target ${treeNode.target}`,
             );
-            return;
         }
 
         await this.selectAndFixTargetIssue(treeNode.target, fixes);
@@ -111,11 +99,7 @@ export class FixIssue {
         }
 
         if (!selectedFix.fix.command) {
-            showAndLogError(
-                `Failed to fix issue`,
-                new Error('No executable fix found for the selected item'),
-            );
-            return;
+            throw new Error('No executable fix found for the selected item');
         }
 
         await this.executeFix(

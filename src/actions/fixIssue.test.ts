@@ -71,13 +71,31 @@ describe('FixIssue', () => {
         );
     });
 
-    it('does not run a single dependency fix without an executable command', async () => {
+    it('fails a single dependency fix without an executable command', async () => {
         const fixIssue = new FixIssue(topoCli, targetModel);
         const dependencyItem = new HealthCheckDependencyTreeItem(
             dependencies[2],
         );
 
-        await fixIssue.fixIssueCommandHandler(dependencyItem);
+        await expect(
+            fixIssue.fixIssueCommandHandler(dependencyItem),
+        ).rejects.toThrow(
+            'No executable fix found for the selected item',
+        );
+
+        expect(executeTaskMock).not.toHaveBeenCalled();
+    });
+
+    it('fails a single dependency fix when no target is selected', async () => {
+        targetModel.setSelected(undefined);
+        const fixIssue = new FixIssue(topoCli, targetModel);
+        const dependencyItem = new HealthCheckDependencyTreeItem(
+            dependencies[0],
+        );
+
+        await expect(
+            fixIssue.fixIssueCommandHandler(dependencyItem),
+        ).rejects.toThrow('No selected target found');
 
         expect(executeTaskMock).not.toHaveBeenCalled();
     });
@@ -177,15 +195,68 @@ describe('FixIssue', () => {
         expect(executeTaskMock).not.toHaveBeenCalled();
     });
 
-    it('does not prompt when a target has no executable dependency fixes', async () => {
+    it('fails when the selected target dependency fix has no executable command', async () => {
+        const fixIssue = new FixIssue(topoCli, targetModel);
+        const targetItem = new TargetTreeItem(target, true, 'connected', [
+            dependencies[0],
+        ]);
+        mockSelectedQuickPickItem({
+            label: 'Container Engine',
+            description: 'Install container engine',
+            dependency: dependencies[0],
+            fix: {
+                description: 'Install container engine',
+            },
+        });
+
+        await expect(
+            fixIssue.fixIssueCommandHandler(targetItem),
+        ).rejects.toThrow(
+            'No executable fix found for the selected item',
+        );
+
+        expect(executeTaskMock).not.toHaveBeenCalled();
+    });
+
+    it('fails when a target has no executable dependency fixes', async () => {
         const fixIssue = new FixIssue(topoCli, targetModel);
         const targetItem = new TargetTreeItem(target, true, 'connected', [
             dependencies[2],
         ]);
 
-        await fixIssue.fixIssueCommandHandler(targetItem);
+        await expect(
+            fixIssue.fixIssueCommandHandler(targetItem),
+        ).rejects.toThrow(
+            `No executable dependency fixes found for target ${target}`,
+        );
 
         expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
         expect(executeTaskMock).not.toHaveBeenCalled();
+    });
+
+    it('fails when fixing an unselected target item', async () => {
+        const fixIssue = new FixIssue(topoCli, targetModel);
+        const targetItem = new TargetTreeItem(target, false, 'connected', [
+            dependencies[0],
+        ]);
+
+        await expect(
+            fixIssue.fixIssueCommandHandler(targetItem),
+        ).rejects.toThrow(
+            'Invalid target item for fix an issue: expected selected TargetTreeItem but received:',
+        );
+
+        expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
+        expect(executeTaskMock).not.toHaveBeenCalled();
+    });
+
+    it('fails when the command is called with an unsupported item', async () => {
+        const fixIssue = new FixIssue(topoCli, targetModel);
+
+        await expect(
+            fixIssue.fixIssueCommandHandler({ unexpected: true }),
+        ).rejects.toThrow(
+            'Invalid item for fix issue: expected HealthCheckDependencyTreeItem or TargetTreeItem but received:',
+        );
     });
 });
