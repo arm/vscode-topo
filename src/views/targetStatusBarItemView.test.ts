@@ -1,10 +1,11 @@
 import * as vscode from 'vscode';
 import { TargetStatusBarItemView } from './targetStatusBarItemView';
 import { TargetTreeView } from './targetTreeView';
-import { ContainersManager } from '../target/containersManager';
 import { mock } from 'vitest-mock-extended';
 import { TargetHealthCheckResult } from '../topoCliSchema';
 import { TargetModel } from '../models/targetModel';
+import { SelectedTargetModel } from '../models/selectedTargetModel';
+import { loaded, loading } from '../util/loadable';
 
 vi.mock('../util/logger');
 
@@ -32,29 +33,40 @@ describe('TargetStatusBarItemView', () => {
         const target = 'root@localhost';
         const targetModel = new TargetModel();
         targetModel.setSelected(target);
-        const containersManager = mock<ContainersManager>({
-            getTargetStateSnapshot: vi.fn().mockReturnValue({
-                health: healthyTarget,
-                status: 'disconnected',
-            }),
-        });
-        new TargetStatusBarItemView(targetModel, containersManager);
+        const selectedTargetModel = new SelectedTargetModel();
+        selectedTargetModel.setHealth(loaded(healthyTarget));
+
+        new TargetStatusBarItemView(targetModel, selectedTargetModel);
 
         expect(vscode.window.createStatusBarItem).toHaveBeenCalledTimes(1);
         const statusBarItem = vi.mocked(vscode.window.createStatusBarItem).mock
             .results[0].value;
-        expect(statusBarItem.text).toBe(`$(loading~spin) ${target}`);
+        expect(statusBarItem.text).toBe(`$(pass-filled) ${target}`);
         expect(statusBarItem.command).toBe(TargetTreeView.focusViewCommand);
-        expect(statusBarItem.text).toBe(`$(loading~spin) ${target}`);
         expect(statusBarItem.tooltip).toBe('Connection String: root@localhost');
         expect(statusBarItem.show).toHaveBeenCalledTimes(1);
         expect(statusBarItem.hide).not.toHaveBeenCalled();
     });
 
+    it('shows a loading icon in the status bar when the health of the selected target is loading', async () => {
+        const target = 'root@localhost';
+        const targetModel = new TargetModel();
+        targetModel.setSelected(target);
+        const selectedTargetModel = new SelectedTargetModel();
+        selectedTargetModel.setHealth(loading(loaded(healthyTarget)));
+
+        new TargetStatusBarItemView(targetModel, selectedTargetModel);
+
+        expect(vscode.window.createStatusBarItem).toHaveBeenCalledTimes(1);
+        const statusBarItem = vi.mocked(vscode.window.createStatusBarItem).mock
+            .results[0].value;
+        expect(statusBarItem.text).toBe(`$(loading~spin) ${target}`);
+    });
+
     it("doesn't show an item in the status bar when no target is selected", async () => {
         new TargetStatusBarItemView(
             new TargetModel(),
-            mock<ContainersManager>(),
+            new SelectedTargetModel(),
         );
 
         expect(vscode.window.createStatusBarItem).toHaveBeenCalledTimes(1);
@@ -70,15 +82,11 @@ describe('TargetStatusBarItemView', () => {
         const target1 = 'root@localhost';
         const target2 = 'root@other-host';
         const targetModel = new TargetModel();
-        const containersManager = mock<ContainersManager>({
-            getTargetStateSnapshot: vi.fn().mockReturnValue({
-                health: healthyTarget,
-                status: 'connected',
-            }),
-        });
+        const selectedTargetModel = new SelectedTargetModel();
+        selectedTargetModel.setHealth(loaded(healthyTarget));
 
         targetModel.setSelected(target1);
-        new TargetStatusBarItemView(targetModel, containersManager);
+        new TargetStatusBarItemView(targetModel, selectedTargetModel);
         const statusBarItem = vi.mocked(vscode.window.createStatusBarItem).mock
             .results[0].value;
         expect(statusBarItem.text).toBe(`$(pass-filled) ${target1}`);
@@ -99,23 +107,21 @@ describe('TargetStatusBarItemView', () => {
         const target = 'root@localhost';
         const targetModel = new TargetModel();
         targetModel.setSelected(target);
-        const containersManager = mock<ContainersManager>({
-            getTargetStateSnapshot: vi.fn().mockReturnValue({
-                health: {
-                    ...healthyTarget,
-                    dependencies: [
-                        {
-                            status: 'warning',
-                            name: 'Container Engine',
-                            value: 'missing',
-                        },
-                    ],
-                },
-                status: 'connected',
+        const selectedTargetModel = new SelectedTargetModel();
+        selectedTargetModel.setHealth(
+            loaded({
+                ...healthyTarget,
+                dependencies: [
+                    {
+                        status: 'warning',
+                        name: 'Container Engine',
+                        value: 'missing',
+                    },
+                ],
             }),
-        });
+        );
 
-        new TargetStatusBarItemView(targetModel, containersManager);
+        new TargetStatusBarItemView(targetModel, selectedTargetModel);
 
         expect(statusBarItem.text).toBe(`$(warning) ${target}`);
         expect(statusBarItem.tooltip).toBe('Connection String: root@localhost');

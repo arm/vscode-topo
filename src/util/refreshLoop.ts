@@ -20,4 +20,8 @@ export class RefreshLoop {
         clearTimeout(this.timeoutId);
         this.timeoutId = undefined;
     }
+
+    public dispose(): void {
+        this.stop();
+    }
 }
