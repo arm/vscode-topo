@@ -84,21 +84,31 @@ export class FixIssue {
         target: string,
         issues: FixableHealthIssue[],
     ): Promise<void> {
-        const selectedFix = await vscode.window.showQuickPick(
+        const selectedFixes = await vscode.window.showQuickPick(
             getIssueFixQuickPickItems(issues),
             {
-                placeHolder: `Select an issue fix for ${target}`,
+                canPickMany: true,
+                placeHolder: `Select dependency fixes for ${target}`,
             },
         );
-        if (!selectedFix) {
+
+        if (!selectedFixes || selectedFixes.length === 0) {
             return;
         }
 
-        await this.executeFix(
-            target,
-            [selectedFix.issue.name],
-            selectedFix.issue.fix.command,
-        );
+        for (const selectedFix of selectedFixes) {
+            if (!selectedFix.issue.fix.command) {
+                throw new Error(
+                    'No executable fix found for the selected item',
+                );
+            }
+
+            await this.executeFix(
+                target,
+                [selectedFix.issue.name],
+                selectedFix.issue.fix.command,
+            );
+        }
     }
 
     private async executeFix(
