@@ -3,20 +3,14 @@ name: Release
 on:
     workflow_dispatch:
         inputs:
-            release-type:
-                type: choice
-                description: A new version is published with the corresponding version bump if not set to None.
-                options:
-                    - 'None'
-                    - 'Pre-release'
-                    - 'Patch'
-                    - 'Minor'
-                    - 'Major'
-                default: 'None'
+            pre-release:
+                type: boolean
+                description: Pre-release
+                default: false
 
 env:
     NODE_VERSION: 22.x
-    PRE_RELEASE_FLAG: ${{ inputs.release-type == 'Pre-release' && '--pre-release' || '' }}
+    PRE_RELEASE_FLAG: ${{ inputs.pre-release && '--pre-release' || '' }}
 
 jobs:
     ci:
@@ -35,7 +29,9 @@ jobs:
               with:
                   app_id: ${{ secrets.TOPO_ACCESS_APP_ID }}
                   private_key: ${{ secrets.TOPO_ACCESS_APP_PRIVATE_KEY }}
-            - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+            - uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e
+              with:
+                  fetch-depth: 0
             - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
               with:
                   node-version: ${{ env.NODE_VERSION }}
@@ -44,22 +40,74 @@ jobs:
               run: npm ci
               env:
                   GITHUB_TOKEN: ${{ steps.get-app-token.outputs.token }}
+            - name: Detect changes since last release to decide major, minor, patch or pre-release
+              id: detect-changes
+              run: |
+                  if [ "$PRE_RELEASE_FLAG" = "--pre-release" ]; then
+                      echo "release-type=Pre-release" >> "$GITHUB_OUTPUT"
+                      exit 0
+                  fi
+
+                  CURRENT_VERSION=$(go run github.com/caarlos0/svu/v3@v3.4.0 current --json || echo '{"major":0,"minor":0,"patch":0}')
+                  NEXT_VERSION=$(go run github.com/caarlos0/svu/v3@v3.4.0 next --json)
+
+                  CURRENT_MAJOR=$(jq -r .major <<< "$CURRENT_VERSION")
+                  CURRENT_MINOR=$(jq -r .minor <<< "$CURRENT_VERSION")
+                  CURRENT_PATCH=$(jq -r .patch <<< "$CURRENT_VERSION")
+                  NEXT_MAJOR=$(jq -r .major <<< "$NEXT_VERSION")
+                  NEXT_MINOR=$(jq -r .minor <<< "$NEXT_VERSION")
+                  NEXT_PATCH=$(jq -r .patch <<< "$NEXT_VERSION")
+
+                  if [ "$NEXT_MAJOR" -gt "$CURRENT_MAJOR" ]; then
+                      RELEASE_TYPE=Major
+                  elif [ "$NEXT_MINOR" -gt "$CURRENT_MINOR" ]; then
+                      RELEASE_TYPE=Minor
+                  elif [ "$NEXT_PATCH" -gt "$CURRENT_PATCH" ]; then
+                      RELEASE_TYPE=Patch
+                  else
+                      RELEASE_TYPE=None
+                  fi
+
+                  echo "release-type=$RELEASE_TYPE" >> "$GITHUB_OUTPUT"
             - name: Calculate Version
               id: calculate-version
               env:
-                  RELEASE_TYPE: ${{ inputs.release-type }}
+                  RELEASE_TYPE: ${{ steps.detect-changes.outputs.release-type }}
               run: |
                   VERSION=$(npm run calculate-new-version --silent)
                   echo "version=$VERSION" >> "$GITHUB_OUTPUT"
             - name: Update extension version
               if: steps.calculate-version.outputs.version
               run: npm version --no-git-tag-version ${{ steps.calculate-version.outputs.version }}
-            - name: Update changelog version
+            - name: Generate release notes and changelog
+              if: steps.calculate-version.outputs.version
               run: |
-                  sed -i.bak -r "s/## \[?Unreleased\]?/## $VERSION/g" CHANGELOG.md
-                  rm CHANGELOG.md.bak
+                  NOTES_FILE="$RUNNER_TEMP/generated-release-notes.md"
+                  gh api "repos/$GITHUB_REPOSITORY/releases/generate-notes" \
+                      --field tag_name="v$VERSION" \
+                      --field target_commitish="$GITHUB_SHA" \
+                      --jq .body > "$NOTES_FILE"
+
+                  cp "$NOTES_FILE" release-notes.md
+
+                  {
+                      sed -n '1,/^## /{ /^## /q; p; }' CHANGELOG.md
+                      printf '## %s\n\n' "$VERSION"
+                      cat "$NOTES_FILE"
+                      printf '\n\n'
+                      sed -n '/^## /,$p' CHANGELOG.md
+                  } > CHANGELOG.md.new
+                  mv CHANGELOG.md.new CHANGELOG.md
               env:
                   VERSION: ${{ steps.calculate-version.outputs.version }}
+                  GH_TOKEN: ${{ steps.get-app-token.outputs.token }}
+            - name: Store release notes
+              if: steps.calculate-version.outputs.version
+              uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+              with:
+                  name: release-notes
+                  path: ./release-notes.md
+                  if-no-files-found: error
             - name: Create version bump patch
               if: steps.calculate-version.outputs.version
               run: git diff > new-version.patch
@@ -70,7 +118,6 @@ jobs:
                   name: new-version-patch
                   path: ./new-version.patch
                   if-no-files-found: error
-
     build:
         name: Build ${{ matrix.platform }}
         needs:
@@ -125,10 +172,10 @@ jobs:
         needs:
             - prepare-version
             - build
-        if: needs.prepare-version.outputs.version && github.ref == 'refs/heads/main'
+        if: needs.prepare-version.outputs.version
         runs-on: ubuntu-latest
         outputs:
-            release_commit: ${{ inputs.release-type == 'Pre-release' && github.sha || steps.commit-version.outputs.release_commit }}
+            release_commit: ${{ steps.commit-version.outputs.release_commit }}
         steps:
             - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
             - name: Download version bump patch
@@ -148,20 +195,16 @@ jobs:
                   git commit -a -m "${{ needs.prepare-version.outputs.version }}"
                   COMMIT=$(git rev-parse HEAD)
                   echo "release_commit=$COMMIT" >> "$GITHUB_OUTPUT"
-            - name: Add "Unreleased" section to changelog
-              run: |
-                  echo "`sed -e "s/# Change Log/# Change Log\n\n## [Unreleased]/g" CHANGELOG.md`" > CHANGELOG.md
-                  git commit -a -m "Add 'Unreleased' section to CHANGELOG.md [skip ci]"
             - name: Push changes
-              if: inputs.release-type != 'Pre-release'
-              run: git push
+              run: git push origin HEAD:${{ github.ref_name }}
 
     release:
         name: Release
         needs:
             - prepare-version
             - build
-        if: needs.prepare-version.outputs.version && github.ref == 'refs/heads/main'
+            - push-new-version
+        if: needs.prepare-version.outputs.version
         runs-on: ubuntu-latest
         permissions:
             contents: write
@@ -169,22 +212,29 @@ jobs:
             - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
               with:
                   path: artifacts
+            - name: Download release notes
+              uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+              with:
+                  name: release-notes
+                  path: release-notes
             - name: Release
               uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda
               with:
                   files: artifacts/*/*.vsix
+                  body_path: release-notes/release-notes.md
                   tag_name: v${{ needs.prepare-version.outputs.version }}
                   target_commitish: ${{ needs.push-new-version.outputs.release_commit }}
-                  prerelease: ${{ inputs.release-type == 'Pre-release' }}
+                  prerelease: ${{ inputs.pre-release }}
 
     publish:
         name: Publish
         needs:
             - prepare-version
             - release
-        if: needs.prepare-version.outputs.version && github.ref == 'refs/heads/main'
+        if: needs.prepare-version.outputs.version
         runs-on: ubuntu-latest
         steps:
+            - uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e
             - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
               with:
                   pattern: vsix-package-*
@@ -194,7 +244,7 @@ jobs:
               with:
                   node-version: ${{ env.NODE_VERSION }}
                   cache: npm
-            - name: Publish to VS Code Marketplace
-              run: npx vsce publish -i artifacts/*.vsix -p ${{secrets.VS_MARKETPLACE_TOKEN}} $PRE_RELEASE_FLAG
-            - name: Publish to Open VSX
-              run: npx ovsx@0.8.0 publish -i artifacts/*.vsix -p ${{secrets.OPEN_VSX_TOKEN}} $PRE_RELEASE_FLAG
+            # - name: Publish to VS Code Marketplace
+            #   run: npx vsce publish -i artifacts/*.vsix -p ${{secrets.VS_MARKETPLACE_TOKEN}} $PRE_RELEASE_FLAG
+            # - name: Publish to Open VSX
+            #   run: npx ovsx@0.8.0 publish -i artifacts/*.vsix -p ${{secrets.OPEN_VSX_TOKEN}} $PRE_RELEASE_FLAG
