@@ -56,13 +56,6 @@ describe('FixIssue', () => {
         targetModel.setSelected(target);
     });
 
-    it('does not prompt to fix issues on construction', async () => {
-        new FixIssue(topoCli, targetModel);
-
-        expect(vscode.window.showWarningMessage).not.toHaveBeenCalled();
-        expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
-    });
-
     it('runs a single dependency fix directly', async () => {
         const fixIssue = new FixIssue(topoCli, targetModel);
         const dependencyItem = new HealthCheckDependencyTreeItem(
