@@ -6,7 +6,7 @@ import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependenc
 import { ErrorTreeItem } from '../treeItems/errorTreeItem';
 import { HostModel } from '../models/hostModel';
 import { DisposableCollector } from '../util/disposableCollector';
-import { loaded, loading } from '../util/loadable';
+import { loaded } from '../util/loadable';
 
 function sortDependenciesByName(
     deps: HealthCheckDependency[],
@@ -52,7 +52,9 @@ export class HostTreeView
 
             const deps = sortDependenciesByName(health.data.host.dependencies);
             return [
-                new HealthCheckDependencyGroupTreeItem(loading(loaded(deps))),
+                new HealthCheckDependencyGroupTreeItem(
+                    loaded(deps, health.loading),
+                ),
             ];
         }
 

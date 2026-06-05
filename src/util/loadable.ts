@@ -6,14 +6,14 @@ export function loading<V, T extends Loadable<V>>(current: T): T {
     return { ...current, loading: true };
 }
 
-export function loaded<T>(data: T): Loaded<T> {
-    return { status: 'loaded', data, loading: false };
+export function loaded<T>(data: T, loading: boolean = false): Loaded<T> {
+    return { status: 'loaded', data, loading };
 }
 
-export function errored(error: unknown): Errored {
+export function errored(error: unknown, loading: boolean = false): Errored {
     return {
         status: 'errored',
         error: error instanceof Error ? error : new Error(String(error)),
-        loading: false,
+        loading,
     };
 }
