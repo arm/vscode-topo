@@ -126,6 +126,11 @@
                 "category": "Arm Topo"
             },
             {
+                "command": "topo.deploy",
+                "title": "Deploy",
+                "category": "Arm Topo"
+            },
+            {
                 "command": "topo.deploy.context",
                 "title": "Topo Deploy",
                 "category": "Arm Topo"

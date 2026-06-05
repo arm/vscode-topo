@@ -66,6 +66,7 @@ Right-click a service in the Targets tree to manage individual containers:
 
 Deploy or stop the `compose.yaml` or `compose.yml` file in a project directory on the selected target. You can trigger either operation from:
 
+- Running **Arm Topo: Deploy** from the Command Palette, then selecting a `compose.yaml` or `compose.yml` file from the workspace.
 - Right-clicking `compose.yaml` or `compose.yml` in the Explorer or editor tab and selecting **Topo Deploy** or **Topo Stop**.
 
 The extension runs `topo deploy --target <ssh>` or `topo stop --target <ssh>` from the directory containing `compose.yaml` or `compose.yml` in a task terminal and reports success or failure.
@@ -112,6 +113,7 @@ All commands are under the **Arm Topo** category. Commands available from the Co
 | `Arm Topo: Clone Remote Project`   | Clone a project from a Git repository.          |
 | `Arm Topo: Clone Template Project` | Clone a project from an Arm template.           |
 | `Arm Topo: Clone Local Project`    | Clone a project from a local directory.         |
+| `Arm Topo: Deploy`                 | Select and deploy a compose file to the target. |
 | `Arm Topo: Inspect Host Health`    | Display host dependency health report.          |
 
 Additional commands are available through the Targets tree view context menus.
