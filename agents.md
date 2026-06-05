@@ -1,3 +1,7 @@
+## Project Architecture
+
+For changes involving command routing, actions, controllers, models, or views, read [docs/architecture.md](docs/architecture.md) before editing. Follow its MVC boundaries unless the existing code clearly requires a narrower local pattern.
+
 ## Coding Conventions
 
 ### Core Philosophy

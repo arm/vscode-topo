@@ -16,19 +16,23 @@ export function attachShell(
     item: ContainerItem,
     containerCommands: ContainerCommands,
 ): void {
+    const fullCommand = containerCommands.getAttachShellCommand(
+        item.id,
+        item.target,
+    );
     const terminal = vscode.window.createTerminal({
         name: `Shell: ${item.image}`,
+        shellPath: fullCommand[0],
+        shellArgs: fullCommand.slice(1),
     });
-    terminal.sendText(
-        containerCommands.getAttachShellCommand(item.id, item.target),
-    );
     terminal.show();
 }
 
 export function attachSSH(target: string): void {
     const terminal = vscode.window.createTerminal({
         name: `SSH: ${target}`,
+        shellPath: 'ssh',
+        shellArgs: [target],
     });
-    terminal.sendText(`ssh ${target}`);
     terminal.show();
 }
