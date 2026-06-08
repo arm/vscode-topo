@@ -1,6 +1,6 @@
 export const REGISTRY_NAME = 'arm';
 export const PACKAGE_NAME = 'topo';
-export const DISPLAY_NAME = 'Arm Topo';
+export const DISPLAY_NAME = 'Topo';
 export const CONFIG_LOGGING_VERBOSITY = 'loggingVerbosity';
 export const DEFAULT_LOGGING_VERBOSITY = 'warn';
 export const TARGET_REMOTEPROC_RUNTIME = 'io.containerd.remoteproc.v1';
