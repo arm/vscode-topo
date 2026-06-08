@@ -146,9 +146,8 @@ describe('Deploy', () => {
             .calls[0][0] as (vscode.QuickPickItem & { uri: vscode.Uri })[];
         expect(quickPickItems.map((item) => item.label)).toEqual([
             'compose.yaml',
-            'compose.yml',
-            path.join('services', 'compose.yaml'),
             path.join('a', 'compose.yml'),
+            path.join('services', 'compose.yaml'),
         ]);
         expect(vscode.window.showQuickPick).toHaveBeenCalledWith(
             quickPickItems,
