@@ -112,42 +112,55 @@ describe('getTargetIssueFixCommandGroups', () => {
 });
 
 describe('hasFixableIssueFix', () => {
-    it('identifies dependency issues with executable fixes', () => {
-        const fixableDependency: IssueCheck = {
-            name: 'Container Engine',
-            status: 'error',
-            value: 'missing',
-            fix: {
-                description: 'Install Docker',
-                command: 'topo install docker',
+    it.each<{
+        name: string;
+        issue: IssueCheck;
+        expected: boolean;
+    }>([
+        {
+            name: 'executable fix',
+            issue: {
+                name: 'Container Engine',
+                status: 'error',
+                value: 'missing',
+                fix: {
+                    description: 'Install Docker',
+                    command: 'topo install docker',
+                },
             },
-        };
-        const healthyDependency: IssueCheck = {
-            name: 'Debugger',
-            status: 'ok',
-            value: 'installed',
-        };
-        const infoDependency: IssueCheck = {
-            name: 'Runtime',
-            status: 'info',
-            value: 'available',
-        };
-        const manualDependency: IssueCheck = {
-            name: 'Runtime',
-            status: 'warning',
-            value: 'missing',
-            fix: {
-                description: 'Manual setup required',
+            expected: true,
+        },
+        {
+            name: 'healthy dependency',
+            issue: {
+                name: 'Debugger',
+                status: 'ok',
+                value: 'installed',
             },
-        };
-
-        expect(
-            [
-                fixableDependency,
-                healthyDependency,
-                infoDependency,
-                manualDependency,
-            ].filter(hasFixableIssueFix),
-        ).toEqual([fixableDependency]);
+            expected: false,
+        },
+        {
+            name: 'informational dependency',
+            issue: {
+                name: 'Runtime',
+                status: 'info',
+                value: 'available',
+            },
+            expected: false,
+        },
+        {
+            name: 'manual fix without command',
+            issue: {
+                name: 'Runtime',
+                status: 'warning',
+                value: 'missing',
+                fix: {
+                    description: 'Manual setup required',
+                },
+            },
+            expected: false,
+        },
+    ])('returns $expected for $name', ({ issue, expected }) => {
+        expect(hasFixableIssueFix(issue)).toBe(expected);
     });
 });
