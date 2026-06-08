@@ -54,9 +54,8 @@ export class Deploy {
                 vscode.workspace.getWorkspaceFolder(file),
             ),
         );
-        const preferredComposeFiles = getPreferredComposeFiles(
-            composeFileMetadata,
-        );
+        const preferredComposeFiles =
+            getPreferredComposeFiles(composeFileMetadata);
         const composeFiles = preferredComposeFiles.sort(compareComposeFiles);
 
         const resource = await promptForComposeFile(composeFiles);
