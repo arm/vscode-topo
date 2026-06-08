@@ -3,7 +3,8 @@ export type WrappedErrorCode =
     | 'CLONE'
     | 'CLI'
     | 'STORAGE'
-    | 'NO_TARGET_SELECTED';
+    | 'NO_TARGET_SELECTED'
+    | 'INVALID_SSH_DESTINATION';
 
 export type WrappedErrorLogLevel = 'Error' | 'Warning' | 'Info' | 'Debug';
 
