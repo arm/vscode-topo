@@ -3,7 +3,7 @@ import { TargetStatus } from '../util/types';
 import {
     hasFixableIssueFix,
     type FixableHealthIssue,
-} from '../util/getIssueFixes';
+} from '../util/iIssueFixes';
 import { IssueCheck } from '../topoCliSchema';
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
 import { TargetSubsystemGroupTreeItem } from './targetSubsystemGroupTreeItem';
