@@ -277,9 +277,7 @@ describe('TargetTreeView', () => {
 
             expect(rootChildren).toEqual([
                 expect.objectContaining({
-                    contextValue: expect.stringContaining(
-                        'HasFixableIssues',
-                    ),
+                    contextValue: expect.stringContaining('HasFixableIssues'),
                 }),
             ]);
         });
