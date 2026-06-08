@@ -8,7 +8,7 @@ import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDepe
 import { TargetSubsystemGroupTreeItem } from '../targetTreeView/targetSubsystemGroupTreeItem';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 import { TargetDescriptionStore } from '../target/targetDescriptionStore';
-import { getVisibleTargetDependencies } from '../target/getVisibleTargetDependencies';
+import { getVisibleTargetIssues } from '../target/getVisibleTargetIssues';
 import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
 import { ContainerItem, TargetState } from '../util/types';
@@ -96,8 +96,8 @@ export class TargetTreeView
                 const description = state.health
                     ? await this.targetDescriptionStore.getDescription(target)
                     : undefined;
-                const visibleDependencies = state.health
-                    ? getVisibleTargetDependencies(state.health, description)
+                const visibleIssues = state.health
+                    ? getVisibleTargetIssues(state.health, description)
                     : [];
                 const remoteProcessorNames =
                     description?.remoteProcessors.map((rp) => rp.name) ?? [];
@@ -107,7 +107,7 @@ export class TargetTreeView
                         target,
                         selected,
                         state.status,
-                        visibleDependencies,
+                        visibleIssues,
                         remoteProcessorNames,
                         state.health?.connectivity,
                     ),
@@ -130,7 +130,7 @@ export class TargetTreeView
 
             return [
                 new HealthCheckDependencyGroupTreeItem(
-                    loaded(element.visibleDependencies),
+                    loaded(element.visibleIssues),
                 ),
                 new TargetSubsystemGroupTreeItem(
                     element.target,

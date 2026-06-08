@@ -8,8 +8,8 @@ import { HostModel } from '../models/hostModel';
 import { DisposableCollector } from '../util/disposableCollector';
 import { loaded } from '../util/loadable';
 
-function sortDependenciesByName(deps: IssueCheck[]): IssueCheck[] {
-    return deps.sort((a, b) =>
+function sortIssueChecksByName(issueChecks: IssueCheck[]): IssueCheck[] {
+    return issueChecks.sort((a, b) =>
         a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
     );
 }
@@ -48,7 +48,7 @@ export class HostTreeView
                 ];
             }
 
-            const deps = sortDependenciesByName(health.data.host.dependencies);
+            const deps = sortIssueChecksByName(health.data.host.dependencies);
             return [
                 new HealthCheckDependencyGroupTreeItem(
                     loaded(deps, health.loading),

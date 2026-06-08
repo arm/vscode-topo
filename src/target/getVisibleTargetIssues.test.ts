@@ -1,6 +1,6 @@
 import { TargetHealthCheck } from '../topoCliSchema';
 import { TargetDescription } from '../util/types';
-import { getVisibleTargetDependencies } from './getVisibleTargetDependencies';
+import { getVisibleTargetIssues } from './getVisibleTargetIssues';
 
 describe('getVisibleTargetDependencies', () => {
     const health: TargetHealthCheck = {
@@ -43,7 +43,7 @@ describe('getVisibleTargetDependencies', () => {
         };
         const expectedDependencies = health.dependencies;
 
-        const result = getVisibleTargetDependencies(
+        const result = getVisibleTargetIssues(
             healthWithFixableSubsystemDriver,
             targetDescription,
         );
@@ -61,7 +61,7 @@ describe('getVisibleTargetDependencies', () => {
             health.subsystemDriver,
         ];
 
-        const result = getVisibleTargetDependencies(health, targetDescription);
+        const result = getVisibleTargetIssues(health, targetDescription);
 
         expect(result).toEqual(expectedDependencies);
     });

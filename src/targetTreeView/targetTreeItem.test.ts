@@ -73,7 +73,7 @@ describe('TargetTreeItem', () => {
         );
     });
 
-    it('adds HasFixableDependencies context when target has fixable dependencies', () => {
+    it('adds HasFixableIssues context when target has fixable dependencies', () => {
         const dependency: IssueCheck = {
             name: 'Container Engine',
             status: 'error',
@@ -87,12 +87,12 @@ describe('TargetTreeItem', () => {
             dependency,
         ]);
 
-        expect(item.contextValue).toContain('HasFixableDependencies');
-        expect(item.visibleDependencies).toEqual([dependency]);
+        expect(item.contextValue).toContain('HasFixableIssues');
+        expect(item.visibleIssues).toEqual([dependency]);
         expect(item.fixableIssues).toEqual([dependency]);
     });
 
-    it('does not add HasFixableDependencies context when dependency fix has no command', () => {
+    it('does not add HasFixableIssues context when dependency fix has no command', () => {
         const dependency: IssueCheck = {
             name: 'Container Engine',
             status: 'error',
@@ -106,12 +106,12 @@ describe('TargetTreeItem', () => {
             dependency,
         ]);
 
-        expect(item.contextValue).not.toContain('HasFixableDependencies');
-        expect(item.visibleDependencies).toEqual([dependency]);
+        expect(item.contextValue).not.toContain('HasFixableIssues');
+        expect(item.visibleIssues).toEqual([dependency]);
         expect(item.fixableIssues).toEqual([]);
     });
 
-    it('adds HasFixableDependencies context when connectivity has a fix command', () => {
+    it('adds HasFixableIssues context when connectivity has a fix command', () => {
         const connectivityIssue: IssueCheck = {
             name: 'Connectivity',
             status: 'error',
@@ -131,7 +131,7 @@ describe('TargetTreeItem', () => {
             connectivityIssue,
         );
 
-        expect(item.contextValue).toContain('HasFixableDependencies');
+        expect(item.contextValue).toContain('HasFixableIssues');
         expect(item.fixableIssues).toEqual([connectivityIssue]);
     });
 

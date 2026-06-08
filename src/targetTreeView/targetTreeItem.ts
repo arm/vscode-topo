@@ -26,7 +26,7 @@ export class TargetTreeItem extends vscode.TreeItem {
         public readonly target: string,
         public readonly selected: boolean,
         public readonly status: TargetStatus,
-        public readonly visibleDependencies: IssueCheck[] = [],
+        public readonly visibleIssues: IssueCheck[] = [],
         public readonly remoteProcessorNames: string[] = [],
         connectivityCheck?: IssueCheck,
     ) {
@@ -48,13 +48,13 @@ export class TargetTreeItem extends vscode.TreeItem {
         if (status === 'connected') {
             contextValues.push('Connected');
         }
-        const issues = [...visibleDependencies];
+        const issues = [...visibleIssues];
         if (connectivityCheck) {
             issues.unshift(connectivityCheck);
         }
         this.fixableIssues = issues.filter(hasFixCommand);
         if (this.fixableIssues.length > 0) {
-            contextValues.push('HasFixableDependencies');
+            contextValues.push('HasFixableIssues');
         }
         this.contextValue = contextValues.join(' ');
         this.collapsibleState = getTargetTreeItemState(selected, status);

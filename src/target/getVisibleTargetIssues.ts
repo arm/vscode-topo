@@ -1,14 +1,14 @@
 import { IssueCheck, TargetHealthCheck } from '../topoCliSchema';
 import { TargetDescription } from '../util/types';
 
-export function getVisibleTargetDependencies(
+export function getVisibleTargetIssues(
     health: TargetHealthCheck,
     targetDescription: TargetDescription | undefined,
 ): IssueCheck[] {
-    const dependencies = [...health.dependencies];
+    const issues = [...health.dependencies];
     if (targetDescription?.remoteProcessors.length) {
-        dependencies.push(health.subsystemDriver);
+        issues.push(health.subsystemDriver);
     }
 
-    return dependencies;
+    return issues;
 }
