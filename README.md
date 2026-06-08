@@ -31,7 +31,9 @@ Each target in the tree shows:
 | -------------------- | --------------------------------------------------------------------- |
 | **Subsystem groups** | Host and any remote processor subsystems detected on the target.      |
 | **Services**         | Running or stopped containers under each subsystem, with state icons. |
-| **Dependencies**     | Connectivity, driver, and target dependency health checks.            |
+| **Dependencies**     | Dependency and driver health-check issues shown for the target.       |
+
+Connectivity errors are shown on the selected target row.
 
 ### Target Actions
 
@@ -43,7 +45,7 @@ Right-click a target in the tree to access these actions:
 | **Remove Target**  | Delete the target from the configuration.                       |
 | **Inspect Health** | Display health-check JSON results for the selected target.      |
 | **Setup Keys**     | Configure SSH key-based authentication for the selected target. |
-| **Fix An Issue**   | Select and run an available fix for a target dependency issue.  |
+| **Fix An Issue**   | Select and run an available fix for a target issue.             |
 
 ### Dependency Actions
 

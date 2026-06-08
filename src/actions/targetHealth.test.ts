@@ -3,14 +3,14 @@ import * as vscode from 'vscode';
 import { TargetHealth } from './targetHealth';
 import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
 import { TopoCli } from '../topoCli';
-import { HealthCheckResult } from '../topoCliSchema';
+import { HealthCheck } from '../topoCliSchema';
 import { TransientDocumentProvider } from '../util/transientDocumentProvider';
 import { showAndLogError } from '../util/showAndLogError';
 
 vi.mock('../util/logger');
 vi.mock('../util/showAndLogError');
 
-const health: HealthCheckResult = {
+const health: HealthCheck = {
     host: {
         dependencies: [],
     },

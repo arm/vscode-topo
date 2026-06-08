@@ -2,10 +2,10 @@ import { mock } from 'vitest-mock-extended';
 import { HostModel } from '../models/hostModel';
 import { TopoCli } from '../topoCli';
 import { HostController } from './hostController';
-import { HostHealthCheckResult } from '../topoCliSchema';
+import { HostHealthCheck } from '../topoCliSchema';
 import { loaded } from '../util/loadable';
 
-const hostHealth: HostHealthCheckResult = {
+const hostHealth: HostHealthCheck = {
     host: {
         dependencies: [
             {

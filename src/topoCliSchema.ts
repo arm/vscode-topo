@@ -37,42 +37,40 @@ export const healthCheckFixSchema = type({
 
 export type HealthCheckFix = Infer<typeof healthCheckFixSchema>;
 
-export const healthCheckDependencySchema = type({
+export const IssueCheckSchema = type({
     name: trimmed(string()),
     status: healthCheckStatusSchema,
     value: trimmed(string()),
     fix: optional(healthCheckFixSchema),
 });
 
-export type HealthCheckDependency = Infer<typeof healthCheckDependencySchema>;
+export type IssueCheck = Infer<typeof IssueCheckSchema>;
 
-const healthCheckHostSchema = type({
-    dependencies: array(healthCheckDependencySchema),
-});
-
-const targetHealthCheckResultSchema = type({
+const targetHealthCheckSchema = type({
     isLocalhost: boolean(),
-    connectivity: healthCheckDependencySchema,
-    subsystemDriver: healthCheckDependencySchema,
-    dependencies: array(healthCheckDependencySchema),
+    connectivity: IssueCheckSchema,
+    subsystemDriver: IssueCheckSchema,
+    dependencies: array(IssueCheckSchema),
 });
 
-export const hostHealthCheckResultSchema = type({
-    host: healthCheckHostSchema,
+const hostHealthSchema = type({
+    dependencies: array(IssueCheckSchema),
 });
 
-export type HostHealthCheckResult = Infer<typeof hostHealthCheckResultSchema>;
-
-export type TargetHealthCheckResult = Infer<
-    typeof targetHealthCheckResultSchema
->;
-
-export const healthCheckResultSchema = type({
-    host: healthCheckHostSchema,
-    target: targetHealthCheckResultSchema,
+export const hostHealthCheckSchema = type({
+    host: hostHealthSchema,
 });
 
-export type HealthCheckResult = Infer<typeof healthCheckResultSchema>;
+export type HostHealthCheck = Infer<typeof hostHealthCheckSchema>;
+
+export type TargetHealthCheck = Infer<typeof targetHealthCheckSchema>;
+
+export const healthCheckSchema = type({
+    host: hostHealthSchema,
+    target: targetHealthCheckSchema,
+});
+
+export type HealthCheck = Infer<typeof healthCheckSchema>;
 
 const serviceDescriptionSchema = type({
     build: optional(

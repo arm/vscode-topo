@@ -5,7 +5,7 @@ import { TargetTreeView } from './targetTreeView';
 import { TargetState } from '../util/types';
 import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
-import { getWorstDependencyStatus } from '../util/getWorstDependencyStatus';
+import { getWorstIssueCheckStatus } from '../util/getWorstIssueCheckStatus';
 import { getDependencyGroupIcon } from './util/dependencyIcons';
 
 function getStatusIconId(state: TargetState): string {
@@ -14,7 +14,7 @@ function getStatusIconId(state: TargetState): string {
         return targetTreeIcon.id;
     }
 
-    const status = getWorstDependencyStatus(state.health?.dependencies ?? []);
+    const status = getWorstIssueCheckStatus(state.health?.dependencies ?? []);
     if (status === 'ok') {
         return 'pass-filled';
     }
