@@ -8,8 +8,8 @@ describe('assertValidSshDestination', () => {
         'root@192.168.1.1',
         '[fe80::1%eth0]',
         'board+debug',
-    ])('accepts valid target "%s"', (target) => {
-        expect(() => assertValidSshDestination(target)).not.toThrow();
+    ])('accepts valid SSH destination "%s"', (sshDestination) => {
+        expect(() => assertValidSshDestination(sshDestination)).not.toThrow();
     });
 
     it.each([
@@ -24,17 +24,17 @@ describe('assertValidSshDestination', () => {
         'prod=west',
         'user@example.com;alias',
     ])(
-        'throws an INVALID_SSH_DESTINATION WrappedError for invalid target "%s"',
-        (target) => {
+        'throws an INVALID_SSH_DESTINATION WrappedError for invalid SSH destination "%s"',
+        (sshDestination) => {
             let thrown: unknown;
 
             try {
-                assertValidSshDestination(target);
+                assertValidSshDestination(sshDestination);
             } catch (err) {
                 thrown = err;
             }
 
-            const message = `Invalid SSH target: ${target}`;
+            const message = `Invalid SSH destination: ${sshDestination}`;
             expect(thrown).toBeInstanceOf(WrappedError);
             expect((thrown as WrappedError).code).toBe(
                 'INVALID_SSH_DESTINATION',
