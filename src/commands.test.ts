@@ -19,6 +19,7 @@ import { ContainerDelete } from './actions/containerDelete';
 import { TargetHealth } from './actions/targetHealth';
 import { FixIssue } from './actions/fixIssue';
 import { HostHealth } from './actions/hostHealth';
+import { ProjectClone } from './actions/projectClone';
 
 vi.mock('./util/logger');
 
@@ -28,6 +29,7 @@ describe('commands', () => {
         hostHealth: mock<HostHealth>(),
         targetController: mock<TargetController>(),
         projectInit: mock<ProjectInit>(),
+        projectClone: mock<ProjectClone>(),
         deploy: mock<Deploy>(),
         stop: mock<Stop>(),
         containerOpenInBrowser: mock<ContainerOpenInBrowser>(),
@@ -122,6 +124,18 @@ describe('commands', () => {
             [
                 commands.fixTargetIssues,
                 handlers.fixIssue.fixIssueCommandHandler,
+            ],
+            [
+                commands.remoteClone,
+                handlers.projectClone.remoteCloneCommandHandler,
+            ],
+            [
+                commands.localClone,
+                handlers.projectClone.localCloneCommandHandler,
+            ],
+            [
+                commands.templateClone,
+                handlers.projectClone.templateCloneCommandHandler,
             ],
         ];
 

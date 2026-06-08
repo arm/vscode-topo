@@ -1,13 +1,11 @@
 import * as vscode from 'vscode';
 import path from 'node:path';
 import { mock } from 'vitest-mock-extended';
-import { ProjectClone } from './projectClone';
 import { ProtocolHandler } from './protocolHandler';
 import { TopoCli } from './topoCli';
 import { mutable } from './util/mutable';
 import { showAndLogError } from './util/showAndLogError';
 import { executeTask } from './util/executeTask';
-import { TargetModel } from './models/targetModel';
 
 vi.mock('./util/showAndLogError', () => ({
     showAndLogError: vi.fn(),
@@ -25,17 +23,13 @@ const destinationUri = vscode.Uri.file(destinationPath);
 const topoBinaryPath = path.join('fake', 'extension', 'resources', 'topo');
 
 describe('ProtocolHandler', () => {
-    let projectClone: ProjectClone;
     let protocolHandler: ProtocolHandler;
     const topoCli = mock<TopoCli>();
-    const targetModel = new TargetModel();
 
     beforeEach(() => {
-        vi.clearAllMocks();
-        const context = mock<vscode.ExtensionContext>();
+        vi.resetAllMocks();
         topoCli.getBinaryPath.mockReturnValue(topoBinaryPath);
-        projectClone = new ProjectClone(context, topoCli, targetModel);
-        protocolHandler = new ProtocolHandler(projectClone);
+        protocolHandler = new ProtocolHandler(topoCli);
         mutable(vscode.workspace).workspaceFolders = undefined;
     });
 
