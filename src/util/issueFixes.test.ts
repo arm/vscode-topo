@@ -2,6 +2,7 @@ import { IssueCheck, TargetHealthCheck } from '../topoCliSchema';
 import {
     hasFixCommand,
     getTargetIssueFixCommandGroups,
+    type IssueFixCommandGroup,
 } from './issueFixes';
 
 describe('getTargetIssueFixCommandGroups', () => {
@@ -21,51 +22,63 @@ describe('getTargetIssueFixCommandGroups', () => {
     };
 
     it('ignores target health issues without executable fixes', () => {
-        expect(
-            getTargetIssueFixCommandGroups({
-                ...targetHealth,
-                connectivity: {
-                    name: 'Connected',
+        const health: TargetHealthCheck = {
+            ...targetHealth,
+            connectivity: {
+                name: 'Connected',
+                status: 'error',
+                value: 'unreachable',
+                fix: {
+                    description: 'Manual setup required',
+                },
+            },
+            dependencies: [
+                {
+                    name: 'Container Engine',
                     status: 'error',
-                    value: 'unreachable',
+                    value: 'missing',
                     fix: {
                         description: 'Manual setup required',
                     },
                 },
-                dependencies: [
-                    {
-                        name: 'Container Engine',
-                        status: 'error',
-                        value: 'missing',
-                        fix: {
-                            description: 'Manual setup required',
-                        },
-                    },
-                    {
-                        name: 'Debugger',
-                        status: 'warning',
-                        value: 'missing',
-                    },
-                ],
-            }),
-        ).toEqual([]);
+                {
+                    name: 'Debugger',
+                    status: 'warning',
+                    value: 'missing',
+                },
+            ],
+        };
+        const expectedCommandGroups: IssueFixCommandGroup[] = [];
+
+        const result = getTargetIssueFixCommandGroups(health);
+
+        expect(result).toEqual(expectedCommandGroups);
     });
 
     it('groups target health issue fixes by command', () => {
-        expect(
-            getTargetIssueFixCommandGroups({
-                ...targetHealth,
-                connectivity: {
-                    name: 'Connected',
-                    status: 'error',
-                    value: 'unreachable',
-                    fix: {
-                        description: 'Install remoteproc components',
-                        command: 'topo install remoteproc',
-                    },
+        const health: TargetHealthCheck = {
+            ...targetHealth,
+            connectivity: {
+                name: 'Connected',
+                status: 'error',
+                value: 'unreachable',
+                fix: {
+                    description: 'Install remoteproc components',
+                    command: 'topo install remoteproc',
                 },
-                subsystemDriver: {
-                    name: 'Subsystem Driver',
+            },
+            subsystemDriver: {
+                name: 'Subsystem Driver',
+                status: 'error',
+                value: 'missing',
+                fix: {
+                    description: 'Install remoteproc components',
+                    command: 'topo install remoteproc',
+                },
+            },
+            dependencies: [
+                {
+                    name: 'Remoteproc Runtime',
                     status: 'error',
                     value: 'missing',
                     fix: {
@@ -73,28 +86,18 @@ describe('getTargetIssueFixCommandGroups', () => {
                         command: 'topo install remoteproc',
                     },
                 },
-                dependencies: [
-                    {
-                        name: 'Remoteproc Runtime',
-                        status: 'error',
-                        value: 'missing',
-                        fix: {
-                            description: 'Install remoteproc components',
-                            command: 'topo install remoteproc',
-                        },
+                {
+                    name: 'Debugger',
+                    status: 'warning',
+                    value: 'missing',
+                    fix: {
+                        description: 'Install debugger',
+                        command: 'topo install debugger',
                     },
-                    {
-                        name: 'Debugger',
-                        status: 'warning',
-                        value: 'missing',
-                        fix: {
-                            description: 'Install debugger',
-                            command: 'topo install debugger',
-                        },
-                    },
-                ],
-            }),
-        ).toEqual([
+                },
+            ],
+        };
+        const expectedCommandGroups = [
             {
                 issueNames: [
                     'Connected',
@@ -107,11 +110,15 @@ describe('getTargetIssueFixCommandGroups', () => {
                 issueNames: ['Debugger'],
                 command: 'topo install debugger',
             },
-        ]);
+        ];
+
+        const result = getTargetIssueFixCommandGroups(health);
+
+        expect(result).toEqual(expectedCommandGroups);
     });
 });
 
-describe('hasFixableIssueFix', () => {
+describe('hasFixCommand', () => {
     it.each<{
         name: string;
         issue: IssueCheck;
@@ -161,6 +168,11 @@ describe('hasFixableIssueFix', () => {
             expected: false,
         },
     ])('returns $expected for $name', ({ issue, expected }) => {
-        expect(hasFixCommand(issue)).toBe(expected);
+        const healthIssue = issue;
+        const expectedResult = expected;
+
+        const result = hasFixCommand(healthIssue);
+
+        expect(result).toBe(expectedResult);
     });
 });
