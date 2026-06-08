@@ -4,7 +4,7 @@ import {
     getTargetIssueFixCommandGroups,
 } from './issueFixes';
 
-describe('getIssueFixes', () => {
+describe('getTargetIssueFixCommandGroups', () => {
     const targetHealth: TargetHealthCheck = {
         isLocalhost: false,
         connectivity: {
@@ -109,7 +109,9 @@ describe('getIssueFixes', () => {
             },
         ]);
     });
+});
 
+describe('hasFixableIssueFix', () => {
     it('identifies dependency issues with executable fixes', () => {
         const fixableDependency: IssueCheck = {
             name: 'Container Engine',
