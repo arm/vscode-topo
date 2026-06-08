@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { PACKAGE_NAME } from '../manifest';
-import { HealthCheckDependency } from '../topoCliSchema';
+import { IssueCheck } from '../topoCliSchema';
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 import { ErrorTreeItem } from '../treeItems/errorTreeItem';
@@ -8,9 +8,7 @@ import { HostModel } from '../models/hostModel';
 import { DisposableCollector } from '../util/disposableCollector';
 import { loaded } from '../util/loadable';
 
-function sortDependenciesByName(
-    deps: HealthCheckDependency[],
-): HealthCheckDependency[] {
+function sortDependenciesByName(deps: IssueCheck[]): IssueCheck[] {
     return deps.sort((a, b) =>
         a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
     );

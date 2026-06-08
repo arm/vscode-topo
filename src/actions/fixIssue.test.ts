@@ -4,7 +4,7 @@ import { FixIssue } from './fixIssue';
 import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 import { executeTask } from '../util/executeTask';
-import { HealthCheckDependency } from '../topoCliSchema';
+import { IssueCheck } from '../topoCliSchema';
 import { TargetModel } from '../models/targetModel';
 import { TopoCli } from '../topoCli';
 
@@ -25,7 +25,7 @@ describe('FixIssue', () => {
 
     const target = 'user@topo.local';
     const topoBinaryPath = '/fake/extension/resources/topo';
-    const dependencies: HealthCheckDependency[] = [
+    const dependencies: IssueCheck[] = [
         {
             name: 'Container Engine',
             status: 'error',
@@ -142,7 +142,7 @@ describe('FixIssue', () => {
 
     it('runs fix task for target connectivity issue', async () => {
         const fixIssue = new FixIssue(topoCli, targetModel);
-        const connectivityIssue: HealthCheckDependency = {
+        const connectivityIssue: IssueCheck = {
             name: 'Connectivity',
             status: 'error',
             value: 'ssh authentication failed',

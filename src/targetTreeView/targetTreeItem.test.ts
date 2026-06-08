@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { TargetTreeItem } from './targetTreeItem';
-import { HealthCheckDependency } from '../topoCliSchema';
+import { IssueCheck } from '../topoCliSchema';
 
 describe('TargetTreeItem', () => {
     const baseTarget = 'root@host.local';
@@ -74,7 +74,7 @@ describe('TargetTreeItem', () => {
     });
 
     it('adds HasFixableDependencies context when target has fixable dependencies', () => {
-        const dependency: HealthCheckDependency = {
+        const dependency: IssueCheck = {
             name: 'Container Engine',
             status: 'error',
             value: 'missing',

@@ -1,6 +1,7 @@
 import {
+    IssueCheck,
     type HealthCheckFix,
-    type TargetHealthCheckResult,
+    type TargetHealthCheck,
 } from '../topoCliSchema';
 
 export type IssueFixCommandGroup = {
@@ -8,23 +9,18 @@ export type IssueFixCommandGroup = {
     command: string;
 };
 
-export type HealthCheckIssue =
-    | TargetHealthCheckResult['connectivity']
-    | TargetHealthCheckResult['subsystemDriver']
-    | TargetHealthCheckResult['dependencies'][number];
-
-export type FixableHealthCheckIssue = HealthCheckIssue & {
+export type FixableHealthIssue = IssueCheck & {
     fix: HealthCheckFix & { command: string };
 };
 
 export function hasFixableIssueFix(
-    issue: HealthCheckIssue | undefined,
-): issue is FixableHealthCheckIssue {
+    issue: IssueCheck | undefined,
+): issue is FixableHealthIssue {
     return !!issue?.fix?.command;
 }
 
 export function getTargetIssueFixCommandGroups(
-    health: TargetHealthCheckResult | undefined,
+    health: TargetHealthCheck | undefined,
 ): IssueFixCommandGroup[] {
     if (!health) {
         return [];
@@ -53,7 +49,7 @@ export function getTargetIssueFixCommandGroups(
     return [...groups.values()];
 }
 
-function getTargetIssues(health: TargetHealthCheckResult): HealthCheckIssue[] {
+function getTargetIssues(health: TargetHealthCheck): IssueCheck[] {
     return [
         health.connectivity,
         health.subsystemDriver,

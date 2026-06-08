@@ -1,14 +1,11 @@
-import {
-    HealthCheckDependency,
-    TargetHealthCheckResult,
-} from '../topoCliSchema';
+import { IssueCheck, TargetHealthCheck } from '../topoCliSchema';
 import {
     hasFixableIssueFix,
     getTargetIssueFixCommandGroups,
 } from './getIssueFixes';
 
 describe('getIssueFixes', () => {
-    const targetHealth: TargetHealthCheckResult = {
+    const targetHealth: TargetHealthCheck = {
         isLocalhost: false,
         connectivity: {
             name: 'Connected',
@@ -114,7 +111,7 @@ describe('getIssueFixes', () => {
     });
 
     it('identifies dependency issues with executable fixes', () => {
-        const fixableDependency: HealthCheckDependency = {
+        const fixableDependency: IssueCheck = {
             name: 'Container Engine',
             status: 'error',
             value: 'missing',
@@ -123,17 +120,17 @@ describe('getIssueFixes', () => {
                 command: 'topo install docker',
             },
         };
-        const healthyDependency: HealthCheckDependency = {
+        const healthyDependency: IssueCheck = {
             name: 'Debugger',
             status: 'ok',
             value: 'installed',
         };
-        const infoDependency: HealthCheckDependency = {
+        const infoDependency: IssueCheck = {
             name: 'Runtime',
             status: 'info',
             value: 'available',
         };
-        const manualDependency: HealthCheckDependency = {
+        const manualDependency: IssueCheck = {
             name: 'Runtime',
             status: 'warning',
             value: 'missing',
@@ -153,7 +150,7 @@ describe('getIssueFixes', () => {
     });
 
     it('identifies connectivity and dependency issues with executable fixes', () => {
-        const connectivityIssue: TargetHealthCheckResult['connectivity'] = {
+        const connectivityIssue: TargetHealthCheck['connectivity'] = {
             name: 'Connected',
             status: 'error',
             value: 'unreachable',
@@ -162,7 +159,7 @@ describe('getIssueFixes', () => {
                 command: 'topo setup-keys',
             },
         };
-        const dependencyIssue: HealthCheckDependency = {
+        const dependencyIssue: IssueCheck = {
             name: 'Debugger',
             status: 'error',
             value: 'missing',

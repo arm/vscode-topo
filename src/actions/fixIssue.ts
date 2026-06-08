@@ -5,12 +5,12 @@ import { showAndLogError } from '../util/showAndLogError';
 import { executeTask } from '../util/executeTask';
 import { TargetModel } from '../models/targetModel';
 import { TopoCli } from '../topoCli';
-import { type FixableHealthCheckIssue } from '../util/getIssueFixes';
+import { type FixableHealthIssue } from '../util/getIssueFixes';
 
-type IssueFixQuickPickItem = vscode.QuickPickItem & FixableHealthCheckIssue;
+type IssueFixQuickPickItem = vscode.QuickPickItem & FixableHealthIssue;
 
 function getIssueFixQuickPickItems(
-    issues: FixableHealthCheckIssue[],
+    issues: FixableHealthIssue[],
 ): IssueFixQuickPickItem[] {
     return issues.map((issue) => ({
         label: issue.name,
@@ -80,7 +80,7 @@ export class FixIssue {
 
     private async selectAndFixTargetIssue(
         target: string,
-        issues: FixableHealthCheckIssue[],
+        issues: FixableHealthIssue[],
     ): Promise<void> {
         const selectedFix = await vscode.window.showQuickPick(
             getIssueFixQuickPickItems(issues),

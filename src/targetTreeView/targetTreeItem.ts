@@ -2,9 +2,9 @@ import * as vscode from 'vscode';
 import { TargetStatus } from '../util/types';
 import {
     hasFixableIssueFix,
-    type FixableHealthCheckIssue,
+    type FixableHealthIssue,
 } from '../util/getIssueFixes';
-import { HealthCheckDependency } from '../topoCliSchema';
+import { IssueCheck } from '../topoCliSchema';
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
 import { TargetSubsystemGroupTreeItem } from './targetSubsystemGroupTreeItem';
 import { ContainerItem } from '../util/types';
@@ -12,7 +12,7 @@ import { loaded } from '../util/loadable';
 
 function getConnectivityDiagnosticsMessage(
     selected: boolean,
-    connectivityCheck?: HealthCheckDependency,
+    connectivityCheck?: IssueCheck,
 ): string | undefined {
     if (
         !selected ||
@@ -28,15 +28,15 @@ function getConnectivityDiagnosticsMessage(
 /** Represents a target */
 export class TargetTreeItem extends vscode.TreeItem {
     public readonly dependencyGroup: HealthCheckDependencyGroupTreeItem;
-    public readonly fixableIssues: FixableHealthCheckIssue[];
+    public readonly fixableIssues: FixableHealthIssue[];
 
     constructor(
         public readonly target: string,
         public readonly selected: boolean,
         public readonly status: TargetStatus,
-        visibleDependencies: HealthCheckDependency[] = [],
+        visibleDependencies: IssueCheck[] = [],
         private readonly remoteProcessorNames: string[] = [],
-        connectivityCheck?: HealthCheckDependency,
+        connectivityCheck?: IssueCheck,
     ) {
         super(target, vscode.TreeItemCollapsibleState.Expanded);
         const diagnosticsMessage = getConnectivityDiagnosticsMessage(

@@ -9,10 +9,7 @@ import { TargetState, ContainerItem, TargetDescription } from '../util/types';
 import { mock, MockProxy } from 'vitest-mock-extended';
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
 import { TargetSubsystemGroupTreeItem } from '../targetTreeView/targetSubsystemGroupTreeItem';
-import {
-    HealthCheckDependency,
-    TargetHealthCheckResult,
-} from '../topoCliSchema';
+import { IssueCheck, TargetHealthCheck } from '../topoCliSchema';
 import { TargetDescriptionStore } from '../target/targetDescriptionStore';
 import { TargetModel } from '../models/targetModel';
 
@@ -26,7 +23,7 @@ describe('TargetTreeView', () => {
         hostProcessors: [],
         remoteProcessors: [{ name: 'imx-rproc' }, { name: 'other-rproc' }],
     };
-    const targetHealth: TargetHealthCheckResult = {
+    const targetHealth: TargetHealthCheck = {
         isLocalhost: false,
         connectivity: {
             name: 'Connectivity',
@@ -152,16 +149,16 @@ describe('TargetTreeView', () => {
         });
 
         it('returns dependency items for Dependencies group', async () => {
-            const subsystemDriverHealth = mock<HealthCheckDependency>({
+            const subsystemDriverHealth = mock<IssueCheck>({
                 name: 'rproc-driver',
                 status: 'ok',
             });
             const dependencies = [
-                mock<HealthCheckDependency>({
+                mock<IssueCheck>({
                     name: 'Container Engine',
                     status: 'ok',
                 }),
-                mock<HealthCheckDependency>({
+                mock<IssueCheck>({
                     name: 'Some Dependency',
                     status: 'ok',
                 }),

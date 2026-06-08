@@ -1,7 +1,7 @@
-import { HealthCheckDependency, HealthCheckStatus } from '../topoCliSchema';
+import { IssueCheck, HealthCheckStatus } from '../topoCliSchema';
 
 export const getWorstDependencyStatus = (
-    dependencies: HealthCheckDependency[],
+    dependencies: IssueCheck[],
 ): HealthCheckStatus => {
     return dependencies.reduce((acc: HealthCheckStatus, dependency) => {
         if (dependency.status === 'error') {
