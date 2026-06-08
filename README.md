@@ -81,8 +81,8 @@ Use the **Topo: Initialize Project** command from the Command Palette to create 
 
 Three clone commands are available from the Command Palette:
 
-| Command                         | Description                                 |
-| ------------------------------- | ------------------------------------------- |
+| Command                          | Description                                 |
+| -------------------------------- | ------------------------------------------- |
 | **Topo: Clone Remote Project**   | Clone from a Git repository.                |
 | **Topo: Clone Template Project** | Clone from a curated list of Arm templates. |
 | **Topo: Clone Local Project**    | Clone from a local directory.               |
@@ -109,12 +109,12 @@ All commands are under the **Topo** category. Commands available from the Comman
 
 | Command                        | Description                                     |
 | ------------------------------ | ----------------------------------------------- |
-| `Topo: Initialize Project`      | Initialize a new Topo project in the workspace. |
-| `Topo: Clone Remote Project`    | Clone a project from a Git repository.          |
-| `Topo: Clone Template Project`  | Clone a project from an Arm template.           |
-| `Topo: Clone Local Project`     | Clone a project from a local directory.         |
-| `Topo: Deploy`                  | Select and deploy a compose file to the target. |
-| `Topo: Inspect Host Health`     | Display host dependency health report.          |
+| `Topo: Initialize Project`     | Initialize a new Topo project in the workspace. |
+| `Topo: Clone Remote Project`   | Clone a project from a Git repository.          |
+| `Topo: Clone Template Project` | Clone a project from an Arm template.           |
+| `Topo: Clone Local Project`    | Clone a project from a local directory.         |
+| `Topo: Deploy`                 | Select and deploy a compose file to the target. |
+| `Topo: Inspect Host Health`    | Display host dependency health report.          |
 
 Additional commands are available through the Targets tree view context menus.
 
