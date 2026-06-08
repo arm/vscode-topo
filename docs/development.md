@@ -1,6 +1,6 @@
 # Development Guide
 
-This document covers how to build, test, and package the Arm Topo VS Code extension from source.
+This document covers how to build, test, and package the Topo VS Code extension from source.
 
 ## Prerequisites
 
