@@ -13,6 +13,10 @@ vi.mock('../util/executeTask');
 
 const executeTaskMock = vi.mocked(executeTask);
 
+type UriQuickPickItem = vscode.QuickPickItem & {
+    uri: vscode.Uri;
+};
+
 describe('Deploy', () => {
     let deployAction: Deploy;
     const workspaceUri = vscode.Uri.file('/fake/workspace');
@@ -38,6 +42,17 @@ describe('Deploy', () => {
                     uri.fsPath.startsWith(workspaceFolder.uri.fsPath),
                 ),
         );
+    }
+
+    function mockShowQuickPickSelection<T extends vscode.QuickPickItem>(
+        selectedItem: T | undefined,
+    ): void {
+        vi.mocked(
+            vscode.window.showQuickPick as (
+                items: readonly T[],
+                options?: vscode.QuickPickOptions,
+            ) => Thenable<T | undefined>,
+        ).mockReturnValueOnce(Promise.resolve(selectedItem));
     }
 
     beforeEach(() => {
@@ -121,31 +136,38 @@ describe('Deploy', () => {
             '/fake/workspace/services/compose.yaml',
         );
         const nestedYml = vscode.Uri.file('/fake/workspace/a/compose.yml');
+        const expectedQuickPickItems: UriQuickPickItem[] = [
+            {
+                label: 'compose.yaml',
+                description: undefined,
+                uri: rootYaml,
+            },
+            {
+                label: path.join('a', 'compose.yml'),
+                description: undefined,
+                uri: nestedYml,
+            },
+            {
+                label: path.join('services', 'compose.yaml'),
+                description: undefined,
+                uri: nestedYaml,
+            },
+        ];
         vi.mocked(vscode.workspace.findFiles).mockResolvedValueOnce([
             nestedYaml,
             rootYaml,
             nestedYml,
             rootYml,
         ]);
-        vi.mocked(vscode.window.showQuickPick).mockResolvedValueOnce({
-            label: 'compose.yaml',
-            uri: rootYaml,
-        } as never);
+        mockShowQuickPickSelection(expectedQuickPickItems[0]);
 
         await deployAction.deployCommandHandler();
 
         expect(vscode.workspace.findFiles).toHaveBeenCalledWith(
             '**/compose.{yaml,yml}',
         );
-        const quickPickItems = vi.mocked(vscode.window.showQuickPick).mock
-            .calls[0][0] as (vscode.QuickPickItem & { uri: vscode.Uri })[];
-        expect(quickPickItems.map((item) => item.label)).toEqual([
-            'compose.yaml',
-            path.join('a', 'compose.yml'),
-            path.join('services', 'compose.yaml'),
-        ]);
         expect(vscode.window.showQuickPick).toHaveBeenCalledWith(
-            quickPickItems,
+            expectedQuickPickItems,
             {
                 placeHolder: 'Select a compose file to deploy',
             },
