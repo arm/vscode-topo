@@ -328,7 +328,7 @@ describe('FixIssue', () => {
         await expect(
             fixIssue.fixIssueCommandHandler(targetItem),
         ).rejects.toThrow(
-            'Invalid target item for fix an issue: expected selected TargetTreeItem but received:',
+            'Invalid target item for fix issues: expected selected TargetTreeItem but received:',
         );
 
         expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
@@ -341,7 +341,7 @@ describe('FixIssue', () => {
         await expect(
             fixIssue.fixIssueCommandHandler({ unexpected: true }),
         ).rejects.toThrow(
-            'Invalid item for fix issue: expected HealthCheckDependencyTreeItem or TargetTreeItem but received:',
+            'Invalid item for fix issues: expected HealthCheckDependencyTreeItem or TargetTreeItem but received:',
         );
     });
 });

@@ -40,7 +40,7 @@ export class FixIssue {
         }
 
         throw new Error(
-            `Invalid item for fix issue: expected HealthCheckDependencyTreeItem or TargetTreeItem but received: ${String(treeNode)}`,
+            `Invalid item for fix issues: expected HealthCheckDependencyTreeItem or TargetTreeItem but received: ${String(treeNode)}`,
         );
     }
 
@@ -65,7 +65,7 @@ export class FixIssue {
     ): Promise<void> {
         if (!treeNode.selected) {
             throw new Error(
-                `Invalid target item for fix an issue: expected selected TargetTreeItem but received: ${String(treeNode)}`,
+                `Invalid target item for fix issues: expected selected TargetTreeItem but received: ${String(treeNode)}`,
             );
         }
 

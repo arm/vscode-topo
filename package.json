@@ -106,7 +106,7 @@
             },
             {
                 "command": "topo.fixTargetIssues",
-                "title": "Fix An Issue",
+                "title": "Fix Issues",
                 "category": "Topo"
             },
             {
