@@ -30,7 +30,10 @@ export function getComposeFileMetadata(
     };
 }
 
-export function compareComposeFiles(a: ComposeFileMetadata, b: ComposeFileMetadata): number {
+export function compareComposeFiles(
+    a: ComposeFileMetadata,
+    b: ComposeFileMetadata,
+): number {
     const rootDiff = getRootPriority(a) - getRootPriority(b);
     if (rootDiff !== 0) {
         return rootDiff;
@@ -44,6 +47,12 @@ export function compareComposeFiles(a: ComposeFileMetadata, b: ComposeFileMetada
     return a.relativePath.localeCompare(b.relativePath);
 }
 
+/**
+ * Returns the compose files to show to users, preferring compose.yaml over
+ * compose.yml when both exist in the same directory.
+ *
+ * Files in different directories or workspace folders are kept independently.
+ */
 export function getPreferredComposeFiles(
     composeFiles: ComposeFileMetadata[],
 ): ComposeFileMetadata[] {
