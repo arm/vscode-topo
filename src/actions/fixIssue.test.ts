@@ -110,10 +110,7 @@ describe('FixIssue', () => {
             label: 'Container Engine',
             description: 'Install container engine',
             detail: `Command: topo install container-engine --target ${target}`,
-            name: dependencies[0].name,
-            status: dependencies[0].status,
-            value: dependencies[0].value,
-            fix: dependencies[0].fix,
+            issue: dependencies[0],
         });
 
         await fixIssue.fixIssueCommandHandler(targetItem);
@@ -124,10 +121,7 @@ describe('FixIssue', () => {
                     label: 'Container Engine',
                     description: 'Install container engine',
                     detail: `Command: topo install container-engine --target ${target}`,
-                    name: dependencies[0].name,
-                    status: dependencies[0].status,
-                    value: dependencies[0].value,
-                    fix: dependencies[0].fix,
+                    issue: dependencies[0],
                 },
             ],
             {
@@ -163,13 +157,7 @@ describe('FixIssue', () => {
             label: 'Connectivity',
             description: 'Configure ssh keys',
             detail: 'Command: topo setup-keys --target ssh://pi5-rod',
-            name: 'Connectivity',
-            status: 'error',
-            value: 'ssh authentication failed',
-            fix: {
-                description: 'Configure ssh keys',
-                command: 'topo setup-keys --target ssh://pi5-rod',
-            },
+            issue: connectivityIssue,
         });
 
         await fixIssue.fixIssueCommandHandler(targetItem);
@@ -192,10 +180,7 @@ describe('FixIssue', () => {
             label: 'Debugger',
             description: 'Install debugger',
             detail: `Command: topo install debugger --target ${target}`,
-            name: dependencies[1].name,
-            status: dependencies[1].status,
-            value: dependencies[1].value,
-            fix: dependencies[1].fix,
+            issue: dependencies[1],
         });
 
         await fixIssue.fixIssueCommandHandler(targetItem);
@@ -206,19 +191,13 @@ describe('FixIssue', () => {
                     label: 'Container Engine',
                     description: 'Install container engine',
                     detail: `Command: topo install container-engine --target ${target}`,
-                    name: dependencies[0].name,
-                    status: dependencies[0].status,
-                    value: dependencies[0].value,
-                    fix: dependencies[0].fix,
+                    issue: dependencies[0],
                 },
                 {
                     label: 'Debugger',
                     description: 'Install debugger',
                     detail: `Command: topo install debugger --target ${target}`,
-                    name: dependencies[1].name,
-                    status: dependencies[1].status,
-                    value: dependencies[1].value,
-                    fix: dependencies[1].fix,
+                    issue: dependencies[1],
                 },
             ],
             {

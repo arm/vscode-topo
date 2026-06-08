@@ -7,7 +7,9 @@ import { TargetModel } from '../models/targetModel';
 import { TopoCli } from '../topoCli';
 import { type FixableHealthIssue } from '../util/iIssueFixes';
 
-type IssueFixQuickPickItem = vscode.QuickPickItem & FixableHealthIssue;
+type IssueFixQuickPickItem = vscode.QuickPickItem & {
+    issue: FixableHealthIssue;
+};
 
 function getIssueFixQuickPickItems(
     issues: FixableHealthIssue[],
@@ -16,7 +18,7 @@ function getIssueFixQuickPickItems(
         label: issue.name,
         description: issue.fix.description,
         detail: `Command: ${issue.fix.command}`,
-        ...issue,
+        issue,
     }));
 }
 
@@ -94,8 +96,8 @@ export class FixIssue {
 
         await this.executeFix(
             target,
-            [selectedFix.name],
-            selectedFix.fix.command,
+            [selectedFix.issue.name],
+            selectedFix.issue.fix.command,
         );
     }
 
