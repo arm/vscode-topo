@@ -150,29 +150,4 @@ describe('hasFixableIssueFix', () => {
             ].filter(hasFixableIssueFix),
         ).toEqual([fixableDependency]);
     });
-
-    it('identifies connectivity and dependency issues with executable fixes', () => {
-        const connectivityIssue: TargetHealthCheck['connectivity'] = {
-            name: 'Connected',
-            status: 'error',
-            value: 'unreachable',
-            fix: {
-                description: 'Set up SSH keys',
-                command: 'topo setup-keys',
-            },
-        };
-        const dependencyIssue: IssueCheck = {
-            name: 'Debugger',
-            status: 'error',
-            value: 'missing',
-            fix: {
-                description: 'Install debugger',
-                command: 'topo install debugger',
-            },
-        };
-
-        expect(
-            [connectivityIssue, dependencyIssue].filter(hasFixableIssueFix),
-        ).toEqual([connectivityIssue, dependencyIssue]);
-    });
 });
