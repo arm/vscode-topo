@@ -1,6 +1,6 @@
 import { IssueCheck, TargetHealthCheck } from '../topoCliSchema';
 import {
-    hasFixableIssueFix,
+    hasFixCommand,
     getTargetIssueFixCommandGroups,
 } from './issueFixes';
 
@@ -161,6 +161,6 @@ describe('hasFixableIssueFix', () => {
             expected: false,
         },
     ])('returns $expected for $name', ({ issue, expected }) => {
-        expect(hasFixableIssueFix(issue)).toBe(expected);
+        expect(hasFixCommand(issue)).toBe(expected);
     });
 });

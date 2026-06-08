@@ -13,7 +13,7 @@ export type FixableHealthIssue = IssueCheck & {
     fix: HealthCheckFix & { command: string };
 };
 
-export function hasFixableIssueFix(
+export function hasFixCommand(
     issue: IssueCheck | undefined,
 ): issue is FixableHealthIssue {
     return !!issue?.fix?.command;

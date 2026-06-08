@@ -1,9 +1,6 @@
 import * as vscode from 'vscode';
 import { TargetStatus } from '../util/types';
-import {
-    hasFixableIssueFix,
-    type FixableHealthIssue,
-} from '../util/issueFixes';
+import { hasFixCommand, type FixableHealthIssue } from '../util/issueFixes';
 import { IssueCheck } from '../topoCliSchema';
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
 import { TargetSubsystemGroupTreeItem } from './targetSubsystemGroupTreeItem';
@@ -60,7 +57,7 @@ export class TargetTreeItem extends vscode.TreeItem {
         if (connectivityCheck) {
             issues.unshift(connectivityCheck);
         }
-        this.fixableIssues = issues.filter(hasFixableIssueFix);
+        this.fixableIssues = issues.filter(hasFixCommand);
         this.dependencyGroup = new HealthCheckDependencyGroupTreeItem(
             loaded(visibleDependencies),
         );
