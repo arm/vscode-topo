@@ -90,13 +90,13 @@ export async function activate(
 
     const hostController = new HostController(hostModel, topoCli);
     const hostHealth = new HostHealth(topoCli, hostHealthDocProvider);
+
     const targetController = new TargetController(targetModel, targetStore);
     context.subscriptions.push(
         targetStore.onExternalTargetsChanged(() =>
             targetController.updateFromStore(),
         ),
     );
-
     const projectInit = new ProjectInit(topoCli);
     const projectClone = new ProjectClone(context, topoCli, targetModel);
     const deploy = new Deploy(topoCli, targetModel);

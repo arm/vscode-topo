@@ -31,6 +31,17 @@ async function set(
     await memento.update(key, value);
 }
 
+async function clearMemento(memento: vscode.Memento): Promise<void> {
+    for (const key of memento.keys()) {
+        logger.debug(`Clearing state ${key}`);
+        await memento.update(key, undefined);
+    }
+}
+
+function isFileNotFoundError(err: unknown): boolean {
+    return err instanceof vscode.FileSystemError && err.code === 'FileNotFound';
+}
+
 export class TargetStore {
     private _onExternalTargetsChanged: vscode.EventEmitter<void> =
         new vscode.EventEmitter<void>();
@@ -160,6 +171,28 @@ export class TargetStore {
         value: string | undefined,
     ): Promise<void> {
         return set(this.context.workspaceState, key, value);
+    }
+
+    public async resetExtensionData(): Promise<void> {
+        await clearMemento(this.context.globalState);
+        await clearMemento(this.context.workspaceState);
+
+        try {
+            await vscode.workspace.fs.delete(this.context.globalStorageUri, {
+                recursive: true,
+                useTrash: false,
+            });
+        } catch (err) {
+            if (!isFileNotFoundError(err)) {
+                throw err;
+            }
+        }
+
+        await vscode.workspace.fs.createDirectory(
+            this.context.globalStorageUri,
+        );
+
+        this.publishExternalTargetsChange();
     }
 
     public dispose(): void {

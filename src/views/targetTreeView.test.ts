@@ -12,6 +12,7 @@ import { TargetSubsystemGroupTreeItem } from '../targetTreeView/targetSubsystemG
 import { IssueCheck, TargetHealthCheck } from '../topoCliSchema';
 import { TargetDescriptionStore } from '../target/targetDescriptionStore';
 import { TargetModel } from '../models/targetModel';
+import { TargetDataIssueTreeItem } from '../targetTreeView/targetDataIssueTreeItem';
 
 describe('TargetTreeView', () => {
     let view: TargetTreeView;
@@ -343,6 +344,27 @@ describe('TargetTreeView', () => {
             const rootChildren = await view.getChildren();
 
             expect(rootChildren.length).toEqual(0);
+        });
+
+        it('shows target data issues at the root', async () => {
+            const issue = 'The local data saved by Topo looks corrupted.';
+            targetModel.setDataIssue(true);
+
+            const rootChildren = await view.getChildren();
+
+            expect(rootChildren).toHaveLength(1);
+            expect(rootChildren[0]).toBeInstanceOf(TargetDataIssueTreeItem);
+            expect(rootChildren[0]).toStrictEqual(
+                expect.objectContaining({
+                    label: 'Local data issue',
+                    description: issue,
+                    tooltip: issue,
+                    contextValue: 'CorruptedDataIssue',
+                }),
+            );
+            expect(
+                containersManagerMock.getTargetStateSnapshot,
+            ).not.toHaveBeenCalled();
         });
     });
 

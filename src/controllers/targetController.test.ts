@@ -95,6 +95,85 @@ describe('target construction', () => {
         expect(targetModel.targets).toEqual(['host-a', 'host-b']);
         expect(targetModel.selected).toBe('host-b');
     });
+
+    it('shows a data issue in the model when stored targets are corrupted', () => {
+        const targetStore = mockTargetStore();
+        const targetModel = new TargetModel();
+        targetStore.getTargets.mockImplementation(() => {
+            throw new WrappedError('STORAGE', 'Failed to load targets');
+        });
+
+        new TargetController(targetModel, targetStore);
+
+        expect(targetModel.dataIssue).toBe(true);
+        expect(targetModel.targets).toEqual([]);
+        expect(targetModel.selected).toBeUndefined();
+        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            'setContext',
+            'topo.targetDataIssue',
+            true,
+        );
+    });
+
+    it('clears the data issue after targets load successfully', () => {
+        const targetStore = mockTargetStore(['host-a'], 'host-a');
+        const targetModel = new TargetModel();
+        targetModel.setDataIssue(true);
+
+        new TargetController(targetModel, targetStore);
+
+        expect(targetModel.dataIssue).toBe(false);
+        expect(targetModel.targets).toEqual(['host-a']);
+        expect(targetModel.selected).toBe('host-a');
+        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            'setContext',
+            'topo.targetDataIssue',
+            false,
+        );
+    });
+
+    it('resets extension data when reset command is invoked', async () => {
+        const targetStore = mockTargetStore();
+        const targetModel = new TargetModel();
+        targetStore.resetExtensionData.mockResolvedValue(undefined);
+        const controller = new TargetController(targetModel, targetStore);
+
+        await controller.resetExtensionDataCommandHandler();
+
+        expect(targetStore.resetExtensionData).toHaveBeenCalled();
+        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            'setContext',
+            'topo.targetDataIssue',
+            false,
+        );
+    });
+
+    it('reports an error when resetting extension data fails', async () => {
+        const targetStore = mockTargetStore();
+        const error = new Error('boom');
+        targetStore.resetExtensionData.mockRejectedValue(error);
+        const controller = new TargetController(new TargetModel(), targetStore);
+
+        await controller.resetExtensionDataCommandHandler();
+
+        expect(showAndLogError).toHaveBeenCalledWith(
+            'Failed to reset Topo local data',
+            error,
+        );
+    });
+
+    it('throws when selected target loading fails', () => {
+        const targetStore = mockTargetStore(['host-a']);
+        const targetModel = new TargetModel();
+        targetStore.getSelectedTarget.mockImplementation(() => {
+            throw new WrappedError('STORAGE', 'Failed to load selected target');
+        });
+
+        expect(() => new TargetController(targetModel, targetStore)).toThrow(
+            'Failed to load selected target',
+        );
+        expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
+    });
 });
 
 describe('target addition', () => {
@@ -198,6 +277,19 @@ describe('target addition', () => {
         expect(vscode.window.showWarningMessage).not.toHaveBeenCalled();
         expect(targetStore.setSelected).not.toHaveBeenCalled();
     });
+
+    it('throws when targetStore.addTarget fails with a storage error', async () => {
+        const targetStore = mockTargetStore();
+        const targetModel = new TargetModel();
+        const controller = new TargetController(targetModel, targetStore);
+        const error = new WrappedError('STORAGE', 'Failed to load targets');
+        targetStore.addTarget.mockRejectedValueOnce(error);
+        mockQuickPick({ label: 'root@192.0.2.1' });
+
+        await expect(controller.addCommandHandler()).rejects.toThrow(error);
+
+        expect(showAndLogError).not.toHaveBeenCalled();
+    });
 });
 
 describe('target selection', () => {
@@ -282,5 +374,22 @@ describe('target removal', () => {
             'Failed to remove target',
             error,
         );
+    });
+
+    it('shows an error when targetStore.deleteTarget fails with a storage error', async () => {
+        const targetStore = mockTargetStore();
+        const targetModel = new TargetModel();
+        const controller = new TargetController(targetModel, targetStore);
+        const targetItem = new TargetTreeItem('foo@bar.co', true, 'connected');
+        const error = new WrappedError('STORAGE', 'Failed to load targets');
+        targetStore.deleteTarget.mockRejectedValue(error);
+
+        await controller.removeCommandHandler(targetItem);
+
+        expect(showAndLogError).toHaveBeenCalledWith(
+            'Failed to remove target',
+            error,
+        );
+        expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
     });
 });

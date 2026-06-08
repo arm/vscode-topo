@@ -27,6 +27,7 @@ export const showOutput = command('showOutput');
 export const selectTarget = command('selectTarget');
 export const removeTarget = command('removeTarget');
 export const addTarget = command('addTarget');
+export const resetExtensionData = command('resetExtensionData');
 export const inspectHostHealth = command('inspectHostHealth');
 export const initProject = command('initProject');
 export const deploy = command('deploy.context');
@@ -75,6 +76,9 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
         ),
         vscode.commands.registerCommand(addTarget, () =>
             handlers.targetController.addCommandHandler(),
+        ),
+        vscode.commands.registerCommand(resetExtensionData, () =>
+            handlers.targetController.resetExtensionDataCommandHandler(),
         ),
         vscode.commands.registerCommand(inspectHostHealth, () =>
             handlers.hostHealth.inspectHealthCommandHandler(),

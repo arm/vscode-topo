@@ -77,6 +77,10 @@ describe('commands', () => {
             ],
             [commands.addTarget, handlers.targetController.addCommandHandler],
             [
+                commands.resetExtensionData,
+                handlers.targetController.resetExtensionDataCommandHandler,
+            ],
+            [
                 commands.inspectHostHealth,
                 handlers.hostHealth.inspectHealthCommandHandler,
             ],

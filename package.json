@@ -90,6 +90,12 @@
                 "category": "Topo"
             },
             {
+                "command": "topo.resetExtensionData",
+                "title": "Reset Data",
+                "icon": "$(discard)",
+                "category": "Topo"
+            },
+            {
                 "command": "topo.inspectTargetHealth",
                 "title": "Inspect Health",
                 "category": "Topo"
@@ -202,6 +208,10 @@
                     "when": "false"
                 },
                 {
+                    "command": "topo.resetExtensionData",
+                    "when": "false"
+                },
+                {
                     "command": "topo.removeTarget",
                     "when": "false"
                 },
@@ -269,6 +279,11 @@
                     "group": "topo/1_output"
                 },
                 {
+                    "command": "topo.resetExtensionData",
+                    "when": "view == topo.target-manager && viewItem =~ /CorruptedDataIssue/",
+                    "group": "inline"
+                },
+                {
                     "command": "topo.selectTarget",
                     "when": "view == topo.target-manager && viewItem =~ /Target/",
                     "group": "topo/1_select"
@@ -332,7 +347,7 @@
             "view/title": [
                 {
                     "command": "topo.addTarget",
-                    "when": "view == topo.target-manager",
+                    "when": "view == topo.target-manager && !topo.targetDataIssue",
                     "group": "navigation"
                 },
                 {

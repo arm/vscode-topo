@@ -13,6 +13,7 @@ import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
 import { ContainerItem, TargetState } from '../util/types';
 import { loaded } from '../util/loadable';
+import { TargetDataIssueTreeItem } from '../targetTreeView/targetDataIssueTreeItem';
 
 function compareByName(a: { name: string }, b: { name: string }): number {
     return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
@@ -62,7 +63,7 @@ export class TargetTreeView
     ) {
         const treeView = vscode.window.createTreeView(TargetTreeView.viewId, {
             treeDataProvider: this,
-            showCollapseAll: true,
+            showCollapseAll: false,
         });
 
         this.disposables.collect(
@@ -71,6 +72,9 @@ export class TargetTreeView
                 this._onDidChangeTreeData.fire(undefined);
             }),
             this.targetModel.onTargetsChanged(() => {
+                this._onDidChangeTreeData.fire(undefined);
+            }),
+            this.targetModel.onDataIssueChanged(() => {
                 this._onDidChangeTreeData.fire(undefined);
             }),
             this.containersManager.onDataUpdate(() => {
@@ -84,6 +88,10 @@ export class TargetTreeView
         element?: vscode.TreeItem,
     ): Promise<vscode.TreeItem[]> {
         if (!element) {
+            if (this.targetModel.dataIssue) {
+                return [new TargetDataIssueTreeItem()];
+            }
+
             const selectedTarget = this.targetModel.selected;
             const targetTreeItems: TargetTreeItem[] = [];
             for (const target of this.targetModel.targets) {

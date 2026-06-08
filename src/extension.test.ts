@@ -29,7 +29,7 @@ describe('extension activation', () => {
         }
         vi.clearAllTimers();
         vi.useRealTimers();
-        vi.resetAllMocks();
+        vi.clearAllMocks();
     });
 
     it('registers commands and prepares disposables', async () => {

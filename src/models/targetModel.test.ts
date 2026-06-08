@@ -6,6 +6,7 @@ describe('TargetModel', () => {
 
         expect(model.selected).toBeUndefined();
         expect(model.targets).toEqual([]);
+        expect(model.dataIssue).toBe(false);
     });
 
     it('stores the latest selected target', () => {
@@ -69,5 +70,67 @@ describe('TargetModel', () => {
         model.setTargets(['user@host']);
 
         expect(onChanged).toHaveBeenCalledTimes(1);
+    });
+
+    it('stores whether there is a data issue', () => {
+        const model = new TargetModel();
+
+        model.setDataIssue(true);
+
+        expect(model.dataIssue).toBe(true);
+    });
+
+    it('clears targets and selected target when a data issue is set', () => {
+        const model = new TargetModel();
+        const onTargetsChanged = vi.fn();
+        const onSelectedChanged = vi.fn();
+        model.setTargets(['user@host']);
+        model.setSelected('user@host');
+        model.onTargetsChanged(onTargetsChanged);
+        model.onSelectedChanged(onSelectedChanged);
+
+        model.setDataIssue(true);
+
+        expect(model.dataIssue).toBe(true);
+        expect(model.targets).toEqual([]);
+        expect(model.selected).toBeUndefined();
+        expect(onTargetsChanged).toHaveBeenCalledTimes(1);
+        expect(onSelectedChanged).toHaveBeenCalledTimes(1);
+    });
+
+    it('clears the data issue when targets are updated', () => {
+        const model = new TargetModel();
+        const onDataIssueChanged = vi.fn();
+        model.setDataIssue(true);
+        model.onDataIssueChanged(onDataIssueChanged);
+
+        model.setTargets(['user@host']);
+
+        expect(model.dataIssue).toBe(false);
+        expect(onDataIssueChanged).toHaveBeenCalledTimes(1);
+    });
+
+    it('clears the data issue when selected target is updated', () => {
+        const model = new TargetModel();
+        const onDataIssueChanged = vi.fn();
+        model.setDataIssue(true);
+        model.onDataIssueChanged(onDataIssueChanged);
+
+        model.setSelected('user@host');
+
+        expect(model.dataIssue).toBe(false);
+        expect(onDataIssueChanged).toHaveBeenCalledTimes(1);
+    });
+
+    it('fires onDataIssueChanged when data issue is updated', () => {
+        const model = new TargetModel();
+        const onChanged = vi.fn();
+        model.onDataIssueChanged(onChanged);
+
+        model.setDataIssue(true);
+        model.setDataIssue(false);
+
+        expect(model.dataIssue).toBe(false);
+        expect(onChanged).toHaveBeenCalledTimes(2);
     });
 });
