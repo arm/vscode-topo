@@ -5,6 +5,7 @@ import { executeTask } from '../util/executeTask';
 import { showAndLogError } from '../util/showAndLogError';
 import { TargetModel } from '../models/targetModel';
 import { TopoCli } from '../topoCli';
+import { isWrappedError, WrappedError } from '../errors/wrappedError';
 import {
     COMPOSE_FILE_GLOB,
     compareComposeFiles,
@@ -28,6 +29,17 @@ export class Deploy {
     ) {}
 
     public async deployCommandHandler(): Promise<void> {
+        let target: string;
+        try {
+            target = this.getSelectedTarget();
+        } catch (err: unknown) {
+            if (isWrappedError(err, ['NO_TARGET_SELECTED'])) {
+                showAndLogError('Error executing deploy command', err);
+                return;
+            }
+            throw err;
+        }
+
         const files = await vscode.workspace.findFiles(COMPOSE_FILE_GLOB);
         if (files.length === 0) {
             vscode.window.showErrorMessage(
@@ -48,7 +60,7 @@ export class Deploy {
         if (!resource) {
             return;
         }
-        await this.deployResource(resource);
+        await deploy(this.topoCli.getBinaryPath(), resource.fsPath, target);
     }
 
     public async deployContextCommandHandler(
@@ -59,23 +71,30 @@ export class Deploy {
                 'No compose.yaml or compose.yml selected for deployment',
             );
         }
-        await this.deployResource(resource);
-    }
 
-    private async deployResource(resource: vscode.Uri): Promise<void> {
-        const target = this.targetModel.selected;
-
-        if (!target) {
-            showAndLogError(
-                'Error executing deploy command',
-                new Error(
-                    'No target selected. Please select a target before deploying.',
-                ),
-            );
-            return;
+        let target: string;
+        try {
+            target = this.getSelectedTarget();
+        } catch (err: unknown) {
+            if (isWrappedError(err, ['NO_TARGET_SELECTED'])) {
+                showAndLogError('Error executing deploy command', err);
+                return;
+            }
+            throw err;
         }
 
         await deploy(this.topoCli.getBinaryPath(), resource.fsPath, target);
+    }
+
+    private getSelectedTarget(): string {
+        const target = this.targetModel.selected;
+        if (!target) {
+            throw new WrappedError(
+                'NO_TARGET_SELECTED',
+                'No target selected. Please select a target before deploying.',
+            );
+        }
+        return target;
     }
 }
 

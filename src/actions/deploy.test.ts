@@ -85,6 +85,19 @@ describe('Deploy', () => {
         expect(executeTaskMock).not.toHaveBeenCalled();
     });
 
+    it('shows an error when target is selected but no compose files are found', async () => {
+        await deployAction.deployCommandHandler();
+
+        expect(vscode.workspace.findFiles).toHaveBeenCalledWith(
+            '**/compose.{yaml,yml}',
+        );
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
+            'No compose.yaml or compose.yml files found in the workspace.',
+        );
+        expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
+        expect(executeTaskMock).not.toHaveBeenCalled();
+    });
+
     it('handles successful deploy operation', async () => {
         await deployServices(topoBinaryPath, composeFilePath, target);
 
@@ -188,16 +201,6 @@ describe('Deploy', () => {
 
         await deployAction.deployCommandHandler();
 
-        expect(executeTaskMock).not.toHaveBeenCalled();
-    });
-
-    it('shows an error when no compose files are found', async () => {
-        await deployAction.deployCommandHandler();
-
-        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-            'No compose.yaml or compose.yml files found in the workspace.',
-        );
-        expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
         expect(executeTaskMock).not.toHaveBeenCalled();
     });
 });
