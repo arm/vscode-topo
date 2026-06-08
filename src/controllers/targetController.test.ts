@@ -4,8 +4,11 @@ import * as vscode from 'vscode';
 import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
 import { TargetStore } from '../target/targetStore';
 import { TargetModel } from '../models/targetModel';
+import { WrappedError } from '../errors/wrappedError';
+import { showAndLogError } from '../util/showAndLogError';
 
 vi.mock('../util/logger');
+vi.mock('../util/showAndLogError');
 
 afterEach(() => {
     vi.clearAllMocks();
@@ -134,6 +137,20 @@ describe('target addition', () => {
         expect(targetModel.targets).toEqual([targetSsh]);
     });
 
+    it('trims the selected target before storing and selecting it', async () => {
+        const targetStore = mockTargetStore();
+        const targetModel = new TargetModel();
+        const controller = new TargetController(targetModel, targetStore);
+        mockQuickPick({ label: '  root@192.0.2.1  ' });
+
+        await controller.addCommandHandler();
+
+        expect(targetStore.addTarget).toHaveBeenCalledWith('root@192.0.2.1');
+        expect(targetStore.setSelected).toHaveBeenCalledWith('root@192.0.2.1');
+        expect(targetModel.selected).toBe('root@192.0.2.1');
+        expect(targetModel.targets).toEqual(['root@192.0.2.1']);
+    });
+
     it('does nothing when quick pick is dismissed', async () => {
         const targetStore = mockTargetStore();
         const targetModel = new TargetModel();
@@ -148,7 +165,26 @@ describe('target addition', () => {
         expect(targetModel.targets).toEqual([]);
     });
 
-    it('shows error when targetStore.addTarget fails', async () => {
+    it('shows error when targetStore.addTarget fails with an invalid target error', async () => {
+        const targetStore = mockTargetStore();
+        const targetModel = new TargetModel();
+        const controller = new TargetController(targetModel, targetStore);
+        const error = new WrappedError('INVALID_SSH_DESTINATION', 'boom');
+        targetStore.addTarget.mockRejectedValueOnce(error);
+        mockQuickPick({ label: 'root@192.0.2.1' });
+
+        await controller.addCommandHandler();
+
+        expect(targetStore.addTarget).toHaveBeenCalled();
+        expect(showAndLogError).toHaveBeenCalledWith(
+            'Cannot add target. Enter a valid SSH destination',
+            error,
+        );
+        expect(vscode.window.showWarningMessage).not.toHaveBeenCalled();
+        expect(targetStore.setSelected).not.toHaveBeenCalled();
+    });
+
+    it('throws when targetStore.addTarget fails with a non-invalid-target error', async () => {
         const targetStore = mockTargetStore();
         const targetModel = new TargetModel();
         const controller = new TargetController(targetModel, targetStore);
@@ -156,12 +192,10 @@ describe('target addition', () => {
         targetStore.addTarget.mockRejectedValueOnce(error);
         mockQuickPick({ label: 'root@192.0.2.1' });
 
-        await controller.addCommandHandler();
+        await expect(controller.addCommandHandler()).rejects.toThrow(error);
 
-        expect(targetStore.addTarget).toHaveBeenCalled();
-        expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
-            expect.stringContaining('Failed to add target'),
-        );
+        expect(showAndLogError).not.toHaveBeenCalled();
+        expect(vscode.window.showWarningMessage).not.toHaveBeenCalled();
         expect(targetStore.setSelected).not.toHaveBeenCalled();
     });
 });
@@ -251,14 +285,14 @@ describe('target removal', () => {
             target: 'foo@bar.co',
             selected: true,
         });
-        targetStore.deleteTarget.mockRejectedValue(
-            new Error('Target not found'),
-        );
+        const error = new Error('Target not found');
+        targetStore.deleteTarget.mockRejectedValue(error);
 
         await controller.removeCommandHandler(targetItem);
 
-        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-            expect.stringContaining('Failed to remove target'),
+        expect(showAndLogError).toHaveBeenCalledWith(
+            'Failed to remove target',
+            error,
         );
     });
 });
