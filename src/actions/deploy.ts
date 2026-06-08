@@ -5,8 +5,13 @@ import { executeTask } from '../util/executeTask';
 import { showAndLogError } from '../util/showAndLogError';
 import { TargetModel } from '../models/targetModel';
 import { TopoCli } from '../topoCli';
-import { isWrappedError, WrappedError } from '../errors/wrappedError';
-import { findComposeFiles } from '../util/findComposeFiles';
+import {
+    COMPOSE_FILE_GLOB,
+    compareComposeFiles,
+    getComposeFile,
+    getPreferredComposeFiles,
+    type ComposeFile,
+} from '../util/findComposeFiles';
 
 const viewLogsItem: vscode.MessageItem = {
     title: 'View Logs',
@@ -23,16 +28,23 @@ export class Deploy {
     ) {}
 
     public async deployCommandHandler(): Promise<void> {
-        let resource: vscode.Uri | undefined;
-        try {
-            resource = await selectComposeFile();
-        } catch (err: unknown) {
-            if (isWrappedError(err, ['DEPLOY'])) {
-                showAndLogError('Error executing deploy command', err);
-                return;
-            }
-            throw err;
+        const files = await vscode.workspace.findFiles(COMPOSE_FILE_GLOB);
+        if (files.length === 0) {
+            vscode.window.showErrorMessage(
+                'No compose.yaml or compose.yml files found in the workspace.',
+            );
+            return;
         }
+
+        const composeFileDescriptions = files.map((file) =>
+            getComposeFile(file, vscode.workspace.getWorkspaceFolder(file)),
+        );
+        const preferredComposeFiles = getPreferredComposeFiles(
+            composeFileDescriptions,
+        );
+        const composeFiles = preferredComposeFiles.sort(compareComposeFiles);
+
+        const resource = await promptForComposeFile(composeFiles);
         if (!resource) {
             return;
         }
@@ -67,15 +79,9 @@ export class Deploy {
     }
 }
 
-async function selectComposeFile(): Promise<vscode.Uri | undefined> {
-    const composeFiles = await findComposeFiles();
-    if (composeFiles.length === 0) {
-        throw new WrappedError(
-            'DEPLOY',
-            'No compose.yaml or compose.yml files found in the workspace.',
-        );
-    }
-
+async function promptForComposeFile(
+    composeFiles: ComposeFile[],
+): Promise<vscode.Uri | undefined> {
     const showWorkspaceName =
         (vscode.workspace.workspaceFolders?.length ?? 0) > 1;
     const items: ComposeFileQuickPickItem[] = composeFiles.map(

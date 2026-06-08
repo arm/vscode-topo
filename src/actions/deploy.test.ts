@@ -178,7 +178,7 @@ describe('Deploy', () => {
         await deployAction.deployCommandHandler();
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-            'Error executing deploy command. No compose.yaml or compose.yml files found in the workspace.',
+            'No compose.yaml or compose.yml files found in the workspace.',
         );
         expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
         expect(executeTaskMock).not.toHaveBeenCalled();

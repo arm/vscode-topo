@@ -2,8 +2,7 @@ export type WrappedErrorCode =
     | 'DOCKER'
     | 'CLONE'
     | 'CLI'
-    | 'STORAGE'
-    | 'DEPLOY';
+    | 'STORAGE';
 
 export type WrappedErrorLogLevel = 'Error' | 'Warning' | 'Info' | 'Debug';
 

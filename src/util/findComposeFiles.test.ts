@@ -1,90 +1,99 @@
 import path from 'node:path';
 import * as vscode from 'vscode';
-import { findComposeFiles } from './findComposeFiles';
-import { mutable } from './mutable';
+import {
+    compareComposeFiles,
+    getComposeFile,
+    getPreferredComposeFiles,
+} from './findComposeFiles';
 
-describe('findComposeFiles', () => {
-    const workspaceUri = vscode.Uri.file('/fake/workspace');
-    const workspaceFolders = [
-        { uri: workspaceUri, name: 'workspace', index: 0 },
-    ];
+describe('getComposeFile', () => {
+    it('creates compose file metadata outside a workspace', () => {
+        const uri = vscode.Uri.file('/fake/workspace/services/compose.yaml');
 
-    function mockWorkspaceFolders(
-        workspaceFolders: vscode.WorkspaceFolder[],
-    ): void {
-        mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-        vi.mocked(vscode.workspace.getWorkspaceFolder).mockImplementation(
-            (uri) =>
-                workspaceFolders.find((workspaceFolder) =>
-                    uri.fsPath.startsWith(workspaceFolder.uri.fsPath),
-                ),
-        );
-    }
+        const composeFile = getComposeFile(uri, undefined);
 
-    beforeEach(() => {
-        vi.mocked(vscode.workspace.findFiles).mockReset();
-        vi.mocked(vscode.workspace.findFiles).mockResolvedValue([]);
-        vi.mocked(vscode.workspace.getWorkspaceFolder).mockReset();
-        vi.mocked(vscode.workspace.getWorkspaceFolder).mockReturnValue(
+        expect(composeFile).toEqual({
+            uri,
+            relativePath: 'compose.yaml',
+            workspaceIndex: Number.MAX_SAFE_INTEGER,
+        });
+    });
+
+    it('includes workspace metadata for compose files', () => {
+        const workspaceFolder: vscode.WorkspaceFolder = {
+            uri: vscode.Uri.file('/fake/beta'),
+            name: 'beta',
+            index: 1,
+        };
+        const uri = vscode.Uri.file('/fake/beta/services/compose.yaml');
+
+        const composeFile = getComposeFile(uri, workspaceFolder);
+
+        expect(composeFile).toEqual({
+            uri,
+            relativePath: path.join('services', 'compose.yaml'),
+            workspaceIndex: 1,
+            workspaceName: 'beta',
+        });
+    });
+});
+
+describe('getPreferredComposeFiles', () => {
+    it('keeps compose.yaml and compose.yml files from different directories', () => {
+        const yamlFile = getComposeFile(
+            vscode.Uri.file('/fake/workspace/compose.yaml'),
             undefined,
         );
-        mutable(vscode.workspace).workspaceFolders = undefined;
-    });
-
-    afterEach(() => {
-        vi.restoreAllMocks();
-    });
-
-    it('finds compose.yaml and compose.yml files from different directories', async () => {
-        const yamlFile = vscode.Uri.file('/fake/workspace/compose.yaml');
-        const ymlFile = vscode.Uri.file('/fake/workspace/service/compose.yml');
-        vi.mocked(vscode.workspace.findFiles).mockResolvedValueOnce([
-            yamlFile,
-            ymlFile,
-        ]);
-
-        const composeFiles = await findComposeFiles();
-
-        expect(vscode.workspace.findFiles).toHaveBeenCalledWith(
-            '**/compose.{yaml,yml}',
+        const ymlFile = getComposeFile(
+            vscode.Uri.file('/fake/workspace/service/compose.yml'),
+            undefined,
         );
-        expect(composeFiles.map((composeFile) => composeFile.uri)).toEqual([
-            yamlFile,
-            ymlFile,
-        ]);
+
+        const composeFiles = getPreferredComposeFiles([yamlFile, ymlFile]);
+
+        expect(composeFiles).toEqual([yamlFile, ymlFile]);
     });
 
-    it('ignores compose.yml when compose.yaml is present in the same directory', async () => {
-        const yamlFile = vscode.Uri.file('/fake/workspace/compose.yaml');
-        const ymlFile = vscode.Uri.file('/fake/workspace/compose.yml');
-        vi.mocked(vscode.workspace.findFiles).mockResolvedValueOnce([
-            ymlFile,
-            yamlFile,
-        ]);
-
-        const composeFiles = await findComposeFiles();
-
-        expect(composeFiles.map((composeFile) => composeFile.uri)).toEqual([
-            yamlFile,
-        ]);
-    });
-
-    it('sorts root files before nested files', async () => {
-        mockWorkspaceFolders(workspaceFolders);
-        const nestedYaml = vscode.Uri.file(
-            '/fake/workspace/services/compose.yaml',
+    it('ignores compose.yml when compose.yaml is present in the same directory', () => {
+        const yamlFile = getComposeFile(
+            vscode.Uri.file('/fake/workspace/compose.yaml'),
+            undefined,
         );
-        const rootYaml = vscode.Uri.file('/fake/workspace/compose.yaml');
-        const nestedYml = vscode.Uri.file('/fake/workspace/a/compose.yml');
-        const rootYml = vscode.Uri.file('/fake/workspace/compose.yml');
-        vi.mocked(vscode.workspace.findFiles).mockResolvedValueOnce([
-            nestedYaml,
-            rootYaml,
-            nestedYml,
-            rootYml,
-        ]);
+        const ymlFile = getComposeFile(
+            vscode.Uri.file('/fake/workspace/compose.yml'),
+            undefined,
+        );
 
-        const composeFiles = await findComposeFiles();
+        const composeFiles = getPreferredComposeFiles([ymlFile, yamlFile]);
+
+        expect(composeFiles).toEqual([yamlFile]);
+    });
+});
+
+describe('compareComposeFiles', () => {
+    const workspaceFolder: vscode.WorkspaceFolder = {
+        uri: vscode.Uri.file('/fake/workspace'),
+        name: 'workspace',
+        index: 0,
+    };
+
+    it('sorts root files before nested files', () => {
+        const nestedYaml = getComposeFile(
+            vscode.Uri.file('/fake/workspace/services/compose.yaml'),
+            workspaceFolder,
+        );
+        const rootYaml = getComposeFile(
+            vscode.Uri.file('/fake/workspace/compose.yaml'),
+            workspaceFolder,
+        );
+        const nestedYml = getComposeFile(
+            vscode.Uri.file('/fake/workspace/a/compose.yml'),
+            workspaceFolder,
+        );
+
+        const composeFiles = [nestedYaml, rootYaml, nestedYml].sort(
+            compareComposeFiles,
+        );
 
         expect(
             composeFiles.map((composeFile) => composeFile.relativePath),
@@ -95,59 +104,31 @@ describe('findComposeFiles', () => {
         ]);
     });
 
-    it('sorts root files before nested files across workspaces', async () => {
-        mockWorkspaceFolders([
-            {
-                uri: vscode.Uri.file('/fake/alpha'),
-                name: 'alpha',
-                index: 0,
-            },
-            {
-                uri: vscode.Uri.file('/fake/beta'),
-                name: 'beta',
-                index: 1,
-            },
-        ]);
-        const alphaNested = vscode.Uri.file('/fake/alpha/app/compose.yaml');
-        const betaRoot = vscode.Uri.file('/fake/beta/compose.yaml');
-        vi.mocked(vscode.workspace.findFiles).mockResolvedValueOnce([
-            alphaNested,
-            betaRoot,
-        ]);
+    it('sorts root files before nested files across workspaces', () => {
+        const alphaWorkspace: vscode.WorkspaceFolder = {
+            uri: vscode.Uri.file('/fake/alpha'),
+            name: 'alpha',
+            index: 0,
+        };
+        const betaWorkspace: vscode.WorkspaceFolder = {
+            uri: vscode.Uri.file('/fake/beta'),
+            name: 'beta',
+            index: 1,
+        };
+        const alphaNested = getComposeFile(
+            vscode.Uri.file('/fake/alpha/app/compose.yaml'),
+            alphaWorkspace,
+        );
+        const betaRoot = getComposeFile(
+            vscode.Uri.file('/fake/beta/compose.yaml'),
+            betaWorkspace,
+        );
 
-        const composeFiles = await findComposeFiles();
+        const composeFiles = [alphaNested, betaRoot].sort(compareComposeFiles);
 
         expect(composeFiles.map((composeFile) => composeFile.uri)).toEqual([
-            betaRoot,
-            alphaNested,
-        ]);
-    });
-
-    it('includes workspace metadata for compose files', async () => {
-        mockWorkspaceFolders([
-            {
-                uri: vscode.Uri.file('/fake/alpha'),
-                name: 'alpha',
-                index: 0,
-            },
-            { uri: vscode.Uri.file('/fake/beta'), name: 'beta', index: 1 },
-        ]);
-        const betaComposeFile = vscode.Uri.file(
-            '/fake/beta/services/compose.yaml',
-        );
-        vi.mocked(vscode.workspace.findFiles).mockResolvedValueOnce([
-            betaComposeFile,
-        ]);
-
-        const composeFiles = await findComposeFiles();
-
-        expect(composeFiles).toEqual([
-            {
-                uri: betaComposeFile,
-                relativePath: path.join('services', 'compose.yaml'),
-                workspaceIndex: 1,
-                workspaceName: 'beta',
-            },
+            betaRoot.uri,
+            alphaNested.uri,
         ]);
     });
 });

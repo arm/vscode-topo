@@ -8,20 +8,12 @@ export interface ComposeFile {
     workspaceName?: string;
 }
 
-export async function findComposeFiles(): Promise<ComposeFile[]> {
-    const composeFiles = await vscode.workspace.findFiles(
-        '**/compose.{yaml,yml}',
-    );
-    const composeFileDescriptions = composeFiles.map(getComposeFile);
-    const preferredComposeFiles = getPreferredComposeFiles(
-        composeFileDescriptions,
-    );
+export const COMPOSE_FILE_GLOB = '**/compose.{yaml,yml}';
 
-    return preferredComposeFiles.sort(compareComposeFiles);
-}
-
-function getComposeFile(uri: vscode.Uri): ComposeFile {
-    const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
+export function getComposeFile(
+    uri: vscode.Uri,
+    workspaceFolder: vscode.WorkspaceFolder | undefined,
+): ComposeFile {
     if (!workspaceFolder) {
         return {
             uri,
@@ -38,7 +30,7 @@ function getComposeFile(uri: vscode.Uri): ComposeFile {
     };
 }
 
-function compareComposeFiles(a: ComposeFile, b: ComposeFile): number {
+export function compareComposeFiles(a: ComposeFile, b: ComposeFile): number {
     const rootDiff = getRootPriority(a) - getRootPriority(b);
     if (rootDiff !== 0) {
         return rootDiff;
@@ -52,7 +44,9 @@ function compareComposeFiles(a: ComposeFile, b: ComposeFile): number {
     return a.relativePath.localeCompare(b.relativePath);
 }
 
-function getPreferredComposeFiles(composeFiles: ComposeFile[]): ComposeFile[] {
+export function getPreferredComposeFiles(
+    composeFiles: ComposeFile[],
+): ComposeFile[] {
     const yamlDirectories = new Set(
         composeFiles
             .filter((composeFile) => isYamlFile(composeFile))
@@ -67,7 +61,7 @@ function getPreferredComposeFiles(composeFiles: ComposeFile[]): ComposeFile[] {
 }
 
 function getDirectoryKey(composeFile: ComposeFile): string {
-    if (!composeFile.workspaceName) {
+    if (composeFile.workspaceName === undefined) {
         return `file:${path.dirname(composeFile.uri.fsPath)}`;
     }
     return `${composeFile.workspaceIndex}:${path.dirname(composeFile.relativePath)}`;
