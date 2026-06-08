@@ -9,9 +9,9 @@ import { isWrappedError, WrappedError } from '../errors/wrappedError';
 import {
     COMPOSE_FILE_GLOB,
     compareComposeFiles,
-    getComposeFile,
+    getComposeFileMetadata,
     getPreferredComposeFiles,
-    type ComposeFile,
+    type ComposeFileMetadata,
 } from '../util/composeFile';
 
 const viewLogsItem: vscode.MessageItem = {
@@ -48,11 +48,14 @@ export class Deploy {
             return;
         }
 
-        const composeFileDescriptions = files.map((file) =>
-            getComposeFile(file, vscode.workspace.getWorkspaceFolder(file)),
+        const composeFileMetadata = files.map((file) =>
+            getComposeFileMetadata(
+                file,
+                vscode.workspace.getWorkspaceFolder(file),
+            ),
         );
         const preferredComposeFiles = getPreferredComposeFiles(
-            composeFileDescriptions,
+            composeFileMetadata,
         );
         const composeFiles = preferredComposeFiles.sort(compareComposeFiles);
 
@@ -99,7 +102,7 @@ export class Deploy {
 }
 
 async function promptForComposeFile(
-    composeFiles: ComposeFile[],
+    composeFiles: ComposeFileMetadata[],
 ): Promise<vscode.Uri | undefined> {
     const showWorkspaceName =
         (vscode.workspace.workspaceFolders?.length ?? 0) > 1;

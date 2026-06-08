@@ -1,7 +1,7 @@
 import path from 'node:path';
 import * as vscode from 'vscode';
 
-export interface ComposeFile {
+export interface ComposeFileMetadata {
     uri: vscode.Uri;
     relativePath: string;
     workspaceIndex: number;
@@ -10,10 +10,10 @@ export interface ComposeFile {
 
 export const COMPOSE_FILE_GLOB = '**/compose.{yaml,yml}';
 
-export function getComposeFile(
+export function getComposeFileMetadata(
     uri: vscode.Uri,
     workspaceFolder: vscode.WorkspaceFolder | undefined,
-): ComposeFile {
+): ComposeFileMetadata {
     if (!workspaceFolder) {
         return {
             uri,
@@ -30,7 +30,7 @@ export function getComposeFile(
     };
 }
 
-export function compareComposeFiles(a: ComposeFile, b: ComposeFile): number {
+export function compareComposeFiles(a: ComposeFileMetadata, b: ComposeFileMetadata): number {
     const rootDiff = getRootPriority(a) - getRootPriority(b);
     if (rootDiff !== 0) {
         return rootDiff;
@@ -45,8 +45,8 @@ export function compareComposeFiles(a: ComposeFile, b: ComposeFile): number {
 }
 
 export function getPreferredComposeFiles(
-    composeFiles: ComposeFile[],
-): ComposeFile[] {
+    composeFiles: ComposeFileMetadata[],
+): ComposeFileMetadata[] {
     const yamlDirectories = new Set(
         composeFiles
             .filter((composeFile) => isYamlFile(composeFile))
@@ -60,18 +60,18 @@ export function getPreferredComposeFiles(
     );
 }
 
-function getDirectoryKey(composeFile: ComposeFile): string {
+function getDirectoryKey(composeFile: ComposeFileMetadata): string {
     if (composeFile.workspaceName === undefined) {
         return `file:${path.dirname(composeFile.uri.fsPath)}`;
     }
     return `${composeFile.workspaceIndex}:${path.dirname(composeFile.relativePath)}`;
 }
 
-function getRootPriority(composeFile: ComposeFile): number {
+function getRootPriority(composeFile: ComposeFileMetadata): number {
     const isWorkspaceRootFile = path.dirname(composeFile.relativePath) === '.';
     return isWorkspaceRootFile ? 0 : 1;
 }
 
-function isYamlFile(composeFile: ComposeFile): boolean {
+function isYamlFile(composeFile: ComposeFileMetadata): boolean {
     return path.extname(composeFile.uri.fsPath) === '.yaml';
 }

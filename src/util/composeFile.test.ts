@@ -2,15 +2,15 @@ import path from 'node:path';
 import * as vscode from 'vscode';
 import {
     compareComposeFiles,
-    getComposeFile,
+    getComposeFileMetadata,
     getPreferredComposeFiles,
 } from './composeFile';
 
-describe('getComposeFile', () => {
+describe('getComposeFileMetadata', () => {
     it('creates compose file metadata outside a workspace', () => {
         const uri = vscode.Uri.file('/fake/workspace/services/compose.yaml');
 
-        const composeFile = getComposeFile(uri, undefined);
+        const composeFile = getComposeFileMetadata(uri, undefined);
 
         expect(composeFile).toEqual({
             uri,
@@ -27,7 +27,7 @@ describe('getComposeFile', () => {
         };
         const uri = vscode.Uri.file('/fake/beta/services/compose.yaml');
 
-        const composeFile = getComposeFile(uri, workspaceFolder);
+        const composeFile = getComposeFileMetadata(uri, workspaceFolder);
 
         expect(composeFile).toEqual({
             uri,
@@ -40,11 +40,11 @@ describe('getComposeFile', () => {
 
 describe('getPreferredComposeFiles', () => {
     it('keeps compose.yaml and compose.yml files from different directories', () => {
-        const yamlFile = getComposeFile(
+        const yamlFile = getComposeFileMetadata(
             vscode.Uri.file('/fake/workspace/compose.yaml'),
             undefined,
         );
-        const ymlFile = getComposeFile(
+        const ymlFile = getComposeFileMetadata(
             vscode.Uri.file('/fake/workspace/service/compose.yml'),
             undefined,
         );
@@ -55,11 +55,11 @@ describe('getPreferredComposeFiles', () => {
     });
 
     it('ignores compose.yml when compose.yaml is present in the same directory', () => {
-        const yamlFile = getComposeFile(
+        const yamlFile = getComposeFileMetadata(
             vscode.Uri.file('/fake/workspace/compose.yaml'),
             undefined,
         );
-        const ymlFile = getComposeFile(
+        const ymlFile = getComposeFileMetadata(
             vscode.Uri.file('/fake/workspace/compose.yml'),
             undefined,
         );
@@ -78,15 +78,15 @@ describe('compareComposeFiles', () => {
     };
 
     it('sorts root files before nested files', () => {
-        const nestedYaml = getComposeFile(
+        const nestedYaml = getComposeFileMetadata(
             vscode.Uri.file('/fake/workspace/services/compose.yaml'),
             workspaceFolder,
         );
-        const rootYaml = getComposeFile(
+        const rootYaml = getComposeFileMetadata(
             vscode.Uri.file('/fake/workspace/compose.yaml'),
             workspaceFolder,
         );
-        const nestedYml = getComposeFile(
+        const nestedYml = getComposeFileMetadata(
             vscode.Uri.file('/fake/workspace/a/compose.yml'),
             workspaceFolder,
         );
@@ -115,11 +115,11 @@ describe('compareComposeFiles', () => {
             name: 'beta',
             index: 1,
         };
-        const alphaNested = getComposeFile(
+        const alphaNested = getComposeFileMetadata(
             vscode.Uri.file('/fake/alpha/app/compose.yaml'),
             alphaWorkspace,
         );
-        const betaRoot = getComposeFile(
+        const betaRoot = getComposeFileMetadata(
             vscode.Uri.file('/fake/beta/compose.yaml'),
             betaWorkspace,
         );
