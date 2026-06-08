@@ -12,7 +12,7 @@ import {
     getComposeFile,
     getPreferredComposeFiles,
     type ComposeFile,
-} from '../util/findComposeFiles';
+} from '../util/composeFile';
 
 const viewLogsItem: vscode.MessageItem = {
     title: 'View Logs',

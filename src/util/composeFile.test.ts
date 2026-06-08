@@ -4,7 +4,7 @@ import {
     compareComposeFiles,
     getComposeFile,
     getPreferredComposeFiles,
-} from './findComposeFiles';
+} from './composeFile';
 
 describe('getComposeFile', () => {
     it('creates compose file metadata outside a workspace', () => {
