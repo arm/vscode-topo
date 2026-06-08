@@ -13,16 +13,17 @@ vi.mock('../util/executeTask');
 
 const executeTaskMock = vi.mocked(executeTask);
 
-type ShowQuickPickMock = {
-    mockResolvedValueOnce(value: unknown): void;
-};
+type ShowQuickPickMany = <T extends vscode.QuickPickItem>(
+    items: T[],
+    options: vscode.QuickPickOptions & { canPickMany: true },
+) => Thenable<T[] | undefined>;
 
 const mockSelectedQuickPickItems = <T extends vscode.QuickPickItem>(
     items: T[],
 ) => {
-    const showQuickPickMock = vi.mocked(
+    const showQuickPickMock = vi.mocked<ShowQuickPickMany>(
         vscode.window.showQuickPick,
-    ) as unknown as ShowQuickPickMock;
+    );
     showQuickPickMock.mockResolvedValueOnce(items);
 };
 
