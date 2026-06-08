@@ -1,33 +1,39 @@
 import * as vscode from 'vscode';
 import { TargetStatus } from '../util/types';
-import { getFixableDependencyFixes } from '../util/getDependencyFixes';
-import { HealthCheckDependency } from '../topoCliSchema';
+import { hasFixCommand, type FixableHealthIssue } from '../util/issueFixes';
+import { IssueCheck } from '../topoCliSchema';
 
 function getConnectivityDiagnosticsMessage(
     selected: boolean,
-    connectivity?: HealthCheckDependency,
+    connectivityCheck?: IssueCheck,
 ): string | undefined {
-    if (!selected || connectivity?.status === 'ok' || !connectivity?.value) {
+    if (
+        !selected ||
+        connectivityCheck?.status === 'ok' ||
+        !connectivityCheck?.value
+    ) {
         return undefined;
     }
 
-    return connectivity.value;
+    return connectivityCheck.value;
 }
 
 /** Represents a target */
 export class TargetTreeItem extends vscode.TreeItem {
+    public readonly fixableIssues: FixableHealthIssue[];
+
     constructor(
         public readonly target: string,
         public readonly selected: boolean,
         public readonly status: TargetStatus,
-        public readonly visibleDependencies: HealthCheckDependency[] = [],
+        public readonly visibleIssues: IssueCheck[] = [],
         public readonly remoteProcessorNames: string[] = [],
-        connectivity?: HealthCheckDependency,
+        connectivityCheck?: IssueCheck,
     ) {
         super(target, vscode.TreeItemCollapsibleState.Expanded);
         const diagnosticsMessage = getConnectivityDiagnosticsMessage(
             selected,
-            connectivity,
+            connectivityCheck,
         );
         this.id = target;
         this.description = diagnosticsMessage;
@@ -42,8 +48,13 @@ export class TargetTreeItem extends vscode.TreeItem {
         if (status === 'connected') {
             contextValues.push('Connected');
         }
-        if (getFixableDependencyFixes(visibleDependencies).length > 0) {
-            contextValues.push('HasFixableDependencies');
+        const issues = [...visibleIssues];
+        if (connectivityCheck) {
+            issues.unshift(connectivityCheck);
+        }
+        this.fixableIssues = issues.filter(hasFixCommand);
+        if (this.fixableIssues.length > 0) {
+            contextValues.push('HasFixableIssues');
         }
         this.contextValue = contextValues.join(' ');
         this.collapsibleState = getTargetTreeItemState(selected, status);

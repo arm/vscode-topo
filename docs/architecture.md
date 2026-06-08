@@ -1,14 +1,14 @@
 # Codebase Architecture
 
-As a VSCode extension, interaction is mostly done via [commands](https://code.visualstudio.com/api/extension-guides/command)-based. Our responsibility is to handle commands from the user, their agent(s) or other parts of the extension and do something useful.
+As a VS Code extension, interaction is mostly done via [commands](https://code.visualstudio.com/api/extension-guides/command)-based. Our responsibility is to handle commands from the user, their agent(s) or other parts of the extension and do something useful.
 
-There are two primary types of command - ones that need to directly update the UI by querying the outside world, and those that are side-effect only that are mostly designed to surface useful operations the user may want to perform in VSCode. The former type of commands are handled by **controllers**, while the latter are handled by **actions**.
+There are two primary types of command - ones that need to directly update the UI by querying the outside world, and those that are side-effect only that are mostly designed to surface useful operations the user may want to perform in VS Code. The former type of commands are handled by **controllers**, while the latter are handled by **actions**.
 
-At the top-level of the extension we create a command registry which is responsible for routing VSCode command strings to action/controller command handlers. At this same level, the extension has the option to register any method of invoking command handlers that it needs. For example, we run a periodic refresh event of certain target state every few seconds. We register such systems alongside the command router than making use of it for type safety guarantees and to skip the VSCode plumbing where it is unneeded.
+At the top-level of the extension we create a command registry which is responsible for routing VS Code command strings to action/controller command handlers. At this same level, the extension has the option to register any method of invoking command handlers that it needs. For example, we run a periodic refresh event of certain target state every few seconds. We register such systems alongside the command router than making use of it for type safety guarantees and to skip the VS Code plumbing where it is unneeded.
 
 ```mermaid
 flowchart LR
-    vscode["VSCode Commands<br/>(user/app/agent)"] --> router["Command Router<br/>(commands.ts)"]
+    vscode["VS Code Commands<br/>(user/app/agent)"] --> router["Command Router<br/>(commands.ts)"]
 
     subgraph controllers["Controllers"]
         direction TB
@@ -60,8 +60,8 @@ flowchart LR
     modelZ --> viewY
     modelZ --> viewZ
 
-    actionB --> fireVscode1["Invoke more VSCode commands"]
-    viewY --> fireVscode2["Invoke more VSCode commands"]
+    actionB --> fireVscode1["Invoke more VS Code commands"]
+    viewY --> fireVscode2["Invoke more VS Code commands"]
 ```
 
 ## Actions
@@ -82,11 +82,11 @@ Models must only ever be mutated by controllers, never directly by views.
 
 ### Views
 
-Views take a reference to a model (or models) and render them to the UI in some way. As a VSCode extension, this boils down to working with various vscode APIs to do things like construct status bar items or building tree views in the sidebar that visualize the state of our models.
+Views take a reference to a model (or models) and render them to the UI in some way. As a VS Code extension, this boils down to working with various vscode APIs to do things like construct status bar items or building tree views in the sidebar that visualize the state of our models.
 
 Views subscribe to the events emitted by models to trigger re-renders and can optionally render data from multiple models if required.
 
-Some views may need to invoke mutations of the model as a result of user interaction. VSCode mostly handles this via [commands](https://code.visualstudio.com/api/extension-guides/command) (discussed more below). While commands should be favoured for controller invocations to keep a consistent API surface, rarely, commands may not be applicable for a given UI. For example, if you create a webview containing a list of targets where clicking on one selects it (don't do this). In this case it's acceptable to pass a reference to the relevant controller to the view and perform the mutation there. Do not use the result of the mutation, wait for the model get updated and trigger a re-render.
+Some views may need to invoke mutations of the model as a result of user interaction. VS Code mostly handles this via [commands](https://code.visualstudio.com/api/extension-guides/command) (discussed more below). While commands should be favoured for controller invocations to keep a consistent API surface, rarely, commands may not be applicable for a given UI. For example, if you create a webview containing a list of targets where clicking on one selects it (don't do this). In this case it's acceptable to pass a reference to the relevant controller to the view and perform the mutation there. Do not use the result of the mutation, wait for the model get updated and trigger a re-render.
 
 ### Controllers
 
@@ -104,7 +104,7 @@ Since the controller is the object with the power to query the outside world, or
 
 ```mermaid
 flowchart TD
-    A["VSCode Commands<br/>(from user, from elsewhere in the app,<br/>from polling — whatever)"] --> B["Controller"]
+    A["VS Code Commands<br/>(from user, from elsewhere in the app,<br/>from polling - whatever)"] --> B["Controller"]
 
     B -- "Inspect via TopoCli,<br/>DockerCommands etc." --> C["World<br/>(host health, target health,<br/>containers etc.)"]
 
