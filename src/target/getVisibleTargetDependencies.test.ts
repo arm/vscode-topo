@@ -29,10 +29,26 @@ describe('getVisibleTargetDependencies', () => {
             hostProcessors: [],
             remoteProcessors: [],
         };
+        const healthWithFixableSubsystemDriver: TargetHealthCheck = {
+            ...health,
+            subsystemDriver: {
+                name: 'Subsystem Driver',
+                status: 'error',
+                value: 'missing',
+                fix: {
+                    description: 'Install subsystem driver',
+                    command: 'topo install subsystem-driver',
+                },
+            },
+        };
+        const expectedDependencies = health.dependencies;
 
-        expect(getVisibleTargetDependencies(health, targetDescription)).toEqual(
-            health.dependencies,
+        const result = getVisibleTargetDependencies(
+            healthWithFixableSubsystemDriver,
+            targetDescription,
         );
+
+        expect(result).toEqual(expectedDependencies);
     });
 
     it('includes the subsystem driver when remote processors exist', () => {
@@ -40,9 +56,13 @@ describe('getVisibleTargetDependencies', () => {
             hostProcessors: [],
             remoteProcessors: [{ name: 'imx-rproc' }],
         };
+        const expectedDependencies = [
+            ...health.dependencies,
+            health.subsystemDriver,
+        ];
 
-        expect(getVisibleTargetDependencies(health, targetDescription)).toEqual(
-            [...health.dependencies, health.subsystemDriver],
-        );
+        const result = getVisibleTargetDependencies(health, targetDescription);
+
+        expect(result).toEqual(expectedDependencies);
     });
 });

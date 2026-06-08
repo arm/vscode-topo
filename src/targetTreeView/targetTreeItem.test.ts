@@ -92,6 +92,49 @@ describe('TargetTreeItem', () => {
         expect(item.fixableIssues).toEqual([dependency]);
     });
 
+    it('does not add HasFixableDependencies context when dependency fix has no command', () => {
+        const dependency: IssueCheck = {
+            name: 'Container Engine',
+            status: 'error',
+            value: 'missing',
+            fix: {
+                description: 'Manual setup required',
+            },
+        };
+
+        const item = new TargetTreeItem(baseTarget, true, 'connected', [
+            dependency,
+        ]);
+
+        expect(item.contextValue).not.toContain('HasFixableDependencies');
+        expect(item.dependencyGroup.dependencies).toEqual([dependency]);
+        expect(item.fixableIssues).toEqual([]);
+    });
+
+    it('adds HasFixableDependencies context when connectivity has a fix command', () => {
+        const connectivityIssue: IssueCheck = {
+            name: 'Connectivity',
+            status: 'error',
+            value: 'unreachable',
+            fix: {
+                description: 'Set up connectivity',
+                command: 'topo setup-keys',
+            },
+        };
+
+        const item = new TargetTreeItem(
+            baseTarget,
+            true,
+            'error',
+            [],
+            [],
+            connectivityIssue,
+        );
+
+        expect(item.contextValue).toContain('HasFixableDependencies');
+        expect(item.fixableIssues).toEqual([connectivityIssue]);
+    });
+
     it('shows diagnostics as a description and tooltip when provided', () => {
         const item = new TargetTreeItem(baseTarget, true, 'error', [], [], {
             name: 'Connectivity',
