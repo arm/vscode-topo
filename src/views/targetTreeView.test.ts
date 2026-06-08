@@ -256,6 +256,34 @@ describe('TargetTreeView', () => {
             expect(unselectedTarget!.description).toBeUndefined();
         });
 
+        it('marks target with executable subsystem driver fix as fixable when remote processors exist', async () => {
+            containersManagerMock.getTargetStateSnapshot.mockReturnValue({
+                health: {
+                    ...targetHealth,
+                    subsystemDriver: {
+                        name: 'SubsystemDriver',
+                        status: 'error',
+                        value: 'missing',
+                        fix: {
+                            description: 'Install subsystem driver',
+                            command: 'topo install subsystem-driver',
+                        },
+                    },
+                },
+                status: 'connected',
+            });
+
+            const rootChildren = await view.getChildren();
+
+            expect(rootChildren).toEqual([
+                expect.objectContaining({
+                    contextValue: expect.stringContaining(
+                        'HasFixableDependencies',
+                    ),
+                }),
+            ]);
+        });
+
         it('returns containers for Host and remoteproc groups', async () => {
             const rootChildren = await view.getChildren();
             const targetChildren = await view.getChildren(rootChildren[0]);
