@@ -2,10 +2,6 @@ import * as vscode from 'vscode';
 import { TargetStatus } from '../util/types';
 import { hasFixCommand, type FixableHealthIssue } from '../util/issueFixes';
 import { IssueCheck } from '../topoCliSchema';
-import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
-import { TargetSubsystemGroupTreeItem } from './targetSubsystemGroupTreeItem';
-import { ContainerItem } from '../util/types';
-import { loaded } from '../util/loadable';
 
 function getConnectivityDiagnosticsMessage(
     selected: boolean,
@@ -24,15 +20,14 @@ function getConnectivityDiagnosticsMessage(
 
 /** Represents a target */
 export class TargetTreeItem extends vscode.TreeItem {
-    public readonly dependencyGroup: HealthCheckDependencyGroupTreeItem;
     public readonly fixableIssues: FixableHealthIssue[];
 
     constructor(
         public readonly target: string,
         public readonly selected: boolean,
         public readonly status: TargetStatus,
-        visibleDependencies: IssueCheck[] = [],
-        private readonly remoteProcessorNames: string[] = [],
+        public readonly visibleDependencies: IssueCheck[] = [],
+        public readonly remoteProcessorNames: string[] = [],
         connectivityCheck?: IssueCheck,
     ) {
         super(target, vscode.TreeItemCollapsibleState.Expanded);
@@ -58,9 +53,6 @@ export class TargetTreeItem extends vscode.TreeItem {
             issues.unshift(connectivityCheck);
         }
         this.fixableIssues = issues.filter(hasFixCommand);
-        this.dependencyGroup = new HealthCheckDependencyGroupTreeItem(
-            loaded(visibleDependencies),
-        );
         if (this.fixableIssues.length > 0) {
             contextValues.push('HasFixableDependencies');
         }
@@ -70,16 +62,6 @@ export class TargetTreeItem extends vscode.TreeItem {
 
     public get displayName(): string {
         return this.label?.toString() ?? '';
-    }
-
-    public createSubsystemGroup(
-        containers: ContainerItem[] = [],
-    ): TargetSubsystemGroupTreeItem {
-        return new TargetSubsystemGroupTreeItem(
-            this.target,
-            this.remoteProcessorNames,
-            containers,
-        );
     }
 }
 
