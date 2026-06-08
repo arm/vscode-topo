@@ -126,6 +126,22 @@ describe('TargetStore', () => {
         expect(raw).toBeUndefined();
     });
 
+    it.each([
+        '-oProxyCommand=touch /tmp/pwned',
+        'user@example.com another',
+        ' user@example.com',
+        'user@example.com ',
+        'user@example.com\nother',
+    ])('rejects invalid target "%s"', async (target) => {
+        const { context } = createMockContext();
+        const store = new TargetStore(context);
+
+        await expect(store.addTarget(target)).rejects.toMatchObject({
+            code: 'INVALID_SSH_DESTINATION',
+        });
+        expect(context.globalState.get('targets')).toBeUndefined();
+    });
+
     it('persists targets via setTarget and exposes them via getTargets', async () => {
         const { context } = createMockContext();
         const store = new TargetStore(context);
