@@ -262,6 +262,55 @@ describe('FixIssue', () => {
         );
     });
 
+    it('runs a shared target dependency fix only once', async () => {
+        const sharedCommand = `topo install remoteproc --target ${target}`;
+        const remoteprocRuntime: IssueCheck = {
+            name: 'Remoteproc Runtime',
+            status: 'error',
+            value: 'missing',
+            fix: {
+                description: 'Install remoteproc components',
+                command: sharedCommand,
+            },
+        };
+        const remoteprocShim: IssueCheck = {
+            name: 'Remoteproc Shim',
+            status: 'error',
+            value: 'missing',
+            fix: {
+                description: 'Install remoteproc components',
+                command: sharedCommand,
+            },
+        };
+        const fixIssue = new FixIssue(topoCli, targetModel);
+        const targetItem = new TargetTreeItem(target, true, 'connected', [
+            remoteprocRuntime,
+            remoteprocShim,
+        ]);
+        mockSelectedQuickPickItems([
+            {
+                label: 'Remoteproc Runtime',
+                description: 'Install remoteproc components',
+                detail: `Command: ${sharedCommand}`,
+                issue: remoteprocRuntime,
+            },
+            {
+                label: 'Remoteproc Shim',
+                description: 'Install remoteproc components',
+                detail: `Command: ${sharedCommand}`,
+                issue: remoteprocShim,
+            },
+        ]);
+
+        await fixIssue.fixIssueCommandHandler(targetItem);
+
+        expect(executeTaskMock).toHaveBeenCalledTimes(1);
+        expect(executeTaskMock).toHaveBeenCalledWith(
+            `Fix Remoteproc Runtime, Remoteproc Shim on ${target}`,
+            [topoBinaryPath, 'install', 'remoteproc', '--target', target],
+        );
+    });
+
     it('does not run a target dependency fix when quick pick is cancelled', async () => {
         const fixIssue = new FixIssue(topoCli, targetModel);
         const targetItem = new TargetTreeItem(
@@ -278,7 +327,7 @@ describe('FixIssue', () => {
     });
 
     it('fails when the selected target dependency fix has no executable command', async () => {
-        const manualIssue = {
+        const manualIssue: IssueCheck = {
             name: 'Container Engine',
             status: 'warning',
             value: 'manual setup required',

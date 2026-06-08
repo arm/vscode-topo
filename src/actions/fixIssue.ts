@@ -5,7 +5,10 @@ import { showAndLogError } from '../util/showAndLogError';
 import { executeTask } from '../util/executeTask';
 import { TargetModel } from '../models/targetModel';
 import { TopoCli } from '../topoCli';
-import { type FixableHealthIssue } from '../util/issueFixes';
+import {
+    type FixableHealthIssue,
+    getIssueFixCommandGroups,
+} from '../util/issueFixes';
 
 type IssueFixQuickPickItem = vscode.QuickPickItem & {
     issue: FixableHealthIssue;
@@ -96,17 +99,24 @@ export class FixIssue {
             return;
         }
 
-        for (const selectedFix of selectedFixes) {
-            if (!selectedFix.issue.fix.command) {
+        const selectedIssues = selectedFixes.map(
+            (selectedFix) => selectedFix.issue,
+        );
+        for (const selectedIssue of selectedIssues) {
+            if (!selectedIssue.fix?.command) {
                 throw new Error(
-                    'No executable fix found for the selected item',
+                    'No executable fix found for the selected item: ' +
+                        selectedIssue.name,
                 );
             }
+        }
 
+        const fixGroups = getIssueFixCommandGroups(selectedIssues);
+        for (const fixGroup of fixGroups) {
             await this.executeFix(
                 target,
-                [selectedFix.issue.name],
-                selectedFix.issue.fix.command,
+                fixGroup.issueNames,
+                fixGroup.command,
             );
         }
     }
