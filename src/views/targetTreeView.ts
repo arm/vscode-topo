@@ -12,6 +12,7 @@ import { getVisibleTargetDependencies } from '../target/getVisibleTargetDependen
 import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
 import { ContainerItem, TargetState } from '../util/types';
+import { loaded } from '../util/loadable';
 
 function compareByName(a: { name: string }, b: { name: string }): number {
     return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
@@ -108,6 +109,7 @@ export class TargetTreeView
                         state.status,
                         visibleDependencies,
                         remoteProcessorNames,
+                        state.health?.connectivity,
                     ),
                 );
             }
@@ -127,7 +129,7 @@ export class TargetTreeView
             const sortedContainers = [...containers].sort(compareContainers);
 
             const dependenciesGroup = new HealthCheckDependencyGroupTreeItem(
-                element.visibleDependencies,
+                loaded(element.visibleDependencies),
             );
             const subsystemsGroup = new TargetSubsystemGroupTreeItem(
                 element.target,

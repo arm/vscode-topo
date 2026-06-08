@@ -2,11 +2,9 @@ import * as vscode from 'vscode';
 import { HostTreeView } from './hostTreeView';
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
-import { failedToLoadHostDependenciesMessage } from '../treeItems/hostDependenciesLoadErrorItem';
 import { HostModel } from '../models/hostModel';
-import { showOutput } from '../commands';
-
-vi.mock('../util/logger');
+import { errored, loaded } from '../util/loadable';
+import { ErrorTreeItem } from '../treeItems/errorTreeItem';
 
 describe('HostDependenciesTreeDataProvider', () => {
     afterEach(() => {
@@ -38,8 +36,8 @@ describe('HostDependenciesTreeDataProvider', () => {
 
     it('returns host dependency items sorted by name below the Dependencies group', async () => {
         const model = new HostModel();
-        model.setHealth({
-            data: {
+        model.setHealth(
+            loaded({
                 host: {
                     dependencies: [
                         {
@@ -59,9 +57,8 @@ describe('HostDependenciesTreeDataProvider', () => {
                         },
                     ],
                 },
-            },
-            status: 'loaded',
-        });
+            }),
+        );
         const provider = new HostTreeView(model);
 
         const rootChildren = provider.getChildren();
@@ -88,25 +85,16 @@ describe('HostDependenciesTreeDataProvider', () => {
 
     it('returns an error item when host health cannot be loaded', async () => {
         const model = new HostModel();
-        model.setHealth({
-            error: new Error('health unavailable'),
-            status: 'error',
-        });
+        const erroredValue = errored('uh oh');
+        model.setHealth(erroredValue);
         const provider = new HostTreeView(model);
 
         const children = provider.getChildren();
 
         expect(children).toHaveLength(1);
-        expect(children[0]).toMatchObject({
-            label: failedToLoadHostDependenciesMessage,
-            collapsibleState: vscode.TreeItemCollapsibleState.None,
-            command: {
-                command: showOutput,
-                title: 'Open Topo Output',
-            },
-            contextValue: 'Dependencies Error',
-            tooltip: 'Open the Topo output channel for details.',
-        });
+        expect(children[0]).toMatchObject(
+            new ErrorTreeItem('Failed to load dependencies', erroredValue),
+        );
     });
 
     it('getTreeItem returns the element itself', () => {
@@ -128,10 +116,7 @@ describe('HostDependenciesTreeDataProvider', () => {
         const listener = vi.fn();
         provider.onDidChangeTreeData(listener);
 
-        model.setHealth({
-            status: 'error',
-            error: new Error('unimportant'),
-        });
+        model.setHealth(errored('irrelevant error'));
 
         expect(listener).toHaveBeenCalled();
     });

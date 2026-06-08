@@ -209,6 +209,56 @@ describe('TargetTreeView', () => {
             );
         });
 
+        it('shows connectivity diagnostics on selected target when connectivity has an error', async () => {
+            const diagnostics = '"ssh" not found on remote target\'s $PATH';
+            containersManagerMock.getTargetStateSnapshot.mockReturnValue({
+                health: {
+                    ...targetHealth,
+                    connectivity: {
+                        name: 'Connectivity',
+                        status: 'error',
+                        value: diagnostics,
+                    },
+                },
+                status: 'error',
+            });
+
+            const rootChildren = await view.getChildren();
+
+            expect(rootChildren).toStrictEqual([
+                expect.objectContaining({
+                    label: target,
+                    description: diagnostics,
+                    tooltip: `${target}: ${diagnostics}`,
+                }),
+            ]);
+        });
+
+        it('does not show connectivity diagnostics on unselected targets', async () => {
+            const otherTarget = 'user@other.local';
+            targetModel.setTargets([target, otherTarget]);
+            targetModel.setSelected(otherTarget);
+            containersManagerMock.getTargetStateSnapshot.mockReturnValue({
+                health: {
+                    ...targetHealth,
+                    connectivity: {
+                        name: 'Connectivity',
+                        status: 'error',
+                        value: 'ssh connection failed',
+                    },
+                },
+                status: 'error',
+            });
+
+            const rootChildren = await view.getChildren();
+            const unselectedTarget = rootChildren.find(
+                (item) => item.label === target,
+            );
+
+            expect(unselectedTarget).toBeDefined();
+            expect(unselectedTarget!.description).toBeUndefined();
+        });
+
         it('marks target with executable dependency fixes as fixable', async () => {
             const targetState: TargetState = {
                 health: {

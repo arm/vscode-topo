@@ -10,6 +10,7 @@ import {
     string,
     trimmed,
     type,
+    defaulted,
 } from 'superstruct';
 
 const templateCompatibilitySchema = enums(['supported', 'unsupported']);
@@ -105,7 +106,7 @@ const describeRemoteprocSchema = type({
 
 export const targetDescriptionSchema = type({
     hostProcessors: array(describeHostProcessorSchema),
-    remoteProcessors: array(describeRemoteprocSchema),
+    remoteProcessors: defaulted(array(describeRemoteprocSchema), []),
 });
 
 const topoLogLevelSchema = enums(['DEBUG', 'INFO', 'WARN', 'ERROR']);

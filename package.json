@@ -4,7 +4,7 @@
     "publisher": "arm",
     "description": "",
     "license": "Apache-2.0",
-    "version": "0.0.0",
+    "version": "1.3.0",
     "engines": {
         "vscode": "^1.101.0",
         "node": "22",
@@ -100,9 +100,14 @@
                 "category": "Topo"
             },
             {
-                "command": "topo.fixIssue",
+                "command": "topo.fixDependencyIssue",
                 "title": "Fix",
                 "category": "Topo"
+            },
+            {
+                "command": "topo.fixTargetIssues",
+                "title": "Fix An Issue",
+                "category": "Arm Topo"
             },
             {
                 "command": "topo.inspectHostHealth",
@@ -209,7 +214,11 @@
                     "when": "false"
                 },
                 {
-                    "command": "topo.fixIssue",
+                    "command": "topo.fixDependencyIssue",
+                    "when": "false"
+                },
+                {
+                    "command": "topo.fixTargetIssues",
                     "when": "false"
                 },
                 {
@@ -256,7 +265,7 @@
             "view/item/context": [
                 {
                     "command": "topo.showOutput",
-                    "when": "view == topo.host-manager && viewItem =~ /Dependencies/ && viewItem =~ /Error/",
+                    "when": "viewItem =~ /OpenableError/",
                     "group": "topo/1_output"
                 },
                 {
@@ -275,13 +284,18 @@
                     "group": "topo/2_actions"
                 },
                 {
+                    "command": "topo.fixTargetIssues",
+                    "when": "view === topo.target-manager && viewItem =~ /Target/ && viewItem =~ /Selected/ && viewItem =~ /HasFixableDependencies/",
+                    "group": "topo/2_actions"
+                },
+                {
                     "command": "topo.removeTarget",
                     "when": "view == topo.target-manager && viewItem =~ /Target/",
                     "group": "topo/3_cleanup"
                 },
                 {
-                    "command": "topo.fixIssue",
-                    "when": "view === topo.target-manager && viewItem =~ /Fixable/",
+                    "command": "topo.fixDependencyIssue",
+                    "when": "view === topo.target-manager && viewItem =~ /Dependency/ && viewItem =~ /Fixable/",
                     "group": "topo/1_manage"
                 },
                 {
