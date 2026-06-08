@@ -1,6 +1,6 @@
 {
     "name": "topo",
-    "displayName": "Arm Topo",
+    "displayName": "Topo",
     "publisher": "arm",
     "description": "",
     "license": "Apache-2.0",
@@ -26,114 +26,114 @@
             {
                 "command": "topo.initProject",
                 "title": "Initialize Project",
-                "category": "Arm Topo"
+                "category": "Topo"
             },
             {
                 "command": "topo.remoteClone",
                 "title": "Clone Remote Project",
-                "category": "Arm Topo"
+                "category": "Topo"
             },
             {
                 "command": "topo.templateClone",
                 "title": "Clone Template Project",
-                "category": "Arm Topo"
+                "category": "Topo"
             },
             {
                 "command": "topo.localClone",
                 "title": "Clone Local Project",
-                "category": "Arm Topo"
+                "category": "Topo"
             },
             {
                 "command": "topo.attachVsCode",
                 "title": "Attach VS Code",
-                "category": "Arm Topo"
+                "category": "Topo"
             },
             {
                 "command": "topo.attachShell",
                 "title": "Attach Shell",
-                "category": "Arm Topo"
+                "category": "Topo"
             },
             {
                 "command": "topo.openInBrowser",
                 "title": "Open in Browser",
-                "category": "Arm Topo"
+                "category": "Topo"
             },
             {
                 "command": "topo.startContainer",
                 "title": "Start",
-                "category": "Arm Topo"
+                "category": "Topo"
             },
             {
                 "command": "topo.stopContainer",
                 "title": "Stop",
-                "category": "Arm Topo"
+                "category": "Topo"
             },
             {
                 "command": "topo.deleteContainer",
                 "title": "Delete",
-                "category": "Arm Topo"
+                "category": "Topo"
             },
             {
                 "command": "topo.selectTarget",
                 "title": "Select Target",
-                "category": "Arm Topo"
+                "category": "Topo"
             },
             {
                 "command": "topo.removeTarget",
                 "title": "Remove Target",
-                "category": "Arm Topo"
+                "category": "Topo"
             },
             {
                 "command": "topo.addTarget",
                 "title": "Add Target",
                 "icon": "$(add)",
-                "category": "Arm Topo"
+                "category": "Topo"
             },
             {
                 "command": "topo.inspectTargetHealth",
                 "title": "Inspect Health",
-                "category": "Arm Topo"
+                "category": "Topo"
             },
             {
                 "command": "topo.setupKeys",
                 "title": "Setup Keys",
-                "category": "Arm Topo"
+                "category": "Topo"
             },
             {
                 "command": "topo.fixDependencyIssue",
                 "title": "Fix",
-                "category": "Arm Topo"
+                "category": "Topo"
             },
             {
                 "command": "topo.fixTargetIssues",
                 "title": "Fix An Issue",
-                "category": "Arm Topo"
+                "category": "Topo"
             },
             {
                 "command": "topo.inspectHostHealth",
                 "title": "Inspect Host Health",
-                "category": "Arm Topo"
+                "category": "Topo"
             },
             {
                 "command": "topo.refreshHostHealth",
                 "title": "Refresh",
                 "icon": "$(refresh)",
-                "category": "Arm Topo"
+                "category": "Topo"
             },
             {
                 "command": "topo.showOutput",
-                "title": "Open Arm Topo Output",
-                "category": "Arm Topo"
+                "title": "Open Topo Output",
+                "category": "Topo"
             },
             {
                 "command": "topo.deploy.context",
                 "title": "Topo Deploy",
-                "category": "Arm Topo"
+                "category": "Topo"
             },
             {
                 "command": "topo.stop.context",
                 "title": "Topo Stop",
-                "category": "Arm Topo"
+                "category": "Topo"
             }
         ],
         "viewsContainers": {
