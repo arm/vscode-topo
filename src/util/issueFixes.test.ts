@@ -2,7 +2,7 @@ import { IssueCheck, TargetHealthCheck } from '../topoCliSchema';
 import {
     hasFixableIssueFix,
     getTargetIssueFixCommandGroups,
-} from './iIssueFixes';
+} from './issueFixes';
 
 describe('getIssueFixes', () => {
     const targetHealth: TargetHealthCheck = {

@@ -5,7 +5,7 @@ import { showAndLogError } from '../util/showAndLogError';
 import { executeTask } from '../util/executeTask';
 import { TargetModel } from '../models/targetModel';
 import { TopoCli } from '../topoCli';
-import { type FixableHealthIssue } from '../util/iIssueFixes';
+import { type FixableHealthIssue } from '../util/issueFixes';
 
 type IssueFixQuickPickItem = vscode.QuickPickItem & {
     issue: FixableHealthIssue;
