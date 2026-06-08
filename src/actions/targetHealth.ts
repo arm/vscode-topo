@@ -4,7 +4,7 @@ import { logger } from '../util/logger';
 import { TopoCli } from '../topoCli';
 import { TransientDocumentProvider } from '../util/transientDocumentProvider';
 import { showAndLogError } from '../util/showAndLogError';
-import { HealthCheckResult } from '../topoCliSchema';
+import { HealthCheck } from '../topoCliSchema';
 
 export class TargetHealth {
     constructor(
@@ -25,7 +25,7 @@ export class TargetHealth {
             return;
         }
 
-        let health: HealthCheckResult;
+        let health: HealthCheck;
         try {
             health = await this.topoCli.health(treeNode.target);
         } catch (err) {
