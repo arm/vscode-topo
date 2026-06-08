@@ -45,21 +45,16 @@ describe('Deploy', () => {
         topoCli.getBinaryPath.mockReturnValue(topoBinaryPath);
         targetModel = new TargetModel();
         targetModel.setSelected(target);
-        executeTaskMock.mockReset();
-        vi.mocked(vscode.workspace.findFiles).mockReset();
         vi.mocked(vscode.workspace.findFiles).mockResolvedValue([]);
-        vi.mocked(vscode.workspace.getWorkspaceFolder).mockReset();
         vi.mocked(vscode.workspace.getWorkspaceFolder).mockReturnValue(
             undefined,
         );
-        vi.mocked(vscode.window.showQuickPick).mockReset();
-        vi.mocked(vscode.window.showErrorMessage).mockClear();
         mutable(vscode.workspace).workspaceFolders = undefined;
         deployAction = new Deploy(topoCli, targetModel);
     });
 
     afterEach(() => {
-        vi.restoreAllMocks();
+        vi.resetAllMocks();
     });
 
     it('shows an error in the command handler with no target selected', async () => {
