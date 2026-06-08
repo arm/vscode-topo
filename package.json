@@ -107,7 +107,7 @@
             {
                 "command": "topo.fixTargetIssues",
                 "title": "Fix An Issue",
-                "category": "Arm Topo"
+                "category": "Topo"
             },
             {
                 "command": "topo.inspectHostHealth",
