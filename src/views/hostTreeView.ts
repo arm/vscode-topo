@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { PACKAGE_NAME } from '../manifest';
-import { HealthCheckDependency } from '../topoCliSchema';
+import { IssueCheck } from '../topoCliSchema';
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 import { ErrorTreeItem } from '../treeItems/errorTreeItem';
@@ -8,10 +8,8 @@ import { HostModel } from '../models/hostModel';
 import { DisposableCollector } from '../util/disposableCollector';
 import { loaded } from '../util/loadable';
 
-function sortDependenciesByName(
-    deps: HealthCheckDependency[],
-): HealthCheckDependency[] {
-    return deps.sort((a, b) =>
+function sortIssueChecksByName(issueChecks: IssueCheck[]): IssueCheck[] {
+    return issueChecks.sort((a, b) =>
         a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
     );
 }
@@ -50,7 +48,7 @@ export class HostTreeView
                 ];
             }
 
-            const deps = sortDependenciesByName(health.data.host.dependencies);
+            const deps = sortIssueChecksByName(health.data.host.dependencies);
             return [
                 new HealthCheckDependencyGroupTreeItem(
                     loaded(deps, health.loading),

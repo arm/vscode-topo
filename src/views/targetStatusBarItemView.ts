@@ -5,14 +5,14 @@ import { TargetTreeView } from './targetTreeView';
 import { TargetState } from '../util/types';
 import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
-import { getWorstDependencyStatus } from '../util/getWorstDependencyStatus';
+import { getWorstIssueCheckStatus } from '../util/getWorstIssueCheckStatus';
 import { getDependencyGroupIcon } from './util/dependencyIcons';
 import { errored, Loadable, loaded } from '../util/loadable';
-import { TargetHealthCheckResult } from '../topoCliSchema';
+import { TargetHealthCheck } from '../topoCliSchema';
 
 function targetHealthLoadable(
     state: TargetState,
-): Loadable<TargetHealthCheckResult | undefined> {
+): Loadable<TargetHealthCheck | undefined> {
     if (state.status === 'connected') {
         return loaded(state.health);
     }
@@ -23,16 +23,16 @@ function targetHealthLoadable(
 }
 
 function getStatusIconId(
-    state: Loadable<TargetHealthCheckResult | undefined>,
+    state: Loadable<TargetHealthCheck | undefined>,
 ): string {
     const targetTreeIcon = getTargetTreeItemIcon(true, state);
     if (targetTreeIcon) {
         return targetTreeIcon.id;
     }
 
-    const deps =
+    const dependencies =
         state.status === 'loaded' && state.data ? state.data.dependencies : [];
-    const status = getWorstDependencyStatus(deps);
+    const status = getWorstIssueCheckStatus(dependencies);
     if (status === 'ok') {
         return 'pass-filled';
     }
@@ -43,7 +43,7 @@ function getStatusIconId(
 function renderStatusBarItem(
     statusBarItem: vscode.StatusBarItem,
     target: string | undefined,
-    state: Loadable<TargetHealthCheckResult | undefined>,
+    state: Loadable<TargetHealthCheck | undefined>,
 ): void {
     if (target) {
         const iconId = getStatusIconId(state);

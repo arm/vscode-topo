@@ -3,28 +3,23 @@ import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 import { showAndLogError } from '../util/showAndLogError';
 import { executeTask } from '../util/executeTask';
-import {
-    getFixableDependencyFixes,
-    IssueFix,
-} from '../util/getDependencyFixes';
-import { HealthCheckDependency } from '../topoCliSchema';
 import { TargetModel } from '../models/targetModel';
 import { TopoCli } from '../topoCli';
+import { type FixableHealthIssue } from '../util/issueFixes';
 
-type IssueFixQuickPickItem = vscode.QuickPickItem & IssueFix;
+type IssueFixQuickPickItem = vscode.QuickPickItem & {
+    issue: FixableHealthIssue;
+};
 
-function getFixableDependencyQuickPickItems(
-    dependencies: HealthCheckDependency[],
+function getIssueFixQuickPickItems(
+    issues: FixableHealthIssue[],
 ): IssueFixQuickPickItem[] {
-    return getFixableDependencyFixes(dependencies).map(
-        ({ dependency, fix }) => ({
-            label: dependency.name,
-            description: fix.description,
-            detail: `Command: ${fix.command}`,
-            dependency,
-            fix,
-        }),
-    );
+    return issues.map((issue) => ({
+        label: issue.name,
+        description: issue.fix.description,
+        detail: `Command: ${issue.fix.command}`,
+        issue,
+    }));
 }
 
 export class FixIssue {
@@ -57,12 +52,12 @@ export class FixIssue {
             throw new Error('No selected target found');
         }
 
-        const fix = treeNode.dependency.fix;
-        if (!fix?.command) {
+        const command = treeNode.dependency.fix?.command;
+        if (!command) {
             throw new Error('No executable fix found for the selected item');
         }
 
-        await this.executeFix(target, [treeNode.dependency.name], fix.command);
+        await this.executeFix(target, [treeNode.dependency.name], command);
     }
 
     private async fixTargetIssuesFromTreeItem(
@@ -74,63 +69,57 @@ export class FixIssue {
             );
         }
 
-        const fixes = getFixableDependencyQuickPickItems(
-            treeNode.visibleDependencies,
-        );
+        const fixableIssues = treeNode.fixableIssues;
 
-        if (fixes.length === 0) {
+        if (fixableIssues.length === 0) {
             throw new Error(
-                `No executable dependency fixes found for target ${treeNode.target}`,
+                `No executable issue fixes found for target ${treeNode.target}`,
             );
         }
 
-        await this.selectAndFixTargetIssue(treeNode.target, fixes);
+        await this.selectAndFixTargetIssue(treeNode.target, fixableIssues);
     }
 
     private async selectAndFixTargetIssue(
         target: string,
-        fixes: IssueFixQuickPickItem[],
+        issues: FixableHealthIssue[],
     ): Promise<void> {
-        const selectedFix = await vscode.window.showQuickPick(fixes, {
-            placeHolder: `Select a dependency fix for ${target}`,
-        });
+        const selectedFix = await vscode.window.showQuickPick(
+            getIssueFixQuickPickItems(issues),
+            {
+                placeHolder: `Select an issue fix for ${target}`,
+            },
+        );
         if (!selectedFix) {
             return;
         }
 
-        if (!selectedFix.fix.command) {
-            throw new Error('No executable fix found for the selected item');
-        }
-
         await this.executeFix(
             target,
-            [selectedFix.dependency.name],
-            selectedFix.fix.command,
+            [selectedFix.issue.name],
+            selectedFix.issue.fix.command,
         );
     }
 
     private async executeFix(
         target: string,
-        dependencyNames: string[],
+        issueNames: string[],
         command: string,
     ): Promise<void> {
-        const dependencyName = dependencyNames.join(', ');
+        const issueName = issueNames.join(', ');
         const commandArgs = command.split(/\s+/);
         if (commandArgs[0] === 'topo') {
             commandArgs[0] = this.topoCli.getBinaryPath();
         }
 
         try {
-            await executeTask(
-                `Fix ${dependencyName} on ${target}`,
-                commandArgs,
-            );
+            await executeTask(`Fix ${issueName} on ${target}`, commandArgs);
             vscode.window.showInformationMessage(
-                `${dependencyName} was fixed on target ${target}`,
+                `${issueName} was fixed on target ${target}`,
             );
         } catch (err) {
             showAndLogError(
-                `Failed to fix ${dependencyName} on target ${target}`,
+                `Failed to fix ${issueName} on target ${target}`,
                 err,
             );
         }

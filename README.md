@@ -31,7 +31,9 @@ Each target in the tree shows:
 | -------------------- | --------------------------------------------------------------------- |
 | **Subsystem groups** | Host and any remote processor subsystems detected on the target.      |
 | **Services**         | Running or stopped containers under each subsystem, with state icons. |
-| **Dependencies**     | Connectivity, driver, and target dependency health checks.            |
+| **Dependencies**     | Dependency and driver health-check issues shown for the target.       |
+
+Connectivity errors are shown on the selected target row.
 
 ### Target Actions
 
@@ -43,7 +45,7 @@ Right-click a target in the tree to access these actions:
 | **Remove Target**  | Delete the target from the configuration.                       |
 | **Inspect Health** | Display health-check JSON results for the selected target.      |
 | **Setup Keys**     | Configure SSH key-based authentication for the selected target. |
-| **Fix An Issue**   | Select and run an available fix for a target dependency issue.  |
+| **Fix An Issue**   | Select and run an available fix for a target issue.             |
 
 ### Dependency Actions
 
@@ -66,7 +68,8 @@ Right-click a service in the Targets tree to manage individual containers:
 
 Deploy or stop the `compose.yaml` or `compose.yml` file in a project directory on the selected target. You can trigger either operation from:
 
-- Right-clicking `compose.yaml` or `compose.yml` in the Explorer or editor tab and selecting **Topo Deploy** or **Topo Stop**.
+- Running **Topo: Deploy** from the Command Palette, then selecting a `compose.yaml` or `compose.yml` file from the workspace.
+- Right-clicking `compose.yaml` or `compose.yml` in the Explorer or editor tab and selecting **Deploy** or **Stop**.
 
 The extension runs `topo deploy --target <ssh>` or `topo stop --target <ssh>` from the directory containing `compose.yaml` or `compose.yml` in a task terminal and reports success or failure.
 
@@ -112,6 +115,7 @@ All commands are under the **Topo** category. Commands available from the Comman
 | `Topo: Clone Remote Project`   | Clone a project from a Git repository.          |
 | `Topo: Clone Template Project` | Clone a project from an Arm template.           |
 | `Topo: Clone Local Project`    | Clone a project from a local directory.         |
+| `Topo: Deploy`                 | Select and deploy a compose file to the target. |
 | `Topo: Inspect Host Health`    | Display host dependency health report.          |
 
 Additional commands are available through the Targets tree view context menus.

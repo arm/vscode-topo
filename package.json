@@ -126,13 +126,18 @@
                 "category": "Topo"
             },
             {
+                "command": "topo.deploy",
+                "title": "Deploy",
+                "category": "Topo"
+            },
+            {
                 "command": "topo.deploy.context",
-                "title": "Topo Deploy",
+                "title": "Deploy",
                 "category": "Topo"
             },
             {
                 "command": "topo.stop.context",
-                "title": "Topo Stop",
+                "title": "Stop",
                 "category": "Topo"
             }
         ],
@@ -285,7 +290,7 @@
                 },
                 {
                     "command": "topo.fixTargetIssues",
-                    "when": "view === topo.target-manager && viewItem =~ /Target/ && viewItem =~ /Selected/ && viewItem =~ /HasFixableDependencies/",
+                    "when": "view === topo.target-manager && viewItem =~ /Target/ && viewItem =~ /Selected/ && viewItem =~ /HasFixableIssues/",
                     "group": "topo/2_actions"
                 },
                 {

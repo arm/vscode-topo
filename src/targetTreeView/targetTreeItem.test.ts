@@ -1,13 +1,12 @@
 import * as vscode from 'vscode';
 import { TargetTreeItem } from './targetTreeItem';
-import {
-    HealthCheckDependency,
-    TargetHealthCheckResult,
-} from '../topoCliSchema';
+import { IssueCheck, TargetHealthCheck } from '../topoCliSchema';
 import { errored, loaded, loading } from '../util/loadable';
 import { TargetDescription } from '../util/types';
 
-const testTargetHealth: TargetHealthCheckResult = {
+vi.mock('../util/logger');
+
+const testTargetHealth: TargetHealthCheck = {
     isLocalhost: false,
     connectivity: {
         name: 'Connectivity',
@@ -134,8 +133,8 @@ describe('TargetTreeItem', () => {
         );
     });
 
-    it('adds HasFixableDependencies context when visible dependencies have executable fixes', () => {
-        const dependency: HealthCheckDependency = {
+    it('adds HasFixableIssues context when visible issues have executable fixes', () => {
+        const dependency: IssueCheck = {
             name: 'Container Engine',
             status: 'error',
             value: 'missing',
@@ -153,7 +152,90 @@ describe('TargetTreeItem', () => {
             }),
         });
 
-        expect(item.contextValue).toContain('HasFixableDependencies');
-        expect(item.visibleDependencies).toEqual([dependency]);
+        expect(item.contextValue).toContain('HasFixableIssues');
+        expect(item.visibleIssues).toEqual([dependency]);
+        expect(item.fixableIssues).toEqual([dependency]);
+    });
+
+    it('does not add HasFixableIssues context when visible issue fix has no command', () => {
+        const dependency: IssueCheck = {
+            name: 'Container Engine',
+            status: 'error',
+            value: 'missing',
+            fix: {
+                description: 'Manual setup required',
+            },
+        };
+        const item = new TargetTreeItem({
+            target: baseTarget,
+            selected: true,
+            health: loaded({
+                ...testTargetHealth,
+                dependencies: [dependency],
+            }),
+        });
+
+        expect(item.contextValue).not.toContain('HasFixableIssues');
+        expect(item.visibleIssues).toEqual([dependency]);
+        expect(item.fixableIssues).toEqual([]);
+    });
+
+    it('adds HasFixableIssues context when connectivity has a fix command', () => {
+        const connectivityIssue: IssueCheck = {
+            name: 'Connectivity',
+            status: 'error',
+            value: 'unreachable',
+            fix: {
+                description: 'Set up connectivity',
+                command: 'topo setup-keys',
+            },
+        };
+        const item = new TargetTreeItem({
+            target: baseTarget,
+            selected: true,
+            health: loaded({
+                ...testTargetHealth,
+                connectivity: connectivityIssue,
+            }),
+        });
+
+        expect(item.contextValue).toContain('HasFixableIssues');
+        expect(item.fixableIssues).toEqual([connectivityIssue]);
+    });
+
+    it('shows connectivity diagnostics as a description and tooltip', () => {
+        const item = new TargetTreeItem({
+            target: baseTarget,
+            selected: true,
+            health: loaded({
+                ...testTargetHealth,
+                connectivity: {
+                    name: 'Connectivity',
+                    status: 'error',
+                    value: 'ssh connection failed',
+                },
+            }),
+        });
+
+        expect(item.description).toBe('ssh connection failed');
+        expect(item.tooltip).toBe(`${baseTarget}: ssh connection failed`);
+    });
+
+    it('does not show connectivity diagnostics when target is unselected', () => {
+        const item = new TargetTreeItem({
+            target: baseTarget,
+            selected: false,
+            health: loaded({
+                ...testTargetHealth,
+                connectivity: {
+                    name: 'Connectivity',
+                    status: 'error',
+                    value: 'ssh connection failed',
+                },
+            }),
+        });
+
+        expect(item.description).toBeUndefined();
+        expect(item.tooltip).toBeUndefined();
     });
 });

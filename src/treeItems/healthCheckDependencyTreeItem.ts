@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { HealthCheckDependency } from '../topoCliSchema';
+import { IssueCheck } from '../topoCliSchema';
 import { getDependencyItemIcon } from '../views/util/dependencyIcons';
 
 const capitalizeFirstLetter = (s: string) => {
@@ -7,7 +7,7 @@ const capitalizeFirstLetter = (s: string) => {
 };
 
 export class HealthCheckDependencyTreeItem extends vscode.TreeItem {
-    constructor(public readonly dependency: HealthCheckDependency) {
+    constructor(public readonly dependency: IssueCheck) {
         super(dependency.name, vscode.TreeItemCollapsibleState.None);
         this.description = dependency.value;
 

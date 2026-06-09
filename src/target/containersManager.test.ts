@@ -7,7 +7,7 @@ import * as vscode from 'vscode';
 import { mock } from 'vitest-mock-extended';
 import { TopoCli } from '../topoCli';
 import type { ContainerCommands } from './containerCommands';
-import type { HealthCheckResult } from '../topoCliSchema';
+import type { HealthCheck } from '../topoCliSchema';
 import type { Mock } from 'vitest';
 import { TargetModel } from '../models/targetModel';
 
@@ -111,7 +111,7 @@ const dockerInspectCommand = commandString([
     '--format',
     '{{json .}}',
 ]);
-const loadedHealth: HealthCheckResult = {
+const loadedHealth: HealthCheck = {
     host: { dependencies: [] },
     target: {
         isLocalhost: false,
@@ -301,7 +301,7 @@ describe('ContainersManager', () => {
     });
 
     it('clears cached containers when the container engine becomes unhealthy', async () => {
-        const unhealthyContainerEngine: HealthCheckResult = {
+        const unhealthyContainerEngine: HealthCheck = {
             host: { dependencies: [] },
             target: {
                 isLocalhost: false,
@@ -401,9 +401,7 @@ describe('ContainersManager', () => {
     });
 
     it('getTargetStateSnapshot returns default state before health load completes', async () => {
-        topoCli.health.mockReturnValueOnce(
-            new Promise<HealthCheckResult>(() => {}),
-        );
+        topoCli.health.mockReturnValueOnce(new Promise<HealthCheck>(() => {}));
         const targetModel = new TargetModel();
         targetModel.setSelected(target);
         const containerCommands = mock<ContainerCommands>();
@@ -421,8 +419,8 @@ describe('ContainersManager', () => {
     });
 
     it('getTargetState waits for health load and updates the snapshot', async () => {
-        let resolveHealth: (result: HealthCheckResult) => void;
-        const pendingHealth = new Promise<HealthCheckResult>(
+        let resolveHealth: (result: HealthCheck) => void;
+        const pendingHealth = new Promise<HealthCheck>(
             (resolve) => (resolveHealth = resolve),
         );
         topoCli.health.mockReturnValueOnce(pendingHealth);
@@ -471,8 +469,8 @@ describe('ContainersManager', () => {
         const targetModel = new TargetModel();
         targetModel.setSelected(target);
 
-        let resolveOldHealth: (result: HealthCheckResult) => void;
-        const pendingOldHealth = new Promise<HealthCheckResult>(
+        let resolveOldHealth: (result: HealthCheck) => void;
+        const pendingOldHealth = new Promise<HealthCheck>(
             (resolve) => (resolveOldHealth = resolve),
         );
         topoCli.health.mockImplementation(async (ssh: string) => {

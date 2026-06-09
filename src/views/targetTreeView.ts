@@ -12,7 +12,7 @@ import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
 import { ContainerItem, TargetState } from '../util/types';
 import { errored, Loadable, loaded } from '../util/loadable';
-import { TargetHealthCheckResult } from '../topoCliSchema';
+import { TargetHealthCheck } from '../topoCliSchema';
 
 function compareByName(a: { name: string }, b: { name: string }): number {
     return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
@@ -46,7 +46,7 @@ function filterContainersForGroup(
 
 function targetHealthLoadable(
     state: TargetState,
-): Loadable<TargetHealthCheckResult | undefined> {
+): Loadable<TargetHealthCheck | undefined> {
     if (state.status === 'connected') {
         return loaded(state.health);
     }
@@ -140,7 +140,7 @@ export class TargetTreeView
             const sortedContainers = [...containers].sort(compareContainers);
 
             const dependenciesGroup = new HealthCheckDependencyGroupTreeItem(
-                loaded(element.visibleDependencies, element.health.loading),
+                loaded(element.visibleIssues, element.health.loading),
             );
             const subsystemsGroup = new TargetSubsystemGroupTreeItem(
                 element.target,

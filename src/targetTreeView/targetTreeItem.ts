@@ -1,18 +1,15 @@
 import * as vscode from 'vscode';
-import { getFixableDependencyFixes } from '../util/getDependencyFixes';
-import {
-    HealthCheckDependency,
-    TargetHealthCheckResult,
-} from '../topoCliSchema';
+import { IssueCheck, TargetHealthCheck } from '../topoCliSchema';
 import { errored, Loadable } from '../util/loadable';
-import { getVisibleTargetDependencies } from '../target/getVisibleTargetDependencies';
+import { getVisibleTargetIssues } from '../target/getVisibleTargetIssues';
 import { TargetDescription } from '../util/types';
 import { logger } from '../util/logger';
+import { hasFixCommand, type FixableHealthIssue } from '../util/issueFixes';
 
 export interface TargetTreeItemOptions {
     readonly target: string;
     readonly selected: boolean;
-    readonly health?: Loadable<TargetHealthCheckResult | undefined>;
+    readonly health?: Loadable<TargetHealthCheck | undefined>;
     readonly targetDescription?: Loadable<TargetDescription>;
 }
 
@@ -23,7 +20,7 @@ const defaultTargetDescription = errored('Target description not available');
 export class TargetTreeItem extends vscode.TreeItem {
     public readonly target: string;
     public readonly selected: boolean;
-    public readonly health: Loadable<TargetHealthCheckResult | undefined>;
+    public readonly health: Loadable<TargetHealthCheck | undefined>;
     public readonly targetDescription: Loadable<TargetDescription>;
 
     constructor({
@@ -39,6 +36,7 @@ export class TargetTreeItem extends vscode.TreeItem {
         this.targetDescription = targetDescription;
         this.id = target;
         this.iconPath = getTargetTreeItemIcon(selected, health);
+
         const contextValues = ['Target'];
         if (selected) {
             contextValues.push('Selected');
@@ -47,13 +45,16 @@ export class TargetTreeItem extends vscode.TreeItem {
                 contextValues.push('Connected');
             } else {
                 const message = getConnectivityStatusMessage(health);
-                logger.warn(message);
-                this.description = message;
-                this.tooltip = `${target}: ${message}`;
+                if (message) {
+                    logger.warn(message);
+                    this.description = message;
+                    this.tooltip = `${target}: ${message}`;
+                }
             }
         }
-        if (getFixableDependencyFixes(this.visibleDependencies).length > 0) {
-            contextValues.push('HasFixableDependencies');
+
+        if (this.fixableIssues.length > 0) {
+            contextValues.push('HasFixableIssues');
         }
         this.contextValue = contextValues.join(' ');
         this.collapsibleState = getTargetTreeItemState(
@@ -73,7 +74,7 @@ export class TargetTreeItem extends vscode.TreeItem {
         return this.label?.toString() ?? '';
     }
 
-    public get visibleDependencies(): HealthCheckDependency[] {
+    public get visibleIssues(): IssueCheck[] {
         if (this.health.status !== 'loaded' || this.health.data === undefined) {
             return [];
         }
@@ -82,7 +83,16 @@ export class TargetTreeItem extends vscode.TreeItem {
             this.targetDescription.status === 'loaded'
                 ? this.targetDescription.data
                 : undefined;
-        return getVisibleTargetDependencies(this.health.data, description);
+        return getVisibleTargetIssues(this.health.data, description);
+    }
+
+    public get fixableIssues(): FixableHealthIssue[] {
+        const issues: Array<IssueCheck | undefined> = [...this.visibleIssues];
+        if (this.health.status === 'loaded') {
+            issues.unshift(this.health.data?.connectivity);
+        }
+
+        return issues.filter(hasFixCommand);
     }
 
     public get remoteProcessorNames(): string[] {
@@ -96,7 +106,7 @@ export class TargetTreeItem extends vscode.TreeItem {
 }
 
 const getConnectivityStatusMessage = (
-    health: Loadable<TargetHealthCheckResult | undefined>,
+    health: Loadable<TargetHealthCheck | undefined>,
 ): string | undefined => {
     if (health.status === 'errored') {
         return health.error.message;
@@ -124,7 +134,7 @@ const getTargetTreeItemState = (
 
 export const getTargetTreeItemIcon = (
     targetSelected: boolean,
-    health: Loadable<TargetHealthCheckResult | undefined>,
+    health: Loadable<TargetHealthCheck | undefined>,
 ): vscode.ThemeIcon | undefined => {
     if (!targetSelected) {
         return undefined;
