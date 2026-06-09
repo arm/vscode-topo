@@ -5,7 +5,10 @@ import { showAndLogError } from '../util/showAndLogError';
 import { executeTask } from '../util/executeTask';
 import { TargetModel } from '../models/targetModel';
 import { TopoCli } from '../topoCli';
-import { type FixableHealthIssue } from '../util/issueFixes';
+import {
+    type FixableHealthIssue,
+    getIssueFixCommandGroups,
+} from '../util/issueFixes';
 
 type IssueFixQuickPickItem = vscode.QuickPickItem & {
     issue: FixableHealthIssue;
@@ -40,7 +43,7 @@ export class FixIssue {
         }
 
         throw new Error(
-            `Invalid item for fix issue: expected HealthCheckDependencyTreeItem or TargetTreeItem but received: ${String(treeNode)}`,
+            `Invalid item for fix issues: expected HealthCheckDependencyTreeItem or TargetTreeItem but received: ${String(treeNode)}`,
         );
     }
 
@@ -65,7 +68,7 @@ export class FixIssue {
     ): Promise<void> {
         if (!treeNode.selected) {
             throw new Error(
-                `Invalid target item for fix an issue: expected selected TargetTreeItem but received: ${String(treeNode)}`,
+                `Invalid target item for fix issues: expected selected TargetTreeItem but received: ${String(treeNode)}`,
             );
         }
 
@@ -84,21 +87,30 @@ export class FixIssue {
         target: string,
         issues: FixableHealthIssue[],
     ): Promise<void> {
-        const selectedFix = await vscode.window.showQuickPick(
+        const selectedFixes = await vscode.window.showQuickPick(
             getIssueFixQuickPickItems(issues),
             {
-                placeHolder: `Select an issue fix for ${target}`,
+                canPickMany: true,
+                placeHolder: `Select dependency fixes for ${target}`,
             },
         );
-        if (!selectedFix) {
+
+        if (!selectedFixes || selectedFixes.length === 0) {
             return;
         }
 
-        await this.executeFix(
-            target,
-            [selectedFix.issue.name],
-            selectedFix.issue.fix.command,
+        const selectedIssues = selectedFixes.map(
+            (selectedFix) => selectedFix.issue,
         );
+
+        const fixGroups = getIssueFixCommandGroups(selectedIssues);
+        for (const fixGroup of fixGroups) {
+            await this.executeFix(
+                target,
+                fixGroup.issueNames,
+                fixGroup.command,
+            );
+        }
     }
 
     private async executeFix(

@@ -45,7 +45,7 @@ Right-click a target in the tree to access these actions:
 | **Remove Target**  | Delete the target from the configuration.                       |
 | **Inspect Health** | Display health-check JSON results for the selected target.      |
 | **Setup Keys**     | Configure SSH key-based authentication for the selected target. |
-| **Fix An Issue**   | Select and run an available fix for a target issue.             |
+| **Fix Issues**     | Select and run available fixes for target dependency issues.    |
 
 ### Dependency Actions
 
