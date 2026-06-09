@@ -12,6 +12,7 @@ import { errored, Loadable, loaded, loading } from '../util/loadable';
 import { ContainerItem, DockerInspectItem, DockerPsItem } from '../util/types';
 import { HealthCheck, TargetHealthCheck } from '../topoCliSchema';
 import { LatestAbortableWork } from '../util/latestAbortableWork';
+import { DisposableCollector } from '../util/disposableCollector';
 
 function isTargetTreeItem(node: unknown): node is TargetTreeItem {
     if (node instanceof TargetTreeItem) {
@@ -135,6 +136,7 @@ async function loadContainersData(
 }
 
 export class TargetController {
+    private readonly disposables = new DisposableCollector();
     private readonly selectedTargetDataRefresh = new LatestAbortableWork();
 
     constructor(
@@ -142,7 +144,9 @@ export class TargetController {
         private readonly targetStore: TargetStore,
         private readonly topoCli: TopoCli,
         private readonly containerCommands: ContainerCommands,
-    ) {}
+    ) {
+        this.disposables.collect(this.selectedTargetDataRefresh);
+    }
 
     public activate(): void {
         this.updateFromTargetStore();
@@ -266,6 +270,6 @@ export class TargetController {
     }
 
     public dispose(): void {
-        this.selectedTargetDataRefresh.dispose();
+        this.disposables.dispose();
     }
 }
