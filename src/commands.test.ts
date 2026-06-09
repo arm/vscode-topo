@@ -85,6 +85,10 @@ describe('commands', () => {
                 handlers.projectInit.initProjectCommandHandler,
             ],
             [commands.deploy, handlers.deploy.deployCommandHandler],
+            [
+                commands.deployContext,
+                handlers.deploy.deployContextCommandHandler,
+            ],
             [commands.stop, handlers.stop.stopCommandHandler],
             [
                 commands.openInBrowser,
@@ -115,7 +119,14 @@ describe('commands', () => {
                 commands.inspectTargetHealth,
                 handlers.targetHealth.inspectHealthCommandHandler,
             ],
-            [commands.fixIssue, handlers.fixIssue.fixIssueCommandHandler],
+            [
+                commands.fixDependencyIssue,
+                handlers.fixIssue.fixIssueCommandHandler,
+            ],
+            [
+                commands.fixTargetIssues,
+                handlers.fixIssue.fixIssueCommandHandler,
+            ],
         ];
 
         it.each(cases)(

@@ -1,4 +1,4 @@
-import { ServiceDescription, TargetHealthCheckResult } from '../topoCliSchema';
+import { ServiceDescription, TargetHealthCheck } from '../topoCliSchema';
 
 export interface HostProcessor {
     model: string;
@@ -108,11 +108,6 @@ export type Mutable<T> = { -readonly [P in keyof T]: T[P] };
 export type TargetStatus = 'disconnected' | 'connected' | 'error';
 
 export interface TargetState {
-    health: TargetHealthCheckResult | undefined;
+    health: TargetHealthCheck | undefined;
     status: TargetStatus;
 }
-
-export type Loadable<T> =
-    | { status: 'loading'; placeholder: Loadable<T> }
-    | { status: 'loaded'; data: T }
-    | { status: 'error'; error: Error };

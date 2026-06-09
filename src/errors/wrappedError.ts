@@ -1,4 +1,10 @@
-export type WrappedErrorCode = 'DOCKER' | 'CLONE' | 'CLI' | 'STORAGE';
+export type WrappedErrorCode =
+    | 'DOCKER'
+    | 'CLONE'
+    | 'CLI'
+    | 'STORAGE'
+    | 'NO_TARGET_SELECTED'
+    | 'INVALID_SSH_DESTINATION';
 
 export type WrappedErrorLogLevel = 'Error' | 'Warning' | 'Info' | 'Debug';
 

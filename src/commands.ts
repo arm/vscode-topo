@@ -29,7 +29,8 @@ export const removeTarget = command('removeTarget');
 export const addTarget = command('addTarget');
 export const inspectHostHealth = command('inspectHostHealth');
 export const initProject = command('initProject');
-export const deploy = command('deploy.context');
+export const deploy = command('deploy');
+export const deployContext = command('deploy.context');
 export const stop = command('stop.context');
 export const openInBrowser = command('openInBrowser');
 export const attachVsCode = command('attachVsCode');
@@ -39,7 +40,8 @@ export const startContainer = command('startContainer');
 export const stopContainer = command('stopContainer');
 export const deleteContainer = command('deleteContainer');
 export const inspectTargetHealth = command('inspectTargetHealth');
-export const fixIssue = command('fixIssue');
+export const fixDependencyIssue = command('fixDependencyIssue');
+export const fixTargetIssues = command('fixTargetIssues');
 
 export interface CommandHandlers {
     hostController: HostController;
@@ -81,8 +83,13 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
         vscode.commands.registerCommand(initProject, () =>
             handlers.projectInit.initProjectCommandHandler(),
         ),
-        vscode.commands.registerCommand(deploy, (resource?: vscode.Uri) =>
-            handlers.deploy.deployCommandHandler(resource),
+        vscode.commands.registerCommand(deploy, () =>
+            handlers.deploy.deployCommandHandler(),
+        ),
+        vscode.commands.registerCommand(
+            deployContext,
+            (resource?: vscode.Uri) =>
+                handlers.deploy.deployContextCommandHandler(resource),
         ),
         vscode.commands.registerCommand(stop, (resource?: vscode.Uri) =>
             handlers.stop.stopCommandHandler(resource),
@@ -113,7 +120,10 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
         vscode.commands.registerCommand(inspectTargetHealth, (treeNode) =>
             handlers.targetHealth.inspectHealthCommandHandler(treeNode),
         ),
-        vscode.commands.registerCommand(fixIssue, (treeNode) =>
+        vscode.commands.registerCommand(fixDependencyIssue, (treeNode) =>
+            handlers.fixIssue.fixIssueCommandHandler(treeNode),
+        ),
+        vscode.commands.registerCommand(fixTargetIssues, (treeNode) =>
             handlers.fixIssue.fixIssueCommandHandler(treeNode),
         ),
     );

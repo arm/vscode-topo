@@ -1,39 +1,17 @@
 import * as vscode from 'vscode';
 import { PACKAGE_NAME } from '../manifest';
-import { HealthCheckDependency, HostHealthCheckResult } from '../topoCliSchema';
+import { IssueCheck } from '../topoCliSchema';
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
-import { logger } from '../util/logger';
-import {
-    failedToLoadHostDependenciesMessage,
-    HostDependenciesLoadErrorItem,
-} from '../treeItems/hostDependenciesLoadErrorItem';
+import { ErrorTreeItem } from '../treeItems/errorTreeItem';
 import { HostModel } from '../models/hostModel';
-import { Loadable } from '../util/types';
 import { DisposableCollector } from '../util/disposableCollector';
+import { loaded } from '../util/loadable';
 
-function sortDependenciesByName(
-    deps: HealthCheckDependency[],
-): HealthCheckDependency[] {
-    return deps.sort((a, b) =>
+function sortIssueChecksByName(issueChecks: IssueCheck[]): IssueCheck[] {
+    return issueChecks.sort((a, b) =>
         a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
     );
-}
-
-function getRootItem(health: Loadable<HostHealthCheckResult>): vscode.TreeItem {
-    if (health.status === 'error') {
-        logger.warn(failedToLoadHostDependenciesMessage, health.error);
-        return new HostDependenciesLoadErrorItem();
-    }
-
-    if (health.status === 'loading') {
-        const item = getRootItem(health.placeholder);
-        item.iconPath = new vscode.ThemeIcon('loading~spin');
-        return item;
-    }
-
-    const deps = sortDependenciesByName(health.data.host.dependencies);
-    return new HealthCheckDependencyGroupTreeItem(deps);
 }
 
 export class HostTreeView
@@ -63,7 +41,19 @@ export class HostTreeView
 
     public getChildren(element?: vscode.TreeItem): vscode.TreeItem[] {
         if (!element) {
-            return [getRootItem(this.model.health)];
+            const health = this.model.health;
+            if (health.status === 'errored') {
+                return [
+                    new ErrorTreeItem('Failed to load dependencies', health),
+                ];
+            }
+
+            const deps = sortIssueChecksByName(health.data.host.dependencies);
+            return [
+                new HealthCheckDependencyGroupTreeItem(
+                    loaded(deps, health.loading),
+                ),
+            ];
         }
 
         if (element instanceof HealthCheckDependencyGroupTreeItem) {

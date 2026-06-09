@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { TargetTreeItem } from './targetTreeItem';
-import { HealthCheckDependency } from '../topoCliSchema';
+import { IssueCheck } from '../topoCliSchema';
 
 describe('TargetTreeItem', () => {
     const baseTarget = 'root@host.local';
@@ -73,8 +73,8 @@ describe('TargetTreeItem', () => {
         );
     });
 
-    it('adds HasFixableDependencies context when target has fixable dependencies', () => {
-        const dependency: HealthCheckDependency = {
+    it('adds HasFixableIssues context when target has fixable dependencies', () => {
+        const dependency: IssueCheck = {
             name: 'Container Engine',
             status: 'error',
             value: 'missing',
@@ -87,7 +87,73 @@ describe('TargetTreeItem', () => {
             dependency,
         ]);
 
-        expect(item.contextValue).toContain('HasFixableDependencies');
-        expect(item.visibleDependencies).toEqual([dependency]);
+        expect(item.contextValue).toContain('HasFixableIssues');
+        expect(item.visibleIssues).toEqual([dependency]);
+        expect(item.fixableIssues).toEqual([dependency]);
+    });
+
+    it('does not add HasFixableIssues context when dependency fix has no command', () => {
+        const dependency: IssueCheck = {
+            name: 'Container Engine',
+            status: 'error',
+            value: 'missing',
+            fix: {
+                description: 'Manual setup required',
+            },
+        };
+
+        const item = new TargetTreeItem(baseTarget, true, 'connected', [
+            dependency,
+        ]);
+
+        expect(item.contextValue).not.toContain('HasFixableIssues');
+        expect(item.visibleIssues).toEqual([dependency]);
+        expect(item.fixableIssues).toEqual([]);
+    });
+
+    it('adds HasFixableIssues context when connectivity has a fix command', () => {
+        const connectivityIssue: IssueCheck = {
+            name: 'Connectivity',
+            status: 'error',
+            value: 'unreachable',
+            fix: {
+                description: 'Set up connectivity',
+                command: 'topo setup-keys',
+            },
+        };
+
+        const item = new TargetTreeItem(
+            baseTarget,
+            true,
+            'error',
+            [],
+            [],
+            connectivityIssue,
+        );
+
+        expect(item.contextValue).toContain('HasFixableIssues');
+        expect(item.fixableIssues).toEqual([connectivityIssue]);
+    });
+
+    it('shows diagnostics as a description and tooltip when provided', () => {
+        const item = new TargetTreeItem(baseTarget, true, 'error', [], [], {
+            name: 'Connectivity',
+            status: 'error',
+            value: 'ssh connection failed',
+        });
+
+        expect(item.description).toBe('ssh connection failed');
+        expect(item.tooltip).toBe(`${baseTarget}: ssh connection failed`);
+    });
+
+    it('does not show connectivity diagnostics when target is unselected', () => {
+        const item = new TargetTreeItem(baseTarget, false, 'error', [], [], {
+            name: 'Connectivity',
+            status: 'error',
+            value: 'ssh connection failed',
+        });
+
+        expect(item.description).toBeUndefined();
+        expect(item.tooltip).toBeUndefined();
     });
 });

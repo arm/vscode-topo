@@ -4,4 +4,5 @@ coverage/
 *.config.js
 out/
 package-lock.json
+CHANGELOG.md
 test-workspace/

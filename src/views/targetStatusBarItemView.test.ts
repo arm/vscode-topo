@@ -3,12 +3,12 @@ import { TargetStatusBarItemView } from './targetStatusBarItemView';
 import { TargetTreeView } from './targetTreeView';
 import { ContainersManager } from '../target/containersManager';
 import { mock } from 'vitest-mock-extended';
-import { TargetHealthCheckResult } from '../topoCliSchema';
+import { TargetHealthCheck } from '../topoCliSchema';
 import { TargetModel } from '../models/targetModel';
 
 vi.mock('../util/logger');
 
-const healthyTarget: TargetHealthCheckResult = {
+const healthyTarget: TargetHealthCheck = {
     isLocalhost: false,
     connectivity: {
         status: 'ok',

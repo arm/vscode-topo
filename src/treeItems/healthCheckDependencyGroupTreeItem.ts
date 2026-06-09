@@ -1,17 +1,21 @@
 import * as vscode from 'vscode';
-import { HealthCheckDependency } from '../topoCliSchema';
-import { getWorstDependencyStatus } from '../util/getWorstDependencyStatus';
+import { IssueCheck } from '../topoCliSchema';
+import { getWorstIssueCheckStatus } from '../util/getWorstIssueCheckStatus';
 import { getDependencyGroupIcon } from '../views/util/dependencyIcons';
+import { Loaded } from '../util/loadable';
 
 export class HealthCheckDependencyGroupTreeItem extends vscode.TreeItem {
-    public readonly dependencies: HealthCheckDependency[];
+    public readonly dependencies: IssueCheck[];
 
-    constructor(dependencies: HealthCheckDependency[]) {
+    constructor(dependencies: Loaded<IssueCheck[]>) {
         super('Dependencies', vscode.TreeItemCollapsibleState.Collapsed);
         this.contextValue = 'Dependencies';
-        this.dependencies = dependencies;
+        this.dependencies = dependencies.data;
 
-        const status = getWorstDependencyStatus(dependencies);
-        this.iconPath = getDependencyGroupIcon(status);
+        const worstDepStatus = getWorstIssueCheckStatus(dependencies.data);
+        this.iconPath = getDependencyGroupIcon(worstDepStatus);
+        if (dependencies.loading) {
+            this.iconPath = new vscode.ThemeIcon('loading~spin');
+        }
     }
 }

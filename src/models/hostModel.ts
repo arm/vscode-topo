@@ -1,12 +1,12 @@
 import * as vscode from 'vscode';
-import { HostHealthCheckResult } from '../topoCliSchema';
-import { Loadable } from '../util/types';
+import { HostHealthCheck } from '../topoCliSchema';
+import { Loadable, loaded } from '../util/loadable';
 
-const defaultHealthCheckResult: HostHealthCheckResult = {
+const defaultHealthCheckResult = loaded({
     host: {
         dependencies: [],
     },
-};
+});
 
 export class HostModel {
     private _onHealthChanged: vscode.EventEmitter<void> =
@@ -14,16 +14,14 @@ export class HostModel {
     public readonly onHealthChanged: vscode.Event<void> =
         this._onHealthChanged.event;
 
-    private _health?: Loadable<HostHealthCheckResult>;
+    private _health?: Loadable<HostHealthCheck>;
 
-    public setHealth(health: Loadable<HostHealthCheckResult>): void {
+    public setHealth(health: Loadable<HostHealthCheck>): void {
         this._health = health;
         this._onHealthChanged.fire();
     }
 
-    public get health(): Loadable<HostHealthCheckResult> {
-        return (
-            this._health ?? { status: 'loaded', data: defaultHealthCheckResult }
-        );
+    public get health(): Loadable<HostHealthCheck> {
+        return this._health ?? defaultHealthCheckResult;
     }
 }
