@@ -46,41 +46,49 @@
             {
                 "command": "topo.attachVsCode",
                 "title": "Attach VS Code",
+                "icon": "$(vscode)",
                 "category": "Topo"
             },
             {
                 "command": "topo.attachShell",
                 "title": "Attach Shell",
+                "icon": "$(terminal)",
                 "category": "Topo"
             },
             {
                 "command": "topo.openInBrowser",
                 "title": "Open in Browser",
+                "icon": "$(globe)",
                 "category": "Topo"
             },
             {
                 "command": "topo.startContainer",
                 "title": "Start",
+                "icon": "$(play)",
                 "category": "Topo"
             },
             {
                 "command": "topo.stopContainer",
                 "title": "Stop",
+                "icon": "$(stop)",
                 "category": "Topo"
             },
             {
                 "command": "topo.deleteContainer",
                 "title": "Delete",
+                "icon": "$(trash)",
                 "category": "Topo"
             },
             {
                 "command": "topo.selectTarget",
                 "title": "Select Target",
+                "icon": "$(plug)",
                 "category": "Topo"
             },
             {
                 "command": "topo.removeTarget",
                 "title": "Remove Target",
+                "icon": "$(trash)",
                 "category": "Topo"
             },
             {
@@ -92,21 +100,25 @@
             {
                 "command": "topo.inspectTargetHealth",
                 "title": "Inspect Health",
+                "icon": "$(pulse)",
                 "category": "Topo"
             },
             {
                 "command": "topo.fixDependencyIssue",
                 "title": "Fix",
+                "icon": "$(wrench)",
                 "category": "Topo"
             },
             {
                 "command": "topo.fixTargetIssues",
                 "title": "Fix Issues",
+                "icon": "$(wrench)",
                 "category": "Topo"
             },
             {
                 "command": "topo.inspectHostHealth",
                 "title": "Inspect Host Health",
+                "icon": "$(pulse)",
                 "category": "Topo"
             },
             {
@@ -118,6 +130,7 @@
             {
                 "command": "topo.showOutput",
                 "title": "Open Topo Output",
+                "icon": "$(output)",
                 "category": "Topo"
             },
             {
@@ -262,62 +275,67 @@
                 {
                     "command": "topo.showOutput",
                     "when": "viewItem =~ /OpenableError/",
-                    "group": "topo/1_output"
+                    "group": "inline@1"
                 },
                 {
                     "command": "topo.selectTarget",
                     "when": "view == topo.target-manager && viewItem =~ /Target/",
-                    "group": "topo/1_select"
+                    "group": "inline@1"
                 },
                 {
                     "command": "topo.inspectTargetHealth",
                     "when": "view === topo.target-manager && viewItem =~ /Target/ && viewItem =~ /Selected/",
-                    "group": "topo/2_actions"
+                    "group": "inline@2"
                 },
                 {
                     "command": "topo.fixTargetIssues",
                     "when": "view === topo.target-manager && viewItem =~ /Target/ && viewItem =~ /Selected/ && viewItem =~ /HasFixableIssues/",
-                    "group": "topo/2_actions"
+                    "group": "inline@3"
                 },
                 {
                     "command": "topo.removeTarget",
                     "when": "view == topo.target-manager && viewItem =~ /Target/",
-                    "group": "topo/3_cleanup"
+                    "group": "inline@4"
                 },
                 {
                     "command": "topo.fixDependencyIssue",
                     "when": "view === topo.target-manager && viewItem =~ /Dependency/ && viewItem =~ /Fixable/",
-                    "group": "topo/1_manage"
+                    "group": "inline@1"
+                },
+                {
+                    "command": "topo.fixDependencyIssue",
+                    "when": "view === topo.host-manager && viewItem =~ /Dependency/ && viewItem =~ /Fixable/",
+                    "group": "inline@1"
                 },
                 {
                     "command": "topo.attachVsCode",
                     "when": "view === topo.target-manager && viewItem =~ /service/ && viewItem =~ /running/ && viewItem =~ /Host/",
-                    "group": "topo/attach@1"
+                    "group": "inline@1"
                 },
                 {
                     "command": "topo.attachShell",
                     "when": "view === topo.target-manager && viewItem =~ /service/ && viewItem =~ /running/ && viewItem =~ /Host/",
-                    "group": "topo/attach@1"
+                    "group": "inline@2"
                 },
                 {
                     "command": "topo.openInBrowser",
                     "when": "view === topo.target-manager && viewItem =~ /service/ && viewItem =~ /running/ && viewItem =~ /Host/",
-                    "group": "topo/attach@1"
+                    "group": "inline@3"
                 },
                 {
                     "command": "topo.startContainer",
                     "when": "view === topo.target-manager && viewItem =~ /service/ && viewItem =~ /exited/",
-                    "group": "topo/manage@1"
+                    "group": "inline@4"
                 },
                 {
                     "command": "topo.stopContainer",
                     "when": "view === topo.target-manager && viewItem =~ /service/ && viewItem =~ /running/",
-                    "group": "topo/manage@1"
+                    "group": "inline@4"
                 },
                 {
                     "command": "topo.deleteContainer",
                     "when": "view === topo.target-manager && viewItem =~ /service/",
-                    "group": "topo/manage@2"
+                    "group": "inline@5"
                 }
             ],
             "view/title": [
@@ -328,6 +346,11 @@
                 },
                 {
                     "command": "topo.refreshHostHealth",
+                    "when": "view == topo.host-manager",
+                    "group": "navigation"
+                },
+                {
+                    "command": "topo.inspectHostHealth",
                     "when": "view == topo.host-manager",
                     "group": "navigation"
                 }
