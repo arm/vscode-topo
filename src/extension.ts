@@ -14,11 +14,9 @@ import { AttachShell } from './actions/attachShell';
 import { ContainerDelete } from './actions/containerDelete';
 import { DockerCommands } from './target/dockerCommands';
 import { TargetStore } from './target/targetStore';
-import { ProjectClone } from './projectClone';
 import { Deploy } from './actions/deploy';
 import { Stop } from './actions/stop';
 import { ProtocolHandler } from './protocolHandler';
-import { SetupKeys } from './actions/setupKeys';
 import { TargetDescriptionStore } from './target/targetDescriptionStore';
 import { FixIssue } from './actions/fixIssue';
 import { HostTreeView } from './views/hostTreeView';
@@ -30,6 +28,7 @@ import { HostController } from './controllers/hostController';
 import { TransientDocumentProvider } from './util/transientDocumentProvider';
 import { TargetController } from './controllers/targetController';
 import { TargetModel } from './models/targetModel';
+import { ProjectClone } from './actions/projectClone';
 
 export async function activate(
     context: vscode.ExtensionContext,
@@ -98,19 +97,18 @@ export async function activate(
     );
 
     const projectInit = new ProjectInit(topoCli);
-    const projectClone = new ProjectClone(context, topoCli, targetModel);
+    const projectClone = new ProjectClone(topoCli, targetModel);
     const deploy = new Deploy(topoCli, targetModel);
     const stop = new Stop(topoCli, targetModel);
     const containerOpenInBrowser = new ContainerOpenInBrowser();
     const attachVsCode = new AttachVsCode(dockerCommands);
     const attachShell = new AttachShell(dockerCommands);
-    const setupKeys = new SetupKeys(topoCli, targetModel);
     const containerStart = new ContainerStart(dockerCommands);
     const containerStop = new ContainerStop(dockerCommands);
     const containerDelete = new ContainerDelete(dockerCommands);
     const targetHealth = new TargetHealth(topoCli, targetHealthDocProvider);
     const fixIssue = new FixIssue(topoCli, targetModel);
-    const protocolHandler = new ProtocolHandler(projectClone);
+    const protocolHandler = new ProtocolHandler(topoCli);
 
     context.subscriptions.push(
         commands.register({
@@ -123,17 +121,16 @@ export async function activate(
             containerOpenInBrowser,
             attachVsCode,
             attachShell,
-            setupKeys,
             containerStart,
             containerStop,
             containerDelete,
             targetHealth,
             fixIssue,
+            projectClone,
         }),
         logger,
         vscode.window.registerUriHandler(protocolHandler),
     );
 
     topoCli.activate();
-    projectClone.activate();
 }

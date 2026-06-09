@@ -10,13 +10,13 @@ import { Stop } from './actions/stop';
 import { ContainerOpenInBrowser } from './actions/containerOpenInBrowser';
 import { AttachVsCode } from './actions/attachVsCode';
 import { AttachShell } from './actions/attachShell';
-import { SetupKeys } from './actions/setupKeys';
 import { ContainerStart } from './actions/containerStart';
 import { ContainerStop } from './actions/containerStop';
 import { ContainerDelete } from './actions/containerDelete';
 import { TargetHealth } from './actions/targetHealth';
 import { FixIssue } from './actions/fixIssue';
 import { HostHealth } from './actions/hostHealth';
+import { ProjectClone } from './actions/projectClone';
 
 function command(id: string): string {
     return `${PACKAGE_NAME}.${id}`;
@@ -35,25 +35,27 @@ export const stop = command('stop.context');
 export const openInBrowser = command('openInBrowser');
 export const attachVsCode = command('attachVsCode');
 export const attachShell = command('attachShell');
-export const setupKeys = command('setupKeys');
 export const startContainer = command('startContainer');
 export const stopContainer = command('stopContainer');
 export const deleteContainer = command('deleteContainer');
 export const inspectTargetHealth = command('inspectTargetHealth');
 export const fixDependencyIssue = command('fixDependencyIssue');
 export const fixTargetIssues = command('fixTargetIssues');
+export const remoteClone = command('remoteClone');
+export const localClone = command('localClone');
+export const templateClone = command('templateClone');
 
 export interface CommandHandlers {
     hostController: HostController;
     hostHealth: HostHealth;
     targetController: TargetController;
     projectInit: ProjectInit;
+    projectClone: ProjectClone;
     deploy: Deploy;
     stop: Stop;
     containerOpenInBrowser: ContainerOpenInBrowser;
     attachVsCode: AttachVsCode;
     attachShell: AttachShell;
-    setupKeys: SetupKeys;
     containerStart: ContainerStart;
     containerStop: ContainerStop;
     containerDelete: ContainerDelete;
@@ -105,9 +107,6 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
         vscode.commands.registerCommand(attachShell, (treeNode) =>
             handlers.attachShell.attachShellCommandHandler(treeNode),
         ),
-        vscode.commands.registerCommand(setupKeys, (treeNode) =>
-            handlers.setupKeys.setupKeysCommandHandler(treeNode),
-        ),
         vscode.commands.registerCommand(startContainer, (treeNode) =>
             handlers.containerStart.startContainerCommandHandler(treeNode),
         ),
@@ -125,6 +124,15 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
         ),
         vscode.commands.registerCommand(fixTargetIssues, (treeNode) =>
             handlers.fixIssue.fixIssueCommandHandler(treeNode),
+        ),
+        vscode.commands.registerCommand(remoteClone, () =>
+            handlers.projectClone.remoteCloneCommandHandler(),
+        ),
+        vscode.commands.registerCommand(localClone, () =>
+            handlers.projectClone.localCloneCommandHandler(),
+        ),
+        vscode.commands.registerCommand(templateClone, () =>
+            handlers.projectClone.templateCloneCommandHandler(),
         ),
     );
 
