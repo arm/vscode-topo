@@ -1,9 +1,9 @@
-import { TargetHealthCheckResult } from '../topoCliSchema';
+import { TargetHealthCheck } from '../topoCliSchema';
 import { ContainerItem } from '../util/types';
 import { loaded } from '../util/loadable';
 import { SelectedTargetModel } from './selectedTargetModel';
 
-const targetHealth: TargetHealthCheckResult = {
+const targetHealth: TargetHealthCheck = {
     isLocalhost: false,
     connectivity: {
         name: 'Connectivity',
