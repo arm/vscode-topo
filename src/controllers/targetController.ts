@@ -141,21 +141,13 @@ export class TargetController {
         private readonly targetStore: TargetStore,
         private readonly topoCli: TopoCli,
         private readonly containerCommands: ContainerCommands,
-    ) {}
-
-    public activate(): void {
+    ) {
         this.updateFromTargetStore();
-        this.refreshSelectedTargetDataCommandHandler();
     }
 
     public updateFromTargetStore(): void {
         this.model.setTargets([...this.targetStore.getTargets()]);
-
-        const prevSelected = this.model.selected;
         this.model.setSelected(this.targetStore.getSelectedTarget());
-        if (prevSelected && prevSelected !== this.model.selected) {
-            this.refreshSelectedTargetDataCommandHandler();
-        }
     }
 
     public async selectCommandHandler(treeNode?: unknown): Promise<void> {

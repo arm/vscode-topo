@@ -93,7 +93,6 @@ export async function activate(
         topoCli,
         dockerCommands,
     );
-    targetController.activate();
 
     const selectedTargetRefreshLoop = new RefreshLoop(async () => {
         if (!targetController.isRefreshingSelectedTargetData()) {
@@ -107,6 +106,9 @@ export async function activate(
         targetStore.onExternalTargetsChanged(() =>
             targetController.updateFromTargetStore(),
         ),
+        targetModel.onSelectedChanged(() => {
+            targetController.refreshSelectedTargetDataCommandHandler();
+        }),
     );
 
     const projectInit = new ProjectInit(topoCli);

@@ -157,20 +157,14 @@ describe('buildQuickPickItems', () => {
     });
 });
 
-describe('target activation', () => {
-    it('loads targets and selected target into the model', () => {
+describe('controller creation', () => {
+    it('loads targets and selected target into the model on creation', () => {
         const targetStore = mockTargetStore(['host-a', 'host-b'], 'host-b');
         const targetModel = new TargetModel();
-        const { controller, topoCli } = createController(
-            targetModel,
-            targetStore,
-        );
-
-        controller.activate();
+        createController(targetModel, targetStore);
 
         expect(targetModel.targets).toEqual(['host-a', 'host-b']);
         expect(targetModel.selected).toBe('host-b');
-        expect(topoCli.health).toHaveBeenCalledWith('host-b');
     });
 });
 
@@ -278,7 +272,7 @@ describe('target addition', () => {
 });
 
 describe('target selection', () => {
-    it('saves the selected target, updates model and refreshes selected target data', async () => {
+    it('saves the selected target, updates model and clears selected target data', async () => {
         const previousTarget = 'user@previous-board';
         const targetStore = mockTargetStore(
             [previousTarget, 'user@board'],
@@ -286,10 +280,7 @@ describe('target selection', () => {
         );
         const targetModel = new TargetModel();
         targetModel.setSelected(previousTarget);
-        const { controller, topoCli } = createController(
-            targetModel,
-            targetStore,
-        );
+        const { controller } = createController(targetModel, targetStore);
         const targetItem = new TargetTreeItem({
             target: 'user@board',
             selected: true,
@@ -299,7 +290,8 @@ describe('target selection', () => {
 
         expect(targetStore.setSelected).toHaveBeenCalledWith(targetItem.target);
         expect(targetModel.selected).toBe(targetItem.target);
-        expect(topoCli.health).toHaveBeenCalledWith(targetItem.target);
+        expect(targetModel.selectedTargetHealth).toEqual(loaded(undefined));
+        expect(targetModel.selectedTargetContainers).toEqual(loaded([]));
     });
 
     it('does nothing when select command is executed with a non-target item', async () => {
@@ -345,10 +337,7 @@ describe('target removal', () => {
         );
         const targetModel = new TargetModel();
         targetModel.setSelected(removedTarget);
-        const { controller, topoCli } = createController(
-            targetModel,
-            targetStore,
-        );
+        const { controller } = createController(targetModel, targetStore);
         const targetItem = new TargetTreeItem({
             target: removedTarget,
             selected: true,
@@ -358,7 +347,6 @@ describe('target removal', () => {
 
         expect(targetStore.deleteTarget).toHaveBeenCalledWith(removedTarget);
         expect(targetModel.selected).toBe(remainingTarget);
-        expect(topoCli.health).toHaveBeenCalledWith(remainingTarget);
     });
 
     it('does nothing when removeTarget is invoked with a non-target item', async () => {
