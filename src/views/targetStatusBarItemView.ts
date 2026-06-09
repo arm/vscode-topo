@@ -5,7 +5,6 @@ import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
 import { getWorstIssueCheckStatus } from '../util/getWorstIssueCheckStatus';
 import { getDependencyGroupIcon } from './util/dependencyIcons';
-import { SelectedTargetModel } from '../models/selectedTargetModel';
 import { Loadable } from '../util/loadable';
 import { TargetHealthCheck } from '../topoCliSchema';
 
@@ -50,10 +49,7 @@ export class TargetStatusBarItemView implements vscode.Disposable {
 
     private statusBarItem: vscode.StatusBarItem;
 
-    constructor(
-        private readonly targetModel: TargetModel,
-        private readonly selectedTargetModel: SelectedTargetModel,
-    ) {
+    constructor(private readonly targetModel: TargetModel) {
         this.statusBarItem = vscode.window.createStatusBarItem(
             TargetStatusBarItemView.id,
             vscode.StatusBarAlignment.Left,
@@ -64,14 +60,13 @@ export class TargetStatusBarItemView implements vscode.Disposable {
 
         this.disposables.collect(
             this.statusBarItem,
-            this.targetModel.onSelectedChanged(() => this.refresh()),
-            this.selectedTargetModel.onHealthChanged(() => this.refresh()),
+            this.targetModel.onHealthChanged(() => this.refresh()),
         );
     }
 
     private refresh(): void {
         const selectedTarget = this.targetModel.selected;
-        const selectedHealth = this.selectedTargetModel.health;
+        const selectedHealth = this.targetModel.selectedTargetHealth;
         renderStatusBarItem(this.statusBarItem, selectedTarget, selectedHealth);
     }
 
