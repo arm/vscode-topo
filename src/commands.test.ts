@@ -83,6 +83,10 @@ describe('commands', () => {
                 handlers.projectInit.initProjectCommandHandler,
             ],
             [commands.deploy, handlers.deploy.deployCommandHandler],
+            [
+                commands.deployContext,
+                handlers.deploy.deployContextCommandHandler,
+            ],
             [commands.stop, handlers.stop.stopCommandHandler],
             [
                 commands.openInBrowser,
