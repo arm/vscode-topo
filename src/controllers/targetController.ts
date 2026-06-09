@@ -11,6 +11,7 @@ import { ContainerCommands } from '../target/containerCommands';
 import { errored, Loadable, loaded, loading } from '../util/loadable';
 import { ContainerItem, DockerInspectItem, DockerPsItem } from '../util/types';
 import { HealthCheck, TargetHealthCheck } from '../topoCliSchema';
+import { LatestAbortableWork } from '../util/latestAbortableWork';
 
 function isTargetTreeItem(node: unknown): node is TargetTreeItem {
     if (node instanceof TargetTreeItem) {
@@ -134,7 +135,7 @@ async function loadContainersData(
 }
 
 export class TargetController {
-    private currentRefreshAbortController: AbortController | undefined;
+    private readonly selectedTargetDataRefresh = new LatestAbortableWork();
 
     constructor(
         private readonly model: TargetModel,
@@ -197,41 +198,25 @@ export class TargetController {
     }
 
     public async refreshSelectedTargetDataCommandHandler(): Promise<void> {
-        this.abortCurrentTargetDataRefresh();
-
         const target = this.model.selected;
         if (!target) {
+            this.selectedTargetDataRefresh.abort();
             this.model.setSelectedTargetHealth(loaded(undefined));
             this.model.setSelectedTargetContainers(loaded([]));
             return;
         }
 
-        const ab = new AbortController();
-        this.currentRefreshAbortController = ab;
-
         try {
-            await this.refreshSelectedTargetData(target, ab.signal);
+            await this.selectedTargetDataRefresh.run((signal) =>
+                this.refreshSelectedTargetData(target, signal),
+            );
         } catch (err) {
-            if (!ab.signal.aborted) {
-                return showAndLogError('Failed to refresh target data', err);
-            }
-        } finally {
-            if (this.currentRefreshAbortController === ab) {
-                this.currentRefreshAbortController = undefined;
-            }
+            showAndLogError('Failed to refresh target data', err);
         }
     }
 
     public isRefreshingSelectedTargetData(): boolean {
-        if (!this.currentRefreshAbortController) {
-            return false;
-        }
-        return !this.currentRefreshAbortController.signal.aborted;
-    }
-
-    private abortCurrentTargetDataRefresh(): void {
-        this.currentRefreshAbortController?.abort();
-        this.currentRefreshAbortController = undefined;
+        return this.selectedTargetDataRefresh.isRunning();
     }
 
     private async refreshSelectedTargetData(
@@ -279,6 +264,6 @@ export class TargetController {
     }
 
     public dispose(): void {
-        this.abortCurrentTargetDataRefresh();
+        this.selectedTargetDataRefresh.dispose();
     }
 }
