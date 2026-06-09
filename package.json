@@ -126,13 +126,18 @@
                 "category": "Topo"
             },
             {
+                "command": "topo.deploy",
+                "title": "Deploy",
+                "category": "Topo"
+            },
+            {
                 "command": "topo.deploy.context",
-                "title": "Topo Deploy",
+                "title": "Deploy",
                 "category": "Topo"
             },
             {
                 "command": "topo.stop.context",
-                "title": "Topo Stop",
+                "title": "Stop",
                 "category": "Topo"
             }
         ],
