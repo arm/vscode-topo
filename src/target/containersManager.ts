@@ -106,13 +106,9 @@ export class ContainersManager implements vscode.Disposable {
         return future(async () => {
             try {
                 const health = await this.topoCli.health(target);
-                const status =
-                    health.target?.connectivity.status === 'ok'
-                        ? 'connected'
-                        : 'error';
                 return {
                     health: health.target,
-                    status,
+                    status: 'connected',
                 };
             } catch (err) {
                 logger.error(

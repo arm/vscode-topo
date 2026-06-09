@@ -168,6 +168,11 @@ describe('TargetTreeView', () => {
                 health: {
                     dependencies: dependencies,
                     subsystemDriver: subsystemDriverHealth,
+                    connectivity: {
+                        name: 'Connectivity',
+                        status: 'ok',
+                        value: 'ok',
+                    },
                 },
             });
             containersManagerMock.getTargetStateSnapshot.mockReturnValue(
@@ -178,6 +183,7 @@ describe('TargetTreeView', () => {
             const dependenciesGroup = targetChildren.find(
                 (v) => v instanceof HealthCheckDependencyGroupTreeItem,
             );
+            expect(dependenciesGroup).toBeDefined();
 
             const got = await view.getChildren(dependenciesGroup);
 
@@ -217,7 +223,7 @@ describe('TargetTreeView', () => {
                         value: diagnostics,
                     },
                 },
-                status: 'error',
+                status: 'connected',
             });
 
             const rootChildren = await view.getChildren();
