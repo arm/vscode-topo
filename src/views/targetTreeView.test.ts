@@ -8,10 +8,7 @@ import { ContainerItem, TargetDescription } from '../util/types';
 import { mock, MockProxy } from 'vitest-mock-extended';
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
 import { TargetSubsystemGroupTreeItem } from '../targetTreeView/targetSubsystemGroupTreeItem';
-import {
-    HealthCheckDependency,
-    TargetHealthCheckResult,
-} from '../topoCliSchema';
+import { IssueCheck, TargetHealthCheck } from '../topoCliSchema';
 import { TargetDescriptionStore } from '../target/targetDescriptionStore';
 import { TargetModel } from '../models/targetModel';
 import { SelectedTargetModel } from '../models/selectedTargetModel';
@@ -28,7 +25,7 @@ describe('TargetTreeView', () => {
         hostProcessors: [],
         remoteProcessors: [{ name: 'imx-rproc' }, { name: 'other-rproc' }],
     };
-    const targetHealth: TargetHealthCheckResult = {
+    const targetHealth: TargetHealthCheck = {
         isLocalhost: false,
         connectivity: {
             name: 'Connectivity',
@@ -138,22 +135,19 @@ describe('TargetTreeView', () => {
         });
 
         it('returns dependency items for Dependencies group', async () => {
-            const subsystemDriverHealth: HealthCheckDependency = {
+            const subsystemDriverHealth = mock<IssueCheck>({
                 name: 'rproc-driver',
                 status: 'ok',
-                value: 'ready',
-            };
-            const dependencies: HealthCheckDependency[] = [
-                {
+            });
+            const dependencies = [
+                mock<IssueCheck>({
                     name: 'Container Engine',
                     status: 'ok',
-                    value: 'present',
-                },
-                {
+                }),
+                mock<IssueCheck>({
                     name: 'Some Dependency',
                     status: 'ok',
-                    value: 'present',
-                },
+                }),
             ];
             selectedTargetModel.setHealth(
                 loaded({
@@ -167,6 +161,7 @@ describe('TargetTreeView', () => {
             const dependenciesGroup = targetChildren.find(
                 (v) => v instanceof HealthCheckDependencyGroupTreeItem,
             );
+            expect(dependenciesGroup).toBeDefined();
 
             const got = await view.getChildren(dependenciesGroup);
 
@@ -177,7 +172,7 @@ describe('TargetTreeView', () => {
             ]);
         });
 
-        it('shows cleared selected target data as connected with no dependencies', async () => {
+        it('shows cleared selected target data as unexpandable and not connected', async () => {
             selectedTargetModel.clear();
 
             const rootChildren = await view.getChildren();
@@ -186,7 +181,6 @@ describe('TargetTreeView', () => {
             const targetItem = rootChildren[0] as TargetTreeItem;
             expect(targetItem.contextValue).toContain('Target');
             expect(targetItem.contextValue).toContain('Selected');
-            expect(targetItem.visibleDependencies).toEqual([]);
             expect(targetItem.collapsibleState).toBe(
                 vscode.TreeItemCollapsibleState.None,
             );
@@ -194,7 +188,16 @@ describe('TargetTreeView', () => {
 
         it('shows health diagnostics on selected target when health has an error', async () => {
             const diagnostics = '"ssh" not found on remote target\'s $PATH';
-            selectedTargetModel.setHealth(errored(diagnostics));
+            selectedTargetModel.setHealth(
+                loaded({
+                    ...targetHealth,
+                    connectivity: {
+                        name: 'Connectivity',
+                        status: 'error',
+                        value: diagnostics,
+                    },
+                }),
+            );
 
             const rootChildren = await view.getChildren();
 
@@ -243,9 +246,7 @@ describe('TargetTreeView', () => {
             const rootChildren = await view.getChildren();
 
             expect(rootChildren).toHaveLength(1);
-            expect(rootChildren[0].contextValue).toContain(
-                'HasFixableDependencies',
-            );
+            expect(rootChildren[0].contextValue).toContain('HasFixableIssues');
         });
 
         it('marks target with executable subsystem driver fix as fixable when remote processors exist', async () => {
@@ -267,9 +268,7 @@ describe('TargetTreeView', () => {
             const rootChildren = await view.getChildren();
 
             expect(rootChildren).toHaveLength(1);
-            expect(rootChildren[0].contextValue).toContain(
-                'HasFixableDependencies',
-            );
+            expect(rootChildren[0].contextValue).toContain('HasFixableIssues');
         });
 
         it('does not mark target as fixable for hidden subsystem driver fixes', async () => {
@@ -304,25 +303,25 @@ describe('TargetTreeView', () => {
             selectedTargetModel.setHealth(
                 loaded({
                     ...targetHealth,
-                    dependencies: [
-                        {
-                            name: 'Container Engine',
-                            status: 'error',
-                            value: 'missing',
-                            fix: {
-                                description: 'Manual setup required',
-                            },
+                    subsystemDriver: {
+                        name: 'SubsystemDriver',
+                        status: 'error',
+                        value: 'missing',
+                        fix: {
+                            description: 'Install subsystem driver',
+                            command: 'topo install subsystem-driver',
                         },
-                    ],
+                    },
                 }),
             );
 
             const rootChildren = await view.getChildren();
 
-            expect(rootChildren).toHaveLength(1);
-            expect(rootChildren[0].contextValue).not.toContain(
-                'HasFixableDependencies',
-            );
+            expect(rootChildren).toEqual([
+                expect.objectContaining({
+                    contextValue: expect.stringContaining('HasFixableIssues'),
+                }),
+            ]);
         });
 
         it('returns containers for Host and remoteproc groups', async () => {

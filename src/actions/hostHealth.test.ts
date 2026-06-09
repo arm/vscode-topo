@@ -2,14 +2,14 @@ import { mock } from 'vitest-mock-extended';
 import * as vscode from 'vscode';
 import { HostHealth } from './hostHealth';
 import { TopoCli } from '../topoCli';
-import { HostHealthCheckResult } from '../topoCliSchema';
+import { HostHealthCheck } from '../topoCliSchema';
 import { executeCommand } from '../util/test/executeCommand';
 import { showAndLogError } from '../util/showAndLogError';
 import { TransientDocumentProvider } from '../util/transientDocumentProvider';
 
 vi.mock('../util/showAndLogError');
 
-const hostHealth: HostHealthCheckResult = {
+const hostHealth: HostHealthCheck = {
     host: {
         dependencies: [
             {

@@ -3,15 +3,15 @@ import { TargetModel } from '../models/targetModel';
 import { SelectedTargetModel } from '../models/selectedTargetModel';
 import { ContainerCommands } from '../target/containerCommands';
 import { TopoCli } from '../topoCli';
-import { HealthCheckResult } from '../topoCliSchema';
 import { DockerInspectItem, DockerPsItem } from '../util/types';
 import { loaded } from '../util/loadable';
 import { SelectedTargetController } from './selectedTargetController';
+import { HealthCheck } from '../topoCliSchema';
 
 vi.mock('../util/logger');
 
 const target = 'user@target';
-const health: HealthCheckResult = {
+const health: HealthCheck = {
     host: {
         dependencies: [],
     },
@@ -132,7 +132,7 @@ describe('SelectedTargetController', () => {
     });
 
     it('treats container engine dependency error as error when loading containers', async () => {
-        const unhealthyContainerEngineHealth: HealthCheckResult = {
+        const unhealthyContainerEngineHealth: HealthCheck = {
             ...health,
             target: {
                 ...health.target,
@@ -175,7 +175,7 @@ describe('SelectedTargetController', () => {
     });
 
     it('sets empty containers when selected target health is disconnected', async () => {
-        const disconnectedHealth: HealthCheckResult = {
+        const disconnectedHealth: HealthCheck = {
             ...health,
             target: {
                 ...health.target,
