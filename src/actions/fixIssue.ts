@@ -102,14 +102,6 @@ export class FixIssue {
         const selectedIssues = selectedFixes.map(
             (selectedFix) => selectedFix.issue,
         );
-        for (const selectedIssue of selectedIssues) {
-            if (!selectedIssue.fix?.command) {
-                throw new Error(
-                    'No executable fix found for the selected item: ' +
-                        selectedIssue.name,
-                );
-            }
-        }
 
         const fixGroups = getIssueFixCommandGroups(selectedIssues);
         for (const fixGroup of fixGroups) {
