@@ -39,12 +39,6 @@ async function loadTargetHealth(
 ): Promise<Loadable<TargetHealthCheck>> {
     try {
         const health = await topoCli.health(target);
-        if (health.target.connectivity.status === 'error') {
-            return errored(
-                health.target.connectivity.fix?.description ??
-                    'Failed to connect',
-            );
-        }
         return loaded(health.target);
     } catch (err) {
         return errored(err);
