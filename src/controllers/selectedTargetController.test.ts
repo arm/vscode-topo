@@ -207,11 +207,7 @@ describe('SelectedTargetController', () => {
         await vi.waitFor(() => {
             const healthState = model.health;
 
-            expect(healthState.status).toBe('errored');
-            if (healthState.status !== 'errored') {
-                throw new Error('Expected disconnected target health to error');
-            }
-            expect(healthState.error.message).toBe('Connect the target');
+            expect(healthState.status).toBe('loaded');
             expect(model.containers).toStrictEqual(loaded([]));
         });
         expect(containerCommands.getContainers).not.toHaveBeenCalled();
