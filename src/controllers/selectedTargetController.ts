@@ -55,24 +55,22 @@ async function loadContainersData(
     containerCommands: ContainerCommands,
     target: string,
 ): Promise<Loadable<ContainerItem[]>> {
+    let items: DockerPsItem[];
+    let inspectOutput: DockerInspectItem[];
     try {
-        const items = await containerCommands.getContainers(target);
+        items = await containerCommands.getContainers(target);
         const ids = items.map((item) => item.ID);
-        const inspectOutput = await containerCommands.inspectContainers(
-            ids,
-            target,
-        );
-        const containers: ContainerItem[] = [];
-        for (const item of items) {
-            const inspect = inspectOutput.find((el) =>
-                el.Id.startsWith(item.ID),
-            );
-            containers.push(createContainerItem(item, inspect, target));
-        }
-        return loaded(containers);
+        inspectOutput = await containerCommands.inspectContainers(ids, target);
     } catch (err: unknown) {
         return errored(err);
     }
+
+    const containers: ContainerItem[] = [];
+    for (const item of items) {
+        const inspect = inspectOutput.find((el) => el.Id.startsWith(item.ID));
+        containers.push(createContainerItem(item, inspect, target));
+    }
+    return loaded(containers);
 }
 
 export class SelectedTargetController implements vscode.Disposable {
