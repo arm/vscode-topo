@@ -17,9 +17,7 @@ function targetHealthLoadable(
         return loaded(state.health);
     }
     if (state.status === 'error') {
-        return errored(
-            state.health?.connectivity.value ?? 'Target health not available',
-        );
+        return errored('Target health not available');
     }
     return loaded(undefined, true);
 }

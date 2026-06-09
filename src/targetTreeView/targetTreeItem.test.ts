@@ -69,19 +69,6 @@ describe('TargetTreeItem', () => {
         );
     });
 
-    it('shows loading icon when another selected target dependency is loading', () => {
-        const item = new TargetTreeItem({
-            target: baseTarget,
-            selected: true,
-            health: loaded(testTargetHealth),
-            targetDescription: loaded(testTargetDescription),
-            containers: loading(loaded([])),
-        });
-
-        expect(item.iconPath).toBeInstanceOf(vscode.ThemeIcon);
-        expect((item.iconPath as vscode.ThemeIcon).id).toBe('loading~spin');
-    });
-
     it('shows error icon and detail when selected target health is errored', () => {
         const item = new TargetTreeItem({
             target: baseTarget,

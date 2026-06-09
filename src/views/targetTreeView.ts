@@ -51,9 +51,7 @@ function targetHealthLoadable(
         return loaded(state.health);
     }
     if (state.status === 'error') {
-        return errored(
-            state.health?.connectivity.value ?? 'Target health not available',
-        );
+        return errored('Target health not available');
     }
     return loaded(undefined, true);
 }
@@ -133,11 +131,7 @@ export class TargetTreeView
         }
 
         if (element instanceof TargetTreeItem) {
-            if (
-                !element.selected ||
-                element.health.status !== 'loaded' ||
-                !element.health.data
-            ) {
+            if (!element.selected || !element.connected) {
                 return [];
             }
             const containers = await this.containersManager.getContainersData(

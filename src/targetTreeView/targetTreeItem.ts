@@ -4,21 +4,20 @@ import {
     HealthCheckDependency,
     TargetHealthCheckResult,
 } from '../topoCliSchema';
-import { errored, Loadable, loaded } from '../util/loadable';
+import { errored, Loadable } from '../util/loadable';
 import { getVisibleTargetDependencies } from '../target/getVisibleTargetDependencies';
-import { ContainerItem, TargetDescription } from '../util/types';
+import { TargetDescription } from '../util/types';
+import { logger } from '../util/logger';
 
 export interface TargetTreeItemOptions {
     readonly target: string;
     readonly selected: boolean;
     readonly health?: Loadable<TargetHealthCheckResult | undefined>;
     readonly targetDescription?: Loadable<TargetDescription>;
-    readonly containers?: Loadable<ContainerItem[]>;
 }
 
 const defaultTargetHealth = errored('Target health not available');
 const defaultTargetDescription = errored('Target description not available');
-const defaultContainers = loaded([]);
 
 /** Represents a target */
 export class TargetTreeItem extends vscode.TreeItem {
@@ -32,7 +31,6 @@ export class TargetTreeItem extends vscode.TreeItem {
         selected,
         health = defaultTargetHealth,
         targetDescription = defaultTargetDescription,
-        containers = defaultContainers,
     }: TargetTreeItemOptions) {
         super(target, vscode.TreeItemCollapsibleState.Expanded);
         this.target = target;
@@ -40,24 +38,35 @@ export class TargetTreeItem extends vscode.TreeItem {
         this.health = health;
         this.targetDescription = targetDescription;
         this.id = target;
-        if (selected && health.status === 'errored') {
-            this.description = health.error.message;
-            this.tooltip = `${target}: ${health.error.message}`;
-        }
-        const loadables = [health, targetDescription, containers];
-        this.iconPath = getTargetTreeItemIcon(selected, ...loadables);
+        this.iconPath = getTargetTreeItemIcon(selected, health);
         const contextValues = ['Target'];
         if (selected) {
             contextValues.push('Selected');
-        }
-        if (health.status === 'loaded' && health.data !== undefined) {
-            contextValues.push('Connected');
+
+            if (this.connected) {
+                contextValues.push('Connected');
+            } else {
+                const message = getConnectivityStatusMessage(health);
+                logger.warn(message);
+                this.description = message;
+                this.tooltip = `${target}: ${message}`;
+            }
         }
         if (getFixableDependencyFixes(this.visibleDependencies).length > 0) {
             contextValues.push('HasFixableDependencies');
         }
         this.contextValue = contextValues.join(' ');
-        this.collapsibleState = getTargetTreeItemState(selected, health);
+        this.collapsibleState = getTargetTreeItemState(
+            selected,
+            this.connected,
+        );
+    }
+
+    public get connected(): boolean {
+        return (
+            this.health.status === 'loaded' &&
+            this.health.data?.connectivity.status === 'ok'
+        );
     }
 
     public get displayName(): string {
@@ -86,11 +95,28 @@ export class TargetTreeItem extends vscode.TreeItem {
     }
 }
 
-export const getTargetTreeItemState = (
+const getConnectivityStatusMessage = (
+    health: Loadable<TargetHealthCheckResult | undefined>,
+): string | undefined => {
+    if (health.status === 'errored') {
+        return health.error.message;
+    }
+
+    if (
+        health.status === 'loaded' &&
+        health.data?.connectivity.status !== 'ok'
+    ) {
+        return health.data?.connectivity.value;
+    }
+
+    return undefined;
+};
+
+const getTargetTreeItemState = (
     targetSelected: boolean,
-    health: Loadable<unknown>,
+    connected: boolean,
 ): vscode.TreeItemCollapsibleState => {
-    if (targetSelected && health.status === 'loaded' && health.data) {
+    if (targetSelected && connected) {
         return vscode.TreeItemCollapsibleState.Expanded;
     }
     return vscode.TreeItemCollapsibleState.None;
@@ -98,15 +124,18 @@ export const getTargetTreeItemState = (
 
 export const getTargetTreeItemIcon = (
     targetSelected: boolean,
-    ...loadables: Loadable<unknown>[]
+    health: Loadable<TargetHealthCheckResult | undefined>,
 ): vscode.ThemeIcon | undefined => {
     if (!targetSelected) {
         return undefined;
     }
-    if (loadables.some((l) => l.loading)) {
+    if (health.loading) {
         return new vscode.ThemeIcon('loading~spin');
     }
-    if (loadables.some((l) => l.status === 'errored')) {
+    if (
+        health.status === 'errored' ||
+        health.data?.connectivity.status !== 'ok'
+    ) {
         return new vscode.ThemeIcon(
             'error',
             new vscode.ThemeColor('testing.iconFailed'),
