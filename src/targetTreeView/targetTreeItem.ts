@@ -3,7 +3,6 @@ import { IssueCheck, TargetHealthCheck } from '../topoCliSchema';
 import { errored, Loadable } from '../util/loadable';
 import { getVisibleTargetIssues } from '../target/getVisibleTargetIssues';
 import { TargetDescription } from '../util/types';
-import { logger } from '../util/logger';
 import { hasFixCommand, type FixableHealthIssue } from '../util/issueFixes';
 
 export interface TargetTreeItemOptions {
@@ -46,7 +45,6 @@ export class TargetTreeItem extends vscode.TreeItem {
             } else {
                 const message = getConnectivityStatusMessage(health);
                 if (message) {
-                    logger.warn(message);
                     this.description = message;
                     this.tooltip = `${target}: ${message}`;
                 }
