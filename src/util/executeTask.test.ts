@@ -71,7 +71,7 @@ describe('executeTask', () => {
     });
 
     it('rejects when the matching task exits unsuccessfully', async () => {
-        const runningTask = executeTask('Setup keys', ['topo', 'setup-keys']);
+        const runningTask = executeTask('Example task', ['topo', 'example']);
         await Promise.resolve();
         taskEndListener?.({
             execution: { task: {} as vscode.Task, terminate: vi.fn() },
@@ -80,7 +80,7 @@ describe('executeTask', () => {
         taskEndListener?.({ execution: taskExecution, exitCode: 1 });
 
         await expect(runningTask).rejects.toThrow(
-            'Setup keys failed with exit code 1',
+            'Example task failed with exit code 1',
         );
         expect(dispose).toHaveBeenCalledTimes(1);
     });
