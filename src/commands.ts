@@ -10,7 +10,6 @@ import { Stop } from './actions/stop';
 import { ContainerOpenInBrowser } from './actions/containerOpenInBrowser';
 import { AttachVsCode } from './actions/attachVsCode';
 import { AttachShell } from './actions/attachShell';
-import { SetupKeys } from './actions/setupKeys';
 import { ContainerStart } from './actions/containerStart';
 import { ContainerStop } from './actions/containerStop';
 import { ContainerDelete } from './actions/containerDelete';
@@ -35,7 +34,6 @@ export const stop = command('stop.context');
 export const openInBrowser = command('openInBrowser');
 export const attachVsCode = command('attachVsCode');
 export const attachShell = command('attachShell');
-export const setupKeys = command('setupKeys');
 export const startContainer = command('startContainer');
 export const stopContainer = command('stopContainer');
 export const deleteContainer = command('deleteContainer');
@@ -53,7 +51,6 @@ export interface CommandHandlers {
     containerOpenInBrowser: ContainerOpenInBrowser;
     attachVsCode: AttachVsCode;
     attachShell: AttachShell;
-    setupKeys: SetupKeys;
     containerStart: ContainerStart;
     containerStop: ContainerStop;
     containerDelete: ContainerDelete;
@@ -104,9 +101,6 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
         ),
         vscode.commands.registerCommand(attachShell, (treeNode) =>
             handlers.attachShell.attachShellCommandHandler(treeNode),
-        ),
-        vscode.commands.registerCommand(setupKeys, (treeNode) =>
-            handlers.setupKeys.setupKeysCommandHandler(treeNode),
         ),
         vscode.commands.registerCommand(startContainer, (treeNode) =>
             handlers.containerStart.startContainerCommandHandler(treeNode),
