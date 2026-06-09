@@ -32,25 +32,21 @@ export class Stop {
             return;
         }
 
-        await stop(this.topoCli.getBinaryPath(), resource.fsPath, target);
+        await stop(this.topoCli, resource.fsPath, target);
     }
 }
 
 export async function stop(
-    topoBinaryPath: string,
+    topoCli: TopoCli,
     composeFilePath: string,
     target: string,
 ): Promise<void> {
     const taskName = `Stop services on ${target}`;
 
     try {
-        await executeTask(
-            taskName,
-            [topoBinaryPath, 'stop', '--target', target],
-            {
-                cwd: path.dirname(composeFilePath),
-            },
-        );
+        await executeTask(taskName, topoCli.buildStopCommand(target), {
+            cwd: path.dirname(composeFilePath),
+        });
         vscode.window.showInformationMessage(
             `Services on ${target} stopped successfully.`,
         );

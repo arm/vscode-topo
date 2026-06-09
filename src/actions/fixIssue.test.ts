@@ -63,6 +63,13 @@ describe('FixIssue', () => {
         vi.clearAllMocks();
         topoCli = mock<TopoCli>();
         topoCli.getBinaryPath.mockReturnValue(topoBinaryPath);
+        topoCli.resolveTopoCommand.mockImplementation((command) => {
+            const commandArgs = command.split(/\s+/);
+            if (commandArgs[0] === 'topo') {
+                commandArgs[0] = topoBinaryPath;
+            }
+            return commandArgs;
+        });
         targetModel = new TargetModel();
         targetModel.setSelected(target);
     });

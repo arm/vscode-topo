@@ -62,7 +62,7 @@ export class ProtocolHandler implements vscode.UriHandler {
         }
 
         const cloneStarted = await cloneProjectFromSource(
-            this.topoCli.getBinaryPath(),
+            this.topoCli,
             cloneSource,
             cloneBuildArgs,
         );

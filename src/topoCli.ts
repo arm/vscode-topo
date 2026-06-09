@@ -44,6 +44,7 @@ export interface CloneRawSource {
 }
 
 export type CloneSource = CloneRemoteSource | CloneLocalSource | CloneRawSource;
+export type CloneBuildArgs = Record<string, string>;
 
 const normalizeLogLevel = (level: string): WrappedErrorLogLevel => {
     switch (level.toUpperCase()) {
@@ -141,6 +142,50 @@ export class TopoCli {
             : manifest.TOPO_CLI;
         const base = path.join(binaryFolder, binaryName);
         return base;
+    }
+
+    private getCloneSourceString(cloneSource: CloneSource): string {
+        switch (cloneSource.type) {
+            case 'dir':
+                return `dir:${cloneSource.path}`;
+            case 'git':
+                return `git:${cloneSource.url}`;
+            case undefined:
+                return cloneSource.value;
+        }
+    }
+
+    public buildDeployCommand(target: string): string[] {
+        return [this.getBinaryPath(), 'deploy', '--target', target];
+    }
+
+    public buildStopCommand(target: string): string[] {
+        return [this.getBinaryPath(), 'stop', '--target', target];
+    }
+
+    public buildCloneCommand(
+        cloneSource: CloneSource,
+        projectPath: string,
+        cloneBuildArgs: CloneBuildArgs = {},
+    ): string[] {
+        const buildArgs = Object.entries(cloneBuildArgs).map(
+            ([key, value]) => `${key}=${value}`,
+        );
+        return [
+            this.getBinaryPath(),
+            'clone',
+            this.getCloneSourceString(cloneSource),
+            projectPath,
+            ...buildArgs,
+        ];
+    }
+
+    public resolveTopoCommand(command: string): string[] {
+        const commandArgs = command.split(/\s+/);
+        if (commandArgs[0] === 'topo') {
+            commandArgs[0] = this.getBinaryPath();
+        }
+        return commandArgs;
     }
 
     /** Returns the version string of the binary (via version). */

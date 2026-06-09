@@ -119,10 +119,7 @@ export class FixIssue {
         command: string,
     ): Promise<void> {
         const issueName = issueNames.join(', ');
-        const commandArgs = command.split(/\s+/);
-        if (commandArgs[0] === 'topo') {
-            commandArgs[0] = this.topoCli.getBinaryPath();
-        }
+        const commandArgs = this.topoCli.resolveTopoCommand(command);
 
         try {
             await executeTask(`Fix ${issueName} on ${target}`, commandArgs);

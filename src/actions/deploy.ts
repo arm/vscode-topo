@@ -62,7 +62,7 @@ export class Deploy {
         if (!resource) {
             return;
         }
-        await deploy(this.topoCli.getBinaryPath(), resource.fsPath, target);
+        await deploy(this.topoCli, resource.fsPath, target);
     }
 
     public async deployContextCommandHandler(
@@ -85,7 +85,7 @@ export class Deploy {
             throw err;
         }
 
-        await deploy(this.topoCli.getBinaryPath(), resource.fsPath, target);
+        await deploy(this.topoCli, resource.fsPath, target);
     }
 
     private getSelectedTarget(): string {
@@ -120,20 +120,16 @@ async function promptForComposeFile(
 }
 
 export async function deploy(
-    topoBinaryPath: string,
+    topoCli: TopoCli,
     composeFilePath: string,
     target: string,
 ): Promise<void> {
     const taskName = `Deploy to ${target}`;
 
     try {
-        await executeTask(
-            taskName,
-            [topoBinaryPath, 'deploy', '--target', target],
-            {
-                cwd: path.dirname(composeFilePath),
-            },
-        );
+        await executeTask(taskName, topoCli.buildDeployCommand(target), {
+            cwd: path.dirname(composeFilePath),
+        });
         vscode.window.showInformationMessage(
             `Deployment to ${target} completed successfully.`,
         );

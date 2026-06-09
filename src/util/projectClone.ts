@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { CloneSource, TopoCli } from '../topoCli';
+import { CloneBuildArgs, CloneSource, TopoCli } from '../topoCli';
 import * as path from 'node:path';
 import { TemplateDescription } from '../topoCliSchema';
 import { WrappedError } from '../errors/wrappedError';
@@ -15,7 +15,6 @@ type CloneResult =
     | {
           success: false;
       };
-type CloneBuildArgs = Record<string, string>;
 
 const postCloneAction = async (repositoryPath: string) => {
     let message = 'Would you like to open the cloned repository?';
@@ -117,40 +116,8 @@ const getDefaultProjectNameFromSourceString = (
     }
 };
 
-const getCloneCommandFromSourceString = (
-    topoBinaryPath: string,
-    workspacePath: string,
-    projectName: string,
-    cloneSourceString: string,
-    cloneBuildArgs: CloneBuildArgs = {},
-): string[] => {
-    const projectPath = path.join(workspacePath, projectName);
-    const buildArgs = Object.entries(cloneBuildArgs).map(
-        ([key, value]) => `${key}=${value}`,
-    );
-
-    return [
-        topoBinaryPath,
-        'clone',
-        cloneSourceString,
-        projectPath,
-        ...buildArgs,
-    ];
-};
-
-const getCloneSourceString = (cloneSource: CloneSource): string => {
-    switch (cloneSource.type) {
-        case 'dir':
-            return `dir:${cloneSource.path}`;
-        case 'git':
-            return `git:${cloneSource.url}`;
-        case undefined:
-            return cloneSource.value;
-    }
-};
-
 const cloneWithSource = async (
-    topoBinaryPath: string,
+    topoCli: TopoCli,
     cloneSource: CloneSource,
     defaultProjectName: string,
     cloneBuildArgs: CloneBuildArgs = {},
@@ -167,12 +134,9 @@ const cloneWithSource = async (
         return { success: false };
     }
     const repositoryPath = path.join(workspacePath, projectName);
-    const cloneSourceString = getCloneSourceString(cloneSource);
-    const cloneCommand = getCloneCommandFromSourceString(
-        topoBinaryPath,
-        workspacePath,
-        projectName,
-        cloneSourceString,
+    const cloneCommand = topoCli.buildCloneCommand(
+        cloneSource,
+        repositoryPath,
         cloneBuildArgs,
     );
     try {
@@ -210,14 +174,14 @@ export const getTemplateOfChoice = async (
 };
 
 export async function cloneProjectFromSource(
-    topoBinaryPath: string,
+    topoCli: TopoCli,
     cloneSource: CloneSource,
     cloneBuildArgs: CloneBuildArgs = {},
 ): Promise<boolean> {
     const defaultProjectName =
         getDefaultProjectNameFromSourceString(cloneSource);
     const cloneResult = await cloneWithSource(
-        topoBinaryPath,
+        topoCli,
         cloneSource,
         defaultProjectName,
         cloneBuildArgs,

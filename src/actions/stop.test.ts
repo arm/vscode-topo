@@ -20,12 +20,14 @@ describe('Stop', () => {
     const composeFilePath = composeFileUri.fsPath;
     const target = 'topo.local';
     const topoBinaryPath = '/fake/extension/resources/topo';
+    const stopCommand = [topoBinaryPath, 'stop', '--target', target];
     let topoCli: MockProxy<TopoCli>;
     let targetModel: TargetModel;
 
     beforeEach(() => {
         topoCli = mock<TopoCli>();
         topoCli.getBinaryPath.mockReturnValue(topoBinaryPath);
+        topoCli.buildStopCommand.mockReturnValue(stopCommand);
         targetModel = new TargetModel();
         targetModel.setSelected(target);
         executeTaskMock.mockReset();
@@ -50,18 +52,18 @@ describe('Stop', () => {
     });
 
     it('handles successful stop operation', async () => {
-        await stopServices(topoBinaryPath, composeFilePath, target);
+        await stopServices(topoCli, composeFilePath, target);
 
         expect(executeTaskMock).toHaveBeenCalledWith(
             'Stop services on topo.local',
-            [topoBinaryPath, 'stop', '--target', 'topo.local'],
+            stopCommand,
             { cwd: path.dirname(composeFilePath) },
         );
     });
 
     it('handles task failure', async () => {
         executeTaskMock.mockRejectedValueOnce(new Error('stop failed'));
-        await stopServices(topoBinaryPath, composeFilePath, target);
+        await stopServices(topoCli, composeFilePath, target);
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
             'Stopping services on topo.local failed: stop failed',
@@ -74,7 +76,7 @@ describe('Stop', () => {
         await expect(op).resolves.toBeUndefined();
         expect(executeTaskMock).toHaveBeenCalledWith(
             'Stop services on topo.local',
-            [topoBinaryPath, 'stop', '--target', 'topo.local'],
+            stopCommand,
             { cwd: path.dirname(composeFilePath) },
         );
     });

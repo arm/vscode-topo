@@ -25,6 +25,7 @@ describe('Deploy', () => {
     const composeFilePath = composeFileUri.fsPath;
     const target = 'topo.local';
     const topoBinaryPath = '/fake/extension/resources/topo';
+    const deployCommand = [topoBinaryPath, 'deploy', '--target', target];
     let topoCli: MockProxy<TopoCli>;
     let targetModel: TargetModel;
 
@@ -43,6 +44,7 @@ describe('Deploy', () => {
     beforeEach(() => {
         topoCli = mock<TopoCli>();
         topoCli.getBinaryPath.mockReturnValue(topoBinaryPath);
+        topoCli.buildDeployCommand.mockReturnValue(deployCommand);
         targetModel = new TargetModel();
         targetModel.setSelected(target);
         vi.mocked(vscode.workspace.findFiles).mockResolvedValue([]);
@@ -84,18 +86,18 @@ describe('Deploy', () => {
     });
 
     it('handles successful deploy operation', async () => {
-        await deployServices(topoBinaryPath, composeFilePath, target);
+        await deployServices(topoCli, composeFilePath, target);
 
         expect(executeTaskMock).toHaveBeenCalledWith(
             'Deploy to topo.local',
-            [topoBinaryPath, 'deploy', '--target', 'topo.local'],
+            deployCommand,
             { cwd: path.dirname(composeFilePath) },
         );
     });
 
     it('handles task failure', async () => {
         executeTaskMock.mockRejectedValueOnce(new Error('deploy failed'));
-        await deployServices(topoBinaryPath, composeFilePath, target);
+        await deployServices(topoCli, composeFilePath, target);
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
             'Deployment to topo.local failed: deploy failed',
@@ -108,7 +110,7 @@ describe('Deploy', () => {
         await expect(op).resolves.toBeUndefined();
         expect(executeTaskMock).toHaveBeenCalledWith(
             'Deploy to topo.local',
-            [topoBinaryPath, 'deploy', '--target', 'topo.local'],
+            deployCommand,
             { cwd: path.dirname(composeFilePath) },
         );
     });
@@ -151,7 +153,7 @@ describe('Deploy', () => {
         );
         expect(executeTaskMock).toHaveBeenCalledWith(
             'Deploy to topo.local',
-            [topoBinaryPath, 'deploy', '--target', 'topo.local'],
+            deployCommand,
             { cwd: workspaceUri.fsPath },
         );
     });

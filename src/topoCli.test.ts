@@ -56,6 +56,98 @@ describe('TopoCli', () => {
         );
     });
 
+    it('buildDeployCommand builds topo deploy args for a target', () => {
+        expect(topoCli.buildDeployCommand('topo.local')).toEqual([
+            path.join(ext, 'resources', manifest.TOPO_CLI),
+            'deploy',
+            '--target',
+            'topo.local',
+        ]);
+    });
+
+    it('buildStopCommand builds topo stop args for a target', () => {
+        expect(topoCli.buildStopCommand('topo.local')).toEqual([
+            path.join(ext, 'resources', manifest.TOPO_CLI),
+            'stop',
+            '--target',
+            'topo.local',
+        ]);
+    });
+
+    it('buildCloneCommand builds clone args for git sources', () => {
+        expect(
+            topoCli.buildCloneCommand(
+                {
+                    type: 'git',
+                    url: 'https://example.com/repo.git',
+                },
+                '/workspace/repo',
+            ),
+        ).toEqual([
+            path.join(ext, 'resources', manifest.TOPO_CLI),
+            'clone',
+            'git:https://example.com/repo.git',
+            '/workspace/repo',
+        ]);
+    });
+
+    it('buildCloneCommand builds clone args for local directory sources', () => {
+        expect(
+            topoCli.buildCloneCommand(
+                {
+                    type: 'dir',
+                    path: '/source/project',
+                },
+                '/workspace/project',
+            ),
+        ).toEqual([
+            path.join(ext, 'resources', manifest.TOPO_CLI),
+            'clone',
+            'dir:/source/project',
+            '/workspace/project',
+        ]);
+    });
+
+    it('buildCloneCommand passes through raw sources and build args', () => {
+        expect(
+            topoCli.buildCloneCommand(
+                {
+                    value: 'https://example.com/repo.git',
+                },
+                '/workspace/repo',
+                {
+                    model: 'some-huggingface-id',
+                },
+            ),
+        ).toEqual([
+            path.join(ext, 'resources', manifest.TOPO_CLI),
+            'clone',
+            'https://example.com/repo.git',
+            '/workspace/repo',
+            'model=some-huggingface-id',
+        ]);
+    });
+
+    it('resolveTopoCommand replaces a leading topo executable with the extension binary path', () => {
+        expect(
+            topoCli.resolveTopoCommand(
+                'topo install remoteproc --target topo.local',
+            ),
+        ).toEqual([
+            path.join(ext, 'resources', manifest.TOPO_CLI),
+            'install',
+            'remoteproc',
+            '--target',
+            'topo.local',
+        ]);
+    });
+
+    it('resolveTopoCommand leaves non-topo executables unchanged', () => {
+        expect(
+            topoCli.resolveTopoCommand('docker compose --file compose.yaml up'),
+        ).toEqual(['docker', 'compose', '--file', 'compose.yaml', 'up']);
+    });
+
     it('getVersion parses stdout from version', () => {
         execSyncMock.mockReturnValue('topo version 1.2.3 (commit: abcd)\n');
         const v = topoCli.getVersion();

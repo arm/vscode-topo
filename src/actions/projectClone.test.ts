@@ -60,13 +60,10 @@ describe('ProjectClone action', () => {
 
             await projectClone.remoteCloneCommandHandler();
 
-            expect(cloneProjectFromSourceMock).toHaveBeenCalledWith(
-                topoBinaryPath,
-                {
-                    type: 'git',
-                    url: 'https://example.com/repo.git',
-                },
-            );
+            expect(cloneProjectFromSourceMock).toHaveBeenCalledWith(topoCli, {
+                type: 'git',
+                url: 'https://example.com/repo.git',
+            });
         });
     });
 
@@ -84,13 +81,10 @@ describe('ProjectClone action', () => {
 
             await projectClone.localCloneCommandHandler();
 
-            expect(cloneProjectFromSourceMock).toHaveBeenCalledWith(
-                topoBinaryPath,
-                {
-                    type: 'dir',
-                    path: localSourcePath,
-                },
-            );
+            expect(cloneProjectFromSourceMock).toHaveBeenCalledWith(topoCli, {
+                type: 'dir',
+                path: localSourcePath,
+            });
         });
     });
 
@@ -113,13 +107,10 @@ describe('ProjectClone action', () => {
                 topoCli,
                 'me@example.com',
             );
-            expect(cloneProjectFromSourceMock).toHaveBeenCalledWith(
-                topoBinaryPath,
-                {
-                    type: 'git',
-                    url: selectedTemplate.url,
-                },
-            );
+            expect(cloneProjectFromSourceMock).toHaveBeenCalledWith(topoCli, {
+                type: 'git',
+                url: selectedTemplate.url,
+            });
         });
 
         it('fetches templates without a target when none is selected', async () => {

@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import path from 'node:path';
-import { mock } from 'vitest-mock-extended';
 import { ProtocolHandler } from './protocolHandler';
 import { TopoCli } from './topoCli';
 import { mutable } from './util/mutable';
@@ -24,11 +23,13 @@ const topoBinaryPath = path.join('fake', 'extension', 'resources', 'topo');
 
 describe('ProtocolHandler', () => {
     let protocolHandler: ProtocolHandler;
-    const topoCli = mock<TopoCli>();
+    const topoCli = new TopoCli(
+        path.join('fake', 'extension'),
+        {} as vscode.EnvironmentVariableCollection,
+    );
 
     beforeEach(() => {
         vi.resetAllMocks();
-        topoCli.getBinaryPath.mockReturnValue(topoBinaryPath);
         protocolHandler = new ProtocolHandler(topoCli);
         mutable(vscode.workspace).workspaceFolders = undefined;
     });

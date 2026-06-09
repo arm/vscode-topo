@@ -40,7 +40,7 @@ export class ProjectClone {
             if (!selectedTemplate) {
                 return;
             }
-            await cloneProjectFromSource(this.topoCli.getBinaryPath(), {
+            await cloneProjectFromSource(this.topoCli, {
                 type: 'git',
                 url: selectedTemplate.url,
             });
@@ -53,7 +53,7 @@ export class ProjectClone {
             if (!cloneSourcePath) {
                 return;
             }
-            await cloneProjectFromSource(this.topoCli.getBinaryPath(), {
+            await cloneProjectFromSource(this.topoCli, {
                 type: 'dir',
                 path: cloneSourcePath,
             });
@@ -68,7 +68,7 @@ export class ProjectClone {
             if (!cloneSourceRemoteUrl) {
                 return;
             }
-            await cloneProjectFromSource(this.topoCli.getBinaryPath(), {
+            await cloneProjectFromSource(this.topoCli, {
                 type: 'git',
                 url: cloneSourceRemoteUrl,
             });
