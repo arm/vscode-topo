@@ -12,13 +12,13 @@ import { Stop } from './actions/stop';
 import { ContainerOpenInBrowser } from './actions/containerOpenInBrowser';
 import { AttachVsCode } from './actions/attachVsCode';
 import { AttachShell } from './actions/attachShell';
-import { SetupKeys } from './actions/setupKeys';
 import { ContainerStart } from './actions/containerStart';
 import { ContainerStop } from './actions/containerStop';
 import { ContainerDelete } from './actions/containerDelete';
 import { TargetHealth } from './actions/targetHealth';
 import { FixIssue } from './actions/fixIssue';
 import { HostHealth } from './actions/hostHealth';
+import { ProjectClone } from './actions/projectClone';
 
 vi.mock('./util/logger');
 
@@ -28,12 +28,12 @@ describe('commands', () => {
         hostHealth: mock<HostHealth>(),
         targetController: mock<TargetController>(),
         projectInit: mock<ProjectInit>(),
+        projectClone: mock<ProjectClone>(),
         deploy: mock<Deploy>(),
         stop: mock<Stop>(),
         containerOpenInBrowser: mock<ContainerOpenInBrowser>(),
         attachVsCode: mock<AttachVsCode>(),
         attachShell: mock<AttachShell>(),
-        setupKeys: mock<SetupKeys>(),
         containerStart: mock<ContainerStart>(),
         containerStop: mock<ContainerStop>(),
         containerDelete: mock<ContainerDelete>(),
@@ -102,7 +102,6 @@ describe('commands', () => {
                 commands.attachShell,
                 handlers.attachShell.attachShellCommandHandler,
             ],
-            [commands.setupKeys, handlers.setupKeys.setupKeysCommandHandler],
             [
                 commands.startContainer,
                 handlers.containerStart.startContainerCommandHandler,
@@ -126,6 +125,18 @@ describe('commands', () => {
             [
                 commands.fixTargetIssues,
                 handlers.fixIssue.fixIssueCommandHandler,
+            ],
+            [
+                commands.remoteClone,
+                handlers.projectClone.remoteCloneCommandHandler,
+            ],
+            [
+                commands.localClone,
+                handlers.projectClone.localCloneCommandHandler,
+            ],
+            [
+                commands.templateClone,
+                handlers.projectClone.templateCloneCommandHandler,
             ],
         ];
 
