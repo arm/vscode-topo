@@ -19,14 +19,15 @@ const workspaceUri = vscode.Uri.file(workspacePath);
 const workspaceFolders = [{ uri: workspaceUri, name: 'workspace', index: 0 }];
 const destinationPath = path.join('home', 'destination');
 const destinationUri = vscode.Uri.file(destinationPath);
-const topoBinaryPath = path.join('fake', 'extension', 'resources', 'topo');
+const extensionPath = path.join('fake', 'extension');
+const topoCli = new TopoCli(
+    extensionPath,
+    {} as vscode.EnvironmentVariableCollection,
+);
+const topoBinaryPath = topoCli.getBinaryPath();
 
 describe('ProtocolHandler', () => {
     let protocolHandler: ProtocolHandler;
-    const topoCli = new TopoCli(
-        path.join('fake', 'extension'),
-        {} as vscode.EnvironmentVariableCollection,
-    );
 
     beforeEach(() => {
         vi.resetAllMocks();
