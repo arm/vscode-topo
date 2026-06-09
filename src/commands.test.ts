@@ -12,7 +12,6 @@ import { Stop } from './actions/stop';
 import { ContainerOpenInBrowser } from './actions/containerOpenInBrowser';
 import { AttachVsCode } from './actions/attachVsCode';
 import { AttachShell } from './actions/attachShell';
-import { SetupKeys } from './actions/setupKeys';
 import { ContainerStart } from './actions/containerStart';
 import { ContainerStop } from './actions/containerStop';
 import { ContainerDelete } from './actions/containerDelete';
@@ -35,7 +34,6 @@ describe('commands', () => {
         containerOpenInBrowser: mock<ContainerOpenInBrowser>(),
         attachVsCode: mock<AttachVsCode>(),
         attachShell: mock<AttachShell>(),
-        setupKeys: mock<SetupKeys>(),
         containerStart: mock<ContainerStart>(),
         containerStop: mock<ContainerStop>(),
         containerDelete: mock<ContainerDelete>(),
@@ -104,7 +102,6 @@ describe('commands', () => {
                 commands.attachShell,
                 handlers.attachShell.attachShellCommandHandler,
             ],
-            [commands.setupKeys, handlers.setupKeys.setupKeysCommandHandler],
             [
                 commands.startContainer,
                 handlers.containerStart.startContainerCommandHandler,

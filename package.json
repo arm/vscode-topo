@@ -95,11 +95,6 @@
                 "category": "Topo"
             },
             {
-                "command": "topo.setupKeys",
-                "title": "Setup Keys",
-                "category": "Topo"
-            },
-            {
                 "command": "topo.fixDependencyIssue",
                 "title": "Fix",
                 "category": "Topo"
@@ -215,10 +210,6 @@
                     "when": "false"
                 },
                 {
-                    "command": "topo.setupKeys",
-                    "when": "false"
-                },
-                {
                     "command": "topo.fixDependencyIssue",
                     "when": "false"
                 },
@@ -280,11 +271,6 @@
                 },
                 {
                     "command": "topo.inspectTargetHealth",
-                    "when": "view === topo.target-manager && viewItem =~ /Target/ && viewItem =~ /Selected/",
-                    "group": "topo/2_actions"
-                },
-                {
-                    "command": "topo.setupKeys",
                     "when": "view === topo.target-manager && viewItem =~ /Target/ && viewItem =~ /Selected/",
                     "group": "topo/2_actions"
                 },
