@@ -97,7 +97,8 @@ export class SelectedTargetController implements vscode.Disposable {
             await this.refresh(target, ab.signal);
         } catch (err) {
             if (!ab.signal.aborted) {
-                return showAndLogError('Failed to refresh target data', err);
+                showAndLogError('Failed to refresh target data', err);
+                return;
             }
         } finally {
             if (this.currentRefreshAbortController === ab) {
