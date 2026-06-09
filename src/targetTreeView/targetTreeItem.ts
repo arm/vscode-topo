@@ -4,20 +4,21 @@ import {
     HealthCheckDependency,
     TargetHealthCheckResult,
 } from '../topoCliSchema';
-import { errored, Loadable } from '../util/loadable';
+import { errored, Loadable, loaded } from '../util/loadable';
 import { getVisibleTargetDependencies } from '../target/getVisibleTargetDependencies';
-import { TargetDescription } from '../util/types';
+import { ContainerItem, TargetDescription } from '../util/types';
 
 export interface TargetTreeItemOptions {
     readonly target: string;
     readonly selected: boolean;
     readonly health?: Loadable<TargetHealthCheckResult | undefined>;
     readonly targetDescription?: Loadable<TargetDescription>;
-    readonly otherLoadables?: Loadable<unknown>[];
+    readonly containers?: Loadable<ContainerItem[]>;
 }
 
 const defaultTargetHealth = errored('Target health not available');
 const defaultTargetDescription = errored('Target description not available');
+const defaultContainers = loaded([]);
 
 /** Represents a target */
 export class TargetTreeItem extends vscode.TreeItem {
@@ -31,7 +32,7 @@ export class TargetTreeItem extends vscode.TreeItem {
         selected,
         health = defaultTargetHealth,
         targetDescription = defaultTargetDescription,
-        otherLoadables = [],
+        containers = defaultContainers,
     }: TargetTreeItemOptions) {
         super(target, vscode.TreeItemCollapsibleState.Expanded);
         this.target = target;
@@ -43,12 +44,8 @@ export class TargetTreeItem extends vscode.TreeItem {
             this.description = health.error.message;
             this.tooltip = `${target}: ${health.error.message}`;
         }
-        this.iconPath = getTargetTreeItemIcon(
-            selected,
-            health,
-            targetDescription,
-            ...otherLoadables,
-        );
+        const loadables = [health, targetDescription, containers];
+        this.iconPath = getTargetTreeItemIcon(selected, ...loadables);
         const contextValues = ['Target'];
         if (selected) {
             contextValues.push('Selected');

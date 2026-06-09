@@ -75,7 +75,7 @@ describe('TargetTreeItem', () => {
             selected: true,
             health: loaded(testTargetHealth),
             targetDescription: loaded(testTargetDescription),
-            otherLoadables: [loading(loaded([]))],
+            containers: loading(loaded([])),
         });
 
         expect(item.iconPath).toBeInstanceOf(vscode.ThemeIcon);
