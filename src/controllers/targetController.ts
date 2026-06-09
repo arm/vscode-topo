@@ -143,7 +143,7 @@ export class TargetController {
         private readonly containerCommands: ContainerCommands,
     ) {}
 
-    public async activate(): Promise<void> {
+    public activate(): void {
         this.updateFromTargetStore();
         this.refreshSelectedTargetDataCommandHandler();
     }
@@ -209,8 +209,8 @@ export class TargetController {
 
         const target = this.model.selected;
         if (!target) {
-            this.model.setSelectedTargetContainers(loaded([]));
             this.model.setSelectedTargetHealth(loaded(undefined));
+            this.model.setSelectedTargetContainers(loaded([]));
             return;
         }
 
@@ -257,12 +257,15 @@ export class TargetController {
         signal.throwIfAborted();
         this.model.setSelectedTargetHealth(health);
 
-        if (health.status !== 'loaded') {
+        if (
+            health.status !== 'loaded' ||
+            health.data?.connectivity.status !== 'ok'
+        ) {
             this.model.setSelectedTargetContainers(loaded([]));
             return;
         }
 
-        const containerEngineDependency = health.data?.dependencies.find(
+        const containerEngineDependency = health.data.dependencies.find(
             (dep) => dep.name === 'Container Engine',
         );
         if (containerEngineDependency?.status === 'error') {

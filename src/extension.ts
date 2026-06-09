@@ -93,6 +93,7 @@ export async function activate(
         topoCli,
         dockerCommands,
     );
+    targetController.activate();
 
     const selectedTargetRefreshLoop = new RefreshLoop(async () => {
         if (!targetController.isRefreshingSelectedTargetData()) {
