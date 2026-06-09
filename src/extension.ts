@@ -30,8 +30,6 @@ import { TargetController } from './controllers/targetController';
 import { TargetModel } from './models/targetModel';
 import { ProjectClone } from './actions/projectClone';
 import { RefreshLoop } from './util/refreshLoop';
-import { SelectedTargetModel } from './models/selectedTargetModel';
-import { SelectedTargetController } from './controllers/selectedTargetController';
 
 export async function activate(
     context: vscode.ExtensionContext,
@@ -65,7 +63,6 @@ export async function activate(
 
     const targetModel = new TargetModel();
     const hostModel = new HostModel();
-    const selectedTargetModel = new SelectedTargetModel();
 
     const containersManager = new ContainersManager(
         topoCli,
@@ -81,10 +78,7 @@ export async function activate(
         targetModel,
         targetDescriptionStore,
     );
-    const targetStatusBarItemView = new TargetStatusBarItemView(
-        targetModel,
-        selectedTargetModel,
-    );
+    const targetStatusBarItemView = new TargetStatusBarItemView(targetModel);
     context.subscriptions.push(
         hostTreeView,
         targetTreeView,
@@ -93,29 +87,24 @@ export async function activate(
 
     const hostController = new HostController(hostModel, topoCli);
     const hostHealth = new HostHealth(topoCli, hostHealthDocProvider);
-    const targetController = new TargetController(targetModel, targetStore);
-    const selectedTargetController = new SelectedTargetController(
-        selectedTargetModel,
+    const targetController = new TargetController(
         targetModel,
+        targetStore,
         topoCli,
         dockerCommands,
     );
 
     const selectedTargetRefreshLoop = new RefreshLoop(async () => {
-        if (!selectedTargetController.isRefreshing()) {
-            await selectedTargetController.refreshCommandHandler();
+        if (!targetController.isRefreshingSelectedTargetData()) {
+            await targetController.refreshSelectedTargetDataCommandHandler();
         }
     }, 3000);
 
     context.subscriptions.push(
-        selectedTargetController,
+        targetController,
         selectedTargetRefreshLoop,
-        targetModel.onSelectedChanged(() => {
-            selectedTargetModel.clear();
-            selectedTargetController.refreshCommandHandler();
-        }),
         targetStore.onExternalTargetsChanged(() =>
-            targetController.updateFromStore(),
+            targetController.updateFromTargetStore(),
         ),
     );
 
