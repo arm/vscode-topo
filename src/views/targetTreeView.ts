@@ -104,7 +104,6 @@ export class TargetTreeView
                     selected && selectedTargetDescription
                         ? loaded(selectedTargetDescription)
                         : undefined;
-                const otherLoadables = [this.selectedTargetModel.containers];
 
                 targetTreeItems.push(
                     new TargetTreeItem({
@@ -112,7 +111,6 @@ export class TargetTreeView
                         selected,
                         health,
                         targetDescription,
-                        otherLoadables,
                     }),
                 );
             }
@@ -123,12 +121,12 @@ export class TargetTreeView
         }
 
         if (element instanceof TargetTreeItem) {
-            if (!element.selected || element.health.status !== 'loaded') {
+            if (!element.selected || !element.connected) {
                 return [];
             }
 
             const dependenciesGroup = new HealthCheckDependencyGroupTreeItem(
-                loaded(element.visibleDependencies, element.health.loading),
+                loaded(element.visibleIssues, element.health.loading),
             );
             const subsystemsGroup = new TargetSubsystemGroupTreeItem(
                 element.target,

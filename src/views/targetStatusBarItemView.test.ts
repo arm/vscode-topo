@@ -2,14 +2,14 @@ import * as vscode from 'vscode';
 import { TargetStatusBarItemView } from './targetStatusBarItemView';
 import { TargetTreeView } from './targetTreeView';
 import { mock } from 'vitest-mock-extended';
-import { TargetHealthCheckResult } from '../topoCliSchema';
+import { TargetHealthCheck } from '../topoCliSchema';
 import { TargetModel } from '../models/targetModel';
 import { SelectedTargetModel } from '../models/selectedTargetModel';
 import { loaded, loading } from '../util/loadable';
 
 vi.mock('../util/logger');
 
-const healthyTarget: TargetHealthCheckResult = {
+const healthyTarget: TargetHealthCheck = {
     isLocalhost: false,
     connectivity: {
         status: 'ok',

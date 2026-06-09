@@ -1,19 +1,15 @@
 import * as vscode from 'vscode';
-import { getFixableDependencyFixes } from '../util/getDependencyFixes';
-import {
-    HealthCheckDependency,
-    TargetHealthCheckResult,
-} from '../topoCliSchema';
+import { IssueCheck, TargetHealthCheck } from '../topoCliSchema';
 import { errored, Loadable } from '../util/loadable';
-import { getVisibleTargetDependencies } from '../target/getVisibleTargetDependencies';
+import { getVisibleTargetIssues } from '../target/getVisibleTargetIssues';
 import { TargetDescription } from '../util/types';
+import { hasFixCommand, type FixableHealthIssue } from '../util/issueFixes';
 
 export interface TargetTreeItemOptions {
     readonly target: string;
     readonly selected: boolean;
-    readonly health?: Loadable<TargetHealthCheckResult | undefined>;
+    readonly health?: Loadable<TargetHealthCheck | undefined>;
     readonly targetDescription?: Loadable<TargetDescription>;
-    readonly otherLoadables?: Loadable<unknown>[];
 }
 
 const defaultTargetHealth = errored('Target health not available');
@@ -23,7 +19,7 @@ const defaultTargetDescription = errored('Target description not available');
 export class TargetTreeItem extends vscode.TreeItem {
     public readonly target: string;
     public readonly selected: boolean;
-    public readonly health: Loadable<TargetHealthCheckResult | undefined>;
+    public readonly health: Loadable<TargetHealthCheck | undefined>;
     public readonly targetDescription: Loadable<TargetDescription>;
 
     constructor({
@@ -31,7 +27,6 @@ export class TargetTreeItem extends vscode.TreeItem {
         selected,
         health = defaultTargetHealth,
         targetDescription = defaultTargetDescription,
-        otherLoadables = [],
     }: TargetTreeItemOptions) {
         super(target, vscode.TreeItemCollapsibleState.Expanded);
         this.target = target;
@@ -39,35 +34,45 @@ export class TargetTreeItem extends vscode.TreeItem {
         this.health = health;
         this.targetDescription = targetDescription;
         this.id = target;
-        if (selected && health.status === 'errored') {
-            this.description = health.error.message;
-            this.tooltip = `${target}: ${health.error.message}`;
-        }
-        this.iconPath = getTargetTreeItemIcon(
-            selected,
-            health,
-            targetDescription,
-            ...otherLoadables,
-        );
+        this.iconPath = getTargetTreeItemIcon(selected, health);
+
         const contextValues = ['Target'];
         if (selected) {
             contextValues.push('Selected');
+
+            if (this.connected) {
+                contextValues.push('Connected');
+            } else {
+                const message = getConnectivityStatusMessage(health);
+                if (message) {
+                    this.description = message;
+                    this.tooltip = `${target}: ${message}`;
+                }
+            }
         }
-        if (health.status === 'loaded' && health.data !== undefined) {
-            contextValues.push('Connected');
-        }
-        if (getFixableDependencyFixes(this.visibleDependencies).length > 0) {
-            contextValues.push('HasFixableDependencies');
+
+        if (this.fixableIssues.length > 0) {
+            contextValues.push('HasFixableIssues');
         }
         this.contextValue = contextValues.join(' ');
-        this.collapsibleState = getTargetTreeItemState(selected, health);
+        this.collapsibleState = getTargetTreeItemState(
+            selected,
+            this.connected,
+        );
+    }
+
+    public get connected(): boolean {
+        return (
+            this.health.status === 'loaded' &&
+            this.health.data?.connectivity.status === 'ok'
+        );
     }
 
     public get displayName(): string {
         return this.label?.toString() ?? '';
     }
 
-    public get visibleDependencies(): HealthCheckDependency[] {
+    public get visibleIssues(): IssueCheck[] {
         if (this.health.status !== 'loaded' || this.health.data === undefined) {
             return [];
         }
@@ -76,7 +81,16 @@ export class TargetTreeItem extends vscode.TreeItem {
             this.targetDescription.status === 'loaded'
                 ? this.targetDescription.data
                 : undefined;
-        return getVisibleTargetDependencies(this.health.data, description);
+        return getVisibleTargetIssues(this.health.data, description);
+    }
+
+    public get fixableIssues(): FixableHealthIssue[] {
+        const issues: Array<IssueCheck | undefined> = [...this.visibleIssues];
+        if (this.health.status === 'loaded') {
+            issues.unshift(this.health.data?.connectivity);
+        }
+
+        return issues.filter(hasFixCommand);
     }
 
     public get remoteProcessorNames(): string[] {
@@ -89,11 +103,28 @@ export class TargetTreeItem extends vscode.TreeItem {
     }
 }
 
-export const getTargetTreeItemState = (
+const getConnectivityStatusMessage = (
+    health: Loadable<TargetHealthCheck | undefined>,
+): string | undefined => {
+    if (health.status === 'errored') {
+        return health.error.message;
+    }
+
+    if (
+        health.status === 'loaded' &&
+        health.data?.connectivity.status !== 'ok'
+    ) {
+        return health.data?.connectivity.value;
+    }
+
+    return undefined;
+};
+
+const getTargetTreeItemState = (
     targetSelected: boolean,
-    health: Loadable<unknown>,
+    connected: boolean,
 ): vscode.TreeItemCollapsibleState => {
-    if (targetSelected && health.status === 'loaded' && health.data) {
+    if (targetSelected && connected) {
         return vscode.TreeItemCollapsibleState.Expanded;
     }
     return vscode.TreeItemCollapsibleState.None;
@@ -101,15 +132,18 @@ export const getTargetTreeItemState = (
 
 export const getTargetTreeItemIcon = (
     targetSelected: boolean,
-    ...loadables: Loadable<unknown>[]
+    health: Loadable<TargetHealthCheck | undefined>,
 ): vscode.ThemeIcon | undefined => {
     if (!targetSelected) {
         return undefined;
     }
-    if (loadables.some((l) => l.loading)) {
+    if (health.loading) {
         return new vscode.ThemeIcon('loading~spin');
     }
-    if (loadables.some((l) => l.status === 'errored')) {
+    if (
+        health.status === 'errored' ||
+        health.data?.connectivity.status !== 'ok'
+    ) {
         return new vscode.ThemeIcon(
             'error',
             new vscode.ThemeColor('testing.iconFailed'),
