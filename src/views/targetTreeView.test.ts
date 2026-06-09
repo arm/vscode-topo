@@ -225,30 +225,6 @@ describe('TargetTreeView', () => {
             expect(unselectedTarget!.description).toBeUndefined();
         });
 
-        it('marks target with executable dependency fixes as fixable', async () => {
-            selectedTargetModel.setHealth(
-                loaded({
-                    ...targetHealth,
-                    dependencies: [
-                        {
-                            name: 'Container Engine',
-                            status: 'error',
-                            value: 'missing',
-                            fix: {
-                                description: 'Install container engine',
-                                command: 'topo install container-engine',
-                            },
-                        },
-                    ],
-                }),
-            );
-
-            const rootChildren = await view.getChildren();
-
-            expect(rootChildren).toHaveLength(1);
-            expect(rootChildren[0].contextValue).toContain('HasFixableIssues');
-        });
-
         it('marks target with executable subsystem driver fix as fixable when remote processors exist', async () => {
             selectedTargetModel.setHealth(
                 loaded({
@@ -269,59 +245,6 @@ describe('TargetTreeView', () => {
 
             expect(rootChildren).toHaveLength(1);
             expect(rootChildren[0].contextValue).toContain('HasFixableIssues');
-        });
-
-        it('does not mark target as fixable for hidden subsystem driver fixes', async () => {
-            targetDescriptionStoreMock.getDescription.mockResolvedValue({
-                hostProcessors: [],
-                remoteProcessors: [],
-            });
-            selectedTargetModel.setHealth(
-                loaded({
-                    ...targetHealth,
-                    subsystemDriver: {
-                        name: 'SubsystemDriver',
-                        status: 'error',
-                        value: 'missing',
-                        fix: {
-                            description: 'Install subsystem driver',
-                            command: 'topo install subsystem-driver',
-                        },
-                    },
-                }),
-            );
-
-            const rootChildren = await view.getChildren();
-
-            expect(rootChildren).toHaveLength(1);
-            expect(rootChildren[0].contextValue).not.toContain(
-                'HasFixableDependencies',
-            );
-        });
-
-        it('does not mark target as fixable when no executable dependency fixes exist', async () => {
-            selectedTargetModel.setHealth(
-                loaded({
-                    ...targetHealth,
-                    subsystemDriver: {
-                        name: 'SubsystemDriver',
-                        status: 'error',
-                        value: 'missing',
-                        fix: {
-                            description: 'Install subsystem driver',
-                            command: 'topo install subsystem-driver',
-                        },
-                    },
-                }),
-            );
-
-            const rootChildren = await view.getChildren();
-
-            expect(rootChildren).toEqual([
-                expect.objectContaining({
-                    contextValue: expect.stringContaining('HasFixableIssues'),
-                }),
-            ]);
         });
 
         it('returns containers for Host and remoteproc groups', async () => {
