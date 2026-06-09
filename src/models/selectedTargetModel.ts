@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { Loadable, loaded } from '../util/loadable';
 import { ContainerItem } from '../util/types';
-import { TargetHealthCheckResult } from '../topoCliSchema';
+import { TargetHealthCheck } from '../topoCliSchema';
 
 const defaultContainerState = loaded([]);
 const defaultTargetHealth = loaded(undefined);
@@ -17,14 +17,14 @@ export class SelectedTargetModel {
     public readonly onContainersChanged: vscode.Event<void> =
         this._onContainersChanged.event;
 
-    private _health?: Loadable<TargetHealthCheckResult | undefined>;
+    private _health?: Loadable<TargetHealthCheck | undefined>;
     private _containers?: Loadable<ContainerItem[]>;
 
-    public get health(): Loadable<TargetHealthCheckResult | undefined> {
+    public get health(): Loadable<TargetHealthCheck | undefined> {
         return this._health ?? defaultTargetHealth;
     }
 
-    public setHealth(state: Loadable<TargetHealthCheckResult | undefined>) {
+    public setHealth(state: Loadable<TargetHealthCheck | undefined>) {
         this._health = state;
         this._onHealthChanged.fire();
     }
