@@ -8,6 +8,7 @@ import {
 
 describe('getTargetIssueFixCommandGroups', () => {
     const targetHealth: TargetHealthCheck = {
+        destination: 'ssh://topo.local',
         isLocalhost: false,
         connectivity: {
             name: 'Connected',

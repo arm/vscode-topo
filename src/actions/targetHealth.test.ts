@@ -15,6 +15,7 @@ const health: HealthCheck = {
         dependencies: [],
     },
     target: {
+        destination: 'ssh://topo.local',
         isLocalhost: false,
         connectivity: {
             name: 'Connectivity',
