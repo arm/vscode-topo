@@ -9,7 +9,7 @@ import { mock } from 'vitest-mock-extended';
 import { Writable } from 'node:stream';
 import { WrappedError } from './errors/wrappedError';
 import {
-    HealthCheckResult,
+    HealthCheck,
     ProjectDescription,
     TemplateDescription,
 } from './topoCliSchema';
@@ -305,7 +305,7 @@ describe('TopoCli', () => {
     });
 
     it('health parses JSON output', async () => {
-        const want: HealthCheckResult = {
+        const want: HealthCheck = {
             host: { dependencies: [] },
             target: {
                 isLocalhost: false,
@@ -328,7 +328,7 @@ describe('TopoCli', () => {
                 },
             },
         };
-        const cliResponse: HealthCheckResult = {
+        const cliResponse: HealthCheck = {
             host: { dependencies: [] },
             target: {
                 isLocalhost: false,
@@ -365,7 +365,6 @@ describe('TopoCli', () => {
                 '--target',
                 'hostname',
                 '--skip-version-checks',
-                '--accept-new-host-keys',
                 '-o',
                 'json',
             ],
@@ -384,13 +383,7 @@ describe('TopoCli', () => {
         expect(execMock).toHaveBeenCalledTimes(1);
         expect(execMock).toHaveBeenCalledWith(
             topoCli.getBinaryPath(),
-            [
-                'health',
-                '--skip-version-checks',
-                '--accept-new-host-keys',
-                '-o',
-                'json',
-            ],
+            ['health', '--skip-version-checks', '-o', 'json'],
             {
                 env: {},
                 windowsHide: true,

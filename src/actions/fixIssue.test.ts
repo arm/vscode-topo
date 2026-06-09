@@ -4,7 +4,7 @@ import { FixIssue } from './fixIssue';
 import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 import { executeTask } from '../util/executeTask';
-import { HealthCheckDependency } from '../topoCliSchema';
+import { IssueCheck } from '../topoCliSchema';
 import { TargetModel } from '../models/targetModel';
 import { TopoCli } from '../topoCli';
 
@@ -13,16 +13,27 @@ vi.mock('../util/executeTask');
 
 const executeTaskMock = vi.mocked(executeTask);
 
-const mockSelectedQuickPickItem = <T extends vscode.QuickPickItem>(item: T) => {
-    vi.mocked(vscode.window.showQuickPick).mockResolvedValueOnce(item);
+type ShowQuickPickMany = <T extends vscode.QuickPickItem>(
+    items: T[],
+    options: vscode.QuickPickOptions & { canPickMany: true },
+) => Thenable<T[] | undefined>;
+
+const mockSelectedQuickPickItems = <T extends vscode.QuickPickItem>(
+    items: T[],
+) => {
+    const showQuickPickMock = vi.mocked<ShowQuickPickMany>(
+        vscode.window.showQuickPick,
+    );
+    showQuickPickMock.mockResolvedValueOnce(items);
 };
+
 describe('FixIssue', () => {
     let targetModel: TargetModel;
     let topoCli: MockProxy<TopoCli>;
 
     const target = 'user@topo.local';
     const topoBinaryPath = '/fake/extension/resources/topo';
-    const dependencies: HealthCheckDependency[] = [
+    const dependencies: IssueCheck[] = [
         {
             name: 'Container Engine',
             status: 'error',
@@ -98,18 +109,19 @@ describe('FixIssue', () => {
         expect(executeTaskMock).not.toHaveBeenCalled();
     });
 
-    it('shows a quick pick when only one target dependency fix is available', async () => {
+    it('shows a quick pick when only one target issue fix is available', async () => {
         const fixIssue = new FixIssue(topoCli, targetModel);
         const targetItem = new TargetTreeItem(target, true, 'connected', [
             dependencies[0],
         ]);
-        mockSelectedQuickPickItem({
-            label: 'Container Engine',
-            description: 'Install container engine',
-            detail: `Command: topo install container-engine --target ${target}`,
-            dependency: dependencies[0],
-            fix: dependencies[0].fix,
-        });
+        mockSelectedQuickPickItems([
+            {
+                label: 'Container Engine',
+                description: 'Install container engine',
+                detail: `Command: topo install container-engine --target ${target}`,
+                issue: dependencies[0],
+            },
+        ]);
 
         await fixIssue.fixIssueCommandHandler(targetItem);
 
@@ -119,12 +131,12 @@ describe('FixIssue', () => {
                     label: 'Container Engine',
                     description: 'Install container engine',
                     detail: `Command: topo install container-engine --target ${target}`,
-                    dependency: dependencies[0],
-                    fix: dependencies[0].fix,
+                    issue: dependencies[0],
                 },
             ],
             {
-                placeHolder: `Select a dependency fix for ${target}`,
+                canPickMany: true,
+                placeHolder: `Select dependency fixes for ${target}`,
             },
         );
         expect(executeTaskMock).toHaveBeenCalledWith(
@@ -133,7 +145,43 @@ describe('FixIssue', () => {
         );
     });
 
-    it('shows target dependency fixes in a quick pick and runs the selected fix', async () => {
+    it('runs fix task for target connectivity issue', async () => {
+        const fixIssue = new FixIssue(topoCli, targetModel);
+        const connectivityIssue: IssueCheck = {
+            name: 'Connectivity',
+            status: 'error',
+            value: 'ssh authentication failed',
+            fix: {
+                description: 'Configure ssh keys',
+                command: 'topo setup-keys --target ssh://pi5-rod',
+            },
+        };
+        const targetItem = new TargetTreeItem(
+            target,
+            true,
+            'error',
+            [],
+            [],
+            connectivityIssue,
+        );
+        mockSelectedQuickPickItems([
+            {
+                label: 'Connectivity',
+                description: 'Configure ssh keys',
+                detail: 'Command: topo setup-keys --target ssh://pi5-rod',
+                issue: connectivityIssue,
+            },
+        ]);
+
+        await fixIssue.fixIssueCommandHandler(targetItem);
+
+        expect(executeTaskMock).toHaveBeenCalledWith(
+            `Fix Connectivity on ${target}`,
+            [topoBinaryPath, 'setup-keys', '--target', 'ssh://pi5-rod'],
+        );
+    });
+
+    it('shows target issue fixes in a quick pick and runs the selected fix', async () => {
         const fixIssue = new FixIssue(topoCli, targetModel);
         const targetItem = new TargetTreeItem(
             target,
@@ -141,13 +189,14 @@ describe('FixIssue', () => {
             'connected',
             dependencies,
         );
-        mockSelectedQuickPickItem({
-            label: 'Debugger',
-            description: 'Install debugger',
-            detail: `Command: topo install debugger --target ${target}`,
-            dependency: dependencies[1],
-            fix: dependencies[1].fix,
-        });
+        mockSelectedQuickPickItems([
+            {
+                label: 'Debugger',
+                description: 'Install debugger',
+                detail: `Command: topo install debugger --target ${target}`,
+                issue: dependencies[1],
+            },
+        ]);
 
         await fixIssue.fixIssueCommandHandler(targetItem);
 
@@ -157,24 +206,109 @@ describe('FixIssue', () => {
                     label: 'Container Engine',
                     description: 'Install container engine',
                     detail: `Command: topo install container-engine --target ${target}`,
-                    dependency: dependencies[0],
-                    fix: dependencies[0].fix,
+                    issue: dependencies[0],
                 },
                 {
                     label: 'Debugger',
                     description: 'Install debugger',
                     detail: `Command: topo install debugger --target ${target}`,
-                    dependency: dependencies[1],
-                    fix: dependencies[1].fix,
+                    issue: dependencies[1],
                 },
             ],
             {
-                placeHolder: `Select a dependency fix for ${target}`,
+                canPickMany: true,
+                placeHolder: `Select dependency fixes for ${target}`,
             },
         );
         expect(executeTaskMock).toHaveBeenCalledWith(
             `Fix Debugger on ${target}`,
             [topoBinaryPath, 'install', 'debugger', '--target', target],
+        );
+    });
+
+    it('runs each selected target dependency fix', async () => {
+        const fixIssue = new FixIssue(topoCli, targetModel);
+        const targetItem = new TargetTreeItem(
+            target,
+            true,
+            'connected',
+            dependencies,
+        );
+        mockSelectedQuickPickItems([
+            {
+                label: 'Container Engine',
+                description: 'Install container engine',
+                detail: `Command: topo install container-engine --target ${target}`,
+                issue: dependencies[0],
+            },
+            {
+                label: 'Debugger',
+                description: 'Install debugger',
+                detail: `Command: topo install debugger --target ${target}`,
+                issue: dependencies[1],
+            },
+        ]);
+
+        await fixIssue.fixIssueCommandHandler(targetItem);
+
+        expect(executeTaskMock).toHaveBeenNthCalledWith(
+            1,
+            `Fix Container Engine on ${target}`,
+            [topoBinaryPath, 'install', 'container-engine', '--target', target],
+        );
+        expect(executeTaskMock).toHaveBeenNthCalledWith(
+            2,
+            `Fix Debugger on ${target}`,
+            [topoBinaryPath, 'install', 'debugger', '--target', target],
+        );
+    });
+
+    it('runs a shared target dependency fix only once', async () => {
+        const sharedCommand = `topo install remoteproc --target ${target}`;
+        const remoteprocRuntime: IssueCheck = {
+            name: 'Remoteproc Runtime',
+            status: 'error',
+            value: 'missing',
+            fix: {
+                description: 'Install remoteproc components',
+                command: sharedCommand,
+            },
+        };
+        const remoteprocShim: IssueCheck = {
+            name: 'Remoteproc Shim',
+            status: 'error',
+            value: 'missing',
+            fix: {
+                description: 'Install remoteproc components',
+                command: sharedCommand,
+            },
+        };
+        const fixIssue = new FixIssue(topoCli, targetModel);
+        const targetItem = new TargetTreeItem(target, true, 'connected', [
+            remoteprocRuntime,
+            remoteprocShim,
+        ]);
+        mockSelectedQuickPickItems([
+            {
+                label: 'Remoteproc Runtime',
+                description: 'Install remoteproc components',
+                detail: `Command: ${sharedCommand}`,
+                issue: remoteprocRuntime,
+            },
+            {
+                label: 'Remoteproc Shim',
+                description: 'Install remoteproc components',
+                detail: `Command: ${sharedCommand}`,
+                issue: remoteprocShim,
+            },
+        ]);
+
+        await fixIssue.fixIssueCommandHandler(targetItem);
+
+        expect(executeTaskMock).toHaveBeenCalledTimes(1);
+        expect(executeTaskMock).toHaveBeenCalledWith(
+            `Fix Remoteproc Runtime, Remoteproc Shim on ${target}`,
+            [topoBinaryPath, 'install', 'remoteproc', '--target', target],
         );
     });
 
@@ -186,30 +320,9 @@ describe('FixIssue', () => {
             'connected',
             dependencies,
         );
-        vi.mocked(vscode.window.showQuickPick).mockResolvedValueOnce(undefined);
+        mockSelectedQuickPickItems([]);
 
         await fixIssue.fixIssueCommandHandler(targetItem);
-
-        expect(executeTaskMock).not.toHaveBeenCalled();
-    });
-
-    it('fails when the selected target dependency fix has no executable command', async () => {
-        const fixIssue = new FixIssue(topoCli, targetModel);
-        const targetItem = new TargetTreeItem(target, true, 'connected', [
-            dependencies[0],
-        ]);
-        mockSelectedQuickPickItem({
-            label: 'Container Engine',
-            description: 'Install container engine',
-            dependency: dependencies[0],
-            fix: {
-                description: 'Install container engine',
-            },
-        });
-
-        await expect(
-            fixIssue.fixIssueCommandHandler(targetItem),
-        ).rejects.toThrow('No executable fix found for the selected item');
 
         expect(executeTaskMock).not.toHaveBeenCalled();
     });
@@ -223,7 +336,7 @@ describe('FixIssue', () => {
         await expect(
             fixIssue.fixIssueCommandHandler(targetItem),
         ).rejects.toThrow(
-            `No executable dependency fixes found for target ${target}`,
+            `No executable issue fixes found for target ${target}`,
         );
 
         expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
@@ -232,14 +345,12 @@ describe('FixIssue', () => {
 
     it('fails when fixing an unselected target item', async () => {
         const fixIssue = new FixIssue(topoCli, targetModel);
-        const targetItem = new TargetTreeItem(target, false, 'connected', [
-            dependencies[0],
-        ]);
+        const targetItem = new TargetTreeItem(target, false, 'connected');
 
         await expect(
             fixIssue.fixIssueCommandHandler(targetItem),
         ).rejects.toThrow(
-            'Invalid target item for fix an issue: expected selected TargetTreeItem but received:',
+            'Invalid target item for fix issues: expected selected TargetTreeItem but received:',
         );
 
         expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
@@ -252,7 +363,7 @@ describe('FixIssue', () => {
         await expect(
             fixIssue.fixIssueCommandHandler({ unexpected: true }),
         ).rejects.toThrow(
-            'Invalid item for fix issue: expected HealthCheckDependencyTreeItem or TargetTreeItem but received:',
+            'Invalid item for fix issues: expected HealthCheckDependencyTreeItem or TargetTreeItem but received:',
         );
     });
 });

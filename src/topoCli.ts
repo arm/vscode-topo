@@ -3,10 +3,10 @@ import * as childProcess from 'node:child_process';
 import * as vscode from 'vscode';
 import * as manifest from './manifest';
 import {
-    HealthCheckResult,
-    HostHealthCheckResult,
-    healthCheckResultSchema,
-    hostHealthCheckResultSchema,
+    HealthCheck,
+    HostHealthCheck,
+    healthCheckSchema,
+    hostHealthCheckSchema,
     ProjectDescription,
     projectDescriptionSchema,
     TemplateDescription,
@@ -271,12 +271,7 @@ export class TopoCli {
         if (sshTarget) {
             cmd.push('--target', sshTarget);
         }
-        cmd.push(
-            '--skip-version-checks',
-            '--accept-new-host-keys',
-            '-o',
-            'json',
-        );
+        cmd.push('--skip-version-checks', '-o', 'json');
         const promise = await new Promise<string>((resolve, reject) => {
             const child = childProcess.execFile(
                 bin,
@@ -300,11 +295,11 @@ export class TopoCli {
         return result;
     }
 
-    public async hostHealth(): Promise<HostHealthCheckResult> {
-        return this.runHealth(hostHealthCheckResultSchema);
+    public async hostHealth(): Promise<HostHealthCheck> {
+        return this.runHealth(hostHealthCheckSchema);
     }
 
-    public async health(sshTarget: string): Promise<HealthCheckResult> {
-        return this.runHealth(healthCheckResultSchema, sshTarget);
+    public async health(sshTarget: string): Promise<HealthCheck> {
+        return this.runHealth(healthCheckSchema, sshTarget);
     }
 }

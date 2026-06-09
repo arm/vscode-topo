@@ -30,7 +30,8 @@ export const removeTarget = command('removeTarget');
 export const addTarget = command('addTarget');
 export const inspectHostHealth = command('inspectHostHealth');
 export const initProject = command('initProject');
-export const deploy = command('deploy.context');
+export const deploy = command('deploy');
+export const deployContext = command('deploy.context');
 export const stop = command('stop.context');
 export const openInBrowser = command('openInBrowser');
 export const attachVsCode = command('attachVsCode');
@@ -87,8 +88,13 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
         vscode.commands.registerCommand(initProject, () =>
             handlers.projectInit.initProjectCommandHandler(),
         ),
-        vscode.commands.registerCommand(deploy, (resource?: vscode.Uri) =>
-            handlers.deploy.deployCommandHandler(resource),
+        vscode.commands.registerCommand(deploy, () =>
+            handlers.deploy.deployCommandHandler(),
+        ),
+        vscode.commands.registerCommand(
+            deployContext,
+            (resource?: vscode.Uri) =>
+                handlers.deploy.deployContextCommandHandler(resource),
         ),
         vscode.commands.registerCommand(stop, (resource?: vscode.Uri) =>
             handlers.stop.stopCommandHandler(resource),
