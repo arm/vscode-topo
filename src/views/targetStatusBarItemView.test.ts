@@ -4,7 +4,6 @@ import { TargetTreeView } from './targetTreeView';
 import { mock } from 'vitest-mock-extended';
 import { TargetHealthCheck } from '../topoCliSchema';
 import { TargetModel } from '../models/targetModel';
-import { SelectedTargetModel } from '../models/selectedTargetModel';
 import { loaded, loading } from '../util/loadable';
 
 vi.mock('../util/logger');
@@ -33,10 +32,9 @@ describe('TargetStatusBarItemView', () => {
         const target = 'root@localhost';
         const targetModel = new TargetModel();
         targetModel.setSelected(target);
-        const selectedTargetModel = new SelectedTargetModel();
-        selectedTargetModel.setHealth(loaded(healthyTarget));
+        targetModel.setSelectedTargetHealth(loaded(healthyTarget));
 
-        new TargetStatusBarItemView(targetModel, selectedTargetModel);
+        new TargetStatusBarItemView(targetModel);
 
         expect(vscode.window.createStatusBarItem).toHaveBeenCalledTimes(1);
         const statusBarItem = vi.mocked(vscode.window.createStatusBarItem).mock
@@ -52,10 +50,9 @@ describe('TargetStatusBarItemView', () => {
         const target = 'root@localhost';
         const targetModel = new TargetModel();
         targetModel.setSelected(target);
-        const selectedTargetModel = new SelectedTargetModel();
-        selectedTargetModel.setHealth(loading(loaded(healthyTarget)));
+        targetModel.setSelectedTargetHealth(loading(loaded(healthyTarget)));
 
-        new TargetStatusBarItemView(targetModel, selectedTargetModel);
+        new TargetStatusBarItemView(targetModel);
 
         expect(vscode.window.createStatusBarItem).toHaveBeenCalledTimes(1);
         const statusBarItem = vi.mocked(vscode.window.createStatusBarItem).mock
@@ -64,10 +61,7 @@ describe('TargetStatusBarItemView', () => {
     });
 
     it("doesn't show an item in the status bar when no target is selected", async () => {
-        new TargetStatusBarItemView(
-            new TargetModel(),
-            new SelectedTargetModel(),
-        );
+        new TargetStatusBarItemView(new TargetModel());
 
         expect(vscode.window.createStatusBarItem).toHaveBeenCalledTimes(1);
         const statusBarItem = vi.mocked(vscode.window.createStatusBarItem).mock
@@ -82,20 +76,19 @@ describe('TargetStatusBarItemView', () => {
         const target1 = 'root@localhost';
         const target2 = 'root@other-host';
         const targetModel = new TargetModel();
-        const selectedTargetModel = new SelectedTargetModel();
-        selectedTargetModel.setHealth(loaded(healthyTarget));
 
         targetModel.setSelected(target1);
-        new TargetStatusBarItemView(targetModel, selectedTargetModel);
+        targetModel.setSelectedTargetHealth(loaded(healthyTarget));
+        new TargetStatusBarItemView(targetModel);
         const statusBarItem = vi.mocked(vscode.window.createStatusBarItem).mock
             .results[0].value;
         expect(statusBarItem.text).toBe(`$(pass-filled) ${target1}`);
 
         targetModel.setSelected(target2);
+        targetModel.setSelectedTargetHealth(loaded(healthyTarget));
 
         expect(vscode.window.createStatusBarItem).toHaveBeenCalledTimes(1);
         expect(statusBarItem.text).toBe(`$(pass-filled) ${target2}`);
-        expect(statusBarItem.show).toHaveBeenCalledTimes(2);
         expect(statusBarItem.hide).not.toHaveBeenCalled();
     });
 
@@ -107,8 +100,7 @@ describe('TargetStatusBarItemView', () => {
         const target = 'root@localhost';
         const targetModel = new TargetModel();
         targetModel.setSelected(target);
-        const selectedTargetModel = new SelectedTargetModel();
-        selectedTargetModel.setHealth(
+        targetModel.setSelectedTargetHealth(
             loaded({
                 ...healthyTarget,
                 dependencies: [
@@ -121,7 +113,7 @@ describe('TargetStatusBarItemView', () => {
             }),
         );
 
-        new TargetStatusBarItemView(targetModel, selectedTargetModel);
+        new TargetStatusBarItemView(targetModel);
 
         expect(statusBarItem.text).toBe(`$(warning) ${target}`);
         expect(statusBarItem.tooltip).toBe('Connection String: root@localhost');

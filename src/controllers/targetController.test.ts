@@ -6,9 +6,61 @@ import { TargetStore } from '../target/targetStore';
 import { TargetModel } from '../models/targetModel';
 import { WrappedError } from '../errors/wrappedError';
 import { showAndLogError } from '../util/showAndLogError';
+import { TopoCli } from '../topoCli';
+import { ContainerCommands } from '../target/containerCommands';
+import { DockerInspectItem, DockerPsItem } from '../util/types';
+import { loaded } from '../util/loadable';
+import { HealthCheck } from '../topoCliSchema';
 
 vi.mock('../util/logger');
 vi.mock('../util/showAndLogError');
+
+const target = 'user@target';
+const health: HealthCheck = {
+    host: {
+        dependencies: [],
+    },
+    target: {
+        isLocalhost: false,
+        connectivity: {
+            name: 'Connectivity',
+            status: 'ok',
+            value: 'connected',
+        },
+        subsystemDriver: {
+            name: 'Subsystem Driver',
+            status: 'ok',
+            value: 'ready',
+        },
+        dependencies: [],
+    },
+};
+
+const dockerPsItem: DockerPsItem = {
+    ID: 'abcdef',
+    Names: 'service',
+    Image: 'image',
+    State: 'running',
+    Status: 'Up 1 minute',
+    Labels: '',
+    RunningFor: '1 minute',
+    CreatedAt: '',
+};
+
+const dockerInspectItem: DockerInspectItem = {
+    Id: 'abcdef123456',
+    HostConfig: {
+        Runtime: 'runc',
+        Annotations: {
+            key: 'value',
+        },
+    },
+    NetworkSettings: {
+        Ports: {
+            '80/tcp': [{ HostIp: '0.0.0.0', HostPort: '8080' }],
+        },
+    },
+};
 
 afterEach(() => {
     vi.clearAllMocks();
@@ -38,6 +90,26 @@ function mockTargetStore(
         }
     });
     return targetStore;
+}
+
+function mockControllerDependencies() {
+    const topoCli = mock<TopoCli>();
+    topoCli.health.mockResolvedValue(health);
+    const containerCommands = mock<ContainerCommands>();
+    containerCommands.getContainers.mockResolvedValue([]);
+    containerCommands.inspectContainers.mockResolvedValue([]);
+    return { topoCli, containerCommands };
+}
+
+function createController(targetModel: TargetModel, targetStore: TargetStore) {
+    const { topoCli, containerCommands } = mockControllerDependencies();
+    const controller = new TargetController(
+        targetModel,
+        targetStore,
+        topoCli,
+        containerCommands,
+    );
+    return { controller, topoCli, containerCommands };
 }
 
 describe('buildQuickPickItems', () => {
@@ -85,12 +157,12 @@ describe('buildQuickPickItems', () => {
     });
 });
 
-describe('target construction', () => {
-    it('loads targets and selected target into the model', () => {
+describe('load from store', () => {
+    it('loads targets and selected target into the model from the store', () => {
         const targetStore = mockTargetStore(['host-a', 'host-b'], 'host-b');
         const targetModel = new TargetModel();
-
-        new TargetController(targetModel, targetStore);
+        const { controller } = createController(targetModel, targetStore);
+        controller.updateTargetsFromStore();
 
         expect(targetModel.targets).toEqual(['host-a', 'host-b']);
         expect(targetModel.selected).toBe('host-b');
@@ -126,7 +198,7 @@ describe('target addition', () => {
         const targetSsh = 'root@192.0.2.1';
         const targetStore = mockTargetStore();
         const targetModel = new TargetModel();
-        const controller = new TargetController(targetModel, targetStore);
+        const { controller } = createController(targetModel, targetStore);
         mockQuickPick({ label: targetSsh });
 
         await controller.addCommandHandler();
@@ -140,7 +212,7 @@ describe('target addition', () => {
     it('trims the selected target before storing and selecting it', async () => {
         const targetStore = mockTargetStore();
         const targetModel = new TargetModel();
-        const controller = new TargetController(targetModel, targetStore);
+        const { controller } = createController(targetModel, targetStore);
         mockQuickPick({ label: '  root@192.0.2.1  ' });
 
         await controller.addCommandHandler();
@@ -154,7 +226,7 @@ describe('target addition', () => {
     it('does nothing when quick pick is dismissed', async () => {
         const targetStore = mockTargetStore();
         const targetModel = new TargetModel();
-        const controller = new TargetController(targetModel, targetStore);
+        const { controller } = createController(targetModel, targetStore);
         mockQuickPick(undefined);
 
         await controller.addCommandHandler();
@@ -168,7 +240,7 @@ describe('target addition', () => {
     it('shows error when targetStore.addTarget fails with an invalid target error', async () => {
         const targetStore = mockTargetStore();
         const targetModel = new TargetModel();
-        const controller = new TargetController(targetModel, targetStore);
+        const { controller } = createController(targetModel, targetStore);
         const error = new WrappedError('INVALID_SSH_DESTINATION', 'boom');
         targetStore.addTarget.mockRejectedValueOnce(error);
         mockQuickPick({ label: 'root@192.0.2.1' });
@@ -187,7 +259,7 @@ describe('target addition', () => {
     it('throws when targetStore.addTarget fails with a non-invalid-target error', async () => {
         const targetStore = mockTargetStore();
         const targetModel = new TargetModel();
-        const controller = new TargetController(targetModel, targetStore);
+        const { controller } = createController(targetModel, targetStore);
         const error = new Error('boom');
         targetStore.addTarget.mockRejectedValueOnce(error);
         mockQuickPick({ label: 'root@192.0.2.1' });
@@ -201,10 +273,15 @@ describe('target addition', () => {
 });
 
 describe('target selection', () => {
-    it('saves the selected target and updates model when select command is executed with a target item', async () => {
-        const targetStore = mockTargetStore(['user@board']);
+    it('saves the selected target, updates model and clears selected target data', async () => {
+        const previousTarget = 'user@previous-board';
+        const targetStore = mockTargetStore(
+            [previousTarget, 'user@board'],
+            previousTarget,
+        );
         const targetModel = new TargetModel();
-        const controller = new TargetController(targetModel, targetStore);
+        targetModel.setSelected(previousTarget);
+        const { controller } = createController(targetModel, targetStore);
         const targetItem = new TargetTreeItem({
             target: 'user@board',
             selected: true,
@@ -214,17 +291,23 @@ describe('target selection', () => {
 
         expect(targetStore.setSelected).toHaveBeenCalledWith(targetItem.target);
         expect(targetModel.selected).toBe(targetItem.target);
+        expect(targetModel.selectedTargetHealth).toEqual(loaded(undefined));
+        expect(targetModel.selectedTargetContainers).toEqual(loaded([]));
     });
 
     it('does nothing when select command is executed with a non-target item', async () => {
         const targetStore = mockTargetStore();
         const targetModel = new TargetModel();
-        const controller = new TargetController(targetModel, targetStore);
+        const { controller, topoCli } = createController(
+            targetModel,
+            targetStore,
+        );
 
         await controller.selectCommandHandler();
 
         expect(targetStore.setSelected).not.toHaveBeenCalled();
         expect(targetModel.selected).toBeUndefined();
+        expect(topoCli.health).not.toHaveBeenCalled();
     });
 });
 
@@ -236,7 +319,7 @@ describe('target removal', () => {
         });
         const targetStore = mockTargetStore([targetItem.target]);
         const targetModel = new TargetModel();
-        const controller = new TargetController(targetModel, targetStore);
+        const { controller } = createController(targetModel, targetStore);
 
         await controller.removeCommandHandler(targetItem);
 
@@ -254,7 +337,8 @@ describe('target removal', () => {
             removedTarget,
         );
         const targetModel = new TargetModel();
-        const controller = new TargetController(targetModel, targetStore);
+        targetModel.setSelected(removedTarget);
+        const { controller } = createController(targetModel, targetStore);
         const targetItem = new TargetTreeItem({
             target: removedTarget,
             selected: true,
@@ -269,7 +353,7 @@ describe('target removal', () => {
     it('does nothing when removeTarget is invoked with a non-target item', async () => {
         const targetStore = mockTargetStore();
         const targetModel = new TargetModel();
-        const controller = new TargetController(targetModel, targetStore);
+        const { controller } = createController(targetModel, targetStore);
 
         await controller.removeCommandHandler();
 
@@ -280,7 +364,7 @@ describe('target removal', () => {
     it('shows an error when deleteTarget fails', async () => {
         const targetStore = mockTargetStore();
         const targetModel = new TargetModel();
-        const controller = new TargetController(targetModel, targetStore);
+        const { controller } = createController(targetModel, targetStore);
         const targetItem = new TargetTreeItem({
             target: 'foo@bar.co',
             selected: true,
@@ -294,5 +378,139 @@ describe('target removal', () => {
             'Failed to remove target',
             error,
         );
+    });
+});
+
+describe('selected target data refresh', () => {
+    it('clears selected target data when no target is selected', async () => {
+        const targetStore = mockTargetStore();
+        const targetModel = new TargetModel();
+        targetModel.setSelectedTargetHealth(loaded(health.target));
+        targetModel.setSelectedTargetContainers(loaded([]));
+        const { controller, topoCli, containerCommands } = createController(
+            targetModel,
+            targetStore,
+        );
+
+        await controller.refreshSelectedTargetDataCommandHandler();
+
+        expect(targetModel.selectedTargetHealth).toEqual(loaded(undefined));
+        expect(targetModel.selectedTargetContainers).toEqual(loaded([]));
+        expect(topoCli.health).not.toHaveBeenCalled();
+        expect(containerCommands.getContainers).not.toHaveBeenCalled();
+    });
+
+    it('loads health and containers for the selected target', async () => {
+        const targetStore = mockTargetStore([target], target);
+        const targetModel = new TargetModel();
+        targetModel.setSelected(target);
+        const { controller, topoCli, containerCommands } = createController(
+            targetModel,
+            targetStore,
+        );
+        containerCommands.getContainers.mockResolvedValue([dockerPsItem]);
+        containerCommands.inspectContainers.mockResolvedValue([
+            dockerInspectItem,
+        ]);
+
+        await controller.refreshSelectedTargetDataCommandHandler();
+
+        expect(targetModel.selectedTargetContainers).toStrictEqual(
+            loaded([
+                {
+                    id: dockerPsItem.ID,
+                    name: dockerPsItem.Names,
+                    image: dockerPsItem.Image,
+                    state: dockerPsItem.State,
+                    status: dockerPsItem.Status,
+                    labels: dockerPsItem.Labels,
+                    runningFor: dockerPsItem.RunningFor,
+                    createdAt: dockerPsItem.CreatedAt,
+                    runtime: dockerInspectItem.HostConfig.Runtime,
+                    annotations: dockerInspectItem.HostConfig.Annotations,
+                    ports: dockerInspectItem.NetworkSettings.Ports,
+                    target,
+                },
+            ]),
+        );
+        expect(targetModel.selectedTargetHealth).toStrictEqual(
+            loaded(health.target),
+        );
+        expect(topoCli.health).toHaveBeenCalledWith(target);
+        expect(containerCommands.getContainers).toHaveBeenCalledWith(target);
+        expect(containerCommands.inspectContainers).toHaveBeenCalledWith(
+            [dockerPsItem.ID],
+            target,
+        );
+    });
+
+    it('treats container engine dependency error as error when loading containers', async () => {
+        const unhealthyContainerEngineHealth: HealthCheck = {
+            ...health,
+            target: {
+                ...health.target,
+                dependencies: [
+                    {
+                        name: 'Container Engine',
+                        status: 'error',
+                        value: 'missing',
+                        fix: {
+                            description: 'Install container engine',
+                        },
+                    },
+                ],
+            },
+        };
+        const targetStore = mockTargetStore([target], target);
+        const targetModel = new TargetModel();
+        targetModel.setSelected(target);
+        const { controller, topoCli, containerCommands } = createController(
+            targetModel,
+            targetStore,
+        );
+        topoCli.health.mockResolvedValue(unhealthyContainerEngineHealth);
+
+        await controller.refreshSelectedTargetDataCommandHandler();
+
+        expect(targetModel.selectedTargetContainers).toStrictEqual({
+            status: 'errored',
+            error: new Error('Install container engine'),
+            loading: false,
+        });
+        expect(containerCommands.getContainers).not.toHaveBeenCalled();
+        expect(containerCommands.inspectContainers).not.toHaveBeenCalled();
+    });
+
+    it('sets empty containers when selected target health is disconnected', async () => {
+        const disconnectedHealth: HealthCheck = {
+            ...health,
+            target: {
+                ...health.target,
+                connectivity: {
+                    name: 'Connectivity',
+                    status: 'error',
+                    value: 'unreachable',
+                    fix: {
+                        description: 'Connect the target',
+                    },
+                },
+            },
+        };
+        const targetStore = mockTargetStore([target], target);
+        const targetModel = new TargetModel();
+        targetModel.setSelected(target);
+        const { controller, topoCli, containerCommands } = createController(
+            targetModel,
+            targetStore,
+        );
+        topoCli.health.mockResolvedValue(disconnectedHealth);
+
+        await controller.refreshSelectedTargetDataCommandHandler();
+
+        expect(targetModel.selectedTargetHealth).toStrictEqual(
+            loaded(disconnectedHealth.target),
+        );
+        expect(targetModel.selectedTargetContainers).toStrictEqual(loaded([]));
+        expect(containerCommands.getContainers).not.toHaveBeenCalled();
     });
 });
