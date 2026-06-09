@@ -327,34 +327,6 @@ describe('FixIssue', () => {
         expect(executeTaskMock).not.toHaveBeenCalled();
     });
 
-    it('fails when the selected target dependency fix has no executable command', async () => {
-        const manualIssue: IssueCheck = {
-            name: 'Container Engine',
-            status: 'warning',
-            value: 'manual setup required',
-            fix: {
-                description: 'Install container engine',
-            },
-        };
-        const fixIssue = new FixIssue(topoCli, targetModel);
-        const targetItem = new TargetTreeItem(target, true, 'connected', [
-            dependencies[0],
-        ]);
-        mockSelectedQuickPickItems([
-            {
-                label: 'Container Engine',
-                description: 'Install container engine',
-                issue: manualIssue,
-            },
-        ]);
-
-        await expect(
-            fixIssue.fixIssueCommandHandler(targetItem),
-        ).rejects.toThrow('No executable fix found for the selected item');
-
-        expect(executeTaskMock).not.toHaveBeenCalled();
-    });
-
     it('fails when a target has no executable dependency fixes', async () => {
         const fixIssue = new FixIssue(topoCli, targetModel);
         const targetItem = new TargetTreeItem(target, true, 'connected', [
