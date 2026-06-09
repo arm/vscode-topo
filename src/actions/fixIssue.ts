@@ -91,7 +91,7 @@ export class FixIssue {
             getIssueFixQuickPickItems(issues),
             {
                 canPickMany: true,
-                placeHolder: `Select dependency fixes for ${target}`,
+                placeHolder: `Select fixes for ${target}`,
             },
         );
 
@@ -127,7 +127,7 @@ export class FixIssue {
         try {
             await executeTask(`Fix ${issueName} on ${target}`, commandArgs);
             vscode.window.showInformationMessage(
-                `${issueName} was fixed on target ${target}`,
+                `${issueName} fixed on target ${target}`,
             );
         } catch (err) {
             showAndLogError(

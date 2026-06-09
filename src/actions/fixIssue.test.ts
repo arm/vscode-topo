@@ -160,7 +160,7 @@ describe('FixIssue', () => {
             ],
             {
                 canPickMany: true,
-                placeHolder: `Select dependency fixes for ${target}`,
+                placeHolder: `Select fixes for ${target}`,
             },
         );
         expect(executeTaskMock).toHaveBeenCalledWith(
@@ -233,7 +233,7 @@ describe('FixIssue', () => {
             ],
             {
                 canPickMany: true,
-                placeHolder: `Select dependency fixes for ${target}`,
+                placeHolder: `Select fixes for ${target}`,
             },
         );
         expect(executeTaskMock).toHaveBeenCalledWith(
