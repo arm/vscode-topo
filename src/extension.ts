@@ -104,7 +104,7 @@ export async function activate(
         targetController,
         selectedTargetRefreshLoop,
         targetStore.onExternalTargetsChanged(() =>
-            targetController.updateFromTargetStore(),
+            targetController.updateTargetsFromStore(),
         ),
         targetModel.onSelectedChanged(() => {
             targetController.refreshSelectedTargetDataCommandHandler();
@@ -147,7 +147,7 @@ export async function activate(
         vscode.window.registerUriHandler(protocolHandler),
     );
 
-    targetController.activate();
+    targetController.updateTargetsFromStore();
     topoCli.activate();
     selectedTargetRefreshLoop.start();
 }

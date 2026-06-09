@@ -148,11 +148,7 @@ export class TargetController {
         this.disposables.collect(this.selectedTargetDataRefresh);
     }
 
-    public activate(): void {
-        this.updateFromTargetStore();
-    }
-
-    public updateFromTargetStore(): void {
+    public updateTargetsFromStore(): void {
         this.model.setTargets([...this.targetStore.getTargets()]);
         this.model.setSelected(this.targetStore.getSelectedTarget());
     }
@@ -163,7 +159,7 @@ export class TargetController {
         }
 
         await this.targetStore.setSelected(treeNode.target);
-        this.updateFromTargetStore();
+        this.updateTargetsFromStore();
     }
 
     public async removeCommandHandler(treeNode?: unknown): Promise<void> {
@@ -173,7 +169,7 @@ export class TargetController {
 
         try {
             await this.targetStore.deleteTarget(treeNode.target);
-            this.updateFromTargetStore();
+            this.updateTargetsFromStore();
         } catch (err) {
             const errorMessage = `Failed to remove target`;
             showAndLogError(errorMessage, err);
@@ -200,7 +196,7 @@ export class TargetController {
             throw error;
         }
         await this.targetStore.setSelected(target);
-        this.updateFromTargetStore();
+        this.updateTargetsFromStore();
     }
 
     public async refreshSelectedTargetDataCommandHandler(): Promise<void> {

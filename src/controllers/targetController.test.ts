@@ -157,12 +157,12 @@ describe('buildQuickPickItems', () => {
     });
 });
 
-describe('activation', () => {
-    it('loads targets and selected target into the model on activation', () => {
+describe('load from store', () => {
+    it('loads targets and selected target into the model from the store', () => {
         const targetStore = mockTargetStore(['host-a', 'host-b'], 'host-b');
         const targetModel = new TargetModel();
         const { controller } = createController(targetModel, targetStore);
-        controller.activate();
+        controller.updateTargetsFromStore();
 
         expect(targetModel.targets).toEqual(['host-a', 'host-b']);
         expect(targetModel.selected).toBe('host-b');
