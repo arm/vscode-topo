@@ -6,7 +6,7 @@ import { ContainerItem, DockerInspectItem, DockerPsItem } from '../util/types';
 import { showAndLogError } from '../util/showAndLogError';
 import { logger } from '../util/logger';
 import { errored, Loadable, loaded, loading } from '../util/loadable';
-import { TargetHealthCheck } from '../topoCliSchema';
+import { HealthCheck, TargetHealthCheck } from '../topoCliSchema';
 import { SelectedTargetModel } from '../models/selectedTargetModel';
 
 function createContainerItem(
@@ -37,18 +37,14 @@ async function loadTargetHealth(
     topoCli: TopoCli,
     target: string,
 ): Promise<Loadable<TargetHealthCheck>> {
+    let health: HealthCheck;
     try {
-        const health = await topoCli.health(target);
-        if (health.target.connectivity.status === 'error') {
-            return errored(
-                health.target.connectivity.fix?.description ??
-                    'Failed to connect',
-            );
-        }
-        return loaded(health.target);
+        health = await topoCli.health(target);
     } catch (err) {
         return errored(err);
     }
+
+    return loaded(health.target);
 }
 
 async function loadContainersData(
