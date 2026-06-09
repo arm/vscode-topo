@@ -142,7 +142,9 @@ export class TargetController {
         private readonly targetStore: TargetStore,
         private readonly topoCli: TopoCli,
         private readonly containerCommands: ContainerCommands,
-    ) {
+    ) {}
+
+    public activate(): void {
         this.updateFromTargetStore();
     }
 

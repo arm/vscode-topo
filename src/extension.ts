@@ -147,6 +147,7 @@ export async function activate(
         vscode.window.registerUriHandler(protocolHandler),
     );
 
+    targetController.activate();
     topoCli.activate();
     selectedTargetRefreshLoop.start();
 }
