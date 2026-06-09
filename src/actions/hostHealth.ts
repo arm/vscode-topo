@@ -4,7 +4,7 @@ import { TopoCli } from '../topoCli';
 import { DisposableCollector } from '../util/disposableCollector';
 import { showAndLogError } from '../util/showAndLogError';
 import { TransientDocumentProvider } from '../util/transientDocumentProvider';
-import { HostHealthCheckResult } from '../topoCliSchema';
+import { HostHealthCheck } from '../topoCliSchema';
 
 export class HostHealth implements vscode.Disposable {
     public static readonly inspectHostHealthCommand = `${manifest.PACKAGE_NAME}.inspectHostHealth`;
@@ -26,7 +26,7 @@ export class HostHealth implements vscode.Disposable {
     }
 
     public async inspectHealthCommandHandler(): Promise<void> {
-        let health: HostHealthCheckResult;
+        let health: HostHealthCheck;
         try {
             health = await this.topoCli.hostHealth();
         } catch (err) {

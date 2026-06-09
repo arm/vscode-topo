@@ -12,7 +12,7 @@ import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
 import { ContainerItem, TargetState } from '../util/types';
 import { errored, Loadable, loaded } from '../util/loadable';
-import { TargetHealthCheckResult } from '../topoCliSchema';
+import { TargetHealthCheck } from '../topoCliSchema';
 
 function compareByName(a: { name: string }, b: { name: string }): number {
     return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
@@ -46,14 +46,12 @@ function filterContainersForGroup(
 
 function targetHealthLoadable(
     state: TargetState,
-): Loadable<TargetHealthCheckResult | undefined> {
+): Loadable<TargetHealthCheck | undefined> {
     if (state.status === 'connected') {
         return loaded(state.health);
     }
     if (state.status === 'error') {
-        return errored(
-            state.health?.connectivity.value ?? 'Target health not available',
-        );
+        return errored('Target health not available');
     }
     return loaded(undefined, true);
 }
@@ -133,11 +131,7 @@ export class TargetTreeView
         }
 
         if (element instanceof TargetTreeItem) {
-            if (
-                !element.selected ||
-                element.health.status !== 'loaded' ||
-                !element.health.data
-            ) {
+            if (!element.selected || !element.connected) {
                 return [];
             }
             const containers = await this.containersManager.getContainersData(
@@ -146,7 +140,7 @@ export class TargetTreeView
             const sortedContainers = [...containers].sort(compareContainers);
 
             const dependenciesGroup = new HealthCheckDependencyGroupTreeItem(
-                loaded(element.visibleDependencies, element.health.loading),
+                loaded(element.visibleIssues, element.health.loading),
             );
             const subsystemsGroup = new TargetSubsystemGroupTreeItem(
                 element.target,

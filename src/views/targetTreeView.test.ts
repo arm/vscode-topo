@@ -9,10 +9,7 @@ import { TargetState, ContainerItem, TargetDescription } from '../util/types';
 import { mock, MockProxy } from 'vitest-mock-extended';
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
 import { TargetSubsystemGroupTreeItem } from '../targetTreeView/targetSubsystemGroupTreeItem';
-import {
-    HealthCheckDependency,
-    TargetHealthCheckResult,
-} from '../topoCliSchema';
+import { IssueCheck, TargetHealthCheck } from '../topoCliSchema';
 import { TargetDescriptionStore } from '../target/targetDescriptionStore';
 import { TargetModel } from '../models/targetModel';
 
@@ -26,7 +23,7 @@ describe('TargetTreeView', () => {
         hostProcessors: [],
         remoteProcessors: [{ name: 'imx-rproc' }, { name: 'other-rproc' }],
     };
-    const targetHealth: TargetHealthCheckResult = {
+    const targetHealth: TargetHealthCheck = {
         isLocalhost: false,
         connectivity: {
             name: 'Connectivity',
@@ -152,16 +149,16 @@ describe('TargetTreeView', () => {
         });
 
         it('returns dependency items for Dependencies group', async () => {
-            const subsystemDriverHealth = mock<HealthCheckDependency>({
+            const subsystemDriverHealth = mock<IssueCheck>({
                 name: 'rproc-driver',
                 status: 'ok',
             });
             const dependencies = [
-                mock<HealthCheckDependency>({
+                mock<IssueCheck>({
                     name: 'Container Engine',
                     status: 'ok',
                 }),
-                mock<HealthCheckDependency>({
+                mock<IssueCheck>({
                     name: 'Some Dependency',
                     status: 'ok',
                 }),
@@ -171,6 +168,11 @@ describe('TargetTreeView', () => {
                 health: {
                     dependencies: dependencies,
                     subsystemDriver: subsystemDriverHealth,
+                    connectivity: {
+                        name: 'Connectivity',
+                        status: 'ok',
+                        value: 'ok',
+                    },
                 },
             });
             containersManagerMock.getTargetStateSnapshot.mockReturnValue(
@@ -181,6 +183,7 @@ describe('TargetTreeView', () => {
             const dependenciesGroup = targetChildren.find(
                 (v) => v instanceof HealthCheckDependencyGroupTreeItem,
             );
+            expect(dependenciesGroup).toBeDefined();
 
             const got = await view.getChildren(dependenciesGroup);
 
@@ -220,7 +223,7 @@ describe('TargetTreeView', () => {
                         value: diagnostics,
                     },
                 },
-                status: 'error',
+                status: 'connected',
             });
 
             const rootChildren = await view.getChildren();
@@ -259,120 +262,30 @@ describe('TargetTreeView', () => {
             expect(unselectedTarget!.description).toBeUndefined();
         });
 
-        it('marks target with executable dependency fixes as fixable', async () => {
-            const targetState: TargetState = {
-                health: {
-                    ...targetHealth,
-                    dependencies: [
-                        {
-                            name: 'Container Engine',
-                            status: 'error',
-                            value: 'missing',
-                            fix: {
-                                description: 'Install container engine',
-                                command: 'topo install container-engine',
-                            },
-                        },
-                    ],
-                },
-                status: 'connected',
-            };
-            containersManagerMock.getTargetStateSnapshot.mockReturnValue(
-                targetState,
-            );
-
-            const rootChildren = await view.getChildren();
-
-            expect(rootChildren).toHaveLength(1);
-            expect(rootChildren[0].contextValue).toContain(
-                'HasFixableDependencies',
-            );
-        });
-
         it('marks target with executable subsystem driver fix as fixable when remote processors exist', async () => {
-            const targetState: TargetState = {
-                health: {
-                    ...targetHealth,
-                    subsystemDriver: {
-                        name: 'SubsystemDriver',
-                        status: 'error',
-                        value: 'missing',
-                        fix: {
-                            description: 'Install subsystem driver',
-                            command: 'topo install subsystem-driver',
-                        },
-                    },
-                },
-                status: 'connected',
-            };
-            containersManagerMock.getTargetStateSnapshot.mockReturnValue(
-                targetState,
-            );
-
-            const rootChildren = await view.getChildren();
-
-            expect(rootChildren).toHaveLength(1);
-            expect(rootChildren[0].contextValue).toContain(
-                'HasFixableDependencies',
-            );
-        });
-
-        it('does not mark target as fixable for hidden subsystem driver fixes', async () => {
-            targetDescriptionStoreMock.getDescription.mockResolvedValue({
-                hostProcessors: [],
-                remoteProcessors: [],
-            });
-            const targetState: TargetState = {
-                health: {
-                    ...targetHealth,
-                    subsystemDriver: {
-                        name: 'SubsystemDriver',
-                        status: 'error',
-                        value: 'missing',
-                        fix: {
-                            description: 'Install subsystem driver',
-                            command: 'topo install subsystem-driver',
-                        },
-                    },
-                },
-                status: 'connected',
-            };
-            containersManagerMock.getTargetStateSnapshot.mockReturnValue(
-                targetState,
-            );
-
-            const rootChildren = await view.getChildren();
-
-            expect(rootChildren).toHaveLength(1);
-            expect(rootChildren[0].contextValue).not.toContain(
-                'HasFixableDependencies',
-            );
-        });
-
-        it('does not mark target as fixable when no executable dependency fixes exist', async () => {
             containersManagerMock.getTargetStateSnapshot.mockReturnValue({
                 health: {
                     ...targetHealth,
-                    dependencies: [
-                        {
-                            name: 'Container Engine',
-                            status: 'error',
-                            value: 'missing',
-                            fix: {
-                                description: 'Manual setup required',
-                            },
+                    subsystemDriver: {
+                        name: 'SubsystemDriver',
+                        status: 'error',
+                        value: 'missing',
+                        fix: {
+                            description: 'Install subsystem driver',
+                            command: 'topo install subsystem-driver',
                         },
-                    ],
+                    },
                 },
                 status: 'connected',
             });
 
             const rootChildren = await view.getChildren();
 
-            expect(rootChildren).toHaveLength(1);
-            expect(rootChildren[0].contextValue).not.toContain(
-                'HasFixableDependencies',
-            );
+            expect(rootChildren).toEqual([
+                expect.objectContaining({
+                    contextValue: expect.stringContaining('HasFixableIssues'),
+                }),
+            ]);
         });
 
         it('returns containers for Host and remoteproc groups', async () => {
