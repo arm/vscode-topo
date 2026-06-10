@@ -4,6 +4,7 @@ import { loaded } from '../util/loadable';
 import { TargetModel } from './targetModel';
 
 const targetHealth: TargetHealthCheck = {
+    destination: 'ssh://target',
     isLocalhost: false,
     connectivity: {
         name: 'Connectivity',
