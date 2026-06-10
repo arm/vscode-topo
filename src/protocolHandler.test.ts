@@ -1,35 +1,42 @@
 import * as vscode from 'vscode';
 import path from 'node:path';
-import { mock } from 'vitest-mock-extended';
 import { ProtocolHandler } from './protocolHandler';
-import { TopoCli } from './topoCli';
 import { mutable } from './util/mutable';
 import { showAndLogError } from './util/showAndLogError';
-import { executeTask } from './util/executeTask';
+import { TaskExecutor } from './util/taskExecutor';
+import { MockProxy, mock } from 'vitest-mock-extended';
 
 vi.mock('./util/showAndLogError', () => ({
     showAndLogError: vi.fn(),
 }));
-vi.mock('./util/executeTask');
 
 const showAndLogErrorSpy = vi.mocked(showAndLogError);
-const executeTaskMock = vi.mocked(executeTask);
 
-const workspacePath = path.join('home', 'workspace');
+const workspacePath = path.resolve('home', 'workspace');
 const workspaceUri = vscode.Uri.file(workspacePath);
 const workspaceFolders = [{ uri: workspaceUri, name: 'workspace', index: 0 }];
-const destinationPath = path.join('home', 'destination');
+const destinationPath = path.resolve('home', 'destination');
 const destinationUri = vscode.Uri.file(destinationPath);
-const topoBinaryPath = path.join('fake', 'extension', 'resources', 'topo');
 
 describe('ProtocolHandler', () => {
     let protocolHandler: ProtocolHandler;
-    const topoCli = mock<TopoCli>();
+    let taskExecutor: MockProxy<TaskExecutor>;
+
+    function expectCloneTask(projectName: string, args: string[]): void {
+        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+        const task = taskExecutor.run.mock.calls[0][0];
+        expect(task.name).toBe(`Clone ${projectName}`);
+        expect(task.execution).toMatchObject({
+            process: 'topo',
+            args,
+            options: { cwd: undefined },
+        });
+    }
 
     beforeEach(() => {
         vi.resetAllMocks();
-        topoCli.getBinaryPath.mockReturnValue(topoBinaryPath);
-        protocolHandler = new ProtocolHandler(topoCli);
+        taskExecutor = mock<TaskExecutor>();
+        protocolHandler = new ProtocolHandler(taskExecutor);
         mutable(vscode.workspace).workspaceFolders = undefined;
     });
 
@@ -44,8 +51,7 @@ describe('ProtocolHandler', () => {
         );
 
         expect(vscode.window.showOpenDialog).not.toHaveBeenCalled();
-        expect(executeTaskMock).toHaveBeenCalledWith('Clone repo', [
-            topoBinaryPath,
+        expectCloneTask('repo', [
             'clone',
             'git:https://example.com/repo.git',
             path.join(workspaceUri.fsPath, 'repo'),
@@ -74,8 +80,7 @@ describe('ProtocolHandler', () => {
             canSelectMany: false,
             openLabel: 'Select Destination Folder',
         });
-        expect(executeTaskMock).toHaveBeenCalledWith('Clone repo', [
-            topoBinaryPath,
+        expectCloneTask('repo', [
             'clone',
             'git:https://example.com/repo.git',
             path.join(destinationUri.fsPath, 'repo'),
@@ -85,7 +90,7 @@ describe('ProtocolHandler', () => {
     it('shows an error when the clone task throws', async () => {
         mutable(vscode.workspace).workspaceFolders = workspaceFolders;
         const err = new Error('task fail');
-        executeTaskMock.mockRejectedValueOnce(err);
+        taskExecutor.run.mockRejectedValueOnce(err);
         vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
 
         await protocolHandler.handleUri(
@@ -113,8 +118,7 @@ describe('ProtocolHandler', () => {
             ),
         );
 
-        expect(executeTaskMock).toHaveBeenCalledWith('Clone repo', [
-            topoBinaryPath,
+        expectCloneTask('repo', [
             'clone',
             'https://example.com/repo.git',
             path.join(workspaceUri.fsPath, 'repo'),
@@ -135,8 +139,7 @@ describe('ProtocolHandler', () => {
             }),
         );
 
-        expect(executeTaskMock).toHaveBeenCalledWith('Clone repo', [
-            topoBinaryPath,
+        expectCloneTask('repo', [
             'clone',
             'https://example.com/repo.git',
             path.join(workspaceUri.fsPath, 'repo'),
@@ -158,15 +161,11 @@ describe('ProtocolHandler', () => {
             ),
         );
 
-        expect(executeTaskMock).toHaveBeenCalledWith(
-            'Clone topo-lightbulb-moment',
-            [
-                topoBinaryPath,
-                'clone',
-                'https://github.com/Arm-Examples/topo-lightbulb-moment',
-                path.join(workspaceUri.fsPath, 'topo-lightbulb-moment'),
-            ],
-        );
+        expectCloneTask('topo-lightbulb-moment', [
+            'clone',
+            'https://github.com/Arm-Examples/topo-lightbulb-moment',
+            path.join(workspaceUri.fsPath, 'topo-lightbulb-moment'),
+        ]);
     });
 
     it('does not attempt clone when source is missing', async () => {
@@ -174,7 +173,7 @@ describe('ProtocolHandler', () => {
             vscode.Uri.parse('vscode://arm.topo/clone?model=test-model'),
         );
 
-        expect(executeTaskMock).not.toHaveBeenCalled();
+        expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
     });
 
@@ -185,7 +184,7 @@ describe('ProtocolHandler', () => {
 
         await protocolHandler.handleUri(uri);
 
-        expect(executeTaskMock).not.toHaveBeenCalled();
+        expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
             `Invalid URI: ${uri.toString()}`,
         );
@@ -203,7 +202,7 @@ describe('ProtocolHandler', () => {
         );
         expect(vscode.window.showOpenDialog).not.toHaveBeenCalled();
         expect(vscode.window.showInputBox).not.toHaveBeenCalled();
-        expect(executeTaskMock).not.toHaveBeenCalled();
+        expect(taskExecutor.run).not.toHaveBeenCalled();
     });
 
     it('forwards repeated query params as array clone options', async () => {
@@ -216,8 +215,7 @@ describe('ProtocolHandler', () => {
             ),
         );
 
-        expect(executeTaskMock).toHaveBeenCalledWith('Clone repo', [
-            topoBinaryPath,
+        expectCloneTask('repo', [
             'clone',
             'https://github.com/Arm-Examples/topo-lightbulb-moment',
             path.join(workspaceUri.fsPath, 'repo'),

@@ -1,17 +1,11 @@
 import path from 'node:path';
 import os from 'node:os';
 import * as vscode from 'vscode';
-import { Deploy, deploy as deployServices } from './deploy';
-import { executeTask } from '../util/executeTask';
+import { Deploy, createDeployTask, deploy as deployServices } from './deploy';
 import { TargetModel } from '../models/targetModel';
-import { TopoCli } from '../topoCli';
 import { MockProxy, mock } from 'vitest-mock-extended';
 import { mutable } from '../util/mutable';
-
-vi.mock('../util/logger');
-vi.mock('../util/executeTask');
-
-const executeTaskMock = vi.mocked(executeTask);
+import { TaskExecutor } from '../util/taskExecutor';
 
 describe('Deploy', () => {
     let deployAction: Deploy;
@@ -24,9 +18,24 @@ describe('Deploy', () => {
     );
     const composeFilePath = composeFileUri.fsPath;
     const target = 'topo.local';
-    const topoBinaryPath = '/fake/extension/resources/topo';
-    let topoCli: MockProxy<TopoCli>;
+    let taskExecutor: MockProxy<TaskExecutor>;
     let targetModel: TargetModel;
+
+    function expectDeployTask(task: vscode.Task, cwd: string): void {
+        expect(task.name).toBe('Deploy to topo.local');
+        expect(task.presentationOptions).toEqual({
+            reveal: vscode.TaskRevealKind.Always,
+            echo: true,
+            focus: true,
+            showReuseMessage: true,
+            clear: true,
+        });
+        expect(task.execution).toMatchObject({
+            process: 'topo',
+            args: ['deploy', '--target', target],
+            options: { cwd },
+        });
+    }
 
     function mockWorkspaceFolders(
         workspaceFolders: vscode.WorkspaceFolder[],
@@ -41,8 +50,7 @@ describe('Deploy', () => {
     }
 
     beforeEach(() => {
-        topoCli = mock<TopoCli>();
-        topoCli.getBinaryPath.mockReturnValue(topoBinaryPath);
+        taskExecutor = mock<TaskExecutor>();
         targetModel = new TargetModel();
         targetModel.setSelected(target);
         vi.mocked(vscode.workspace.findFiles).mockResolvedValue([]);
@@ -50,7 +58,7 @@ describe('Deploy', () => {
             undefined,
         );
         mutable(vscode.workspace).workspaceFolders = undefined;
-        deployAction = new Deploy(topoCli, targetModel);
+        deployAction = new Deploy(taskExecutor, targetModel);
     });
 
     afterEach(() => {
@@ -67,7 +75,7 @@ describe('Deploy', () => {
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
             'Error executing deploy command. No target selected. Please select a target before deploying.',
         );
-        expect(executeTaskMock).not.toHaveBeenCalled();
+        expect(taskExecutor.run).not.toHaveBeenCalled();
     });
 
     it('shows an error when target is selected but no compose files are found', async () => {
@@ -80,22 +88,28 @@ describe('Deploy', () => {
             'No compose.yaml or compose.yml files found in the workspace.',
         );
         expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
-        expect(executeTaskMock).not.toHaveBeenCalled();
+        expect(taskExecutor.run).not.toHaveBeenCalled();
+    });
+
+    it('builds a deploy task with the topo command name', () => {
+        const task = createDeployTask(composeFilePath, target);
+
+        expectDeployTask(task, path.dirname(composeFilePath));
     });
 
     it('handles successful deploy operation', async () => {
-        await deployServices(topoBinaryPath, composeFilePath, target);
+        await deployServices(taskExecutor, composeFilePath, target);
 
-        expect(executeTaskMock).toHaveBeenCalledWith(
-            'Deploy to topo.local',
-            [topoBinaryPath, 'deploy', '--target', 'topo.local'],
-            { cwd: path.dirname(composeFilePath) },
+        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+        expectDeployTask(
+            taskExecutor.run.mock.calls[0][0],
+            path.dirname(composeFilePath),
         );
     });
 
     it('handles task failure', async () => {
-        executeTaskMock.mockRejectedValueOnce(new Error('deploy failed'));
-        await deployServices(topoBinaryPath, composeFilePath, target);
+        taskExecutor.run.mockRejectedValueOnce(new Error('deploy failed'));
+        await deployServices(taskExecutor, composeFilePath, target);
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
             'Deployment to topo.local failed: deploy failed',
@@ -106,10 +120,10 @@ describe('Deploy', () => {
         const op = deployAction.deployContextCommandHandler(composeFileUri);
 
         await expect(op).resolves.toBeUndefined();
-        expect(executeTaskMock).toHaveBeenCalledWith(
-            'Deploy to topo.local',
-            [topoBinaryPath, 'deploy', '--target', 'topo.local'],
-            { cwd: path.dirname(composeFilePath) },
+        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+        expectDeployTask(
+            taskExecutor.run.mock.calls[0][0],
+            path.dirname(composeFilePath),
         );
     });
 
@@ -123,7 +137,7 @@ describe('Deploy', () => {
         expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
         expect(vscode.workspace.findFiles).not.toHaveBeenCalled();
         expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
-        expect(executeTaskMock).not.toHaveBeenCalled();
+        expect(taskExecutor.run).not.toHaveBeenCalled();
     });
 
     it('prompts for and deploys the selected compose file when running the deploy command', async () => {
@@ -149,10 +163,10 @@ describe('Deploy', () => {
                 placeHolder: 'Select a compose file to deploy',
             },
         );
-        expect(executeTaskMock).toHaveBeenCalledWith(
-            'Deploy to topo.local',
-            [topoBinaryPath, 'deploy', '--target', 'topo.local'],
-            { cwd: workspaceUri.fsPath },
+        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+        expectDeployTask(
+            taskExecutor.run.mock.calls[0][0],
+            workspaceUri.fsPath,
         );
     });
 
@@ -165,6 +179,6 @@ describe('Deploy', () => {
 
         await deployAction.deployCommandHandler();
 
-        expect(executeTaskMock).not.toHaveBeenCalled();
+        expect(taskExecutor.run).not.toHaveBeenCalled();
     });
 });
