@@ -1,6 +1,7 @@
 {
     "name": "topo",
     "displayName": "Topo",
+    "icon": "media/topo.png",
     "publisher": "arm",
     "description": "",
     "license": "Apache-2.0",
