@@ -9,7 +9,6 @@ import { TargetController } from './controllers/targetController';
 import { ProjectInit } from './actions/projectInit';
 import { Deploy } from './actions/deploy';
 import { Stop } from './actions/stop';
-import { ContainerOpenInBrowser } from './actions/containerOpenInBrowser';
 import { AttachVsCode } from './actions/attachVsCode';
 import { AttachShell } from './actions/attachShell';
 import { ContainerStart } from './actions/containerStart';
@@ -28,7 +27,6 @@ describe('commands', () => {
         projectClone: mock<ProjectClone>(),
         deploy: mock<Deploy>(),
         stop: mock<Stop>(),
-        containerOpenInBrowser: mock<ContainerOpenInBrowser>(),
         attachVsCode: mock<AttachVsCode>(),
         attachShell: mock<AttachShell>(),
         containerStart: mock<ContainerStart>(),
@@ -82,10 +80,6 @@ describe('commands', () => {
                 handlers.deploy.deployContextCommandHandler,
             ],
             [commands.stop, handlers.stop.stopCommandHandler],
-            [
-                commands.openInBrowser,
-                handlers.containerOpenInBrowser.openInBrowserCommandHandler,
-            ],
             [
                 commands.attachVsCode,
                 handlers.attachVsCode.attachVsCodeCommandHandler,
