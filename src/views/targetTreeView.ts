@@ -8,11 +8,11 @@ import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDepe
 import { TargetProcessingDomainGroupTreeItem } from '../targetTreeView/targetProcessingDomainGroupTreeItem';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 import { TargetDescriptionStore } from '../target/targetDescriptionStore';
-import { getVisibleTargetIssues } from '../target/getVisibleTargetIssues';
 import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
 import { ContainerItem, TargetState } from '../util/types';
-import { loaded } from '../util/loadable';
+import { errored, Loadable, loaded } from '../util/loadable';
+import { TargetHealthCheck } from '../topoCliSchema';
 
 function compareByName(a: { name: string }, b: { name: string }): number {
     return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
@@ -48,6 +48,18 @@ const PRIMARY_OS_PROCESSING_DOMAIN = {
     id: 'PrimaryOS',
     label: 'Primary OS',
 };
+
+function targetHealthLoadable(
+    state: TargetState,
+): Loadable<TargetHealthCheck | undefined> {
+    if (state.status === 'connected') {
+        return loaded(state.health);
+    }
+    if (state.status === 'error') {
+        return errored('Target health not available');
+    }
+    return loaded(undefined, true);
+}
 
 export class TargetTreeView
     implements vscode.TreeDataProvider<vscode.TreeItem>, vscode.Disposable
@@ -93,29 +105,28 @@ export class TargetTreeView
             const targetTreeItems: TargetTreeItem[] = [];
             for (const target of this.targetModel.targets) {
                 const selected = target === selectedTarget;
-
                 const state: TargetState = selected
                     ? this.containersManager.getTargetStateSnapshot(target)
                     : { status: 'disconnected', health: undefined };
-
-                const description = state.health
-                    ? await this.targetDescriptionStore.getDescription(target)
+                const health = selected
+                    ? targetHealthLoadable(state)
                     : undefined;
-                const visibleIssues = state.health
-                    ? getVisibleTargetIssues(state.health, description)
-                    : [];
-                const remoteProcessorNames =
-                    description?.remoteProcessors.map((rp) => rp.name) ?? [];
+                const description =
+                    health?.status === 'loaded' && health.data
+                        ? await this.targetDescriptionStore.getDescription(
+                              target,
+                          )
+                        : undefined;
 
                 targetTreeItems.push(
-                    new TargetTreeItem(
+                    new TargetTreeItem({
                         target,
                         selected,
-                        state.status,
-                        visibleIssues,
-                        remoteProcessorNames,
-                        state.health?.connectivity,
-                    ),
+                        health,
+                        targetDescription: description
+                            ? loaded(description)
+                            : undefined,
+                    }),
                 );
             }
             const sortedTargetTreeItems = targetTreeItems.sort((a, b) =>
@@ -125,7 +136,7 @@ export class TargetTreeView
         }
 
         if (element instanceof TargetTreeItem) {
-            if (!element.selected || element.status !== 'connected') {
+            if (!element.selected || !element.connected) {
                 return [];
             }
             const containers = await this.containersManager.getContainersData(
@@ -133,16 +144,15 @@ export class TargetTreeView
             );
             const sortedContainers = [...containers].sort(compareContainers);
 
-            return [
-                new HealthCheckDependencyGroupTreeItem(
-                    loaded(element.visibleIssues),
-                ),
-                new TargetProcessingDomainGroupTreeItem(
-                    element.target,
-                    element.remoteProcessorNames,
-                    sortedContainers,
-                ),
-            ];
+            const dependenciesGroup = new HealthCheckDependencyGroupTreeItem(
+                loaded(element.visibleIssues, element.health.loading),
+            );
+            const subsystemsGroup = new TargetProcessingDomainGroupTreeItem(
+                element.target,
+                element.remoteProcessorNames,
+                sortedContainers,
+            );
+            return [dependenciesGroup, subsystemsGroup];
         }
 
         if (element instanceof HealthCheckDependencyGroupTreeItem) {
