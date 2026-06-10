@@ -99,12 +99,6 @@
                 "category": "Topo"
             },
             {
-                "command": "topo.inspectTargetHealth",
-                "title": "Inspect Health",
-                "icon": "$(pulse)",
-                "category": "Topo"
-            },
-            {
                 "command": "topo.fixDependencyIssue",
                 "title": "Fix",
                 "icon": "$(wrench)",
@@ -114,12 +108,6 @@
                 "command": "topo.fixTargetIssues",
                 "title": "Fix Issues",
                 "icon": "$(wrench)",
-                "category": "Topo"
-            },
-            {
-                "command": "topo.inspectHostHealth",
-                "title": "Inspect Host Health",
-                "icon": "$(pulse)",
                 "category": "Topo"
             },
             {
@@ -220,10 +208,6 @@
                     "when": "false"
                 },
                 {
-                    "command": "topo.inspectTargetHealth",
-                    "when": "false"
-                },
-                {
                     "command": "topo.fixDependencyIssue",
                     "when": "false"
                 },
@@ -284,11 +268,6 @@
                     "group": "inline@1"
                 },
                 {
-                    "command": "topo.inspectTargetHealth",
-                    "when": "view === topo.target-manager && viewItem =~ /Target/ && viewItem =~ /Selected/",
-                    "group": "inline@2"
-                },
-                {
                     "command": "topo.fixTargetIssues",
                     "when": "view === topo.target-manager && viewItem =~ /Target/ && viewItem =~ /Selected/ && viewItem =~ /HasFixableIssues/",
                     "group": "inline@3"
@@ -342,11 +321,6 @@
                 },
                 {
                     "command": "topo.refreshHostHealth",
-                    "when": "view == topo.host-manager",
-                    "group": "navigation"
-                },
-                {
-                    "command": "topo.inspectHostHealth",
                     "when": "view == topo.host-manager",
                     "group": "navigation"
                 }
