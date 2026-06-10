@@ -303,11 +303,6 @@
                     "group": "inline@1"
                 },
                 {
-                    "command": "topo.fixDependencyIssue",
-                    "when": "view === topo.host-manager && viewItem =~ /Dependency/ && viewItem =~ /Fixable/",
-                    "group": "inline@1"
-                },
-                {
                     "command": "topo.attachVsCode",
                     "when": "view === topo.target-manager && viewItem =~ /service/ && viewItem =~ /running/ && viewItem =~ /Host/",
                     "group": "inline@1"
