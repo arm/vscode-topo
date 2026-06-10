@@ -39,12 +39,11 @@ Connectivity errors are shown on the selected target row.
 
 Use the inline buttons on each target row to access these actions:
 
-| Command            | Description                                                  |
-| ------------------ | ------------------------------------------------------------ |
-| **Select Target**  | Make the target active for deployments and actions.          |
-| **Remove Target**  | Delete the target from the configuration.                    |
-| **Inspect Health** | Display health-check JSON results for the selected target.   |
-| **Fix Issues**     | Select and run available fixes for target dependency issues. |
+| Command           | Description                                                  |
+| ----------------- | ------------------------------------------------------------ |
+| **Select Target** | Make the target active for deployments and actions.          |
+| **Remove Target** | Delete the target from the configuration.                    |
+| **Fix Issues**    | Select and run available fixes for target dependency issues. |
 
 ### Dependency Actions
 
@@ -102,7 +101,7 @@ vscode://arm.topo/clone?source=git:https://github.com/example/repo
 
 The **Host** view appears in the **Topo** activity bar container and shows host dependency health for tools such as Docker and SSH. Missing or unhealthy dependencies are shown in the tree.
 
-Use the refresh button in the Host view title bar to reload host dependency health. Use the inspect button in the Host view title bar to view a detailed JSON health report.
+Use the refresh button in the Host view title bar to reload host dependency health.
 
 ## Commands
 
@@ -115,7 +114,6 @@ All commands are under the **Topo** category. Commands available from the Comman
 | `Topo: Clone Template Project` | Clone a project from an Arm Template.           |
 | `Topo: Clone Local Project`    | Clone a project from a local directory.         |
 | `Topo: Deploy`                 | Select and deploy a compose file to the target. |
-| `Topo: Inspect Host Health`    | Display host dependency health report.          |
 
 Additional commands are available through inline buttons in the Targets and Host tree views.
 
