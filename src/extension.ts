@@ -8,7 +8,6 @@ import { TargetTreeView } from './views/targetTreeView';
 import { ContainersManager } from './target/containersManager';
 import { ContainerStart } from './actions/containerStart';
 import { ContainerStop } from './actions/containerStop';
-import { ContainerOpenInBrowser } from './actions/containerOpenInBrowser';
 import { AttachVsCode } from './actions/attachVsCode';
 import { AttachShell } from './actions/attachShell';
 import { ContainerDelete } from './actions/containerDelete';
@@ -100,7 +99,6 @@ export async function activate(
     const projectClone = new ProjectClone(topoCli, targetModel);
     const deploy = new Deploy(topoCli, targetModel);
     const stop = new Stop(topoCli, targetModel);
-    const containerOpenInBrowser = new ContainerOpenInBrowser();
     const attachVsCode = new AttachVsCode(dockerCommands);
     const attachShell = new AttachShell(dockerCommands);
     const containerStart = new ContainerStart(dockerCommands);
@@ -118,7 +116,6 @@ export async function activate(
             projectInit,
             deploy,
             stop,
-            containerOpenInBrowser,
             attachVsCode,
             attachShell,
             containerStart,

@@ -7,7 +7,6 @@ import { DisposableCollector } from './util/disposableCollector';
 import { ProjectInit } from './actions/projectInit';
 import { Deploy } from './actions/deploy';
 import { Stop } from './actions/stop';
-import { ContainerOpenInBrowser } from './actions/containerOpenInBrowser';
 import { AttachVsCode } from './actions/attachVsCode';
 import { AttachShell } from './actions/attachShell';
 import { ContainerStart } from './actions/containerStart';
@@ -32,7 +31,6 @@ export const initProject = command('initProject');
 export const deploy = command('deploy');
 export const deployContext = command('deploy.context');
 export const stop = command('stop.context');
-export const openInBrowser = command('openInBrowser');
 export const attachVsCode = command('attachVsCode');
 export const attachShell = command('attachShell');
 export const startContainer = command('startContainer');
@@ -53,7 +51,6 @@ export interface CommandHandlers {
     projectClone: ProjectClone;
     deploy: Deploy;
     stop: Stop;
-    containerOpenInBrowser: ContainerOpenInBrowser;
     attachVsCode: AttachVsCode;
     attachShell: AttachShell;
     containerStart: ContainerStart;
@@ -95,11 +92,6 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
         ),
         vscode.commands.registerCommand(stop, (resource?: vscode.Uri) =>
             handlers.stop.stopCommandHandler(resource),
-        ),
-        vscode.commands.registerCommand(openInBrowser, (treeNode) =>
-            handlers.containerOpenInBrowser.openInBrowserCommandHandler(
-                treeNode,
-            ),
         ),
         vscode.commands.registerCommand(attachVsCode, (treeNode) =>
             handlers.attachVsCode.attachVsCodeCommandHandler(treeNode),
