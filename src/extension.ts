@@ -29,6 +29,7 @@ import { TransientDocumentProvider } from './util/transientDocumentProvider';
 import { TargetController } from './controllers/targetController';
 import { TargetModel } from './models/targetModel';
 import { ProjectClone } from './actions/projectClone';
+import { RefreshLoop } from './util/refreshLoop';
 
 export async function activate(
     context: vscode.ExtensionContext,
@@ -77,10 +78,7 @@ export async function activate(
         targetModel,
         targetDescriptionStore,
     );
-    const targetStatusBarItemView = new TargetStatusBarItemView(
-        targetModel,
-        containersManager,
-    );
+    const targetStatusBarItemView = new TargetStatusBarItemView(targetModel);
     context.subscriptions.push(
         hostTreeView,
         targetTreeView,
@@ -89,11 +87,28 @@ export async function activate(
 
     const hostController = new HostController(hostModel, topoCli);
     const hostHealth = new HostHealth(topoCli, hostHealthDocProvider);
-    const targetController = new TargetController(targetModel, targetStore);
+    const targetController = new TargetController(
+        targetModel,
+        targetStore,
+        topoCli,
+        dockerCommands,
+    );
+
+    const selectedTargetRefreshLoop = new RefreshLoop(async () => {
+        if (!targetController.isRefreshingSelectedTargetData()) {
+            await targetController.refreshSelectedTargetDataCommandHandler();
+        }
+    }, 3000);
+
     context.subscriptions.push(
+        targetController,
+        selectedTargetRefreshLoop,
         targetStore.onExternalTargetsChanged(() =>
-            targetController.updateFromStore(),
+            targetController.updateTargetsFromStore(),
         ),
+        targetModel.onSelectedChanged(() => {
+            targetController.refreshSelectedTargetDataCommandHandler();
+        }),
     );
 
     const projectInit = new ProjectInit(topoCli);
@@ -132,5 +147,7 @@ export async function activate(
         vscode.window.registerUriHandler(protocolHandler),
     );
 
+    targetController.updateTargetsFromStore();
     topoCli.activate();
+    selectedTargetRefreshLoop.start();
 }

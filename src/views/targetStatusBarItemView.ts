@@ -1,26 +1,12 @@
 import * as vscode from 'vscode';
-import { ContainersManager } from '../target/containersManager';
 import { getTargetTreeItemIcon } from '../targetTreeView/targetTreeItem';
 import { TargetTreeView } from './targetTreeView';
-import { TargetState } from '../util/types';
 import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
 import { getWorstIssueCheckStatus } from '../util/getWorstIssueCheckStatus';
 import { getDependencyGroupIcon } from './util/dependencyIcons';
-import { errored, Loadable, loaded } from '../util/loadable';
+import { Loadable } from '../util/loadable';
 import { TargetHealthCheck } from '../topoCliSchema';
-
-function targetHealthLoadable(
-    state: TargetState,
-): Loadable<TargetHealthCheck | undefined> {
-    if (state.status === 'connected') {
-        return loaded(state.health);
-    }
-    if (state.status === 'error') {
-        return errored('Target health not available');
-    }
-    return loaded(undefined, true);
-}
 
 function getStatusIconId(
     state: Loadable<TargetHealthCheck | undefined>,
@@ -43,10 +29,10 @@ function getStatusIconId(
 function renderStatusBarItem(
     statusBarItem: vscode.StatusBarItem,
     target: string | undefined,
-    state: Loadable<TargetHealthCheck | undefined>,
+    selectedHealth: Loadable<TargetHealthCheck | undefined>,
 ): void {
     if (target) {
-        const iconId = getStatusIconId(state);
+        const iconId = getStatusIconId(selectedHealth);
         statusBarItem.text = `$(${iconId}) ${target}`;
         statusBarItem.tooltip = `Connection String: ${target}`;
         statusBarItem.show();
@@ -63,10 +49,7 @@ export class TargetStatusBarItemView implements vscode.Disposable {
 
     private statusBarItem: vscode.StatusBarItem;
 
-    constructor(
-        private readonly targetModel: TargetModel,
-        private readonly containersManager: ContainersManager,
-    ) {
+    constructor(private readonly targetModel: TargetModel) {
         this.statusBarItem = vscode.window.createStatusBarItem(
             TargetStatusBarItemView.id,
             vscode.StatusBarAlignment.Left,
@@ -77,19 +60,14 @@ export class TargetStatusBarItemView implements vscode.Disposable {
 
         this.disposables.collect(
             this.statusBarItem,
-            this.targetModel.onSelectedChanged(() => this.refresh()),
-            this.containersManager.onDataUpdate(() => this.refresh()),
+            this.targetModel.onHealthChanged(() => this.refresh()),
         );
     }
 
     private refresh(): void {
         const selectedTarget = this.targetModel.selected;
-        const state = selectedTarget
-            ? targetHealthLoadable(
-                  this.containersManager.getTargetStateSnapshot(selectedTarget),
-              )
-            : loaded(undefined);
-        renderStatusBarItem(this.statusBarItem, selectedTarget, state);
+        const selectedHealth = this.targetModel.selectedTargetHealth;
+        renderStatusBarItem(this.statusBarItem, selectedTarget, selectedHealth);
     }
 
     public dispose(): void {
