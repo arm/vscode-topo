@@ -1,6 +1,6 @@
 import { TargetTreeView } from './targetTreeView';
 import { TargetContainerTreeItem } from '../targetTreeView/targetContainerTreeItem';
-import { TargetSubsystemTreeItem } from '../targetTreeView/targetSubsystemTreeItem';
+import { TargetProcessingDomainTreeItem } from '../targetTreeView/targetProcessingDomainTreeItem';
 import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
 import * as vscode from 'vscode';
 import * as manifest from '../manifest';
@@ -8,7 +8,7 @@ import { ContainersManager } from '../target/containersManager';
 import { TargetState, ContainerItem, TargetDescription } from '../util/types';
 import { mock, MockProxy } from 'vitest-mock-extended';
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
-import { TargetSubsystemGroupTreeItem } from '../targetTreeView/targetSubsystemGroupTreeItem';
+import { TargetProcessingDomainGroupTreeItem } from '../targetTreeView/targetProcessingDomainGroupTreeItem';
 import { IssueCheck, TargetHealthCheck } from '../topoCliSchema';
 import { TargetDescriptionStore } from '../target/targetDescriptionStore';
 import { TargetModel } from '../models/targetModel';
@@ -131,7 +131,7 @@ describe('TargetTreeView', () => {
     });
 
     describe('getChildren', () => {
-        it('returns Target at root and Dependencies/Subsystems as its children', async () => {
+        it('returns Target at root and Dependencies/Processing Domains as its children', async () => {
             const rootChildren = await view.getChildren();
             const targetChildren = await view.getChildren(rootChildren[0]);
 
@@ -140,10 +140,10 @@ describe('TargetTreeView', () => {
                 HealthCheckDependencyGroupTreeItem,
             );
             expect(targetChildren[1]).toBeInstanceOf(
-                TargetSubsystemGroupTreeItem,
+                TargetProcessingDomainGroupTreeItem,
             );
             expect(targetChildren[0].label).toBe('Dependencies');
-            expect(targetChildren[1].label).toBe('Subsystems');
+            expect(targetChildren[1].label).toBe('Processing Domains');
             expect(containersManagerMock.getTargetState).not.toHaveBeenCalled();
             expect(
                 targetDescriptionStoreMock.getDescription,
@@ -290,33 +290,37 @@ describe('TargetTreeView', () => {
             ]);
         });
 
-        it('returns containers for Host and remoteproc groups', async () => {
+        it('returns containers for Primary OS and remote processor groups', async () => {
             const rootChildren = await view.getChildren();
             const targetChildren = await view.getChildren(rootChildren[0]);
-            const subsystemsGroup = targetChildren.find(
-                (v) => v instanceof TargetSubsystemGroupTreeItem,
+            const processingDomainsGroup = targetChildren.find(
+                (v) => v instanceof TargetProcessingDomainGroupTreeItem,
             );
-            const subsystemItems = await view.getChildren(subsystemsGroup);
-            const hostGroup = subsystemItems.find(
-                (item) => item.label === 'Host',
-            ) as TargetSubsystemTreeItem;
-            const remoteprocGroup = subsystemItems.find(
+            const processingDomainItems = await view.getChildren(
+                processingDomainsGroup,
+            );
+            const primaryOsGroup = processingDomainItems.find(
+                (item) => item.label === 'Primary OS',
+            ) as TargetProcessingDomainTreeItem;
+            const remoteprocGroup = processingDomainItems.find(
                 (item) => item.label === 'imx-rproc',
-            ) as TargetSubsystemTreeItem;
-            const otherRprocGroup = subsystemItems.find(
+            ) as TargetProcessingDomainTreeItem;
+            const otherRprocGroup = processingDomainItems.find(
                 (item) => item.label === 'other-rproc',
-            ) as TargetSubsystemTreeItem;
+            ) as TargetProcessingDomainTreeItem;
 
-            const hostChildren = await view.getChildren(hostGroup);
+            const primaryOsChildren = await view.getChildren(primaryOsGroup);
             const imxRprocChildren = await view.getChildren(remoteprocGroup);
             const otherRprocChildren = await view.getChildren(otherRprocGroup);
 
             expect(
                 containersManagerMock.getContainersData,
             ).toHaveBeenCalledTimes(1);
-            expect(hostChildren).toHaveLength(1);
-            expect(hostChildren[0]).toBeInstanceOf(TargetContainerTreeItem);
-            expect((hostChildren[0] as TargetContainerTreeItem).name).toBe(
+            expect(primaryOsChildren).toHaveLength(1);
+            expect(primaryOsChildren[0]).toBeInstanceOf(
+                TargetContainerTreeItem,
+            );
+            expect((primaryOsChildren[0] as TargetContainerTreeItem).name).toBe(
                 'cont2',
             );
             expect(imxRprocChildren).toHaveLength(2);
@@ -331,15 +335,18 @@ describe('TargetTreeView', () => {
 
         it('handles parsing error in getContainersData gracefully', async () => {
             containersManagerMock.getContainersData.mockResolvedValueOnce([]);
-            const subsystemGroup = new TargetSubsystemGroupTreeItem(
-                target,
-                targetDescription.remoteProcessors.map((rp) => rp.name),
-            );
+            const processingDomainsGroup =
+                new TargetProcessingDomainGroupTreeItem(
+                    target,
+                    targetDescription.remoteProcessors.map((rp) => rp.name),
+                );
 
-            const subsystemItems = await view.getChildren(subsystemGroup);
-            const remoteprocGroup = subsystemItems.find(
+            const processingDomainItems = await view.getChildren(
+                processingDomainsGroup,
+            );
+            const remoteprocGroup = processingDomainItems.find(
                 (item) => item.label === 'imx-rproc',
-            ) as TargetSubsystemTreeItem;
+            ) as TargetProcessingDomainTreeItem;
             const children = await view.getChildren(remoteprocGroup);
 
             expect(children).toEqual([]);
@@ -356,7 +363,10 @@ describe('TargetTreeView', () => {
 
     describe('getTreeItem', () => {
         it('getTreeItem returns the element itself', () => {
-            const item = new TargetSubsystemTreeItem('Host', target);
+            const item = new TargetProcessingDomainTreeItem(
+                'PrimaryOS',
+                target,
+            );
 
             const treeItem = view.getTreeItem(item);
 
