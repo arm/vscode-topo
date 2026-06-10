@@ -22,8 +22,10 @@ describe('TargetTreeView', () => {
     const targetDescription: TargetDescription = {
         hostProcessors: [],
         remoteProcessors: [{ name: 'imx-rproc' }, { name: 'other-rproc' }],
+        totalMemoryKb: 1024,
     };
     const targetHealth: TargetHealthCheck = {
+        destination: `ssh://${target}`,
         isLocalhost: false,
         connectivity: {
             name: 'Connectivity',
