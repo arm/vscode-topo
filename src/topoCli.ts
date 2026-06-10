@@ -28,23 +28,6 @@ export interface TopoCliVersion {
     commit: string;
 }
 
-export interface CloneRemoteSource {
-    url: string;
-    type: 'git';
-}
-
-export interface CloneLocalSource {
-    path: string;
-    type: 'dir';
-}
-
-export interface CloneRawSource {
-    value: string;
-    type?: never;
-}
-
-export type CloneSource = CloneRemoteSource | CloneLocalSource | CloneRawSource;
-
 const normalizeLogLevel = (level: string): WrappedErrorLogLevel => {
     switch (level.toUpperCase()) {
         case 'ERROR':

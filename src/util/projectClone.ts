@@ -1,11 +1,28 @@
 import * as vscode from 'vscode';
-import { CloneSource, TopoCli } from '../topoCli';
+import { TopoCli } from '../topoCli';
 import * as path from 'node:path';
 import { TemplateDescription } from '../topoCliSchema';
 import { WrappedError } from '../errors/wrappedError';
 import { getCloneDestinationPath } from './getCloneDestinationPath';
 import { executeTask } from './executeTask';
 import { getErrorMessage } from './getErrorMessage';
+
+interface CloneRemoteSource {
+    url: string;
+    type: 'git';
+}
+
+interface CloneLocalSource {
+    path: string;
+    type: 'dir';
+}
+
+interface CloneRawSource {
+    value: string;
+    type?: never;
+}
+
+type CloneSource = CloneRemoteSource | CloneLocalSource | CloneRawSource;
 
 type CloneResult =
     | {
@@ -15,6 +32,7 @@ type CloneResult =
     | {
           success: false;
       };
+
 type CloneBuildArgs = Record<string, string>;
 
 const postCloneAction = async (repositoryPath: string) => {
