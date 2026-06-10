@@ -101,7 +101,7 @@ vscode://arm.topo/clone?source=git:https://github.com/example/repo
 
 The **Host** view appears in the **Topo** activity bar container and shows host dependency health for tools such as Docker and SSH. Missing or unhealthy dependencies are shown in the tree.
 
-Use the refresh button in the Host view title bar to reload host dependency health. Use the inspect button in the Host view title bar to view a detailed JSON health report.
+Use the refresh button in the Host view title bar to reload host dependency health.
 
 ## Commands
 
