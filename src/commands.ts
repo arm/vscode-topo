@@ -12,9 +12,7 @@ import { AttachShell } from './actions/attachShell';
 import { ContainerStart } from './actions/containerStart';
 import { ContainerStop } from './actions/containerStop';
 import { ContainerDelete } from './actions/containerDelete';
-import { TargetHealth } from './actions/targetHealth';
 import { FixIssue } from './actions/fixIssue';
-import { HostHealth } from './actions/hostHealth';
 import { ProjectClone } from './actions/projectClone';
 
 function command(id: string): string {
@@ -26,7 +24,6 @@ export const showOutput = command('showOutput');
 export const selectTarget = command('selectTarget');
 export const removeTarget = command('removeTarget');
 export const addTarget = command('addTarget');
-export const inspectHostHealth = command('inspectHostHealth');
 export const initProject = command('initProject');
 export const deploy = command('deploy');
 export const deployContext = command('deploy.context');
@@ -36,7 +33,6 @@ export const attachShell = command('attachShell');
 export const startContainer = command('startContainer');
 export const stopContainer = command('stopContainer');
 export const deleteContainer = command('deleteContainer');
-export const inspectTargetHealth = command('inspectTargetHealth');
 export const fixDependencyIssue = command('fixDependencyIssue');
 export const fixTargetIssues = command('fixTargetIssues');
 export const remoteClone = command('remoteClone');
@@ -45,7 +41,6 @@ export const templateClone = command('templateClone');
 
 export interface CommandHandlers {
     hostController: HostController;
-    hostHealth: HostHealth;
     targetController: TargetController;
     projectInit: ProjectInit;
     projectClone: ProjectClone;
@@ -56,7 +51,6 @@ export interface CommandHandlers {
     containerStart: ContainerStart;
     containerStop: ContainerStop;
     containerDelete: ContainerDelete;
-    targetHealth: TargetHealth;
     fixIssue: FixIssue;
 }
 
@@ -75,9 +69,6 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
         ),
         vscode.commands.registerCommand(addTarget, () =>
             handlers.targetController.addCommandHandler(),
-        ),
-        vscode.commands.registerCommand(inspectHostHealth, () =>
-            handlers.hostHealth.inspectHealthCommandHandler(),
         ),
         vscode.commands.registerCommand(initProject, () =>
             handlers.projectInit.initProjectCommandHandler(),
@@ -107,9 +98,6 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
         ),
         vscode.commands.registerCommand(deleteContainer, (treeNode) =>
             handlers.containerDelete.deleteContainerCommandHandler(treeNode),
-        ),
-        vscode.commands.registerCommand(inspectTargetHealth, (treeNode) =>
-            handlers.targetHealth.inspectHealthCommandHandler(treeNode),
         ),
         vscode.commands.registerCommand(fixDependencyIssue, (treeNode) =>
             handlers.fixIssue.fixIssueCommandHandler(treeNode),
