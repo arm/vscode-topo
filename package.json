@@ -304,17 +304,17 @@
                 },
                 {
                     "command": "topo.attachVsCode",
-                    "when": "view === topo.target-manager && viewItem =~ /service/ && viewItem =~ /running/ && viewItem =~ /Host/",
+                    "when": "view === topo.target-manager && viewItem =~ /service/ && viewItem =~ /running/ && viewItem =~ /PrimaryOS/",
                     "group": "inline@1"
                 },
                 {
                     "command": "topo.attachShell",
-                    "when": "view === topo.target-manager && viewItem =~ /service/ && viewItem =~ /running/ && viewItem =~ /Host/",
+                    "when": "view === topo.target-manager && viewItem =~ /service/ && viewItem =~ /running/ && viewItem =~ /PrimaryOS/",
                     "group": "inline@2"
                 },
                 {
                     "command": "topo.openInBrowser",
-                    "when": "view === topo.target-manager && viewItem =~ /service/ && viewItem =~ /running/ && viewItem =~ /Host/",
+                    "when": "view === topo.target-manager && viewItem =~ /service/ && viewItem =~ /running/ && viewItem =~ /PrimaryOS/",
                     "group": "inline@3"
                 },
                 {

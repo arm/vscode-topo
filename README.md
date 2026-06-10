@@ -1,6 +1,6 @@
 # Topo
 
-The Topo extension for Visual Studio Code provides a graphical interface for working with [Topo](https://github.com/Arm/topo). Use the extension to manage remote targets, deploy services, and monitor running containers - all from within VS Code.
+The Topo extension for Visual Studio Code provides a graphical interface for working with [Topo](https://github.com/Arm/topo). Use the extension to manage targets, run deployments, and monitor services and containers across processing domains - all from within VS Code.
 
 This extension is [free to use](LICENSE) and can be installed from the VS Code Marketplace or from a `.vsix` package.
 
@@ -12,12 +12,12 @@ This extension is [free to use](LICENSE) and can be installed from the VS Code M
 
 1. Install the extension from the VS Code Marketplace or a `.vsix` package.
 2. Add a target from the **Targets** view in the **Topo** activity bar container.
-3. Configure a target, making sure all the dependencies are set up correctly.
+3. Configure a target, making sure its dependencies are set up correctly.
 4. Deploy your services to the target.
 
 ## Target Management
 
-The **Targets** view appears in the **Topo** activity bar container and lets you manage remote devices where services are deployed.
+The **Targets** view appears in the **Topo** activity bar container and lets you manage targets where deployments run.
 
 ### Add a Target
 
@@ -27,11 +27,11 @@ Click the **+** button in the Targets view title bar and enter an SSH connection
 
 Each target in the tree shows:
 
-| Item                 | Description                                                           |
-| -------------------- | --------------------------------------------------------------------- |
-| **Subsystem groups** | Host and any remote processor subsystems detected on the target.      |
-| **Services**         | Running or stopped containers under each subsystem, with state icons. |
-| **Dependencies**     | Dependency and driver health-check issues shown for the target.       |
+| Item                   | Description                                                                       |
+| ---------------------- | --------------------------------------------------------------------------------- |
+| **Processing Domains** | Processing domains on the target, including the primary OS and remote processors. |
+| **Services**           | Running or stopped containers grouped by processing domain, with state icons.     |
+| **Dependencies**       | Required target components and driver health-check issues shown for the target.   |
 
 Connectivity errors are shown on the selected target row.
 
@@ -54,18 +54,18 @@ Use the inline **Fix** button on a fixable dependency item to run the executable
 
 Use the inline buttons on a service in the Targets tree to manage individual containers:
 
-| Command             | Description                                                                                  |
-| ------------------- | -------------------------------------------------------------------------------------------- |
-| **Start**           | Start a stopped container.                                                                   |
-| **Stop**            | Stop a running container.                                                                    |
-| **Delete**          | Remove a container.                                                                          |
-| **Attach Shell**    | Open a VS Code terminal connected to a running Host container.                               |
-| **Attach VS Code**  | Open a running Host container in a VS Code Remote Containers session.                        |
-| **Open in Browser** | Open a running Host service in the default browser by auto-detecting common published ports. |
+| Command             | Description                                                                                 |
+| ------------------- | ------------------------------------------------------------------------------------------- |
+| **Start**           | Start a stopped container.                                                                  |
+| **Stop**            | Stop a running container.                                                                   |
+| **Delete**          | Remove a container.                                                                         |
+| **Attach Shell**    | Open a VS Code terminal connected to a running container in the target's primary OS.        |
+| **Attach VS Code**  | Open a running container in the target's primary OS in a VS Code Remote Containers session. |
+| **Open in Browser** | Open a running service in the target's primary OS by auto-detecting common published ports. |
 
 ## Deploy and Stop
 
-Deploy or stop the `compose.yaml` or `compose.yml` file in a project directory on the selected target. You can trigger either operation from:
+Deploy or stop the `compose.yaml` or `compose.yml` file in a project directory on the selected target. A deploy operation builds container images, transfers them to the target, and starts services. You can trigger either operation from:
 
 - Running **Topo: Deploy** from the Command Palette, then selecting a `compose.yaml` or `compose.yml` file from the workspace.
 - Right-clicking `compose.yaml` or `compose.yml` in the Explorer or editor tab and selecting **Deploy** or **Stop**.
@@ -85,7 +85,7 @@ Three clone commands are available from the Command Palette:
 | Command                          | Description                                 |
 | -------------------------------- | ------------------------------------------- |
 | **Topo: Clone Remote Project**   | Clone from a Git repository.                |
-| **Topo: Clone Template Project** | Clone from a curated list of Arm templates. |
+| **Topo: Clone Template Project** | Clone from a curated list of Arm Templates. |
 | **Topo: Clone Local Project**    | Clone from a local directory.               |
 
 After cloning, the extension offers to open the project in the current window, a new window, or add it to the workspace.
@@ -112,7 +112,7 @@ All commands are under the **Topo** category. Commands available from the Comman
 | ------------------------------ | ----------------------------------------------- |
 | `Topo: Initialize Project`     | Initialize a new Topo project in the workspace. |
 | `Topo: Clone Remote Project`   | Clone a project from a Git repository.          |
-| `Topo: Clone Template Project` | Clone a project from an Arm template.           |
+| `Topo: Clone Template Project` | Clone a project from an Arm Template.           |
 | `Topo: Clone Local Project`    | Clone a project from a local directory.         |
 | `Topo: Deploy`                 | Select and deploy a compose file to the target. |
 | `Topo: Inspect Host Health`    | Display host dependency health report.          |
