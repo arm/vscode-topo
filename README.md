@@ -14,7 +14,7 @@ Bring [Topo](https://github.com/Arm/topo) CLI workflows into VS Code. Clone [Top
 2. Add a target from the **Targets** view in the **Topo** activity bar container.
 3. Review any missing target dependencies and apply suggested fixes.
 4. Clone a [Topo Template](https://github.com/arm/topo-template-format/blob/main/01-authoring-templates.md) from our catalog.
-5. Deploy the configured project to your target
+5. Deploy the configured project to your target.
 
 ---
 
