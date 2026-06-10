@@ -129,13 +129,11 @@
             },
             {
                 "command": "topo.deploy.context",
-                "title": "Deploy",
-                "category": "Topo"
+                "title": "Topo Deploy"
             },
             {
                 "command": "topo.stop.context",
-                "title": "Stop",
-                "category": "Topo"
+                "title": "Topo Stop"
             }
         ],
         "viewsContainers": {
