@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { mock, MockProxy } from 'vitest-mock-extended';
 import { FixIssue } from './fixIssue';
 import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
+import { loaded } from '../util/loadable';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 import { executeTask } from '../util/executeTask';
 import { IssueCheck } from '../topoCliSchema';
@@ -19,7 +20,7 @@ type ShowQuickPickMany = <T extends vscode.QuickPickItem>(
 ) => Thenable<T[] | undefined>;
 
 const mockSelectedQuickPickItems = <T extends vscode.QuickPickItem>(
-    items: T[],
+    items: T[] | undefined,
 ) => {
     const showQuickPickMock = vi.mocked<ShowQuickPickMany>(
         vscode.window.showQuickPick,
@@ -58,6 +59,32 @@ describe('FixIssue', () => {
             value: 'lscpu',
         },
     ];
+    const connectedIssue: IssueCheck = {
+        name: 'Connectivity',
+        status: 'ok',
+        value: 'ok',
+    };
+
+    const createTargetItemWithIssues = (
+        targetIssues: IssueCheck[],
+        selected = true,
+        connectivity: IssueCheck = connectedIssue,
+    ): TargetTreeItem =>
+        new TargetTreeItem({
+            target,
+            selected,
+            health: loaded({
+                destination: `ssh://${target}`,
+                isLocalhost: false,
+                connectivity,
+                dependencies: targetIssues,
+                subsystemDriver: {
+                    name: 'SubsystemDriver',
+                    status: 'ok',
+                    value: 'ready',
+                },
+            }),
+        });
 
     beforeEach(() => {
         vi.clearAllMocks();
@@ -118,9 +145,7 @@ describe('FixIssue', () => {
 
     it('shows a quick pick when only one target issue fix is available', async () => {
         const fixIssue = new FixIssue(topoCli, targetModel);
-        const targetItem = new TargetTreeItem(target, true, 'connected', [
-            dependencies[0],
-        ]);
+        const targetItem = createTargetItemWithIssues([dependencies[0]]);
         mockSelectedQuickPickItems([
             {
                 label: 'Container Engine',
@@ -163,12 +188,9 @@ describe('FixIssue', () => {
                 command: 'topo setup-keys --target ssh://pi5-rod',
             },
         };
-        const targetItem = new TargetTreeItem(
-            target,
+        const targetItem = createTargetItemWithIssues(
+            [],
             true,
-            'error',
-            [],
-            [],
             connectivityIssue,
         );
         mockSelectedQuickPickItems([
@@ -190,12 +212,7 @@ describe('FixIssue', () => {
 
     it('shows target issue fixes in a quick pick and runs the selected fix', async () => {
         const fixIssue = new FixIssue(topoCli, targetModel);
-        const targetItem = new TargetTreeItem(
-            target,
-            true,
-            'connected',
-            dependencies,
-        );
+        const targetItem = createTargetItemWithIssues(dependencies);
         mockSelectedQuickPickItems([
             {
                 label: 'Debugger',
@@ -235,12 +252,7 @@ describe('FixIssue', () => {
 
     it('runs each selected target dependency fix', async () => {
         const fixIssue = new FixIssue(topoCli, targetModel);
-        const targetItem = new TargetTreeItem(
-            target,
-            true,
-            'connected',
-            dependencies,
-        );
+        const targetItem = createTargetItemWithIssues(dependencies);
         mockSelectedQuickPickItems([
             {
                 label: 'Container Engine',
@@ -291,7 +303,7 @@ describe('FixIssue', () => {
             },
         };
         const fixIssue = new FixIssue(topoCli, targetModel);
-        const targetItem = new TargetTreeItem(target, true, 'connected', [
+        const targetItem = createTargetItemWithIssues([
             remoteprocRuntime,
             remoteprocShim,
         ]);
@@ -321,12 +333,7 @@ describe('FixIssue', () => {
 
     it('does not run a target dependency fix when quick pick is cancelled', async () => {
         const fixIssue = new FixIssue(topoCli, targetModel);
-        const targetItem = new TargetTreeItem(
-            target,
-            true,
-            'connected',
-            dependencies,
-        );
+        const targetItem = createTargetItemWithIssues(dependencies);
         mockSelectedQuickPickItems([]);
 
         await fixIssue.fixIssueCommandHandler(targetItem);
@@ -336,9 +343,7 @@ describe('FixIssue', () => {
 
     it('fails when a target has no executable dependency fixes', async () => {
         const fixIssue = new FixIssue(topoCli, targetModel);
-        const targetItem = new TargetTreeItem(target, true, 'connected', [
-            dependencies[2],
-        ]);
+        const targetItem = createTargetItemWithIssues([dependencies[2]]);
 
         await expect(
             fixIssue.fixIssueCommandHandler(targetItem),
@@ -352,7 +357,7 @@ describe('FixIssue', () => {
 
     it('fails when fixing an unselected target item', async () => {
         const fixIssue = new FixIssue(topoCli, targetModel);
-        const targetItem = new TargetTreeItem(target, false, 'connected');
+        const targetItem = createTargetItemWithIssues([dependencies[0]], false);
 
         await expect(
             fixIssue.fixIssueCommandHandler(targetItem),

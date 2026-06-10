@@ -305,6 +305,7 @@ describe('TopoCli', () => {
                 { model: 'Cortex-A55', cores: 2, features: ['fp'] },
             ],
             remoteProcessors: [{ name: 'imx-rproc' }],
+            totalMemoryKb: 123456,
         };
         execMock.mockImplementation((_bin, _cargs, _options, cb) => {
             cb!(
@@ -314,6 +315,7 @@ describe('TopoCli', () => {
                         { model: ' Cortex-A55 ', cores: 2, features: [' fp '] },
                     ],
                     remoteProcessors: [{ name: ' imx-rproc ' }],
+                    totalMemoryKb: 123456,
                 }),
                 '',
             );
@@ -400,6 +402,7 @@ describe('TopoCli', () => {
         const want: HealthCheck = {
             host: { dependencies: [] },
             target: {
+                destination: 'ssh://hostname',
                 isLocalhost: false,
                 dependencies: [
                     {
@@ -423,6 +426,7 @@ describe('TopoCli', () => {
         const cliResponse: HealthCheck = {
             host: { dependencies: [] },
             target: {
+                destination: 'ssh://hostname',
                 isLocalhost: false,
                 dependencies: [
                     {

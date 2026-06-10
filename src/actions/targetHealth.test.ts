@@ -15,6 +15,7 @@ const health: HealthCheck = {
         dependencies: [],
     },
     target: {
+        destination: 'ssh://topo.local',
         isLocalhost: false,
         connectivity: {
             name: 'Connectivity',
@@ -51,7 +52,10 @@ describe('TargetHealth', () => {
             health: vi.fn().mockResolvedValue(health),
         });
         const targetHealth = new TargetHealth(topoCli, healthDocumentProvider);
-        const targetItem = new TargetTreeItem('user@foobar', true, 'connected');
+        const targetItem = new TargetTreeItem({
+            target: 'user@foobar',
+            selected: true,
+        });
 
         await targetHealth.inspectHealthCommandHandler(targetItem);
 
@@ -68,7 +72,10 @@ describe('TargetHealth', () => {
     it('does not open health document for non-selected target', async () => {
         const topoCli = mock<TopoCli>();
         const targetHealth = new TargetHealth(topoCli, healthDocumentProvider);
-        const targetItem = new TargetTreeItem('abc.com', false, 'disconnected');
+        const targetItem = new TargetTreeItem({
+            target: 'abc.com',
+            selected: false,
+        });
 
         await targetHealth.inspectHealthCommandHandler(targetItem);
 
@@ -81,7 +88,10 @@ describe('TargetHealth', () => {
         const topoCli = mock<TopoCli>();
         const targetHealth = new TargetHealth(topoCli, healthDocumentProvider);
         topoCli.health.mockRejectedValue(error);
-        const targetItem = new TargetTreeItem('abc.com', true, 'connected');
+        const targetItem = new TargetTreeItem({
+            target: 'abc.com',
+            selected: true,
+        });
 
         await targetHealth.inspectHealthCommandHandler(targetItem);
 
