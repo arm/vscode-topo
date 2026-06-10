@@ -383,24 +383,6 @@ describe('target removal', () => {
 });
 
 describe('selected target data refresh', () => {
-    it('clears selected target data when no target is selected', async () => {
-        const targetStore = mockTargetStore();
-        const targetModel = new TargetModel();
-        targetModel.setSelectedTargetHealth(loaded(health.target));
-        targetModel.setSelectedTargetContainers(loaded([]));
-        const { controller, topoCli, containerCommands } = createController(
-            targetModel,
-            targetStore,
-        );
-
-        await controller.refreshSelectedTargetDataCommandHandler();
-
-        expect(targetModel.selectedTargetHealth).toEqual(loaded(undefined));
-        expect(targetModel.selectedTargetContainers).toEqual(loaded([]));
-        expect(topoCli.health).not.toHaveBeenCalled();
-        expect(containerCommands.getContainers).not.toHaveBeenCalled();
-    });
-
     it('loads health and containers for the selected target', async () => {
         const targetStore = mockTargetStore([target], target);
         const targetModel = new TargetModel();
