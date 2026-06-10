@@ -74,6 +74,7 @@ describe('FixIssue', () => {
             target,
             selected,
             health: loaded({
+                destination: `ssh://${target}`,
                 isLocalhost: false,
                 connectivity,
                 dependencies: targetIssues,
