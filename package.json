@@ -2,8 +2,8 @@
     "name": "topo",
     "displayName": "Topo",
     "icon": "media/topo.png",
-    "publisher": "arm",
-    "description": "",
+    "publisher": "Arm",
+    "description": "Compose, configure, and deploy containerized examples for Arm hardware",
     "license": "Apache-2.0",
     "version": "0.0.0",
     "engines": {
