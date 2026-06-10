@@ -31,6 +31,7 @@ import { ProjectClone } from './actions/projectClone';
 import { showAndLogError } from './util/showAndLogError';
 import { topo } from '../package.json';
 import { RefreshLoop } from './util/refreshLoop';
+import { TaskExecutor } from './util/taskExecutor';
 
 export async function activate(
     context: vscode.ExtensionContext,
@@ -112,9 +113,10 @@ export async function activate(
     );
 
     const projectInit = new ProjectInit(topoCli);
-    const projectClone = new ProjectClone(topoCli, targetModel);
-    const deploy = new Deploy(topoCli, targetModel);
-    const stop = new Stop(topoCli, targetModel);
+    const taskExecutor = new TaskExecutor(topoCli);
+    const projectClone = new ProjectClone(topoCli, targetModel, taskExecutor);
+    const deploy = new Deploy(taskExecutor, targetModel);
+    const stop = new Stop(taskExecutor, targetModel);
     const containerOpenInBrowser = new ContainerOpenInBrowser();
     const attachVsCode = new AttachVsCode(dockerCommands);
     const attachShell = new AttachShell(dockerCommands);
@@ -122,8 +124,8 @@ export async function activate(
     const containerStop = new ContainerStop(dockerCommands);
     const containerDelete = new ContainerDelete(dockerCommands);
     const targetHealth = new TargetHealth(topoCli, targetHealthDocProvider);
-    const fixIssue = new FixIssue(topoCli, targetModel);
-    const protocolHandler = new ProtocolHandler(topoCli);
+    const fixIssue = new FixIssue(taskExecutor, targetModel);
+    const protocolHandler = new ProtocolHandler(taskExecutor);
 
     context.subscriptions.push(
         commands.register({

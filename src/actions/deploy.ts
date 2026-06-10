@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
 import { getErrorMessage } from '../util/getErrorMessage';
 import path from 'node:path';
-import { executeTask } from '../util/executeTask';
+import { createProcessTask } from '../util/task';
+import { TaskExecutor } from '../util/taskExecutor';
 import { showAndLogError } from '../util/showAndLogError';
 import { TargetModel } from '../models/targetModel';
-import { TopoCli } from '../topoCli';
 import { isWrappedError, WrappedError } from '../errors/wrappedError';
 import {
     COMPOSE_FILE_GLOB,
@@ -24,7 +24,7 @@ type ComposeFileQuickPickItem = vscode.QuickPickItem & {
 
 export class Deploy {
     constructor(
-        private readonly topoCli: TopoCli,
+        private readonly taskExecutor: TaskExecutor,
         private readonly targetModel: TargetModel,
     ) {}
 
@@ -62,7 +62,7 @@ export class Deploy {
         if (!resource) {
             return;
         }
-        await deploy(this.topoCli.getBinaryPath(), resource.fsPath, target);
+        await deploy(this.taskExecutor, resource.fsPath, target);
     }
 
     public async deployContextCommandHandler(
@@ -85,7 +85,7 @@ export class Deploy {
             throw err;
         }
 
-        await deploy(this.topoCli.getBinaryPath(), resource.fsPath, target);
+        await deploy(this.taskExecutor, resource.fsPath, target);
     }
 
     private getSelectedTarget(): string {
@@ -120,20 +120,15 @@ async function promptForComposeFile(
 }
 
 export async function deploy(
-    topoBinaryPath: string,
+    taskExecutor: TaskExecutor,
     composeFilePath: string,
     target: string,
 ): Promise<void> {
-    const taskName = `Deploy to ${target}`;
+    const task = createDeployTask(composeFilePath, target);
+    const taskName = task.name;
 
     try {
-        await executeTask(
-            taskName,
-            [topoBinaryPath, 'deploy', '--target', target],
-            {
-                cwd: path.dirname(composeFilePath),
-            },
-        );
+        await taskExecutor.run(task);
         vscode.window.showInformationMessage(
             `Deployment to ${target} completed successfully.`,
         );
@@ -153,4 +148,17 @@ export async function deploy(
             terminal?.show();
         }
     }
+}
+
+export function createDeployTask(
+    composeFilePath: string,
+    target: string,
+): vscode.Task {
+    return createProcessTask(
+        `Deploy to ${target}`,
+        ['topo', 'deploy', '--target', target],
+        {
+            cwd: path.dirname(composeFilePath),
+        },
+    );
 }

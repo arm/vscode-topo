@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
 import { getErrorMessage } from '../util/getErrorMessage';
 import path from 'node:path';
-import { executeTask } from '../util/executeTask';
+import { createProcessTask } from '../util/task';
+import { TaskExecutor } from '../util/taskExecutor';
 import { showAndLogError } from '../util/showAndLogError';
 import { TargetModel } from '../models/targetModel';
-import { TopoCli } from '../topoCli';
 
 const viewLogsItem: vscode.MessageItem = {
     title: 'View Logs',
@@ -12,7 +12,7 @@ const viewLogsItem: vscode.MessageItem = {
 
 export class Stop {
     constructor(
-        private readonly topoCli: TopoCli,
+        private readonly taskExecutor: TaskExecutor,
         private readonly targetModel: TargetModel,
     ) {}
 
@@ -32,25 +32,20 @@ export class Stop {
             return;
         }
 
-        await stop(this.topoCli.getBinaryPath(), resource.fsPath, target);
+        await stop(this.taskExecutor, resource.fsPath, target);
     }
 }
 
 export async function stop(
-    topoBinaryPath: string,
+    taskExecutor: TaskExecutor,
     composeFilePath: string,
     target: string,
 ): Promise<void> {
-    const taskName = `Stop services on ${target}`;
+    const task = createStopTask(composeFilePath, target);
+    const taskName = task.name;
 
     try {
-        await executeTask(
-            taskName,
-            [topoBinaryPath, 'stop', '--target', target],
-            {
-                cwd: path.dirname(composeFilePath),
-            },
-        );
+        await taskExecutor.run(task);
         vscode.window.showInformationMessage(
             `Services on ${target} stopped successfully.`,
         );
@@ -70,4 +65,17 @@ export async function stop(
             terminal?.show();
         }
     }
+}
+
+export function createStopTask(
+    composeFilePath: string,
+    target: string,
+): vscode.Task {
+    return createProcessTask(
+        `Stop services on ${target}`,
+        ['topo', 'stop', '--target', target],
+        {
+            cwd: path.dirname(composeFilePath),
+        },
+    );
 }
