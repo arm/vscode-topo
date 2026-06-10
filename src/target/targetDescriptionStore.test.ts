@@ -23,6 +23,7 @@ describe('TargetDescriptionStore', () => {
                 },
             ],
             remoteProcessors: [{ name: 'imx-rproc' }],
+            totalMemoryKb: 1024,
         };
         topoCli.describe.mockResolvedValue(targetDescription);
         const store = new TargetDescriptionStore(topoCli);
@@ -36,6 +37,7 @@ describe('TargetDescriptionStore', () => {
         topoCli.describe.mockResolvedValue({
             hostProcessors: [],
             remoteProcessors: [],
+            totalMemoryKb: 1024,
         });
         const store = new TargetDescriptionStore(topoCli);
 

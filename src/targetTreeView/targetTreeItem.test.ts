@@ -7,6 +7,7 @@ import { TargetDescription } from '../util/types';
 vi.mock('../util/logger');
 
 const testTargetHealth: TargetHealthCheck = {
+    destination: 'ssh://host.local',
     isLocalhost: false,
     connectivity: {
         name: 'Connectivity',
@@ -24,6 +25,7 @@ const testTargetHealth: TargetHealthCheck = {
 const testTargetDescription: TargetDescription = {
     hostProcessors: [],
     remoteProcessors: [],
+    totalMemoryKb: 1024,
 };
 
 describe('TargetTreeItem', () => {
