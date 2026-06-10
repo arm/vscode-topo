@@ -1,12 +1,39 @@
 # Topo
 
-Discover and deploy containerised software to Arm hardware over SSH.
+Discover, configure, and deploy containerised software to Arm hardware over SSH.
 
-Bring [Topo](https://github.com/Arm/topo) CLI workflows into VS Code. Clone [Topo Templates](https://github.com/arm/topo-template-format/blob/main/01-authoring-templates.md), manage SSH targets, deploy projects, and visualise containers across processing domains.
+Integrate [Topo](https://github.com/Arm/topo) CLI workflows into VS Code.
+
+Topo connects to your Arm device over SSH, checks what it can run, and recommends compatible [Topo Templates](https://github.com/arm/topo-template-format). Clone a Template and Topo helps you configure it for your use case, and deploy to your target over SSH. The configured result is a normal Docker Compose project that you can learn from, modify, or use as the starting point for your own application.
+
+Already have a Compose project? Topo gives you a fast, incremental build-deploy loop over SSH.
+
+## Who is this for?
+
+**You just got a board and want to see what it can do.** Topo scans your target and finds [Topo Templates](https://github.com/arm/topo-template-format) that showcase its capabilities, from running an LLM to comparing SIMD performance. Each one deploys in minutes and is a real Compose project you can learn from or build on.
+
+**You want a faster edit-build-deploy loop.** Build on your laptop and deploy to a Pi or Jetson over SSH. Rebuilds are incremental, so after the first deploy you're often iterating in seconds.
+
+**You have a heterogeneous device and want to use all of it.** Your board has remote processors like a Cortex-M that normally need separate toolchains and manual firmware loading. Topo and [Remoteproc Runtime](https://github.com/arm/remoteproc-runtime) let you orchestrate the whole device as one Docker Compose project.
+
+Not sure what these terms mean? The [glossary](https://github.com/arm/topo/blob/main/docs/glossary.md) defines Topo's core concepts.
+
 
 ## Requirements
 
+**Host machine** (where this extension will run):
+
 - Visual Studio Code v1.101.0 or newer
+- [Docker](https://docs.docker.com/get-docker/)
+- Curl
+
+**Target machine** (the remote Arm system):
+
+- Reachable with SSH
+- Linux on ARM64
+- Docker
+
+The host and target can be the same system.
 
 ## Getting Started
 
