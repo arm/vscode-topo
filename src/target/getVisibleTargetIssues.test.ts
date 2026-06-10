@@ -4,6 +4,7 @@ import { getVisibleTargetIssues } from './getVisibleTargetIssues';
 
 describe('getVisibleTargetDependencies', () => {
     const health: TargetHealthCheck = {
+        destination: 'ssh://topo.local',
         isLocalhost: false,
         connectivity: {
             name: 'Connectivity',
@@ -28,6 +29,7 @@ describe('getVisibleTargetDependencies', () => {
         const targetDescription: TargetDescription = {
             hostProcessors: [],
             remoteProcessors: [],
+            totalMemoryKb: 1024,
         };
         const healthWithFixableSubsystemDriver: TargetHealthCheck = {
             ...health,
@@ -55,6 +57,7 @@ describe('getVisibleTargetDependencies', () => {
         const targetDescription: TargetDescription = {
             hostProcessors: [],
             remoteProcessors: [{ name: 'imx-rproc' }],
+            totalMemoryKb: 1024,
         };
         const expectedDependencies = [
             ...health.dependencies,
