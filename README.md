@@ -66,7 +66,7 @@ Use the inline buttons on a service in the Targets tree to manage individual con
 Deploy or stop the `compose.yaml` or `compose.yml` file in a project directory on the selected target. A deploy operation builds container images, transfers them to the target, and starts services. You can trigger either operation from:
 
 - Running **Topo: Deploy** from the Command Palette, then selecting a `compose.yaml` or `compose.yml` file from the workspace.
-- Right-clicking `compose.yaml` or `compose.yml` in the Explorer or editor tab and selecting **Deploy** or **Stop**.
+- Right-clicking `compose.yaml` or `compose.yml` in the Explorer or editor tab and selecting **Topo Deploy** or **Topo Stop**.
 
 The extension runs `topo deploy --target <ssh>` or `topo stop --target <ssh>` from the directory containing `compose.yaml` or `compose.yml` in a task terminal and reports success or failure.
 
@@ -104,7 +104,7 @@ Use the refresh button in the Host view title bar to reload host dependency heal
 
 ## Commands
 
-All commands are under the **Topo** category. Commands available from the Command Palette:
+Commands available from the Command Palette:
 
 | Command                        | Description                                     |
 | ------------------------------ | ----------------------------------------------- |

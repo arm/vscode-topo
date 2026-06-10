@@ -203,8 +203,6 @@ export class TargetController {
         const target = this.model.selected;
         if (!target) {
             this.selectedTargetDataRefresh.abort();
-            this.model.setSelectedTargetHealth(loaded(undefined));
-            this.model.setSelectedTargetContainers(loaded([]));
             return;
         }
 
