@@ -22,7 +22,7 @@ interface CloneRawSource {
     type?: never;
 }
 
-type CloneSource = CloneRemoteSource | CloneLocalSource | CloneRawSource;
+export type CloneSource = CloneRemoteSource | CloneLocalSource | CloneRawSource;
 
 type CloneResult =
     | {
