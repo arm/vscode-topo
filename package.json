@@ -2,7 +2,7 @@
     "name": "topo",
     "displayName": "Topo",
     "publisher": "Arm",
-    "description": "Compose, parameterize, and deploy containerized examples for Arm hardware",
+    "description": "Compose, configure, and deploy containerized examples for Arm hardware",
     "license": "Apache-2.0",
     "version": "0.0.0",
     "engines": {
