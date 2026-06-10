@@ -65,7 +65,6 @@ export async function activate(
 
     const hostTreeView = new HostTreeView(hostModel);
     const targetTreeView = new TargetTreeView(
-        selectedTargetModel,
         targetModel,
         targetDescriptionStore,
     );

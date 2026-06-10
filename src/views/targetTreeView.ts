@@ -11,7 +11,6 @@ import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
 import { ContainerItem } from '../util/types';
 import { loaded } from '../util/loadable';
-import { SelectedTargetModel } from '../models/selectedTargetModel';
 import { ErrorTreeItem } from '../treeItems/errorTreeItem';
 
 function compareByName(a: { name: string }, b: { name: string }): number {
@@ -56,7 +55,6 @@ export class TargetTreeView
     private readonly disposables = new DisposableCollector();
 
     constructor(
-        private readonly selectedTargetModel: SelectedTargetModel,
         private readonly targetModel: TargetModel,
         private readonly targetDescriptionStore: TargetDescriptionStore,
     ) {
@@ -73,10 +71,10 @@ export class TargetTreeView
             this.targetModel.onTargetsChanged(() => {
                 this._onDidChangeTreeData.fire(undefined);
             }),
-            this.selectedTargetModel.onHealthChanged(() => {
+            this.targetModel.onHealthChanged(() => {
                 this._onDidChangeTreeData.fire(undefined);
             }),
-            this.selectedTargetModel.onContainersChanged(() => {
+            this.targetModel.onContainersChanged(() => {
                 this._onDidChangeTreeData.fire(undefined);
             }),
             this._onDidChangeTreeData,
@@ -98,7 +96,7 @@ export class TargetTreeView
             for (const target of this.targetModel.targets) {
                 const selected = target === selectedTarget;
                 const health = selected
-                    ? this.selectedTargetModel.health
+                    ? this.targetModel.selectedTargetHealth
                     : undefined;
                 const targetDescription =
                     selected && selectedTargetDescription
@@ -131,7 +129,7 @@ export class TargetTreeView
             const subsystemsGroup = new TargetSubsystemGroupTreeItem(
                 element.target,
                 element.remoteProcessorNames,
-                this.selectedTargetModel.containers,
+                this.targetModel.selectedTargetContainers,
             );
             return [dependenciesGroup, subsystemsGroup];
         }
