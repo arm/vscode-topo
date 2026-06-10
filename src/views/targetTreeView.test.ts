@@ -11,13 +11,11 @@ import { TargetSubsystemGroupTreeItem } from '../targetTreeView/targetSubsystemG
 import { IssueCheck, TargetHealthCheck } from '../topoCliSchema';
 import { TargetDescriptionStore } from '../target/targetDescriptionStore';
 import { TargetModel } from '../models/targetModel';
-import { SelectedTargetModel } from '../models/selectedTargetModel';
 import { errored, loaded } from '../util/loadable';
 import { ErrorTreeItem } from '../treeItems/errorTreeItem';
 
 describe('TargetTreeView', () => {
     let view: TargetTreeView;
-    let selectedTargetModel: SelectedTargetModel;
     let targetModel: TargetModel;
     let targetDescriptionStoreMock: MockProxy<TargetDescriptionStore>;
     const target = 'user@topo.local';
@@ -99,18 +97,13 @@ describe('TargetTreeView', () => {
         targetModel = new TargetModel();
         targetModel.setTargets([target]);
         targetModel.setSelected(target);
-        selectedTargetModel = new SelectedTargetModel();
-        selectedTargetModel.setHealth(loaded(targetHealth));
-        selectedTargetModel.setContainers(loaded(mockContainers));
+        targetModel.setSelectedTargetHealth(loaded(targetHealth));
+        targetModel.setSelectedTargetContainers(loaded(mockContainers));
         targetDescriptionStoreMock = mock<TargetDescriptionStore>();
         targetDescriptionStoreMock.getDescription.mockResolvedValue(
             targetDescription,
         );
-        view = new TargetTreeView(
-            selectedTargetModel,
-            targetModel,
-            targetDescriptionStoreMock,
-        );
+        view = new TargetTreeView(targetModel, targetDescriptionStoreMock);
         vi.clearAllTimers();
         vi.clearAllMocks();
     });
@@ -149,7 +142,7 @@ describe('TargetTreeView', () => {
                     status: 'ok',
                 }),
             ];
-            selectedTargetModel.setHealth(
+            targetModel.setSelectedTargetHealth(
                 loaded({
                     ...targetHealth,
                     dependencies,
@@ -172,8 +165,8 @@ describe('TargetTreeView', () => {
             ]);
         });
 
-        it('shows cleared selected target data as unexpandable and not connected', async () => {
-            selectedTargetModel.clear();
+        it('sets disconnected context and tree collapsible state for target with pending health', async () => {
+            targetModel.setSelectedTargetHealth(loaded(undefined));
 
             const rootChildren = await view.getChildren();
 
@@ -188,7 +181,7 @@ describe('TargetTreeView', () => {
 
         it('shows health diagnostics on selected target when health has an error', async () => {
             const diagnostics = '"ssh" not found on remote target\'s $PATH';
-            selectedTargetModel.setHealth(
+            targetModel.setSelectedTargetHealth(
                 loaded({
                     ...targetHealth,
                     connectivity: {
@@ -214,7 +207,9 @@ describe('TargetTreeView', () => {
             const otherTarget = 'user@other.local';
             targetModel.setTargets([target, otherTarget]);
             targetModel.setSelected(otherTarget);
-            selectedTargetModel.setHealth(errored('ssh connection failed'));
+            targetModel.setSelectedTargetHealth(
+                errored('ssh connection failed'),
+            );
 
             const rootChildren = await view.getChildren();
             const unselectedTarget = rootChildren.find(
@@ -226,7 +221,7 @@ describe('TargetTreeView', () => {
         });
 
         it('marks target with executable subsystem driver fix as fixable when remote processors exist', async () => {
-            selectedTargetModel.setHealth(
+            targetModel.setSelectedTargetHealth(
                 loaded({
                     ...targetHealth,
                     subsystemDriver: {
@@ -284,7 +279,7 @@ describe('TargetTreeView', () => {
         });
 
         it('returns an error item when containers fail to load', async () => {
-            selectedTargetModel.setContainers(
+            targetModel.setSelectedTargetContainers(
                 errored('container parse failed'),
             );
             const rootChildren = await view.getChildren();
