@@ -14,6 +14,19 @@ import { HealthCheck, TargetHealthCheck } from '../topoCliSchema';
 import { LatestAbortableWork } from '../util/latestAbortableWork';
 import { DisposableCollector } from '../util/disposableCollector';
 
+type TargetPromptResult =
+    | { readonly kind: 'select'; readonly target: string }
+    | { readonly kind: 'remove'; readonly target: string };
+
+type TargetQuickPickItem = vscode.QuickPickItem & {
+    readonly target: string;
+};
+
+const removeTargetQuickPickButton: vscode.QuickInputButton = {
+    iconPath: new vscode.ThemeIcon('trash'),
+    tooltip: 'Remove Target',
+};
+
 function isTargetTreeItem(node: unknown): node is TargetTreeItem {
     if (node instanceof TargetTreeItem) {
         return true;
@@ -26,28 +39,47 @@ function isTargetTreeItem(node: unknown): node is TargetTreeItem {
 
 async function promptForSshTarget(
     currentTargets: string[],
-): Promise<string | undefined> {
+    selectedTarget: string | undefined,
+): Promise<TargetPromptResult | undefined> {
     const sshHosts = await getHosts(defaultSshConfigPath);
-    const existingTargets = new Set(currentTargets);
-    const availableHosts = sshHosts.filter(
-        (host) => !existingTargets.has(host),
-    );
+    const removeTargetButtonsEnabled = selectedTarget === undefined;
 
-    const quickPick = vscode.window.createQuickPick();
-    quickPick.title = 'Add new target';
+    const quickPick = vscode.window.createQuickPick<TargetQuickPickItem>();
+    quickPick.title = 'Select a target';
     quickPick.placeholder =
         'Select a host or type a connection string (e.g. root@192.168.1.1)';
-    quickPick.items = buildQuickPickItems(availableHosts, '');
+    quickPick.items = buildQuickPickItems(
+        sshHosts,
+        '',
+        currentTargets,
+        removeTargetButtonsEnabled,
+    );
 
     quickPick.onDidChangeValue((value) => {
-        quickPick.items = buildQuickPickItems(availableHosts, value);
+        quickPick.items = buildQuickPickItems(
+            sshHosts,
+            value,
+            currentTargets,
+            removeTargetButtonsEnabled,
+        );
     });
 
-    return new Promise<string | undefined>((resolve) => {
+    return new Promise<TargetPromptResult | undefined>((resolve) => {
         quickPick.onDidAccept(async () => {
-            const selected = quickPick.selectedItems[0]?.label?.trim();
+            const selected = quickPick.selectedItems[0]?.target.trim();
+            resolve(
+                selected ? { kind: 'select', target: selected } : undefined,
+            );
             quickPick.hide();
-            resolve(selected);
+        });
+
+        quickPick.onDidTriggerItemButton((event) => {
+            if (event.button !== removeTargetQuickPickButton) {
+                return;
+            }
+
+            resolve({ kind: 'remove', target: event.item.target });
+            quickPick.hide();
         });
 
         quickPick.onDidHide(() => {
@@ -61,18 +93,43 @@ async function promptForSshTarget(
 export function buildQuickPickItems(
     availableHosts: string[],
     filter: string,
-): vscode.QuickPickItem[] {
-    const hostItems: vscode.QuickPickItem[] = availableHosts.map((host) => ({
-        label: host,
+    currentTargets: string[] = [],
+    removeTargetButtonsEnabled = true,
+): TargetQuickPickItem[] {
+    const availableHostsByLowerCase = new Set(
+        availableHosts.map((host) => host.toLowerCase()),
+    );
+    const knownTargets = [
+        ...currentTargets,
+        ...availableHosts.filter(
+            (host) =>
+                !currentTargets.some(
+                    (target) => target.toLowerCase() === host.toLowerCase(),
+                ),
+        ),
+    ];
+    const targetItems: TargetQuickPickItem[] = knownTargets.map((target) => ({
+        label: target,
+        target,
+        buttons:
+            removeTargetButtonsEnabled &&
+            currentTargets.includes(target) &&
+            !availableHostsByLowerCase.has(target.toLowerCase())
+                ? [removeTargetQuickPickButton]
+                : undefined,
     }));
     const trimmed = filter.trim();
     const isNovelEntry =
         trimmed.length > 0 &&
-        !availableHosts.some((h) => h.toLowerCase() === trimmed.toLowerCase());
-    const manualItem: vscode.QuickPickItem | undefined = isNovelEntry
-        ? { label: trimmed, description: 'Add new SSH target' }
+        !knownTargets.some((h) => h.toLowerCase() === trimmed.toLowerCase());
+    const manualItem: TargetQuickPickItem | undefined = isNovelEntry
+        ? {
+              label: trimmed,
+              target: trimmed,
+              description: 'Add new SSH target',
+          }
         : undefined;
-    return [...(manualItem ? [manualItem] : []), ...hostItems];
+    return [...(manualItem ? [manualItem] : []), ...targetItems];
 }
 
 function createContainerItem(
@@ -153,13 +210,8 @@ export class TargetController {
         this.model.setSelected(this.targetStore.getSelectedTarget());
     }
 
-    public async selectCommandHandler(treeNode?: unknown): Promise<void> {
-        if (!isTargetTreeItem(treeNode)) {
-            return;
-        }
-
-        await this.targetStore.setSelected(treeNode.target);
-        this.updateTargetsFromStore();
+    public async selectCommandHandler(): Promise<void> {
+        await this.promptAndSelectTarget();
     }
 
     public async removeCommandHandler(treeNode?: unknown): Promise<void> {
@@ -167,8 +219,21 @@ export class TargetController {
             return;
         }
 
+        await this.removeTarget(treeNode.target);
+    }
+
+    public async unselectCommandHandler(treeNode?: unknown): Promise<void> {
+        if (!isTargetTreeItem(treeNode)) {
+            return;
+        }
+
+        await this.targetStore.setSelected(undefined);
+        this.updateTargetsFromStore();
+    }
+
+    private async removeTarget(target: string): Promise<void> {
         try {
-            await this.targetStore.deleteTarget(treeNode.target);
+            await this.targetStore.deleteTarget(target);
             this.updateTargetsFromStore();
         } catch (err) {
             const errorMessage = `Failed to remove target`;
@@ -176,24 +241,39 @@ export class TargetController {
         }
     }
 
-    public async addCommandHandler(): Promise<void> {
-        const selectedTarget = await promptForSshTarget(this.model.targets);
-        const target = selectedTarget?.trim();
+    private async promptAndSelectTarget(): Promise<void> {
+        const result = await promptForSshTarget(
+            this.model.targets,
+            this.model.selected,
+        );
+
+        switch (result?.kind) {
+            case 'remove':
+                await this.removeTarget(result.target);
+                return;
+            case 'select':
+            case undefined:
+                break;
+        }
+
+        const target = result?.target.trim();
         if (!target) {
             return;
         }
 
-        try {
-            await this.targetStore.addTarget(target);
-        } catch (error) {
-            if (isWrappedError(error, ['INVALID_SSH_DESTINATION'])) {
-                showAndLogError(
-                    'Cannot add target. Enter a valid SSH destination',
-                    error,
-                );
-                return;
+        if (!this.model.targets.includes(target)) {
+            try {
+                await this.targetStore.addTarget(target);
+            } catch (error) {
+                if (isWrappedError(error, ['INVALID_SSH_DESTINATION'])) {
+                    showAndLogError(
+                        'Cannot add target. Enter a valid SSH destination',
+                        error,
+                    );
+                    return;
+                }
+                throw error;
             }
-            throw error;
         }
         await this.targetStore.setSelected(target);
         this.updateTargetsFromStore();

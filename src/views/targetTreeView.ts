@@ -91,40 +91,28 @@ export class TargetTreeView
     ): Promise<vscode.TreeItem[]> {
         if (!element) {
             const selectedTarget = this.targetModel.selected;
-            const selectedTargetDescription = selectedTarget
-                ? await this.targetDescriptionStore.getDescription(
-                      selectedTarget,
-                  )
-                : undefined;
-
-            const targetTreeItems: TargetTreeItem[] = [];
-            for (const target of this.targetModel.targets) {
-                const selected = target === selectedTarget;
-                const health = selected
-                    ? this.targetModel.selectedTargetHealth
-                    : undefined;
-                const targetDescription =
-                    selected && selectedTargetDescription
-                        ? loaded(selectedTargetDescription)
-                        : undefined;
-
-                targetTreeItems.push(
-                    new TargetTreeItem({
-                        target,
-                        selected,
-                        health,
-                        targetDescription,
-                    }),
-                );
+            if (!selectedTarget) {
+                return [];
             }
-            const sortedTargetTreeItems = targetTreeItems.sort((a, b) =>
-                a.displayName.localeCompare(b.displayName),
-            );
-            return sortedTargetTreeItems;
+
+            const selectedTargetDescription =
+                await this.targetDescriptionStore.getDescription(
+                    selectedTarget,
+                );
+
+            return [
+                new TargetTreeItem({
+                    target: selectedTarget,
+                    health: this.targetModel.selectedTargetHealth,
+                    targetDescription: selectedTargetDescription
+                        ? loaded(selectedTargetDescription)
+                        : undefined,
+                }),
+            ];
         }
 
         if (element instanceof TargetTreeItem) {
-            if (!element.selected || !element.connected) {
+            if (!element.connected) {
                 return [];
             }
 

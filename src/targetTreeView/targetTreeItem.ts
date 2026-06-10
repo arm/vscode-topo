@@ -7,7 +7,6 @@ import { hasFixCommand, type FixableHealthIssue } from '../util/issueFixes';
 
 export interface TargetTreeItemOptions {
     readonly target: string;
-    readonly selected: boolean;
     readonly health?: Loadable<TargetHealthCheck | undefined>;
     readonly targetDescription?: Loadable<TargetDescription>;
 }
@@ -18,36 +17,30 @@ const defaultTargetDescription = errored('Target description not available');
 /** Represents a target */
 export class TargetTreeItem extends vscode.TreeItem {
     public readonly target: string;
-    public readonly selected: boolean;
     public readonly health: Loadable<TargetHealthCheck | undefined>;
     public readonly targetDescription: Loadable<TargetDescription>;
 
     constructor({
         target,
-        selected,
         health = defaultTargetHealth,
         targetDescription = defaultTargetDescription,
     }: TargetTreeItemOptions) {
         super(target, vscode.TreeItemCollapsibleState.Expanded);
         this.target = target;
-        this.selected = selected;
         this.health = health;
         this.targetDescription = targetDescription;
         this.id = target;
-        this.iconPath = getTargetTreeItemIcon(selected, health);
+        this.iconPath = getTargetTreeItemIcon(health);
 
-        const contextValues = ['Target'];
-        if (selected) {
-            contextValues.push('Selected');
+        const contextValues = ['Target', 'Selected'];
 
-            if (this.connected) {
-                contextValues.push('Connected');
-            } else {
-                const message = getConnectivityStatusMessage(health);
-                if (message) {
-                    this.description = message;
-                    this.tooltip = `${target}: ${message}`;
-                }
+        if (this.connected) {
+            contextValues.push('Connected');
+        } else {
+            const message = getConnectivityStatusMessage(health);
+            if (message) {
+                this.description = message;
+                this.tooltip = `${target}: ${message}`;
             }
         }
 
@@ -55,10 +48,7 @@ export class TargetTreeItem extends vscode.TreeItem {
             contextValues.push('HasFixableIssues');
         }
         this.contextValue = contextValues.join(' ');
-        this.collapsibleState = getTargetTreeItemState(
-            selected,
-            this.connected,
-        );
+        this.collapsibleState = getTargetTreeItemState(this.connected);
     }
 
     public get connected(): boolean {
@@ -121,22 +111,17 @@ const getConnectivityStatusMessage = (
 };
 
 const getTargetTreeItemState = (
-    targetSelected: boolean,
     connected: boolean,
 ): vscode.TreeItemCollapsibleState => {
-    if (targetSelected && connected) {
+    if (connected) {
         return vscode.TreeItemCollapsibleState.Expanded;
     }
     return vscode.TreeItemCollapsibleState.None;
 };
 
 export const getTargetTreeItemIcon = (
-    targetSelected: boolean,
     health: Loadable<TargetHealthCheck | undefined>,
 ): vscode.ThemeIcon | undefined => {
-    if (!targetSelected) {
-        return undefined;
-    }
     if (health.loading) {
         return new vscode.ThemeIcon('loading~spin');
     }

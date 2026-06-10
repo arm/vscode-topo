@@ -66,12 +66,6 @@ export class FixIssue {
     private async fixTargetIssuesFromTreeItem(
         treeNode: TargetTreeItem,
     ): Promise<void> {
-        if (!treeNode.selected) {
-            throw new Error(
-                `Invalid target item for fix issues: expected selected TargetTreeItem but received: ${String(treeNode)}`,
-            );
-        }
-
         const fixableIssues = treeNode.fixableIssues;
 
         if (fixableIssues.length === 0) {

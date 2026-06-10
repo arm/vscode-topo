@@ -11,21 +11,23 @@ This extension is [free to use](LICENSE) and can be installed from the VS Code M
 ## Getting Started
 
 1. Install the extension from the VS Code Marketplace or a `.vsix` package.
-2. Add a target from the **Targets** view in the **Topo** activity bar container.
-3. Configure a target, making sure its dependencies are set up correctly.
+2. Select a target from the **Target** view in the **Topo** activity bar container.
+3. Configure the target, making sure its dependencies are set up correctly.
 4. Deploy your services to the target.
 
 ## Target Management
 
-The **Targets** view appears in the **Topo** activity bar container and lets you manage targets where deployments run.
+The **Target** view appears in the **Topo** activity bar container and shows the currently selected target where deployments run.
 
-### Add a Target
+### Select a Target
 
-Click the **+** button in the Targets view title bar and enter an SSH connection string (for example `root@192.168.1.1`). The extension automatically selects the first target you add.
+Click **Select a target** in the Target view title bar or status bar to open the target picker. The picker shows saved targets and hosts from your SSH config. Select an existing target, choose an SSH config host, or type an SSH connection string (for example `root@192.168.1.1`) to add and select a new target.
+
+Saved targets that do not come from SSH config can be removed from the picker with the inline trash button. Remove buttons are hidden while a target is selected; unselect the target first to remove saved manual targets.
 
 ### Target Tree
 
-Each target in the tree shows:
+The selected target in the tree shows:
 
 | Item                   | Description                                                                       |
 | ---------------------- | --------------------------------------------------------------------------------- |
@@ -33,17 +35,16 @@ Each target in the tree shows:
 | **Services**           | Running or stopped containers grouped by processing domain, with state icons.     |
 | **Dependencies**       | Required target components and driver health-check issues shown for the target.   |
 
-Connectivity errors are shown on the selected target row.
+Connectivity errors are shown on the target row. If no target is selected, the view shows a **Select a target** button.
 
 ### Target Actions
 
-Use the inline buttons on each target row to access these actions:
+Use the inline buttons on the selected target row to access these actions:
 
-| Command           | Description                                                  |
-| ----------------- | ------------------------------------------------------------ |
-| **Select Target** | Make the target active for deployments and actions.          |
-| **Remove Target** | Delete the target from the configuration.                    |
-| **Fix Issues**    | Select and run available fixes for target dependency issues. |
+| Command             | Description                                                  |
+| ------------------- | ------------------------------------------------------------ |
+| **Unselect Target** | Clear the active target without deleting it.                 |
+| **Fix Issues**      | Select and run available fixes for target dependency issues. |
 
 ### Dependency Actions
 
@@ -51,7 +52,7 @@ Use the inline **Fix** button on a fixable dependency item to run the executable
 
 ## Container Actions
 
-Use the inline buttons on a service in the Targets tree to manage individual containers:
+Use the inline buttons on a service in the Target tree to manage individual containers:
 
 | Command            | Description                                                                                 |
 | ------------------ | ------------------------------------------------------------------------------------------- |
@@ -114,7 +115,7 @@ Commands available from the Command Palette:
 | `Topo: Clone Local Project`    | Clone a project from a local directory.         |
 | `Topo: Deploy`                 | Select and deploy a compose file to the target. |
 
-Additional commands are available through inline buttons in the Targets and Host tree views.
+Additional commands are available through inline buttons in the Target and Host tree views.
 
 ## Settings
 
