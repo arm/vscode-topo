@@ -1,8 +1,8 @@
 # Topo
 
-The Topo extension for Visual Studio Code provides a graphical interface for working with [Topo](https://github.com/Arm/topo). Use the extension to manage targets, run deployments, and monitor services and containers across processing domains - all from within VS Code.
+Discover and deploy containerised software to Arm hardware over SSH.
 
-This extension is [free to use](LICENSE) and can be installed from the VS Code Marketplace or from a `.vsix` package.
+Bring [Topo](https://github.com/Arm/topo) CLI workflows into VS Code. Clone [Topo Templates](https://github.com/arm/topo-template-format/blob/main/01-authoring-templates.md), manage SSH targets, deploy projects, and visualise containers across processing domains.
 
 ## Requirements
 
@@ -12,8 +12,11 @@ This extension is [free to use](LICENSE) and can be installed from the VS Code M
 
 1. Install the extension from the VS Code Marketplace or a `.vsix` package.
 2. Add a target from the **Targets** view in the **Topo** activity bar container.
-3. Configure a target, making sure its dependencies are set up correctly.
-4. Deploy your services to the target.
+3. Review any missing target dependencies and apply suggested fixes.
+4. Clone a [Topo Template](https://github.com/arm/topo-template-format/blob/main/01-authoring-templates.md) from our catalog.
+5. Deploy the configured project to your target
+
+---
 
 ## Target Management
 
@@ -21,7 +24,7 @@ The **Targets** view appears in the **Topo** activity bar container and lets you
 
 ### Add a Target
 
-Click the **+** button in the Targets view title bar and enter an SSH connection string (for example `root@192.168.1.1`). The extension automatically selects the first target you add.
+Click the **+** button in the Targets view title bar and enter an SSH destination string (for example `root@192.168.1.1`). The extension automatically selects the first target you add.
 
 ### Target Tree
 
@@ -65,12 +68,10 @@ Use the inline buttons on a service in the Targets tree to manage individual con
 
 ## Deploy and Stop
 
-Deploy or stop the `compose.yaml` or `compose.yml` file in a project directory on the selected target. A deploy operation builds container images, transfers them to the target, and starts services. You can trigger either operation from:
+Deploy or stop the `compose.yaml` file in a project directory on the selected target. A deploy operation builds container images, transfers them to the target, and starts services. You can trigger either operation from:
 
-- Running **Topo: Deploy** from the Command Palette, then selecting a `compose.yaml` or `compose.yml` file from the workspace.
-- Right-clicking `compose.yaml` or `compose.yml` in the Explorer or editor tab and selecting **Deploy** or **Stop**.
-
-The extension runs `topo deploy --target <ssh>` or `topo stop --target <ssh>` from the directory containing `compose.yaml` or `compose.yml` in a task terminal and reports success or failure.
+- Running **Topo: Deploy** from the Command Palette, then selecting a `compose.yaml` file from the workspace.
+- Right-clicking `compose.yaml` in the Explorer or editor tab and selecting **Deploy** or **Stop**.
 
 ## Project Management
 
