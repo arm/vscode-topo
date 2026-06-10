@@ -13,6 +13,7 @@ export interface RemoteProcessor {
 export interface TargetDescription {
     hostProcessors: HostProcessor[];
     remoteProcessors: RemoteProcessor[];
+    totalMemoryKb: number;
 }
 
 /**

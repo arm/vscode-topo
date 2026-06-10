@@ -2,9 +2,9 @@ import * as vscode from 'vscode';
 import { TargetContainerTreeItem } from '../targetTreeView/targetContainerTreeItem';
 import * as manifest from '../manifest';
 import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
-import { TargetSubsystemTreeItem } from '../targetTreeView/targetSubsystemTreeItem';
+import { TargetProcessingDomainTreeItem } from '../targetTreeView/targetProcessingDomainTreeItem';
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
-import { TargetSubsystemGroupTreeItem } from '../targetTreeView/targetSubsystemGroupTreeItem';
+import { TargetProcessingDomainGroupTreeItem } from '../targetTreeView/targetProcessingDomainGroupTreeItem';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 import { TargetDescriptionStore } from '../target/targetDescriptionStore';
 import { TargetModel } from '../models/targetModel';
@@ -27,21 +27,26 @@ function compareContainers(a: ContainerItem, b: ContainerItem): number {
     return compareByName(a, b);
 }
 
-function filterContainersForGroup(
+function filterContainersForProcessingDomain(
     containers: ContainerItem[],
-    group: string,
+    processingDomainId: string,
 ): ContainerItem[] {
     return containers.filter((item) => {
-        if (group === 'Host') {
+        if (processingDomainId === 'PrimaryOS') {
             return item.runtime === manifest.TARGET_HOST_RUNTIME;
         }
 
         return (
             item.runtime === manifest.TARGET_REMOTEPROC_RUNTIME &&
-            item.annotations?.['remoteproc.name'] === group
+            item.annotations?.['remoteproc.name'] === processingDomainId
         );
     });
 }
+
+const PRIMARY_OS_PROCESSING_DOMAIN = {
+    id: 'PrimaryOS',
+    label: 'Primary OS',
+};
 
 export class TargetTreeView
     implements vscode.TreeDataProvider<vscode.TreeItem>, vscode.Disposable
@@ -126,7 +131,7 @@ export class TargetTreeView
             const dependenciesGroup = new HealthCheckDependencyGroupTreeItem(
                 loaded(element.visibleIssues, element.health.loading),
             );
-            const subsystemsGroup = new TargetSubsystemGroupTreeItem(
+            const subsystemsGroup = new TargetProcessingDomainGroupTreeItem(
                 element.target,
                 element.remoteProcessorNames,
                 this.targetModel.selectedTargetContainers,
@@ -139,7 +144,7 @@ export class TargetTreeView
             return deps.map((d) => new HealthCheckDependencyTreeItem(d));
         }
 
-        if (element instanceof TargetSubsystemGroupTreeItem) {
+        if (element instanceof TargetProcessingDomainGroupTreeItem) {
             if (element.containers.status === 'errored') {
                 return [
                     new ErrorTreeItem(
@@ -153,22 +158,29 @@ export class TargetTreeView
                 compareContainers,
             );
 
-            const groupNames = ['Host', ...element.remoteProcessorNames];
-            return groupNames.map((group) => {
-                const containers = filterContainersForGroup(
+            const processingDomains = [
+                PRIMARY_OS_PROCESSING_DOMAIN,
+                ...element.remoteProcessorNames.map((name) => ({
+                    id: name,
+                    label: name,
+                })),
+            ];
+            return processingDomains.map((domain) => {
+                const containers = filterContainersForProcessingDomain(
                     sortedContainers,
-                    group,
+                    domain.id,
                 );
 
-                return new TargetSubsystemTreeItem(
-                    group,
+                return new TargetProcessingDomainTreeItem(
+                    domain.id,
                     element.target,
                     containers,
+                    domain.label,
                 );
             });
         }
 
-        if (element instanceof TargetSubsystemTreeItem) {
+        if (element instanceof TargetProcessingDomainTreeItem) {
             return element.containers.map(
                 (container) => new TargetContainerTreeItem(container),
             );

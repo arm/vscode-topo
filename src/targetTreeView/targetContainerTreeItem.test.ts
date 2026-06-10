@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { TargetContainerTreeItem } from './targetContainerTreeItem';
-import { TARGET_REMOTEPROC_RUNTIME } from '../manifest';
+import { TARGET_HOST_RUNTIME, TARGET_REMOTEPROC_RUNTIME } from '../manifest';
 import { ContainerItem } from '../util/types';
 
 describe('TargetContainerTreeItem', () => {
@@ -63,5 +63,26 @@ describe('TargetContainerTreeItem', () => {
         expect((item.iconPath as vscode.ThemeIcon).color).toEqual({
             id: 'terminal.ansiWhite',
         });
+    });
+
+    it('uses PrimaryOS context for containers running in the primary OS', () => {
+        const container: ContainerItem = {
+            id: 'id789',
+            name: 'primary-os-container',
+            image: 'alpine',
+            state: 'running',
+            status: 'Up',
+            labels: '',
+            runningFor: '1m',
+            runtime: TARGET_HOST_RUNTIME,
+            annotations: {},
+            createdAt: '',
+            ports: {},
+            target,
+        };
+
+        const item = new TargetContainerTreeItem(container);
+
+        expect(item.contextValue).toBe('service running PrimaryOS');
     });
 });
