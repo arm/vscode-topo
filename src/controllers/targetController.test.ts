@@ -21,6 +21,7 @@ const health: HealthCheck = {
         dependencies: [],
     },
     target: {
+        destination: 'ssh://target',
         isLocalhost: false,
         connectivity: {
             name: 'Connectivity',
