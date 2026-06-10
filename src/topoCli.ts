@@ -302,4 +302,16 @@ export class TopoCli {
     public async health(sshTarget: string): Promise<HealthCheck> {
         return this.runHealth(healthCheckSchema, sshTarget);
     }
+
+    public verifyVersion(expectedVersionStr: string): void {
+        const actual = this.getVersion().version;
+        const expected = expectedVersionStr.startsWith('v')
+            ? expectedVersionStr.slice(1)
+            : expectedVersionStr;
+        if (actual !== expected) {
+            throw new Error(
+                `version mismatch: found=${actual} expected=${expected}`,
+            );
+        }
+    }
 }
