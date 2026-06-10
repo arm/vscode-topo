@@ -117,12 +117,6 @@
                 "category": "Topo"
             },
             {
-                "command": "topo.inspectHostHealth",
-                "title": "Inspect Host Health",
-                "icon": "$(pulse)",
-                "category": "Topo"
-            },
-            {
                 "command": "topo.refreshHostHealth",
                 "title": "Refresh",
                 "icon": "$(refresh)",
@@ -342,11 +336,6 @@
                 },
                 {
                     "command": "topo.refreshHostHealth",
-                    "when": "view == topo.host-manager",
-                    "group": "navigation"
-                },
-                {
-                    "command": "topo.inspectHostHealth",
                     "when": "view == topo.host-manager",
                     "group": "navigation"
                 }

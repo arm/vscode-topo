@@ -15,7 +15,6 @@ import { ContainerStop } from './actions/containerStop';
 import { ContainerDelete } from './actions/containerDelete';
 import { TargetHealth } from './actions/targetHealth';
 import { FixIssue } from './actions/fixIssue';
-import { HostHealth } from './actions/hostHealth';
 import { ProjectClone } from './actions/projectClone';
 
 function command(id: string): string {
@@ -27,7 +26,6 @@ export const showOutput = command('showOutput');
 export const selectTarget = command('selectTarget');
 export const removeTarget = command('removeTarget');
 export const addTarget = command('addTarget');
-export const inspectHostHealth = command('inspectHostHealth');
 export const initProject = command('initProject');
 export const deploy = command('deploy');
 export const deployContext = command('deploy.context');
@@ -47,7 +45,6 @@ export const templateClone = command('templateClone');
 
 export interface CommandHandlers {
     hostController: HostController;
-    hostHealth: HostHealth;
     targetController: TargetController;
     projectInit: ProjectInit;
     projectClone: ProjectClone;
@@ -78,9 +75,6 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
         ),
         vscode.commands.registerCommand(addTarget, () =>
             handlers.targetController.addCommandHandler(),
-        ),
-        vscode.commands.registerCommand(inspectHostHealth, () =>
-            handlers.hostHealth.inspectHealthCommandHandler(),
         ),
         vscode.commands.registerCommand(initProject, () =>
             handlers.projectInit.initProjectCommandHandler(),

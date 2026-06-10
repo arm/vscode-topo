@@ -21,7 +21,6 @@ import { FixIssue } from './actions/fixIssue';
 import { HostTreeView } from './views/hostTreeView';
 import { logger } from './util/logger';
 import { TargetHealth } from './actions/targetHealth';
-import { HostHealth } from './actions/hostHealth';
 import { HostModel } from './models/hostModel';
 import { HostController } from './controllers/hostController';
 import { TransientDocumentProvider } from './util/transientDocumentProvider';
@@ -51,15 +50,10 @@ export async function activate(
     const targetHealthDocProvider = new TransientDocumentProvider(
         'target-health',
     );
-    const hostHealthDocProvider = new TransientDocumentProvider('host-health');
     const dockerCommands = new DockerCommands();
     const targetStore = new TargetStore(context);
     const targetDescriptionStore = new TargetDescriptionStore(topoCli);
-    context.subscriptions.push(
-        targetStore,
-        hostHealthDocProvider,
-        targetHealthDocProvider,
-    );
+    context.subscriptions.push(targetStore, targetHealthDocProvider);
 
     const targetModel = new TargetModel();
     const hostModel = new HostModel();
@@ -86,7 +80,6 @@ export async function activate(
     );
 
     const hostController = new HostController(hostModel, topoCli);
-    const hostHealth = new HostHealth(topoCli, hostHealthDocProvider);
     const targetController = new TargetController(
         targetModel,
         targetStore,
@@ -128,7 +121,6 @@ export async function activate(
     context.subscriptions.push(
         commands.register({
             hostController,
-            hostHealth,
             targetController,
             projectInit,
             deploy,
