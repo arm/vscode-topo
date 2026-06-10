@@ -10,7 +10,6 @@ import { ProjectInit } from './actions/projectInit';
 import { Deploy } from './actions/deploy';
 import { Stop } from './actions/stop';
 import { ContainerOpenInBrowser } from './actions/containerOpenInBrowser';
-import { AttachVsCode } from './actions/attachVsCode';
 import { AttachShell } from './actions/attachShell';
 import { ContainerStart } from './actions/containerStart';
 import { ContainerStop } from './actions/containerStop';
@@ -29,7 +28,6 @@ describe('commands', () => {
         deploy: mock<Deploy>(),
         stop: mock<Stop>(),
         containerOpenInBrowser: mock<ContainerOpenInBrowser>(),
-        attachVsCode: mock<AttachVsCode>(),
         attachShell: mock<AttachShell>(),
         containerStart: mock<ContainerStart>(),
         containerStop: mock<ContainerStop>(),
@@ -85,10 +83,6 @@ describe('commands', () => {
             [
                 commands.openInBrowser,
                 handlers.containerOpenInBrowser.openInBrowserCommandHandler,
-            ],
-            [
-                commands.attachVsCode,
-                handlers.attachVsCode.attachVsCodeCommandHandler,
             ],
             [
                 commands.attachShell,

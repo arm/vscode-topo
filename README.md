@@ -59,7 +59,6 @@ Use the inline buttons on a service in the Targets tree to manage individual con
 | **Stop**            | Stop a running container.                                                                   |
 | **Delete**          | Remove a container.                                                                         |
 | **Attach Shell**    | Open a VS Code terminal connected to a running container in the target's primary OS.        |
-| **Attach VS Code**  | Open a running container in the target's primary OS in a VS Code Remote Containers session. |
 | **Open in Browser** | Open a running service in the target's primary OS by auto-detecting common published ports. |
 
 ## Deploy and Stop

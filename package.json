@@ -45,12 +45,6 @@
                 "category": "Topo"
             },
             {
-                "command": "topo.attachVsCode",
-                "title": "Attach VS Code",
-                "icon": "$(vscode)",
-                "category": "Topo"
-            },
-            {
                 "command": "topo.attachShell",
                 "title": "Attach Shell",
                 "icon": "$(terminal)",
@@ -226,10 +220,6 @@
                     "when": "false"
                 },
                 {
-                    "command": "topo.attachVsCode",
-                    "when": "false"
-                },
-                {
                     "command": "topo.attachShell",
                     "when": "false"
                 },
@@ -281,19 +271,14 @@
                     "group": "inline@1"
                 },
                 {
-                    "command": "topo.attachVsCode",
+                    "command": "topo.attachShell",
                     "when": "view === topo.target-manager && viewItem =~ /service/ && viewItem =~ /running/ && viewItem =~ /PrimaryOS/",
                     "group": "inline@1"
                 },
                 {
-                    "command": "topo.attachShell",
-                    "when": "view === topo.target-manager && viewItem =~ /service/ && viewItem =~ /running/ && viewItem =~ /PrimaryOS/",
-                    "group": "inline@2"
-                },
-                {
                     "command": "topo.openInBrowser",
                     "when": "view === topo.target-manager && viewItem =~ /service/ && viewItem =~ /running/ && viewItem =~ /PrimaryOS/",
-                    "group": "inline@3"
+                    "group": "inline@2"
                 },
                 {
                     "command": "topo.startContainer",
