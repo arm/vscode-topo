@@ -1,56 +1,47 @@
 import * as vscode from 'vscode';
 import { mock } from 'vitest-mock-extended';
 import { activate } from './extension';
+import { TopoCli } from './topoCli';
 
 vi.mock('child_process');
 vi.mock('./util/logger');
 vi.mock('./topoCli');
-vi.mock('./topoCliVersionChecker', () => {
-    return {
-        TopoCliVersionChecker: vi.fn().mockImplementation(function () {
-            return {
-                checkTopoCliVersion: vi.fn(() => true),
-            };
-        }),
-    };
-});
 
 describe('extension activation', () => {
-    let subscriptions: vscode.Disposable[];
-
-    beforeEach(() => {
-        vi.useFakeTimers();
-        subscriptions = [];
-    });
-
     afterEach(() => {
-        for (const sub of subscriptions) {
-            sub.dispose();
-        }
-        vi.clearAllTimers();
-        vi.useRealTimers();
         vi.resetAllMocks();
     });
 
     it('registers commands and prepares disposables', async () => {
-        const extensionPath = '/fake/extension/path';
-        const environmentVariableCollection =
-            mock<vscode.EnvironmentVariableCollection>();
-        const globalState = mock<vscode.Memento>();
-        const workspaceState = mock<vscode.Memento>();
-        const globalStorageUri = vscode.Uri.file('/fake/storage/path');
         const context = mock<vscode.ExtensionContext>({
-            subscriptions,
-            extensionPath,
-            environmentVariableCollection,
-            globalState,
-            workspaceState,
-            globalStorageUri,
+            subscriptions: [],
+            globalState: mock<vscode.Memento>(),
+            workspaceState: mock<vscode.Memento>(),
         });
 
         await activate(context);
 
         expect(vscode.commands.registerCommand).toHaveBeenCalled();
-        expect(subscriptions.length).toBeGreaterThan(0);
+        expect(context.subscriptions.length).toBeGreaterThan(0);
+    });
+
+    it('shows an error and skips command registration when the topo CLI version check fails', async () => {
+        vi.mocked(TopoCli).mockImplementation(function () {
+            return mock<TopoCli>({
+                verifyVersion: vi.fn().mockImplementation(() => {
+                    throw new Error('version mismatch');
+                }),
+            });
+        });
+        const context = mock<vscode.ExtensionContext>({
+            subscriptions: [],
+        });
+
+        await activate(context);
+
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
+            expect.stringContaining('version mismatch'),
+        );
+        expect(vscode.commands.registerCommand).not.toHaveBeenCalled();
     });
 });

@@ -2,7 +2,6 @@ import * as vscode from 'vscode';
 import * as commands from './commands';
 import { TopoCli } from './topoCli';
 import { ProjectInit } from './actions/projectInit';
-import { TopoCliVersionChecker } from './topoCliVersionChecker';
 import { TargetStatusBarItemView } from './views/targetStatusBarItemView';
 import { TargetTreeView } from './views/targetTreeView';
 import { ContainerStart } from './actions/containerStart';
@@ -28,6 +27,8 @@ import { TransientDocumentProvider } from './util/transientDocumentProvider';
 import { TargetController } from './controllers/targetController';
 import { TargetModel } from './models/targetModel';
 import { ProjectClone } from './actions/projectClone';
+import { showAndLogError } from './util/showAndLogError';
+import { topo } from '../package.json';
 import { RefreshLoop } from './util/refreshLoop';
 
 export async function activate(
@@ -38,12 +39,11 @@ export async function activate(
         context.environmentVariableCollection,
     );
     context.subscriptions.push(topoCli);
-    const topoCliVersionChecker = new TopoCliVersionChecker(
-        topoCli,
-        context.extensionPath,
-    );
 
-    if (!topoCliVersionChecker.checkTopoCliVersion()) {
+    try {
+        topoCli.verifyVersion(topo.version);
+    } catch (err) {
+        showAndLogError(`Topo CLI version check failed`, err);
         return;
     }
 
