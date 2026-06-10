@@ -232,6 +232,9 @@ export class TargetController {
         this.model.setSelectedTargetHealth(
             loading(this.model.selectedTargetHealth),
         );
+        this.model.setSelectedTargetContainers(
+            loading(this.model.selectedTargetContainers),
+        );
         const health = await loadTargetHealth(this.topoCli, target);
         signal.throwIfAborted();
         this.model.setSelectedTargetHealth(health);
@@ -254,9 +257,6 @@ export class TargetController {
             return this.model.setSelectedTargetContainers(errored(err));
         }
 
-        this.model.setSelectedTargetContainers(
-            loading(this.model.selectedTargetContainers),
-        );
         const containers = await loadContainersData(
             this.containerCommands,
             target,
