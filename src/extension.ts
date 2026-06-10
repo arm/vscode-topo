@@ -20,10 +20,8 @@ import { TargetDescriptionStore } from './target/targetDescriptionStore';
 import { FixIssue } from './actions/fixIssue';
 import { HostTreeView } from './views/hostTreeView';
 import { logger } from './util/logger';
-import { TargetHealth } from './actions/targetHealth';
 import { HostModel } from './models/hostModel';
 import { HostController } from './controllers/hostController';
-import { TransientDocumentProvider } from './util/transientDocumentProvider';
 import { TargetController } from './controllers/targetController';
 import { TargetModel } from './models/targetModel';
 import { ProjectClone } from './actions/projectClone';
@@ -47,13 +45,10 @@ export async function activate(
         return;
     }
 
-    const targetHealthDocProvider = new TransientDocumentProvider(
-        'target-health',
-    );
     const dockerCommands = new DockerCommands();
     const targetStore = new TargetStore(context);
     const targetDescriptionStore = new TargetDescriptionStore(topoCli);
-    context.subscriptions.push(targetStore, targetHealthDocProvider);
+    context.subscriptions.push(targetStore);
 
     const targetModel = new TargetModel();
     const hostModel = new HostModel();
@@ -114,7 +109,6 @@ export async function activate(
     const containerStart = new ContainerStart(dockerCommands);
     const containerStop = new ContainerStop(dockerCommands);
     const containerDelete = new ContainerDelete(dockerCommands);
-    const targetHealth = new TargetHealth(topoCli, targetHealthDocProvider);
     const fixIssue = new FixIssue(topoCli, targetModel);
     const protocolHandler = new ProtocolHandler(topoCli);
 
@@ -131,7 +125,6 @@ export async function activate(
             containerStart,
             containerStop,
             containerDelete,
-            targetHealth,
             fixIssue,
             projectClone,
         }),

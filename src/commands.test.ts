@@ -15,7 +15,6 @@ import { AttachShell } from './actions/attachShell';
 import { ContainerStart } from './actions/containerStart';
 import { ContainerStop } from './actions/containerStop';
 import { ContainerDelete } from './actions/containerDelete';
-import { TargetHealth } from './actions/targetHealth';
 import { FixIssue } from './actions/fixIssue';
 import { ProjectClone } from './actions/projectClone';
 
@@ -35,7 +34,6 @@ describe('commands', () => {
         containerStart: mock<ContainerStart>(),
         containerStop: mock<ContainerStop>(),
         containerDelete: mock<ContainerDelete>(),
-        targetHealth: mock<TargetHealth>(),
         fixIssue: mock<FixIssue>(),
     } satisfies commands.CommandHandlers;
 
@@ -108,10 +106,7 @@ describe('commands', () => {
                 commands.deleteContainer,
                 handlers.containerDelete.deleteContainerCommandHandler,
             ],
-            [
-                commands.inspectTargetHealth,
-                handlers.targetHealth.inspectHealthCommandHandler,
-            ],
+
             [
                 commands.fixDependencyIssue,
                 handlers.fixIssue.fixIssueCommandHandler,

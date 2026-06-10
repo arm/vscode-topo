@@ -13,7 +13,6 @@ import { AttachShell } from './actions/attachShell';
 import { ContainerStart } from './actions/containerStart';
 import { ContainerStop } from './actions/containerStop';
 import { ContainerDelete } from './actions/containerDelete';
-import { TargetHealth } from './actions/targetHealth';
 import { FixIssue } from './actions/fixIssue';
 import { ProjectClone } from './actions/projectClone';
 
@@ -36,7 +35,6 @@ export const attachShell = command('attachShell');
 export const startContainer = command('startContainer');
 export const stopContainer = command('stopContainer');
 export const deleteContainer = command('deleteContainer');
-export const inspectTargetHealth = command('inspectTargetHealth');
 export const fixDependencyIssue = command('fixDependencyIssue');
 export const fixTargetIssues = command('fixTargetIssues');
 export const remoteClone = command('remoteClone');
@@ -56,7 +54,6 @@ export interface CommandHandlers {
     containerStart: ContainerStart;
     containerStop: ContainerStop;
     containerDelete: ContainerDelete;
-    targetHealth: TargetHealth;
     fixIssue: FixIssue;
 }
 
@@ -109,9 +106,6 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
         ),
         vscode.commands.registerCommand(deleteContainer, (treeNode) =>
             handlers.containerDelete.deleteContainerCommandHandler(treeNode),
-        ),
-        vscode.commands.registerCommand(inspectTargetHealth, (treeNode) =>
-            handlers.targetHealth.inspectHealthCommandHandler(treeNode),
         ),
         vscode.commands.registerCommand(fixDependencyIssue, (treeNode) =>
             handlers.fixIssue.fixIssueCommandHandler(treeNode),

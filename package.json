@@ -99,12 +99,6 @@
                 "category": "Topo"
             },
             {
-                "command": "topo.inspectTargetHealth",
-                "title": "Inspect Health",
-                "icon": "$(pulse)",
-                "category": "Topo"
-            },
-            {
                 "command": "topo.fixDependencyIssue",
                 "title": "Fix",
                 "icon": "$(wrench)",
@@ -214,10 +208,6 @@
                     "when": "false"
                 },
                 {
-                    "command": "topo.inspectTargetHealth",
-                    "when": "false"
-                },
-                {
                     "command": "topo.fixDependencyIssue",
                     "when": "false"
                 },
@@ -276,11 +266,6 @@
                     "command": "topo.selectTarget",
                     "when": "view == topo.target-manager && viewItem =~ /Target/",
                     "group": "inline@1"
-                },
-                {
-                    "command": "topo.inspectTargetHealth",
-                    "when": "view === topo.target-manager && viewItem =~ /Target/ && viewItem =~ /Selected/",
-                    "group": "inline@2"
                 },
                 {
                     "command": "topo.fixTargetIssues",
