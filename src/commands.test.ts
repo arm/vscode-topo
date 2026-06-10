@@ -15,9 +15,7 @@ import { AttachShell } from './actions/attachShell';
 import { ContainerStart } from './actions/containerStart';
 import { ContainerStop } from './actions/containerStop';
 import { ContainerDelete } from './actions/containerDelete';
-import { TargetHealth } from './actions/targetHealth';
 import { FixIssue } from './actions/fixIssue';
-import { HostHealth } from './actions/hostHealth';
 import { ProjectClone } from './actions/projectClone';
 
 vi.mock('./util/logger');
@@ -25,7 +23,6 @@ vi.mock('./util/logger');
 describe('commands', () => {
     const handlers = {
         hostController: mock<HostController>(),
-        hostHealth: mock<HostHealth>(),
         targetController: mock<TargetController>(),
         projectInit: mock<ProjectInit>(),
         projectClone: mock<ProjectClone>(),
@@ -37,7 +34,6 @@ describe('commands', () => {
         containerStart: mock<ContainerStart>(),
         containerStop: mock<ContainerStop>(),
         containerDelete: mock<ContainerDelete>(),
-        targetHealth: mock<TargetHealth>(),
         fixIssue: mock<FixIssue>(),
     } satisfies commands.CommandHandlers;
 
@@ -77,10 +73,6 @@ describe('commands', () => {
             ],
             [commands.addTarget, handlers.targetController.addCommandHandler],
             [
-                commands.inspectHostHealth,
-                handlers.hostHealth.inspectHealthCommandHandler,
-            ],
-            [
                 commands.initProject,
                 handlers.projectInit.initProjectCommandHandler,
             ],
@@ -114,10 +106,7 @@ describe('commands', () => {
                 commands.deleteContainer,
                 handlers.containerDelete.deleteContainerCommandHandler,
             ],
-            [
-                commands.inspectTargetHealth,
-                handlers.targetHealth.inspectHealthCommandHandler,
-            ],
+
             [
                 commands.fixDependencyIssue,
                 handlers.fixIssue.fixIssueCommandHandler,
