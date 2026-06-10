@@ -9,6 +9,7 @@ import { TargetModel } from '../models/targetModel';
 vi.mock('../util/logger');
 
 const healthyTarget: TargetHealthCheck = {
+    destination: 'ssh://root@localhost',
     isLocalhost: false,
     connectivity: {
         status: 'ok',

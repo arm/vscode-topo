@@ -114,6 +114,7 @@ const dockerInspectCommand = commandString([
 const loadedHealth: HealthCheck = {
     host: { dependencies: [] },
     target: {
+        destination: `ssh://${target}`,
         isLocalhost: false,
         dependencies: [
             {
@@ -304,6 +305,7 @@ describe('ContainersManager', () => {
         const unhealthyContainerEngine: HealthCheck = {
             host: { dependencies: [] },
             target: {
+                destination: `ssh://${target}`,
                 isLocalhost: false,
                 dependencies: [
                     {
@@ -481,6 +483,7 @@ describe('ContainersManager', () => {
             return {
                 host: { dependencies: [] },
                 target: {
+                    destination: `ssh://${ssh}`,
                     isLocalhost: false,
                     dependencies: [
                         {
@@ -523,6 +526,7 @@ describe('ContainersManager', () => {
         resolveOldHealth!({
             host: { dependencies: [] },
             target: {
+                destination: `ssh://${target}`,
                 isLocalhost: false,
                 dependencies: [
                     {

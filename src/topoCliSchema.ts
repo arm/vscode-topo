@@ -47,6 +47,7 @@ export const IssueCheckSchema = type({
 export type IssueCheck = Infer<typeof IssueCheckSchema>;
 
 const targetHealthCheckSchema = type({
+    destination: trimmed(string()),
     isLocalhost: boolean(),
     connectivity: IssueCheckSchema,
     subsystemDriver: IssueCheckSchema,
@@ -105,6 +106,7 @@ const describeRemoteprocSchema = type({
 export const targetDescriptionSchema = type({
     hostProcessors: array(describeHostProcessorSchema),
     remoteProcessors: defaulted(array(describeRemoteprocSchema), []),
+    totalMemoryKb: number(),
 });
 
 const topoLogLevelSchema = enums(['DEBUG', 'INFO', 'WARN', 'ERROR']);
