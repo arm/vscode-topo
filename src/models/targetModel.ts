@@ -3,6 +3,10 @@ import { Loadable, loaded } from '../util/loadable';
 import { TargetHealthCheck } from '../topoCliSchema';
 import { ContainerItem } from '../util/types';
 
+const defaultContainers: Loadable<ContainerItem[]> = loaded([]);
+const defaultHealth: Loadable<TargetHealthCheck | undefined> =
+    loaded(undefined);
+
 export class TargetModel {
     private _onSelectedChanged: vscode.EventEmitter<void> =
         new vscode.EventEmitter<void>();
@@ -26,13 +30,16 @@ export class TargetModel {
 
     private _selected?: string;
     private _targets: string[] = [];
-    private _health: Loadable<TargetHealthCheck | undefined> =
-        loaded(undefined);
-    private _containers: Loadable<ContainerItem[]> = loaded([]);
+    private _health: Loadable<TargetHealthCheck | undefined> = defaultHealth;
+    private _containers: Loadable<ContainerItem[]> = defaultContainers;
 
     public setSelected(selected: string | undefined): void {
+        const changed = this._selected !== selected;
         this._selected = selected;
-        this._onSelectedChanged.fire();
+        if (changed) {
+            this.clearSelectedTargetData();
+            this._onSelectedChanged.fire();
+        }
     }
 
     public setTargets(targets: string[]): void {
@@ -66,5 +73,10 @@ export class TargetModel {
     public setSelectedTargetContainers(containers: Loadable<ContainerItem[]>) {
         this._containers = containers;
         this._onContainersChanged.fire();
+    }
+
+    public clearSelectedTargetData(): void {
+        this.setSelectedTargetHealth(defaultHealth);
+        this.setSelectedTargetContainers(defaultContainers);
     }
 }
