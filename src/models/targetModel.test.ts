@@ -126,4 +126,15 @@ describe('TargetModel', () => {
         expect(onHealthChanged).toHaveBeenCalledTimes(1);
         expect(onContainersChanged).toHaveBeenCalledTimes(1);
     });
+
+    it('clears selected target data when selected target is changed', () => {
+        const model = new TargetModel();
+        model.setSelectedTargetHealth(loaded(targetHealth));
+        model.setSelectedTargetContainers(loaded(containers));
+
+        model.setSelected('user@host');
+
+        expect(model.selectedTargetHealth).toEqual(loaded(undefined));
+        expect(model.selectedTargetContainers).toEqual(loaded([]));
+    });
 });

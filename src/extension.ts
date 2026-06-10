@@ -4,10 +4,8 @@ import { TopoCli } from './topoCli';
 import { ProjectInit } from './actions/projectInit';
 import { TargetStatusBarItemView } from './views/targetStatusBarItemView';
 import { TargetTreeView } from './views/targetTreeView';
-import { ContainersManager } from './target/containersManager';
 import { ContainerStart } from './actions/containerStart';
 import { ContainerStop } from './actions/containerStop';
-import { ContainerOpenInBrowser } from './actions/containerOpenInBrowser';
 import { AttachVsCode } from './actions/attachVsCode';
 import { AttachShell } from './actions/attachShell';
 import { ContainerDelete } from './actions/containerDelete';
@@ -53,17 +51,8 @@ export async function activate(
     const targetModel = new TargetModel();
     const hostModel = new HostModel();
 
-    const containersManager = new ContainersManager(
-        topoCli,
-        dockerCommands,
-        targetModel,
-    );
-    await containersManager.activate();
-    context.subscriptions.push(containersManager);
-
     const hostTreeView = new HostTreeView(hostModel);
     const targetTreeView = new TargetTreeView(
-        containersManager,
         targetModel,
         targetDescriptionStore,
     );
@@ -103,7 +92,6 @@ export async function activate(
     const projectClone = new ProjectClone(topoCli, targetModel);
     const deploy = new Deploy(topoCli, targetModel);
     const stop = new Stop(topoCli, targetModel);
-    const containerOpenInBrowser = new ContainerOpenInBrowser();
     const attachVsCode = new AttachVsCode(dockerCommands);
     const attachShell = new AttachShell(dockerCommands);
     const containerStart = new ContainerStart(dockerCommands);
@@ -119,7 +107,6 @@ export async function activate(
             projectInit,
             deploy,
             stop,
-            containerOpenInBrowser,
             attachVsCode,
             attachShell,
             containerStart,

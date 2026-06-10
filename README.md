@@ -53,21 +53,20 @@ Use the inline **Fix** button on a fixable dependency item to run the executable
 
 Use the inline buttons on a service in the Targets tree to manage individual containers:
 
-| Command             | Description                                                                                 |
-| ------------------- | ------------------------------------------------------------------------------------------- |
-| **Start**           | Start a stopped container.                                                                  |
-| **Stop**            | Stop a running container.                                                                   |
-| **Delete**          | Remove a container.                                                                         |
-| **Attach Shell**    | Open a VS Code terminal connected to a running container in the target's primary OS.        |
-| **Attach VS Code**  | Open a running container in the target's primary OS in a VS Code Remote Containers session. |
-| **Open in Browser** | Open a running service in the target's primary OS by auto-detecting common published ports. |
+| Command            | Description                                                                                 |
+| ------------------ | ------------------------------------------------------------------------------------------- |
+| **Start**          | Start a stopped container.                                                                  |
+| **Stop**           | Stop a running container.                                                                   |
+| **Delete**         | Remove a container.                                                                         |
+| **Attach Shell**   | Open a VS Code terminal connected to a running container in the target's primary OS.        |
+| **Attach VS Code** | Open a running container in the target's primary OS in a VS Code Remote Containers session. |
 
 ## Deploy and Stop
 
 Deploy or stop the `compose.yaml` or `compose.yml` file in a project directory on the selected target. A deploy operation builds container images, transfers them to the target, and starts services. You can trigger either operation from:
 
 - Running **Topo: Deploy** from the Command Palette, then selecting a `compose.yaml` or `compose.yml` file from the workspace.
-- Right-clicking `compose.yaml` or `compose.yml` in the Explorer or editor tab and selecting **Deploy** or **Stop**.
+- Right-clicking `compose.yaml` or `compose.yml` in the Explorer or editor tab and selecting **Topo Deploy** or **Topo Stop**.
 
 The extension runs `topo deploy --target <ssh>` or `topo stop --target <ssh>` from the directory containing `compose.yaml` or `compose.yml` in a task terminal and reports success or failure.
 
@@ -105,7 +104,7 @@ Use the refresh button in the Host view title bar to reload host dependency heal
 
 ## Commands
 
-All commands are under the **Topo** category. Commands available from the Command Palette:
+Commands available from the Command Palette:
 
 | Command                        | Description                                     |
 | ------------------------------ | ----------------------------------------------- |
