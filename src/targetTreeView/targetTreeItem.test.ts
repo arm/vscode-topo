@@ -34,7 +34,6 @@ describe('TargetTreeItem', () => {
     it('sets basic fields', () => {
         const item = new TargetTreeItem({
             target: baseTarget,
-            selected: false,
         });
 
         expect(item.id).toBe(baseTarget);
@@ -44,7 +43,7 @@ describe('TargetTreeItem', () => {
     });
 
     it('defaults to target state not ready when health is omitted', () => {
-        const item = new TargetTreeItem({ target: baseTarget, selected: true });
+        const item = new TargetTreeItem({ target: baseTarget });
 
         expect(item.description).toBe('Target health not available');
         expect(item.contextValue).not.toContain('Connected');
@@ -53,15 +52,13 @@ describe('TargetTreeItem', () => {
         );
     });
 
-    it('shows loading icon and Selected context while selected target is refreshing', () => {
+    it('shows loading icon while target is refreshing', () => {
         const item = new TargetTreeItem({
             target: baseTarget,
-            selected: true,
             health: loading(errored('Target state is not ready')),
         });
 
         expect(item.contextValue).toContain('Target');
-        expect(item.contextValue).toContain('Selected');
         expect(item.contextValue).not.toContain('Connected');
         expect(item.iconPath).toBeInstanceOf(vscode.ThemeIcon);
         expect((item.iconPath as vscode.ThemeIcon).id).toBe('loading~spin');
@@ -73,12 +70,10 @@ describe('TargetTreeItem', () => {
     it('shows error icon and detail when selected target health is errored', () => {
         const item = new TargetTreeItem({
             target: baseTarget,
-            selected: true,
             health: errored(new Error('ssh connection failed')),
         });
 
         expect(item.contextValue).toContain('Target');
-        expect(item.contextValue).toContain('Selected');
         expect(item.contextValue).not.toContain('Connected');
         expect(item.iconPath).toBeInstanceOf(vscode.ThemeIcon);
         const icon = item.iconPath as vscode.ThemeIcon;
@@ -91,27 +86,9 @@ describe('TargetTreeItem', () => {
         );
     });
 
-    it('does not show health error when target is unselected', () => {
-        const item = new TargetTreeItem({
-            target: baseTarget,
-            selected: false,
-            health: errored('Target not selected'),
-        });
-
-        expect(item.contextValue).toContain('Target');
-        expect(item.contextValue).not.toContain('Selected');
-        expect(item.iconPath).toBeUndefined();
-        expect(item.description).toBeUndefined();
-        expect(item.tooltip).toBeUndefined();
-        expect(item.collapsibleState).toBe(
-            vscode.TreeItemCollapsibleState.None,
-        );
-    });
-
     it('does not mark undefined selected target health as Connected', () => {
         const item = new TargetTreeItem({
             target: baseTarget,
-            selected: true,
             health: loaded(undefined),
         });
 
@@ -121,13 +98,11 @@ describe('TargetTreeItem', () => {
     it('is expanded and Connected when selected target health is loaded', () => {
         const item = new TargetTreeItem({
             target: baseTarget,
-            selected: true,
             health: loaded(testTargetHealth),
             targetDescription: loaded(testTargetDescription),
         });
 
         expect(item.contextValue).toContain('Target');
-        expect(item.contextValue).toContain('Selected');
         expect(item.contextValue).toContain('Connected');
         expect(item.iconPath).toBeUndefined();
         expect(item.collapsibleState).toBe(
@@ -147,7 +122,6 @@ describe('TargetTreeItem', () => {
         };
         const item = new TargetTreeItem({
             target: baseTarget,
-            selected: true,
             health: loaded({
                 ...testTargetHealth,
                 dependencies: [dependency],
@@ -170,7 +144,6 @@ describe('TargetTreeItem', () => {
         };
         const item = new TargetTreeItem({
             target: baseTarget,
-            selected: true,
             health: loaded({
                 ...testTargetHealth,
                 dependencies: [dependency],
@@ -194,7 +167,6 @@ describe('TargetTreeItem', () => {
         };
         const item = new TargetTreeItem({
             target: baseTarget,
-            selected: true,
             health: loaded({
                 ...testTargetHealth,
                 connectivity: connectivityIssue,
@@ -208,7 +180,6 @@ describe('TargetTreeItem', () => {
     it('shows connectivity diagnostics as a description and tooltip', () => {
         const item = new TargetTreeItem({
             target: baseTarget,
-            selected: true,
             health: loaded({
                 ...testTargetHealth,
                 connectivity: {
@@ -221,23 +192,5 @@ describe('TargetTreeItem', () => {
 
         expect(item.description).toBe('ssh connection failed');
         expect(item.tooltip).toBe(`${baseTarget}: ssh connection failed`);
-    });
-
-    it('does not show connectivity diagnostics when target is unselected', () => {
-        const item = new TargetTreeItem({
-            target: baseTarget,
-            selected: false,
-            health: loaded({
-                ...testTargetHealth,
-                connectivity: {
-                    name: 'Connectivity',
-                    status: 'error',
-                    value: 'ssh connection failed',
-                },
-            }),
-        });
-
-        expect(item.description).toBeUndefined();
-        expect(item.tooltip).toBeUndefined();
     });
 });

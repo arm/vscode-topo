@@ -71,19 +71,13 @@
             {
                 "command": "topo.selectTarget",
                 "title": "Select Target",
-                "icon": "$(plug)",
+                "icon": "$(list-selection)",
                 "category": "Topo"
             },
             {
-                "command": "topo.removeTarget",
-                "title": "Remove Target",
-                "icon": "$(trash)",
-                "category": "Topo"
-            },
-            {
-                "command": "topo.addTarget",
-                "title": "Add Target",
-                "icon": "$(add)",
+                "command": "topo.unselectTarget",
+                "title": "Unselect Target",
+                "icon": "$(circle-slash)",
                 "category": "Topo"
             },
             {
@@ -143,7 +137,7 @@
                 },
                 {
                     "id": "topo.target-manager",
-                    "name": "Targets",
+                    "name": "Target",
                     "visibility": "visible",
                     "icon": "media/topo.svg"
                 }
@@ -152,7 +146,7 @@
         "viewsWelcome": [
             {
                 "view": "topo.target-manager",
-                "contents": "No targets found\n[Add Target](command:topo.addTarget)"
+                "contents": "No target selected\n[Select a target](command:topo.selectTarget)"
             }
         ],
         "menus": {
@@ -182,15 +176,11 @@
             ],
             "commandPalette": [
                 {
-                    "command": "topo.addTarget",
-                    "when": "false"
-                },
-                {
                     "command": "topo.selectTarget",
                     "when": "false"
                 },
                 {
-                    "command": "topo.removeTarget",
+                    "command": "topo.unselectTarget",
                     "when": "false"
                 },
                 {
@@ -241,17 +231,12 @@
                     "group": "inline@1"
                 },
                 {
-                    "command": "topo.selectTarget",
-                    "when": "view == topo.target-manager && viewItem =~ /Target/",
-                    "group": "inline@1"
-                },
-                {
                     "command": "topo.fixTargetIssues",
-                    "when": "view === topo.target-manager && viewItem =~ /Target/ && viewItem =~ /Selected/ && viewItem =~ /HasFixableIssues/",
+                    "when": "view === topo.target-manager && viewItem =~ /Target/ && viewItem =~ /HasFixableIssues/",
                     "group": "inline@3"
                 },
                 {
-                    "command": "topo.removeTarget",
+                    "command": "topo.unselectTarget",
                     "when": "view == topo.target-manager && viewItem =~ /Target/",
                     "group": "inline@4"
                 },
@@ -283,7 +268,7 @@
             ],
             "view/title": [
                 {
-                    "command": "topo.addTarget",
+                    "command": "topo.selectTarget",
                     "when": "view == topo.target-manager",
                     "group": "navigation"
                 },
