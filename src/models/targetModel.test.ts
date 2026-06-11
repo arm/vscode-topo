@@ -110,6 +110,18 @@ describe('TargetModel', () => {
         expect(onChanged).toHaveBeenCalledTimes(1);
     });
 
+    it('does not fire onTargetsChanged when the target list instance is unchanged', () => {
+        const model = new TargetModel();
+        const targets = ['user@host'];
+        const onChanged = vi.fn();
+        model.setTargets(targets);
+        model.onTargetsChanged(onChanged);
+
+        model.setTargets(targets);
+
+        expect(onChanged).not.toHaveBeenCalled();
+    });
+
     it('stores whether the data store is corrupted', () => {
         const model = new TargetModel();
 
