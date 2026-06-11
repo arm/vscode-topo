@@ -160,6 +160,30 @@ describe('TargetModel', () => {
         expect(onDataIssueChanged).toHaveBeenCalledTimes(1);
     });
 
+    it('clears target state and selected target data', () => {
+        const model = new TargetModel();
+        model.setTargets(['user@host']);
+        model.setSelected('user@host');
+        model.setSelectedTargetHealth(loaded(targetHealth));
+        model.setSelectedTargetContainers(loaded(containers));
+
+        model.clear();
+
+        expect(model.targets).toEqual([]);
+        expect(model.selected).toBeUndefined();
+        expect(model.selectedTargetHealth).toEqual(loaded(undefined));
+        expect(model.selectedTargetContainers).toEqual(loaded([]));
+    });
+
+    it('clears the data issue when model state is cleared', () => {
+        const model = new TargetModel();
+        model.setDataStoreCorrupted();
+
+        model.clear();
+
+        expect(model.dataIssue).toBe(false);
+    });
+
     it('stores selected target health and containers and fires change events', () => {
         const model = new TargetModel();
         const health = loaded(targetHealth);

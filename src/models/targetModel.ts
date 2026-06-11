@@ -7,6 +7,11 @@ const defaultContainers: Loadable<ContainerItem[]> = loaded([]);
 const defaultHealth: Loadable<TargetHealthCheck | undefined> =
     loaded(undefined);
 
+type ClearTargetStateResult = {
+    targetsChanged: boolean;
+    selectedChanged: boolean;
+};
+
 export class TargetModel {
     private _onSelectedChanged: vscode.EventEmitter<void> =
         new vscode.EventEmitter<void>();
@@ -60,11 +65,7 @@ export class TargetModel {
 
     public setDataStoreCorrupted(): void {
         this._dataStoreCorrupted = true;
-        const targetsChanged = this._targets.length > 0;
-        const selectedChanged = this._selected !== undefined;
-        this._targets = [];
-        this._selected = undefined;
-        this.clearSelectedTargetData();
+        const { targetsChanged, selectedChanged } = this.clearTargetState();
 
         this._onDataIssueChanged.fire();
         if (targetsChanged) {
@@ -72,6 +73,21 @@ export class TargetModel {
         }
         if (selectedChanged) {
             this._onSelectedChanged.fire();
+        }
+    }
+
+    public clear(): void {
+        const { targetsChanged, selectedChanged } = this.clearTargetState();
+        const dataIssueCleared = this.clearDataIssue();
+
+        if (targetsChanged) {
+            this._onTargetsChanged.fire();
+        }
+        if (selectedChanged) {
+            this._onSelectedChanged.fire();
+        }
+        if (dataIssueCleared) {
+            this._onDataIssueChanged.fire();
         }
     }
 
@@ -91,6 +107,15 @@ export class TargetModel {
         const dataIssueCleared = this._dataStoreCorrupted;
         this._dataStoreCorrupted = false;
         return dataIssueCleared;
+    }
+
+    private clearTargetState(): ClearTargetStateResult {
+        const targetsChanged = this._targets.length > 0;
+        const selectedChanged = this._selected !== undefined;
+        this._targets = [];
+        this._selected = undefined;
+        this.clearSelectedTargetData();
+        return { targetsChanged, selectedChanged };
     }
 
     public get selectedTargetHealth(): Loadable<TargetHealthCheck | undefined> {
