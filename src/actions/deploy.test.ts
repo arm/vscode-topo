@@ -7,6 +7,7 @@ import { TargetModel } from '../models/targetModel';
 import { TopoCli } from '../topoCli';
 import { MockProxy, mock } from 'vitest-mock-extended';
 import { mutable } from '../util/mutable';
+import { TargetController } from '../controllers/targetController';
 
 vi.mock('../util/logger');
 vi.mock('../util/executeTask');
@@ -27,6 +28,7 @@ describe('Deploy', () => {
     const topoBinaryPath = '/fake/extension/resources/topo';
     let topoCli: MockProxy<TopoCli>;
     let targetModel: TargetModel;
+    let targetController: MockProxy<TargetController>;
 
     function mockWorkspaceFolders(
         workspaceFolders: vscode.WorkspaceFolder[],
@@ -45,12 +47,13 @@ describe('Deploy', () => {
         topoCli.getBinaryPath.mockReturnValue(topoBinaryPath);
         targetModel = new TargetModel();
         targetModel.setSelected(target);
+        targetController = mock<TargetController>();
         vi.mocked(vscode.workspace.findFiles).mockResolvedValue([]);
         vi.mocked(vscode.workspace.getWorkspaceFolder).mockReturnValue(
             undefined,
         );
         mutable(vscode.workspace).workspaceFolders = undefined;
-        deployAction = new Deploy(topoCli, targetModel);
+        deployAction = new Deploy(topoCli, targetModel, targetController);
     });
 
     afterEach(() => {
@@ -68,6 +71,9 @@ describe('Deploy', () => {
             'Error executing deploy command. No target selected. Please select a target before deploying.',
         );
         expect(executeTaskMock).not.toHaveBeenCalled();
+        expect(
+            targetController.refreshSelectedTargetDataCommandHandler,
+        ).not.toHaveBeenCalled();
     });
 
     it('shows an error when target is selected but no compose files are found', async () => {
@@ -81,6 +87,9 @@ describe('Deploy', () => {
         );
         expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
         expect(executeTaskMock).not.toHaveBeenCalled();
+        expect(
+            targetController.refreshSelectedTargetDataCommandHandler,
+        ).not.toHaveBeenCalled();
     });
 
     it('handles successful deploy operation', async () => {
@@ -154,6 +163,9 @@ describe('Deploy', () => {
             [topoBinaryPath, 'deploy', '--target', 'topo.local'],
             { cwd: workspaceUri.fsPath },
         );
+        expect(
+            targetController.refreshSelectedTargetDataCommandHandler,
+        ).toHaveBeenCalledOnce();
     });
 
     it('returns without deploying when compose selection is cancelled', async () => {
@@ -166,5 +178,8 @@ describe('Deploy', () => {
         await deployAction.deployCommandHandler();
 
         expect(executeTaskMock).not.toHaveBeenCalled();
+        expect(
+            targetController.refreshSelectedTargetDataCommandHandler,
+        ).not.toHaveBeenCalled();
     });
 });

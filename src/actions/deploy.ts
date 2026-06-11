@@ -5,6 +5,7 @@ import { executeTask } from '../util/executeTask';
 import { showAndLogError } from '../util/showAndLogError';
 import { TargetModel } from '../models/targetModel';
 import { TopoCli } from '../topoCli';
+import { TargetController } from '../controllers/targetController';
 import { isWrappedError, WrappedError } from '../errors/wrappedError';
 import {
     COMPOSE_FILE_GLOB,
@@ -26,6 +27,7 @@ export class Deploy {
     constructor(
         private readonly topoCli: TopoCli,
         private readonly targetModel: TargetModel,
+        private readonly targetController: TargetController,
     ) {}
 
     public async deployCommandHandler(): Promise<void> {
@@ -63,6 +65,7 @@ export class Deploy {
             return;
         }
         await deploy(this.topoCli.getBinaryPath(), resource.fsPath, target);
+        await this.targetController.refreshSelectedTargetDataCommandHandler();
     }
 
     public async deployContextCommandHandler(
@@ -86,6 +89,7 @@ export class Deploy {
         }
 
         await deploy(this.topoCli.getBinaryPath(), resource.fsPath, target);
+        await this.targetController.refreshSelectedTargetDataCommandHandler();
     }
 
     private getSelectedTarget(): string {
