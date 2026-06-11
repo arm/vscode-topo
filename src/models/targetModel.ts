@@ -64,10 +64,13 @@ export class TargetModel {
     }
 
     public setDataStoreCorrupted(): void {
+        const dataStoreCorruptionChanged = !this._dataStoreCorrupted;
         this._dataStoreCorrupted = true;
         const { targetsChanged, selectedChanged } = this.clearTargetState();
 
-        this._onDataStoreCorruptionChanged.fire();
+        if (dataStoreCorruptionChanged) {
+            this._onDataStoreCorruptionChanged.fire();
+        }
         if (targetsChanged) {
             this._onTargetsChanged.fire();
         }

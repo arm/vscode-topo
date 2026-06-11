@@ -136,6 +136,17 @@ describe('TargetModel', () => {
         expect(onSelectedChanged).toHaveBeenCalledTimes(1);
     });
 
+    it('fires onDataStoreCorruptionChanged when data store corruption changes', () => {
+        const model = new TargetModel();
+        const onDataStoreCorruptionChanged = vi.fn();
+        model.onDataStoreCorruptionChanged(onDataStoreCorruptionChanged);
+
+        model.setDataStoreCorrupted();
+        model.setDataStoreCorrupted();
+
+        expect(onDataStoreCorruptionChanged).toHaveBeenCalledTimes(1);
+    });
+
     it('clears data store corruption when targets are updated', () => {
         const model = new TargetModel();
         const onDataStoreCorruptionChanged = vi.fn();
