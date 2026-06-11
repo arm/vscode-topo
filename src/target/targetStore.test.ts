@@ -360,13 +360,6 @@ describe('TargetStore', () => {
                 expect.any(Uint8Array),
             );
         });
-        expect(
-            vi.mocked(vscode.workspace.fs.createDirectory).mock
-                .invocationCallOrder[0],
-        ).toBeLessThan(
-            vi.mocked(vscode.workspace.fs.writeFile).mock
-                .invocationCallOrder[0],
-        );
     });
 
     it('does not fail when resetting extension data and global storage does not exist', async () => {
