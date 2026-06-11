@@ -39,6 +39,7 @@ function isTargetTreeItem(node: unknown): node is TargetTreeItem {
 
 async function promptForSshTarget(
     currentTargets: string[],
+    selectedTarget: string | undefined,
 ): Promise<TargetPromptResult | undefined> {
     const sshHosts = await getHosts(defaultSshConfigPath);
 
@@ -46,10 +47,20 @@ async function promptForSshTarget(
     quickPick.title = 'Select a target';
     quickPick.placeholder =
         'Select a host or type a connection string (e.g. root@192.168.1.1)';
-    quickPick.items = buildQuickPickItems(sshHosts, '', currentTargets);
+    quickPick.items = buildQuickPickItems(
+        sshHosts,
+        '',
+        currentTargets,
+        selectedTarget,
+    );
 
     quickPick.onDidChangeValue((value) => {
-        quickPick.items = buildQuickPickItems(sshHosts, value, currentTargets);
+        quickPick.items = buildQuickPickItems(
+            sshHosts,
+            value,
+            currentTargets,
+            selectedTarget,
+        );
     });
 
     return new Promise<TargetPromptResult | undefined>((resolve) => {
@@ -82,6 +93,7 @@ export function buildQuickPickItems(
     availableHosts: string[],
     filter: string,
     currentTargets: string[] = [],
+    selectedTarget?: string,
 ): TargetQuickPickItem[] {
     const availableHostsByLowerCase = new Set(
         availableHosts.map((host) => host.toLowerCase()),
@@ -95,15 +107,20 @@ export function buildQuickPickItems(
                 ),
         ),
     ];
-    const targetItems: TargetQuickPickItem[] = knownTargets.map((target) => ({
-        label: target,
-        target,
-        buttons:
-            currentTargets.includes(target) &&
-            !availableHostsByLowerCase.has(target.toLowerCase())
-                ? [removeTargetQuickPickButton]
-                : undefined,
-    }));
+    const targetItems: TargetQuickPickItem[] = knownTargets.map((target) => {
+        const isSelected =
+            target.toLowerCase() === selectedTarget?.toLowerCase();
+        return {
+            label: target,
+            target,
+            ...(isSelected ? { description: '$(target)' } : {}),
+            buttons:
+                currentTargets.includes(target) &&
+                !availableHostsByLowerCase.has(target.toLowerCase())
+                    ? [removeTargetQuickPickButton]
+                    : undefined,
+        };
+    });
     const trimmed = filter.trim();
     const isNovelEntry =
         trimmed.length > 0 &&
@@ -232,7 +249,10 @@ export class TargetController {
     }
 
     private async promptAndSelectTarget(): Promise<void> {
-        const result = await promptForSshTarget(this.model.targets);
+        const result = await promptForSshTarget(
+            this.model.targets,
+            this.model.selected,
+        );
 
         switch (result?.kind) {
             case 'remove':
