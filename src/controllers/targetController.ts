@@ -42,7 +42,6 @@ async function promptForSshTarget(
     selectedTarget: string | undefined,
 ): Promise<TargetPromptResult | undefined> {
     const sshHosts = await getHosts(defaultSshConfigPath);
-    const removeTargetButtonsEnabled = selectedTarget === undefined;
 
     const quickPick = vscode.window.createQuickPick<TargetQuickPickItem>();
     quickPick.title = 'Select a target';
@@ -52,7 +51,7 @@ async function promptForSshTarget(
         sshHosts,
         '',
         currentTargets,
-        removeTargetButtonsEnabled,
+        selectedTarget,
     );
 
     quickPick.onDidChangeValue((value) => {
@@ -60,7 +59,7 @@ async function promptForSshTarget(
             sshHosts,
             value,
             currentTargets,
-            removeTargetButtonsEnabled,
+            selectedTarget,
         );
     });
 
@@ -94,7 +93,7 @@ export function buildQuickPickItems(
     availableHosts: string[],
     filter: string,
     currentTargets: string[] = [],
-    removeTargetButtonsEnabled = true,
+    selectedTarget?: string,
 ): TargetQuickPickItem[] {
     const availableHostsByLowerCase = new Set(
         availableHosts.map((host) => host.toLowerCase()),
@@ -112,9 +111,9 @@ export function buildQuickPickItems(
         label: target,
         target,
         buttons:
-            removeTargetButtonsEnabled &&
             currentTargets.includes(target) &&
-            !availableHostsByLowerCase.has(target.toLowerCase())
+            !availableHostsByLowerCase.has(target.toLowerCase()) &&
+            target.toLowerCase() !== selectedTarget?.toLowerCase()
                 ? [removeTargetQuickPickButton]
                 : undefined,
     }));
@@ -212,14 +211,6 @@ export class TargetController {
 
     public async selectCommandHandler(): Promise<void> {
         await this.promptAndSelectTarget();
-    }
-
-    public async removeCommandHandler(treeNode?: unknown): Promise<void> {
-        if (!isTargetTreeItem(treeNode)) {
-            return;
-        }
-
-        await this.removeTarget(treeNode.target);
     }
 
     public async unselectCommandHandler(treeNode?: unknown): Promise<void> {

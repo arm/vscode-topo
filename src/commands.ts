@@ -21,7 +21,6 @@ function command(id: string): string {
 export const refreshHostHealth = command('refreshHostHealth');
 export const showOutput = command('showOutput');
 export const selectTarget = command('selectTarget');
-export const removeTarget = command('removeTarget');
 export const unselectTarget = command('unselectTarget');
 export const initProject = command('initProject');
 export const deploy = command('deploy');
@@ -60,9 +59,6 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
         vscode.commands.registerCommand(showOutput, () => logger.show()),
         vscode.commands.registerCommand(selectTarget, () =>
             handlers.targetController.selectCommandHandler(),
-        ),
-        vscode.commands.registerCommand(removeTarget, (treeNode) =>
-            handlers.targetController.removeCommandHandler(treeNode),
         ),
         vscode.commands.registerCommand(unselectTarget, (treeNode) =>
             handlers.targetController.unselectCommandHandler(treeNode),

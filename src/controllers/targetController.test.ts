@@ -140,7 +140,7 @@ describe('buildQuickPickItems', () => {
         ]);
     });
 
-    it('does not add a remove button to targets from ssh config', () => {
+    it('does not add a remove button to saved targets from ssh config', () => {
         const items = buildQuickPickItems(['host-a'], '', ['host-a']);
 
         expect(items[0]).toEqual({
@@ -150,12 +150,49 @@ describe('buildQuickPickItems', () => {
         });
     });
 
-    it('does not add remove buttons while a target is selected', () => {
-        const items = buildQuickPickItems([], '', ['saved-host'], false);
+    it('does not add a remove button to the selected target', () => {
+        const items = buildQuickPickItems(
+            [],
+            '',
+            ['selected-host'],
+            'selected-host',
+        );
 
         expect(items[0]).toEqual({
-            label: 'saved-host',
-            target: 'saved-host',
+            label: 'selected-host',
+            target: 'selected-host',
+            buttons: undefined,
+        });
+    });
+
+    it('adds remove buttons to non-selected manual targets while a target is selected', () => {
+        const items = buildQuickPickItems(
+            [],
+            '',
+            ['selected-host', 'other-host'],
+            'selected-host',
+        );
+
+        expect(items).toEqual([
+            {
+                label: 'selected-host',
+                target: 'selected-host',
+                buttons: undefined,
+            },
+            expect.objectContaining({
+                label: 'other-host',
+                target: 'other-host',
+                buttons: expect.any(Array),
+            }),
+        ]);
+    });
+
+    it('does not add a remove button to ssh config hosts that are not saved targets', () => {
+        const items = buildQuickPickItems(['host-a'], '');
+
+        expect(items[0]).toEqual({
+            label: 'host-a',
+            target: 'host-a',
             buttons: undefined,
         });
     });
@@ -419,73 +456,6 @@ describe('target unselection', () => {
         await controller.unselectCommandHandler();
 
         expect(targetStore.setSelected).not.toHaveBeenCalled();
-    });
-});
-
-describe('target removal', () => {
-    it('deletes the target from the store when removeTarget is invoked with a target item', async () => {
-        const targetItem = new TargetTreeItem({
-            target: 'foo@bar.co',
-        });
-        const targetStore = mockTargetStore([targetItem.target]);
-        const targetModel = new TargetModel();
-        const { controller } = createController(targetModel, targetStore);
-
-        await controller.removeCommandHandler(targetItem);
-
-        expect(targetStore.deleteTarget).toHaveBeenCalledWith(
-            targetItem.target,
-        );
-        expect(targetModel.targets).toEqual([]);
-    });
-
-    it('selects a remaining target when the removed target was selected', async () => {
-        const removedTarget = 'foo@bar.co';
-        const remainingTarget = 'bar@bar.co';
-        const targetStore = mockTargetStore(
-            [removedTarget, remainingTarget],
-            removedTarget,
-        );
-        const targetModel = new TargetModel();
-        targetModel.setSelected(removedTarget);
-        const { controller } = createController(targetModel, targetStore);
-        const targetItem = new TargetTreeItem({
-            target: removedTarget,
-        });
-
-        await controller.removeCommandHandler(targetItem);
-
-        expect(targetStore.deleteTarget).toHaveBeenCalledWith(removedTarget);
-        expect(targetModel.selected).toBe(remainingTarget);
-    });
-
-    it('does nothing when removeTarget is invoked with a non-target item', async () => {
-        const targetStore = mockTargetStore();
-        const targetModel = new TargetModel();
-        const { controller } = createController(targetModel, targetStore);
-
-        await controller.removeCommandHandler();
-
-        expect(targetStore.deleteTarget).not.toHaveBeenCalled();
-        expect(targetModel.targets).toEqual([]);
-    });
-
-    it('shows an error when deleteTarget fails', async () => {
-        const targetStore = mockTargetStore();
-        const targetModel = new TargetModel();
-        const { controller } = createController(targetModel, targetStore);
-        const targetItem = new TargetTreeItem({
-            target: 'foo@bar.co',
-        });
-        const error = new Error('Target not found');
-        targetStore.deleteTarget.mockRejectedValue(error);
-
-        await controller.removeCommandHandler(targetItem);
-
-        expect(showAndLogError).toHaveBeenCalledWith(
-            'Failed to remove target',
-            error,
-        );
     });
 });
 

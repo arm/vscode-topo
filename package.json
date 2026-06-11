@@ -75,12 +75,6 @@
                 "category": "Topo"
             },
             {
-                "command": "topo.removeTarget",
-                "title": "Remove Target",
-                "icon": "$(trash)",
-                "category": "Topo"
-            },
-            {
                 "command": "topo.unselectTarget",
                 "title": "Unselect Target",
                 "icon": "$(circle-slash)",
@@ -183,10 +177,6 @@
             "commandPalette": [
                 {
                     "command": "topo.selectTarget",
-                    "when": "false"
-                },
-                {
-                    "command": "topo.removeTarget",
                     "when": "false"
                 },
                 {

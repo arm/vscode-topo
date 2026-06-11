@@ -64,10 +64,6 @@ describe('commands', () => {
                 handlers.targetController.selectCommandHandler,
             ],
             [
-                commands.removeTarget,
-                handlers.targetController.removeCommandHandler,
-            ],
-            [
                 commands.unselectTarget,
                 handlers.targetController.unselectCommandHandler,
             ],
