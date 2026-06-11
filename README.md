@@ -23,6 +23,8 @@ The **Target** view appears in the **Topo** activity bar container and shows the
 
 Click **Select a target** in the Target view title bar or status bar to open the target picker. The picker shows saved targets and hosts from your SSH config. Select an existing target, choose an SSH config host, or type an SSH connection string (for example `root@192.168.1.1`) to add and select a new target.
 
+### Remove a Target
+
 Saved targets that do not come from SSH config and are not currently selected can be removed from the picker with the inline trash button.
 
 ### Target Tree
