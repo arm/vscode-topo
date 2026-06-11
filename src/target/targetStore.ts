@@ -104,11 +104,7 @@ export class TargetStore {
         const currentSelected = this.getSelectedTarget();
         await this.saveTargets(targets);
         if (currentSelected === target) {
-            const remaining = [...targets];
-            const newSelected = remaining.length
-                ? remaining.sort((a, b) => a.localeCompare(b))[0]
-                : undefined;
-            await this.setSelected(newSelected);
+            await this.setSelected(undefined);
         }
     }
 

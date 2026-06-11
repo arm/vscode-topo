@@ -39,7 +39,6 @@ function isTargetTreeItem(node: unknown): node is TargetTreeItem {
 
 async function promptForSshTarget(
     currentTargets: string[],
-    selectedTarget: string | undefined,
 ): Promise<TargetPromptResult | undefined> {
     const sshHosts = await getHosts(defaultSshConfigPath);
 
@@ -47,20 +46,10 @@ async function promptForSshTarget(
     quickPick.title = 'Select a target';
     quickPick.placeholder =
         'Select a host or type a connection string (e.g. root@192.168.1.1)';
-    quickPick.items = buildQuickPickItems(
-        sshHosts,
-        '',
-        currentTargets,
-        selectedTarget,
-    );
+    quickPick.items = buildQuickPickItems(sshHosts, '', currentTargets);
 
     quickPick.onDidChangeValue((value) => {
-        quickPick.items = buildQuickPickItems(
-            sshHosts,
-            value,
-            currentTargets,
-            selectedTarget,
-        );
+        quickPick.items = buildQuickPickItems(sshHosts, value, currentTargets);
     });
 
     return new Promise<TargetPromptResult | undefined>((resolve) => {
@@ -93,7 +82,6 @@ export function buildQuickPickItems(
     availableHosts: string[],
     filter: string,
     currentTargets: string[] = [],
-    selectedTarget?: string,
 ): TargetQuickPickItem[] {
     const availableHostsByLowerCase = new Set(
         availableHosts.map((host) => host.toLowerCase()),
@@ -112,8 +100,7 @@ export function buildQuickPickItems(
         target,
         buttons:
             currentTargets.includes(target) &&
-            !availableHostsByLowerCase.has(target.toLowerCase()) &&
-            target.toLowerCase() !== selectedTarget?.toLowerCase()
+            !availableHostsByLowerCase.has(target.toLowerCase())
                 ? [removeTargetQuickPickButton]
                 : undefined,
     }));
@@ -232,14 +219,30 @@ export class TargetController {
         }
     }
 
-    private async promptAndSelectTarget(): Promise<void> {
-        const result = await promptForSshTarget(
-            this.model.targets,
-            this.model.selected,
+    private async confirmSelectedTargetRemoval(
+        target: string,
+    ): Promise<boolean> {
+        const remove = 'Remove Target';
+        const response = await vscode.window.showWarningMessage(
+            `Remove the selected target "${target}"?`,
+            { modal: true },
+            remove,
         );
+        return response === remove;
+    }
+
+    private async promptAndSelectTarget(): Promise<void> {
+        const result = await promptForSshTarget(this.model.targets);
 
         switch (result?.kind) {
             case 'remove':
+                if (
+                    result.target.toLowerCase() ===
+                        this.model.selected?.toLowerCase() &&
+                    !(await this.confirmSelectedTargetRemoval(result.target))
+                ) {
+                    return;
+                }
                 await this.removeTarget(result.target);
                 return;
             case 'select':
