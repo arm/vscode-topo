@@ -40,7 +40,7 @@ The host and target can be the same system.
 1. Install the extension from the VS Code Marketplace or a `.vsix` package.
 2. Add a target from the **Targets** view in the **Topo** activity bar container.
 3. Let Topo check the target for missing dependencies and apply any suggested fixes.
-4. Clone a [Topo Template](https://github.com/arm/topo-template-format/blob/main/01-authoring-templates.md) from our catalog.
+4. Clone a [Topo Template](https://github.com/arm/topo-template-format) from our catalog.
 5. Deploy the configured project to your target.
 
 ---
