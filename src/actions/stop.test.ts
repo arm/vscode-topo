@@ -6,6 +6,7 @@ import { executeTask } from '../util/executeTask';
 import { TargetModel } from '../models/targetModel';
 import { TopoCli } from '../topoCli';
 import { mock, MockProxy } from 'vitest-mock-extended';
+import { TargetController } from '../controllers/targetController';
 
 vi.mock('../util/logger');
 vi.mock('../util/executeTask');
@@ -22,15 +23,17 @@ describe('Stop', () => {
     const topoBinaryPath = '/fake/extension/resources/topo';
     let topoCli: MockProxy<TopoCli>;
     let targetModel: TargetModel;
+    let targetController: MockProxy<TargetController>;
 
     beforeEach(() => {
         topoCli = mock<TopoCli>();
         topoCli.getBinaryPath.mockReturnValue(topoBinaryPath);
         targetModel = new TargetModel();
         targetModel.setSelected(target);
+        targetController = mock<TargetController>();
         executeTaskMock.mockReset();
         vi.mocked(vscode.window.showErrorMessage).mockClear();
-        stopAction = new Stop(topoCli, targetModel);
+        stopAction = new Stop(topoCli, targetModel, targetController);
     });
 
     afterEach(() => {
@@ -47,6 +50,9 @@ describe('Stop', () => {
             'Error executing stop command. No target selected. Please select a target before stopping.',
         );
         expect(executeTaskMock).not.toHaveBeenCalled();
+        expect(
+            targetController.refreshSelectedTargetDataCommandHandler,
+        ).not.toHaveBeenCalled();
     });
 
     it('handles successful stop operation', async () => {

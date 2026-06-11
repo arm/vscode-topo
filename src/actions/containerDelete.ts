@@ -2,9 +2,13 @@ import { assertTargetContainerTreeItem } from '../targetTreeView/assertTargetCon
 import { showAndLogError } from '../util/showAndLogError';
 import { isWrappedError } from '../errors/wrappedError';
 import { ContainerCommands } from '../target/containerCommands';
+import { TargetController } from '../controllers/targetController';
 
 export class ContainerDelete {
-    constructor(private readonly containerCommands: ContainerCommands) {}
+    constructor(
+        private readonly containerCommands: ContainerCommands,
+        private readonly targetController: TargetController,
+    ) {}
 
     public async deleteContainerCommandHandler(
         treeNode: unknown,
@@ -23,5 +27,6 @@ export class ContainerDelete {
             }
             throw err;
         }
+        await this.targetController.refreshSelectedTargetDataCommandHandler();
     }
 }

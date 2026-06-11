@@ -7,6 +7,7 @@ import { mock } from 'vitest-mock-extended';
 import { ContainerItem } from '../util/types';
 import { ContainerCommands } from '../target/containerCommands';
 import type { MockInstance } from 'vitest';
+import { TargetController } from '../controllers/targetController';
 
 describe('ContainerStart', () => {
     let showErrorMessageSpy: MockInstance;
@@ -39,7 +40,11 @@ describe('ContainerStart', () => {
 
     it('calls startContainer and shows info message on success', async () => {
         const containerCommands = mock<ContainerCommands>();
-        const containerStart = new ContainerStart(containerCommands);
+        const targetController = mock<TargetController>();
+        const containerStart = new ContainerStart(
+            containerCommands,
+            targetController,
+        );
 
         await containerStart.startContainerCommandHandler(treeItem);
 
@@ -47,14 +52,21 @@ describe('ContainerStart', () => {
             'abc123',
             target,
         );
+        expect(
+            targetController.refreshSelectedTargetDataCommandHandler,
+        ).toHaveBeenCalledOnce();
     });
 
     it('shows error message if startContainer throws a WrappedError', async () => {
         const containerCommands = mock<ContainerCommands>();
+        const targetController = mock<TargetController>();
         containerCommands.startContainer.mockRejectedValue(
             new WrappedError('DOCKER', 'fail'),
         );
-        const containerStart = new ContainerStart(containerCommands);
+        const containerStart = new ContainerStart(
+            containerCommands,
+            targetController,
+        );
 
         await containerStart.startContainerCommandHandler(treeItem);
 
@@ -63,6 +75,9 @@ describe('ContainerStart', () => {
                 'Failed to start the container abc123. fail',
             ),
         );
+        expect(
+            targetController.refreshSelectedTargetDataCommandHandler,
+        ).not.toHaveBeenCalled();
     });
 
     it('re-throws generic error errors from startContainer', async () => {
@@ -70,7 +85,10 @@ describe('ContainerStart', () => {
         containerCommands.startContainer.mockRejectedValue(
             new Error('generic error'),
         );
-        const containerStart = new ContainerStart(containerCommands);
+        const containerStart = new ContainerStart(
+            containerCommands,
+            mock<TargetController>(),
+        );
 
         await expect(
             containerStart.startContainerCommandHandler(treeItem),
