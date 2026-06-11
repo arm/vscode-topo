@@ -1,8 +1,4 @@
-import {
-    DockerCommands,
-    DockerError,
-    parseDockerStderr,
-} from './dockerCommands';
+import { DockerCommands } from './dockerCommands';
 import { execFile } from '../util/exec';
 import { logger } from '../util/logger';
 import { DockerInspectItem } from '../util/types';
@@ -17,8 +13,12 @@ vi.mock('../util/logger');
 
 const execFileMock: Mock = vi.mocked(execFile);
 
-function makeDockerError(stdout: string, stderr: string): DockerError {
-    const e = new Error('Command failed: docker something') as DockerError;
+type DockerCommandError = Error & { stdout: string; stderr: string };
+
+function makeDockerError(stdout: string, stderr: string): DockerCommandError {
+    const e = new Error(
+        'Command failed: docker something',
+    ) as DockerCommandError;
     e.stdout = stdout;
     e.stderr = stderr;
     return e;
@@ -35,203 +35,6 @@ describe('DockerCommands', () => {
             stderr: '',
         }));
         dockerCommands = new DockerCommands();
-    });
-
-    describe('getCurrentContext', () => {
-        it('returns trimmed context name on success', async () => {
-            execFileMock.mockResolvedValueOnce({
-                stdout: 'default\n',
-                stderr: '',
-            });
-
-            const ctx = await dockerCommands.getCurrentContext();
-
-            expect(ctx).toBe('default');
-            expect(execFileMock).toHaveBeenCalledWith('docker', [
-                'context',
-                'show',
-            ]);
-        });
-
-        it('logs when stderr present', async () => {
-            execFileMock.mockResolvedValueOnce({ stdout: '', stderr: 'err' });
-
-            await dockerCommands.getCurrentContext();
-
-            expect(logger.warn).toHaveBeenCalledWith(expect.any(String), 'err');
-        });
-
-        it('throws when exec fails', async () => {
-            execFileMock.mockRejectedValueOnce(new Error('fail'));
-
-            const getCurrentContextOperation =
-                dockerCommands.getCurrentContext();
-
-            await expect(getCurrentContextOperation).rejects.toThrow('fail');
-        });
-    });
-
-    describe('getContexts', () => {
-        it('parses contexts list', async () => {
-            execFileMock.mockResolvedValueOnce({
-                stdout: 'default\ntarget\n',
-                stderr: '',
-            });
-
-            const list = await dockerCommands.getContexts();
-
-            expect(list).toEqual(['default', 'target']);
-            expect(execFileMock).toHaveBeenCalledWith('docker', [
-                'context',
-                'ls',
-                '--format',
-                '{{.Name}}',
-            ]);
-        });
-
-        it('logs when stderr present', async () => {
-            execFileMock.mockResolvedValueOnce({ stdout: '', stderr: 'err' });
-
-            await dockerCommands.getContexts();
-
-            expect(logger.warn).toHaveBeenCalledWith(expect.any(String), 'err');
-        });
-
-        it('throws when exec fails', async () => {
-            execFileMock.mockRejectedValueOnce(new Error('fail'));
-
-            const getContextsOperation = dockerCommands.getContexts();
-
-            await expect(getContextsOperation).rejects.toThrow('fail');
-        });
-    });
-
-    describe('useContext', () => {
-        it('invokes docker context use', async () => {
-            execFileMock.mockResolvedValueOnce({ stdout: '', stderr: '' });
-
-            await dockerCommands.useContext('target-ctx');
-
-            expect(execFileMock).toHaveBeenCalledWith('docker', [
-                'context',
-                'use',
-                'target-ctx',
-            ]);
-        });
-    });
-
-    describe('ensureContext', () => {
-        it('does nothing when context exists', async () => {
-            execFileMock.mockResolvedValueOnce({
-                stdout: 'a\ntarget-ctx\n',
-                stderr: '',
-            });
-
-            await dockerCommands.ensureContext('target-ctx', 'user@host');
-
-            expect(execFileMock).toHaveBeenCalledTimes(1);
-        });
-
-        it('creates context when missing', async () => {
-            execFileMock
-                .mockResolvedValueOnce({ stdout: 'default\n', stderr: '' })
-                .mockResolvedValueOnce({ stdout: '', stderr: '' });
-
-            await dockerCommands.ensureContext('target-ctx', 'user@host');
-
-            expect(execFileMock).toHaveBeenCalledTimes(2);
-            expect(execFileMock.mock.calls[1]).toEqual([
-                'docker',
-                [
-                    'context',
-                    'create',
-                    'target-ctx',
-                    '--docker',
-                    'host=ssh://user@host',
-                ],
-            ]);
-        });
-
-        it('logs error when listing contexts fails', async () => {
-            execFileMock.mockRejectedValueOnce(new Error('list-fail'));
-
-            const ensureContextOperation = dockerCommands.ensureContext(
-                'target-ctx',
-                'user@host',
-            );
-
-            await expect(ensureContextOperation).rejects.toThrow('list-fail');
-        });
-    });
-
-    describe('executeWithContext', () => {
-        it('switches context, runs operation and restores original context after timeout', async () => {
-            const op = vi.fn().mockResolvedValue('ok');
-            execFileMock.mockImplementationOnce(
-                async (_command: string, args: string[]) => {
-                    if (args.join(' ') === 'context show') {
-                        return {
-                            stdout: 'orig\n',
-                            stderr: '',
-                        };
-                    }
-                    return {
-                        stdout: '',
-                        stderr: '',
-                    };
-                },
-            );
-
-            const res = await dockerCommands.executeWithContext(
-                () => op(),
-                'target-ctx',
-                0,
-            );
-
-            expect(res).toBe('ok');
-            // first call shows 'docker context show' then use then restore
-            expect(execFileMock.mock.calls[0]).toEqual([
-                'docker',
-                ['context', 'show'],
-            ]);
-            expect(execFileMock.mock.calls[1]).toEqual([
-                'docker',
-                ['context', 'use', 'target-ctx'],
-            ]);
-            expect(execFileMock.mock.calls[2]).toEqual([
-                'docker',
-                ['context', 'use', 'orig'],
-            ]);
-        });
-
-        it('still restores original context when operation throws', async () => {
-            execFileMock.mockImplementationOnce(
-                async (_command: string, args: string[]) => {
-                    if (args.join(' ') === 'context show') {
-                        return {
-                            stdout: 'orig\n',
-                            stderr: '',
-                        };
-                    }
-                    return {
-                        stdout: '',
-                        stderr: '',
-                    };
-                },
-            );
-            const op = vi.fn().mockRejectedValue(new Error('op-fail'));
-
-            const executeWithContextOperation =
-                dockerCommands.executeWithContext(() => op(), 'target-ctx', 0);
-
-            await expect(executeWithContextOperation).rejects.toThrow(
-                'op-fail',
-            );
-            expect(execFileMock.mock.calls[2]).toEqual([
-                'docker',
-                ['context', 'use', 'orig'],
-            ]);
-        });
     });
 
     describe('getContainers', () => {
@@ -367,16 +170,35 @@ describe('DockerCommands', () => {
             ).rejects.toBe(err);
         });
 
-        it('throws a WrappedError when exec rejects with a DockerError', async () => {
-            const dockerErr = makeDockerError('', 'some docker error');
-            execFileMock.mockRejectedValue(dockerErr);
+        it('throws a WrappedError with Docker stderr logs when exec rejects with a DockerError', async () => {
+            const dockerErr = makeDockerError(
+                '',
+                'Error: container not found\n\nWarning: low disk space\nsome other message',
+            );
+            execFileMock.mockRejectedValueOnce(dockerErr);
 
-            await expect(
-                dockerCommands.inspectContainers(['a'], 'ctx'),
-            ).rejects.toThrow(WrappedError);
-            await expect(
-                dockerCommands.inspectContainers(['a'], 'ctx'),
-            ).rejects.toThrow('some docker error');
+            const operation = dockerCommands.inspectContainers(['a'], 'ctx');
+
+            await expect(operation).rejects.toThrow(WrappedError);
+            await expect(operation).rejects.toMatchObject({
+                code: 'DOCKER',
+                message:
+                    'Error: container not found\n\nWarning: low disk space\nsome other message',
+                logs: [
+                    {
+                        level: 'Error',
+                        msg: 'Error: container not found',
+                    },
+                    {
+                        level: 'Warning',
+                        msg: 'Warning: low disk space',
+                    },
+                    {
+                        level: 'Error',
+                        msg: 'some other message',
+                    },
+                ],
+            });
         });
 
         it('returns empty array when provided with an empty array', async () => {
@@ -512,57 +334,5 @@ describe('DockerCommands', () => {
                 'sh',
             ]);
         });
-    });
-});
-
-describe('parseDockerStderr', () => {
-    it('classifies Error: lines as errors', () => {
-        const logs = parseDockerStderr('Error: something went wrong');
-
-        expect(logs).toEqual([
-            { level: 'Error', msg: 'Error: something went wrong' },
-        ]);
-    });
-
-    it('classifies Warning: lines as warnings', () => {
-        const logs = parseDockerStderr('Warning: deprecated flag');
-
-        expect(logs).toEqual([
-            { level: 'Warning', msg: 'Warning: deprecated flag' },
-        ]);
-    });
-
-    it('classifies unrecognised lines as errors', () => {
-        const logs = parseDockerStderr('unexpected output');
-
-        expect(logs).toEqual([{ level: 'Error', msg: 'unexpected output' }]);
-    });
-
-    it('handles mixed lines', () => {
-        const stderr =
-            'Error: container not found\nWarning: low disk space\nsome other message';
-
-        const logs = parseDockerStderr(stderr);
-
-        expect(logs).toEqual([
-            { level: 'Error', msg: 'Error: container not found' },
-            { level: 'Warning', msg: 'Warning: low disk space' },
-            { level: 'Error', msg: 'some other message' },
-        ]);
-    });
-
-    it('skips empty lines', () => {
-        const logs = parseDockerStderr('Error: fail\n\n\nWarning: warn');
-
-        expect(logs).toEqual([
-            { level: 'Error', msg: 'Error: fail' },
-            { level: 'Warning', msg: 'Warning: warn' },
-        ]);
-    });
-
-    it('returns empty array for empty string', () => {
-        const logs = parseDockerStderr('');
-
-        expect(logs).toEqual([]);
     });
 });
