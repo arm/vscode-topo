@@ -9,7 +9,6 @@ import { TargetController } from './controllers/targetController';
 import { ProjectInit } from './actions/projectInit';
 import { Deploy } from './actions/deploy';
 import { Stop } from './actions/stop';
-import { AttachVsCode } from './actions/attachVsCode';
 import { AttachShell } from './actions/attachShell';
 import { ContainerStart } from './actions/containerStart';
 import { ContainerStop } from './actions/containerStop';
@@ -27,7 +26,6 @@ describe('commands', () => {
         projectClone: mock<ProjectClone>(),
         deploy: mock<Deploy>(),
         stop: mock<Stop>(),
-        attachVsCode: mock<AttachVsCode>(),
         attachShell: mock<AttachShell>(),
         containerStart: mock<ContainerStart>(),
         containerStop: mock<ContainerStop>(),
@@ -80,10 +78,6 @@ describe('commands', () => {
                 handlers.deploy.deployContextCommandHandler,
             ],
             [commands.stop, handlers.stop.stopCommandHandler],
-            [
-                commands.attachVsCode,
-                handlers.attachVsCode.attachVsCodeCommandHandler,
-            ],
             [
                 commands.attachShell,
                 handlers.attachShell.attachShellCommandHandler,
