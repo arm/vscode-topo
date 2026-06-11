@@ -32,10 +32,9 @@ async function set(
 }
 
 async function clearMemento(memento: vscode.Memento): Promise<void> {
-    for (const key of memento.keys()) {
-        logger.debug(`Clearing state ${key}`);
-        await memento.update(key, undefined);
-    }
+    await Promise.all(
+        memento.keys().map((key) => memento.update(key, undefined)),
+    );
 }
 
 function isFileNotFoundError(err: unknown): boolean {
