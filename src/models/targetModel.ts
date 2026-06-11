@@ -41,21 +41,19 @@ export class TargetModel {
     public setSelected(selected: string | undefined): void {
         const changed = this._selected !== selected;
         this._selected = selected;
-        const dataIssueCleared = this.clearDataIssue();
         if (changed) {
             this.clearSelectedTargetData();
             this._onSelectedChanged.fire();
         }
-        if (dataIssueCleared) {
+        if (this.clearDataIssue()) {
             this._onDataIssueChanged.fire();
         }
     }
 
     public setTargets(targets: string[]): void {
         this._targets = targets;
-        const dataIssueCleared = this.clearDataIssue();
         this._onTargetsChanged.fire();
-        if (dataIssueCleared) {
+        if (this.clearDataIssue()) {
             this._onDataIssueChanged.fire();
         }
     }
