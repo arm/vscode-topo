@@ -68,7 +68,7 @@ describe('TargetStatusBarItemView', () => {
         expect(vscode.window.createStatusBarItem).toHaveBeenCalledTimes(1);
         const statusBarItem = vi.mocked(vscode.window.createStatusBarItem).mock
             .results[0].value;
-        expect(statusBarItem.text).toBe('$(list-selection) Select a target');
+        expect(statusBarItem.text).toBe('$(target) Select a target');
         expect(statusBarItem.tooltip).toBe('Select a target');
         expect(statusBarItem.command).toBe(selectTarget);
         expect(statusBarItem.show).toHaveBeenCalledTimes(1);
