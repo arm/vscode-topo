@@ -1,19 +1,18 @@
 import * as vscode from 'vscode';
 import { TargetContainerTreeItem } from '../targetTreeView/targetContainerTreeItem';
-import { ContainersManager } from '../target/containersManager';
 import * as manifest from '../manifest';
 import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
-import { TargetSubsystemTreeItem } from '../targetTreeView/targetSubsystemTreeItem';
+import { TargetProcessingDomainTreeItem } from '../targetTreeView/targetProcessingDomainTreeItem';
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
-import { TargetSubsystemGroupTreeItem } from '../targetTreeView/targetSubsystemGroupTreeItem';
+import { TargetProcessingDomainGroupTreeItem } from '../targetTreeView/targetProcessingDomainGroupTreeItem';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 import { TargetDescriptionStore } from '../target/targetDescriptionStore';
-import { getVisibleTargetIssues } from '../target/getVisibleTargetIssues';
 import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
-import { ContainerItem, TargetState } from '../util/types';
+import { ContainerItem } from '../util/types';
 import { loaded } from '../util/loadable';
 import { TargetDataIssueTreeItem } from '../targetTreeView/targetDataIssueTreeItem';
+import { ErrorTreeItem } from '../treeItems/errorTreeItem';
 
 function compareByName(a: { name: string }, b: { name: string }): number {
     return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
@@ -29,21 +28,26 @@ function compareContainers(a: ContainerItem, b: ContainerItem): number {
     return compareByName(a, b);
 }
 
-function filterContainersForGroup(
+function filterContainersForProcessingDomain(
     containers: ContainerItem[],
-    group: string,
+    processingDomainId: string,
 ): ContainerItem[] {
     return containers.filter((item) => {
-        if (group === 'Host') {
+        if (processingDomainId === 'PrimaryOS') {
             return item.runtime === manifest.TARGET_HOST_RUNTIME;
         }
 
         return (
             item.runtime === manifest.TARGET_REMOTEPROC_RUNTIME &&
-            item.annotations?.['remoteproc.name'] === group
+            item.annotations?.['remoteproc.name'] === processingDomainId
         );
     });
 }
+
+const PRIMARY_OS_PROCESSING_DOMAIN = {
+    id: 'PrimaryOS',
+    label: 'Primary OS',
+};
 
 export class TargetTreeView
     implements vscode.TreeDataProvider<vscode.TreeItem>, vscode.Disposable
@@ -57,7 +61,6 @@ export class TargetTreeView
     private readonly disposables = new DisposableCollector();
 
     constructor(
-        private readonly containersManager: ContainersManager,
         private readonly targetModel: TargetModel,
         private readonly targetDescriptionStore: TargetDescriptionStore,
     ) {
@@ -77,7 +80,10 @@ export class TargetTreeView
             this.targetModel.onDataIssueChanged(() => {
                 this._onDidChangeTreeData.fire(undefined);
             }),
-            this.containersManager.onDataUpdate(() => {
+            this.targetModel.onHealthChanged(() => {
+                this._onDidChangeTreeData.fire(undefined);
+            }),
+            this.targetModel.onContainersChanged(() => {
                 this._onDidChangeTreeData.fire(undefined);
             }),
             this._onDidChangeTreeData,
@@ -93,59 +99,40 @@ export class TargetTreeView
             }
 
             const selectedTarget = this.targetModel.selected;
-            const targetTreeItems: TargetTreeItem[] = [];
-            for (const target of this.targetModel.targets) {
-                const selected = target === selectedTarget;
-
-                const state: TargetState = selected
-                    ? this.containersManager.getTargetStateSnapshot(target)
-                    : { status: 'disconnected', health: undefined };
-
-                const description = state.health
-                    ? await this.targetDescriptionStore.getDescription(target)
-                    : undefined;
-                const visibleIssues = state.health
-                    ? getVisibleTargetIssues(state.health, description)
-                    : [];
-                const remoteProcessorNames =
-                    description?.remoteProcessors.map((rp) => rp.name) ?? [];
-
-                targetTreeItems.push(
-                    new TargetTreeItem(
-                        target,
-                        selected,
-                        state.status,
-                        visibleIssues,
-                        remoteProcessorNames,
-                        state.health?.connectivity,
-                    ),
-                );
+            if (!selectedTarget) {
+                return [];
             }
-            const sortedTargetTreeItems = targetTreeItems.sort((a, b) =>
-                a.displayName.localeCompare(b.displayName),
-            );
-            return sortedTargetTreeItems;
+
+            const selectedTargetDescription =
+                await this.targetDescriptionStore.getDescription(
+                    selectedTarget,
+                );
+
+            return [
+                new TargetTreeItem({
+                    target: selectedTarget,
+                    health: this.targetModel.selectedTargetHealth,
+                    targetDescription: selectedTargetDescription
+                        ? loaded(selectedTargetDescription)
+                        : undefined,
+                }),
+            ];
         }
 
         if (element instanceof TargetTreeItem) {
-            if (!element.selected || element.status !== 'connected') {
+            if (!element.connected) {
                 return [];
             }
-            const containers = await this.containersManager.getContainersData(
-                element.target,
-            );
-            const sortedContainers = [...containers].sort(compareContainers);
 
-            return [
-                new HealthCheckDependencyGroupTreeItem(
-                    loaded(element.visibleIssues),
-                ),
-                new TargetSubsystemGroupTreeItem(
-                    element.target,
-                    element.remoteProcessorNames,
-                    sortedContainers,
-                ),
-            ];
+            const dependenciesGroup = new HealthCheckDependencyGroupTreeItem(
+                loaded(element.visibleIssues, element.health.loading),
+            );
+            const subsystemsGroup = new TargetProcessingDomainGroupTreeItem(
+                element.target,
+                element.remoteProcessorNames,
+                this.targetModel.selectedTargetContainers,
+            );
+            return [dependenciesGroup, subsystemsGroup];
         }
 
         if (element instanceof HealthCheckDependencyGroupTreeItem) {
@@ -153,23 +140,43 @@ export class TargetTreeView
             return deps.map((d) => new HealthCheckDependencyTreeItem(d));
         }
 
-        if (element instanceof TargetSubsystemGroupTreeItem) {
-            const groupNames = ['Host', ...element.remoteProcessorNames];
-            return groupNames.map((group) => {
-                const containers = filterContainersForGroup(
-                    element.containers,
-                    group,
+        if (element instanceof TargetProcessingDomainGroupTreeItem) {
+            if (element.containers.status === 'errored') {
+                return [
+                    new ErrorTreeItem(
+                        'Failed to load containers',
+                        element.containers,
+                    ),
+                ];
+            }
+
+            const sortedContainers = [...element.containers.data].sort(
+                compareContainers,
+            );
+
+            const processingDomains = [
+                PRIMARY_OS_PROCESSING_DOMAIN,
+                ...element.remoteProcessorNames.map((name) => ({
+                    id: name,
+                    label: name,
+                })),
+            ];
+            return processingDomains.map((domain) => {
+                const containers = filterContainersForProcessingDomain(
+                    sortedContainers,
+                    domain.id,
                 );
 
-                return new TargetSubsystemTreeItem(
-                    group,
+                return new TargetProcessingDomainTreeItem(
+                    domain.id,
                     element.target,
                     containers,
+                    domain.label,
                 );
             });
         }
 
-        if (element instanceof TargetSubsystemTreeItem) {
+        if (element instanceof TargetProcessingDomainTreeItem) {
             return element.containers.map(
                 (container) => new TargetContainerTreeItem(container),
             );

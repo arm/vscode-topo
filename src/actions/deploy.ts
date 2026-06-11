@@ -5,9 +5,21 @@ import { executeTask } from '../util/executeTask';
 import { showAndLogError } from '../util/showAndLogError';
 import { TargetModel } from '../models/targetModel';
 import { TopoCli } from '../topoCli';
+import { isWrappedError, WrappedError } from '../errors/wrappedError';
+import {
+    COMPOSE_FILE_GLOB,
+    compareComposeFiles,
+    getComposeFileMetadata,
+    getPreferredComposeFiles,
+    type ComposeFileMetadata,
+} from '../util/composeFile';
 
 const viewLogsItem: vscode.MessageItem = {
     title: 'View Logs',
+};
+
+type ComposeFileQuickPickItem = vscode.QuickPickItem & {
+    uri: vscode.Uri;
 };
 
 export class Deploy {
@@ -16,26 +28,95 @@ export class Deploy {
         private readonly targetModel: TargetModel,
     ) {}
 
-    public async deployCommandHandler(resource?: vscode.Uri): Promise<void> {
+    public async deployCommandHandler(): Promise<void> {
+        let target: string;
+        try {
+            target = this.getSelectedTarget();
+        } catch (err: unknown) {
+            if (isWrappedError(err, ['NO_TARGET_SELECTED'])) {
+                showAndLogError('Error executing deploy command', err);
+                return;
+            }
+            throw err;
+        }
+
+        const files = await vscode.workspace.findFiles(COMPOSE_FILE_GLOB);
+        if (files.length === 0) {
+            vscode.window.showErrorMessage(
+                'No compose.yaml or compose.yml files found in the workspace.',
+            );
+            return;
+        }
+
+        const composeFileMetadata = files.map((file) =>
+            getComposeFileMetadata(
+                file,
+                vscode.workspace.getWorkspaceFolder(file),
+            ),
+        );
+        const preferredComposeFiles =
+            getPreferredComposeFiles(composeFileMetadata);
+        const composeFiles = preferredComposeFiles.sort(compareComposeFiles);
+
+        const resource = await promptForComposeFile(composeFiles);
+        if (!resource) {
+            return;
+        }
+        await deploy(this.topoCli.getBinaryPath(), resource.fsPath, target);
+    }
+
+    public async deployContextCommandHandler(
+        resource?: vscode.Uri,
+    ): Promise<void> {
         if (!resource) {
             throw new Error(
                 'No compose.yaml or compose.yml selected for deployment',
             );
         }
-        const target = this.targetModel.selected;
 
-        if (!target) {
-            showAndLogError(
-                'Error executing deploy command',
-                new Error(
-                    'No target selected. Please select a target before deploying.',
-                ),
-            );
-            return;
+        let target: string;
+        try {
+            target = this.getSelectedTarget();
+        } catch (err: unknown) {
+            if (isWrappedError(err, ['NO_TARGET_SELECTED'])) {
+                showAndLogError('Error executing deploy command', err);
+                return;
+            }
+            throw err;
         }
 
         await deploy(this.topoCli.getBinaryPath(), resource.fsPath, target);
     }
+
+    private getSelectedTarget(): string {
+        const target = this.targetModel.selected;
+        if (!target) {
+            throw new WrappedError(
+                'NO_TARGET_SELECTED',
+                'No target selected. Please select a target before deploying.',
+            );
+        }
+        return target;
+    }
+}
+
+async function promptForComposeFile(
+    composeFiles: ComposeFileMetadata[],
+): Promise<vscode.Uri | undefined> {
+    const showWorkspaceName =
+        (vscode.workspace.workspaceFolders?.length ?? 0) > 1;
+    const items: ComposeFileQuickPickItem[] = composeFiles.map(
+        ({ uri, relativePath, workspaceName }) => ({
+            label: relativePath,
+            description: showWorkspaceName ? workspaceName : undefined,
+            uri,
+        }),
+    );
+    const selected = await vscode.window.showQuickPick(items, {
+        placeHolder: 'Select a compose file to deploy',
+    });
+
+    return selected?.uri;
 }
 
 export async function deploy(

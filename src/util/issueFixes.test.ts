@@ -1,12 +1,14 @@
 import { IssueCheck, TargetHealthCheck } from '../topoCliSchema';
 import {
     hasFixCommand,
+    getIssueFixCommandGroups,
     getTargetIssueFixCommandGroups,
     type IssueFixCommandGroup,
 } from './issueFixes';
 
 describe('getTargetIssueFixCommandGroups', () => {
     const targetHealth: TargetHealthCheck = {
+        destination: 'ssh://topo.local',
         isLocalhost: false,
         connectivity: {
             name: 'Connected',
@@ -115,6 +117,53 @@ describe('getTargetIssueFixCommandGroups', () => {
         const result = getTargetIssueFixCommandGroups(health);
 
         expect(result).toEqual(expectedCommandGroups);
+    });
+});
+
+describe('getIssueFixCommandGroups', () => {
+    it('groups the provided issues by command', () => {
+        const issues: IssueCheck[] = [
+            {
+                name: 'Remoteproc Runtime',
+                status: 'error',
+                value: 'missing',
+                fix: {
+                    description: 'Install remoteproc components',
+                    command: 'topo install remoteproc',
+                },
+            },
+            {
+                name: 'Remoteproc Shim',
+                status: 'error',
+                value: 'missing',
+                fix: {
+                    description: 'Install remoteproc components',
+                    command: 'topo install remoteproc',
+                },
+            },
+            {
+                name: 'Debugger',
+                status: 'warning',
+                value: 'missing',
+                fix: {
+                    description: 'Install debugger',
+                    command: 'topo install debugger',
+                },
+            },
+        ];
+
+        const result = getIssueFixCommandGroups(issues);
+
+        expect(result).toEqual([
+            {
+                issueNames: ['Remoteproc Runtime', 'Remoteproc Shim'],
+                command: 'topo install remoteproc',
+            },
+            {
+                issueNames: ['Debugger'],
+                command: 'topo install debugger',
+            },
+        ]);
     });
 });
 

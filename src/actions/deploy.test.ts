@@ -6,6 +6,7 @@ import { executeTask } from '../util/executeTask';
 import { TargetModel } from '../models/targetModel';
 import { TopoCli } from '../topoCli';
 import { MockProxy, mock } from 'vitest-mock-extended';
+import { mutable } from '../util/mutable';
 
 vi.mock('../util/logger');
 vi.mock('../util/executeTask');
@@ -14,6 +15,10 @@ const executeTaskMock = vi.mocked(executeTask);
 
 describe('Deploy', () => {
     let deployAction: Deploy;
+    const workspaceUri = vscode.Uri.file('/fake/workspace');
+    const workspaceFolders = [
+        { uri: workspaceUri, name: 'workspace', index: 0 },
+    ];
     const composeFileUri = vscode.Uri.file(
         path.join(os.tmpdir(), 'compose.yaml'),
     );
@@ -23,30 +28,58 @@ describe('Deploy', () => {
     let topoCli: MockProxy<TopoCli>;
     let targetModel: TargetModel;
 
+    function mockWorkspaceFolders(
+        workspaceFolders: vscode.WorkspaceFolder[],
+    ): void {
+        mutable(vscode.workspace).workspaceFolders = workspaceFolders;
+        vi.mocked(vscode.workspace.getWorkspaceFolder).mockImplementation(
+            (uri) =>
+                workspaceFolders.find((workspaceFolder) =>
+                    uri.fsPath.startsWith(workspaceFolder.uri.fsPath),
+                ),
+        );
+    }
+
     beforeEach(() => {
         topoCli = mock<TopoCli>();
         topoCli.getBinaryPath.mockReturnValue(topoBinaryPath);
         targetModel = new TargetModel();
         targetModel.setSelected(target);
-        executeTaskMock.mockReset();
-        vi.mocked(vscode.window.showErrorMessage).mockClear();
+        vi.mocked(vscode.workspace.findFiles).mockResolvedValue([]);
+        vi.mocked(vscode.workspace.getWorkspaceFolder).mockReturnValue(
+            undefined,
+        );
+        mutable(vscode.workspace).workspaceFolders = undefined;
         deployAction = new Deploy(topoCli, targetModel);
     });
 
     afterEach(() => {
-        vi.restoreAllMocks();
+        vi.resetAllMocks();
     });
 
     it('shows an error in the command handler with no target selected', async () => {
         targetModel.setSelected(undefined);
 
         const deployOperation =
-            deployAction.deployCommandHandler(composeFileUri);
+            deployAction.deployContextCommandHandler(composeFileUri);
 
         await expect(deployOperation).resolves.toBeUndefined();
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
             'Error executing deploy command. No target selected. Please select a target before deploying.',
         );
+        expect(executeTaskMock).not.toHaveBeenCalled();
+    });
+
+    it('shows an error when target is selected but no compose files are found', async () => {
+        await deployAction.deployCommandHandler();
+
+        expect(vscode.workspace.findFiles).toHaveBeenCalledWith(
+            '**/compose.{yaml,yml}',
+        );
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
+            'No compose.yaml or compose.yml files found in the workspace.',
+        );
+        expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
         expect(executeTaskMock).not.toHaveBeenCalled();
     });
 
@@ -70,7 +103,7 @@ describe('Deploy', () => {
     });
 
     it('invokes handler when command called', async () => {
-        const op = deployAction.deployCommandHandler(composeFileUri);
+        const op = deployAction.deployContextCommandHandler(composeFileUri);
 
         await expect(op).resolves.toBeUndefined();
         expect(executeTaskMock).toHaveBeenCalledWith(
@@ -78,5 +111,60 @@ describe('Deploy', () => {
             [topoBinaryPath, 'deploy', '--target', 'topo.local'],
             { cwd: path.dirname(composeFilePath) },
         );
+    });
+
+    it('throws when context command is called without a resource', async () => {
+        await expect(
+            deployAction.deployContextCommandHandler(),
+        ).rejects.toThrow(
+            'No compose.yaml or compose.yml selected for deployment',
+        );
+
+        expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
+        expect(vscode.workspace.findFiles).not.toHaveBeenCalled();
+        expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
+        expect(executeTaskMock).not.toHaveBeenCalled();
+    });
+
+    it('prompts for and deploys the selected compose file when running the deploy command', async () => {
+        mockWorkspaceFolders(workspaceFolders);
+        const composeFile = vscode.Uri.file('/fake/workspace/compose.yaml');
+        const selectedComposeFile = {
+            label: 'compose.yaml',
+            description: undefined,
+            uri: composeFile,
+        };
+        vi.mocked(vscode.workspace.findFiles).mockResolvedValueOnce([
+            composeFile,
+        ]);
+        vi.mocked(vscode.window.showQuickPick).mockResolvedValueOnce(
+            selectedComposeFile,
+        );
+
+        await deployAction.deployCommandHandler();
+
+        expect(vscode.window.showQuickPick).toHaveBeenCalledWith(
+            [selectedComposeFile],
+            {
+                placeHolder: 'Select a compose file to deploy',
+            },
+        );
+        expect(executeTaskMock).toHaveBeenCalledWith(
+            'Deploy to topo.local',
+            [topoBinaryPath, 'deploy', '--target', 'topo.local'],
+            { cwd: workspaceUri.fsPath },
+        );
+    });
+
+    it('returns without deploying when compose selection is cancelled', async () => {
+        mockWorkspaceFolders(workspaceFolders);
+        vi.mocked(vscode.workspace.findFiles).mockResolvedValueOnce([
+            vscode.Uri.file('/fake/workspace/compose.yaml'),
+        ]);
+        vi.mocked(vscode.window.showQuickPick).mockResolvedValueOnce(undefined);
+
+        await deployAction.deployCommandHandler();
+
+        expect(executeTaskMock).not.toHaveBeenCalled();
     });
 });

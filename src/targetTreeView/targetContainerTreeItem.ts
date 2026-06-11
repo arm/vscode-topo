@@ -12,16 +12,16 @@ export class TargetContainerTreeItem extends vscode.TreeItem {
         super(containerItem.image, vscode.TreeItemCollapsibleState.None);
         this.description = `${containerItem.name} - ${containerItem.runningFor}`;
         this.tooltip = `ID: ${containerItem.id}\nImage: ${containerItem.image}\nName: ${containerItem.name}\nStatus: ${containerItem.status}\nLabels: ${containerItem.labels}\nUptime: ${containerItem.runningFor}\n`;
-        let subsystemCategory: string | undefined;
+        let processingDomainCategory: string | undefined;
         if (containerItem.runtime === TARGET_HOST_RUNTIME) {
-            subsystemCategory = 'Host';
+            processingDomainCategory = 'PrimaryOS';
         }
         if (containerItem.runtime === TARGET_REMOTEPROC_RUNTIME) {
-            subsystemCategory = 'Remoteproc';
+            processingDomainCategory = 'Remoteproc';
         }
         const contextValues = ['service', containerItem.state];
-        if (subsystemCategory) {
-            contextValues.push(subsystemCategory);
+        if (processingDomainCategory) {
+            contextValues.push(processingDomainCategory);
         }
         this.contextValue = contextValues.join(' ');
         this.iconPath = TargetContainerTreeItem.getIconForState(

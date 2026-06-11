@@ -1,94 +1,137 @@
 import * as vscode from 'vscode';
-import { TargetStatus } from '../util/types';
+import { IssueCheck, TargetHealthCheck } from '../topoCliSchema';
+import { errored, Loadable } from '../util/loadable';
+import { getVisibleTargetIssues } from '../target/getVisibleTargetIssues';
+import { TargetDescription } from '../util/types';
 import { hasFixCommand, type FixableHealthIssue } from '../util/issueFixes';
-import { IssueCheck } from '../topoCliSchema';
 
-function getConnectivityDiagnosticsMessage(
-    selected: boolean,
-    connectivityCheck?: IssueCheck,
-): string | undefined {
-    if (
-        !selected ||
-        connectivityCheck?.status === 'ok' ||
-        !connectivityCheck?.value
-    ) {
-        return undefined;
-    }
-
-    return connectivityCheck.value;
+export interface TargetTreeItemOptions {
+    readonly target: string;
+    readonly health?: Loadable<TargetHealthCheck | undefined>;
+    readonly targetDescription?: Loadable<TargetDescription>;
 }
+
+const defaultTargetHealth = errored('Target health not available');
+const defaultTargetDescription = errored('Target description not available');
 
 /** Represents a target */
 export class TargetTreeItem extends vscode.TreeItem {
-    public readonly fixableIssues: FixableHealthIssue[];
+    public readonly target: string;
+    public readonly health: Loadable<TargetHealthCheck | undefined>;
+    public readonly targetDescription: Loadable<TargetDescription>;
 
-    constructor(
-        public readonly target: string,
-        public readonly selected: boolean,
-        public readonly status: TargetStatus,
-        public readonly visibleIssues: IssueCheck[] = [],
-        public readonly remoteProcessorNames: string[] = [],
-        connectivityCheck?: IssueCheck,
-    ) {
+    constructor({
+        target,
+        health = defaultTargetHealth,
+        targetDescription = defaultTargetDescription,
+    }: TargetTreeItemOptions) {
         super(target, vscode.TreeItemCollapsibleState.Expanded);
-        const diagnosticsMessage = getConnectivityDiagnosticsMessage(
-            selected,
-            connectivityCheck,
-        );
+        this.target = target;
+        this.health = health;
+        this.targetDescription = targetDescription;
         this.id = target;
-        this.description = diagnosticsMessage;
-        this.tooltip = diagnosticsMessage
-            ? `${target}: ${diagnosticsMessage}`
-            : undefined;
-        this.iconPath = getTargetTreeItemIcon(selected, status);
+        this.iconPath = getTargetTreeItemIcon(health);
+
         const contextValues = ['Target'];
-        if (selected) {
-            contextValues.push('Selected');
-        }
-        if (status === 'connected') {
+
+        if (this.connected) {
             contextValues.push('Connected');
+        } else {
+            const message = getConnectivityStatusMessage(health);
+            if (message) {
+                this.description = message;
+                this.tooltip = `${target}: ${message}`;
+            }
         }
-        const issues = [...visibleIssues];
-        if (connectivityCheck) {
-            issues.unshift(connectivityCheck);
-        }
-        this.fixableIssues = issues.filter(hasFixCommand);
+
         if (this.fixableIssues.length > 0) {
             contextValues.push('HasFixableIssues');
         }
         this.contextValue = contextValues.join(' ');
-        this.collapsibleState = getTargetTreeItemState(selected, status);
+        this.collapsibleState = getTargetTreeItemState(this.connected);
+    }
+
+    public get connected(): boolean {
+        return (
+            this.health.status === 'loaded' &&
+            this.health.data?.connectivity.status === 'ok'
+        );
     }
 
     public get displayName(): string {
         return this.label?.toString() ?? '';
     }
+
+    public get visibleIssues(): IssueCheck[] {
+        if (this.health.status !== 'loaded' || this.health.data === undefined) {
+            return [];
+        }
+
+        const description =
+            this.targetDescription.status === 'loaded'
+                ? this.targetDescription.data
+                : undefined;
+        return getVisibleTargetIssues(this.health.data, description);
+    }
+
+    public get fixableIssues(): FixableHealthIssue[] {
+        const issues: Array<IssueCheck | undefined> = [...this.visibleIssues];
+        if (this.health.status === 'loaded') {
+            issues.unshift(this.health.data?.connectivity);
+        }
+
+        return issues.filter(hasFixCommand);
+    }
+
+    public get remoteProcessorNames(): string[] {
+        if (this.targetDescription.status !== 'loaded') {
+            return [];
+        }
+        return this.targetDescription.data.remoteProcessors.map(
+            (rp) => rp.name,
+        );
+    }
 }
 
-export const getTargetTreeItemState = (
-    targetSelected: boolean,
-    status: TargetStatus,
+const getConnectivityStatusMessage = (
+    health: Loadable<TargetHealthCheck | undefined>,
+): string | undefined => {
+    if (health.status === 'errored') {
+        return health.error.message;
+    }
+
+    if (
+        health.status === 'loaded' &&
+        health.data?.connectivity.status !== 'ok'
+    ) {
+        return health.data?.connectivity.value;
+    }
+
+    return undefined;
+};
+
+const getTargetTreeItemState = (
+    connected: boolean,
 ): vscode.TreeItemCollapsibleState => {
-    if (targetSelected && status === 'connected') {
+    if (connected) {
         return vscode.TreeItemCollapsibleState.Expanded;
     }
     return vscode.TreeItemCollapsibleState.None;
 };
 
 export const getTargetTreeItemIcon = (
-    targetSelected: boolean,
-    status: TargetStatus,
+    health: Loadable<TargetHealthCheck | undefined>,
 ): vscode.ThemeIcon | undefined => {
-    if (!targetSelected) {
-        return undefined;
-    }
-    if (status === 'disconnected' && targetSelected) {
+    if (health.loading) {
         return new vscode.ThemeIcon('loading~spin');
     }
-    if (status === 'error') {
+    if (
+        health.status === 'errored' ||
+        health.data?.connectivity.status !== 'ok'
+    ) {
         return new vscode.ThemeIcon(
             'error',
-            new vscode.ThemeColor('terminal.ansiRed'),
+            new vscode.ThemeColor('testing.iconFailed'),
         );
     }
     return undefined;

@@ -213,6 +213,7 @@ describe('TopoCli', () => {
                 { model: 'Cortex-A55', cores: 2, features: ['fp'] },
             ],
             remoteProcessors: [{ name: 'imx-rproc' }],
+            totalMemoryKb: 123456,
         };
         execMock.mockImplementation((_bin, _cargs, _options, cb) => {
             cb!(
@@ -222,6 +223,7 @@ describe('TopoCli', () => {
                         { model: ' Cortex-A55 ', cores: 2, features: [' fp '] },
                     ],
                     remoteProcessors: [{ name: ' imx-rproc ' }],
+                    totalMemoryKb: 123456,
                 }),
                 '',
             );
@@ -308,6 +310,7 @@ describe('TopoCli', () => {
         const want: HealthCheck = {
             host: { dependencies: [] },
             target: {
+                destination: 'ssh://hostname',
                 isLocalhost: false,
                 dependencies: [
                     {
@@ -331,6 +334,7 @@ describe('TopoCli', () => {
         const cliResponse: HealthCheck = {
             host: { dependencies: [] },
             target: {
+                destination: 'ssh://hostname',
                 isLocalhost: false,
                 dependencies: [
                     {
@@ -365,7 +369,6 @@ describe('TopoCli', () => {
                 '--target',
                 'hostname',
                 '--skip-version-checks',
-                '--accept-new-host-keys',
                 '-o',
                 'json',
             ],
@@ -384,13 +387,7 @@ describe('TopoCli', () => {
         expect(execMock).toHaveBeenCalledTimes(1);
         expect(execMock).toHaveBeenCalledWith(
             topoCli.getBinaryPath(),
-            [
-                'health',
-                '--skip-version-checks',
-                '--accept-new-host-keys',
-                '-o',
-                'json',
-            ],
+            ['health', '--skip-version-checks', '-o', 'json'],
             {
                 env: {},
                 windowsHide: true,
@@ -398,6 +395,26 @@ describe('TopoCli', () => {
             expect.any(Function),
         );
         expect(cp.stdin.end).toHaveBeenCalledTimes(1);
+    });
+
+    it('verifyVersion does not throw when versions match', () => {
+        execSyncMock.mockReturnValue('topo version 1.2.3 (commit: abcd)\n');
+
+        expect(() => topoCli.verifyVersion('1.2.3')).not.toThrow();
+    });
+
+    it('verifyVersion throws when versions mismatch', () => {
+        execSyncMock.mockReturnValue('topo version 1.2.3 (commit: abcd)\n');
+
+        expect(() => topoCli.verifyVersion('2.0.0')).toThrow(
+            'version mismatch: found=1.2.3 expected=2.0.0',
+        );
+    });
+
+    it('verifyVersion accepts v-prefixed versions from package.json', () => {
+        execSyncMock.mockReturnValue('topo version 1.2.3 (commit: abcd)\n');
+
+        expect(() => topoCli.verifyVersion('v1.2.3')).not.toThrow();
     });
 
     it('health throws error when JSON output is invalid', async () => {

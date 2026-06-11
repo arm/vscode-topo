@@ -1,20 +1,25 @@
 import * as vscode from 'vscode';
-import { ContainersManager } from '../target/containersManager';
 import { getTargetTreeItemIcon } from '../targetTreeView/targetTreeItem';
 import { TargetTreeView } from './targetTreeView';
-import { TargetState } from '../util/types';
 import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
 import { getWorstIssueCheckStatus } from '../util/getWorstIssueCheckStatus';
 import { getDependencyGroupIcon } from './util/dependencyIcons';
+import { Loadable } from '../util/loadable';
+import { TargetHealthCheck } from '../topoCliSchema';
+import { selectTarget } from '../commands';
 
-function getStatusIconId(state: TargetState): string {
-    const targetTreeIcon = getTargetTreeItemIcon(true, state.status);
+function getStatusIconId(
+    state: Loadable<TargetHealthCheck | undefined>,
+): string {
+    const targetTreeIcon = getTargetTreeItemIcon(state);
     if (targetTreeIcon) {
         return targetTreeIcon.id;
     }
 
-    const status = getWorstIssueCheckStatus(state.health?.dependencies ?? []);
+    const dependencies =
+        state.status === 'loaded' && state.data ? state.data.dependencies : [];
+    const status = getWorstIssueCheckStatus(dependencies);
     if (status === 'ok') {
         return 'pass-filled';
     }
@@ -25,15 +30,19 @@ function getStatusIconId(state: TargetState): string {
 function renderStatusBarItem(
     statusBarItem: vscode.StatusBarItem,
     target: string | undefined,
-    state: TargetState,
+    selectedHealth: Loadable<TargetHealthCheck | undefined>,
 ): void {
     if (target) {
-        const iconId = getStatusIconId(state);
+        const iconId = getStatusIconId(selectedHealth);
         statusBarItem.text = `$(${iconId}) ${target}`;
-        statusBarItem.tooltip = `Connection String: ${target}`;
+        statusBarItem.tooltip = `SSH destination: ${target}`;
+        statusBarItem.command = TargetTreeView.focusViewCommand;
         statusBarItem.show();
     } else {
-        statusBarItem.hide();
+        statusBarItem.text = '$(list-selection) Select a target';
+        statusBarItem.tooltip = 'Select a target';
+        statusBarItem.command = selectTarget;
+        statusBarItem.show();
     }
 }
 
@@ -45,31 +54,24 @@ export class TargetStatusBarItemView implements vscode.Disposable {
 
     private statusBarItem: vscode.StatusBarItem;
 
-    constructor(
-        private readonly targetModel: TargetModel,
-        private readonly containersManager: ContainersManager,
-    ) {
+    constructor(private readonly targetModel: TargetModel) {
         this.statusBarItem = vscode.window.createStatusBarItem(
             TargetStatusBarItemView.id,
             vscode.StatusBarAlignment.Left,
             TargetStatusBarItemView.priority,
         );
-        this.statusBarItem.command = TargetTreeView.focusViewCommand;
         this.refresh();
 
         this.disposables.collect(
             this.statusBarItem,
-            this.targetModel.onSelectedChanged(() => this.refresh()),
-            this.containersManager.onDataUpdate(() => this.refresh()),
+            this.targetModel.onHealthChanged(() => this.refresh()),
         );
     }
 
     private refresh(): void {
         const selectedTarget = this.targetModel.selected;
-        const state: TargetState = selectedTarget
-            ? this.containersManager.getTargetStateSnapshot(selectedTarget)
-            : { health: undefined, status: 'disconnected' };
-        renderStatusBarItem(this.statusBarItem, selectedTarget, state);
+        const selectedHealth = this.targetModel.selectedTargetHealth;
+        renderStatusBarItem(this.statusBarItem, selectedTarget, selectedHealth);
     }
 
     public dispose(): void {

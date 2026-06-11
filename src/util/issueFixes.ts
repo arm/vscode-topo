@@ -26,9 +26,15 @@ export function getTargetIssueFixCommandGroups(
         return [];
     }
 
+    return getIssueFixCommandGroups(getTargetIssues(health));
+}
+
+export function getIssueFixCommandGroups(
+    issues: IssueCheck[],
+): IssueFixCommandGroup[] {
     const groups = new Map<string, IssueFixCommandGroup>();
 
-    for (const issue of getTargetIssues(health)) {
+    for (const issue of issues) {
         const command = issue.fix?.command;
         if (!command) {
             continue;

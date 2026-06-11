@@ -28,23 +28,6 @@ export interface TopoCliVersion {
     commit: string;
 }
 
-export interface CloneRemoteSource {
-    url: string;
-    type: 'git';
-}
-
-export interface CloneLocalSource {
-    path: string;
-    type: 'dir';
-}
-
-export interface CloneRawSource {
-    value: string;
-    type?: never;
-}
-
-export type CloneSource = CloneRemoteSource | CloneLocalSource | CloneRawSource;
-
 const normalizeLogLevel = (level: string): WrappedErrorLogLevel => {
     switch (level.toUpperCase()) {
         case 'ERROR':
@@ -271,12 +254,7 @@ export class TopoCli {
         if (sshTarget) {
             cmd.push('--target', sshTarget);
         }
-        cmd.push(
-            '--skip-version-checks',
-            '--accept-new-host-keys',
-            '-o',
-            'json',
-        );
+        cmd.push('--skip-version-checks', '-o', 'json');
         const promise = await new Promise<string>((resolve, reject) => {
             const child = childProcess.execFile(
                 bin,
@@ -306,5 +284,17 @@ export class TopoCli {
 
     public async health(sshTarget: string): Promise<HealthCheck> {
         return this.runHealth(healthCheckSchema, sshTarget);
+    }
+
+    public verifyVersion(expectedVersionStr: string): void {
+        const actual = this.getVersion().version;
+        const expected = expectedVersionStr.startsWith('v')
+            ? expectedVersionStr.slice(1)
+            : expectedVersionStr;
+        if (actual !== expected) {
+            throw new Error(
+                `version mismatch: found=${actual} expected=${expected}`,
+            );
+        }
     }
 }

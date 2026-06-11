@@ -1,12 +1,50 @@
+import { TargetHealthCheck } from '../topoCliSchema';
+import { ContainerItem } from '../util/types';
+import { loaded } from '../util/loadable';
 import { TargetModel } from './targetModel';
 
+const targetHealth: TargetHealthCheck = {
+    destination: 'ssh://target',
+    isLocalhost: false,
+    connectivity: {
+        name: 'Connectivity',
+        status: 'ok',
+        value: 'connected',
+    },
+    subsystemDriver: {
+        name: 'Subsystem Driver',
+        status: 'ok',
+        value: 'ready',
+    },
+    dependencies: [],
+};
+
+const containers: ContainerItem[] = [
+    {
+        id: 'container-id',
+        name: 'service',
+        image: 'image',
+        state: 'running',
+        status: 'Up 1 minute',
+        labels: '',
+        runningFor: '1 minute',
+        createdAt: '',
+        runtime: 'runc',
+        annotations: {},
+        ports: {},
+        target: 'user@target',
+    },
+];
+
 describe('TargetModel', () => {
-    it('defaults to no selected target and an empty target list', () => {
+    it('defaults to no selected target, an empty target list and empty selected target data', () => {
         const model = new TargetModel();
 
         expect(model.selected).toBeUndefined();
         expect(model.targets).toEqual([]);
         expect(model.dataIssue).toBe(false);
+        expect(model.selectedTargetHealth).toEqual(loaded(undefined));
+        expect(model.selectedTargetContainers).toEqual(loaded([]));
     });
 
     it('stores the latest selected target', () => {
@@ -132,5 +170,34 @@ describe('TargetModel', () => {
 
         expect(model.dataIssue).toBe(false);
         expect(onChanged).toHaveBeenCalledTimes(2);
+    });
+
+    it('stores selected target health and containers and fires change events', () => {
+        const model = new TargetModel();
+        const health = loaded(targetHealth);
+        const containerState = loaded(containers);
+        const onHealthChanged = vi.fn();
+        const onContainersChanged = vi.fn();
+        model.onHealthChanged(onHealthChanged);
+        model.onContainersChanged(onContainersChanged);
+
+        model.setSelectedTargetHealth(health);
+        model.setSelectedTargetContainers(containerState);
+
+        expect(model.selectedTargetHealth).toBe(health);
+        expect(model.selectedTargetContainers).toBe(containerState);
+        expect(onHealthChanged).toHaveBeenCalledTimes(1);
+        expect(onContainersChanged).toHaveBeenCalledTimes(1);
+    });
+
+    it('clears selected target data when selected target is changed', () => {
+        const model = new TargetModel();
+        model.setSelectedTargetHealth(loaded(targetHealth));
+        model.setSelectedTargetContainers(loaded(containers));
+
+        model.setSelected('user@host');
+
+        expect(model.selectedTargetHealth).toEqual(loaded(undefined));
+        expect(model.selectedTargetContainers).toEqual(loaded([]));
     });
 });
