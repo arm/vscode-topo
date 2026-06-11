@@ -180,6 +180,30 @@ describe('buildQuickPickItems', () => {
         ]);
     });
 
+    it('marks the selected target with an icon description', () => {
+        const items = buildQuickPickItems(
+            [],
+            '',
+            ['selected-host', 'other-host'],
+            'selected-host',
+        );
+
+        expect(items).toEqual([
+            expect.objectContaining({
+                label: 'selected-host',
+                target: 'selected-host',
+                description: '$(target)',
+                buttons: expect.any(Array),
+            }),
+            expect.objectContaining({
+                label: 'other-host',
+                target: 'other-host',
+                buttons: expect.any(Array),
+            }),
+        ]);
+        expect(items[1]).not.toHaveProperty('description');
+    });
+
     it('does not add a remove button to ssh config hosts that are not saved targets', () => {
         const items = buildQuickPickItems(['host-a'], '');
 
@@ -349,12 +373,20 @@ describe('target addition', () => {
         const targetModel = new TargetModel();
         const { controller } = createController(targetModel, targetStore);
         controller.updateTargetsFromStore();
-        mockQuickPick({ selectedItem: { label: 'saved-host' } });
+        const quickPick = mockQuickPick({
+            selectedItem: { label: 'saved-host' },
+        });
 
         await controller.selectCommandHandler();
 
         expect(targetStore.addTarget).not.toHaveBeenCalled();
         expect(targetStore.setSelected).toHaveBeenCalledWith('saved-host');
+        expect(quickPick.items[0]).toEqual(
+            expect.objectContaining({
+                target: 'saved-host',
+                description: '$(target)',
+            }),
+        );
         expect(targetModel.selected).toBe('saved-host');
         expect(targetModel.targets).toEqual(['saved-host']);
     });
