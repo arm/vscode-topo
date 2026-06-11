@@ -32,7 +32,7 @@ export class TargetTreeItem extends vscode.TreeItem {
         this.id = target;
         this.iconPath = getTargetTreeItemIcon(health);
 
-        const contextValues = ['Target', 'Selected'];
+        const contextValues = ['Target'];
 
         if (this.connected) {
             contextValues.push('Connected');

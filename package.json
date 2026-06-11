@@ -232,7 +232,7 @@
                 },
                 {
                     "command": "topo.fixTargetIssues",
-                    "when": "view === topo.target-manager && viewItem =~ /Target/ && viewItem =~ /Selected/ && viewItem =~ /HasFixableIssues/",
+                    "when": "view === topo.target-manager && viewItem =~ /Target/ && viewItem =~ /HasFixableIssues/",
                     "group": "inline@3"
                 },
                 {

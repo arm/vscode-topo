@@ -175,7 +175,6 @@ describe('TargetTreeView', () => {
             expect(rootChildren).toHaveLength(1);
             const targetItem = rootChildren[0] as TargetTreeItem;
             expect(targetItem.contextValue).toContain('Target');
-            expect(targetItem.contextValue).toContain('Selected');
             expect(targetItem.collapsibleState).toBe(
                 vscode.TreeItemCollapsibleState.None,
             );

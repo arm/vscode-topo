@@ -40,7 +40,6 @@ describe('TargetTreeItem', () => {
         expect(item.label).toBe(baseTarget);
         expect(item.displayName).toBe(baseTarget);
         expect(item.contextValue).toContain('Target');
-        expect(item.contextValue).toContain('Selected');
     });
 
     it('defaults to target state not ready when health is omitted', () => {
@@ -53,14 +52,13 @@ describe('TargetTreeItem', () => {
         );
     });
 
-    it('shows loading icon and Selected context while selected target is refreshing', () => {
+    it('shows loading icon while target is refreshing', () => {
         const item = new TargetTreeItem({
             target: baseTarget,
             health: loading(errored('Target state is not ready')),
         });
 
         expect(item.contextValue).toContain('Target');
-        expect(item.contextValue).toContain('Selected');
         expect(item.contextValue).not.toContain('Connected');
         expect(item.iconPath).toBeInstanceOf(vscode.ThemeIcon);
         expect((item.iconPath as vscode.ThemeIcon).id).toBe('loading~spin');
@@ -76,7 +74,6 @@ describe('TargetTreeItem', () => {
         });
 
         expect(item.contextValue).toContain('Target');
-        expect(item.contextValue).toContain('Selected');
         expect(item.contextValue).not.toContain('Connected');
         expect(item.iconPath).toBeInstanceOf(vscode.ThemeIcon);
         const icon = item.iconPath as vscode.ThemeIcon;
@@ -106,7 +103,6 @@ describe('TargetTreeItem', () => {
         });
 
         expect(item.contextValue).toContain('Target');
-        expect(item.contextValue).toContain('Selected');
         expect(item.contextValue).toContain('Connected');
         expect(item.iconPath).toBeUndefined();
         expect(item.collapsibleState).toBe(
