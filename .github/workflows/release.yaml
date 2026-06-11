@@ -43,12 +43,16 @@ jobs:
             - name: Detect changes since last release to decide major, minor, patch or pre-release
               id: detect-changes
               run: |
+                  CURRENT_VERSION=$(go run github.com/caarlos0/svu/v3@v3.4.0 current --json || echo '{"major":0,"minor":0,"patch":0}')
+
+                  IS_FIRST_RELEASE=$(jq -r '(.major == 0 and .minor == 0 and .patch == 0)' <<< "$CURRENT_VERSION")
+                  echo "is-first-release=$IS_FIRST_RELEASE" >> "$GITHUB_OUTPUT"
+
                   if [ "$PRE_RELEASE_FLAG" = "--pre-release" ]; then
                       echo "release-type=Pre-release" >> "$GITHUB_OUTPUT"
                       exit 0
                   fi
 
-                  CURRENT_VERSION=$(go run github.com/caarlos0/svu/v3@v3.4.0 current --json || echo '{"major":0,"minor":0,"patch":0}')
                   NEXT_VERSION=$(go run github.com/caarlos0/svu/v3@v3.4.0 next --json)
 
                   CURRENT_MAJOR=$(jq -r .major <<< "$CURRENT_VERSION")
@@ -83,10 +87,14 @@ jobs:
               if: steps.calculate-version.outputs.version
               run: |
                   NOTES_FILE="$RUNNER_TEMP/generated-release-notes.md"
-                  gh api "repos/$GITHUB_REPOSITORY/releases/generate-notes" \
-                      --field tag_name="v$VERSION" \
-                      --field target_commitish="$GITHUB_SHA" \
-                      --jq .body > "$NOTES_FILE"
+                  if [ "$IS_FIRST_RELEASE" = "true" ]; then
+                      printf 'Initial release.\n' > "$NOTES_FILE"
+                  else
+                      gh api "repos/$GITHUB_REPOSITORY/releases/generate-notes" \
+                          --field tag_name="v$VERSION" \
+                          --field target_commitish="$GITHUB_SHA" \
+                          --jq .body > "$NOTES_FILE"
+                  fi
 
                   cp "$NOTES_FILE" release-notes.md
 
@@ -100,6 +108,7 @@ jobs:
                   mv CHANGELOG.md.new CHANGELOG.md
               env:
                   VERSION: ${{ steps.calculate-version.outputs.version }}
+                  IS_FIRST_RELEASE: ${{ steps.detect-changes.outputs.is-first-release }}
                   GH_TOKEN: ${{ steps.get-app-token.outputs.token }}
             - name: Store release notes
               if: steps.calculate-version.outputs.version
