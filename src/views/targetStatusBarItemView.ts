@@ -34,7 +34,7 @@ function renderStatusBarItem(
     if (target) {
         const iconId = getStatusIconId(selectedHealth);
         statusBarItem.text = `$(${iconId}) ${target}`;
-        statusBarItem.tooltip = `Connection String: ${target}`;
+        statusBarItem.tooltip = `SSH destination: ${target}`;
         statusBarItem.show();
     } else {
         statusBarItem.hide();
