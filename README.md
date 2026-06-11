@@ -35,8 +35,6 @@ The selected target in the tree shows:
 | **Services**           | Running or stopped containers grouped by processing domain, with state icons.     |
 | **Dependencies**       | Required target components and driver health-check issues shown for the target.   |
 
-Connectivity errors are shown on the target row. If no target is selected, the view shows a **Select a target** button.
-
 ### Target Actions
 
 Use the inline buttons on the selected target row to access these actions:
