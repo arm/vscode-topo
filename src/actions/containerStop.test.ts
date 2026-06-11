@@ -7,6 +7,7 @@ import { WrappedError } from '../errors/wrappedError';
 import { mock } from 'vitest-mock-extended';
 import { ContainerCommands } from '../target/containerCommands';
 import type { MockInstance } from 'vitest';
+import { TargetController } from '../controllers/targetController';
 
 describe('ContainerStop', () => {
     let showErrorMessageSpy: MockInstance;
@@ -33,9 +34,17 @@ describe('ContainerStop', () => {
             .mockImplementation(vi.fn());
     });
 
+    afterEach(() => {
+        vi.clearAllMocks();
+    });
+
     it('calls stopContainer and shows info message on success', async () => {
         const containerCommands = mock<ContainerCommands>();
-        const containerStop = new ContainerStop(containerCommands);
+        const targetController = mock<TargetController>();
+        const containerStop = new ContainerStop(
+            containerCommands,
+            targetController,
+        );
 
         await containerStop.stopContainerCommandHandler(treeItem);
 
@@ -43,14 +52,21 @@ describe('ContainerStop', () => {
             'abc123',
             target,
         );
+        expect(
+            targetController.refreshSelectedTargetDataCommandHandler,
+        ).toHaveBeenCalledOnce();
     });
 
     it('shows error message if stopContainer throws a WrappedError', async () => {
         const containerCommands = mock<ContainerCommands>();
+        const targetController = mock<TargetController>();
         containerCommands.stopContainer.mockRejectedValue(
             new WrappedError('DOCKER', 'fail'),
         );
-        const containerStop = new ContainerStop(containerCommands);
+        const containerStop = new ContainerStop(
+            containerCommands,
+            targetController,
+        );
 
         await containerStop.stopContainerCommandHandler(treeItem);
 
@@ -59,6 +75,9 @@ describe('ContainerStop', () => {
                 'Failed to stop the container abc123. fail',
             ),
         );
+        expect(
+            targetController.refreshSelectedTargetDataCommandHandler,
+        ).not.toHaveBeenCalled();
     });
 
     it('re-throw generic error errors from stopContainer', async () => {
@@ -66,7 +85,10 @@ describe('ContainerStop', () => {
         containerCommands.stopContainer.mockRejectedValue(
             new Error('generic error'),
         );
-        const containerStop = new ContainerStop(containerCommands);
+        const containerStop = new ContainerStop(
+            containerCommands,
+            mock<TargetController>(),
+        );
 
         await expect(
             containerStop.stopContainerCommandHandler(treeItem),

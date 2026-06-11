@@ -5,6 +5,7 @@ import { executeTask } from '../util/executeTask';
 import { showAndLogError } from '../util/showAndLogError';
 import { TargetModel } from '../models/targetModel';
 import { TopoCli } from '../topoCli';
+import { TargetController } from '../controllers/targetController';
 
 const viewLogsItem: vscode.MessageItem = {
     title: 'View Logs',
@@ -14,6 +15,7 @@ export class Stop {
     constructor(
         private readonly topoCli: TopoCli,
         private readonly targetModel: TargetModel,
+        private readonly targetController: TargetController,
     ) {}
 
     public async stopCommandHandler(resource?: vscode.Uri): Promise<void> {
@@ -33,6 +35,7 @@ export class Stop {
         }
 
         await stop(this.topoCli.getBinaryPath(), resource.fsPath, target);
+        await this.targetController.refreshSelectedTargetDataCommandHandler();
     }
 }
 
