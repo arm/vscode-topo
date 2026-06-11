@@ -348,10 +348,10 @@ describe('TargetStore', () => {
             context.globalStorageUri,
             { recursive: true, useTrash: false },
         );
-        expect(vscode.workspace.fs.createDirectory).toHaveBeenCalledWith(
-            context.globalStorageUri,
-        );
         await vi.waitFor(() => {
+            expect(vscode.workspace.fs.createDirectory).toHaveBeenCalledWith(
+                context.globalStorageUri,
+            );
             expect(vscode.workspace.fs.writeFile).toHaveBeenCalledWith(
                 vscode.Uri.joinPath(
                     context.globalStorageUri,
@@ -370,8 +370,10 @@ describe('TargetStore', () => {
         );
 
         await expect(store.resetExtensionData()).resolves.toBeUndefined();
-        expect(vscode.workspace.fs.createDirectory).toHaveBeenCalledWith(
-            context.globalStorageUri,
-        );
+        await vi.waitFor(() => {
+            expect(vscode.workspace.fs.createDirectory).toHaveBeenCalledWith(
+                context.globalStorageUri,
+            );
+        });
     });
 });

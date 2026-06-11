@@ -79,6 +79,9 @@ export class TargetStore {
                 'targets-update.signal',
             );
             const payload = new TextEncoder().encode(Date.now().toString());
+            await vscode.workspace.fs.createDirectory(
+                this.context.globalStorageUri,
+            );
             await vscode.workspace.fs.writeFile(signalUri, payload);
         } catch (err: unknown) {
             logger.error(`Failed to publish target change signal`, err);
@@ -182,10 +185,6 @@ export class TargetStore {
                 throw err;
             }
         }
-
-        await vscode.workspace.fs.createDirectory(
-            this.context.globalStorageUri,
-        );
 
         this.publishExternalTargetsChange();
     }
