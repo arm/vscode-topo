@@ -51,12 +51,6 @@
                 "category": "Topo"
             },
             {
-                "command": "topo.openInBrowser",
-                "title": "Open in Browser",
-                "icon": "$(globe)",
-                "category": "Topo"
-            },
-            {
                 "command": "topo.startContainer",
                 "title": "Start",
                 "icon": "$(play)",
@@ -224,10 +218,6 @@
                     "when": "false"
                 },
                 {
-                    "command": "topo.openInBrowser",
-                    "when": "false"
-                },
-                {
                     "command": "topo.deploy.context",
                     "when": "false"
                 },
@@ -274,11 +264,6 @@
                     "command": "topo.attachShell",
                     "when": "view === topo.target-manager && viewItem =~ /service/ && viewItem =~ /running/ && viewItem =~ /PrimaryOS/",
                     "group": "inline@1"
-                },
-                {
-                    "command": "topo.openInBrowser",
-                    "when": "view === topo.target-manager && viewItem =~ /service/ && viewItem =~ /running/ && viewItem =~ /PrimaryOS/",
-                    "group": "inline@2"
                 },
                 {
                     "command": "topo.startContainer",
