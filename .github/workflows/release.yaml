@@ -43,15 +43,15 @@ jobs:
             - name: Detect changes since last release to decide major, minor, patch or pre-release
               id: detect-changes
               run: |
-                  CURRENT_VERSION=$(go run github.com/caarlos0/svu/v3@v3.4.0 current --json || echo '{"major":0,"minor":0,"patch":0}')
-
-                  IS_FIRST_RELEASE=$(jq -r '(.major == 0 and .minor == 0 and .patch == 0)' <<< "$CURRENT_VERSION")
-                  echo "is-first-release=$IS_FIRST_RELEASE" >> "$GITHUB_OUTPUT"
-
                   if [ "$PRE_RELEASE_FLAG" = "--pre-release" ]; then
                       echo "release-type=Pre-release" >> "$GITHUB_OUTPUT"
                       exit 0
                   fi
+
+                  CURRENT_VERSION=$(go run github.com/caarlos0/svu/v3@v3.4.0 current --json || echo '{"major":0,"minor":0,"patch":0}')
+
+                  IS_FIRST_RELEASE=$(jq -r '(.major == 0 and .minor == 0 and .patch == 0)' <<< "$CURRENT_VERSION")
+                  echo "is-first-release=$IS_FIRST_RELEASE" >> "$GITHUB_OUTPUT"
 
                   NEXT_VERSION=$(go run github.com/caarlos0/svu/v3@v3.4.0 next --json)
 
