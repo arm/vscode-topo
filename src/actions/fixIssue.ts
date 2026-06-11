@@ -5,7 +5,9 @@ import { showAndLogError } from '../util/showAndLogError';
 import { executeTask } from '../util/executeTask';
 import { TargetModel } from '../models/targetModel';
 import { TopoCli } from '../topoCli';
+import { getVisibleTargetIssues } from '../target/getVisibleTargetIssues';
 import {
+    hasFixCommand,
     type FixableHealthIssue,
     getIssueFixCommandGroups,
 } from '../util/issueFixes';
@@ -31,7 +33,12 @@ export class FixIssue {
         private readonly targetModel: TargetModel,
     ) {}
 
-    public async fixIssueCommandHandler(treeNode: unknown): Promise<void> {
+    public async fixIssueCommandHandler(treeNode?: unknown): Promise<void> {
+        if (treeNode === undefined) {
+            await this.fixSelectedTargetIssues();
+            return;
+        }
+
         if (treeNode instanceof HealthCheckDependencyTreeItem) {
             await this.fixDependencyIssueFromTreeItem(treeNode);
             return;
@@ -45,6 +52,42 @@ export class FixIssue {
         throw new Error(
             `Invalid item for fix issues: expected HealthCheckDependencyTreeItem or TargetTreeItem but received: ${String(treeNode)}`,
         );
+    }
+
+    private async fixSelectedTargetIssues(): Promise<void> {
+        const target = this.targetModel.selected;
+        if (!target) {
+            throw new Error('No selected target found');
+        }
+
+        const health = this.targetModel.selectedTargetHealth;
+        const targetHealth =
+            health.status === 'loaded' ? health.data : undefined;
+        const targetDescription = targetHealth
+            ? await this.getTargetDescription(target)
+            : undefined;
+        const fixableIssues = [
+            targetHealth?.connectivity,
+            ...(targetHealth
+                ? getVisibleTargetIssues(targetHealth, targetDescription)
+                : []),
+        ].filter(hasFixCommand);
+
+        if (fixableIssues.length === 0) {
+            throw new Error(
+                `No executable issue fixes found for target ${target}`,
+            );
+        }
+
+        await this.selectAndFixTargetIssue(target, fixableIssues);
+    }
+
+    private async getTargetDescription(target: string) {
+        try {
+            return await this.topoCli.describe(target);
+        } catch {
+            return undefined;
+        }
     }
 
     private async fixDependencyIssueFromTreeItem(

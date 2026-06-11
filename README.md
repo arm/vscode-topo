@@ -29,20 +29,24 @@ Saved targets that do not come from SSH config can be removed from the picker wi
 
 ### Target Tree
 
-The selected target in the tree shows:
+The Target view header shows the selected SSH destination. The tree below it shows:
 
 | Item                   | Description                                                                       |
 | ---------------------- | --------------------------------------------------------------------------------- |
+| **Connectivity**       | SSH or target health connectivity errors when the selected target cannot be used. |
 | **Processing Domains** | Processing domains on the target, including the primary OS and remote processors. |
 | **Services**           | Running or stopped containers grouped by processing domain, with state icons.     |
 | **Dependencies**       | Required target components and driver health-check issues shown for the target.   |
 
+If no target is selected, the view shows a **Select a target** button.
+
 ### Target Actions
 
-Use the inline buttons on the selected target row to access these actions:
+Use the buttons in the Target view title bar to access these actions:
 
 | Command             | Description                                                  |
 | ------------------- | ------------------------------------------------------------ |
+| **Select a target** | Select, add, or remove saved manual targets.                 |
 | **Unselect Target** | Clear the active target without deleting it.                 |
 | **Fix Issues**      | Select and run available fixes for target dependency issues. |
 

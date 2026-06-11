@@ -2,7 +2,6 @@ import * as vscode from 'vscode';
 import { TargetTreeView } from './targetTreeView';
 import { TargetContainerTreeItem } from '../targetTreeView/targetContainerTreeItem';
 import { TargetProcessingDomainTreeItem } from '../targetTreeView/targetProcessingDomainTreeItem';
-import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
 import * as manifest from '../manifest';
 import { ContainerItem, TargetDescription } from '../util/types';
 import { mock, MockProxy } from 'vitest-mock-extended';
@@ -13,11 +12,13 @@ import { TargetDescriptionStore } from '../target/targetDescriptionStore';
 import { TargetModel } from '../models/targetModel';
 import { errored, loaded } from '../util/loadable';
 import { ErrorTreeItem } from '../treeItems/errorTreeItem';
+import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 
 describe('TargetTreeView', () => {
     let view: TargetTreeView;
     let targetModel: TargetModel;
     let targetDescriptionStoreMock: MockProxy<TargetDescriptionStore>;
+    let treeView: vscode.TreeView<vscode.TreeItem>;
     const target = 'user@topo.local';
     const targetDescription: TargetDescription = {
         hostProcessors: [],
@@ -106,24 +107,29 @@ describe('TargetTreeView', () => {
             targetDescription,
         );
         view = new TargetTreeView(targetModel, targetDescriptionStoreMock);
+        treeView = vi.mocked(vscode.window.createTreeView).mock.results[0]
+            .value;
         vi.clearAllTimers();
         vi.clearAllMocks();
     });
 
     describe('getChildren', () => {
-        it('returns Target at root and Dependencies/Processing Domains as its children', async () => {
-            const rootChildren = await view.getChildren();
-            const targetChildren = await view.getChildren(rootChildren[0]);
+        it('shows selected target in the view description', () => {
+            expect(treeView.description).toBe(target);
+        });
 
-            expect(targetChildren).toHaveLength(2);
-            expect(targetChildren[0]).toBeInstanceOf(
+        it('returns Dependencies/Processing Domains at the root', async () => {
+            const rootChildren = await view.getChildren();
+
+            expect(rootChildren).toHaveLength(2);
+            expect(rootChildren[0]).toBeInstanceOf(
                 HealthCheckDependencyGroupTreeItem,
             );
-            expect(targetChildren[1]).toBeInstanceOf(
+            expect(rootChildren[1]).toBeInstanceOf(
                 TargetProcessingDomainGroupTreeItem,
             );
-            expect(targetChildren[0].label).toBe('Dependencies');
-            expect(targetChildren[1].label).toBe('Processing Domains');
+            expect(rootChildren[0].label).toBe('Dependencies');
+            expect(rootChildren[1].label).toBe('Processing Domains');
             expect(
                 targetDescriptionStoreMock.getDescription,
             ).toHaveBeenCalledTimes(1);
@@ -152,8 +158,7 @@ describe('TargetTreeView', () => {
                 }),
             );
             const rootChildren = await view.getChildren();
-            const targetChildren = await view.getChildren(rootChildren[0]);
-            const dependenciesGroup = targetChildren.find(
+            const dependenciesGroup = rootChildren.find(
                 (v) => v instanceof HealthCheckDependencyGroupTreeItem,
             );
             expect(dependenciesGroup).toBeDefined();
@@ -167,20 +172,29 @@ describe('TargetTreeView', () => {
             ]);
         });
 
-        it('sets disconnected context and tree collapsible state for target with pending health', async () => {
+        it('returns a connectivity item while selected target health is pending', async () => {
             targetModel.setSelectedTargetHealth(loaded(undefined));
 
             const rootChildren = await view.getChildren();
 
             expect(rootChildren).toHaveLength(1);
-            const targetItem = rootChildren[0] as TargetTreeItem;
-            expect(targetItem.contextValue).toContain('Target');
-            expect(targetItem.collapsibleState).toBe(
-                vscode.TreeItemCollapsibleState.None,
+            expect(rootChildren[0]).toBeInstanceOf(
+                HealthCheckDependencyTreeItem,
             );
+            expect(rootChildren[0]).toMatchObject({
+                label: 'Connectivity',
+                description: 'Checking target connectivity',
+                contextValue: 'Dependency Warning',
+            });
+            expect((rootChildren[0].iconPath as vscode.ThemeIcon).id).toBe(
+                'loading~spin',
+            );
+            expect(
+                targetDescriptionStoreMock.getDescription,
+            ).not.toHaveBeenCalled();
         });
 
-        it('shows health diagnostics on selected target when health has an error', async () => {
+        it('returns a connectivity item when selected target has a connectivity error', async () => {
             const diagnostics = '"ssh" not found on remote target\'s $PATH';
             targetModel.setSelectedTargetHealth(
                 loaded({
@@ -195,16 +209,21 @@ describe('TargetTreeView', () => {
 
             const rootChildren = await view.getChildren();
 
-            expect(rootChildren).toStrictEqual([
-                expect.objectContaining({
-                    label: target,
-                    description: diagnostics,
-                    tooltip: `${target}: ${diagnostics}`,
-                }),
-            ]);
+            expect(rootChildren).toHaveLength(1);
+            expect(rootChildren[0]).toBeInstanceOf(
+                HealthCheckDependencyTreeItem,
+            );
+            expect(rootChildren[0]).toMatchObject({
+                label: 'Connectivity',
+                description: diagnostics,
+                contextValue: 'Dependency Error',
+            });
+            expect(
+                targetDescriptionStoreMock.getDescription,
+            ).not.toHaveBeenCalled();
         });
 
-        it('only returns the selected target at the root', async () => {
+        it('updates the view description when the selected target changes', async () => {
             const otherTarget = 'user@other.local';
             targetModel.setTargets([target, otherTarget]);
             targetModel.setSelected(otherTarget);
@@ -214,40 +233,20 @@ describe('TargetTreeView', () => {
 
             const rootChildren = await view.getChildren();
 
+            expect(treeView.description).toBe(otherTarget);
             expect(rootChildren).toHaveLength(1);
             expect(rootChildren[0]).toMatchObject({
-                label: otherTarget,
+                label: 'Connectivity',
                 description: 'ssh connection failed',
-                tooltip: `${otherTarget}: ssh connection failed`,
             });
-        });
-
-        it('marks target with executable subsystem driver fix as fixable when remote processors exist', async () => {
-            targetModel.setSelectedTargetHealth(
-                loaded({
-                    ...targetHealth,
-                    subsystemDriver: {
-                        name: 'SubsystemDriver',
-                        status: 'error',
-                        value: 'missing',
-                        fix: {
-                            description: 'Install subsystem driver',
-                            command: 'topo install subsystem-driver',
-                        },
-                    },
-                }),
-            );
-
-            const rootChildren = await view.getChildren();
-
-            expect(rootChildren).toHaveLength(1);
-            expect(rootChildren[0].contextValue).toContain('HasFixableIssues');
+            expect(
+                targetDescriptionStoreMock.getDescription,
+            ).not.toHaveBeenCalled();
         });
 
         it('returns containers for Primary OS and remote processor groups', async () => {
             const rootChildren = await view.getChildren();
-            const targetChildren = await view.getChildren(rootChildren[0]);
-            const processingDomainsGroup = targetChildren.find(
+            const processingDomainsGroup = rootChildren.find(
                 (v) => v instanceof TargetProcessingDomainGroupTreeItem,
             );
             const processingDomainItems = await view.getChildren(
@@ -289,8 +288,7 @@ describe('TargetTreeView', () => {
                 errored('container parse failed'),
             );
             const rootChildren = await view.getChildren();
-            const targetChildren = await view.getChildren(rootChildren[0]);
-            const processingDomainsGroup = targetChildren.find(
+            const processingDomainsGroup = rootChildren.find(
                 (v) => v instanceof TargetProcessingDomainGroupTreeItem,
             );
 
@@ -308,6 +306,7 @@ describe('TargetTreeView', () => {
             const rootChildren = await view.getChildren();
 
             expect(rootChildren.length).toEqual(0);
+            expect(treeView.description).toBeUndefined();
             expect(
                 targetDescriptionStoreMock.getDescription,
             ).not.toHaveBeenCalled();

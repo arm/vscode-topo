@@ -509,11 +509,8 @@ describe('target unselection', () => {
         const targetModel = new TargetModel();
         targetModel.setSelected('user@board');
         const { controller } = createController(targetModel, targetStore);
-        const targetItem = new TargetTreeItem({
-            target: 'user@board',
-        });
 
-        await controller.unselectCommandHandler(targetItem);
+        await controller.unselectCommandHandler();
 
         expect(targetStore.setSelected).toHaveBeenCalledWith(undefined);
         expect(targetModel.selected).toBeUndefined();
@@ -521,14 +518,15 @@ describe('target unselection', () => {
         expect(targetModel.selectedTargetContainers).toEqual(loaded([]));
     });
 
-    it('does nothing when unselect command is executed with a non-target item', async () => {
-        const targetStore = mockTargetStore(['user@board'], 'user@board');
+    it('clears selection idempotently when no target is selected', async () => {
+        const targetStore = mockTargetStore(['user@board']);
         const targetModel = new TargetModel();
         const { controller } = createController(targetModel, targetStore);
 
         await controller.unselectCommandHandler();
 
-        expect(targetStore.setSelected).not.toHaveBeenCalled();
+        expect(targetStore.setSelected).toHaveBeenCalledWith(undefined);
+        expect(targetModel.selected).toBeUndefined();
     });
 });
 

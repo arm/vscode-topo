@@ -8,6 +8,7 @@ import { executeTask } from '../util/executeTask';
 import { IssueCheck } from '../topoCliSchema';
 import { TargetModel } from '../models/targetModel';
 import { TopoCli } from '../topoCli';
+import { TargetDescription } from '../util/types';
 
 vi.mock('../util/logger');
 vi.mock('../util/executeTask');
@@ -64,6 +65,11 @@ describe('FixIssue', () => {
         status: 'ok',
         value: 'ok',
     };
+    const targetDescription: TargetDescription = {
+        hostProcessors: [],
+        remoteProcessors: [],
+        totalMemoryKb: 1024,
+    };
 
     const createTargetItemWithIssues = (
         targetIssues: IssueCheck[],
@@ -88,6 +94,7 @@ describe('FixIssue', () => {
         vi.clearAllMocks();
         topoCli = mock<TopoCli>();
         topoCli.getBinaryPath.mockReturnValue(topoBinaryPath);
+        topoCli.describe.mockResolvedValue(targetDescription);
         targetModel = new TargetModel();
         targetModel.setSelected(target);
     });
@@ -235,6 +242,70 @@ describe('FixIssue', () => {
             `Fix Debugger on ${target}`,
             [topoBinaryPath, 'install', 'debugger', '--target', target],
         );
+    });
+
+    it('fixes selected target issues when called without a tree item', async () => {
+        targetModel.setSelectedTargetHealth(
+            loaded({
+                destination: `ssh://${target}`,
+                isLocalhost: false,
+                connectivity: connectedIssue,
+                dependencies,
+                subsystemDriver: {
+                    name: 'SubsystemDriver',
+                    status: 'ok',
+                    value: 'ready',
+                },
+            }),
+        );
+        const fixIssue = new FixIssue(topoCli, targetModel);
+        mockSelectedQuickPickItems([
+            {
+                label: 'Container Engine',
+                description: 'Install container engine',
+                detail: `Command: topo install container-engine --target ${target}`,
+                issue: dependencies[0],
+            },
+        ]);
+
+        await fixIssue.fixIssueCommandHandler();
+
+        expect(topoCli.describe).toHaveBeenCalledWith(target);
+        expect(vscode.window.showQuickPick).toHaveBeenCalledWith(
+            [
+                {
+                    label: 'Container Engine',
+                    description: 'Install container engine',
+                    detail: `Command: topo install container-engine --target ${target}`,
+                    issue: dependencies[0],
+                },
+                {
+                    label: 'Debugger',
+                    description: 'Install debugger',
+                    detail: `Command: topo install debugger --target ${target}`,
+                    issue: dependencies[1],
+                },
+            ],
+            {
+                canPickMany: true,
+                placeHolder: `Select fixes for ${target}`,
+            },
+        );
+        expect(executeTaskMock).toHaveBeenCalledWith(
+            `Fix Container Engine on ${target}`,
+            [topoBinaryPath, 'install', 'container-engine', '--target', target],
+        );
+    });
+
+    it('fails selected target issue fix when no target is selected', async () => {
+        targetModel.setSelected(undefined);
+        const fixIssue = new FixIssue(topoCli, targetModel);
+
+        await expect(fixIssue.fixIssueCommandHandler()).rejects.toThrow(
+            'No selected target found',
+        );
+
+        expect(executeTaskMock).not.toHaveBeenCalled();
     });
 
     it('runs each selected target dependency fix', async () => {

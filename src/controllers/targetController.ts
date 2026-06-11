@@ -217,11 +217,7 @@ export class TargetController {
         await this.promptAndSelectTarget();
     }
 
-    public async unselectCommandHandler(treeNode?: unknown): Promise<void> {
-        if (!isTargetTreeItem(treeNode)) {
-            return;
-        }
-
+    public async unselectCommandHandler(): Promise<void> {
         await this.targetStore.setSelected(undefined);
         this.updateTargetsFromStore();
     }
