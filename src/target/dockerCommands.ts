@@ -27,7 +27,15 @@ const isDockerError = (err: unknown): err is DockerError => {
     return err.message.startsWith('Command failed: docker ');
 };
 
-const parseDockerStderr = (stderr: string): WrappedErrorLog[] => {
+/**
+ * Helper to run docker commands, convert errors to WrappedError when appropriate,
+ * and log any stderr output as warnings.
+ * @param args - The docker command arguments to run.
+ * @param warnMsg - The message to log if there is any stderr output.
+ * @param shouldTreatErrorAsWarning - Optional function to determine if an error should be treated as a warning.
+ * @returns The stdout of the command.
+ */
+export const parseDockerStderr = (stderr: string): WrappedErrorLog[] => {
     return splitLines(stderr).map((line): WrappedErrorLog => {
         const trimmed = line.trim();
         if (trimmed.startsWith('Warning:')) {

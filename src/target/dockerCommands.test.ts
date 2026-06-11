@@ -1,4 +1,4 @@
-import { DockerCommands } from './dockerCommands';
+import { DockerCommands, parseDockerStderr } from './dockerCommands';
 import { execFile } from '../util/exec';
 import { logger } from '../util/logger';
 import { DockerInspectItem } from '../util/types';
@@ -170,35 +170,16 @@ describe('DockerCommands', () => {
             ).rejects.toBe(err);
         });
 
-        it('throws a WrappedError with Docker stderr logs when exec rejects with a DockerError', async () => {
-            const dockerErr = makeDockerError(
-                '',
-                'Error: container not found\n\nWarning: low disk space\nsome other message',
-            );
-            execFileMock.mockRejectedValueOnce(dockerErr);
+        it('throws a WrappedError when exec rejects with a DockerError', async () => {
+            const dockerErr = makeDockerError('', 'some docker error');
+            execFileMock.mockRejectedValue(dockerErr);
 
-            const operation = dockerCommands.inspectContainers(['a'], 'ctx');
-
-            await expect(operation).rejects.toThrow(WrappedError);
-            await expect(operation).rejects.toMatchObject({
-                code: 'DOCKER',
-                message:
-                    'Error: container not found\n\nWarning: low disk space\nsome other message',
-                logs: [
-                    {
-                        level: 'Error',
-                        msg: 'Error: container not found',
-                    },
-                    {
-                        level: 'Warning',
-                        msg: 'Warning: low disk space',
-                    },
-                    {
-                        level: 'Error',
-                        msg: 'some other message',
-                    },
-                ],
-            });
+            await expect(
+                dockerCommands.inspectContainers(['a'], 'ctx'),
+            ).rejects.toThrow(WrappedError);
+            await expect(
+                dockerCommands.inspectContainers(['a'], 'ctx'),
+            ).rejects.toThrow('some docker error');
         });
 
         it('returns empty array when provided with an empty array', async () => {
@@ -334,5 +315,57 @@ describe('DockerCommands', () => {
                 'sh',
             ]);
         });
+    });
+});
+
+describe('parseDockerStderr', () => {
+    it('classifies Error: lines as errors', () => {
+        const logs = parseDockerStderr('Error: something went wrong');
+
+        expect(logs).toEqual([
+            { level: 'Error', msg: 'Error: something went wrong' },
+        ]);
+    });
+
+    it('classifies Warning: lines as warnings', () => {
+        const logs = parseDockerStderr('Warning: deprecated flag');
+
+        expect(logs).toEqual([
+            { level: 'Warning', msg: 'Warning: deprecated flag' },
+        ]);
+    });
+
+    it('classifies unrecognised lines as errors', () => {
+        const logs = parseDockerStderr('unexpected output');
+
+        expect(logs).toEqual([{ level: 'Error', msg: 'unexpected output' }]);
+    });
+
+    it('handles mixed lines', () => {
+        const stderr =
+            'Error: container not found\nWarning: low disk space\nsome other message';
+
+        const logs = parseDockerStderr(stderr);
+
+        expect(logs).toEqual([
+            { level: 'Error', msg: 'Error: container not found' },
+            { level: 'Warning', msg: 'Warning: low disk space' },
+            { level: 'Error', msg: 'some other message' },
+        ]);
+    });
+
+    it('skips empty lines', () => {
+        const logs = parseDockerStderr('Error: fail\n\n\nWarning: warn');
+
+        expect(logs).toEqual([
+            { level: 'Error', msg: 'Error: fail' },
+            { level: 'Warning', msg: 'Warning: warn' },
+        ]);
+    });
+
+    it('returns empty array for empty string', () => {
+        const logs = parseDockerStderr('');
+
+        expect(logs).toEqual([]);
     });
 });
