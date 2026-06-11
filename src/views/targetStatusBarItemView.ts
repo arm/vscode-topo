@@ -39,7 +39,7 @@ function renderStatusBarItem(
         statusBarItem.command = TargetTreeView.focusViewCommand;
         statusBarItem.show();
     } else {
-        statusBarItem.text = '$(list-selection) Select a target';
+        statusBarItem.text = '$(target) Select a target';
         statusBarItem.tooltip = 'Select a target';
         statusBarItem.command = selectTarget;
         statusBarItem.show();

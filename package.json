@@ -71,7 +71,7 @@
             {
                 "command": "topo.selectTarget",
                 "title": "Select Target",
-                "icon": "$(list-selection)",
+                "icon": "$(target)",
                 "category": "Topo"
             },
             {
