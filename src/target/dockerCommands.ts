@@ -5,7 +5,7 @@ import type { DockerInspectItem, DockerPsItem } from '../util/types';
 import type { ContainerCommands } from './containerCommands';
 import { getErrorMessage } from '../util/getErrorMessage';
 
-interface DockerError extends Error {
+export interface DockerError extends Error {
     stderr: ExecFileResult['stderr'];
     stdout: ExecFileResult['stdout'];
 }

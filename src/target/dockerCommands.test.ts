@@ -1,4 +1,8 @@
-import { DockerCommands, parseDockerStderr } from './dockerCommands';
+import {
+    DockerCommands,
+    DockerError,
+    parseDockerStderr,
+} from './dockerCommands';
 import { execFile } from '../util/exec';
 import { logger } from '../util/logger';
 import { DockerInspectItem } from '../util/types';
@@ -13,12 +17,8 @@ vi.mock('../util/logger');
 
 const execFileMock: Mock = vi.mocked(execFile);
 
-type DockerCommandError = Error & { stdout: string; stderr: string };
-
-function makeDockerError(stdout: string, stderr: string): DockerCommandError {
-    const e = new Error(
-        'Command failed: docker something',
-    ) as DockerCommandError;
+function makeDockerError(stdout: string, stderr: string): DockerError {
+    const e = new Error('Command failed: docker something') as DockerError;
     e.stdout = stdout;
     e.stderr = stderr;
     return e;
