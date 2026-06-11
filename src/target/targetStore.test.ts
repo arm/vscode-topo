@@ -334,19 +334,13 @@ describe('TargetStore', () => {
     });
 
     it('resets extension data from global state, workspace state and global storage', async () => {
-        vi.useFakeTimers();
         const { context } = createMockContext();
         const store = new TargetStore(context);
 
-        try {
-            await store.addTarget('target@example.com');
-            await store.setSelected('target@example.com');
+        await store.addTarget('target@example.com');
+        await store.setSelected('target@example.com');
 
-            await store.resetExtensionData();
-            await vi.advanceTimersByTimeAsync(500);
-        } finally {
-            vi.useRealTimers();
-        }
+        await store.resetExtensionData();
 
         expect(context.globalState.keys()).toEqual([]);
         expect(context.workspaceState.keys()).toEqual([]);
@@ -357,13 +351,15 @@ describe('TargetStore', () => {
         expect(vscode.workspace.fs.createDirectory).toHaveBeenCalledWith(
             context.globalStorageUri,
         );
-        expect(vscode.workspace.fs.writeFile).toHaveBeenCalledWith(
-            vscode.Uri.joinPath(
-                context.globalStorageUri,
-                'targets-update.signal',
-            ),
-            expect.any(Uint8Array),
-        );
+        await vi.waitFor(() => {
+            expect(vscode.workspace.fs.writeFile).toHaveBeenCalledWith(
+                vscode.Uri.joinPath(
+                    context.globalStorageUri,
+                    'targets-update.signal',
+                ),
+                expect.any(Uint8Array),
+            );
+        });
         expect(
             vi.mocked(vscode.workspace.fs.createDirectory).mock
                 .invocationCallOrder[0],
