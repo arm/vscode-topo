@@ -280,7 +280,7 @@ describe('TargetStore', () => {
         expect(selected).toBeDefined();
     });
 
-    it('removes the selected target and falls back to the first remaining target', async () => {
+    it('removes the selected target and clears selection even when targets remain', async () => {
         const { context } = createMockContext();
         const store = new TargetStore(context);
         const t1 = 'one@example.com';
@@ -296,8 +296,7 @@ describe('TargetStore', () => {
         const targets = store.getTargets();
         expect(targets.has(t2)).toBe(false);
         const selected = store.getSelectedTarget();
-        expect(selected).toBeDefined();
-        expect(selected).toBe(t1);
+        expect(selected).toBeUndefined();
     });
 
     it('removes the only selected target and clears selection when none remain', async () => {

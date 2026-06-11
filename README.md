@@ -25,7 +25,7 @@ Click **Select a target** in the Target view title bar or status bar to open the
 
 ### Remove a Target
 
-Saved targets that do not come from SSH config and are not currently selected can be removed from the picker with the inline trash button.
+Saved targets that do not come from SSH config can be removed from the picker with the inline trash button.
 
 ### Target Tree
 

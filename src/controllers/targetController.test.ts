@@ -87,7 +87,7 @@ function mockTargetStore(
     targetStore.deleteTarget.mockImplementation(async (target) => {
         targets = targets.filter((existing) => existing !== target);
         if (selected === target) {
-            selected = [...targets].sort((a, b) => a.localeCompare(b))[0];
+            selected = undefined;
         }
     });
     return targetStore;
@@ -150,35 +150,28 @@ describe('buildQuickPickItems', () => {
         });
     });
 
-    it('does not add a remove button to the selected target', () => {
-        const items = buildQuickPickItems(
-            [],
-            '',
-            ['selected-host'],
-            'selected-host',
-        );
+    it('adds a remove button to manual saved targets', () => {
+        const items = buildQuickPickItems([], '', ['manual-host']);
 
         expect(items[0]).toEqual({
-            label: 'selected-host',
-            target: 'selected-host',
-            buttons: undefined,
+            label: 'manual-host',
+            target: 'manual-host',
+            buttons: expect.any(Array),
         });
     });
 
-    it('adds remove buttons to non-selected manual targets while a target is selected', () => {
-        const items = buildQuickPickItems(
-            [],
-            '',
-            ['selected-host', 'other-host'],
+    it('adds remove buttons to all manual saved targets', () => {
+        const items = buildQuickPickItems([], '', [
             'selected-host',
-        );
+            'other-host',
+        ]);
 
         expect(items).toEqual([
-            {
+            expect.objectContaining({
                 label: 'selected-host',
                 target: 'selected-host',
-                buttons: undefined,
-            },
+                buttons: expect.any(Array),
+            }),
             expect.objectContaining({
                 label: 'other-host',
                 target: 'other-host',
@@ -391,8 +384,56 @@ describe('target addition', () => {
 
         expect(targetStore.deleteTarget).toHaveBeenCalledWith('manual-host');
         expect(targetStore.setSelected).not.toHaveBeenCalled();
+        expect(vscode.window.showWarningMessage).not.toHaveBeenCalled();
         expect(targetModel.selected).toBeUndefined();
         expect(targetModel.targets).toEqual([]);
+    });
+
+    it('confirms before removing the selected target from the quick pick item button', async () => {
+        const targetStore = mockTargetStore(
+            ['selected-host', 'other-host'],
+            'selected-host',
+        );
+        const targetModel = new TargetModel();
+        const { controller } = createController(targetModel, targetStore);
+        controller.updateTargetsFromStore();
+        vi.mocked(vscode.window.showWarningMessage).mockResolvedValueOnce(
+            'Remove Target' as unknown as vscode.MessageItem,
+        );
+        mockQuickPick({ triggerButtonForLabel: 'selected-host' });
+
+        await controller.selectCommandHandler();
+
+        expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
+            'Remove the selected target "selected-host"?',
+            { modal: true },
+            'Remove Target',
+        );
+        expect(targetStore.deleteTarget).toHaveBeenCalledWith('selected-host');
+        expect(targetModel.selected).toBeUndefined();
+        expect(targetModel.targets).toEqual(['other-host']);
+    });
+
+    it('does not remove the selected target when confirmation is dismissed', async () => {
+        const targetStore = mockTargetStore(['selected-host'], 'selected-host');
+        const targetModel = new TargetModel();
+        const { controller } = createController(targetModel, targetStore);
+        controller.updateTargetsFromStore();
+        vi.mocked(vscode.window.showWarningMessage).mockResolvedValueOnce(
+            undefined,
+        );
+        mockQuickPick({ triggerButtonForLabel: 'selected-host' });
+
+        await controller.selectCommandHandler();
+
+        expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
+            'Remove the selected target "selected-host"?',
+            { modal: true },
+            'Remove Target',
+        );
+        expect(targetStore.deleteTarget).not.toHaveBeenCalled();
+        expect(targetModel.selected).toBe('selected-host');
+        expect(targetModel.targets).toEqual(['selected-host']);
     });
 
     it('shows error when targetStore.addTarget fails with an invalid target error', async () => {
