@@ -42,7 +42,7 @@ describe('TargetStatusBarItemView', () => {
             .results[0].value;
         expect(statusBarItem.text).toBe(`$(pass-filled) ${target}`);
         expect(statusBarItem.command).toBe(TargetTreeView.focusViewCommand);
-        expect(statusBarItem.tooltip).toBe('Connection String: root@localhost');
+        expect(statusBarItem.tooltip).toBe('SSH destination: root@localhost');
         expect(statusBarItem.show).toHaveBeenCalledTimes(1);
         expect(statusBarItem.hide).not.toHaveBeenCalled();
     });
@@ -117,6 +117,6 @@ describe('TargetStatusBarItemView', () => {
         new TargetStatusBarItemView(targetModel);
 
         expect(statusBarItem.text).toBe(`$(warning) ${target}`);
-        expect(statusBarItem.tooltip).toBe('Connection String: root@localhost');
+        expect(statusBarItem.tooltip).toBe('SSH destination: root@localhost');
     });
 });
