@@ -98,7 +98,7 @@ Use the inline buttons on a service in the Targets tree to manage individual con
 Deploy or stop the `compose.yaml` file in a project directory on the selected target. A deploy operation builds container images, transfers them to the target, and starts services. You can trigger either operation from:
 
 - Running **Topo: Deploy** from the Command Palette, then selecting a `compose.yaml` file from the workspace.
-- Right-clicking `compose.yaml` in the Explorer or editor tab and selecting **Deploy** or **Stop**.
+- Right-clicking `compose.yaml` in the Explorer or editor tab and selecting **Topo Deploy** or **Topo Stop**.
 
 ## Project Management
 
