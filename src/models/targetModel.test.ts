@@ -113,7 +113,7 @@ describe('TargetModel', () => {
     it('stores whether there is a data issue', () => {
         const model = new TargetModel();
 
-        model.setDataIssue(true);
+        model.setDataStoreCorrupted();
 
         expect(model.dataIssue).toBe(true);
     });
@@ -127,7 +127,7 @@ describe('TargetModel', () => {
         model.onTargetsChanged(onTargetsChanged);
         model.onSelectedChanged(onSelectedChanged);
 
-        model.setDataIssue(true);
+        model.setDataStoreCorrupted();
 
         expect(model.dataIssue).toBe(true);
         expect(model.targets).toEqual([]);
@@ -139,7 +139,7 @@ describe('TargetModel', () => {
     it('clears the data issue when targets are updated', () => {
         const model = new TargetModel();
         const onDataIssueChanged = vi.fn();
-        model.setDataIssue(true);
+        model.setDataStoreCorrupted();
         model.onDataIssueChanged(onDataIssueChanged);
 
         model.setTargets(['user@host']);
@@ -151,25 +151,13 @@ describe('TargetModel', () => {
     it('clears the data issue when selected target is updated', () => {
         const model = new TargetModel();
         const onDataIssueChanged = vi.fn();
-        model.setDataIssue(true);
+        model.setDataStoreCorrupted();
         model.onDataIssueChanged(onDataIssueChanged);
 
         model.setSelected('user@host');
 
         expect(model.dataIssue).toBe(false);
         expect(onDataIssueChanged).toHaveBeenCalledTimes(1);
-    });
-
-    it('fires onDataIssueChanged when data issue is updated', () => {
-        const model = new TargetModel();
-        const onChanged = vi.fn();
-        model.onDataIssueChanged(onChanged);
-
-        model.setDataIssue(true);
-        model.setDataIssue(false);
-
-        expect(model.dataIssue).toBe(false);
-        expect(onChanged).toHaveBeenCalledTimes(2);
     });
 
     it('stores selected target health and containers and fires change events', () => {

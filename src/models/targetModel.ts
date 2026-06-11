@@ -34,7 +34,7 @@ export class TargetModel {
 
     private _selected?: string;
     private _targets: string[] = [];
-    private _dataIssue = false;
+    private _dataStoreCorrupted = false;
     private _health: Loadable<TargetHealthCheck | undefined> = defaultHealth;
     private _containers: Loadable<ContainerItem[]> = defaultContainers;
 
@@ -58,15 +58,13 @@ export class TargetModel {
         }
     }
 
-    public setDataIssue(issue: boolean): void {
-        this._dataIssue = issue;
-        const targetsChanged = issue && this._targets.length > 0;
-        const selectedChanged = issue && this._selected !== undefined;
-        if (issue) {
-            this._targets = [];
-            this._selected = undefined;
-            this.clearSelectedTargetData();
-        }
+    public setDataStoreCorrupted(): void {
+        this._dataStoreCorrupted = true;
+        const targetsChanged = this._targets.length > 0;
+        const selectedChanged = this._selected !== undefined;
+        this._targets = [];
+        this._selected = undefined;
+        this.clearSelectedTargetData();
 
         this._onDataIssueChanged.fire();
         if (targetsChanged) {
@@ -86,12 +84,12 @@ export class TargetModel {
     }
 
     public get dataIssue(): boolean {
-        return this._dataIssue;
+        return this._dataStoreCorrupted;
     }
 
     private clearDataIssue(): boolean {
-        const dataIssueCleared = this._dataIssue;
-        this._dataIssue = false;
+        const dataIssueCleared = this._dataStoreCorrupted;
+        this._dataStoreCorrupted = false;
         return dataIssueCleared;
     }
 

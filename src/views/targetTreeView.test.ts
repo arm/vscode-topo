@@ -316,7 +316,7 @@ describe('TargetTreeView', () => {
 
         it('shows target data issues at the root', async () => {
             const issue = 'The local data saved by Topo looks corrupted.';
-            targetModel.setDataIssue(true);
+            targetModel.setDataStoreCorrupted();
 
             const rootChildren = await view.getChildren();
 

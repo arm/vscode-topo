@@ -238,7 +238,7 @@ export class TargetController {
         if (!this.model.dataIssue) {
             logError(corruptedDataMessage, err);
         }
-        this.model.setDataIssue(true);
+        this.model.setDataStoreCorrupted();
         this.syncTargetDataIssueContext();
     }
 

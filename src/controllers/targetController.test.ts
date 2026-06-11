@@ -312,7 +312,7 @@ describe('load from store', () => {
     it('clears the data issue after targets load successfully', () => {
         const targetStore = mockTargetStore(['host-a'], 'host-a');
         const targetModel = new TargetModel();
-        targetModel.setDataIssue(true);
+        targetModel.setDataStoreCorrupted();
 
         const { controller } = createController(targetModel, targetStore);
         controller.updateTargetsFromStore();
