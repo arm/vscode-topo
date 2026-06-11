@@ -5,6 +5,7 @@ import { mock } from 'vitest-mock-extended';
 import { TargetHealthCheck } from '../topoCliSchema';
 import { TargetModel } from '../models/targetModel';
 import { loaded, loading } from '../util/loadable';
+import { selectTarget } from '../commands';
 
 vi.mock('../util/logger');
 
@@ -61,16 +62,17 @@ describe('TargetStatusBarItemView', () => {
         expect(statusBarItem.text).toBe(`$(loading~spin) ${target}`);
     });
 
-    it("doesn't show an item in the status bar when no target is selected", async () => {
+    it('shows a select target item in the status bar when no target is selected', async () => {
         new TargetStatusBarItemView(new TargetModel());
 
         expect(vscode.window.createStatusBarItem).toHaveBeenCalledTimes(1);
         const statusBarItem = vi.mocked(vscode.window.createStatusBarItem).mock
             .results[0].value;
-        expect(statusBarItem.text).toBe(undefined);
-        expect(statusBarItem.tooltip).toBe(undefined);
-        expect(statusBarItem.hide).toHaveBeenCalledTimes(1);
-        expect(statusBarItem.show).not.toHaveBeenCalled();
+        expect(statusBarItem.text).toBe('$(list-selection) Select a target');
+        expect(statusBarItem.tooltip).toBe('Select a target');
+        expect(statusBarItem.command).toBe(selectTarget);
+        expect(statusBarItem.show).toHaveBeenCalledTimes(1);
+        expect(statusBarItem.hide).not.toHaveBeenCalled();
     });
 
     it('changes the item in the status bar when the currently selected target changes', async () => {

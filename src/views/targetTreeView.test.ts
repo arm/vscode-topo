@@ -175,7 +175,6 @@ describe('TargetTreeView', () => {
             expect(rootChildren).toHaveLength(1);
             const targetItem = rootChildren[0] as TargetTreeItem;
             expect(targetItem.contextValue).toContain('Target');
-            expect(targetItem.contextValue).toContain('Selected');
             expect(targetItem.collapsibleState).toBe(
                 vscode.TreeItemCollapsibleState.None,
             );
@@ -205,7 +204,7 @@ describe('TargetTreeView', () => {
             ]);
         });
 
-        it('does not show health diagnostics on unselected targets', async () => {
+        it('only returns the selected target at the root', async () => {
             const otherTarget = 'user@other.local';
             targetModel.setTargets([target, otherTarget]);
             targetModel.setSelected(otherTarget);
@@ -214,12 +213,13 @@ describe('TargetTreeView', () => {
             );
 
             const rootChildren = await view.getChildren();
-            const unselectedTarget = rootChildren.find(
-                (item) => item.label === target,
-            );
 
-            expect(unselectedTarget).toBeDefined();
-            expect(unselectedTarget!.description).toBeUndefined();
+            expect(rootChildren).toHaveLength(1);
+            expect(rootChildren[0]).toMatchObject({
+                label: otherTarget,
+                description: 'ssh connection failed',
+                tooltip: `${otherTarget}: ssh connection failed`,
+            });
         });
 
         it('marks target with executable subsystem driver fix as fixable when remote processors exist', async () => {
@@ -301,12 +301,16 @@ describe('TargetTreeView', () => {
             expect(got[0].label).toBe('Failed to load containers');
         });
 
-        it('returns empty array when there are no targets', async () => {
+        it('returns empty array when no target is selected', async () => {
             targetModel.setTargets([]);
+            targetModel.setSelected(undefined);
 
             const rootChildren = await view.getChildren();
 
             expect(rootChildren.length).toEqual(0);
+            expect(
+                targetDescriptionStoreMock.getDescription,
+            ).not.toHaveBeenCalled();
         });
     });
 

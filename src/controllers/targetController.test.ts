@@ -117,7 +117,84 @@ describe('buildQuickPickItems', () => {
     it('returns hosts', () => {
         const items = buildQuickPickItems(['host-a', 'host-b'], '');
 
-        expect(items).toEqual([{ label: 'host-a' }, { label: 'host-b' }]);
+        expect(items).toEqual([
+            { label: 'host-a', target: 'host-a' },
+            { label: 'host-b', target: 'host-b' },
+        ]);
+    });
+
+    it('returns current targets before ssh config hosts', () => {
+        const items = buildQuickPickItems(['host-a', 'host-b'], '', [
+            'saved-host',
+            'host-a',
+        ]);
+
+        expect(items).toEqual([
+            expect.objectContaining({
+                label: 'saved-host',
+                target: 'saved-host',
+                buttons: expect.any(Array),
+            }),
+            { label: 'host-a', target: 'host-a', buttons: undefined },
+            { label: 'host-b', target: 'host-b', buttons: undefined },
+        ]);
+    });
+
+    it('does not add a remove button to saved targets from ssh config', () => {
+        const items = buildQuickPickItems(['host-a'], '', ['host-a']);
+
+        expect(items[0]).toEqual({
+            label: 'host-a',
+            target: 'host-a',
+            buttons: undefined,
+        });
+    });
+
+    it('does not add a remove button to the selected target', () => {
+        const items = buildQuickPickItems(
+            [],
+            '',
+            ['selected-host'],
+            'selected-host',
+        );
+
+        expect(items[0]).toEqual({
+            label: 'selected-host',
+            target: 'selected-host',
+            buttons: undefined,
+        });
+    });
+
+    it('adds remove buttons to non-selected manual targets while a target is selected', () => {
+        const items = buildQuickPickItems(
+            [],
+            '',
+            ['selected-host', 'other-host'],
+            'selected-host',
+        );
+
+        expect(items).toEqual([
+            {
+                label: 'selected-host',
+                target: 'selected-host',
+                buttons: undefined,
+            },
+            expect.objectContaining({
+                label: 'other-host',
+                target: 'other-host',
+                buttons: expect.any(Array),
+            }),
+        ]);
+    });
+
+    it('does not add a remove button to ssh config hosts that are not saved targets', () => {
+        const items = buildQuickPickItems(['host-a'], '');
+
+        expect(items[0]).toEqual({
+            label: 'host-a',
+            target: 'host-a',
+            buttons: undefined,
+        });
     });
 
     it('prepends a manual entry when filter does not match any host', () => {
@@ -125,21 +202,46 @@ describe('buildQuickPickItems', () => {
 
         expect(items[0]).toEqual({
             label: 'root@10.0.0.1',
+            target: 'root@10.0.0.1',
             description: 'Add new SSH target',
         });
-        expect(items[1]).toEqual({ label: 'host-a' });
+        expect(items[1]).toEqual({
+            label: 'host-a',
+            target: 'host-a',
+            buttons: undefined,
+        });
     });
 
     it('does not prepend manual entry when filter matches a host (case-insensitive)', () => {
         const items = buildQuickPickItems(['Host-A'], 'host-a');
 
-        expect(items[0]).toEqual({ label: 'Host-A' });
+        expect(items[0]).toEqual({
+            label: 'Host-A',
+            target: 'Host-A',
+            buttons: undefined,
+        });
+    });
+
+    it('does not prepend manual entry when filter matches a current target (case-insensitive)', () => {
+        const items = buildQuickPickItems([], 'saved-host', ['Saved-Host']);
+
+        expect(items[0]).toEqual(
+            expect.objectContaining({
+                label: 'Saved-Host',
+                target: 'Saved-Host',
+                buttons: expect.any(Array),
+            }),
+        );
     });
 
     it('does not prepend manual entry when filter is whitespace-only', () => {
         const items = buildQuickPickItems(['host-a'], '   ');
 
-        expect(items[0]).toEqual({ label: 'host-a' });
+        expect(items[0]).toEqual({
+            label: 'host-a',
+            target: 'host-a',
+            buttons: undefined,
+        });
     });
 
     it('trims whitespace from the filter for the manual entry label', () => {
@@ -147,6 +249,7 @@ describe('buildQuickPickItems', () => {
 
         expect(items[0]).toEqual({
             label: 'my-host',
+            target: 'my-host',
             description: 'Add new SSH target',
         });
     });
@@ -171,27 +274,51 @@ describe('load from store', () => {
 });
 
 describe('target addition', () => {
-    function mockQuickPick(selectedItem: vscode.QuickPickItem | undefined) {
+    type TestQuickPickItem = vscode.QuickPickItem & { target?: string };
+
+    function mockQuickPick({
+        selectedItem,
+        triggerButtonForLabel,
+    }: {
+        selectedItem?: TestQuickPickItem;
+        triggerButtonForLabel?: string;
+    }) {
         const onDidAcceptEmitter = new vscode.EventEmitter<void>();
         const onDidHideEmitter = new vscode.EventEmitter<void>();
         const onDidChangeValueEmitter = new vscode.EventEmitter<string>();
-        const quickPick = mock<vscode.QuickPick<vscode.QuickPickItem>>({
+        const onDidTriggerItemButtonEmitter = new vscode.EventEmitter<
+            vscode.QuickPickItemButtonEvent<TestQuickPickItem>
+        >();
+        const quickPick = mock<vscode.QuickPick<TestQuickPickItem>>({
             title: '',
             placeholder: '',
-            items: [] as vscode.QuickPickItem[],
-            selectedItems: selectedItem ? [selectedItem] : [],
+            items: [] as TestQuickPickItem[],
+            selectedItems: selectedItem
+                ? [{ target: selectedItem.label, ...selectedItem }]
+                : [],
             onDidAccept: onDidAcceptEmitter.event,
             onDidHide: onDidHideEmitter.event,
             onDidChangeValue: onDidChangeValueEmitter.event,
+            onDidTriggerItemButton: onDidTriggerItemButtonEmitter.event,
             show: vi.fn(() => {
-                if (selectedItem) {
+                if (triggerButtonForLabel) {
+                    const item = quickPick.items.find(
+                        (item) => item.label === triggerButtonForLabel,
+                    );
+                    onDidTriggerItemButtonEmitter.fire({
+                        item,
+                        button: item?.buttons?.[0],
+                    } as vscode.QuickPickItemButtonEvent<TestQuickPickItem>);
+                } else if (selectedItem) {
                     onDidAcceptEmitter.fire();
                 } else {
                     onDidHideEmitter.fire();
                 }
             }),
         });
-        vi.mocked(vscode.window.createQuickPick).mockReturnValueOnce(quickPick);
+        vi.mocked(vscode.window.createQuickPick).mockReturnValueOnce(
+            quickPick as unknown as vscode.QuickPick<vscode.QuickPickItem>,
+        );
         return quickPick;
     }
 
@@ -200,9 +327,9 @@ describe('target addition', () => {
         const targetStore = mockTargetStore();
         const targetModel = new TargetModel();
         const { controller } = createController(targetModel, targetStore);
-        mockQuickPick({ label: targetSsh });
+        mockQuickPick({ selectedItem: { label: targetSsh } });
 
-        await controller.addCommandHandler();
+        await controller.selectCommandHandler();
 
         expect(targetStore.addTarget).toHaveBeenCalledWith(targetSsh);
         expect(targetStore.setSelected).toHaveBeenCalledWith(targetSsh);
@@ -214,9 +341,9 @@ describe('target addition', () => {
         const targetStore = mockTargetStore();
         const targetModel = new TargetModel();
         const { controller } = createController(targetModel, targetStore);
-        mockQuickPick({ label: '  root@192.0.2.1  ' });
+        mockQuickPick({ selectedItem: { label: '  root@192.0.2.1  ' } });
 
-        await controller.addCommandHandler();
+        await controller.selectCommandHandler();
 
         expect(targetStore.addTarget).toHaveBeenCalledWith('root@192.0.2.1');
         expect(targetStore.setSelected).toHaveBeenCalledWith('root@192.0.2.1');
@@ -224,15 +351,45 @@ describe('target addition', () => {
         expect(targetModel.targets).toEqual(['root@192.0.2.1']);
     });
 
+    it('selects an existing target without adding it again', async () => {
+        const targetStore = mockTargetStore(['saved-host'], 'saved-host');
+        const targetModel = new TargetModel();
+        const { controller } = createController(targetModel, targetStore);
+        controller.updateTargetsFromStore();
+        mockQuickPick({ selectedItem: { label: 'saved-host' } });
+
+        await controller.selectCommandHandler();
+
+        expect(targetStore.addTarget).not.toHaveBeenCalled();
+        expect(targetStore.setSelected).toHaveBeenCalledWith('saved-host');
+        expect(targetModel.selected).toBe('saved-host');
+        expect(targetModel.targets).toEqual(['saved-host']);
+    });
+
     it('does nothing when quick pick is dismissed', async () => {
         const targetStore = mockTargetStore();
         const targetModel = new TargetModel();
         const { controller } = createController(targetModel, targetStore);
-        mockQuickPick(undefined);
+        mockQuickPick({});
 
-        await controller.addCommandHandler();
+        await controller.selectCommandHandler();
 
         expect(targetStore.addTarget).not.toHaveBeenCalled();
+        expect(targetStore.setSelected).not.toHaveBeenCalled();
+        expect(targetModel.selected).toBeUndefined();
+        expect(targetModel.targets).toEqual([]);
+    });
+
+    it('removes a saved target from the quick pick item button', async () => {
+        const targetStore = mockTargetStore(['manual-host']);
+        const targetModel = new TargetModel();
+        const { controller } = createController(targetModel, targetStore);
+        controller.updateTargetsFromStore();
+        mockQuickPick({ triggerButtonForLabel: 'manual-host' });
+
+        await controller.selectCommandHandler();
+
+        expect(targetStore.deleteTarget).toHaveBeenCalledWith('manual-host');
         expect(targetStore.setSelected).not.toHaveBeenCalled();
         expect(targetModel.selected).toBeUndefined();
         expect(targetModel.targets).toEqual([]);
@@ -244,9 +401,9 @@ describe('target addition', () => {
         const { controller } = createController(targetModel, targetStore);
         const error = new WrappedError('INVALID_SSH_DESTINATION', 'boom');
         targetStore.addTarget.mockRejectedValueOnce(error);
-        mockQuickPick({ label: 'root@192.0.2.1' });
+        mockQuickPick({ selectedItem: { label: 'root@192.0.2.1' } });
 
-        await controller.addCommandHandler();
+        await controller.selectCommandHandler();
 
         expect(targetStore.addTarget).toHaveBeenCalled();
         expect(showAndLogError).toHaveBeenCalledWith(
@@ -263,9 +420,9 @@ describe('target addition', () => {
         const { controller } = createController(targetModel, targetStore);
         const error = new Error('boom');
         targetStore.addTarget.mockRejectedValueOnce(error);
-        mockQuickPick({ label: 'root@192.0.2.1' });
+        mockQuickPick({ selectedItem: { label: 'root@192.0.2.1' } });
 
-        await expect(controller.addCommandHandler()).rejects.toThrow(error);
+        await expect(controller.selectCommandHandler()).rejects.toThrow(error);
 
         expect(showAndLogError).not.toHaveBeenCalled();
         expect(vscode.window.showWarningMessage).not.toHaveBeenCalled();
@@ -273,112 +430,32 @@ describe('target addition', () => {
     });
 });
 
-describe('target selection', () => {
-    it('saves the selected target, updates model and clears selected target data', async () => {
-        const previousTarget = 'user@previous-board';
-        const targetStore = mockTargetStore(
-            [previousTarget, 'user@board'],
-            previousTarget,
-        );
+describe('target unselection', () => {
+    it('clears the selected target and updates model', async () => {
+        const targetStore = mockTargetStore(['user@board'], 'user@board');
         const targetModel = new TargetModel();
-        targetModel.setSelected(previousTarget);
+        targetModel.setSelected('user@board');
         const { controller } = createController(targetModel, targetStore);
         const targetItem = new TargetTreeItem({
             target: 'user@board',
-            selected: true,
         });
 
-        await controller.selectCommandHandler(targetItem);
+        await controller.unselectCommandHandler(targetItem);
 
-        expect(targetStore.setSelected).toHaveBeenCalledWith(targetItem.target);
-        expect(targetModel.selected).toBe(targetItem.target);
+        expect(targetStore.setSelected).toHaveBeenCalledWith(undefined);
+        expect(targetModel.selected).toBeUndefined();
         expect(targetModel.selectedTargetHealth).toEqual(loaded(undefined));
         expect(targetModel.selectedTargetContainers).toEqual(loaded([]));
     });
 
-    it('does nothing when select command is executed with a non-target item', async () => {
-        const targetStore = mockTargetStore();
+    it('does nothing when unselect command is executed with a non-target item', async () => {
+        const targetStore = mockTargetStore(['user@board'], 'user@board');
         const targetModel = new TargetModel();
-        const { controller, topoCli } = createController(
-            targetModel,
-            targetStore,
-        );
+        const { controller } = createController(targetModel, targetStore);
 
-        await controller.selectCommandHandler();
+        await controller.unselectCommandHandler();
 
         expect(targetStore.setSelected).not.toHaveBeenCalled();
-        expect(targetModel.selected).toBeUndefined();
-        expect(topoCli.health).not.toHaveBeenCalled();
-    });
-});
-
-describe('target removal', () => {
-    it('deletes the target from the store when removeTarget is invoked with a target item', async () => {
-        const targetItem = new TargetTreeItem({
-            target: 'foo@bar.co',
-            selected: true,
-        });
-        const targetStore = mockTargetStore([targetItem.target]);
-        const targetModel = new TargetModel();
-        const { controller } = createController(targetModel, targetStore);
-
-        await controller.removeCommandHandler(targetItem);
-
-        expect(targetStore.deleteTarget).toHaveBeenCalledWith(
-            targetItem.target,
-        );
-        expect(targetModel.targets).toEqual([]);
-    });
-
-    it('selects a remaining target when the removed target was selected', async () => {
-        const removedTarget = 'foo@bar.co';
-        const remainingTarget = 'bar@bar.co';
-        const targetStore = mockTargetStore(
-            [removedTarget, remainingTarget],
-            removedTarget,
-        );
-        const targetModel = new TargetModel();
-        targetModel.setSelected(removedTarget);
-        const { controller } = createController(targetModel, targetStore);
-        const targetItem = new TargetTreeItem({
-            target: removedTarget,
-            selected: true,
-        });
-
-        await controller.removeCommandHandler(targetItem);
-
-        expect(targetStore.deleteTarget).toHaveBeenCalledWith(removedTarget);
-        expect(targetModel.selected).toBe(remainingTarget);
-    });
-
-    it('does nothing when removeTarget is invoked with a non-target item', async () => {
-        const targetStore = mockTargetStore();
-        const targetModel = new TargetModel();
-        const { controller } = createController(targetModel, targetStore);
-
-        await controller.removeCommandHandler();
-
-        expect(targetStore.deleteTarget).not.toHaveBeenCalled();
-        expect(targetModel.targets).toEqual([]);
-    });
-
-    it('shows an error when deleteTarget fails', async () => {
-        const targetStore = mockTargetStore();
-        const targetModel = new TargetModel();
-        const { controller } = createController(targetModel, targetStore);
-        const targetItem = new TargetTreeItem({
-            target: 'foo@bar.co',
-            selected: true,
-        });
-        const error = new Error('Target not found');
-        targetStore.deleteTarget.mockRejectedValue(error);
-
-        await controller.removeCommandHandler(targetItem);
-
-        expect(showAndLogError).toHaveBeenCalledWith(
-            'Failed to remove target',
-            error,
-        );
     });
 });
 

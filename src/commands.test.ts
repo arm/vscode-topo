@@ -64,10 +64,9 @@ describe('commands', () => {
                 handlers.targetController.selectCommandHandler,
             ],
             [
-                commands.removeTarget,
-                handlers.targetController.removeCommandHandler,
+                commands.unselectTarget,
+                handlers.targetController.unselectCommandHandler,
             ],
-            [commands.addTarget, handlers.targetController.addCommandHandler],
             [
                 commands.initProject,
                 handlers.projectInit.initProjectCommandHandler,
@@ -127,5 +126,15 @@ describe('commands', () => {
                 expect(handler).toHaveBeenCalled();
             },
         );
+
+        it('calls select target without a tree node argument', async () => {
+            commands.register(handlers);
+
+            await executeCommand(commands.selectTarget, 'argument');
+
+            expect(
+                handlers.targetController.selectCommandHandler,
+            ).toHaveBeenCalledWith();
+        });
     });
 });
