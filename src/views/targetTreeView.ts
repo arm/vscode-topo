@@ -77,7 +77,7 @@ export class TargetTreeView
             this.targetModel.onTargetsChanged(() => {
                 this._onDidChangeTreeData.fire(undefined);
             }),
-            this.targetModel.onDataIssueChanged(() => {
+            this.targetModel.onDataStoreCorruptionChanged(() => {
                 this._onDidChangeTreeData.fire(undefined);
             }),
             this.targetModel.onHealthChanged(() => {

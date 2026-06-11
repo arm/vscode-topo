@@ -22,10 +22,10 @@ export class TargetModel {
         new vscode.EventEmitter<void>();
     public readonly onTargetsChanged: vscode.Event<void> =
         this._onTargetsChanged.event;
-    private _onDataIssueChanged: vscode.EventEmitter<void> =
+    private _onDataStoreCorruptionChanged: vscode.EventEmitter<void> =
         new vscode.EventEmitter<void>();
-    public readonly onDataIssueChanged: vscode.Event<void> =
-        this._onDataIssueChanged.event;
+    public readonly onDataStoreCorruptionChanged: vscode.Event<void> =
+        this._onDataStoreCorruptionChanged.event;
 
     private _onHealthChanged: vscode.EventEmitter<void> =
         new vscode.EventEmitter<void>();
@@ -50,16 +50,16 @@ export class TargetModel {
             this.clearSelectedTargetData();
             this._onSelectedChanged.fire();
         }
-        if (this.clearDataIssue()) {
-            this._onDataIssueChanged.fire();
+        if (this.clearDataStoreCorruption()) {
+            this._onDataStoreCorruptionChanged.fire();
         }
     }
 
     public setTargets(targets: string[]): void {
         this._targets = targets;
         this._onTargetsChanged.fire();
-        if (this.clearDataIssue()) {
-            this._onDataIssueChanged.fire();
+        if (this.clearDataStoreCorruption()) {
+            this._onDataStoreCorruptionChanged.fire();
         }
     }
 
@@ -67,7 +67,7 @@ export class TargetModel {
         this._dataStoreCorrupted = true;
         const { targetsChanged, selectedChanged } = this.clearTargetState();
 
-        this._onDataIssueChanged.fire();
+        this._onDataStoreCorruptionChanged.fire();
         if (targetsChanged) {
             this._onTargetsChanged.fire();
         }
@@ -78,7 +78,7 @@ export class TargetModel {
 
     public clear(): void {
         const { targetsChanged, selectedChanged } = this.clearTargetState();
-        const dataIssueCleared = this.clearDataIssue();
+        const dataStoreCorruptionCleared = this.clearDataStoreCorruption();
 
         if (targetsChanged) {
             this._onTargetsChanged.fire();
@@ -86,8 +86,8 @@ export class TargetModel {
         if (selectedChanged) {
             this._onSelectedChanged.fire();
         }
-        if (dataIssueCleared) {
-            this._onDataIssueChanged.fire();
+        if (dataStoreCorruptionCleared) {
+            this._onDataStoreCorruptionChanged.fire();
         }
     }
 
@@ -103,10 +103,10 @@ export class TargetModel {
         return this._dataStoreCorrupted;
     }
 
-    private clearDataIssue(): boolean {
-        const dataIssueCleared = this._dataStoreCorrupted;
+    private clearDataStoreCorruption(): boolean {
+        const dataStoreCorruptionCleared = this._dataStoreCorrupted;
         this._dataStoreCorrupted = false;
-        return dataIssueCleared;
+        return dataStoreCorruptionCleared;
     }
 
     private clearTargetState(): ClearTargetStateResult {
