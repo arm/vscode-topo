@@ -1,6 +1,6 @@
 import { TargetHealthCheck } from '../topoCliSchema';
 import { ContainerItem } from '../util/types';
-import { loaded } from '../util/loadable';
+import { errored, loaded } from '../util/loadable';
 import { TargetModel } from './targetModel';
 
 const targetHealth: TargetHealthCheck = {
@@ -41,8 +41,7 @@ describe('TargetModel', () => {
         const model = new TargetModel();
 
         expect(model.selected).toBeUndefined();
-        expect(model.targets).toEqual([]);
-        expect(model.dataIssue).toBe(false);
+        expect(model.targets).toEqual(loaded([]));
         expect(model.selectedTargetHealth).toEqual(loaded(undefined));
         expect(model.selectedTargetContainers).toEqual(loaded([]));
     });
@@ -71,11 +70,12 @@ describe('TargetModel', () => {
     it('stores the latest target list', () => {
         const model = new TargetModel();
         const targets = ['user@host-a', 'user@host-b'];
+        const state = loaded(targets);
 
-        model.setTargets(['stale@host']);
-        model.setTargets(targets);
+        model.setTargets(loaded(['stale@host']));
+        model.setTargets(state);
 
-        expect(model.targets).toBe(targets);
+        expect(model.targets).toBe(state);
     });
 
     it('fires onSelectedChanged when selected target is updated', () => {
@@ -93,10 +93,10 @@ describe('TargetModel', () => {
         const onChanged = vi.fn();
         model.onTargetsChanged(onChanged);
 
-        model.setTargets(['user@host']);
-        model.setTargets([]);
+        model.setTargets(loaded(['user@host']));
+        model.setTargets(loaded([]));
 
-        expect(model.targets).toEqual([]);
+        expect(model.targets).toEqual(loaded([]));
         expect(onChanged).toHaveBeenCalledTimes(2);
     });
 
@@ -105,7 +105,7 @@ describe('TargetModel', () => {
         const onChanged = vi.fn();
         model.onTargetsChanged(onChanged);
 
-        model.setTargets(['user@host']);
+        model.setTargets(loaded(['user@host']));
 
         expect(onChanged).toHaveBeenCalledTimes(1);
     });
@@ -113,98 +113,40 @@ describe('TargetModel', () => {
     it('does not fire onTargetsChanged when the target list instance is unchanged', () => {
         const model = new TargetModel();
         const targets = ['user@host'];
+        const state = loaded(targets);
         const onChanged = vi.fn();
-        model.setTargets(targets);
+        model.setTargets(state);
         model.onTargetsChanged(onChanged);
 
-        model.setTargets(targets);
+        model.setTargets(state);
 
         expect(onChanged).not.toHaveBeenCalled();
     });
 
-    it('stores whether the data store is corrupted', () => {
+    it('stores errored target state and clears the selected target', () => {
         const model = new TargetModel();
-
-        model.setDataStoreCorrupted();
-
-        expect(model.dataIssue).toBe(true);
-    });
-
-    it('clears targets and selected target when the data store is corrupted', () => {
-        const model = new TargetModel();
-        const onTargetsChanged = vi.fn();
-        const onSelectedChanged = vi.fn();
-        model.setTargets(['user@host']);
+        const state = errored('Failed to load targets');
         model.setSelected('user@host');
-        model.onTargetsChanged(onTargetsChanged);
-        model.onSelectedChanged(onSelectedChanged);
 
-        model.setDataStoreCorrupted();
+        model.setTargets(state);
 
-        expect(model.dataIssue).toBe(true);
-        expect(model.targets).toEqual([]);
+        expect(model.targets).toBe(state);
         expect(model.selected).toBeUndefined();
-        expect(onTargetsChanged).toHaveBeenCalledTimes(1);
-        expect(onSelectedChanged).toHaveBeenCalledTimes(1);
-    });
-
-    it('fires onDataStoreCorruptionChanged when data store corruption changes', () => {
-        const model = new TargetModel();
-        const onDataStoreCorruptionChanged = vi.fn();
-        model.onDataStoreCorruptionChanged(onDataStoreCorruptionChanged);
-
-        model.setDataStoreCorrupted();
-        model.setDataStoreCorrupted();
-
-        expect(onDataStoreCorruptionChanged).toHaveBeenCalledTimes(1);
-    });
-
-    it('clears data store corruption when targets are updated', () => {
-        const model = new TargetModel();
-        const onDataStoreCorruptionChanged = vi.fn();
-        model.setDataStoreCorrupted();
-        model.onDataStoreCorruptionChanged(onDataStoreCorruptionChanged);
-
-        model.setTargets(['user@host']);
-
-        expect(model.dataIssue).toBe(false);
-        expect(onDataStoreCorruptionChanged).toHaveBeenCalledTimes(1);
-    });
-
-    it('clears data store corruption when selected target is updated', () => {
-        const model = new TargetModel();
-        const onDataStoreCorruptionChanged = vi.fn();
-        model.setDataStoreCorrupted();
-        model.onDataStoreCorruptionChanged(onDataStoreCorruptionChanged);
-
-        model.setSelected('user@host');
-
-        expect(model.dataIssue).toBe(false);
-        expect(onDataStoreCorruptionChanged).toHaveBeenCalledTimes(1);
     });
 
     it('clears target state and selected target data', () => {
         const model = new TargetModel();
-        model.setTargets(['user@host']);
+        model.setTargets(loaded(['user@host']));
         model.setSelected('user@host');
         model.setSelectedTargetHealth(loaded(targetHealth));
         model.setSelectedTargetContainers(loaded(containers));
 
         model.clear();
 
-        expect(model.targets).toEqual([]);
+        expect(model.targets).toEqual(loaded([]));
         expect(model.selected).toBeUndefined();
         expect(model.selectedTargetHealth).toEqual(loaded(undefined));
         expect(model.selectedTargetContainers).toEqual(loaded([]));
-    });
-
-    it('clears data store corruption when model state is cleared', () => {
-        const model = new TargetModel();
-        model.setDataStoreCorrupted();
-
-        model.clear();
-
-        expect(model.dataIssue).toBe(false);
     });
 
     it('stores selected target health and containers and fires change events', () => {

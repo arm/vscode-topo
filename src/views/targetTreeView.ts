@@ -77,9 +77,6 @@ export class TargetTreeView
             this.targetModel.onTargetsChanged(() => {
                 this._onDidChangeTreeData.fire(undefined);
             }),
-            this.targetModel.onDataStoreCorruptionChanged(() => {
-                this._onDidChangeTreeData.fire(undefined);
-            }),
             this.targetModel.onHealthChanged(() => {
                 this._onDidChangeTreeData.fire(undefined);
             }),
@@ -94,8 +91,8 @@ export class TargetTreeView
         element?: vscode.TreeItem,
     ): Promise<vscode.TreeItem[]> {
         if (!element) {
-            if (this.targetModel.dataIssue) {
-                return [new TargetDataIssueTreeItem()];
+            if (this.targetModel.targets.status === 'errored') {
+                return [new TargetDataIssueTreeItem(this.targetModel.targets)];
             }
 
             const selectedTarget = this.targetModel.selected;

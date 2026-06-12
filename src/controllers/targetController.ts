@@ -220,12 +220,16 @@ export class TargetController {
             if (!isWrappedError(err, ['STORAGE'])) {
                 throw err;
             }
-            this.setCorruptedDataIssue(err);
+            if (this.model.targets.status !== 'errored') {
+                logError(corruptedDataMessage, err);
+            }
+            this.model.setTargets(errored(err));
+            this.syncTargetDataIssueContext();
             return;
         }
 
         const selectedTarget = this.targetStore.getSelectedTarget();
-        this.model.setTargets([...targets]);
+        this.model.setTargets(loaded([...targets]));
         this.model.setSelected(selectedTarget);
         this.syncTargetDataIssueContext();
     }
@@ -234,19 +238,11 @@ export class TargetController {
         await this.resetExtensionData();
     }
 
-    private setCorruptedDataIssue(err: unknown): void {
-        if (!this.model.dataIssue) {
-            logError(corruptedDataMessage, err);
-        }
-        this.model.setDataStoreCorrupted();
-        this.syncTargetDataIssueContext();
-    }
-
     private syncTargetDataIssueContext(): void {
-        void vscode.commands.executeCommand(
+        vscode.commands.executeCommand(
             'setContext',
             targetDataIssueContextKey,
-            this.model.dataIssue,
+            this.model.targets.status === 'errored',
         );
     }
 
@@ -297,8 +293,12 @@ export class TargetController {
     }
 
     private async promptAndSelectTarget(): Promise<void> {
+        const currentTargets =
+            this.model.targets.status === 'loaded'
+                ? this.model.targets.data
+                : [];
         const result = await promptForSshTarget(
-            this.model.targets,
+            currentTargets,
             this.model.selected,
         );
 
@@ -323,7 +323,7 @@ export class TargetController {
             return;
         }
 
-        if (!this.model.targets.includes(target)) {
+        if (!currentTargets.includes(target)) {
             try {
                 await this.targetStore.addTarget(target);
             } catch (error) {

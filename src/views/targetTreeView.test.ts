@@ -98,7 +98,7 @@ describe('TargetTreeView', () => {
 
     beforeEach(() => {
         targetModel = new TargetModel();
-        targetModel.setTargets([target]);
+        targetModel.setTargets(loaded([target]));
         targetModel.setSelected(target);
         targetModel.setSelectedTargetHealth(loaded(targetHealth));
         targetModel.setSelectedTargetContainers(loaded(mockContainers));
@@ -207,7 +207,7 @@ describe('TargetTreeView', () => {
 
         it('only returns the selected target at the root', async () => {
             const otherTarget = 'user@other.local';
-            targetModel.setTargets([target, otherTarget]);
+            targetModel.setTargets(loaded([target, otherTarget]));
             targetModel.setSelected(otherTarget);
             targetModel.setSelectedTargetHealth(
                 errored('ssh connection failed'),
@@ -303,7 +303,7 @@ describe('TargetTreeView', () => {
         });
 
         it('returns empty array when no target is selected', async () => {
-            targetModel.setTargets([]);
+            targetModel.setTargets(loaded([]));
             targetModel.setSelected(undefined);
 
             const rootChildren = await view.getChildren();
@@ -315,21 +315,14 @@ describe('TargetTreeView', () => {
         });
 
         it('shows target data issues at the root', async () => {
-            const issue = 'The local data saved by Topo looks corrupted.';
-            targetModel.setDataStoreCorrupted();
+            const targets = errored('Failed to load targets');
+            targetModel.setTargets(targets);
 
             const rootChildren = await view.getChildren();
 
-            expect(rootChildren).toHaveLength(1);
-            expect(rootChildren[0]).toBeInstanceOf(TargetDataIssueTreeItem);
-            expect(rootChildren[0]).toStrictEqual(
-                expect.objectContaining({
-                    label: 'Local data issue',
-                    description: issue,
-                    tooltip: issue,
-                    contextValue: 'CorruptedDataIssue',
-                }),
-            );
+            expect(rootChildren).toStrictEqual([
+                new TargetDataIssueTreeItem(targets),
+            ]);
             expect(
                 targetDescriptionStoreMock.getDescription,
             ).not.toHaveBeenCalled();

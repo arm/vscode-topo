@@ -9,7 +9,7 @@ import { showAndLogError } from '../util/showAndLogError';
 import { TopoCli } from '../topoCli';
 import { ContainerCommands } from '../target/containerCommands';
 import { DockerInspectItem, DockerPsItem } from '../util/types';
-import { loaded } from '../util/loadable';
+import { errored, loaded } from '../util/loadable';
 import { HealthCheck } from '../topoCliSchema';
 
 vi.mock('../util/logger');
@@ -285,7 +285,7 @@ describe('load from store', () => {
         const { controller } = createController(targetModel, targetStore);
         controller.updateTargetsFromStore();
 
-        expect(targetModel.targets).toEqual(['host-a', 'host-b']);
+        expect(targetModel.targets).toEqual(loaded(['host-a', 'host-b']));
         expect(targetModel.selected).toBe('host-b');
     });
 
@@ -299,8 +299,7 @@ describe('load from store', () => {
         const { controller } = createController(targetModel, targetStore);
         controller.updateTargetsFromStore();
 
-        expect(targetModel.dataIssue).toBe(true);
-        expect(targetModel.targets).toEqual([]);
+        expect(targetModel.targets.status).toBe('errored');
         expect(targetModel.selected).toBeUndefined();
         expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
             'setContext',
@@ -309,16 +308,15 @@ describe('load from store', () => {
         );
     });
 
-    it('clears the data issue after targets load successfully', () => {
+    it('clears the target error after targets load successfully', () => {
         const targetStore = mockTargetStore(['host-a'], 'host-a');
         const targetModel = new TargetModel();
-        targetModel.setDataStoreCorrupted();
+        targetModel.setTargets(errored('Failed to load targets'));
 
         const { controller } = createController(targetModel, targetStore);
         controller.updateTargetsFromStore();
 
-        expect(targetModel.dataIssue).toBe(false);
-        expect(targetModel.targets).toEqual(['host-a']);
+        expect(targetModel.targets).toEqual(loaded(['host-a']));
         expect(targetModel.selected).toBe('host-a');
         expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
             'setContext',
@@ -433,7 +431,7 @@ describe('target addition', () => {
         expect(targetStore.addTarget).toHaveBeenCalledWith(targetSsh);
         expect(targetStore.setSelected).toHaveBeenCalledWith(targetSsh);
         expect(targetModel.selected).toBe(targetSsh);
-        expect(targetModel.targets).toEqual([targetSsh]);
+        expect(targetModel.targets).toEqual(loaded([targetSsh]));
     });
 
     it('trims the selected target before storing and selecting it', async () => {
@@ -447,7 +445,7 @@ describe('target addition', () => {
         expect(targetStore.addTarget).toHaveBeenCalledWith('root@192.0.2.1');
         expect(targetStore.setSelected).toHaveBeenCalledWith('root@192.0.2.1');
         expect(targetModel.selected).toBe('root@192.0.2.1');
-        expect(targetModel.targets).toEqual(['root@192.0.2.1']);
+        expect(targetModel.targets).toEqual(loaded(['root@192.0.2.1']));
     });
 
     it('selects an existing target without adding it again', async () => {
@@ -470,7 +468,7 @@ describe('target addition', () => {
             }),
         );
         expect(targetModel.selected).toBe('saved-host');
-        expect(targetModel.targets).toEqual(['saved-host']);
+        expect(targetModel.targets).toEqual(loaded(['saved-host']));
     });
 
     it('does nothing when quick pick is dismissed', async () => {
@@ -484,7 +482,7 @@ describe('target addition', () => {
         expect(targetStore.addTarget).not.toHaveBeenCalled();
         expect(targetStore.setSelected).not.toHaveBeenCalled();
         expect(targetModel.selected).toBeUndefined();
-        expect(targetModel.targets).toEqual([]);
+        expect(targetModel.targets).toEqual(loaded([]));
     });
 
     it('removes a saved target from the quick pick item button', async () => {
@@ -500,7 +498,7 @@ describe('target addition', () => {
         expect(targetStore.setSelected).not.toHaveBeenCalled();
         expect(vscode.window.showWarningMessage).not.toHaveBeenCalled();
         expect(targetModel.selected).toBeUndefined();
-        expect(targetModel.targets).toEqual([]);
+        expect(targetModel.targets).toEqual(loaded([]));
     });
 
     it('confirms before removing the selected target from the quick pick item button', async () => {
@@ -525,7 +523,7 @@ describe('target addition', () => {
         );
         expect(targetStore.deleteTarget).toHaveBeenCalledWith('selected-host');
         expect(targetModel.selected).toBeUndefined();
-        expect(targetModel.targets).toEqual(['other-host']);
+        expect(targetModel.targets).toEqual(loaded(['other-host']));
     });
 
     it('does not remove the selected target when confirmation is dismissed', async () => {
@@ -547,7 +545,7 @@ describe('target addition', () => {
         );
         expect(targetStore.deleteTarget).not.toHaveBeenCalled();
         expect(targetModel.selected).toBe('selected-host');
-        expect(targetModel.targets).toEqual(['selected-host']);
+        expect(targetModel.targets).toEqual(loaded(['selected-host']));
     });
 
     it('shows an error when targetStore.deleteTarget fails with a storage error', async () => {
