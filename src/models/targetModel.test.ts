@@ -1,5 +1,5 @@
 import { TargetHealthCheck } from '../topoCliSchema';
-import { ContainerItem } from '../util/types';
+import { ContainerItem, TargetDescription } from '../util/types';
 import { loaded } from '../util/loadable';
 import { TargetModel } from './targetModel';
 
@@ -36,6 +36,12 @@ const containers: ContainerItem[] = [
     },
 ];
 
+const targetDescription: TargetDescription = {
+    hostProcessors: [],
+    remoteProcessors: [{ name: 'imx-rproc' }],
+    totalMemoryKb: 1024,
+};
+
 describe('TargetModel', () => {
     it('defaults to no selected target, an empty target list and empty selected target data', () => {
         const model = new TargetModel();
@@ -44,6 +50,7 @@ describe('TargetModel', () => {
         expect(model.targets).toEqual([]);
         expect(model.selectedTargetHealth).toEqual(loaded(undefined));
         expect(model.selectedTargetContainers).toEqual(loaded([]));
+        expect(model.selectedTargetDescription).toEqual(loaded(undefined));
     });
 
     it('stores the latest selected target', () => {
@@ -109,32 +116,40 @@ describe('TargetModel', () => {
         expect(onChanged).toHaveBeenCalledTimes(1);
     });
 
-    it('stores selected target health and containers and fires change events', () => {
+    it('stores selected target data and fires change events', () => {
         const model = new TargetModel();
         const health = loaded(targetHealth);
         const containerState = loaded(containers);
+        const descriptionState = loaded(targetDescription);
         const onHealthChanged = vi.fn();
         const onContainersChanged = vi.fn();
+        const onDescriptionChanged = vi.fn();
         model.onHealthChanged(onHealthChanged);
         model.onContainersChanged(onContainersChanged);
+        model.onDescriptionChanged(onDescriptionChanged);
 
         model.setSelectedTargetHealth(health);
         model.setSelectedTargetContainers(containerState);
+        model.setSelectedTargetDescription(descriptionState);
 
         expect(model.selectedTargetHealth).toBe(health);
         expect(model.selectedTargetContainers).toBe(containerState);
+        expect(model.selectedTargetDescription).toBe(descriptionState);
         expect(onHealthChanged).toHaveBeenCalledTimes(1);
         expect(onContainersChanged).toHaveBeenCalledTimes(1);
+        expect(onDescriptionChanged).toHaveBeenCalledTimes(1);
     });
 
     it('clears selected target data when selected target is changed', () => {
         const model = new TargetModel();
         model.setSelectedTargetHealth(loaded(targetHealth));
         model.setSelectedTargetContainers(loaded(containers));
+        model.setSelectedTargetDescription(loaded(targetDescription));
 
         model.setSelected('user@host');
 
         expect(model.selectedTargetHealth).toEqual(loaded(undefined));
         expect(model.selectedTargetContainers).toEqual(loaded([]));
+        expect(model.selectedTargetDescription).toEqual(loaded(undefined));
     });
 });
