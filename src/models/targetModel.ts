@@ -1,10 +1,12 @@
 import * as vscode from 'vscode';
 import { Loadable, loaded } from '../util/loadable';
 import { TargetHealthCheck } from '../topoCliSchema';
-import { ContainerItem } from '../util/types';
+import { ContainerItem, TargetDescription } from '../util/types';
 
 const defaultContainers: Loadable<ContainerItem[]> = loaded([]);
 const defaultHealth: Loadable<TargetHealthCheck | undefined> =
+    loaded(undefined);
+const defaultDescription: Loadable<TargetDescription | undefined> =
     loaded(undefined);
 
 export class TargetModel {
@@ -28,10 +30,17 @@ export class TargetModel {
     public readonly onContainersChanged: vscode.Event<void> =
         this._onContainersChanged.event;
 
+    private _onDescriptionChanged: vscode.EventEmitter<void> =
+        new vscode.EventEmitter<void>();
+    public readonly onDescriptionChanged: vscode.Event<void> =
+        this._onDescriptionChanged.event;
+
     private _selected?: string;
     private _targets: string[] = [];
     private _health: Loadable<TargetHealthCheck | undefined> = defaultHealth;
     private _containers: Loadable<ContainerItem[]> = defaultContainers;
+    private _description: Loadable<TargetDescription | undefined> =
+        defaultDescription;
 
     public setSelected(selected: string | undefined): void {
         const changed = this._selected !== selected;
@@ -75,8 +84,22 @@ export class TargetModel {
         this._onContainersChanged.fire();
     }
 
+    public get selectedTargetDescription(): Loadable<
+        TargetDescription | undefined
+    > {
+        return this._description;
+    }
+
+    public setSelectedTargetDescription(
+        description: Loadable<TargetDescription | undefined>,
+    ) {
+        this._description = description;
+        this._onDescriptionChanged.fire();
+    }
+
     public clearSelectedTargetData(): void {
         this.setSelectedTargetHealth(defaultHealth);
         this.setSelectedTargetContainers(defaultContainers);
+        this.setSelectedTargetDescription(defaultDescription);
     }
 }

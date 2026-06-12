@@ -6,7 +6,6 @@ import { TargetProcessingDomainTreeItem } from '../targetTreeView/targetProcessi
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
 import { TargetProcessingDomainGroupTreeItem } from '../targetTreeView/targetProcessingDomainGroupTreeItem';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
-import { TargetDescriptionStore } from '../target/targetDescriptionStore';
 import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
 import { ContainerItem } from '../util/types';
@@ -59,10 +58,7 @@ export class TargetTreeView
 
     private readonly disposables = new DisposableCollector();
 
-    constructor(
-        private readonly targetModel: TargetModel,
-        private readonly targetDescriptionStore: TargetDescriptionStore,
-    ) {
+    constructor(private readonly targetModel: TargetModel) {
         const treeView = vscode.window.createTreeView(TargetTreeView.viewId, {
             treeDataProvider: this,
             showCollapseAll: true,
@@ -82,6 +78,9 @@ export class TargetTreeView
             this.targetModel.onContainersChanged(() => {
                 this._onDidChangeTreeData.fire(undefined);
             }),
+            this.targetModel.onDescriptionChanged(() => {
+                this._onDidChangeTreeData.fire(undefined);
+            }),
             this._onDidChangeTreeData,
         );
     }
@@ -95,18 +94,12 @@ export class TargetTreeView
                 return [];
             }
 
-            const selectedTargetDescription =
-                await this.targetDescriptionStore.getDescription(
-                    selectedTarget,
-                );
-
             return [
                 new TargetTreeItem({
                     target: selectedTarget,
                     health: this.targetModel.selectedTargetHealth,
-                    targetDescription: selectedTargetDescription
-                        ? loaded(selectedTargetDescription)
-                        : undefined,
+                    targetDescription:
+                        this.targetModel.selectedTargetDescription,
                 }),
             ];
         }
