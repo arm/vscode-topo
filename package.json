@@ -306,6 +306,7 @@
         "watch": "vite build --mode extension --watch --minify=false",
         "download": "node --no-warnings --experimental-strip-types scripts/download.ts",
         "calculate-new-version": "node --no-warnings --experimental-strip-types scripts/calculate-new-version.ts",
+        "generate-changelog-entry": "node --no-warnings --experimental-strip-types scripts/generate-changelog-entry.ts",
         "prettier-check": "prettier -c .",
         "eslint-check": "eslint .",
         "tsc-check": "tsc --noEmit -p src/tsconfig.json"
