@@ -9,7 +9,7 @@ import { TargetController } from './controllers/targetController';
 import { ProjectInit } from './actions/projectInit';
 import { Deploy } from './actions/deploy';
 import { Stop } from './actions/stop';
-import { AttachShell } from './actions/attachShell';
+import { OpenContainerShell } from './actions/openContainerShell';
 import { ContainerStart } from './actions/containerStart';
 import { ContainerStop } from './actions/containerStop';
 import { ContainerDelete } from './actions/containerDelete';
@@ -26,7 +26,7 @@ describe('commands', () => {
         projectClone: mock<ProjectClone>(),
         deploy: mock<Deploy>(),
         stop: mock<Stop>(),
-        attachShell: mock<AttachShell>(),
+        openContainerShell: mock<OpenContainerShell>(),
         containerStart: mock<ContainerStart>(),
         containerStop: mock<ContainerStop>(),
         containerDelete: mock<ContainerDelete>(),
@@ -78,8 +78,8 @@ describe('commands', () => {
             ],
             [commands.stop, handlers.stop.stopCommandHandler],
             [
-                commands.attachShell,
-                handlers.attachShell.attachShellCommandHandler,
+                commands.openContainerShell,
+                handlers.openContainerShell.openContainerShellCommandHandler,
             ],
             [
                 commands.startContainer,
