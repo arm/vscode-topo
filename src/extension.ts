@@ -88,6 +88,7 @@ export async function activate(
             targetController.refreshSelectedTargetDataCommandHandler();
         }),
     );
+
     const projectInit = new ProjectInit(topoCli);
     const projectClone = new ProjectClone(topoCli, targetModel);
     const deploy = new Deploy(topoCli, targetModel, targetController);

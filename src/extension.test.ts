@@ -8,17 +8,7 @@ vi.mock('./util/logger');
 vi.mock('./topoCli');
 
 describe('extension activation', () => {
-    let subscriptions: vscode.Disposable[];
-
-    beforeEach(() => {
-        vi.useFakeTimers();
-        subscriptions = [];
-    });
-
     afterEach(() => {
-        for (const sub of subscriptions) {
-            sub.dispose();
-        }
         vi.clearAllTimers();
         vi.useRealTimers();
         vi.resetAllMocks();
@@ -28,7 +18,7 @@ describe('extension activation', () => {
         vi.useFakeTimers();
         const setTimeoutSpy = vi.spyOn(global, 'setTimeout');
         const context = mock<vscode.ExtensionContext>({
-            subscriptions,
+            subscriptions: [],
             globalState: mock<vscode.Memento>(),
             workspaceState: mock<vscode.Memento>(),
         });
@@ -52,7 +42,7 @@ describe('extension activation', () => {
             });
         });
         const context = mock<vscode.ExtensionContext>({
-            subscriptions,
+            subscriptions: [],
         });
 
         await activate(context);
