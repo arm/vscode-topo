@@ -26,6 +26,8 @@ import { showAndLogError } from './util/showAndLogError';
 import { topo } from '../package.json';
 import { RefreshLoop } from './util/refreshLoop';
 
+const SELECTED_TARGET_REFRESH_INTERVAL_MS = 60_000;
+
 export async function activate(
     context: vscode.ExtensionContext,
 ): Promise<void> {
@@ -74,7 +76,7 @@ export async function activate(
         if (!targetController.isRefreshingSelectedTargetData()) {
             await targetController.refreshSelectedTargetDataCommandHandler();
         }
-    }, 3000);
+    }, SELECTED_TARGET_REFRESH_INTERVAL_MS);
 
     context.subscriptions.push(
         targetController,
@@ -88,12 +90,15 @@ export async function activate(
     );
     const projectInit = new ProjectInit(topoCli);
     const projectClone = new ProjectClone(topoCli, targetModel);
-    const deploy = new Deploy(topoCli, targetModel);
-    const stop = new Stop(topoCli, targetModel);
+    const deploy = new Deploy(topoCli, targetModel, targetController);
+    const stop = new Stop(topoCli, targetModel, targetController);
     const attachShell = new AttachShell(dockerCommands);
-    const containerStart = new ContainerStart(dockerCommands);
-    const containerStop = new ContainerStop(dockerCommands);
-    const containerDelete = new ContainerDelete(dockerCommands);
+    const containerStart = new ContainerStart(dockerCommands, targetController);
+    const containerStop = new ContainerStop(dockerCommands, targetController);
+    const containerDelete = new ContainerDelete(
+        dockerCommands,
+        targetController,
+    );
     const fixIssue = new FixIssue(topoCli, targetModel);
     const protocolHandler = new ProtocolHandler(topoCli);
 

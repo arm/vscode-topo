@@ -71,7 +71,7 @@
             {
                 "command": "topo.selectTarget",
                 "title": "Select Target",
-                "icon": "$(list-selection)",
+                "icon": "$(target)",
                 "category": "Topo"
             },
             {
@@ -329,15 +329,15 @@
         "@eslint/js": "^10.0.1",
         "@vitest/coverage-v8": "^4.0.14",
         "@types/lodash.debounce": "^4.0.9",
-        "@types/node": "^22.19.15",
+        "@types/node": "^22.19.21",
         "@types/vscode": "^1.101.0",
-        "@typescript-eslint/eslint-plugin": "^8.58.2",
+        "@typescript-eslint/eslint-plugin": "^8.61.0",
         "@typescript-eslint/parser": "^8.58.2",
         "@vscode/vsce": "^3.6.2",
-        "eslint": "^10.2.1",
+        "eslint": "^10.4.1",
         "extract-zip": "^2.0.1",
         "globals": "^17.5.0",
-        "prettier": "^3.7.4",
+        "prettier": "^3.8.4",
         "tar": "^7.5.2",
         "typescript": "^6.0.2",
         "vite": "^8.0.10",

@@ -25,6 +25,8 @@ describe('extension activation', () => {
     });
 
     it('registers commands and prepares disposables', async () => {
+        vi.useFakeTimers();
+        const setTimeoutSpy = vi.spyOn(global, 'setTimeout');
         const context = mock<vscode.ExtensionContext>({
             subscriptions,
             globalState: mock<vscode.Memento>(),
@@ -35,6 +37,10 @@ describe('extension activation', () => {
 
         expect(vscode.commands.registerCommand).toHaveBeenCalled();
         expect(context.subscriptions.length).toBeGreaterThan(0);
+        expect(setTimeoutSpy).toHaveBeenCalledWith(
+            expect.any(Function),
+            60_000,
+        );
     });
 
     it('shows an error and skips command registration when the topo CLI version check fails', async () => {

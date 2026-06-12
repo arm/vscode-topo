@@ -7,6 +7,7 @@ import { WrappedError } from '../errors/wrappedError';
 import { mock } from 'vitest-mock-extended';
 import { ContainerCommands } from '../target/containerCommands';
 import type { MockInstance } from 'vitest';
+import { TargetController } from '../controllers/targetController';
 
 describe('ContainerDelete', () => {
     let showErrorMessageSpy: MockInstance;
@@ -40,7 +41,11 @@ describe('ContainerDelete', () => {
 
     it('calls deleteContainer on success', async () => {
         const containerCommands = mock<ContainerCommands>();
-        const containerDelete = new ContainerDelete(containerCommands);
+        const targetController = mock<TargetController>();
+        const containerDelete = new ContainerDelete(
+            containerCommands,
+            targetController,
+        );
 
         await containerDelete.deleteContainerCommandHandler(treeItem);
 
@@ -48,14 +53,21 @@ describe('ContainerDelete', () => {
             'abc123',
             target,
         );
+        expect(
+            targetController.refreshSelectedTargetDataCommandHandler,
+        ).toHaveBeenCalledOnce();
     });
 
     it('shows error message if deleteContainer throws a WrappedError', async () => {
         const containerCommands = mock<ContainerCommands>();
+        const targetController = mock<TargetController>();
         containerCommands.deleteContainer.mockRejectedValue(
             new WrappedError('DOCKER', 'fail'),
         );
-        const containerDelete = new ContainerDelete(containerCommands);
+        const containerDelete = new ContainerDelete(
+            containerCommands,
+            targetController,
+        );
 
         await containerDelete.deleteContainerCommandHandler(treeItem);
 
@@ -64,6 +76,9 @@ describe('ContainerDelete', () => {
                 'Failed to delete the container abc123. fail',
             ),
         );
+        expect(
+            targetController.refreshSelectedTargetDataCommandHandler,
+        ).not.toHaveBeenCalled();
     });
 
     it('re-throws generic errors from deleteContainer', async () => {
@@ -71,7 +86,10 @@ describe('ContainerDelete', () => {
         containerCommands.deleteContainer.mockRejectedValue(
             new Error('generic error'),
         );
-        const containerDelete = new ContainerDelete(containerCommands);
+        const containerDelete = new ContainerDelete(
+            containerCommands,
+            mock<TargetController>(),
+        );
 
         await expect(
             containerDelete.deleteContainerCommandHandler(treeItem),
