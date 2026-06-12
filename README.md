@@ -1,12 +1,14 @@
 # Topo
 
-Discover, configure, and deploy containerised software to Arm hardware over SSH.
+The Topo extension makes it easy for application developers to deploy containers to Arm-based edge devices running Linux, including systems with additional remote processors such as Cortex-M or Cortex-R.
 
-Integrate [Topo](https://github.com/Arm/topo) CLI workflows into VS Code.
+Features include:
 
-Topo connects to your Arm device over SSH, checks what it can run, and recommends compatible [Topo Templates](https://github.com/arm/topo-template-format). Clone a Template and Topo helps you configure it for your use case, and deploy to your target over SSH. The configured result is a normal Docker Compose project that you can learn from, modify, or use as the starting point for your own application.
-
-Already have a Compose project? Topo gives you a fast, incremental build-deploy loop over SSH.
+- **Target management**: Connect to targets over SSH, inspect target status, and check target compatibility.
+- **Example discovery**: Discover [Topo Templates](https://github.com/arm/topo-template-format) for your target.
+- **Configure projects**: Topo Templates become standard Docker [Compose projects](https://compose-spec.io/), configured for your use case.
+- **Deployment**: Build and deploy projects to your target.
+- **Container actions**: Manage individual containers within a deployment.
 
 ## Who is this for?
 
@@ -17,7 +19,6 @@ Already have a Compose project? Topo gives you a fast, incremental build-deploy 
 **You have a heterogeneous device and want to use all of it.** Your board has remote processors like a Cortex-M that normally need separate toolchains and manual firmware loading. Topo and [Remoteproc Runtime](https://github.com/arm/remoteproc-runtime) let you orchestrate the whole device as one Docker Compose project.
 
 Not sure what these terms mean? The [glossary](https://github.com/arm/topo/blob/main/docs/glossary.md) defines Topo's core concepts.
-
 
 ## Requirements
 
@@ -43,8 +44,7 @@ The host and target can be the same system.
 1. Clone a [Topo Template](https://github.com/arm/topo-template-format) from our catalog.
 1. Deploy the configured project to your target.
 
-----
-
+---
 
 ## Target Management
 
