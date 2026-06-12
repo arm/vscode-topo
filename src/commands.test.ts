@@ -15,6 +15,7 @@ import { ContainerStop } from './actions/containerStop';
 import { ContainerDelete } from './actions/containerDelete';
 import { FixIssue } from './actions/fixIssue';
 import { ProjectClone } from './actions/projectClone';
+import { ProjectTreeItem } from './treeItems/projectTreeItem';
 
 vi.mock('./util/logger');
 
@@ -135,6 +136,52 @@ describe('commands', () => {
             expect(
                 handlers.targetController.selectCommandHandler,
             ).toHaveBeenCalledWith();
+        });
+
+        it('deploy project calls the compose file deploy handler', async () => {
+            const composeFileUri = vscode.Uri.file(
+                '/fake/workspace/demo/compose.yaml',
+            );
+            const projectItem = new ProjectTreeItem(
+                {
+                    name: 'demo',
+                    uri: vscode.Uri.file('/fake/workspace/demo'),
+                    composeFileUri,
+                    workspaceIndex: 0,
+                    workspaceName: 'workspace',
+                },
+                false,
+            );
+            commands.register(handlers);
+
+            await executeCommand(commands.deployProject, projectItem);
+
+            expect(
+                handlers.deploy.deployContextCommandHandler,
+            ).toHaveBeenCalledWith(composeFileUri);
+        });
+
+        it('stop project calls the compose file stop handler', async () => {
+            const composeFileUri = vscode.Uri.file(
+                '/fake/workspace/demo/compose.yaml',
+            );
+            const projectItem = new ProjectTreeItem(
+                {
+                    name: 'demo',
+                    uri: vscode.Uri.file('/fake/workspace/demo'),
+                    composeFileUri,
+                    workspaceIndex: 0,
+                    workspaceName: 'workspace',
+                },
+                false,
+            );
+            commands.register(handlers);
+
+            await executeCommand(commands.stopProject, projectItem);
+
+            expect(handlers.stop.stopCommandHandler).toHaveBeenCalledWith(
+                composeFileUri,
+            );
         });
     });
 });
