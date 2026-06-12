@@ -45,8 +45,8 @@
                 "category": "Topo"
             },
             {
-                "command": "topo.attachShell",
-                "title": "Attach Shell",
+                "command": "topo.openContainerShell",
+                "title": "Open Container Shell",
                 "icon": "$(terminal)",
                 "category": "Topo"
             },
@@ -214,7 +214,7 @@
                     "when": "false"
                 },
                 {
-                    "command": "topo.attachShell",
+                    "command": "topo.openContainerShell",
                     "when": "false"
                 },
                 {
@@ -261,7 +261,7 @@
                     "group": "inline@1"
                 },
                 {
-                    "command": "topo.attachShell",
+                    "command": "topo.openContainerShell",
                     "when": "view === topo.target-manager && viewItem =~ /service/ && viewItem =~ /running/ && viewItem =~ /PrimaryOS/",
                     "group": "inline@1"
                 },

@@ -3,16 +3,18 @@ import { ContainerItem } from '../util/types';
 import { ContainerCommands } from '../target/containerCommands';
 import { assertTargetContainerTreeItem } from '../targetTreeView/assertTargetContainerTreeItem';
 
-export class AttachShell {
+export class OpenContainerShell {
     constructor(private readonly containerCommands: ContainerCommands) {}
 
-    public async attachShellCommandHandler(treeNode: unknown): Promise<void> {
+    public async openContainerShellCommandHandler(
+        treeNode: unknown,
+    ): Promise<void> {
         assertTargetContainerTreeItem(treeNode);
-        attachShell(treeNode.containerItem, this.containerCommands);
+        openContainerShell(treeNode.containerItem, this.containerCommands);
     }
 }
 
-export function attachShell(
+export function openContainerShell(
     item: ContainerItem,
     containerCommands: ContainerCommands,
 ): void {
