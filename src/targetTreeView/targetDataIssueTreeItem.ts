@@ -1,12 +1,13 @@
 import * as vscode from 'vscode';
 
-const targetDataIssueMessage = 'The local data saved by Topo looks corrupted.';
+export const corruptedDataMessage =
+    'The local data saved by Topo looks corrupted.';
 
 export class TargetDataIssueTreeItem extends vscode.TreeItem {
     constructor() {
         super('Local data issue', vscode.TreeItemCollapsibleState.None);
-        this.description = targetDataIssueMessage;
-        this.tooltip = targetDataIssueMessage;
+        this.description = corruptedDataMessage;
+        this.tooltip = corruptedDataMessage;
         this.contextValue = 'CorruptedDataIssue';
         this.iconPath = new vscode.ThemeIcon(
             'error',

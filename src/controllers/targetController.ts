@@ -14,8 +14,8 @@ import { ContainerItem, DockerInspectItem, DockerPsItem } from '../util/types';
 import { HealthCheck, TargetHealthCheck } from '../topoCliSchema';
 import { LatestAbortableWork } from '../util/latestAbortableWork';
 import { DisposableCollector } from '../util/disposableCollector';
+import { corruptedDataMessage } from '../targetTreeView/targetDataIssueTreeItem';
 
-const corruptedDataMessage = 'The local data saved by Topo looks corrupted';
 const targetDataIssueContextKey = `${PACKAGE_NAME}.targetDataIssue`;
 
 type TargetPromptResult =
