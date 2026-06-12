@@ -3,9 +3,10 @@ import { TargetStore } from '../target/targetStore';
 import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
 import { isWrappedError } from '../errors/wrappedError';
 import { logger } from '../util/logger';
-import { showAndLogError } from '../util/showAndLogError';
+import { logError, showAndLogError } from '../util/showAndLogError';
 import { defaultSshConfigPath, getHosts } from '../util/ssh';
 import * as vscode from 'vscode';
+import { PACKAGE_NAME } from '../manifest';
 import { TopoCli } from '../topoCli';
 import { ContainerCommands } from '../target/containerCommands';
 import { errored, Loadable, loaded, loading } from '../util/loadable';
@@ -13,6 +14,9 @@ import { ContainerItem, DockerInspectItem, DockerPsItem } from '../util/types';
 import { HealthCheck, TargetHealthCheck } from '../topoCliSchema';
 import { LatestAbortableWork } from '../util/latestAbortableWork';
 import { DisposableCollector } from '../util/disposableCollector';
+
+const corruptedDataMessage = 'The local data saved by Topo looks corrupted';
+const targetDataIssueContextKey = `${PACKAGE_NAME}.targetDataIssue`;
 
 type TargetPromptResult =
     | { readonly kind: 'select'; readonly target: string }
@@ -209,8 +213,44 @@ export class TargetController {
     }
 
     public updateTargetsFromStore(): void {
-        this.model.setTargets([...this.targetStore.getTargets()]);
-        this.model.setSelected(this.targetStore.getSelectedTarget());
+        let targets: Set<string>;
+        try {
+            targets = this.targetStore.getTargets();
+        } catch (err) {
+            if (!isWrappedError(err, ['STORAGE'])) {
+                throw err;
+            }
+            if (this.model.targets.status !== 'errored') {
+                logError(corruptedDataMessage, err);
+            }
+            this.model.setTargets(errored(err));
+            this.syncTargetDataIssueContext();
+            return;
+        }
+
+        const selectedTarget = this.targetStore.getSelectedTarget();
+        this.model.setTargets(loaded([...targets]));
+        this.model.setSelected(selectedTarget);
+        this.syncTargetDataIssueContext();
+    }
+
+    public async resetExtensionDataCommandHandler(): Promise<void> {
+        try {
+            await this.targetStore.resetExtensionData();
+        } catch (err) {
+            showAndLogError('Failed to reset Topo local data', err);
+        }
+        this.model.clear();
+        this.syncTargetDataIssueContext();
+        vscode.window.showInformationMessage('Topo local data has been reset.');
+    }
+
+    private syncTargetDataIssueContext(): void {
+        vscode.commands.executeCommand(
+            'setContext',
+            targetDataIssueContextKey,
+            this.model.targets.status === 'errored',
+        );
     }
 
     public async selectCommandHandler(): Promise<void> {
@@ -249,8 +289,12 @@ export class TargetController {
     }
 
     private async promptAndSelectTarget(): Promise<void> {
+        const currentTargets =
+            this.model.targets.status === 'loaded'
+                ? this.model.targets.data
+                : [];
         const result = await promptForSshTarget(
-            this.model.targets,
+            currentTargets,
             this.model.selected,
         );
 
@@ -275,7 +319,7 @@ export class TargetController {
             return;
         }
 
-        if (!this.model.targets.includes(target)) {
+        if (!currentTargets.includes(target)) {
             try {
                 await this.targetStore.addTarget(target);
             } catch (error) {

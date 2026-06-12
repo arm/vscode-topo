@@ -11,6 +11,7 @@ import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
 import { ContainerItem } from '../util/types';
 import { loaded } from '../util/loadable';
+import { TargetDataIssueTreeItem } from '../targetTreeView/targetDataIssueTreeItem';
 import { ErrorTreeItem } from '../treeItems/errorTreeItem';
 
 function compareByName(a: { name: string }, b: { name: string }): number {
@@ -65,7 +66,7 @@ export class TargetTreeView
     ) {
         const treeView = vscode.window.createTreeView(TargetTreeView.viewId, {
             treeDataProvider: this,
-            showCollapseAll: true,
+            showCollapseAll: false,
         });
 
         this.disposables.collect(
@@ -90,6 +91,10 @@ export class TargetTreeView
         element?: vscode.TreeItem,
     ): Promise<vscode.TreeItem[]> {
         if (!element) {
+            if (this.targetModel.targets.status === 'errored') {
+                return [new TargetDataIssueTreeItem(this.targetModel.targets)];
+            }
+
             const selectedTarget = this.targetModel.selected;
             if (!selectedTarget) {
                 return [];

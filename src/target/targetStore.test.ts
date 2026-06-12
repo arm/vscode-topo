@@ -20,6 +20,7 @@ function createMockContext(): {
     const workspaceMap = new Map<string, unknown>();
 
     const globalState = mock<vscode.ExtensionContext['globalState']>();
+    globalState.keys.mockImplementation(() => [...globalMap.keys()]);
     globalState.get.mockImplementation(
         (key: string, defaultValue?: unknown) => {
             if (!globalMap.has(key)) {
@@ -30,11 +31,16 @@ function createMockContext(): {
     );
     globalState.update.mockImplementation(
         async (key: string, value: unknown) => {
+            if (value === undefined) {
+                globalMap.delete(key);
+                return;
+            }
             globalMap.set(key, value);
         },
     );
 
     const workspaceState = mock<vscode.ExtensionContext['workspaceState']>();
+    workspaceState.keys.mockImplementation(() => [...workspaceMap.keys()]);
     workspaceState.get.mockImplementation(
         (key: string, defaultValue?: unknown) => {
             if (!workspaceMap.has(key)) {
@@ -45,6 +51,10 @@ function createMockContext(): {
     );
     workspaceState.update.mockImplementation(
         async (key: string, value: unknown) => {
+            if (value === undefined) {
+                workspaceMap.delete(key);
+                return;
+            }
             workspaceMap.set(key, value);
         },
     );
@@ -321,5 +331,49 @@ describe('TargetStore', () => {
         const deleteTargetOperation = store.deleteTarget('no-such-id');
 
         await expect(deleteTargetOperation).rejects.toThrow('does not exist');
+    });
+
+    it('resets extension data from global state, workspace state and global storage', async () => {
+        const { context } = createMockContext();
+        const store = new TargetStore(context);
+
+        await store.addTarget('target@example.com');
+        await store.setSelected('target@example.com');
+
+        await store.resetExtensionData();
+
+        expect(context.globalState.keys()).toEqual([]);
+        expect(context.workspaceState.keys()).toEqual([]);
+        expect(vscode.workspace.fs.delete).toHaveBeenCalledWith(
+            context.globalStorageUri,
+            { recursive: true, useTrash: false },
+        );
+        await vi.waitFor(() => {
+            expect(vscode.workspace.fs.createDirectory).toHaveBeenCalledWith(
+                context.globalStorageUri,
+            );
+            expect(vscode.workspace.fs.writeFile).toHaveBeenCalledWith(
+                vscode.Uri.joinPath(
+                    context.globalStorageUri,
+                    'targets-update.signal',
+                ),
+                expect.any(Uint8Array),
+            );
+        });
+    });
+
+    it('does not fail when resetting extension data and global storage does not exist', async () => {
+        const { context } = createMockContext();
+        const store = new TargetStore(context);
+        vi.mocked(vscode.workspace.fs.delete).mockRejectedValueOnce(
+            vscode.FileSystemError.FileNotFound(context.globalStorageUri),
+        );
+
+        await expect(store.resetExtensionData()).resolves.toBeUndefined();
+        await vi.waitFor(() => {
+            expect(vscode.workspace.fs.createDirectory).toHaveBeenCalledWith(
+                context.globalStorageUri,
+            );
+        });
     });
 });
