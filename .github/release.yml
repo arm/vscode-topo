@@ -1,0 +1,29 @@
+changelog:
+    exclude:
+        labels:
+            - chore
+            - ci
+            - dependencies
+            - documentation
+            - ignore-for-release
+            - skip-changelog
+        authors:
+            - dependabot[bot]
+    categories:
+        - title: Breaking changes
+          labels:
+              - breaking-change
+              - breaking
+              - semver-major
+        - title: New features
+          labels:
+              - enhancement
+              - feature
+              - feat
+              - semver-minor
+        - title: Fixes
+          labels:
+              - bug
+              - bugfix
+              - fix
+              - semver-patch
