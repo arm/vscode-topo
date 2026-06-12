@@ -60,12 +60,10 @@ describe('FixIssue', () => {
 
     const createTargetItemWithIssues = (
         targetIssues: IssueCheck[],
-        selected = true,
         connectivity: IssueCheck = connectedIssue,
     ): TargetTreeItem =>
         new TargetTreeItem({
             target,
-            selected,
             health: loaded({
                 destination: `ssh://${target}`,
                 isLocalhost: false,
@@ -219,11 +217,7 @@ describe('FixIssue', () => {
                 command: 'topo setup-keys --target ssh://pi5-rod',
             },
         };
-        const targetItem = createTargetItemWithIssues(
-            [],
-            true,
-            connectivityIssue,
-        );
+        const targetItem = createTargetItemWithIssues([], connectivityIssue);
         mockSelectedQuickPickItems([
             {
                 label: 'Connectivity',
@@ -389,20 +383,6 @@ describe('FixIssue', () => {
             fixIssue.fixIssueCommandHandler(targetItem),
         ).rejects.toThrow(
             `No executable issue fixes found for target ${target}`,
-        );
-
-        expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
-        expect(taskExecutor.run).not.toHaveBeenCalled();
-    });
-
-    it('fails when fixing an unselected target item', async () => {
-        const fixIssue = new FixIssue(taskExecutor, targetModel);
-        const targetItem = createTargetItemWithIssues([], false);
-
-        await expect(
-            fixIssue.fixIssueCommandHandler(targetItem),
-        ).rejects.toThrow(
-            'Invalid target item for fix issues: expected selected TargetTreeItem but received:',
         );
 
         expect(vscode.window.showQuickPick).not.toHaveBeenCalled();

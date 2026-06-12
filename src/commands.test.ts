@@ -9,15 +9,11 @@ import { TargetController } from './controllers/targetController';
 import { ProjectInit } from './actions/projectInit';
 import { Deploy } from './actions/deploy';
 import { Stop } from './actions/stop';
-import { ContainerOpenInBrowser } from './actions/containerOpenInBrowser';
-import { AttachVsCode } from './actions/attachVsCode';
 import { AttachShell } from './actions/attachShell';
 import { ContainerStart } from './actions/containerStart';
 import { ContainerStop } from './actions/containerStop';
 import { ContainerDelete } from './actions/containerDelete';
-import { TargetHealth } from './actions/targetHealth';
 import { FixIssue } from './actions/fixIssue';
-import { HostHealth } from './actions/hostHealth';
 import { ProjectClone } from './actions/projectClone';
 
 vi.mock('./util/logger');
@@ -25,19 +21,15 @@ vi.mock('./util/logger');
 describe('commands', () => {
     const handlers = {
         hostController: mock<HostController>(),
-        hostHealth: mock<HostHealth>(),
         targetController: mock<TargetController>(),
         projectInit: mock<ProjectInit>(),
         projectClone: mock<ProjectClone>(),
         deploy: mock<Deploy>(),
         stop: mock<Stop>(),
-        containerOpenInBrowser: mock<ContainerOpenInBrowser>(),
-        attachVsCode: mock<AttachVsCode>(),
         attachShell: mock<AttachShell>(),
         containerStart: mock<ContainerStart>(),
         containerStop: mock<ContainerStop>(),
         containerDelete: mock<ContainerDelete>(),
-        targetHealth: mock<TargetHealth>(),
         fixIssue: mock<FixIssue>(),
     } satisfies commands.CommandHandlers;
 
@@ -72,13 +64,8 @@ describe('commands', () => {
                 handlers.targetController.selectCommandHandler,
             ],
             [
-                commands.removeTarget,
-                handlers.targetController.removeCommandHandler,
-            ],
-            [commands.addTarget, handlers.targetController.addCommandHandler],
-            [
-                commands.inspectHostHealth,
-                handlers.hostHealth.inspectHealthCommandHandler,
+                commands.unselectTarget,
+                handlers.targetController.unselectCommandHandler,
             ],
             [
                 commands.initProject,
@@ -90,14 +77,6 @@ describe('commands', () => {
                 handlers.deploy.deployContextCommandHandler,
             ],
             [commands.stop, handlers.stop.stopCommandHandler],
-            [
-                commands.openInBrowser,
-                handlers.containerOpenInBrowser.openInBrowserCommandHandler,
-            ],
-            [
-                commands.attachVsCode,
-                handlers.attachVsCode.attachVsCodeCommandHandler,
-            ],
             [
                 commands.attachShell,
                 handlers.attachShell.attachShellCommandHandler,
@@ -114,10 +93,7 @@ describe('commands', () => {
                 commands.deleteContainer,
                 handlers.containerDelete.deleteContainerCommandHandler,
             ],
-            [
-                commands.inspectTargetHealth,
-                handlers.targetHealth.inspectHealthCommandHandler,
-            ],
+
             [
                 commands.fixDependencyIssue,
                 handlers.fixIssue.fixIssueCommandHandler,
@@ -150,5 +126,15 @@ describe('commands', () => {
                 expect(handler).toHaveBeenCalled();
             },
         );
+
+        it('calls select target without a tree node argument', async () => {
+            commands.register(handlers);
+
+            await executeCommand(commands.selectTarget, 'argument');
+
+            expect(
+                handlers.targetController.selectCommandHandler,
+            ).toHaveBeenCalledWith();
+        });
     });
 });

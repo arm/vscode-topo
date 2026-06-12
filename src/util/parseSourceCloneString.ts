@@ -1,5 +1,5 @@
 import { WrappedError } from '../errors/wrappedError';
-import { CloneSource } from '../topoCli';
+import { CloneSource } from './projectClone';
 
 const isGitURL = (source: string): boolean =>
     source.startsWith('git@') ||

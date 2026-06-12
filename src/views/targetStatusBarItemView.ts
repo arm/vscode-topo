@@ -7,11 +7,12 @@ import { getWorstIssueCheckStatus } from '../util/getWorstIssueCheckStatus';
 import { getDependencyGroupIcon } from './util/dependencyIcons';
 import { Loadable } from '../util/loadable';
 import { TargetHealthCheck } from '../topoCliSchema';
+import { selectTarget } from '../commands';
 
 function getStatusIconId(
     state: Loadable<TargetHealthCheck | undefined>,
 ): string {
-    const targetTreeIcon = getTargetTreeItemIcon(true, state);
+    const targetTreeIcon = getTargetTreeItemIcon(state);
     if (targetTreeIcon) {
         return targetTreeIcon.id;
     }
@@ -34,10 +35,14 @@ function renderStatusBarItem(
     if (target) {
         const iconId = getStatusIconId(selectedHealth);
         statusBarItem.text = `$(${iconId}) ${target}`;
-        statusBarItem.tooltip = `Connection String: ${target}`;
+        statusBarItem.tooltip = `SSH destination: ${target}`;
+        statusBarItem.command = TargetTreeView.focusViewCommand;
         statusBarItem.show();
     } else {
-        statusBarItem.hide();
+        statusBarItem.text = '$(target) Select a target';
+        statusBarItem.tooltip = 'Select a target';
+        statusBarItem.command = selectTarget;
+        statusBarItem.show();
     }
 }
 
@@ -55,7 +60,6 @@ export class TargetStatusBarItemView implements vscode.Disposable {
             vscode.StatusBarAlignment.Left,
             TargetStatusBarItemView.priority,
         );
-        this.statusBarItem.command = TargetTreeView.focusViewCommand;
         this.refresh();
 
         this.disposables.collect(

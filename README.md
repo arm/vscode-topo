@@ -11,21 +11,25 @@ This extension is [free to use](LICENSE) and can be installed from the VS Code M
 ## Getting Started
 
 1. Install the extension from the VS Code Marketplace or a `.vsix` package.
-2. Add a target from the **Targets** view in the **Topo** activity bar container.
-3. Configure a target, making sure its dependencies are set up correctly.
+2. Select a target from the **Target** view in the **Topo** activity bar container.
+3. Configure the target, making sure its dependencies are set up correctly.
 4. Deploy your services to the target.
 
 ## Target Management
 
-The **Targets** view appears in the **Topo** activity bar container and lets you manage targets where deployments run.
+The **Target** view appears in the **Topo** activity bar container and shows the currently selected target where deployments run.
 
-### Add a Target
+### Select a Target
 
-Click the **+** button in the Targets view title bar and enter an SSH connection string (for example `root@192.168.1.1`). The extension automatically selects the first target you add.
+Click **Select a target** in the Target view title bar or status bar to open the target picker. The picker shows saved targets and hosts from your SSH config. Select an existing target, choose an SSH config host, or type an SSH connection string (for example `root@192.168.1.1`) to add and select a new target.
+
+### Remove a Target
+
+Saved targets that do not come from SSH config can be removed from the picker with the inline trash button.
 
 ### Target Tree
 
-Each target in the tree shows:
+The selected target in the tree shows:
 
 | Item                   | Description                                                                       |
 | ---------------------- | --------------------------------------------------------------------------------- |
@@ -33,18 +37,14 @@ Each target in the tree shows:
 | **Services**           | Running or stopped containers grouped by processing domain, with state icons.     |
 | **Dependencies**       | Required target components and driver health-check issues shown for the target.   |
 
-Connectivity errors are shown on the selected target row.
-
 ### Target Actions
 
-Use the inline buttons on each target row to access these actions:
+Use the inline buttons on the selected target row to access these actions:
 
-| Command            | Description                                                  |
-| ------------------ | ------------------------------------------------------------ |
-| **Select Target**  | Make the target active for deployments and actions.          |
-| **Remove Target**  | Delete the target from the configuration.                    |
-| **Inspect Health** | Display health-check JSON results for the selected target.   |
-| **Fix Issues**     | Select and run available fixes for target dependency issues. |
+| Command             | Description                                                  |
+| ------------------- | ------------------------------------------------------------ |
+| **Unselect Target** | Clear the active target without deleting it.                 |
+| **Fix Issues**      | Select and run available fixes for target dependency issues. |
 
 ### Dependency Actions
 
@@ -52,23 +52,21 @@ Use the inline **Fix** button on a fixable dependency item to run the executable
 
 ## Container Actions
 
-Use the inline buttons on a service in the Targets tree to manage individual containers:
+Use the inline buttons on a service in the Target tree to manage individual containers:
 
-| Command             | Description                                                                                 |
-| ------------------- | ------------------------------------------------------------------------------------------- |
-| **Start**           | Start a stopped container.                                                                  |
-| **Stop**            | Stop a running container.                                                                   |
-| **Delete**          | Remove a container.                                                                         |
-| **Attach Shell**    | Open a VS Code terminal connected to a running container in the target's primary OS.        |
-| **Attach VS Code**  | Open a running container in the target's primary OS in a VS Code Remote Containers session. |
-| **Open in Browser** | Open a running service in the target's primary OS by auto-detecting common published ports. |
+| Command          | Description                                                                          |
+| ---------------- | ------------------------------------------------------------------------------------ |
+| **Start**        | Start a stopped container.                                                           |
+| **Stop**         | Stop a running container.                                                            |
+| **Delete**       | Remove a container.                                                                  |
+| **Attach Shell** | Open a VS Code terminal connected to a running container in the target's primary OS. |
 
 ## Deploy and Stop
 
 Deploy or stop the `compose.yaml` or `compose.yml` file in a project directory on the selected target. A deploy operation builds container images, transfers them to the target, and starts services. You can trigger either operation from:
 
 - Running **Topo: Deploy** from the Command Palette, then selecting a `compose.yaml` or `compose.yml` file from the workspace.
-- Right-clicking `compose.yaml` or `compose.yml` in the Explorer or editor tab and selecting **Deploy** or **Stop**.
+- Right-clicking `compose.yaml` or `compose.yml` in the Explorer or editor tab and selecting **Topo Deploy** or **Topo Stop**.
 
 The extension runs `topo deploy --target <ssh>` or `topo stop --target <ssh>` from the directory containing `compose.yaml` or `compose.yml` in a task terminal and reports success or failure.
 
@@ -102,11 +100,11 @@ vscode://arm.topo/clone?source=git:https://github.com/example/repo
 
 The **Host** view appears in the **Topo** activity bar container and shows host dependency health for tools such as Docker and SSH. Missing or unhealthy dependencies are shown in the tree.
 
-Use the refresh button in the Host view title bar to reload host dependency health. Use the inspect button in the Host view title bar to view a detailed JSON health report.
+Use the refresh button in the Host view title bar to reload host dependency health.
 
 ## Commands
 
-All commands are under the **Topo** category. Commands available from the Command Palette:
+Commands available from the Command Palette:
 
 | Command                        | Description                                     |
 | ------------------------------ | ----------------------------------------------- |
@@ -115,9 +113,8 @@ All commands are under the **Topo** category. Commands available from the Comman
 | `Topo: Clone Template Project` | Clone a project from an Arm Template.           |
 | `Topo: Clone Local Project`    | Clone a project from a local directory.         |
 | `Topo: Deploy`                 | Select and deploy a compose file to the target. |
-| `Topo: Inspect Host Health`    | Display host dependency health report.          |
 
-Additional commands are available through inline buttons in the Targets and Host tree views.
+Additional commands are available through inline buttons in the Target and Host tree views.
 
 ## Settings
 

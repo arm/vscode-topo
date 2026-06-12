@@ -2,14 +2,10 @@ import * as vscode from 'vscode';
 import * as commands from './commands';
 import { TopoCli } from './topoCli';
 import { ProjectInit } from './actions/projectInit';
-import { TopoCliVersionChecker } from './topoCliVersionChecker';
 import { TargetStatusBarItemView } from './views/targetStatusBarItemView';
 import { TargetTreeView } from './views/targetTreeView';
-import { ContainersManager } from './target/containersManager';
 import { ContainerStart } from './actions/containerStart';
 import { ContainerStop } from './actions/containerStop';
-import { ContainerOpenInBrowser } from './actions/containerOpenInBrowser';
-import { AttachVsCode } from './actions/attachVsCode';
 import { AttachShell } from './actions/attachShell';
 import { ContainerDelete } from './actions/containerDelete';
 import { DockerCommands } from './target/dockerCommands';
@@ -21,16 +17,17 @@ import { TargetDescriptionStore } from './target/targetDescriptionStore';
 import { FixIssue } from './actions/fixIssue';
 import { HostTreeView } from './views/hostTreeView';
 import { logger } from './util/logger';
-import { TargetHealth } from './actions/targetHealth';
-import { HostHealth } from './actions/hostHealth';
 import { HostModel } from './models/hostModel';
 import { HostController } from './controllers/hostController';
-import { TransientDocumentProvider } from './util/transientDocumentProvider';
 import { TargetController } from './controllers/targetController';
 import { TargetModel } from './models/targetModel';
 import { ProjectClone } from './actions/projectClone';
+import { showAndLogError } from './util/showAndLogError';
+import { topo } from '../package.json';
 import { RefreshLoop } from './util/refreshLoop';
 import { TaskExecutor } from './util/taskExecutor';
+
+const SELECTED_TARGET_REFRESH_INTERVAL_MS = 60_000;
 
 export async function activate(
     context: vscode.ExtensionContext,
@@ -40,42 +37,24 @@ export async function activate(
         context.environmentVariableCollection,
     );
     context.subscriptions.push(topoCli);
-    const topoCliVersionChecker = new TopoCliVersionChecker(
-        topoCli,
-        context.extensionPath,
-    );
 
-    if (!topoCliVersionChecker.checkTopoCliVersion()) {
+    try {
+        topoCli.verifyVersion(topo.version);
+    } catch (err) {
+        showAndLogError(`Topo CLI version check failed`, err);
         return;
     }
 
-    const targetHealthDocProvider = new TransientDocumentProvider(
-        'target-health',
-    );
-    const hostHealthDocProvider = new TransientDocumentProvider('host-health');
     const dockerCommands = new DockerCommands();
     const targetStore = new TargetStore(context);
     const targetDescriptionStore = new TargetDescriptionStore(topoCli);
-    context.subscriptions.push(
-        targetStore,
-        hostHealthDocProvider,
-        targetHealthDocProvider,
-    );
+    context.subscriptions.push(targetStore);
 
     const targetModel = new TargetModel();
     const hostModel = new HostModel();
 
-    const containersManager = new ContainersManager(
-        topoCli,
-        dockerCommands,
-        targetModel,
-    );
-    await containersManager.activate();
-    context.subscriptions.push(containersManager);
-
     const hostTreeView = new HostTreeView(hostModel);
     const targetTreeView = new TargetTreeView(
-        containersManager,
         targetModel,
         targetDescriptionStore,
     );
@@ -87,7 +66,6 @@ export async function activate(
     );
 
     const hostController = new HostController(hostModel, topoCli);
-    const hostHealth = new HostHealth(topoCli, hostHealthDocProvider);
     const targetController = new TargetController(
         targetModel,
         targetStore,
@@ -99,7 +77,7 @@ export async function activate(
         if (!targetController.isRefreshingSelectedTargetData()) {
             await targetController.refreshSelectedTargetDataCommandHandler();
         }
-    }, 3000);
+    }, SELECTED_TARGET_REFRESH_INTERVAL_MS);
 
     context.subscriptions.push(
         targetController,
@@ -115,33 +93,29 @@ export async function activate(
     const projectInit = new ProjectInit(topoCli);
     const taskExecutor = new TaskExecutor(topoCli);
     const projectClone = new ProjectClone(topoCli, targetModel, taskExecutor);
-    const deploy = new Deploy(taskExecutor, targetModel);
-    const stop = new Stop(taskExecutor, targetModel);
-    const containerOpenInBrowser = new ContainerOpenInBrowser();
-    const attachVsCode = new AttachVsCode(dockerCommands);
+    const deploy = new Deploy(taskExecutor, targetModel, targetController);
+    const stop = new Stop(taskExecutor, targetModel, targetController);
     const attachShell = new AttachShell(dockerCommands);
-    const containerStart = new ContainerStart(dockerCommands);
-    const containerStop = new ContainerStop(dockerCommands);
-    const containerDelete = new ContainerDelete(dockerCommands);
-    const targetHealth = new TargetHealth(topoCli, targetHealthDocProvider);
+    const containerStart = new ContainerStart(dockerCommands, targetController);
+    const containerStop = new ContainerStop(dockerCommands, targetController);
+    const containerDelete = new ContainerDelete(
+        dockerCommands,
+        targetController,
+    );
     const fixIssue = new FixIssue(taskExecutor, targetModel);
     const protocolHandler = new ProtocolHandler(taskExecutor);
 
     context.subscriptions.push(
         commands.register({
             hostController,
-            hostHealth,
             targetController,
             projectInit,
             deploy,
             stop,
-            containerOpenInBrowser,
-            attachVsCode,
             attachShell,
             containerStart,
             containerStop,
             containerDelete,
-            targetHealth,
             fixIssue,
             projectClone,
         }),

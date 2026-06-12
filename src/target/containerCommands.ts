@@ -1,18 +1,6 @@
 import type { DockerInspectItem, DockerPsItem } from '../util/types';
 
 export interface ContainerCommands {
-    getCurrentContext(): Promise<string>;
-    useContext(contextName: string): Promise<void>;
-    getContexts(): Promise<string[]>;
-    ensureContext(
-        contextName: string,
-        targetSshConnection: string,
-    ): Promise<void>;
-    executeWithContext<T>(
-        operation: () => Thenable<T> | T,
-        contextName: string,
-        timeout: number,
-    ): Promise<T>;
     startContainer(
         containerId: string,
         targetSshConnection: string,

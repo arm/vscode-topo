@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { TargetContainerTreeItem } from '../targetTreeView/targetContainerTreeItem';
-import { ContainersManager } from '../target/containersManager';
 import * as manifest from '../manifest';
 import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
 import { TargetProcessingDomainTreeItem } from '../targetTreeView/targetProcessingDomainTreeItem';
@@ -10,9 +9,9 @@ import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependenc
 import { TargetDescriptionStore } from '../target/targetDescriptionStore';
 import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
-import { ContainerItem, TargetState } from '../util/types';
-import { errored, Loadable, loaded } from '../util/loadable';
-import { TargetHealthCheck } from '../topoCliSchema';
+import { ContainerItem } from '../util/types';
+import { loaded } from '../util/loadable';
+import { ErrorTreeItem } from '../treeItems/errorTreeItem';
 
 function compareByName(a: { name: string }, b: { name: string }): number {
     return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
@@ -49,18 +48,6 @@ const PRIMARY_OS_PROCESSING_DOMAIN = {
     label: 'Primary OS',
 };
 
-function targetHealthLoadable(
-    state: TargetState,
-): Loadable<TargetHealthCheck | undefined> {
-    if (state.status === 'connected') {
-        return loaded(state.health);
-    }
-    if (state.status === 'error') {
-        return errored('Target health not available');
-    }
-    return loaded(undefined, true);
-}
-
 export class TargetTreeView
     implements vscode.TreeDataProvider<vscode.TreeItem>, vscode.Disposable
 {
@@ -73,7 +60,6 @@ export class TargetTreeView
     private readonly disposables = new DisposableCollector();
 
     constructor(
-        private readonly containersManager: ContainersManager,
         private readonly targetModel: TargetModel,
         private readonly targetDescriptionStore: TargetDescriptionStore,
     ) {
@@ -90,7 +76,10 @@ export class TargetTreeView
             this.targetModel.onTargetsChanged(() => {
                 this._onDidChangeTreeData.fire(undefined);
             }),
-            this.containersManager.onDataUpdate(() => {
+            this.targetModel.onHealthChanged(() => {
+                this._onDidChangeTreeData.fire(undefined);
+            }),
+            this.targetModel.onContainersChanged(() => {
                 this._onDidChangeTreeData.fire(undefined);
             }),
             this._onDidChangeTreeData,
@@ -102,47 +91,30 @@ export class TargetTreeView
     ): Promise<vscode.TreeItem[]> {
         if (!element) {
             const selectedTarget = this.targetModel.selected;
-            const targetTreeItems: TargetTreeItem[] = [];
-            for (const target of this.targetModel.targets) {
-                const selected = target === selectedTarget;
-                const state: TargetState = selected
-                    ? this.containersManager.getTargetStateSnapshot(target)
-                    : { status: 'disconnected', health: undefined };
-                const health = selected
-                    ? targetHealthLoadable(state)
-                    : undefined;
-                const description =
-                    health?.status === 'loaded' && health.data
-                        ? await this.targetDescriptionStore.getDescription(
-                              target,
-                          )
-                        : undefined;
-
-                targetTreeItems.push(
-                    new TargetTreeItem({
-                        target,
-                        selected,
-                        health,
-                        targetDescription: description
-                            ? loaded(description)
-                            : undefined,
-                    }),
-                );
+            if (!selectedTarget) {
+                return [];
             }
-            const sortedTargetTreeItems = targetTreeItems.sort((a, b) =>
-                a.displayName.localeCompare(b.displayName),
-            );
-            return sortedTargetTreeItems;
+
+            const selectedTargetDescription =
+                await this.targetDescriptionStore.getDescription(
+                    selectedTarget,
+                );
+
+            return [
+                new TargetTreeItem({
+                    target: selectedTarget,
+                    health: this.targetModel.selectedTargetHealth,
+                    targetDescription: selectedTargetDescription
+                        ? loaded(selectedTargetDescription)
+                        : undefined,
+                }),
+            ];
         }
 
         if (element instanceof TargetTreeItem) {
-            if (!element.selected || !element.connected) {
+            if (!element.connected) {
                 return [];
             }
-            const containers = await this.containersManager.getContainersData(
-                element.target,
-            );
-            const sortedContainers = [...containers].sort(compareContainers);
 
             const dependenciesGroup = new HealthCheckDependencyGroupTreeItem(
                 loaded(element.visibleIssues, element.health.loading),
@@ -150,7 +122,7 @@ export class TargetTreeView
             const subsystemsGroup = new TargetProcessingDomainGroupTreeItem(
                 element.target,
                 element.remoteProcessorNames,
-                sortedContainers,
+                this.targetModel.selectedTargetContainers,
             );
             return [dependenciesGroup, subsystemsGroup];
         }
@@ -161,6 +133,19 @@ export class TargetTreeView
         }
 
         if (element instanceof TargetProcessingDomainGroupTreeItem) {
+            if (element.containers.status === 'errored') {
+                return [
+                    new ErrorTreeItem(
+                        'Failed to load containers',
+                        element.containers,
+                    ),
+                ];
+            }
+
+            const sortedContainers = [...element.containers.data].sort(
+                compareContainers,
+            );
+
             const processingDomains = [
                 PRIMARY_OS_PROCESSING_DOMAIN,
                 ...element.remoteProcessorNames.map((name) => ({
@@ -170,7 +155,7 @@ export class TargetTreeView
             ];
             return processingDomains.map((domain) => {
                 const containers = filterContainersForProcessingDomain(
-                    element.containers,
+                    sortedContainers,
                     domain.id,
                 );
 

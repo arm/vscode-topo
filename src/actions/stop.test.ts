@@ -5,6 +5,7 @@ import { Stop, createStopTask, stop as stopServices } from './stop';
 import { TargetModel } from '../models/targetModel';
 import { mock, MockProxy } from 'vitest-mock-extended';
 import { TaskExecutor } from '../util/taskExecutor';
+import { TargetController } from '../controllers/targetController';
 
 describe('Stop', () => {
     let stopAction: Stop;
@@ -15,6 +16,7 @@ describe('Stop', () => {
     const target = 'topo.local';
     let taskExecutor: MockProxy<TaskExecutor>;
     let targetModel: TargetModel;
+    let targetController: MockProxy<TargetController>;
 
     function expectStopTask(task: vscode.Task, cwd: string): void {
         expect(task.name).toBe('Stop services on topo.local');
@@ -29,8 +31,9 @@ describe('Stop', () => {
         taskExecutor = mock<TaskExecutor>();
         targetModel = new TargetModel();
         targetModel.setSelected(target);
+        targetController = mock<TargetController>();
         vi.mocked(vscode.window.showErrorMessage).mockClear();
-        stopAction = new Stop(taskExecutor, targetModel);
+        stopAction = new Stop(taskExecutor, targetModel, targetController);
     });
 
     afterEach(() => {
@@ -47,6 +50,9 @@ describe('Stop', () => {
             'Error executing stop command. No target selected. Please select a target before stopping.',
         );
         expect(taskExecutor.run).not.toHaveBeenCalled();
+        expect(
+            targetController.refreshSelectedTargetDataCommandHandler,
+        ).not.toHaveBeenCalled();
     });
 
     it('builds a stop task with the topo command name', () => {
@@ -83,5 +89,8 @@ describe('Stop', () => {
             taskExecutor.run.mock.calls[0][0],
             path.dirname(composeFilePath),
         );
+        expect(
+            targetController.refreshSelectedTargetDataCommandHandler,
+        ).toHaveBeenCalledOnce();
     });
 });

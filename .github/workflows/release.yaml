@@ -29,7 +29,7 @@ jobs:
               with:
                   app_id: ${{ secrets.TOPO_ACCESS_APP_ID }}
                   private_key: ${{ secrets.TOPO_ACCESS_APP_PRIVATE_KEY }}
-            - uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e
+            - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
               with:
                   fetch-depth: 0
             - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
@@ -49,6 +49,10 @@ jobs:
                   fi
 
                   CURRENT_VERSION=$(go run github.com/caarlos0/svu/v3@v3.4.0 current --json || echo '{"major":0,"minor":0,"patch":0}')
+
+                  IS_FIRST_RELEASE=$(jq -r '(.major == 0 and .minor == 0 and .patch == 0)' <<< "$CURRENT_VERSION")
+                  echo "is-first-release=$IS_FIRST_RELEASE" >> "$GITHUB_OUTPUT"
+
                   NEXT_VERSION=$(go run github.com/caarlos0/svu/v3@v3.4.0 next --json)
 
                   CURRENT_MAJOR=$(jq -r .major <<< "$CURRENT_VERSION")
@@ -83,10 +87,14 @@ jobs:
               if: steps.calculate-version.outputs.version
               run: |
                   NOTES_FILE="$RUNNER_TEMP/generated-release-notes.md"
-                  gh api "repos/$GITHUB_REPOSITORY/releases/generate-notes" \
-                      --field tag_name="v$VERSION" \
-                      --field target_commitish="$GITHUB_SHA" \
-                      --jq .body > "$NOTES_FILE"
+                  if [ "$IS_FIRST_RELEASE" = "true" ]; then
+                      printf 'Initial release.\n' > "$NOTES_FILE"
+                  else
+                      gh api "repos/$GITHUB_REPOSITORY/releases/generate-notes" \
+                          --field tag_name="v$VERSION" \
+                          --field target_commitish="$GITHUB_SHA" \
+                          --jq .body > "$NOTES_FILE"
+                  fi
 
                   cp "$NOTES_FILE" release-notes.md
 
@@ -100,6 +108,7 @@ jobs:
                   mv CHANGELOG.md.new CHANGELOG.md
               env:
                   VERSION: ${{ steps.calculate-version.outputs.version }}
+                  IS_FIRST_RELEASE: ${{ steps.detect-changes.outputs.is-first-release }}
                   GH_TOKEN: ${{ steps.get-app-token.outputs.token }}
             - name: Store release notes
               if: steps.calculate-version.outputs.version
@@ -234,7 +243,7 @@ jobs:
         if: needs.prepare-version.outputs.version
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e
+            - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
             - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
               with:
                   pattern: vsix-package-*

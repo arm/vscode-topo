@@ -6,6 +6,7 @@ import { TargetModel } from '../models/targetModel';
 import { MockProxy, mock } from 'vitest-mock-extended';
 import { mutable } from '../util/mutable';
 import { TaskExecutor } from '../util/taskExecutor';
+import { TargetController } from '../controllers/targetController';
 
 describe('Deploy', () => {
     let deployAction: Deploy;
@@ -20,6 +21,7 @@ describe('Deploy', () => {
     const target = 'topo.local';
     let taskExecutor: MockProxy<TaskExecutor>;
     let targetModel: TargetModel;
+    let targetController: MockProxy<TargetController>;
 
     function expectDeployTask(task: vscode.Task, cwd: string): void {
         expect(task.name).toBe('Deploy to topo.local');
@@ -53,12 +55,13 @@ describe('Deploy', () => {
         taskExecutor = mock<TaskExecutor>();
         targetModel = new TargetModel();
         targetModel.setSelected(target);
+        targetController = mock<TargetController>();
         vi.mocked(vscode.workspace.findFiles).mockResolvedValue([]);
         vi.mocked(vscode.workspace.getWorkspaceFolder).mockReturnValue(
             undefined,
         );
         mutable(vscode.workspace).workspaceFolders = undefined;
-        deployAction = new Deploy(taskExecutor, targetModel);
+        deployAction = new Deploy(taskExecutor, targetModel, targetController);
     });
 
     afterEach(() => {
@@ -76,6 +79,9 @@ describe('Deploy', () => {
             'Error executing deploy command. No target selected. Please select a target before deploying.',
         );
         expect(taskExecutor.run).not.toHaveBeenCalled();
+        expect(
+            targetController.refreshSelectedTargetDataCommandHandler,
+        ).not.toHaveBeenCalled();
     });
 
     it('shows an error when target is selected but no compose files are found', async () => {
@@ -89,12 +95,18 @@ describe('Deploy', () => {
         );
         expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
         expect(taskExecutor.run).not.toHaveBeenCalled();
+        expect(
+            targetController.refreshSelectedTargetDataCommandHandler,
+        ).not.toHaveBeenCalled();
     });
 
     it('builds a deploy task with the topo command name', () => {
         const task = createDeployTask(composeFilePath, target);
 
         expectDeployTask(task, path.dirname(composeFilePath));
+        expect(
+            targetController.refreshSelectedTargetDataCommandHandler,
+        ).not.toHaveBeenCalled();
     });
 
     it('handles successful deploy operation', async () => {
@@ -125,6 +137,9 @@ describe('Deploy', () => {
             taskExecutor.run.mock.calls[0][0],
             path.dirname(composeFilePath),
         );
+        expect(
+            targetController.refreshSelectedTargetDataCommandHandler,
+        ).toHaveBeenCalledOnce();
     });
 
     it('throws when context command is called without a resource', async () => {
@@ -138,6 +153,9 @@ describe('Deploy', () => {
         expect(vscode.workspace.findFiles).not.toHaveBeenCalled();
         expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
         expect(taskExecutor.run).not.toHaveBeenCalled();
+        expect(
+            targetController.refreshSelectedTargetDataCommandHandler,
+        ).not.toHaveBeenCalled();
     });
 
     it('prompts for and deploys the selected compose file when running the deploy command', async () => {
@@ -168,6 +186,9 @@ describe('Deploy', () => {
             taskExecutor.run.mock.calls[0][0],
             workspaceUri.fsPath,
         );
+        expect(
+            targetController.refreshSelectedTargetDataCommandHandler,
+        ).toHaveBeenCalledOnce();
     });
 
     it('returns without deploying when compose selection is cancelled', async () => {
@@ -180,5 +201,8 @@ describe('Deploy', () => {
         await deployAction.deployCommandHandler();
 
         expect(taskExecutor.run).not.toHaveBeenCalled();
+        expect(
+            targetController.refreshSelectedTargetDataCommandHandler,
+        ).not.toHaveBeenCalled();
     });
 });
