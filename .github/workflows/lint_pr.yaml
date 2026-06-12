@@ -1,12 +1,12 @@
 name: 'Lint PR'
 
 on:
-    pull_request:
+    pull_request_target:
         branches: [main]
         types: [opened, reopened, edited, synchronize]
 
 jobs:
-    main:
+    validate-title:
         name: Validate PR title
         runs-on: ubuntu-slim
         permissions:
@@ -15,3 +15,77 @@ jobs:
             - uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6.1.1
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    release-notes-labels:
+        name: Label release notes
+        runs-on: ubuntu-latest
+        permissions:
+            issues: write
+            pull-requests: read
+        steps:
+            - name: Apply release note labels
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  PR_NUMBER: ${{ github.event.pull_request.number }}
+                  PR_TITLE: ${{ github.event.pull_request.title }}
+                  REPOSITORY: ${{ github.repository }}
+              run: |
+                  set -euo pipefail
+
+                  ensure_label() {
+                      gh label create "$1" \
+                          --repo "$REPOSITORY" \
+                          --color "$2" \
+                          --description "$3" || true
+                  }
+
+                  ensure_label semver-major b60205 'Breaking change for release notes'
+                  ensure_label semver-minor 0e8a16 'New feature for release notes'
+                  ensure_label semver-patch 1d76db 'Bug fix for release notes'
+                  ensure_label chore cfd3d7 'Maintenance change excluded from release notes'
+                  ensure_label ci cfd3d7 'CI change excluded from release notes'
+                  ensure_label dependencies cfd3d7 'Dependency change excluded from release notes'
+                  ensure_label documentation cfd3d7 'Documentation change excluded from release notes'
+
+                  managed_labels=(
+                      semver-major
+                      semver-minor
+                      semver-patch
+                      chore
+                      ci
+                      dependencies
+                      documentation
+                  )
+
+                  for label in "${managed_labels[@]}"; do
+                      gh issue edit "$PR_NUMBER" --repo "$REPOSITORY" --remove-label "$label" || true
+                  done
+
+                  labels_to_add=()
+                  major_regex='^[a-z]+(\([^)]+\))?!:'
+                  feature_regex='^feat(\([^)]+\))?:'
+                  fix_regex='^fix(\([^)]+\))?:'
+                  dependencies_regex='^chore\(deps[^)]*\):'
+                  chore_regex='^chore(\([^)]+\))?:'
+                  ci_regex='^ci(\([^)]+\))?:'
+                  documentation_regex='^docs(\([^)]+\))?:'
+
+                  if [[ "$PR_TITLE" =~ $major_regex ]]; then
+                      labels_to_add+=(semver-major)
+                  elif [[ "$PR_TITLE" =~ $feature_regex ]]; then
+                      labels_to_add+=(semver-minor)
+                  elif [[ "$PR_TITLE" =~ $fix_regex ]]; then
+                      labels_to_add+=(semver-patch)
+                  elif [[ "$PR_TITLE" =~ $dependencies_regex ]]; then
+                      labels_to_add+=(dependencies)
+                  elif [[ "$PR_TITLE" =~ $chore_regex ]]; then
+                      labels_to_add+=(chore)
+                  elif [[ "$PR_TITLE" =~ $ci_regex ]]; then
+                      labels_to_add+=(ci)
+                  elif [[ "$PR_TITLE" =~ $documentation_regex ]]; then
+                      labels_to_add+=(documentation)
+                  fi
+
+                  for label in "${labels_to_add[@]}"; do
+                      gh issue edit "$PR_NUMBER" --repo "$REPOSITORY" --add-label "$label"
+                  done
