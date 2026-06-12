@@ -38,14 +38,16 @@ describe('ProjectsTreeView', () => {
     });
 
     it('returns project items at the root', () => {
+        const projectUri = vscode.Uri.file('/fake/workspace/demo');
+        const composeFileUri = vscode.Uri.file(
+            '/fake/workspace/demo/compose.yaml',
+        );
         model.setProjects(
             loaded([
                 {
                     name: 'demo',
-                    uri: vscode.Uri.file('/fake/workspace/demo'),
-                    composeFileUri: vscode.Uri.file(
-                        '/fake/workspace/demo/compose.yaml',
-                    ),
+                    uri: projectUri,
+                    composeFileUri,
                     workspaceIndex: 0,
                     workspaceName: 'workspace',
                 },
@@ -59,12 +61,12 @@ describe('ProjectsTreeView', () => {
         expect(children[0]).toBeInstanceOf(ProjectTreeItem);
         expect(children[0]).toMatchObject({
             label: 'demo',
-            tooltip: '/fake/workspace/demo',
+            tooltip: projectUri.fsPath,
             contextValue: 'Project',
-            composeFileUri: vscode.Uri.file(
-                '/fake/workspace/demo/compose.yaml',
-            ),
         });
+        expect((children[0] as ProjectTreeItem).composeFileUri.fsPath).toBe(
+            composeFileUri.fsPath,
+        );
         expect(children[0].resourceUri).toBeUndefined();
     });
 

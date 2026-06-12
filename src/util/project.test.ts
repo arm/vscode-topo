@@ -8,6 +8,7 @@ describe('findTopLevelComposeProjects', () => {
         name: 'workspace',
         index: 0,
     };
+    const workspacePath = workspaceFolder.uri.fsPath;
 
     beforeEach(() => {
         mutable(vscode.workspace).workspaceFolders = [workspaceFolder];
@@ -55,8 +56,13 @@ describe('findTopLevelComposeProjects', () => {
         );
     }
 
+    function workspaceFilePath(...segments: string[]): string {
+        return vscode.Uri.joinPath(workspaceFolder.uri, ...segments).fsPath;
+    }
+
     it('returns workspace folders with compose files at the root', async () => {
-        mockComposeFiles('/fake/workspace/compose.yaml');
+        const composeFilePath = workspaceFilePath('compose.yaml');
+        mockComposeFiles(composeFilePath);
 
         const projects = await findTopLevelComposeProjects();
 
@@ -69,8 +75,8 @@ describe('findTopLevelComposeProjects', () => {
         ).toEqual([
             {
                 name: 'workspace',
-                uri: '/fake/workspace',
-                composeFileUri: '/fake/workspace/compose.yaml',
+                uri: workspacePath,
+                composeFileUri: composeFilePath,
             },
         ]);
         expect(vi.mocked(vscode.workspace.findFiles)).toHaveBeenCalledWith(
@@ -82,7 +88,9 @@ describe('findTopLevelComposeProjects', () => {
     });
 
     it('returns compose files in child folders as separate projects', async () => {
-        mockComposeFiles('/fake/workspace/demo/compose.yaml');
+        const projectPath = workspaceFilePath('demo');
+        const composeFilePath = workspaceFilePath('demo', 'compose.yaml');
+        mockComposeFiles(composeFilePath);
 
         const projects = await findTopLevelComposeProjects();
 
@@ -95,28 +103,24 @@ describe('findTopLevelComposeProjects', () => {
         ).toEqual([
             {
                 name: 'demo',
-                uri: '/fake/workspace/demo',
-                composeFileUri: '/fake/workspace/demo/compose.yaml',
+                uri: projectPath,
+                composeFileUri: composeFilePath,
             },
         ]);
     });
 
     it('prefers compose.yaml over compose.yml in the workspace root', async () => {
-        mockComposeFiles(
-            '/fake/workspace/compose.yml',
-            '/fake/workspace/compose.yaml',
-        );
+        const composeYamlPath = workspaceFilePath('compose.yaml');
+        mockComposeFiles(workspaceFilePath('compose.yml'), composeYamlPath);
 
         const projects = await findTopLevelComposeProjects();
 
         expect(projects).toHaveLength(1);
-        expect(projects[0].composeFileUri.fsPath).toBe(
-            '/fake/workspace/compose.yaml',
-        );
+        expect(projects[0].composeFileUri.fsPath).toBe(composeYamlPath);
     });
 
     it('ignores compose files below immediate child folders', async () => {
-        mockComposeFiles('/fake/workspace/demo/nested/compose.yaml');
+        mockComposeFiles(workspaceFilePath('demo', 'nested', 'compose.yaml'));
 
         const projects = await findTopLevelComposeProjects();
 
@@ -125,8 +129,8 @@ describe('findTopLevelComposeProjects', () => {
 
     it('returns both root and nested compose projects in the same workspace', async () => {
         mockComposeFiles(
-            '/fake/workspace/compose.yaml',
-            '/fake/workspace/demo/compose.yaml',
+            workspaceFilePath('compose.yaml'),
+            workspaceFilePath('demo', 'compose.yaml'),
         );
 
         const projects = await findTopLevelComposeProjects();
@@ -143,13 +147,17 @@ describe('findTopLevelComposeProjects', () => {
             name: 'other-workspace',
             index: 1,
         };
+        const secondWorkspaceComposeFilePath = vscode.Uri.joinPath(
+            secondWorkspaceFolder.uri,
+            'compose.yaml',
+        ).fsPath;
         mutable(vscode.workspace).workspaceFolders = [
             workspaceFolder,
             secondWorkspaceFolder,
         ];
         mockComposeFiles(
-            '/fake/workspace/compose.yaml',
-            '/fake/other-workspace/compose.yaml',
+            workspaceFilePath('compose.yaml'),
+            secondWorkspaceComposeFilePath,
         );
 
         const projects = await findTopLevelComposeProjects();
