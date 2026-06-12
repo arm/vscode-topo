@@ -48,6 +48,8 @@ const PRIMARY_OS_PROCESSING_DOMAIN = {
     label: 'Primary OS',
 };
 
+const HAS_SELECTED_TARGET_CONTEXT = `${manifest.PACKAGE_NAME}.hasSelectedTarget`;
+
 export class TargetTreeView
     implements vscode.TreeDataProvider<vscode.TreeItem>, vscode.Disposable
 {
@@ -67,10 +69,12 @@ export class TargetTreeView
             treeDataProvider: this,
             showCollapseAll: true,
         });
+        this.updateSelectedTargetContext();
 
         this.disposables.collect(
             treeView,
             this.targetModel.onSelectedChanged(() => {
+                this.updateSelectedTargetContext();
                 this._onDidChangeTreeData.fire(undefined);
             }),
             this.targetModel.onTargetsChanged(() => {
@@ -179,6 +183,14 @@ export class TargetTreeView
 
     public getTreeItem(element: vscode.TreeItem): vscode.TreeItem {
         return element;
+    }
+
+    private updateSelectedTargetContext(): void {
+        void vscode.commands.executeCommand(
+            'setContext',
+            HAS_SELECTED_TARGET_CONTEXT,
+            Boolean(this.targetModel.selected),
+        );
     }
 
     public dispose(): void {

@@ -19,6 +19,7 @@ function command(id: string): string {
 }
 
 export const refreshHostHealth = command('refreshHostHealth');
+export const refreshTargetData = command('refreshTargetData');
 export const showOutput = command('showOutput');
 export const selectTarget = command('selectTarget');
 export const unselectTarget = command('unselectTarget');
@@ -55,6 +56,9 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
     disposables.collect(
         vscode.commands.registerCommand(refreshHostHealth, () =>
             handlers.hostController.refreshHealthCommandHandler(),
+        ),
+        vscode.commands.registerCommand(refreshTargetData, () =>
+            handlers.targetController.refreshSelectedTargetDataCommandHandler(),
         ),
         vscode.commands.registerCommand(showOutput, () => logger.show()),
         vscode.commands.registerCommand(selectTarget, () =>

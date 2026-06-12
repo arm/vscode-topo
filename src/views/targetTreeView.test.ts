@@ -110,6 +110,32 @@ describe('TargetTreeView', () => {
         vi.clearAllMocks();
     });
 
+    describe('selected target context', () => {
+        it('sets context to true when constructed with a selected target', () => {
+            const contextualView = new TargetTreeView(
+                targetModel,
+                targetDescriptionStoreMock,
+            );
+
+            expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+                'setContext',
+                'topo.hasSelectedTarget',
+                true,
+            );
+            contextualView.dispose();
+        });
+
+        it('sets context to false when the target is unselected', () => {
+            targetModel.setSelected(undefined);
+
+            expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+                'setContext',
+                'topo.hasSelectedTarget',
+                false,
+            );
+        });
+    });
+
     describe('getChildren', () => {
         it('returns Target at root and Dependencies/Processing Domains as its children', async () => {
             const rootChildren = await view.getChildren();
