@@ -53,7 +53,7 @@ jobs:
                   IS_FIRST_RELEASE=$(jq -r '(.major == 0 and .minor == 0 and .patch == 0)' <<< "$CURRENT_VERSION")
                   echo "is-first-release=$IS_FIRST_RELEASE" >> "$GITHUB_OUTPUT"
 
-                  NEXT_VERSION=$(go run github.com/caarlos0/svu/v3@v3.4.0 next --json)
+                  NEXT_VERSION=$(go run github.com/caarlos0/svu/v3@v3.4.0 next --json --v0)
 
                   CURRENT_MAJOR=$(jq -r .major <<< "$CURRENT_VERSION")
                   CURRENT_MINOR=$(jq -r .minor <<< "$CURRENT_VERSION")
