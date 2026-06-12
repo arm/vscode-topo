@@ -5,6 +5,7 @@ import { showAndLogError } from '../util/showAndLogError';
 import { executeTask } from '../util/executeTask';
 import { TargetModel } from '../models/targetModel';
 import { TopoCli } from '../topoCli';
+import { TargetController } from '../controllers/targetController';
 import {
     type FixableHealthIssue,
     getIssueFixCommandGroups,
@@ -29,22 +30,21 @@ export class FixIssue {
     constructor(
         private readonly topoCli: TopoCli,
         private readonly targetModel: TargetModel,
+        private readonly targetController: TargetController,
     ) {}
 
     public async fixIssueCommandHandler(treeNode: unknown): Promise<void> {
         if (treeNode instanceof HealthCheckDependencyTreeItem) {
             await this.fixDependencyIssueFromTreeItem(treeNode);
-            return;
-        }
-
-        if (treeNode instanceof TargetTreeItem) {
+        } else if (treeNode instanceof TargetTreeItem) {
             await this.fixTargetIssuesFromTreeItem(treeNode);
-            return;
+        } else {
+            throw new Error(
+                `Invalid item for fix issues: expected HealthCheckDependencyTreeItem or TargetTreeItem but received: ${String(treeNode)}`,
+            );
         }
 
-        throw new Error(
-            `Invalid item for fix issues: expected HealthCheckDependencyTreeItem or TargetTreeItem but received: ${String(treeNode)}`,
-        );
+        await this.targetController.refreshSelectedTargetDataCommandHandler();
     }
 
     private async fixDependencyIssueFromTreeItem(
