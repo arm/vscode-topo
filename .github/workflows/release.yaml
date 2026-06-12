@@ -241,3 +241,32 @@ jobs:
                   tag_name: v${{ needs.prepare-version.outputs.version }}
                   target_commitish: ${{ needs.push-new-version.outputs.release_commit }}
                   prerelease: ${{ inputs.pre-release }}
+
+    publish:
+        name: Publish
+        needs:
+            - prepare-version
+            - release
+        if: needs.prepare-version.outputs.version
+        runs-on: ubuntu-latest
+        permissions: {}
+        steps:
+            - id: get-app-token
+              uses: getsentry/action-github-app-token@d4b5da6c5e37703f8c3b3e43abb5705b46e159cc
+              with:
+                  app_id: ${{ secrets.EXTENSIONS_REPO_ACCESS_APP_ID }}
+                  private_key: ${{ secrets.EXTENSIONS_REPO_ACCESS_APP_PRIVATE_KEY }}
+                  scope: Arm-Debug
+            - name: Trigger dist publish workflow
+              env:
+                  GH_TOKEN: ${{ steps.get-app-token.outputs.token }}
+              run: |
+                  gh api \
+                      --method POST \
+                      repos/Arm-Debug/vscode-topo-dist/actions/workflows/publish.yml/dispatches \
+                      --field ref=main \
+                      --field inputs[repository]="${{ github.repository }}" \
+                      --field inputs[version]="v${{ needs.prepare-version.outputs.version }}" \
+                      --field inputs[prerelease]="${{ inputs.pre-release }}" \
+                      --field inputs[vsce]=true \
+                      --field inputs[ovsx]=true
