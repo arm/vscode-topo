@@ -235,18 +235,6 @@ export class TargetController {
     }
 
     public async resetExtensionDataCommandHandler(): Promise<void> {
-        await this.resetExtensionData();
-    }
-
-    private syncTargetDataIssueContext(): void {
-        vscode.commands.executeCommand(
-            'setContext',
-            targetDataIssueContextKey,
-            this.model.targets.status === 'errored',
-        );
-    }
-
-    private async resetExtensionData(): Promise<void> {
         try {
             await this.targetStore.resetExtensionData();
         } catch (err) {
@@ -255,6 +243,14 @@ export class TargetController {
         this.model.clear();
         this.syncTargetDataIssueContext();
         vscode.window.showInformationMessage('Topo local data has been reset.');
+    }
+
+    private syncTargetDataIssueContext(): void {
+        vscode.commands.executeCommand(
+            'setContext',
+            targetDataIssueContextKey,
+            this.model.targets.status === 'errored',
+        );
     }
 
     public async selectCommandHandler(): Promise<void> {
