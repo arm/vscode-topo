@@ -1,8 +1,7 @@
 import * as vscode from 'vscode';
 import { Errored } from '../util/loadable';
 
-export const corruptedDataMessage =
-    'The local data saved by Topo looks corrupted.';
+const corruptedDataMessage = 'The local data saved by Topo looks corrupted.';
 
 export class TargetDataIssueTreeItem extends vscode.TreeItem {
     constructor(errored: Errored) {
