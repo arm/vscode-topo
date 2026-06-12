@@ -87,13 +87,16 @@ jobs:
               if: steps.calculate-version.outputs.version
               run: |
                   NOTES_FILE="$RUNNER_TEMP/generated-release-notes.md"
+                  CHANGELOG_ENTRY_FILE="$RUNNER_TEMP/generated-changelog-entry.md"
                   if [ "$IS_FIRST_RELEASE" = "true" ]; then
                       printf 'Initial release.\n' > "$NOTES_FILE"
+                      printf 'Initial release.\n' > "$CHANGELOG_ENTRY_FILE"
                   else
                       gh api "repos/$GITHUB_REPOSITORY/releases/generate-notes" \
                           --field tag_name="v$VERSION" \
                           --field target_commitish="$GITHUB_SHA" \
                           --jq .body > "$NOTES_FILE"
+                      npm run generate-changelog-entry --silent > "$CHANGELOG_ENTRY_FILE"
                   fi
 
                   cp "$NOTES_FILE" release-notes.md
@@ -101,7 +104,7 @@ jobs:
                   {
                       sed -n '1,/^## /{ /^## /q; p; }' CHANGELOG.md
                       printf '## %s\n\n' "$VERSION"
-                      cat "$NOTES_FILE"
+                      cat "$CHANGELOG_ENTRY_FILE"
                       printf '\n\n'
                       sed -n '/^## /,$p' CHANGELOG.md
                   } > CHANGELOG.md.new
