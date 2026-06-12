@@ -6,7 +6,7 @@ import { TargetStatusBarItemView } from './views/targetStatusBarItemView';
 import { TargetTreeView } from './views/targetTreeView';
 import { ContainerStart } from './actions/containerStart';
 import { ContainerStop } from './actions/containerStop';
-import { AttachShell } from './actions/attachShell';
+import { OpenContainerShell } from './actions/openContainerShell';
 import { ContainerDelete } from './actions/containerDelete';
 import { DockerCommands } from './target/dockerCommands';
 import { TargetStore } from './target/targetStore';
@@ -88,7 +88,7 @@ export async function activate(
     const projectClone = new ProjectClone(topoCli, targetModel);
     const deploy = new Deploy(topoCli, targetModel, targetController);
     const stop = new Stop(topoCli, targetModel, targetController);
-    const attachShell = new AttachShell(dockerCommands);
+    const openContainerShell = new OpenContainerShell(dockerCommands);
     const containerStart = new ContainerStart(dockerCommands, targetController);
     const containerStop = new ContainerStop(dockerCommands, targetController);
     const containerDelete = new ContainerDelete(
@@ -105,7 +105,7 @@ export async function activate(
             projectInit,
             deploy,
             stop,
-            attachShell,
+            openContainerShell,
             containerStart,
             containerStop,
             containerDelete,
