@@ -92,6 +92,12 @@ const ViewColumn = {
     Beside: -2,
 };
 const ProgressLocation = { Notification: 1 };
+const FileType = {
+    Unknown: 0,
+    File: 1,
+    Directory: 2,
+    SymbolicLink: 64,
+};
 
 // Namespaces
 const commands = {
@@ -172,6 +178,7 @@ const window = {
 };
 const fs = {
     readFile: vi.fn(),
+    stat: vi.fn(),
     writeFile: vi.fn(),
 };
 const workspace = {
@@ -280,6 +287,7 @@ module.exports = {
     Disposable,
     EndOfLine,
     EventEmitter,
+    FileType,
     LogLevel,
     Position,
     ProcessExecution,

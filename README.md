@@ -98,8 +98,13 @@ Deploy or stop a project on the selected target. A deploy operation builds conta
 
 - Running **Topo: Deploy** from the Command Palette, then selecting a `compose.yaml` file from the workspace.
 - Right-clicking `compose.yaml` in the Explorer or editor tab and selecting **Topo Deploy** or **Topo Stop**.
+- Using the inline **Deploy** or **Stop** buttons on a project in the **Projects** view.
 
 ## Project Management
+
+The **Projects** view appears in the **Topo** activity bar container and lists workspace projects discovered from top-level `compose.yaml` or `compose.yml` files.
+
+Use the inline buttons on a project row to deploy or stop that project's compose file on the selected target. These actions behave the same as running **Topo Deploy** or **Topo Stop** from the context menu of the project's compose file.
 
 ### Initialize a Project
 
@@ -143,7 +148,7 @@ Commands available from the Command Palette:
 | `Topo: Clone Local Project`    | Clone a project from a local directory.         |
 | `Topo: Deploy`                 | Select and deploy a compose file to the target. |
 
-Additional commands are available through inline buttons in the Target and Host tree views.
+Additional commands are available through inline buttons in the Target, Host, and Projects tree views.
 
 ## Settings
 
