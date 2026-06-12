@@ -9,7 +9,12 @@ import * as vscode from 'vscode';
 import { TopoCli } from '../topoCli';
 import { ContainerCommands } from '../target/containerCommands';
 import { errored, Loadable, loaded, loading } from '../util/loadable';
-import { ContainerItem, DockerInspectItem, DockerPsItem } from '../util/types';
+import {
+    ContainerItem,
+    DockerInspectItem,
+    DockerPsItem,
+    TargetDescription,
+} from '../util/types';
 import { HealthCheck, TargetHealthCheck } from '../topoCliSchema';
 import { LatestAbortableWork } from '../util/latestAbortableWork';
 import { DisposableCollector } from '../util/disposableCollector';
@@ -173,6 +178,20 @@ async function loadTargetHealth(
     return loaded(health.target);
 }
 
+async function loadTargetDescription(
+    topoCli: TopoCli,
+    target: string,
+): Promise<Loadable<TargetDescription>> {
+    let desc: TargetDescription;
+    try {
+        desc = await topoCli.describe(target);
+    } catch (err) {
+        return errored(err);
+    }
+
+    return loaded(desc);
+}
+
 async function loadContainersData(
     containerCommands: ContainerCommands,
     target: string,
@@ -327,6 +346,14 @@ export class TargetController {
         this.model.setSelectedTargetContainers(
             loading(this.model.selectedTargetContainers),
         );
+        this.model.setSelectedTargetDescription(
+            loading(this.model.selectedTargetDescription),
+        );
+
+        const description = await loadTargetDescription(this.topoCli, target);
+        signal.throwIfAborted();
+        this.model.setSelectedTargetDescription(description);
+
         const health = await loadTargetHealth(this.topoCli, target);
         signal.throwIfAborted();
         this.model.setSelectedTargetHealth(health);

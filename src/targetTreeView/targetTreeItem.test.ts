@@ -110,6 +110,15 @@ describe('TargetTreeItem', () => {
         );
     });
 
+    it('returns no remote processors while description data is pending', () => {
+        const item = new TargetTreeItem({
+            target: baseTarget,
+            targetDescription: loaded(undefined),
+        });
+
+        expect(item.remoteProcessorNames).toEqual([]);
+    });
+
     it('adds HasFixableIssues context when visible issues have executable fixes', () => {
         const dependency: IssueCheck = {
             name: 'Container Engine',

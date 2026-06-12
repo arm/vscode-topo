@@ -5,11 +5,10 @@ import { TargetProcessingDomainTreeItem } from '../targetTreeView/targetProcessi
 import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
 import * as manifest from '../manifest';
 import { ContainerItem, TargetDescription } from '../util/types';
-import { mock, MockProxy } from 'vitest-mock-extended';
+import { mock } from 'vitest-mock-extended';
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
 import { TargetProcessingDomainGroupTreeItem } from '../targetTreeView/targetProcessingDomainGroupTreeItem';
 import { IssueCheck, TargetHealthCheck } from '../topoCliSchema';
-import { TargetDescriptionStore } from '../target/targetDescriptionStore';
 import { TargetModel } from '../models/targetModel';
 import { errored, loaded } from '../util/loadable';
 import { ErrorTreeItem } from '../treeItems/errorTreeItem';
@@ -17,7 +16,6 @@ import { ErrorTreeItem } from '../treeItems/errorTreeItem';
 describe('TargetTreeView', () => {
     let view: TargetTreeView;
     let targetModel: TargetModel;
-    let targetDescriptionStoreMock: MockProxy<TargetDescriptionStore>;
     const target = 'user@topo.local';
     const targetDescription: TargetDescription = {
         hostProcessors: [],
@@ -101,11 +99,8 @@ describe('TargetTreeView', () => {
         targetModel.setSelected(target);
         targetModel.setSelectedTargetHealth(loaded(targetHealth));
         targetModel.setSelectedTargetContainers(loaded(mockContainers));
-        targetDescriptionStoreMock = mock<TargetDescriptionStore>();
-        targetDescriptionStoreMock.getDescription.mockResolvedValue(
-            targetDescription,
-        );
-        view = new TargetTreeView(targetModel, targetDescriptionStoreMock);
+        targetModel.setSelectedTargetDescription(loaded(targetDescription));
+        view = new TargetTreeView(targetModel);
         vi.clearAllTimers();
         vi.clearAllMocks();
     });
@@ -124,9 +119,6 @@ describe('TargetTreeView', () => {
             );
             expect(targetChildren[0].label).toBe('Dependencies');
             expect(targetChildren[1].label).toBe('Processing Domains');
-            expect(
-                targetDescriptionStoreMock.getDescription,
-            ).toHaveBeenCalledTimes(1);
         });
 
         it('returns dependency items for Dependencies group', async () => {
@@ -308,9 +300,6 @@ describe('TargetTreeView', () => {
             const rootChildren = await view.getChildren();
 
             expect(rootChildren.length).toEqual(0);
-            expect(
-                targetDescriptionStoreMock.getDescription,
-            ).not.toHaveBeenCalled();
         });
     });
 
