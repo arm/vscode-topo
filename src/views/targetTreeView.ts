@@ -91,6 +91,7 @@ export class TargetTreeView
             this._onDidChangeTreeData,
             { dispose: () => this.refresh.cancel() },
             { dispose: () => this.refreshTargets.cancel() },
+            { dispose: () => this.refreshSelectedTarget.cancel() },
         );
         this.syncTargetDataIssueContext();
         this.syncSelectedTargetContext();
@@ -218,7 +219,7 @@ export class TargetTreeView
     }
 
     private syncSelectedTargetContext(): void {
-        void vscode.commands.executeCommand(
+        vscode.commands.executeCommand(
             'setContext',
             hasSelectedTargetContextKey,
             Boolean(this.targetModel.selected),
