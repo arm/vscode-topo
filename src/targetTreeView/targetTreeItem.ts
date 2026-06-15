@@ -8,7 +8,7 @@ import { hasFixCommand, type FixableHealthIssue } from '../util/issueFixes';
 export interface TargetTreeItemOptions {
     readonly target: string;
     readonly health?: Loadable<TargetHealthCheck | undefined>;
-    readonly targetDescription?: Loadable<TargetDescription>;
+    readonly targetDescription?: Loadable<TargetDescription | undefined>;
 }
 
 const defaultTargetHealth = errored('Target health not available');
@@ -18,7 +18,7 @@ const defaultTargetDescription = errored('Target description not available');
 export class TargetTreeItem extends vscode.TreeItem {
     public readonly target: string;
     public readonly health: Loadable<TargetHealthCheck | undefined>;
-    public readonly targetDescription: Loadable<TargetDescription>;
+    public readonly targetDescription: Loadable<TargetDescription | undefined>;
 
     constructor({
         target,
@@ -84,7 +84,10 @@ export class TargetTreeItem extends vscode.TreeItem {
     }
 
     public get remoteProcessorNames(): string[] {
-        if (this.targetDescription.status !== 'loaded') {
+        if (
+            this.targetDescription.status !== 'loaded' ||
+            this.targetDescription.data === undefined
+        ) {
             return [];
         }
         return this.targetDescription.data.remoteProcessors.map(

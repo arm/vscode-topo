@@ -9,7 +9,12 @@ import * as vscode from 'vscode';
 import { TopoCli } from '../topoCli';
 import { ContainerCommands } from '../target/containerCommands';
 import { errored, Loadable, loaded, loading } from '../util/loadable';
-import { ContainerItem, DockerInspectItem, DockerPsItem } from '../util/types';
+import {
+    ContainerItem,
+    DockerInspectItem,
+    DockerPsItem,
+    TargetDescription,
+} from '../util/types';
 import { HealthCheck, TargetHealthCheck } from '../topoCliSchema';
 import { LatestAbortableWork } from '../util/latestAbortableWork';
 import { DisposableCollector } from '../util/disposableCollector';
@@ -176,6 +181,20 @@ async function loadTargetHealth(
     return loaded(health.target);
 }
 
+async function loadTargetDescription(
+    topoCli: TopoCli,
+    target: string,
+): Promise<Loadable<TargetDescription>> {
+    let desc: TargetDescription;
+    try {
+        desc = await topoCli.describe(target);
+    } catch (err) {
+        return errored(err);
+    }
+
+    return loaded(desc);
+}
+
 async function loadContainersData(
     containerCommands: ContainerCommands,
     target: string,
@@ -201,6 +220,7 @@ async function loadContainersData(
 export class TargetController {
     private readonly disposables = new DisposableCollector();
     private readonly selectedTargetDataRefresh = new LatestAbortableWork();
+    private readonly selectedTargetDescriptionLoad = new LatestAbortableWork();
 
     constructor(
         private readonly model: TargetModel,
@@ -208,7 +228,10 @@ export class TargetController {
         private readonly topoCli: TopoCli,
         private readonly containerCommands: ContainerCommands,
     ) {
-        this.disposables.collect(this.selectedTargetDataRefresh);
+        this.disposables.collect(
+            this.selectedTargetDataRefresh,
+            this.selectedTargetDescriptionLoad,
+        );
     }
 
     public updateTargetsFromStore(): void {
@@ -337,8 +360,36 @@ export class TargetController {
         }
     }
 
+    public async loadSelectedTargetDescriptionCommandHandler(): Promise<void> {
+        const target = this.model.selected;
+        if (!target) {
+            this.selectedTargetDescriptionLoad.abort();
+            return;
+        }
+
+        try {
+            await this.selectedTargetDescriptionLoad.run((signal) =>
+                this.loadSelectedTargetDescription(target, signal),
+            );
+        } catch (err) {
+            showAndLogError('Failed to load target description', err);
+        }
+    }
+
     public isRefreshingSelectedTargetData(): boolean {
         return this.selectedTargetDataRefresh.isRunning();
+    }
+
+    private async loadSelectedTargetDescription(
+        target: string,
+        signal: AbortSignal,
+    ): Promise<void> {
+        this.model.setSelectedTargetDescription(
+            loading(this.model.selectedTargetDescription),
+        );
+        const description = await loadTargetDescription(this.topoCli, target);
+        signal.throwIfAborted();
+        this.model.setSelectedTargetDescription(description);
     }
 
     private async refreshSelectedTargetData(
@@ -355,6 +406,7 @@ export class TargetController {
         this.model.setSelectedTargetContainers(
             loading(this.model.selectedTargetContainers),
         );
+
         const health = await loadTargetHealth(this.topoCli, target);
         signal.throwIfAborted();
         this.model.setSelectedTargetHealth(health);
