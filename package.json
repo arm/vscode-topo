@@ -104,6 +104,12 @@
                 "category": "Topo"
             },
             {
+                "command": "topo.refreshTargetData",
+                "title": "Refresh",
+                "icon": "$(refresh)",
+                "category": "Topo"
+            },
+            {
                 "command": "topo.showOutput",
                 "title": "Open Topo Output",
                 "icon": "$(output)",
@@ -229,6 +235,10 @@
                     "when": "false"
                 },
                 {
+                    "command": "topo.refreshTargetData",
+                    "when": "false"
+                },
+                {
                     "command": "topo.showOutput",
                     "when": "false"
                 }
@@ -284,6 +294,11 @@
                 {
                     "command": "topo.selectTarget",
                     "when": "view == topo.target-manager && !topo.targetDataIssue",
+                    "group": "navigation"
+                },
+                {
+                    "command": "topo.refreshTargetData",
+                    "when": "view == topo.target-manager && topo.hasSelectedTarget",
                     "group": "navigation"
                 },
                 {

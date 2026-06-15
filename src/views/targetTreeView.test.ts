@@ -120,9 +120,10 @@ describe('TargetTreeView', () => {
             vi.useRealTimers();
         });
 
-        it('syncs target data issue context when the view is created', () => {
+        it('syncs contexts when the view is created', () => {
             const model = new TargetModel();
             model.setTargets(errored('Failed to load targets'));
+            model.setSelected('my-target');
 
             const contextView = new TargetTreeView(
                 model,
@@ -132,6 +133,11 @@ describe('TargetTreeView', () => {
             expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
                 'setContext',
                 'topo.targetDataIssue',
+                true,
+            );
+            expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+                'setContext',
+                'topo.hasSelectedTarget',
                 true,
             );
             contextView.dispose();
@@ -161,6 +167,33 @@ describe('TargetTreeView', () => {
                 'setContext',
                 'topo.targetDataIssue',
                 false,
+            );
+        });
+
+        it('syncs selected target context when selected target changes', async () => {
+            targetModel.setSelected(undefined);
+
+            expect(vscode.commands.executeCommand).not.toHaveBeenCalled();
+
+            await vi.advanceTimersByTimeAsync(500);
+
+            expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+                'setContext',
+                'topo.hasSelectedTarget',
+                false,
+            );
+
+            vi.mocked(vscode.commands.executeCommand).mockClear();
+            targetModel.setSelected(target);
+
+            expect(vscode.commands.executeCommand).not.toHaveBeenCalled();
+
+            await vi.advanceTimersByTimeAsync(500);
+
+            expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+                'setContext',
+                'topo.hasSelectedTarget',
+                true,
             );
         });
     });
