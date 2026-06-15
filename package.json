@@ -15,8 +15,7 @@
         "Other"
     ],
     "activationEvents": [
-        "onUri",
-        "onLanguage:yaml"
+        "onUri"
     ],
     "main": "./dist/extension.js",
     "topo": {
