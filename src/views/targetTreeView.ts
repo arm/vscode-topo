@@ -49,10 +49,10 @@ const PRIMARY_OS_PROCESSING_DOMAIN = {
     id: 'PrimaryOS',
     label: 'Primary OS',
 };
+
+const hasSelectedTargetContextKey = `${manifest.PACKAGE_NAME}.hasSelectedTarget`;
 const targetDataIssueContextKey = `${manifest.PACKAGE_NAME}.targetDataIssue`;
 const refreshDelayMs = 500;
-
-const HAS_SELECTED_TARGET_CONTEXT = `${manifest.PACKAGE_NAME}.hasSelectedTarget`;
 
 export class TargetTreeView
     implements vscode.TreeDataProvider<vscode.TreeItem>, vscode.Disposable
@@ -220,7 +220,7 @@ export class TargetTreeView
     private syncSelectedTargetContext(): void {
         void vscode.commands.executeCommand(
             'setContext',
-            HAS_SELECTED_TARGET_CONTEXT,
+            hasSelectedTargetContextKey,
             Boolean(this.targetModel.selected),
         );
     }
