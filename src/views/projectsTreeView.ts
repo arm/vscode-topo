@@ -4,6 +4,7 @@ import { ProjectTreeItem } from '../treeItems/projectTreeItem';
 import { DisposableCollector } from '../util/disposableCollector';
 import { ProjectModel } from '../models/projectModel';
 import { ErrorTreeItem } from '../treeItems/errorTreeItem';
+import { LoadingTreeItem } from '../treeItems/loadingTreeItem';
 
 export class ProjectsTreeView
     implements vscode.TreeDataProvider<vscode.TreeItem>, vscode.Disposable
@@ -38,6 +39,10 @@ export class ProjectsTreeView
         const projects = this.model.projects;
         if (projects.status === 'errored') {
             return [new ErrorTreeItem('Failed to load projects', projects)];
+        }
+
+        if (projects.loading) {
+            return [new LoadingTreeItem('Loading projects')];
         }
 
         const showWorkspaceName =

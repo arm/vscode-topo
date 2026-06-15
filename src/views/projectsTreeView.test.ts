@@ -3,8 +3,9 @@ import { ProjectsTreeView } from './projectsTreeView';
 import { ProjectTreeItem } from '../treeItems/projectTreeItem';
 import { mutable } from '../util/mutable';
 import { ProjectModel } from '../models/projectModel';
-import { loaded, errored } from '../util/loadable';
+import { loaded, errored, loading } from '../util/loadable';
 import { ErrorTreeItem } from '../treeItems/errorTreeItem';
+import { LoadingTreeItem } from '../treeItems/loadingTreeItem';
 
 describe('ProjectsTreeView', () => {
     let model: ProjectModel;
@@ -81,6 +82,32 @@ describe('ProjectsTreeView', () => {
         expect(children[0]).toMatchObject({
             label: 'Failed to load projects',
             description: 'scan failed',
+        });
+    });
+
+    it('shows a loading item while projects are loading', () => {
+        model.setProjects(loading(loaded([])));
+        const provider = new ProjectsTreeView(model);
+
+        const children = provider.getChildren();
+
+        expect(children).toHaveLength(1);
+        expect(children[0]).toBeInstanceOf(LoadingTreeItem);
+        expect(children[0].label).toBe('Loading projects');
+    });
+
+    it('shows a loading error item when refreshing after project loading failed', () => {
+        model.setProjects(loading(errored(new Error('scan failed'))));
+        const provider = new ProjectsTreeView(model);
+
+        const children = provider.getChildren();
+
+        expect(children).toHaveLength(1);
+        expect(children[0]).toBeInstanceOf(ErrorTreeItem);
+        expect(children[0]).toMatchObject({
+            label: 'Failed to load projects',
+            description: 'scan failed',
+            iconPath: new vscode.ThemeIcon('loading~spin'),
         });
     });
 
