@@ -175,7 +175,7 @@ describe('project clone utilities', () => {
         });
     });
 
-    describe('cloneProjectFromSource', () => {
+    describe('createCloneTask', () => {
         it('builds a clone task with the topo command name', () => {
             const repositoryPath = path.resolve('workspace', 'repo');
             const task = createCloneTask(
@@ -197,7 +197,9 @@ describe('project clone utilities', () => {
                 'model=some-huggingface-id',
             ]);
         });
+    });
 
+    describe('cloneProjectFromSource', () => {
         it('throws a clone error when an invalid clone URL is provided', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
 
