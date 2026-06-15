@@ -15,7 +15,7 @@ changelog:
               - breaking-change
               - breaking
               - semver-major
-        - title: New features
+        - title: Features and Enhancements
           labels:
               - enhancement
               - feature
