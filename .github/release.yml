@@ -10,7 +10,7 @@ changelog:
         authors:
             - dependabot[bot]
     categories:
-        - title: Breaking changes
+        - title: Breaking Changes
           labels:
               - breaking-change
               - breaking
