@@ -3,8 +3,7 @@ import { getErrorMessage } from './getErrorMessage';
 import { logger } from './logger';
 import * as vscode from 'vscode';
 
-export const showAndLogError = (message: string, err: unknown) => {
-    vscode.window.showErrorMessage(`${message}. ${getErrorMessage(err)}`);
+export const logError = (message: string, err: unknown) => {
     if (isWrappedError(err)) {
         logger.error(message);
         logger.error(getErrorMessage(err));
@@ -27,4 +26,9 @@ export const showAndLogError = (message: string, err: unknown) => {
     } else {
         logger.error(message, err);
     }
+};
+
+export const showAndLogError = (message: string, err: unknown) => {
+    vscode.window.showErrorMessage(`${message}. ${getErrorMessage(err)}`);
+    logError(message, err);
 };
