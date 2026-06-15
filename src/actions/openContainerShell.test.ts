@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
 import {
-    AttachShell,
-    attachShell as openAttachShell,
+    OpenContainerShell,
+    openContainerShell,
     attachSSH,
-} from '../actions/attachShell';
+} from '../actions/openContainerShell';
 import { mock } from 'vitest-mock-extended';
 import { ContainerItem } from '../util/types';
 import { DockerCommands } from '../target/dockerCommands';
@@ -11,7 +11,7 @@ import { TargetContainerTreeItem } from '../targetTreeView/targetContainerTreeIt
 
 vi.mock('../util/logger');
 
-describe('AttachShell', () => {
+describe('OpenContainerShell', () => {
     const dockerCommands = new DockerCommands();
     const target = 'user@topo.local';
 
@@ -23,8 +23,8 @@ describe('AttachShell', () => {
         vi.clearAllMocks();
     });
 
-    it('attachShell command opens a docker exec terminal', async () => {
-        const attachShell = new AttachShell(dockerCommands);
+    it('openContainerShell command opens a docker exec terminal', async () => {
+        const openContainerShellAction = new OpenContainerShell(dockerCommands);
         const fakeItem = mock<ContainerItem>({
             id: 'cid',
             image: 'clabel',
@@ -33,7 +33,9 @@ describe('AttachShell', () => {
         });
         const treeItem = new TargetContainerTreeItem(fakeItem);
 
-        await attachShell.attachShellCommandHandler(treeItem);
+        await openContainerShellAction.openContainerShellCommandHandler(
+            treeItem,
+        );
 
         const expectedCommand = dockerCommands.getAttachShellCommand(
             fakeItem.id,
@@ -50,7 +52,7 @@ describe('AttachShell', () => {
         expect(terminal.show).toHaveBeenCalled();
     });
 
-    it('attachShell opens a docker exec terminal', () => {
+    it('openContainerShell opens a docker exec terminal', () => {
         const fakeItem = mock<ContainerItem>({
             id: 'cid',
             image: 'clabel',
@@ -58,7 +60,7 @@ describe('AttachShell', () => {
             state: 'running',
         });
 
-        openAttachShell(fakeItem, dockerCommands);
+        openContainerShell(fakeItem, dockerCommands);
 
         const expectedCommand = dockerCommands.getAttachShellCommand(
             fakeItem.id,

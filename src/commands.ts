@@ -7,7 +7,7 @@ import { DisposableCollector } from './util/disposableCollector';
 import { ProjectInit } from './actions/projectInit';
 import { Deploy } from './actions/deploy';
 import { Stop } from './actions/stop';
-import { AttachShell } from './actions/attachShell';
+import { OpenContainerShell } from './actions/openContainerShell';
 import { ContainerStart } from './actions/containerStart';
 import { ContainerStop } from './actions/containerStop';
 import { ContainerDelete } from './actions/containerDelete';
@@ -19,14 +19,16 @@ function command(id: string): string {
 }
 
 export const refreshHostHealth = command('refreshHostHealth');
+export const refreshTargetData = command('refreshTargetData');
 export const showOutput = command('showOutput');
 export const selectTarget = command('selectTarget');
+export const resetExtensionData = command('resetExtensionData');
 export const unselectTarget = command('unselectTarget');
 export const initProject = command('initProject');
 export const deploy = command('deploy');
 export const deployContext = command('deploy.context');
 export const stop = command('stop.context');
-export const attachShell = command('attachShell');
+export const openContainerShell = command('openContainerShell');
 export const startContainer = command('startContainer');
 export const stopContainer = command('stopContainer');
 export const deleteContainer = command('deleteContainer');
@@ -43,7 +45,7 @@ export interface CommandHandlers {
     projectClone: ProjectClone;
     deploy: Deploy;
     stop: Stop;
-    attachShell: AttachShell;
+    openContainerShell: OpenContainerShell;
     containerStart: ContainerStart;
     containerStop: ContainerStop;
     containerDelete: ContainerDelete;
@@ -56,9 +58,15 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
         vscode.commands.registerCommand(refreshHostHealth, () =>
             handlers.hostController.refreshHealthCommandHandler(),
         ),
+        vscode.commands.registerCommand(refreshTargetData, () =>
+            handlers.targetController.refreshSelectedTargetDataCommandHandler(),
+        ),
         vscode.commands.registerCommand(showOutput, () => logger.show()),
         vscode.commands.registerCommand(selectTarget, () =>
             handlers.targetController.selectCommandHandler(),
+        ),
+        vscode.commands.registerCommand(resetExtensionData, () =>
+            handlers.targetController.resetExtensionDataCommandHandler(),
         ),
         vscode.commands.registerCommand(unselectTarget, (treeNode) =>
             handlers.targetController.unselectCommandHandler(treeNode),
@@ -77,8 +85,10 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
         vscode.commands.registerCommand(stop, (resource?: vscode.Uri) =>
             handlers.stop.stopCommandHandler(resource),
         ),
-        vscode.commands.registerCommand(attachShell, (treeNode) =>
-            handlers.attachShell.attachShellCommandHandler(treeNode),
+        vscode.commands.registerCommand(openContainerShell, (treeNode) =>
+            handlers.openContainerShell.openContainerShellCommandHandler(
+                treeNode,
+            ),
         ),
         vscode.commands.registerCommand(startContainer, (treeNode) =>
             handlers.containerStart.startContainerCommandHandler(treeNode),

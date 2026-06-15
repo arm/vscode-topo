@@ -7,6 +7,9 @@ import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependenc
 import { IssueCheck } from '../topoCliSchema';
 import { TargetModel } from '../models/targetModel';
 import { TaskExecutor } from '../util/taskExecutor';
+import { TargetController } from '../controllers/targetController';
+
+vi.mock('../util/logger');
 
 type ShowQuickPickMany = <T extends vscode.QuickPickItem>(
     items: T[],
@@ -25,6 +28,7 @@ const mockSelectedQuickPickItems = <T extends vscode.QuickPickItem>(
 describe('FixIssue', () => {
     let targetModel: TargetModel;
     let taskExecutor: MockProxy<TaskExecutor>;
+    let targetController: MockProxy<TargetController>;
 
     const target = 'user@topo.local';
     const dependencies: IssueCheck[] = [
@@ -58,6 +62,9 @@ describe('FixIssue', () => {
         value: 'ok',
     };
 
+    const createFixIssue = (): FixIssue =>
+        new FixIssue(taskExecutor, targetModel, targetController);
+
     const createTargetItemWithIssues = (
         targetIssues: IssueCheck[],
         connectivity: IssueCheck = connectedIssue,
@@ -80,6 +87,7 @@ describe('FixIssue', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         taskExecutor = mock<TaskExecutor>();
+        targetController = mock<TargetController>();
         targetModel = new TargetModel();
         targetModel.setSelected(target);
     });
@@ -103,7 +111,7 @@ describe('FixIssue', () => {
     });
 
     it('runs a single dependency fix directly', async () => {
-        const fixIssue = new FixIssue(taskExecutor, targetModel);
+        const fixIssue = createFixIssue();
         const dependencyItem = new HealthCheckDependencyTreeItem(
             dependencies[0],
         );
@@ -120,10 +128,13 @@ describe('FixIssue', () => {
                 }),
             }),
         );
+        expect(
+            targetController.refreshSelectedTargetDataCommandHandler,
+        ).toHaveBeenCalledOnce();
     });
 
     it('fails a single dependency fix without an executable command', async () => {
-        const fixIssue = new FixIssue(taskExecutor, targetModel);
+        const fixIssue = createFixIssue();
         const dependencyItem = new HealthCheckDependencyTreeItem(
             dependencies[2],
         );
@@ -133,11 +144,29 @@ describe('FixIssue', () => {
         ).rejects.toThrow('No executable fix found for the selected item');
 
         expect(taskExecutor.run).not.toHaveBeenCalled();
+        expect(
+            targetController.refreshSelectedTargetDataCommandHandler,
+        ).not.toHaveBeenCalled();
+    });
+
+    it('refreshes after a dependency fix task fails', async () => {
+        taskExecutor.run.mockRejectedValueOnce(new Error('fix failed'));
+        const fixIssue = createFixIssue();
+        const dependencyItem = new HealthCheckDependencyTreeItem(
+            dependencies[0],
+        );
+
+        await fixIssue.fixIssueCommandHandler(dependencyItem);
+
+        expect(taskExecutor.run).toHaveBeenCalledOnce();
+        expect(
+            targetController.refreshSelectedTargetDataCommandHandler,
+        ).toHaveBeenCalledOnce();
     });
 
     it('fails a single dependency fix when no target is selected', async () => {
         targetModel.setSelected(undefined);
-        const fixIssue = new FixIssue(taskExecutor, targetModel);
+        const fixIssue = createFixIssue();
         const dependencyItem = new HealthCheckDependencyTreeItem(
             dependencies[0],
         );
@@ -147,10 +176,13 @@ describe('FixIssue', () => {
         ).rejects.toThrow('No selected target found');
 
         expect(taskExecutor.run).not.toHaveBeenCalled();
+        expect(
+            targetController.refreshSelectedTargetDataCommandHandler,
+        ).not.toHaveBeenCalled();
     });
 
     it('shows a quick pick when only one target issue fix is available', async () => {
-        const fixIssue = new FixIssue(taskExecutor, targetModel);
+        const fixIssue = createFixIssue();
         const targetItem = createTargetItemWithIssues([dependencies[0]]);
         mockSelectedQuickPickItems([
             {
@@ -186,10 +218,13 @@ describe('FixIssue', () => {
                 }),
             }),
         );
+        expect(
+            targetController.refreshSelectedTargetDataCommandHandler,
+        ).toHaveBeenCalledOnce();
     });
 
     it('runs fix task for target connectivity issue', async () => {
-        const fixIssue = new FixIssue(taskExecutor, targetModel);
+        const fixIssue = createFixIssue();
         const connectivityIssue: IssueCheck = {
             name: 'Connectivity',
             status: 'error',
@@ -223,7 +258,7 @@ describe('FixIssue', () => {
     });
 
     it('shows target issue fixes in a quick pick and runs the selected fix', async () => {
-        const fixIssue = new FixIssue(taskExecutor, targetModel);
+        const fixIssue = createFixIssue();
         const targetItem = createTargetItemWithIssues(dependencies);
         mockSelectedQuickPickItems([
             {
@@ -268,7 +303,7 @@ describe('FixIssue', () => {
     });
 
     it('runs each selected target dependency fix', async () => {
-        const fixIssue = new FixIssue(taskExecutor, targetModel);
+        const fixIssue = createFixIssue();
         const targetItem = createTargetItemWithIssues(dependencies);
         mockSelectedQuickPickItems([
             {
@@ -304,6 +339,9 @@ describe('FixIssue', () => {
                 }),
             }),
         );
+        expect(
+            targetController.refreshSelectedTargetDataCommandHandler,
+        ).toHaveBeenCalledOnce();
     });
 
     it('runs a shared target dependency fix only once', async () => {
@@ -326,7 +364,7 @@ describe('FixIssue', () => {
                 command: sharedCommand,
             },
         };
-        const fixIssue = new FixIssue(taskExecutor, targetModel);
+        const fixIssue = createFixIssue();
         const targetItem = createTargetItemWithIssues([
             remoteprocRuntime,
             remoteprocShim,
@@ -352,6 +390,7 @@ describe('FixIssue', () => {
         expect(taskExecutor.run).toHaveBeenNthCalledWith(
             1,
             expect.objectContaining({
+                name: `Fix Remoteproc Runtime, Remoteproc Shim on ${target}`,
                 execution: expect.objectContaining({
                     args: ['install', 'remoteproc', '--target', target],
                 }),
@@ -359,18 +398,21 @@ describe('FixIssue', () => {
         );
     });
 
-    it('does not run a target dependency fix when quick pick is cancelled', async () => {
-        const fixIssue = new FixIssue(taskExecutor, targetModel);
+    it('refreshes when target issue selection is cancelled', async () => {
+        const fixIssue = createFixIssue();
         const targetItem = createTargetItemWithIssues(dependencies);
         mockSelectedQuickPickItems([]);
 
         await fixIssue.fixIssueCommandHandler(targetItem);
 
         expect(taskExecutor.run).not.toHaveBeenCalled();
+        expect(
+            targetController.refreshSelectedTargetDataCommandHandler,
+        ).toHaveBeenCalledOnce();
     });
 
     it('fails when a target has no executable dependency fixes', async () => {
-        const fixIssue = new FixIssue(taskExecutor, targetModel);
+        const fixIssue = createFixIssue();
         const targetItem = createTargetItemWithIssues([dependencies[2]]);
 
         await expect(
@@ -381,10 +423,13 @@ describe('FixIssue', () => {
 
         expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
         expect(taskExecutor.run).not.toHaveBeenCalled();
+        expect(
+            targetController.refreshSelectedTargetDataCommandHandler,
+        ).not.toHaveBeenCalled();
     });
 
     it('fails when the command is called with an unsupported item', async () => {
-        const fixIssue = new FixIssue(taskExecutor, targetModel);
+        const fixIssue = createFixIssue();
 
         await expect(
             fixIssue.fixIssueCommandHandler({ unexpected: true }),

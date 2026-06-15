@@ -80,6 +80,10 @@ function calculateNewVersion(releaseType: string): string {
         throw new Error('package.json version must use major.minor.patch');
     }
 
+    if (current.major === 0 && current.minor === 0 && current.patch === 0) {
+        return '0.0.1';
+    }
+
     const oddMinor = current.minor % 2 !== 0;
     const preFallback = formatVersion({
         major: current.major,
