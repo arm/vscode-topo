@@ -48,6 +48,8 @@ const PRIMARY_OS_PROCESSING_DOMAIN = {
     id: 'PrimaryOS',
     label: 'Primary OS',
 };
+
+const hasSelectedTargetContextKey = `${manifest.PACKAGE_NAME}.hasSelectedTarget`;
 const targetDataIssueContextKey = `${manifest.PACKAGE_NAME}.targetDataIssue`;
 const refreshDelayMs = 500;
 
@@ -71,7 +73,7 @@ export class TargetTreeView
         this.disposables.collect(
             treeView,
             this.targetModel.onSelectedChanged(() => {
-                this.refresh();
+                this.refreshSelectedTarget();
             }),
             this.targetModel.onTargetsChanged(() => {
                 this.refreshTargets();
@@ -88,8 +90,10 @@ export class TargetTreeView
             this._onDidChangeTreeData,
             { dispose: () => this.refresh.cancel() },
             { dispose: () => this.refreshTargets.cancel() },
+            { dispose: () => this.refreshSelectedTarget.cancel() },
         );
         this.syncTargetDataIssueContext();
+        this.syncSelectedTargetContext();
     }
 
     public getChildren(element?: vscode.TreeItem): vscode.TreeItem[] {
@@ -187,6 +191,11 @@ export class TargetTreeView
         this._onDidChangeTreeData.fire(undefined);
     }, refreshDelayMs);
 
+    private refreshSelectedTarget = debounce(() => {
+        this._onDidChangeTreeData.fire(undefined);
+        this.syncSelectedTargetContext();
+    }, refreshDelayMs);
+
     private refreshTargets = debounce(() => {
         this._onDidChangeTreeData.fire(undefined);
         this.syncTargetDataIssueContext();
@@ -197,6 +206,14 @@ export class TargetTreeView
             'setContext',
             targetDataIssueContextKey,
             this.targetModel.targets.status === 'errored',
+        );
+    }
+
+    private syncSelectedTargetContext(): void {
+        vscode.commands.executeCommand(
+            'setContext',
+            hasSelectedTargetContextKey,
+            Boolean(this.targetModel.selected),
         );
     }
 

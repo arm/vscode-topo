@@ -5,7 +5,7 @@
     "publisher": "Arm",
     "description": "Compose, configure, and deploy containerized examples for Arm hardware",
     "license": "Apache-2.0",
-    "version": "0.0.1",
+    "version": "0.2.0",
     "engines": {
         "vscode": "^1.101.0",
         "node": "22",
@@ -99,6 +99,12 @@
             },
             {
                 "command": "topo.refreshHostHealth",
+                "title": "Refresh",
+                "icon": "$(refresh)",
+                "category": "Topo"
+            },
+            {
+                "command": "topo.refreshTargetData",
                 "title": "Refresh",
                 "icon": "$(refresh)",
                 "category": "Topo"
@@ -229,6 +235,10 @@
                     "when": "false"
                 },
                 {
+                    "command": "topo.refreshTargetData",
+                    "when": "false"
+                },
+                {
                     "command": "topo.showOutput",
                     "when": "false"
                 }
@@ -284,6 +294,11 @@
                 {
                     "command": "topo.selectTarget",
                     "when": "view == topo.target-manager && !topo.targetDataIssue",
+                    "group": "navigation"
+                },
+                {
+                    "command": "topo.refreshTargetData",
+                    "when": "view == topo.target-manager && topo.hasSelectedTarget",
                     "group": "navigation"
                 },
                 {
