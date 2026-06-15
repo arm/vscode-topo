@@ -220,6 +220,7 @@ async function loadContainersData(
 export class TargetController {
     private readonly disposables = new DisposableCollector();
     private readonly selectedTargetDataRefresh = new LatestAbortableWork();
+    private readonly selectedTargetDescriptionLoad = new LatestAbortableWork();
 
     constructor(
         private readonly model: TargetModel,
@@ -227,7 +228,10 @@ export class TargetController {
         private readonly topoCli: TopoCli,
         private readonly containerCommands: ContainerCommands,
     ) {
-        this.disposables.collect(this.selectedTargetDataRefresh);
+        this.disposables.collect(
+            this.selectedTargetDataRefresh,
+            this.selectedTargetDescriptionLoad,
+        );
     }
 
     public updateTargetsFromStore(): void {
@@ -356,8 +360,36 @@ export class TargetController {
         }
     }
 
+    public async loadSelectedTargetDescriptionCommandHandler(): Promise<void> {
+        const target = this.model.selected;
+        if (!target) {
+            this.selectedTargetDescriptionLoad.abort();
+            return;
+        }
+
+        try {
+            await this.selectedTargetDescriptionLoad.run((signal) =>
+                this.loadSelectedTargetDescription(target, signal),
+            );
+        } catch (err) {
+            showAndLogError('Failed to load target description', err);
+        }
+    }
+
     public isRefreshingSelectedTargetData(): boolean {
         return this.selectedTargetDataRefresh.isRunning();
+    }
+
+    private async loadSelectedTargetDescription(
+        target: string,
+        signal: AbortSignal,
+    ): Promise<void> {
+        this.model.setSelectedTargetDescription(
+            loading(this.model.selectedTargetDescription),
+        );
+        const description = await loadTargetDescription(this.topoCli, target);
+        signal.throwIfAborted();
+        this.model.setSelectedTargetDescription(description);
     }
 
     private async refreshSelectedTargetData(
@@ -373,9 +405,6 @@ export class TargetController {
         );
         this.model.setSelectedTargetContainers(
             loading(this.model.selectedTargetContainers),
-        );
-        this.model.setSelectedTargetDescription(
-            loading(this.model.selectedTargetDescription),
         );
 
         const health = await loadTargetHealth(this.topoCli, target);
@@ -400,13 +429,12 @@ export class TargetController {
             return this.model.setSelectedTargetContainers(errored(err));
         }
 
-        const [containers, description] = await Promise.all([
-            loadContainersData(this.containerCommands, target),
-            loadTargetDescription(this.topoCli, target),
-        ]);
+        const containers = await loadContainersData(
+            this.containerCommands,
+            target,
+        );
         signal.throwIfAborted();
         this.model.setSelectedTargetContainers(containers);
-        this.model.setSelectedTargetDescription(description);
     }
 
     public dispose(): void {

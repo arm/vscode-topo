@@ -640,8 +640,62 @@ describe('target unselection', () => {
     });
 });
 
+describe('selected target description load', () => {
+    it('loads description for the selected target', async () => {
+        const targetStore = mockTargetStore([target], target);
+        const targetModel = new TargetModel();
+        targetModel.setSelected(target);
+        const { controller, topoCli } = createController(
+            targetModel,
+            targetStore,
+        );
+
+        await controller.loadSelectedTargetDescriptionCommandHandler();
+
+        expect(targetModel.selectedTargetDescription).toStrictEqual(
+            loaded(targetDescription),
+        );
+        expect(topoCli.describe).toHaveBeenCalledWith(target);
+        expect(topoCli.health).not.toHaveBeenCalled();
+    });
+
+    it('stores a description error when topo describe fails', async () => {
+        const targetStore = mockTargetStore([target], target);
+        const targetModel = new TargetModel();
+        targetModel.setSelected(target);
+        const { controller, topoCli } = createController(
+            targetModel,
+            targetStore,
+        );
+        const error = new Error('invalid json');
+        topoCli.describe.mockRejectedValue(error);
+
+        await controller.loadSelectedTargetDescriptionCommandHandler();
+
+        expect(targetModel.selectedTargetDescription).toStrictEqual(
+            errored(error),
+        );
+    });
+
+    it('does not load description when no target is selected', async () => {
+        const targetStore = mockTargetStore();
+        const targetModel = new TargetModel();
+        const { controller, topoCli } = createController(
+            targetModel,
+            targetStore,
+        );
+
+        await controller.loadSelectedTargetDescriptionCommandHandler();
+
+        expect(targetModel.selectedTargetDescription).toStrictEqual(
+            loaded(undefined),
+        );
+        expect(topoCli.describe).not.toHaveBeenCalled();
+    });
+});
+
 describe('selected target data refresh', () => {
-    it('loads description, health and containers for the selected target', async () => {
+    it('loads health and containers for the selected target', async () => {
         const targetStore = mockTargetStore([target], target);
         const targetModel = new TargetModel();
         targetModel.setSelected(target);
@@ -677,36 +731,11 @@ describe('selected target data refresh', () => {
         expect(targetModel.selectedTargetHealth).toStrictEqual(
             loaded(health.target),
         );
-        expect(targetModel.selectedTargetDescription).toStrictEqual(
-            loaded(targetDescription),
-        );
-        expect(topoCli.describe).toHaveBeenCalledWith(target);
         expect(topoCli.health).toHaveBeenCalledWith(target);
         expect(containerCommands.getContainers).toHaveBeenCalledWith(target);
         expect(containerCommands.inspectContainers).toHaveBeenCalledWith(
             [dockerPsItem.ID],
             target,
-        );
-    });
-
-    it('stores a description error when topo describe fails', async () => {
-        const targetStore = mockTargetStore([target], target);
-        const targetModel = new TargetModel();
-        targetModel.setSelected(target);
-        const { controller, topoCli } = createController(
-            targetModel,
-            targetStore,
-        );
-        const error = new Error('invalid json');
-        topoCli.describe.mockRejectedValue(error);
-
-        await controller.refreshSelectedTargetDataCommandHandler();
-
-        expect(targetModel.selectedTargetDescription).toStrictEqual(
-            errored(error),
-        );
-        expect(targetModel.selectedTargetHealth).toStrictEqual(
-            loaded(health.target),
         );
     });
 
