@@ -128,14 +128,17 @@ export async function deploy(
     composeFilePath: string,
     target: string,
 ): Promise<void> {
-    const task = createDeployTask(composeFilePath, target);
+    const task = createProcessTask(
+        `Deploy to ${target}`,
+        ['topo', 'deploy', '--target', target],
+        {
+            cwd: path.dirname(composeFilePath),
+        },
+    );
     const taskName = task.name;
 
     try {
         await taskExecutor.run(task);
-        vscode.window.showInformationMessage(
-            `Deployment to ${target} completed successfully.`,
-        );
     } catch (e) {
         const terminal = vscode.window.terminals.find(
             (t) => t.name === taskName,
@@ -152,17 +155,7 @@ export async function deploy(
             terminal?.show();
         }
     }
-}
-
-export function createDeployTask(
-    composeFilePath: string,
-    target: string,
-): vscode.Task {
-    return createProcessTask(
-        `Deploy to ${target}`,
-        ['topo', 'deploy', '--target', target],
-        {
-            cwd: path.dirname(composeFilePath),
-        },
+    vscode.window.showInformationMessage(
+        `Deployment to ${target} completed successfully.`,
     );
 }

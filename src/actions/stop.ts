@@ -44,14 +44,17 @@ export async function stop(
     composeFilePath: string,
     target: string,
 ): Promise<void> {
-    const task = createStopTask(composeFilePath, target);
+    const task = createProcessTask(
+        `Stop services on ${target}`,
+        ['topo', 'stop', '--target', target],
+        {
+            cwd: path.dirname(composeFilePath),
+        },
+    );
     const taskName = task.name;
 
     try {
         await taskExecutor.run(task);
-        vscode.window.showInformationMessage(
-            `Services on ${target} stopped successfully.`,
-        );
     } catch (e) {
         const terminal = vscode.window.terminals.find(
             (t) => t.name === taskName,
@@ -68,17 +71,7 @@ export async function stop(
             terminal?.show();
         }
     }
-}
-
-export function createStopTask(
-    composeFilePath: string,
-    target: string,
-): vscode.Task {
-    return createProcessTask(
-        `Stop services on ${target}`,
-        ['topo', 'stop', '--target', target],
-        {
-            cwd: path.dirname(composeFilePath),
-        },
+    vscode.window.showInformationMessage(
+        `Services on ${target} stopped successfully.`,
     );
 }

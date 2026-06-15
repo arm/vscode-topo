@@ -1,7 +1,7 @@
 import path from 'node:path';
 import os from 'node:os';
 import * as vscode from 'vscode';
-import { Deploy, createDeployTask, deploy as deployServices } from './deploy';
+import { Deploy, deploy as deployServices } from './deploy';
 import { TargetModel } from '../models/targetModel';
 import { MockProxy, mock } from 'vitest-mock-extended';
 import { mutable } from '../util/mutable';
@@ -95,15 +95,6 @@ describe('Deploy', () => {
         );
         expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
         expect(taskExecutor.run).not.toHaveBeenCalled();
-        expect(
-            targetController.refreshSelectedTargetDataCommandHandler,
-        ).not.toHaveBeenCalled();
-    });
-
-    it('builds a deploy task with the topo command name', () => {
-        const task = createDeployTask(composeFilePath, target);
-
-        expectDeployTask(task, path.dirname(composeFilePath));
         expect(
             targetController.refreshSelectedTargetDataCommandHandler,
         ).not.toHaveBeenCalled();

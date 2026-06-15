@@ -1,7 +1,7 @@
 import path from 'node:path';
 import os from 'node:os';
 import * as vscode from 'vscode';
-import { Stop, createStopTask, stop as stopServices } from './stop';
+import { Stop, stop as stopServices } from './stop';
 import { TargetModel } from '../models/targetModel';
 import { mock, MockProxy } from 'vitest-mock-extended';
 import { TaskExecutor } from '../util/taskExecutor';
@@ -53,12 +53,6 @@ describe('Stop', () => {
         expect(
             targetController.refreshSelectedTargetDataCommandHandler,
         ).not.toHaveBeenCalled();
-    });
-
-    it('builds a stop task with the topo command name', () => {
-        const task = createStopTask(composeFilePath, target);
-
-        expectStopTask(task, path.dirname(composeFilePath));
     });
 
     it('handles successful stop operation', async () => {
