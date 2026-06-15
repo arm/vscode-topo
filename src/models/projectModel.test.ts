@@ -38,4 +38,16 @@ describe('ProjectModel', () => {
 
         expect(onChanged).toHaveBeenCalledTimes(1);
     });
+
+    it('fires onProjectsChanged when a different loadable is set', () => {
+        const model = new ProjectModel();
+        model.setProjects(loaded(projects));
+
+        const onChanged = vi.fn();
+        model.onProjectsChanged(onChanged);
+
+        model.setProjects(loaded(projects));
+
+        expect(onChanged).toHaveBeenCalledTimes(1);
+    });
 });

@@ -13,6 +13,10 @@ export class ProjectModel {
     private _projects: Loadable<ProjectMetadata[]> = defaultProjects;
 
     public setProjects(projects: Loadable<ProjectMetadata[]>): void {
+        if (projects === this._projects) {
+            return;
+        }
+
         this._projects = projects;
         this._onProjectsChanged.fire();
     }
