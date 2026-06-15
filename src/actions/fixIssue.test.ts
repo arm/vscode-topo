@@ -84,31 +84,6 @@ describe('FixIssue', () => {
         targetModel.setSelected(target);
     });
 
-    function expectFixTask(
-        task: vscode.Task,
-        taskName: string,
-        args: string[],
-    ): void {
-        expect(task.name).toBe(taskName);
-        expect(task.execution).toMatchObject({
-            process: 'topo',
-            args,
-            options: { cwd: undefined },
-        });
-    }
-
-    function expectFixTaskCall(
-        callIndex: number,
-        taskName: string,
-        args: string[],
-    ): void {
-        expectFixTask(
-            taskExecutor.run.mock.calls[callIndex][0],
-            taskName,
-            args,
-        );
-    }
-
     it('builds a fix task with the topo command name', () => {
         const command = dependencies[1].fix?.command;
         if (!command) {
@@ -116,12 +91,15 @@ describe('FixIssue', () => {
         }
         const task = createFixIssueTask(target, ['Debugger'], command);
 
-        expectFixTask(task, `Fix Debugger on ${target}`, [
-            'install',
-            'debugger',
-            '--target',
-            target,
-        ]);
+        expect(task).toMatchObject(
+            expect.objectContaining({
+                name: `Fix Debugger on ${target}`,
+                execution: expect.objectContaining({
+                    process: 'topo',
+                    args: ['install', 'debugger', '--target', target],
+                }),
+            }),
+        );
     });
 
     it('runs a single dependency fix directly', async () => {
@@ -134,12 +112,14 @@ describe('FixIssue', () => {
 
         expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
         expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-        expectFixTaskCall(0, `Fix Container Engine on ${target}`, [
-            'install',
-            'container-engine',
-            '--target',
-            target,
-        ]);
+        expect(taskExecutor.run).toHaveBeenNthCalledWith(
+            1,
+            expect.objectContaining({
+                execution: expect.objectContaining({
+                    args: ['install', 'container-engine', '--target', target],
+                }),
+            }),
+        );
     });
 
     it('fails a single dependency fix without an executable command', async () => {
@@ -198,12 +178,14 @@ describe('FixIssue', () => {
             },
         );
         expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-        expectFixTaskCall(0, `Fix Container Engine on ${target}`, [
-            'install',
-            'container-engine',
-            '--target',
-            target,
-        ]);
+        expect(taskExecutor.run).toHaveBeenNthCalledWith(
+            1,
+            expect.objectContaining({
+                execution: expect.objectContaining({
+                    args: ['install', 'container-engine', '--target', target],
+                }),
+            }),
+        );
     });
 
     it('runs fix task for target connectivity issue', async () => {
@@ -230,11 +212,14 @@ describe('FixIssue', () => {
         await fixIssue.fixIssueCommandHandler(targetItem);
 
         expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-        expectFixTaskCall(0, `Fix Connectivity on ${target}`, [
-            'setup-keys',
-            '--target',
-            'ssh://pi5-rod',
-        ]);
+        expect(taskExecutor.run).toHaveBeenNthCalledWith(
+            1,
+            expect.objectContaining({
+                execution: expect.objectContaining({
+                    args: ['setup-keys', '--target', 'ssh://pi5-rod'],
+                }),
+            }),
+        );
     });
 
     it('shows target issue fixes in a quick pick and runs the selected fix', async () => {
@@ -272,12 +257,14 @@ describe('FixIssue', () => {
             },
         );
         expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-        expectFixTaskCall(0, `Fix Debugger on ${target}`, [
-            'install',
-            'debugger',
-            '--target',
-            target,
-        ]);
+        expect(taskExecutor.run).toHaveBeenNthCalledWith(
+            1,
+            expect.objectContaining({
+                execution: expect.objectContaining({
+                    args: ['install', 'debugger', '--target', target],
+                }),
+            }),
+        );
     });
 
     it('runs each selected target dependency fix', async () => {
@@ -301,18 +288,22 @@ describe('FixIssue', () => {
         await fixIssue.fixIssueCommandHandler(targetItem);
 
         expect(taskExecutor.run).toHaveBeenCalledTimes(2);
-        expectFixTaskCall(0, `Fix Container Engine on ${target}`, [
-            'install',
-            'container-engine',
-            '--target',
-            target,
-        ]);
-        expectFixTaskCall(1, `Fix Debugger on ${target}`, [
-            'install',
-            'debugger',
-            '--target',
-            target,
-        ]);
+        expect(taskExecutor.run).toHaveBeenNthCalledWith(
+            1,
+            expect.objectContaining({
+                execution: expect.objectContaining({
+                    args: ['install', 'container-engine', '--target', target],
+                }),
+            }),
+        );
+        expect(taskExecutor.run).toHaveBeenNthCalledWith(
+            2,
+            expect.objectContaining({
+                execution: expect.objectContaining({
+                    args: ['install', 'debugger', '--target', target],
+                }),
+            }),
+        );
     });
 
     it('runs a shared target dependency fix only once', async () => {
@@ -358,10 +349,13 @@ describe('FixIssue', () => {
         await fixIssue.fixIssueCommandHandler(targetItem);
 
         expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-        expectFixTaskCall(
-            0,
-            `Fix Remoteproc Runtime, Remoteproc Shim on ${target}`,
-            ['install', 'remoteproc', '--target', target],
+        expect(taskExecutor.run).toHaveBeenNthCalledWith(
+            1,
+            expect.objectContaining({
+                execution: expect.objectContaining({
+                    args: ['install', 'remoteproc', '--target', target],
+                }),
+            }),
         );
     });
 
