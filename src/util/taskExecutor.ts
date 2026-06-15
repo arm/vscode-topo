@@ -6,12 +6,12 @@ export class TaskExecutor {
     constructor(private readonly topoCli: TopoCli) {}
 
     public async run(task: vscode.Task): Promise<void> {
-        const executableTask = this.resolveTaskBinaries(task);
+        const executableTask = this.resolveProcessTaskBinary(task);
         const taskExecution = await vscode.tasks.executeTask(executableTask);
         await waitForTaskProcess(taskExecution, task.name);
     }
 
-    private resolveTaskBinaries(task: vscode.Task): vscode.Task {
+    private resolveProcessTaskBinary(task: vscode.Task): vscode.Task {
         const execution = task.execution;
         if (!(execution instanceof vscode.ProcessExecution)) {
             return task;
