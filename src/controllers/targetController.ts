@@ -378,10 +378,6 @@ export class TargetController {
             loading(this.model.selectedTargetDescription),
         );
 
-        const description = await loadTargetDescription(this.topoCli, target);
-        signal.throwIfAborted();
-        this.model.setSelectedTargetDescription(description);
-
         const health = await loadTargetHealth(this.topoCli, target);
         signal.throwIfAborted();
         this.model.setSelectedTargetHealth(health);
@@ -404,12 +400,13 @@ export class TargetController {
             return this.model.setSelectedTargetContainers(errored(err));
         }
 
-        const containers = await loadContainersData(
-            this.containerCommands,
-            target,
-        );
+        const [containers, description] = await Promise.all([
+            loadContainersData(this.containerCommands, target),
+            loadTargetDescription(this.topoCli, target),
+        ]);
         signal.throwIfAborted();
         this.model.setSelectedTargetContainers(containers);
+        this.model.setSelectedTargetDescription(description);
     }
 
     public dispose(): void {
