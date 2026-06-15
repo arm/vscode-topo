@@ -85,9 +85,7 @@ export class TargetTreeView
         );
     }
 
-    public async getChildren(
-        element?: vscode.TreeItem,
-    ): Promise<vscode.TreeItem[]> {
+    public getChildren(element?: vscode.TreeItem): vscode.TreeItem[] {
         if (!element) {
             const selectedTarget = this.targetModel.selected;
             if (!selectedTarget) {
