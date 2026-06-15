@@ -65,6 +65,10 @@ describe('commands', () => {
                 handlers.targetController.selectCommandHandler,
             ],
             [
+                commands.resetExtensionData,
+                handlers.targetController.resetExtensionDataCommandHandler,
+            ],
+            [
                 commands.unselectTarget,
                 handlers.targetController.unselectCommandHandler,
             ],
