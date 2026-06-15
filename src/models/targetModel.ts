@@ -8,6 +8,7 @@ const defaultHealth: Loadable<TargetHealthCheck | undefined> =
     loaded(undefined);
 const defaultDescription: Loadable<TargetDescription | undefined> =
     loaded(undefined);
+const defaultTargets: Loadable<string[]> = loaded([]);
 
 export class TargetModel {
     private _onSelectedChanged: vscode.EventEmitter<void> =
@@ -36,7 +37,7 @@ export class TargetModel {
         this._onDescriptionChanged.event;
 
     private _selected?: string;
-    private _targets: string[] = [];
+    private _targets: Loadable<string[]> = defaultTargets;
     private _health: Loadable<TargetHealthCheck | undefined> = defaultHealth;
     private _containers: Loadable<ContainerItem[]> = defaultContainers;
     private _description: Loadable<TargetDescription | undefined> =
@@ -45,22 +46,50 @@ export class TargetModel {
     public setSelected(selected: string | undefined): void {
         const changed = this._selected !== selected;
         this._selected = selected;
-        if (changed) {
+        if (changed || selected === undefined) {
             this.clearSelectedTargetData();
+        }
+        if (changed) {
             this._onSelectedChanged.fire();
         }
     }
 
-    public setTargets(targets: string[]): void {
+    public setTargets(targets: Loadable<string[]>): void {
+        const changed = this._targets !== targets;
         this._targets = targets;
-        this._onTargetsChanged.fire();
+        if (changed) {
+            this._onTargetsChanged.fire();
+        }
+    }
+
+    public setSelectedTargetHealth(
+        state: Loadable<TargetHealthCheck | undefined>,
+    ) {
+        const changed = this._health !== state;
+        this._health = state;
+        if (changed) {
+            this._onHealthChanged.fire();
+        }
+    }
+
+    public setSelectedTargetContainers(containers: Loadable<ContainerItem[]>) {
+        const changed = this._containers !== containers;
+        this._containers = containers;
+        if (changed) {
+            this._onContainersChanged.fire();
+        }
+    }
+
+    public clear(): void {
+        this.setTargets(defaultTargets);
+        this.setSelected(undefined);
     }
 
     public get selected(): string | undefined {
         return this._selected;
     }
 
-    public get targets(): string[] {
+    public get targets(): Loadable<string[]> {
         return this._targets;
     }
 
@@ -68,20 +97,8 @@ export class TargetModel {
         return this._health;
     }
 
-    public setSelectedTargetHealth(
-        state: Loadable<TargetHealthCheck | undefined>,
-    ) {
-        this._health = state;
-        this._onHealthChanged.fire();
-    }
-
     public get selectedTargetContainers(): Loadable<ContainerItem[]> {
         return this._containers;
-    }
-
-    public setSelectedTargetContainers(containers: Loadable<ContainerItem[]>) {
-        this._containers = containers;
-        this._onContainersChanged.fire();
     }
 
     public get selectedTargetDescription(): Loadable<
@@ -97,7 +114,7 @@ export class TargetModel {
         this._onDescriptionChanged.fire();
     }
 
-    public clearSelectedTargetData(): void {
+    private clearSelectedTargetData(): void {
         this.setSelectedTargetHealth(defaultHealth);
         this.setSelectedTargetContainers(defaultContainers);
         this.setSelectedTargetDescription(defaultDescription);

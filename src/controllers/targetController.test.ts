@@ -296,8 +296,70 @@ describe('load from store', () => {
         const { controller } = createController(targetModel, targetStore);
         controller.updateTargetsFromStore();
 
-        expect(targetModel.targets).toEqual(['host-a', 'host-b']);
+        expect(targetModel.targets).toEqual(loaded(['host-a', 'host-b']));
         expect(targetModel.selected).toBe('host-b');
+    });
+
+    it('shows a data issue in the model when stored targets are corrupted', () => {
+        const targetStore = mockTargetStore();
+        const targetModel = new TargetModel();
+        targetStore.getTargets.mockImplementation(() => {
+            throw new WrappedError('STORAGE', 'Failed to load targets');
+        });
+
+        const { controller } = createController(targetModel, targetStore);
+        controller.updateTargetsFromStore();
+
+        expect(targetModel.targets.status).toBe('errored');
+        expect(targetModel.selected).toBeUndefined();
+    });
+
+    it('clears the target error after targets load successfully', () => {
+        const targetStore = mockTargetStore(['host-a'], 'host-a');
+        const targetModel = new TargetModel();
+        targetModel.setTargets(errored('Failed to load targets'));
+
+        const { controller } = createController(targetModel, targetStore);
+        controller.updateTargetsFromStore();
+
+        expect(targetModel.targets).toEqual(loaded(['host-a']));
+        expect(targetModel.selected).toBe('host-a');
+    });
+
+    it('resets extension data when reset command is invoked', async () => {
+        const targetStore = mockTargetStore();
+        const targetModel = new TargetModel();
+        targetStore.resetExtensionData.mockResolvedValue(undefined);
+        const { controller } = createController(targetModel, targetStore);
+
+        await controller.resetExtensionDataCommandHandler();
+
+        expect(targetStore.resetExtensionData).toHaveBeenCalled();
+    });
+
+    it('throws when resetting extension data fails with an unknown error', async () => {
+        const targetStore = mockTargetStore();
+        const error = new Error('boom');
+        targetStore.resetExtensionData.mockRejectedValue(error);
+        const { controller } = createController(new TargetModel(), targetStore);
+
+        await expect(
+            controller.resetExtensionDataCommandHandler(),
+        ).rejects.toThrow(error);
+    });
+
+    it('throws when selected target loading fails', () => {
+        const targetStore = mockTargetStore(['host-a']);
+        const targetModel = new TargetModel();
+        targetStore.getSelectedTarget.mockImplementation(() => {
+            throw new WrappedError('STORAGE', 'Failed to load selected target');
+        });
+        const { controller } = createController(targetModel, targetStore);
+
+        expect(() => controller.updateTargetsFromStore()).toThrow(
+            'Failed to load selected target',
+        );
+        expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
     });
 });
 
@@ -362,7 +424,7 @@ describe('target addition', () => {
         expect(targetStore.addTarget).toHaveBeenCalledWith(targetSsh);
         expect(targetStore.setSelected).toHaveBeenCalledWith(targetSsh);
         expect(targetModel.selected).toBe(targetSsh);
-        expect(targetModel.targets).toEqual([targetSsh]);
+        expect(targetModel.targets).toEqual(loaded([targetSsh]));
     });
 
     it('trims the selected target before storing and selecting it', async () => {
@@ -376,7 +438,7 @@ describe('target addition', () => {
         expect(targetStore.addTarget).toHaveBeenCalledWith('root@192.0.2.1');
         expect(targetStore.setSelected).toHaveBeenCalledWith('root@192.0.2.1');
         expect(targetModel.selected).toBe('root@192.0.2.1');
-        expect(targetModel.targets).toEqual(['root@192.0.2.1']);
+        expect(targetModel.targets).toEqual(loaded(['root@192.0.2.1']));
     });
 
     it('selects an existing target without adding it again', async () => {
@@ -399,7 +461,7 @@ describe('target addition', () => {
             }),
         );
         expect(targetModel.selected).toBe('saved-host');
-        expect(targetModel.targets).toEqual(['saved-host']);
+        expect(targetModel.targets).toEqual(loaded(['saved-host']));
     });
 
     it('does nothing when quick pick is dismissed', async () => {
@@ -413,7 +475,7 @@ describe('target addition', () => {
         expect(targetStore.addTarget).not.toHaveBeenCalled();
         expect(targetStore.setSelected).not.toHaveBeenCalled();
         expect(targetModel.selected).toBeUndefined();
-        expect(targetModel.targets).toEqual([]);
+        expect(targetModel.targets).toEqual(loaded([]));
     });
 
     it('removes a saved target from the quick pick item button', async () => {
@@ -429,7 +491,7 @@ describe('target addition', () => {
         expect(targetStore.setSelected).not.toHaveBeenCalled();
         expect(vscode.window.showWarningMessage).not.toHaveBeenCalled();
         expect(targetModel.selected).toBeUndefined();
-        expect(targetModel.targets).toEqual([]);
+        expect(targetModel.targets).toEqual(loaded([]));
     });
 
     it('confirms before removing the selected target from the quick pick item button', async () => {
@@ -454,7 +516,7 @@ describe('target addition', () => {
         );
         expect(targetStore.deleteTarget).toHaveBeenCalledWith('selected-host');
         expect(targetModel.selected).toBeUndefined();
-        expect(targetModel.targets).toEqual(['other-host']);
+        expect(targetModel.targets).toEqual(loaded(['other-host']));
     });
 
     it('does not remove the selected target when confirmation is dismissed', async () => {
@@ -476,7 +538,25 @@ describe('target addition', () => {
         );
         expect(targetStore.deleteTarget).not.toHaveBeenCalled();
         expect(targetModel.selected).toBe('selected-host');
-        expect(targetModel.targets).toEqual(['selected-host']);
+        expect(targetModel.targets).toEqual(loaded(['selected-host']));
+    });
+
+    it('shows an error when targetStore.deleteTarget fails with a storage error', async () => {
+        const targetStore = mockTargetStore(['manual-host']);
+        const targetModel = new TargetModel();
+        const { controller } = createController(targetModel, targetStore);
+        const error = new WrappedError('STORAGE', 'Failed to load targets');
+        targetStore.deleteTarget.mockRejectedValue(error);
+        controller.updateTargetsFromStore();
+        mockQuickPick({ triggerButtonForLabel: 'manual-host' });
+
+        await controller.selectCommandHandler();
+
+        expect(showAndLogError).toHaveBeenCalledWith(
+            'Failed to remove target',
+            error,
+        );
+        expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
     });
 
     it('shows error when targetStore.addTarget fails with an invalid target error', async () => {
@@ -511,6 +591,19 @@ describe('target addition', () => {
         expect(showAndLogError).not.toHaveBeenCalled();
         expect(vscode.window.showWarningMessage).not.toHaveBeenCalled();
         expect(targetStore.setSelected).not.toHaveBeenCalled();
+    });
+
+    it('throws when targetStore.addTarget fails with a storage error', async () => {
+        const targetStore = mockTargetStore();
+        const targetModel = new TargetModel();
+        const { controller } = createController(targetModel, targetStore);
+        const error = new WrappedError('STORAGE', 'Failed to load targets');
+        targetStore.addTarget.mockRejectedValueOnce(error);
+        mockQuickPick({ selectedItem: { label: 'root@192.0.2.1' } });
+
+        await expect(controller.selectCommandHandler()).rejects.toThrow(error);
+
+        expect(showAndLogError).not.toHaveBeenCalled();
     });
 });
 

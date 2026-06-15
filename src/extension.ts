@@ -95,7 +95,7 @@ export async function activate(
         dockerCommands,
         targetController,
     );
-    const fixIssue = new FixIssue(topoCli, targetModel);
+    const fixIssue = new FixIssue(topoCli, targetModel, targetController);
     const protocolHandler = new ProtocolHandler(topoCli);
 
     context.subscriptions.push(

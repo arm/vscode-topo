@@ -10,7 +10,9 @@ import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
 import { ContainerItem } from '../util/types';
 import { loaded } from '../util/loadable';
+import { TargetDataIssueTreeItem } from '../targetTreeView/targetDataIssueTreeItem';
 import { ErrorTreeItem } from '../treeItems/errorTreeItem';
+import debounce from 'lodash.debounce';
 
 function compareByName(a: { name: string }, b: { name: string }): number {
     return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
@@ -46,6 +48,8 @@ const PRIMARY_OS_PROCESSING_DOMAIN = {
     id: 'PrimaryOS',
     label: 'Primary OS',
 };
+const targetDataIssueContextKey = `${manifest.PACKAGE_NAME}.targetDataIssue`;
+const refreshDelayMs = 500;
 
 export class TargetTreeView
     implements vscode.TreeDataProvider<vscode.TreeItem>, vscode.Disposable
@@ -61,32 +65,39 @@ export class TargetTreeView
     constructor(private readonly targetModel: TargetModel) {
         const treeView = vscode.window.createTreeView(TargetTreeView.viewId, {
             treeDataProvider: this,
-            showCollapseAll: true,
+            showCollapseAll: false,
         });
 
         this.disposables.collect(
             treeView,
             this.targetModel.onSelectedChanged(() => {
-                this._onDidChangeTreeData.fire(undefined);
+                this.refresh();
             }),
             this.targetModel.onTargetsChanged(() => {
-                this._onDidChangeTreeData.fire(undefined);
+                this.refreshTargets();
             }),
             this.targetModel.onHealthChanged(() => {
-                this._onDidChangeTreeData.fire(undefined);
+                this.refresh();
             }),
             this.targetModel.onContainersChanged(() => {
-                this._onDidChangeTreeData.fire(undefined);
+                this.refresh();
             }),
             this.targetModel.onDescriptionChanged(() => {
                 this._onDidChangeTreeData.fire(undefined);
             }),
             this._onDidChangeTreeData,
+            { dispose: () => this.refresh.cancel() },
+            { dispose: () => this.refreshTargets.cancel() },
         );
+        this.syncTargetDataIssueContext();
     }
 
     public getChildren(element?: vscode.TreeItem): vscode.TreeItem[] {
         if (!element) {
+            if (this.targetModel.targets.status === 'errored') {
+                return [new TargetDataIssueTreeItem(this.targetModel.targets)];
+            }
+
             const selectedTarget = this.targetModel.selected;
             if (!selectedTarget) {
                 return [];
@@ -170,6 +181,23 @@ export class TargetTreeView
 
     public getTreeItem(element: vscode.TreeItem): vscode.TreeItem {
         return element;
+    }
+
+    private refresh = debounce(() => {
+        this._onDidChangeTreeData.fire(undefined);
+    }, refreshDelayMs);
+
+    private refreshTargets = debounce(() => {
+        this._onDidChangeTreeData.fire(undefined);
+        this.syncTargetDataIssueContext();
+    }, refreshDelayMs);
+
+    private syncTargetDataIssueContext(): void {
+        vscode.commands.executeCommand(
+            'setContext',
+            targetDataIssueContextKey,
+            this.targetModel.targets.status === 'errored',
+        );
     }
 
     public dispose(): void {

@@ -3,7 +3,7 @@ import { TargetStore } from '../target/targetStore';
 import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
 import { isWrappedError } from '../errors/wrappedError';
 import { logger } from '../util/logger';
-import { showAndLogError } from '../util/showAndLogError';
+import { logError, showAndLogError } from '../util/showAndLogError';
 import { defaultSshConfigPath, getHosts } from '../util/ssh';
 import * as vscode from 'vscode';
 import { TopoCli } from '../topoCli';
@@ -18,6 +18,9 @@ import {
 import { HealthCheck, TargetHealthCheck } from '../topoCliSchema';
 import { LatestAbortableWork } from '../util/latestAbortableWork';
 import { DisposableCollector } from '../util/disposableCollector';
+
+const corruptedDataMessage =
+    'The local target data saved by Topo looks corrupted';
 
 type TargetPromptResult =
     | { readonly kind: 'select'; readonly target: string }
@@ -228,8 +231,29 @@ export class TargetController {
     }
 
     public updateTargetsFromStore(): void {
-        this.model.setTargets([...this.targetStore.getTargets()]);
-        this.model.setSelected(this.targetStore.getSelectedTarget());
+        let targets: Set<string>;
+        try {
+            targets = this.targetStore.getTargets();
+        } catch (err) {
+            if (!isWrappedError(err, ['STORAGE'])) {
+                throw err;
+            }
+            if (this.model.targets.status !== 'errored') {
+                logError(corruptedDataMessage, err);
+            }
+            this.model.setTargets(errored(err));
+            return;
+        }
+
+        const selectedTarget = this.targetStore.getSelectedTarget();
+        this.model.setTargets(loaded([...targets]));
+        this.model.setSelected(selectedTarget);
+    }
+
+    public async resetExtensionDataCommandHandler(): Promise<void> {
+        await this.targetStore.resetExtensionData();
+        this.model.clear();
+        vscode.window.showInformationMessage('Topo local data has been reset.');
     }
 
     public async selectCommandHandler(): Promise<void> {
@@ -268,8 +292,12 @@ export class TargetController {
     }
 
     private async promptAndSelectTarget(): Promise<void> {
+        const currentTargets =
+            this.model.targets.status === 'loaded'
+                ? this.model.targets.data
+                : [];
         const result = await promptForSshTarget(
-            this.model.targets,
+            currentTargets,
             this.model.selected,
         );
 
@@ -294,7 +322,7 @@ export class TargetController {
             return;
         }
 
-        if (!this.model.targets.includes(target)) {
+        if (!currentTargets.includes(target)) {
             try {
                 await this.targetStore.addTarget(target);
             } catch (error) {
