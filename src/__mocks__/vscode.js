@@ -14,6 +14,16 @@ const Disposable = vi.fn(() => {
     return { dispose: vi.fn() };
 });
 Disposable.from = (disposable) => disposable;
+class FileSystemError extends Error {
+    constructor(messageOrUri, code = 'Unknown') {
+        super(messageOrUri?.toString?.() ?? messageOrUri);
+        this.code = code;
+    }
+
+    static FileNotFound(messageOrUri) {
+        return new FileSystemError(messageOrUri, 'FileNotFound');
+    }
+}
 class EventEmitter {
     constructor() {
         this._callbacks = [];
@@ -173,6 +183,8 @@ const window = {
 const fs = {
     readFile: vi.fn(),
     writeFile: vi.fn(),
+    createDirectory: vi.fn(),
+    delete: vi.fn(),
 };
 const workspace = {
     fs,
@@ -280,6 +292,7 @@ module.exports = {
     Disposable,
     EndOfLine,
     EventEmitter,
+    FileSystemError,
     LogLevel,
     Position,
     ProcessExecution,

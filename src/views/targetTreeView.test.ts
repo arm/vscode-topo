@@ -11,6 +11,7 @@ import { TargetProcessingDomainGroupTreeItem } from '../targetTreeView/targetPro
 import { IssueCheck, TargetHealthCheck } from '../topoCliSchema';
 import { TargetDescriptionStore } from '../target/targetDescriptionStore';
 import { TargetModel } from '../models/targetModel';
+import { TargetDataIssueTreeItem } from '../targetTreeView/targetDataIssueTreeItem';
 import { errored, loaded } from '../util/loadable';
 import { ErrorTreeItem } from '../treeItems/errorTreeItem';
 
@@ -97,7 +98,7 @@ describe('TargetTreeView', () => {
 
     beforeEach(() => {
         targetModel = new TargetModel();
-        targetModel.setTargets([target]);
+        targetModel.setTargets(loaded([target]));
         targetModel.setSelected(target);
         targetModel.setSelectedTargetHealth(loaded(targetHealth));
         targetModel.setSelectedTargetContainers(loaded(mockContainers));
@@ -108,6 +109,60 @@ describe('TargetTreeView', () => {
         view = new TargetTreeView(targetModel, targetDescriptionStoreMock);
         vi.clearAllTimers();
         vi.clearAllMocks();
+    });
+
+    describe('context', () => {
+        beforeEach(() => {
+            vi.useFakeTimers();
+        });
+
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
+        it('syncs target data issue context when the view is created', () => {
+            const model = new TargetModel();
+            model.setTargets(errored('Failed to load targets'));
+
+            const contextView = new TargetTreeView(
+                model,
+                targetDescriptionStoreMock,
+            );
+
+            expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+                'setContext',
+                'topo.targetDataIssue',
+                true,
+            );
+            contextView.dispose();
+        });
+
+        it('syncs target data issue context when target state changes', async () => {
+            targetModel.setTargets(errored('Failed to load targets'));
+
+            expect(vscode.commands.executeCommand).not.toHaveBeenCalled();
+
+            await vi.advanceTimersByTimeAsync(500);
+
+            expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+                'setContext',
+                'topo.targetDataIssue',
+                true,
+            );
+
+            vi.mocked(vscode.commands.executeCommand).mockClear();
+            targetModel.setTargets(loaded([target]));
+
+            expect(vscode.commands.executeCommand).not.toHaveBeenCalled();
+
+            await vi.advanceTimersByTimeAsync(500);
+
+            expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+                'setContext',
+                'topo.targetDataIssue',
+                false,
+            );
+        });
     });
 
     describe('getChildren', () => {
@@ -206,7 +261,7 @@ describe('TargetTreeView', () => {
 
         it('only returns the selected target at the root', async () => {
             const otherTarget = 'user@other.local';
-            targetModel.setTargets([target, otherTarget]);
+            targetModel.setTargets(loaded([target, otherTarget]));
             targetModel.setSelected(otherTarget);
             targetModel.setSelectedTargetHealth(
                 errored('ssh connection failed'),
@@ -302,12 +357,26 @@ describe('TargetTreeView', () => {
         });
 
         it('returns empty array when no target is selected', async () => {
-            targetModel.setTargets([]);
+            targetModel.setTargets(loaded([]));
             targetModel.setSelected(undefined);
 
             const rootChildren = await view.getChildren();
 
             expect(rootChildren.length).toEqual(0);
+            expect(
+                targetDescriptionStoreMock.getDescription,
+            ).not.toHaveBeenCalled();
+        });
+
+        it('shows target data issues at the root', async () => {
+            const targets = errored('Failed to load targets');
+            targetModel.setTargets(targets);
+
+            const rootChildren = await view.getChildren();
+
+            expect(rootChildren).toStrictEqual([
+                new TargetDataIssueTreeItem(targets),
+            ]);
             expect(
                 targetDescriptionStoreMock.getDescription,
             ).not.toHaveBeenCalled();
