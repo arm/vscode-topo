@@ -13,18 +13,22 @@ export class TargetModel {
         new vscode.EventEmitter<void>();
     public readonly onSelectedChanged: vscode.Event<void> =
         this._onSelectedChanged.event;
+
     private _onTargetsChanged: vscode.EventEmitter<void> =
         new vscode.EventEmitter<void>();
     public readonly onTargetsChanged: vscode.Event<void> =
         this._onTargetsChanged.event;
+
     private _onHealthChanged: vscode.EventEmitter<void> =
         new vscode.EventEmitter<void>();
     public readonly onHealthChanged: vscode.Event<void> =
         this._onHealthChanged.event;
+
     private _onContainersChanged: vscode.EventEmitter<void> =
         new vscode.EventEmitter<void>();
     public readonly onContainersChanged: vscode.Event<void> =
         this._onContainersChanged.event;
+
     private _selected?: string;
     private _targets: Loadable<string[]> = defaultTargets;
     private _health: Loadable<TargetHealthCheck | undefined> = defaultHealth;
