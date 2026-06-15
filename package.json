@@ -241,7 +241,7 @@
                 },
                 {
                     "command": "topo.resetExtensionData",
-                    "when": "view == topo.target-manager && viewItem =~ /CorruptedDataIssue/",
+                    "when": "view == topo.target-manager && viewItem =~ /DataIssueError/",
                     "group": "inline"
                 },
                 {

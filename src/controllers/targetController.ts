@@ -14,7 +14,8 @@ import { HealthCheck, TargetHealthCheck } from '../topoCliSchema';
 import { LatestAbortableWork } from '../util/latestAbortableWork';
 import { DisposableCollector } from '../util/disposableCollector';
 
-const corruptedDataMessage = 'The local data saved by Topo looks corrupted';
+const corruptedDataMessage =
+    'The local target data saved by Topo looks corrupted';
 
 type TargetPromptResult =
     | { readonly kind: 'select'; readonly target: string }

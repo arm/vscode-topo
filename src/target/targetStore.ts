@@ -128,7 +128,7 @@ export class TargetStore {
             assert(targets, serializedTargetsSchema);
             return new Set(Object.keys(targets));
         } catch (err) {
-            const errorMsg = 'Failed to load targets';
+            const errorMsg = 'Failed to parse stored targets';
             throw new WrappedError(
                 'STORAGE',
                 errorMsg,

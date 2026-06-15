@@ -209,7 +209,9 @@ describe('TargetStore', () => {
         }
         expect(thrown).toBeInstanceOf(WrappedError);
         expect((thrown as WrappedError).code).toBe('STORAGE');
-        expect((thrown as WrappedError).message).toBe('Failed to load targets');
+        expect((thrown as WrappedError).message).toBe(
+            'Failed to parse stored targets',
+        );
         expect((thrown as WrappedError).logs).toEqual([
             {
                 level: 'Error',
@@ -235,7 +237,9 @@ describe('TargetStore', () => {
         }
         expect(thrown).toBeInstanceOf(WrappedError);
         expect((thrown as WrappedError).code).toBe('STORAGE');
-        expect((thrown as WrappedError).message).toBe('Failed to load targets');
+        expect((thrown as WrappedError).message).toBe(
+            'Failed to parse stored targets',
+        );
     });
 
     it('does not wrap errors when reading stored targets fails', () => {
