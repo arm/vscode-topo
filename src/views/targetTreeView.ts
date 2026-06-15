@@ -78,7 +78,7 @@ export class TargetTreeView
                 this.refresh();
             }),
             this.targetModel.onTargetsChanged(() => {
-                this.refresh();
+                this.refreshTargets();
             }),
             this.targetModel.onHealthChanged(() => {
                 this.refresh();
@@ -88,6 +88,7 @@ export class TargetTreeView
             }),
             this._onDidChangeTreeData,
             { dispose: () => this.refresh.cancel() },
+            { dispose: () => this.refreshTargets.cancel() },
         );
         this.syncTargetDataIssueContext();
     }
@@ -192,6 +193,10 @@ export class TargetTreeView
     }
 
     private refresh = debounce(() => {
+        this._onDidChangeTreeData.fire(undefined);
+    }, refreshDelayMs);
+
+    private refreshTargets = debounce(() => {
         this._onDidChangeTreeData.fire(undefined);
         this.syncTargetDataIssueContext();
     }, refreshDelayMs);

@@ -164,45 +164,6 @@ describe('TargetTreeView', () => {
             );
         });
 
-        it('syncs target data issue context when other target model state changes', async () => {
-            targetModel.setSelectedTargetHealth(loaded(undefined));
-
-            expect(vscode.commands.executeCommand).not.toHaveBeenCalled();
-
-            await vi.advanceTimersByTimeAsync(500);
-
-            expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
-                'setContext',
-                'topo.targetDataIssue',
-                false,
-            );
-
-            vi.mocked(vscode.commands.executeCommand).mockClear();
-            targetModel.setSelectedTargetContainers(loaded([]));
-
-            expect(vscode.commands.executeCommand).not.toHaveBeenCalled();
-
-            await vi.advanceTimersByTimeAsync(500);
-
-            expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
-                'setContext',
-                'topo.targetDataIssue',
-                false,
-            );
-
-            vi.mocked(vscode.commands.executeCommand).mockClear();
-            targetModel.setSelected(undefined);
-
-            expect(vscode.commands.executeCommand).not.toHaveBeenCalled();
-
-            await vi.advanceTimersByTimeAsync(500);
-
-            expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
-                'setContext',
-                'topo.targetDataIssue',
-                false,
-            );
-        });
     });
 
     describe('getChildren', () => {
