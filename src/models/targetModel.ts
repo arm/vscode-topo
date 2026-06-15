@@ -49,9 +49,6 @@ export class TargetModel {
         if (changed) {
             this._onTargetsChanged.fire();
         }
-        if (targets.status === 'errored') {
-            this.setSelected(undefined);
-        }
     }
 
     public setSelectedTargetHealth(

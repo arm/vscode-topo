@@ -123,7 +123,7 @@ describe('TargetModel', () => {
         expect(onChanged).not.toHaveBeenCalled();
     });
 
-    it('stores errored target state and clears the selected target', () => {
+    it('stores errored target state', () => {
         const model = new TargetModel();
         const state = errored('Failed to load targets');
         model.setSelected('user@host');
@@ -131,7 +131,6 @@ describe('TargetModel', () => {
         model.setTargets(state);
 
         expect(model.targets).toBe(state);
-        expect(model.selected).toBeUndefined();
     });
 
     it('clears target state and selected target data', () => {
