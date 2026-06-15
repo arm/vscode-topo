@@ -111,6 +111,100 @@ describe('TargetTreeView', () => {
         vi.clearAllMocks();
     });
 
+    describe('context', () => {
+        beforeEach(() => {
+            vi.useFakeTimers();
+        });
+
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
+        it('syncs target data issue context when the view is created', () => {
+            const model = new TargetModel();
+            model.setTargets(errored('Failed to load targets'));
+
+            const contextView = new TargetTreeView(
+                model,
+                targetDescriptionStoreMock,
+            );
+
+            expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+                'setContext',
+                'topo.targetDataIssue',
+                true,
+            );
+            contextView.dispose();
+        });
+
+        it('syncs target data issue context when target state changes', async () => {
+            targetModel.setTargets(errored('Failed to load targets'));
+
+            expect(vscode.commands.executeCommand).not.toHaveBeenCalled();
+
+            await vi.advanceTimersByTimeAsync(500);
+
+            expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+                'setContext',
+                'topo.targetDataIssue',
+                true,
+            );
+
+            vi.mocked(vscode.commands.executeCommand).mockClear();
+            targetModel.setTargets(loaded([target]));
+
+            expect(vscode.commands.executeCommand).not.toHaveBeenCalled();
+
+            await vi.advanceTimersByTimeAsync(500);
+
+            expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+                'setContext',
+                'topo.targetDataIssue',
+                false,
+            );
+        });
+
+        it('syncs target data issue context when other target model state changes', async () => {
+            targetModel.setSelectedTargetHealth(loaded(undefined));
+
+            expect(vscode.commands.executeCommand).not.toHaveBeenCalled();
+
+            await vi.advanceTimersByTimeAsync(500);
+
+            expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+                'setContext',
+                'topo.targetDataIssue',
+                false,
+            );
+
+            vi.mocked(vscode.commands.executeCommand).mockClear();
+            targetModel.setSelectedTargetContainers(loaded([]));
+
+            expect(vscode.commands.executeCommand).not.toHaveBeenCalled();
+
+            await vi.advanceTimersByTimeAsync(500);
+
+            expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+                'setContext',
+                'topo.targetDataIssue',
+                false,
+            );
+
+            vi.mocked(vscode.commands.executeCommand).mockClear();
+            targetModel.setSelected(undefined);
+
+            expect(vscode.commands.executeCommand).not.toHaveBeenCalled();
+
+            await vi.advanceTimersByTimeAsync(500);
+
+            expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+                'setContext',
+                'topo.targetDataIssue',
+                false,
+            );
+        });
+    });
+
     describe('getChildren', () => {
         it('returns Target at root and Dependencies/Processing Domains as its children', async () => {
             const rootChildren = await view.getChildren();

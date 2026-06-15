@@ -301,11 +301,6 @@ describe('load from store', () => {
 
         expect(targetModel.targets.status).toBe('errored');
         expect(targetModel.selected).toBeUndefined();
-        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
-            'setContext',
-            'topo.targetDataIssue',
-            true,
-        );
     });
 
     it('clears the target error after targets load successfully', () => {
@@ -318,11 +313,6 @@ describe('load from store', () => {
 
         expect(targetModel.targets).toEqual(loaded(['host-a']));
         expect(targetModel.selected).toBe('host-a');
-        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
-            'setContext',
-            'topo.targetDataIssue',
-            false,
-        );
     });
 
     it('resets extension data when reset command is invoked', async () => {
@@ -334,11 +324,6 @@ describe('load from store', () => {
         await controller.resetExtensionDataCommandHandler();
 
         expect(targetStore.resetExtensionData).toHaveBeenCalled();
-        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
-            'setContext',
-            'topo.targetDataIssue',
-            false,
-        );
     });
 
     it('throws when resetting extension data fails with an unknown error', async () => {

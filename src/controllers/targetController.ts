@@ -6,7 +6,6 @@ import { logger } from '../util/logger';
 import { logError, showAndLogError } from '../util/showAndLogError';
 import { defaultSshConfigPath, getHosts } from '../util/ssh';
 import * as vscode from 'vscode';
-import { PACKAGE_NAME } from '../manifest';
 import { TopoCli } from '../topoCli';
 import { ContainerCommands } from '../target/containerCommands';
 import { errored, Loadable, loaded, loading } from '../util/loadable';
@@ -16,7 +15,6 @@ import { LatestAbortableWork } from '../util/latestAbortableWork';
 import { DisposableCollector } from '../util/disposableCollector';
 
 const corruptedDataMessage = 'The local data saved by Topo looks corrupted';
-const targetDataIssueContextKey = `${PACKAGE_NAME}.targetDataIssue`;
 
 type TargetPromptResult =
     | { readonly kind: 'select'; readonly target: string }
@@ -224,29 +222,18 @@ export class TargetController {
                 logError(corruptedDataMessage, err);
             }
             this.model.setTargets(errored(err));
-            this.syncTargetDataIssueContext();
             return;
         }
 
         const selectedTarget = this.targetStore.getSelectedTarget();
         this.model.setTargets(loaded([...targets]));
         this.model.setSelected(selectedTarget);
-        this.syncTargetDataIssueContext();
     }
 
     public async resetExtensionDataCommandHandler(): Promise<void> {
         await this.targetStore.resetExtensionData();
         this.model.clear();
-        this.syncTargetDataIssueContext();
         vscode.window.showInformationMessage('Topo local data has been reset.');
-    }
-
-    private syncTargetDataIssueContext(): void {
-        vscode.commands.executeCommand(
-            'setContext',
-            targetDataIssueContextKey,
-            this.model.targets.status === 'errored',
-        );
     }
 
     public async selectCommandHandler(): Promise<void> {
