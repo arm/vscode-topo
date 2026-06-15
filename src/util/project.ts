@@ -1,11 +1,13 @@
 import path from 'node:path';
 import * as vscode from 'vscode';
 import {
-    COMPOSE_FILE_GLOB,
     compareComposeFiles,
     getComposeFileMetadata,
     getPreferredComposeFiles,
 } from './composeFile';
+
+const ROOT_COMPOSE_FILE_GLOB = 'compose.{yaml,yml}';
+const CHILD_COMPOSE_FILE_GLOB = '*/compose.{yaml,yml}';
 
 export interface ProjectMetadata {
     name: string;
@@ -22,12 +24,7 @@ export async function findTopLevelComposeProjects(): Promise<
     const projects: ProjectMetadata[] = [];
 
     for (const workspaceFolder of workspaceFolders) {
-        const composeFileUris = await findComposeFileUris(workspaceFolder);
-        const composeFiles = getPreferredComposeFiles(
-            composeFileUris.map((uri) =>
-                getComposeFileMetadata(uri, workspaceFolder),
-            ),
-        ).sort(compareComposeFiles);
+        const composeFiles = await findProjectComposeFiles(workspaceFolder);
 
         projects.push(
             ...composeFiles.map((composeFile) =>
@@ -39,26 +36,33 @@ export async function findTopLevelComposeProjects(): Promise<
     return projects.sort(compareProjects);
 }
 
-async function findComposeFileUris(
+async function findProjectComposeFiles(
     workspaceFolder: vscode.WorkspaceFolder,
-): Promise<vscode.Uri[]> {
-    const composeFileUris = await vscode.workspace.findFiles(
-        new vscode.RelativePattern(workspaceFolder, COMPOSE_FILE_GLOB),
+): Promise<ReturnType<typeof getComposeFileMetadata>[]> {
+    const rootComposeFiles = await findComposeFiles(
+        workspaceFolder,
+        ROOT_COMPOSE_FILE_GLOB,
     );
+    if (rootComposeFiles.length > 0) {
+        return rootComposeFiles;
+    }
 
-    return composeFileUris.filter((uri) =>
-        isTopLevelComposeFile(uri, workspaceFolder),
-    );
+    return findComposeFiles(workspaceFolder, CHILD_COMPOSE_FILE_GLOB);
 }
 
-function isTopLevelComposeFile(
-    uri: vscode.Uri,
+async function findComposeFiles(
     workspaceFolder: vscode.WorkspaceFolder,
-): boolean {
-    const relativePath = path.relative(workspaceFolder.uri.fsPath, uri.fsPath);
-    const directory = path.dirname(relativePath);
+    glob: string,
+): Promise<ReturnType<typeof getComposeFileMetadata>[]> {
+    const composeFileUris = await vscode.workspace.findFiles(
+        new vscode.RelativePattern(workspaceFolder, glob),
+    );
 
-    return directory === '.' || path.dirname(directory) === '.';
+    return getPreferredComposeFiles(
+        composeFileUris.map((uri) =>
+            getComposeFileMetadata(uri, workspaceFolder),
+        ),
+    ).sort(compareComposeFiles);
 }
 
 function createProjectMetadata(

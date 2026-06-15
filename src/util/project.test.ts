@@ -1,3 +1,4 @@
+import path from 'node:path';
 import * as vscode from 'vscode';
 import { mutable } from './mutable';
 import { findTopLevelComposeProjects } from './project';
@@ -41,6 +42,36 @@ describe('findTopLevelComposeProjects', () => {
         return base.fsPath;
     }
 
+    function getRelativePatternPattern(
+        pattern: vscode.RelativePattern,
+    ): string {
+        return String(
+            (pattern as vscode.RelativePattern & { pattern: string }).pattern,
+        );
+    }
+
+    function matchesComposePattern(
+        filePath: string,
+        workspacePath: string,
+        pattern: string,
+    ): boolean {
+        const relativePath = path
+            .relative(workspacePath, filePath)
+            .split(path.sep)
+            .join('/');
+
+        switch (pattern) {
+            case 'compose.{yaml,yml}':
+                return /^compose\.ya?ml$/.test(relativePath);
+            case '*/compose.{yaml,yml}':
+                return /^[^/]+\/compose\.ya?ml$/.test(relativePath);
+            case '**/compose.{yaml,yml}':
+                return /(^|\/)compose\.ya?ml$/.test(relativePath);
+            default:
+                return false;
+        }
+    }
+
     function mockComposeFiles(...paths: string[]): void {
         vi.mocked(vscode.workspace.findFiles).mockImplementation(
             async (pattern) => {
@@ -48,9 +79,21 @@ describe('findTopLevelComposeProjects', () => {
                     pattern instanceof vscode.RelativePattern
                         ? getRelativePatternBasePath(pattern)
                         : '';
+                const glob =
+                    pattern instanceof vscode.RelativePattern
+                        ? getRelativePatternPattern(pattern)
+                        : String(pattern);
 
                 return paths
-                    .filter((filePath) => filePath.startsWith(workspacePath))
+                    .filter(
+                        (filePath) =>
+                            filePath.startsWith(workspacePath) &&
+                            matchesComposePattern(
+                                filePath,
+                                workspacePath,
+                                glob,
+                            ),
+                    )
                     .map((filePath) => vscode.Uri.file(filePath));
             },
         );
@@ -80,11 +123,9 @@ describe('findTopLevelComposeProjects', () => {
             },
         ]);
         expect(vi.mocked(vscode.workspace.findFiles)).toHaveBeenCalledWith(
-            new vscode.RelativePattern(
-                workspaceFolder,
-                '**/compose.{yaml,yml}',
-            ),
+            new vscode.RelativePattern(workspaceFolder, 'compose.{yaml,yml}'),
         );
+        expect(vi.mocked(vscode.workspace.findFiles)).toHaveBeenCalledTimes(1);
     });
 
     it('returns compose files in child folders as separate projects', async () => {
@@ -107,6 +148,9 @@ describe('findTopLevelComposeProjects', () => {
                 composeFileUri: composeFilePath,
             },
         ]);
+        expect(vi.mocked(vscode.workspace.findFiles)).toHaveBeenCalledWith(
+            new vscode.RelativePattern(workspaceFolder, '*/compose.{yaml,yml}'),
+        );
     });
 
     it('prefers compose.yaml over compose.yml in the workspace root', async () => {
@@ -127,7 +171,7 @@ describe('findTopLevelComposeProjects', () => {
         expect(projects).toEqual([]);
     });
 
-    it('returns both root and nested compose projects in the same workspace', async () => {
+    it('does not return child projects when the workspace root has a compose file', async () => {
         mockComposeFiles(
             workspaceFilePath('compose.yaml'),
             workspaceFilePath('demo', 'compose.yaml'),
@@ -135,10 +179,8 @@ describe('findTopLevelComposeProjects', () => {
 
         const projects = await findTopLevelComposeProjects();
 
-        expect(projects.map((project) => project.name)).toEqual([
-            'demo',
-            'workspace',
-        ]);
+        expect(projects.map((project) => project.name)).toEqual(['workspace']);
+        expect(vi.mocked(vscode.workspace.findFiles)).toHaveBeenCalledTimes(1);
     });
 
     it('sorts projects within each workspace folder', async () => {
