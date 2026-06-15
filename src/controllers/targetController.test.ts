@@ -341,18 +341,15 @@ describe('load from store', () => {
         );
     });
 
-    it('reports an error when resetting extension data fails', async () => {
+    it('throws when resetting extension data fails with an unknown error', async () => {
         const targetStore = mockTargetStore();
         const error = new Error('boom');
         targetStore.resetExtensionData.mockRejectedValue(error);
         const { controller } = createController(new TargetModel(), targetStore);
 
-        await controller.resetExtensionDataCommandHandler();
-
-        expect(showAndLogError).toHaveBeenCalledWith(
-            'Failed to reset Topo local data',
-            error,
-        );
+        await expect(
+            controller.resetExtensionDataCommandHandler(),
+        ).rejects.toThrow(error);
     });
 
     it('throws when selected target loading fails', () => {

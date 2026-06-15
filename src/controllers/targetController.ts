@@ -235,11 +235,7 @@ export class TargetController {
     }
 
     public async resetExtensionDataCommandHandler(): Promise<void> {
-        try {
-            await this.targetStore.resetExtensionData();
-        } catch (err) {
-            showAndLogError('Failed to reset Topo local data', err);
-        }
+        await this.targetStore.resetExtensionData();
         this.model.clear();
         this.syncTargetDataIssueContext();
         vscode.window.showInformationMessage('Topo local data has been reset.');
