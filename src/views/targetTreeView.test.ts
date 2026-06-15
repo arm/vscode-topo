@@ -163,7 +163,6 @@ describe('TargetTreeView', () => {
                 false,
             );
         });
-
     });
 
     describe('getChildren', () => {
