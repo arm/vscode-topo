@@ -148,6 +148,18 @@ describe('TargetModel', () => {
         expect(model.selectedTargetContainers).toEqual(loaded([]));
     });
 
+    it('clears selected target data when no target is selected', () => {
+        const model = new TargetModel();
+        model.setSelectedTargetHealth(loaded(targetHealth));
+        model.setSelectedTargetContainers(loaded(containers));
+
+        model.clear();
+
+        expect(model.selected).toBeUndefined();
+        expect(model.selectedTargetHealth).toEqual(loaded(undefined));
+        expect(model.selectedTargetContainers).toEqual(loaded([]));
+    });
+
     it('stores selected target health and containers and fires change events', () => {
         const model = new TargetModel();
         const health = loaded(targetHealth);
@@ -164,6 +176,24 @@ describe('TargetModel', () => {
         expect(model.selectedTargetContainers).toBe(containerState);
         expect(onHealthChanged).toHaveBeenCalledTimes(1);
         expect(onContainersChanged).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not fire selected target data change events when state instances are unchanged', () => {
+        const model = new TargetModel();
+        const health = loaded(targetHealth);
+        const containerState = loaded(containers);
+        const onHealthChanged = vi.fn();
+        const onContainersChanged = vi.fn();
+        model.setSelectedTargetHealth(health);
+        model.setSelectedTargetContainers(containerState);
+        model.onHealthChanged(onHealthChanged);
+        model.onContainersChanged(onContainersChanged);
+
+        model.setSelectedTargetHealth(health);
+        model.setSelectedTargetContainers(containerState);
+
+        expect(onHealthChanged).not.toHaveBeenCalled();
+        expect(onContainersChanged).not.toHaveBeenCalled();
     });
 
     it('clears selected target data when selected target is changed', () => {

@@ -37,8 +37,10 @@ export class TargetModel {
     public setSelected(selected: string | undefined): void {
         const changed = this._selected !== selected;
         this._selected = selected;
-        if (changed) {
+        if (changed || selected === undefined) {
             this.clearSelectedTargetData();
+        }
+        if (changed) {
             this._onSelectedChanged.fire();
         }
     }
@@ -54,22 +56,24 @@ export class TargetModel {
     public setSelectedTargetHealth(
         state: Loadable<TargetHealthCheck | undefined>,
     ) {
+        const changed = this._health !== state;
         this._health = state;
-        this._onHealthChanged.fire();
+        if (changed) {
+            this._onHealthChanged.fire();
+        }
     }
 
     public setSelectedTargetContainers(containers: Loadable<ContainerItem[]>) {
+        const changed = this._containers !== containers;
         this._containers = containers;
-        this._onContainersChanged.fire();
+        if (changed) {
+            this._onContainersChanged.fire();
+        }
     }
 
     public clear(): void {
-        const hadSelectedTarget = this._selected !== undefined;
         this.setTargets(defaultTargets);
         this.setSelected(undefined);
-        if (!hadSelectedTarget) {
-            this.clearSelectedTargetData();
-        }
     }
 
     public get selected(): string | undefined {
