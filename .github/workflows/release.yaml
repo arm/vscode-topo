@@ -241,3 +241,26 @@ jobs:
                   tag_name: v${{ needs.prepare-version.outputs.version }}
                   target_commitish: ${{ needs.push-new-version.outputs.release_commit }}
                   prerelease: ${{ inputs.pre-release }}
+
+    publish:
+        name: Publish
+        needs:
+            - prepare-version
+            - release
+        if: needs.prepare-version.outputs.version
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+            - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+              with:
+                  pattern: vsix-package-*
+                  merge-multiple: true
+                  path: artifacts
+            - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+              with:
+                  node-version: ${{ env.NODE_VERSION }}
+                  cache: npm
+            - name: Publish to VS Code Marketplace
+              run: npx vsce publish -i artifacts/*.vsix -p ${{secrets.VS_MARKETPLACE_TOKEN}} $PRE_RELEASE_FLAG
+            - name: Publish to Open VSX
+              run: npx ovsx@0.8.0 publish -i artifacts/*.vsix -p ${{secrets.OPEN_VSX_TOKEN}} $PRE_RELEASE_FLAG
