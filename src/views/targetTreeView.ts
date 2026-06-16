@@ -6,7 +6,6 @@ import { TargetProcessingDomainTreeItem } from '../targetTreeView/targetProcessi
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
 import { TargetProcessingDomainGroupTreeItem } from '../targetTreeView/targetProcessingDomainGroupTreeItem';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
-import { TargetDescriptionStore } from '../target/targetDescriptionStore';
 import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
 import { ContainerItem } from '../util/types';
@@ -49,6 +48,8 @@ const PRIMARY_OS_PROCESSING_DOMAIN = {
     id: 'PrimaryOS',
     label: 'Primary OS',
 };
+
+const hasSelectedTargetContextKey = `${manifest.PACKAGE_NAME}.hasSelectedTarget`;
 const targetDataIssueContextKey = `${manifest.PACKAGE_NAME}.targetDataIssue`;
 const refreshDelayMs = 500;
 
@@ -63,10 +64,7 @@ export class TargetTreeView
 
     private readonly disposables = new DisposableCollector();
 
-    constructor(
-        private readonly targetModel: TargetModel,
-        private readonly targetDescriptionStore: TargetDescriptionStore,
-    ) {
+    constructor(private readonly targetModel: TargetModel) {
         const treeView = vscode.window.createTreeView(TargetTreeView.viewId, {
             treeDataProvider: this,
             showCollapseAll: false,
@@ -75,7 +73,7 @@ export class TargetTreeView
         this.disposables.collect(
             treeView,
             this.targetModel.onSelectedChanged(() => {
-                this.refresh();
+                this.refreshSelectedTarget();
             }),
             this.targetModel.onTargetsChanged(() => {
                 this.refreshTargets();
@@ -86,16 +84,19 @@ export class TargetTreeView
             this.targetModel.onContainersChanged(() => {
                 this.refresh();
             }),
+            this.targetModel.onDescriptionChanged(() => {
+                this._onDidChangeTreeData.fire(undefined);
+            }),
             this._onDidChangeTreeData,
             { dispose: () => this.refresh.cancel() },
             { dispose: () => this.refreshTargets.cancel() },
+            { dispose: () => this.refreshSelectedTarget.cancel() },
         );
         this.syncTargetDataIssueContext();
+        this.syncSelectedTargetContext();
     }
 
-    public async getChildren(
-        element?: vscode.TreeItem,
-    ): Promise<vscode.TreeItem[]> {
+    public getChildren(element?: vscode.TreeItem): vscode.TreeItem[] {
         if (!element) {
             if (this.targetModel.targets.status === 'errored') {
                 return [new TargetDataIssueTreeItem(this.targetModel.targets)];
@@ -106,18 +107,12 @@ export class TargetTreeView
                 return [];
             }
 
-            const selectedTargetDescription =
-                await this.targetDescriptionStore.getDescription(
-                    selectedTarget,
-                );
-
             return [
                 new TargetTreeItem({
                     target: selectedTarget,
                     health: this.targetModel.selectedTargetHealth,
-                    targetDescription: selectedTargetDescription
-                        ? loaded(selectedTargetDescription)
-                        : undefined,
+                    targetDescription:
+                        this.targetModel.selectedTargetDescription,
                 }),
             ];
         }
@@ -196,6 +191,11 @@ export class TargetTreeView
         this._onDidChangeTreeData.fire(undefined);
     }, refreshDelayMs);
 
+    private refreshSelectedTarget = debounce(() => {
+        this._onDidChangeTreeData.fire(undefined);
+        this.syncSelectedTargetContext();
+    }, refreshDelayMs);
+
     private refreshTargets = debounce(() => {
         this._onDidChangeTreeData.fire(undefined);
         this.syncTargetDataIssueContext();
@@ -206,6 +206,14 @@ export class TargetTreeView
             'setContext',
             targetDataIssueContextKey,
             this.targetModel.targets.status === 'errored',
+        );
+    }
+
+    private syncSelectedTargetContext(): void {
+        vscode.commands.executeCommand(
+            'setContext',
+            hasSelectedTargetContextKey,
+            Boolean(this.targetModel.selected),
         );
     }
 
