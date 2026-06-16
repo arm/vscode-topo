@@ -11,7 +11,7 @@ import { TargetProcessingDomainGroupTreeItem } from '../targetTreeView/targetPro
 import { IssueCheck, TargetHealthCheck } from '../topoCliSchema';
 import { TargetModel } from '../models/targetModel';
 import { TargetDataIssueTreeItem } from '../targetTreeView/targetDataIssueTreeItem';
-import { errored, loaded } from '../util/loadable';
+import { errored, loaded, unloaded } from '../util/loadable';
 import { ErrorTreeItem } from '../treeItems/errorTreeItem';
 
 describe('TargetTreeView', () => {
@@ -229,7 +229,7 @@ describe('TargetTreeView', () => {
         });
 
         it('sets disconnected context and tree collapsible state for target with pending health', () => {
-            targetModel.setSelectedTargetHealth(loaded(undefined));
+            targetModel.setSelectedTargetHealth(unloaded());
 
             const rootChildren = view.getChildren();
 
@@ -360,6 +360,19 @@ describe('TargetTreeView', () => {
             expect(got).toHaveLength(1);
             expect(got[0]).toBeInstanceOf(ErrorTreeItem);
             expect(got[0].label).toBe('Failed to load containers');
+        });
+
+        it('returns no processing domains while containers are unloaded', () => {
+            targetModel.setSelectedTargetContainers(unloaded());
+            const rootChildren = view.getChildren();
+            const targetChildren = view.getChildren(rootChildren[0]);
+            const processingDomainsGroup = targetChildren.find(
+                (v) => v instanceof TargetProcessingDomainGroupTreeItem,
+            );
+
+            const got = view.getChildren(processingDomainsGroup);
+
+            expect(got).toEqual([]);
         });
 
         it('returns empty array when no target is selected', async () => {

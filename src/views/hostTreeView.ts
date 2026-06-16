@@ -48,7 +48,10 @@ export class HostTreeView
                 ];
             }
 
-            const deps = sortIssueChecksByName(health.data.host.dependencies);
+            const deps =
+                health.status === 'loaded'
+                    ? sortIssueChecksByName(health.data.host.dependencies)
+                    : [];
             return [
                 new HealthCheckDependencyGroupTreeItem(
                     loaded(deps, health.loading),
