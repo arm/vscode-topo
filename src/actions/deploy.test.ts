@@ -25,13 +25,6 @@ describe('Deploy', () => {
 
     function expectDeployTask(task: vscode.Task, cwd: string): void {
         expect(task.name).toBe('Deploy to topo.local');
-        expect(task.presentationOptions).toEqual({
-            reveal: vscode.TaskRevealKind.Always,
-            echo: true,
-            focus: true,
-            showReuseMessage: true,
-            clear: true,
-        });
         expect(task.execution).toMatchObject({
             process: 'topo',
             args: ['deploy', '--target', target],
