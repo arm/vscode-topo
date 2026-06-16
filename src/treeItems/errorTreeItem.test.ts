@@ -13,11 +13,12 @@ describe('ErrorTreeItem', () => {
         expect(item.collapsibleState).toBe(
             vscode.TreeItemCollapsibleState.None,
         );
-        expect(item.iconPath).toBeInstanceOf(vscode.ThemeIcon);
-        const icon = item.iconPath as vscode.ThemeIcon;
-        expect(icon.id).toBe('error');
-        expect(icon.color).toBeInstanceOf(vscode.ThemeColor);
-        expect(icon.color!.id).toBe('testing.iconFailed');
+        expect(item.iconPath).toStrictEqual(
+            new vscode.ThemeIcon(
+                'error',
+                new vscode.ThemeColor('testing.iconFailed'),
+            ),
+        );
     });
 
     it('sets context and command to open the output channel', () => {
@@ -39,6 +40,8 @@ describe('ErrorTreeItem', () => {
             loading(errored('uh oh')),
         );
 
-        expect(item.iconPath).toEqual(new vscode.ThemeIcon('loading~spin'));
+        expect(item.iconPath).toStrictEqual(
+            new vscode.ThemeIcon('loading~spin'),
+        );
     });
 });

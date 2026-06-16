@@ -116,9 +116,9 @@ describe('TargetStore', () => {
 
         await expect(addTargetOperation).resolves.toBeUndefined();
         const targets = store.getTargets();
-        expect(targets.has(t)).toBe(true);
+        expect(targets).toContain(t);
         const raw = context.globalState.get('targets') as string | undefined;
-        expect(typeof raw).toBe('string');
+        expect(raw).toBeTypeOf('string');
         const parsed = JSON.parse(raw || '{}');
         expect(parsed[t]).toEqual({});
     });
@@ -160,10 +160,10 @@ describe('TargetStore', () => {
         await store.addTarget(t);
 
         const targets = store.getTargets();
-        expect(targets.has(t)).toBe(true);
+        expect(targets).toContain(t);
 
         const raw = context.globalState.get('targets') as string | undefined;
-        expect(typeof raw).toBe('string');
+        expect(raw).toBeTypeOf('string');
         const parsed = JSON.parse(raw || '{}');
         expect(parsed[t]).toEqual({});
     });
@@ -282,7 +282,7 @@ describe('TargetStore', () => {
         await store.deleteTarget(t2);
 
         const targets = store.getTargets();
-        expect(targets.has(t2)).toBe(false);
+        expect(targets).not.toContain(t2);
         const selected = store.getSelectedTarget();
         expect(selected).toBe(t1);
     });
@@ -301,7 +301,7 @@ describe('TargetStore', () => {
         await store.deleteTarget(t2);
 
         const targets = store.getTargets();
-        expect(targets.has(t2)).toBe(false);
+        expect(targets).not.toContain(t2);
         const selected = store.getSelectedTarget();
         expect(selected).toBeUndefined();
     });

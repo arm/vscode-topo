@@ -21,7 +21,7 @@ describe('HealthCheckDependencyGroupTreeItem', () => {
         expect(item.collapsibleState).toBe(
             vscode.TreeItemCollapsibleState.Collapsed,
         );
-        expect(item.iconPath).toEqual(new vscode.ThemeIcon('library'));
+        expect(item.iconPath).toStrictEqual(new vscode.ThemeIcon('library'));
     });
 
     it('sets loading icon when loading', () => {
@@ -29,6 +29,8 @@ describe('HealthCheckDependencyGroupTreeItem', () => {
             loading(loaded([])),
         );
 
-        expect(item.iconPath).toEqual(new vscode.ThemeIcon('loading~spin'));
+        expect(item.iconPath).toStrictEqual(
+            new vscode.ThemeIcon('loading~spin'),
+        );
     });
 });
