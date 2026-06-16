@@ -1,6 +1,7 @@
 import path from 'node:path';
 import * as vscode from 'vscode';
 import {
+    ComposeFileMetadata,
     compareComposeFiles,
     getComposeFileMetadata,
     getPreferredComposeFiles,
@@ -38,7 +39,7 @@ export async function findTopLevelComposeProjects(): Promise<
 
 async function findProjectComposeFiles(
     workspaceFolder: vscode.WorkspaceFolder,
-): Promise<ReturnType<typeof getComposeFileMetadata>[]> {
+): Promise<ComposeFileMetadata[]> {
     const rootComposeFiles = await findComposeFiles(
         workspaceFolder,
         ROOT_COMPOSE_FILE_GLOB,
@@ -53,7 +54,7 @@ async function findProjectComposeFiles(
 async function findComposeFiles(
     workspaceFolder: vscode.WorkspaceFolder,
     glob: string,
-): Promise<ReturnType<typeof getComposeFileMetadata>[]> {
+): Promise<ComposeFileMetadata[]> {
     const composeFileUris = await vscode.workspace.findFiles(
         new vscode.RelativePattern(workspaceFolder, glob),
     );
@@ -66,7 +67,7 @@ async function findComposeFiles(
 }
 
 function createProjectMetadata(
-    composeFile: ReturnType<typeof getComposeFileMetadata>,
+    composeFile: ComposeFileMetadata,
     workspaceFolder: vscode.WorkspaceFolder,
 ): ProjectMetadata {
     const projectPath = path.dirname(composeFile.uri.fsPath);
@@ -81,7 +82,7 @@ function createProjectMetadata(
 }
 
 function getProjectName(
-    composeFile: ReturnType<typeof getComposeFileMetadata>,
+    composeFile: ComposeFileMetadata,
     workspaceFolder: vscode.WorkspaceFolder,
 ): string {
     const relativeDirectory = path.dirname(composeFile.relativePath);
