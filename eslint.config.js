@@ -68,6 +68,7 @@ module.exports = [
                     args: 'all',
                 },
             ],
+            '@typescript-eslint/no-floating-promises': 'error',
             '@typescript-eslint/no-unused-private-class-members': 'error',
             '@typescript-eslint/switch-exhaustiveness-check': 'error',
             curly: 'warn',

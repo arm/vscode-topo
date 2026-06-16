@@ -29,7 +29,7 @@ describe('executeTask', () => {
     });
 
     it('creates a VS Code process task', async () => {
-        executeTask('Poto', ['topo', 'poto'], {
+        void executeTask('Poto', ['topo', 'poto'], {
             cwd,
         });
         await Promise.resolve();
@@ -95,7 +95,7 @@ describe('executeTask', () => {
             workspaceFolder,
         );
 
-        executeTask('Test Task', ['echo', 'hello'], { cwd });
+        void executeTask('Test Task', ['echo', 'hello'], { cwd });
         await Promise.resolve();
 
         expect(vscode.Task).toHaveBeenCalledWith(
