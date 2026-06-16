@@ -12,7 +12,6 @@ import { ContainerItem } from '../util/types';
 import { loaded } from '../util/loadable';
 import { TargetDataIssueTreeItem } from '../targetTreeView/targetDataIssueTreeItem';
 import { ErrorTreeItem } from '../treeItems/errorTreeItem';
-import debounce from 'lodash.debounce';
 
 function compareByName(a: { name: string }, b: { name: string }): number {
     return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
@@ -51,7 +50,6 @@ const PRIMARY_OS_PROCESSING_DOMAIN = {
 
 const hasSelectedTargetContextKey = `${manifest.PACKAGE_NAME}.hasSelectedTarget`;
 const targetDataIssueContextKey = `${manifest.PACKAGE_NAME}.targetDataIssue`;
-const refreshDelayMs = 500;
 
 export class TargetTreeView
     implements vscode.TreeDataProvider<vscode.TreeItem>, vscode.Disposable
@@ -73,24 +71,23 @@ export class TargetTreeView
         this.disposables.collect(
             treeView,
             this.targetModel.onSelectedChanged(() => {
-                this.refreshSelectedTarget();
+                this.refreshTreeView();
+                this.syncSelectedTargetContext();
             }),
             this.targetModel.onTargetsChanged(() => {
-                this.refreshTargets();
+                this.refreshTreeView();
+                this.syncTargetDataIssueContext();
             }),
             this.targetModel.onHealthChanged(() => {
-                this.refresh();
+                this.refreshTreeView();
             }),
             this.targetModel.onContainersChanged(() => {
-                this.refresh();
+                this.refreshTreeView();
             }),
             this.targetModel.onDescriptionChanged(() => {
-                this._onDidChangeTreeData.fire(undefined);
+                this.refreshTreeView();
             }),
             this._onDidChangeTreeData,
-            { dispose: () => this.refresh.cancel() },
-            { dispose: () => this.refreshTargets.cancel() },
-            { dispose: () => this.refreshSelectedTarget.cancel() },
         );
         this.syncTargetDataIssueContext();
         this.syncSelectedTargetContext();
@@ -187,19 +184,9 @@ export class TargetTreeView
         return element;
     }
 
-    private refresh = debounce(() => {
+    private refreshTreeView(): void {
         this._onDidChangeTreeData.fire(undefined);
-    }, refreshDelayMs);
-
-    private refreshSelectedTarget = debounce(() => {
-        this._onDidChangeTreeData.fire(undefined);
-        this.syncSelectedTargetContext();
-    }, refreshDelayMs);
-
-    private refreshTargets = debounce(() => {
-        this._onDidChangeTreeData.fire(undefined);
-        this.syncTargetDataIssueContext();
-    }, refreshDelayMs);
+    }
 
     private syncTargetDataIssueContext(): void {
         vscode.commands.executeCommand(
