@@ -34,7 +34,9 @@ export class ProjectController implements vscode.Disposable {
 
         try {
             const projects = await this.projectRefresh.run(() =>
-                findTopLevelComposeProjects(),
+                findTopLevelComposeProjects(
+                    vscode.workspace.workspaceFolders ?? [],
+                ),
             );
             if (projects === undefined) {
                 return;

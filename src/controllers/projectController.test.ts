@@ -3,6 +3,7 @@ import { ProjectModel } from '../models/projectModel';
 import { findTopLevelComposeProjects, ProjectMetadata } from '../util/project';
 import { loaded } from '../util/loadable';
 import * as vscode from 'vscode';
+import { mutable } from '../util/mutable';
 
 vi.mock('../util/project');
 
@@ -15,10 +16,20 @@ const projects: ProjectMetadata[] = [
         workspaceName: 'workspace',
     },
 ];
+const workspaceFolder: vscode.WorkspaceFolder = {
+    uri: vscode.Uri.file('/fake/workspace'),
+    name: 'workspace',
+    index: 0,
+};
 
 describe('ProjectController', () => {
+    beforeEach(() => {
+        mutable(vscode.workspace).workspaceFolders = [workspaceFolder];
+    });
+
     afterEach(() => {
         vi.resetAllMocks();
+        mutable(vscode.workspace).workspaceFolders = undefined;
     });
 
     it('refreshes projects on creation', async () => {
@@ -27,7 +38,9 @@ describe('ProjectController', () => {
 
         new ProjectController(model);
 
-        expect(findTopLevelComposeProjects).toHaveBeenCalled();
+        expect(findTopLevelComposeProjects).toHaveBeenCalledWith([
+            workspaceFolder,
+        ]);
         await vi.waitFor(() => {
             expect(model.projects).toStrictEqual(loaded(projects));
         });

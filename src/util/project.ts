@@ -13,10 +13,9 @@ export interface ProjectMetadata {
     workspaceName: string;
 }
 
-export async function findTopLevelComposeProjects(): Promise<
-    ProjectMetadata[]
-> {
-    const workspaceFolders = vscode.workspace.workspaceFolders ?? [];
+export async function findTopLevelComposeProjects(
+    workspaceFolders: readonly vscode.WorkspaceFolder[],
+): Promise<ProjectMetadata[]> {
     const projects: ProjectMetadata[] = [];
 
     for (const workspaceFolder of workspaceFolders) {

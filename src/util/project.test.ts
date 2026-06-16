@@ -1,6 +1,5 @@
 import path from 'node:path';
 import * as vscode from 'vscode';
-import { mutable } from './mutable';
 import { findTopLevelComposeProjects } from './project';
 
 describe('findTopLevelComposeProjects', () => {
@@ -12,16 +11,11 @@ describe('findTopLevelComposeProjects', () => {
     const workspacePath = workspaceFolder.uri.fsPath;
 
     beforeEach(() => {
-        mutable(vscode.workspace).workspaceFolders = [workspaceFolder];
         mockComposeFiles();
-        vi.mocked(vscode.workspace.getWorkspaceFolder).mockImplementation(
-            () => workspaceFolder,
-        );
     });
 
     afterEach(() => {
         vi.resetAllMocks();
-        mutable(vscode.workspace).workspaceFolders = undefined;
     });
 
     function getRelativePatternBasePath(
@@ -107,7 +101,7 @@ describe('findTopLevelComposeProjects', () => {
         const composeFilePath = workspaceFilePath('compose.yaml');
         mockComposeFiles(composeFilePath);
 
-        const projects = await findTopLevelComposeProjects();
+        const projects = await findTopLevelComposeProjects([workspaceFolder]);
 
         expect(
             projects.map((project) => ({
@@ -133,7 +127,7 @@ describe('findTopLevelComposeProjects', () => {
         const composeFilePath = workspaceFilePath('demo', 'compose.yaml');
         mockComposeFiles(composeFilePath);
 
-        const projects = await findTopLevelComposeProjects();
+        const projects = await findTopLevelComposeProjects([workspaceFolder]);
 
         expect(
             projects.map((project) => ({
@@ -157,7 +151,7 @@ describe('findTopLevelComposeProjects', () => {
         const composeYamlPath = workspaceFilePath('compose.yaml');
         mockComposeFiles(workspaceFilePath('compose.yml'), composeYamlPath);
 
-        const projects = await findTopLevelComposeProjects();
+        const projects = await findTopLevelComposeProjects([workspaceFolder]);
 
         expect(projects).toHaveLength(1);
         expect(projects[0].composeFileUri.fsPath).toBe(composeYamlPath);
@@ -166,7 +160,7 @@ describe('findTopLevelComposeProjects', () => {
     it('ignores compose files below immediate child folders', async () => {
         mockComposeFiles(workspaceFilePath('demo', 'nested', 'compose.yaml'));
 
-        const projects = await findTopLevelComposeProjects();
+        const projects = await findTopLevelComposeProjects([workspaceFolder]);
 
         expect(projects).toEqual([]);
     });
@@ -177,7 +171,7 @@ describe('findTopLevelComposeProjects', () => {
             workspaceFilePath('demo', 'compose.yaml'),
         );
 
-        const projects = await findTopLevelComposeProjects();
+        const projects = await findTopLevelComposeProjects([workspaceFolder]);
 
         expect(projects.map((project) => project.name)).toEqual(['workspace']);
         expect(vi.mocked(vscode.workspace.findFiles)).toHaveBeenCalledTimes(1);
@@ -193,16 +187,15 @@ describe('findTopLevelComposeProjects', () => {
             secondWorkspaceFolder.uri,
             'compose.yaml',
         ).fsPath;
-        mutable(vscode.workspace).workspaceFolders = [
-            workspaceFolder,
-            secondWorkspaceFolder,
-        ];
         mockComposeFiles(
             workspaceFilePath('compose.yaml'),
             secondWorkspaceComposeFilePath,
         );
 
-        const projects = await findTopLevelComposeProjects();
+        const projects = await findTopLevelComposeProjects([
+            workspaceFolder,
+            secondWorkspaceFolder,
+        ]);
 
         expect(projects.map((project) => project.name)).toEqual([
             'workspace',
