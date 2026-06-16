@@ -5,11 +5,10 @@ import { TargetProcessingDomainTreeItem } from '../targetTreeView/targetProcessi
 import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
 import * as manifest from '../manifest';
 import { ContainerItem, TargetDescription } from '../util/types';
-import { mock, MockProxy } from 'vitest-mock-extended';
+import { mock } from 'vitest-mock-extended';
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
 import { TargetProcessingDomainGroupTreeItem } from '../targetTreeView/targetProcessingDomainGroupTreeItem';
 import { IssueCheck, TargetHealthCheck } from '../topoCliSchema';
-import { TargetDescriptionStore } from '../target/targetDescriptionStore';
 import { TargetModel } from '../models/targetModel';
 import { TargetDataIssueTreeItem } from '../targetTreeView/targetDataIssueTreeItem';
 import { errored, loaded } from '../util/loadable';
@@ -18,7 +17,6 @@ import { ErrorTreeItem } from '../treeItems/errorTreeItem';
 describe('TargetTreeView', () => {
     let view: TargetTreeView;
     let targetModel: TargetModel;
-    let targetDescriptionStoreMock: MockProxy<TargetDescriptionStore>;
     const target = 'user@topo.local';
     const targetDescription: TargetDescription = {
         hostProcessors: [],
@@ -102,11 +100,8 @@ describe('TargetTreeView', () => {
         targetModel.setSelected(target);
         targetModel.setSelectedTargetHealth(loaded(targetHealth));
         targetModel.setSelectedTargetContainers(loaded(mockContainers));
-        targetDescriptionStoreMock = mock<TargetDescriptionStore>();
-        targetDescriptionStoreMock.getDescription.mockResolvedValue(
-            targetDescription,
-        );
-        view = new TargetTreeView(targetModel, targetDescriptionStoreMock);
+        targetModel.setSelectedTargetDescription(loaded(targetDescription));
+        view = new TargetTreeView(targetModel);
         vi.clearAllTimers();
         vi.clearAllMocks();
     });
@@ -125,10 +120,7 @@ describe('TargetTreeView', () => {
             model.setTargets(errored('Failed to load targets'));
             model.setSelected('my-target');
 
-            const contextView = new TargetTreeView(
-                model,
-                targetDescriptionStoreMock,
-            );
+            const contextView = new TargetTreeView(model);
 
             expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
                 'setContext',
@@ -199,9 +191,9 @@ describe('TargetTreeView', () => {
     });
 
     describe('getChildren', () => {
-        it('returns Target at root and Dependencies/Processing Domains as its children', async () => {
-            const rootChildren = await view.getChildren();
-            const targetChildren = await view.getChildren(rootChildren[0]);
+        it('returns Target at root and Dependencies/Processing Domains as its children', () => {
+            const rootChildren = view.getChildren();
+            const targetChildren = view.getChildren(rootChildren[0]);
 
             expect(targetChildren).toHaveLength(2);
             expect(targetChildren[0]).toBeInstanceOf(
@@ -212,12 +204,9 @@ describe('TargetTreeView', () => {
             );
             expect(targetChildren[0].label).toBe('Dependencies');
             expect(targetChildren[1].label).toBe('Processing Domains');
-            expect(
-                targetDescriptionStoreMock.getDescription,
-            ).toHaveBeenCalledTimes(1);
         });
 
-        it('returns dependency items for Dependencies group', async () => {
+        it('returns dependency items for Dependencies group', () => {
             const subsystemDriverHealth = mock<IssueCheck>({
                 name: 'rproc-driver',
                 status: 'ok',
@@ -239,14 +228,14 @@ describe('TargetTreeView', () => {
                     subsystemDriver: subsystemDriverHealth,
                 }),
             );
-            const rootChildren = await view.getChildren();
-            const targetChildren = await view.getChildren(rootChildren[0]);
+            const rootChildren = view.getChildren();
+            const targetChildren = view.getChildren(rootChildren[0]);
             const dependenciesGroup = targetChildren.find(
                 (v) => v instanceof HealthCheckDependencyGroupTreeItem,
             );
             expect(dependenciesGroup).toBeDefined();
 
-            const got = await view.getChildren(dependenciesGroup);
+            const got = view.getChildren(dependenciesGroup);
 
             expect(got.map((item) => item.label)).toEqual([
                 dependencies[0].name,
@@ -255,10 +244,10 @@ describe('TargetTreeView', () => {
             ]);
         });
 
-        it('sets disconnected context and tree collapsible state for target with pending health', async () => {
+        it('sets disconnected context and tree collapsible state for target with pending health', () => {
             targetModel.setSelectedTargetHealth(loaded(undefined));
 
-            const rootChildren = await view.getChildren();
+            const rootChildren = view.getChildren();
 
             expect(rootChildren).toHaveLength(1);
             const targetItem = rootChildren[0] as TargetTreeItem;
@@ -268,7 +257,7 @@ describe('TargetTreeView', () => {
             );
         });
 
-        it('shows health diagnostics on selected target when health has an error', async () => {
+        it('shows health diagnostics on selected target when health has an error', () => {
             const diagnostics = '"ssh" not found on remote target\'s $PATH';
             targetModel.setSelectedTargetHealth(
                 loaded({
@@ -281,7 +270,7 @@ describe('TargetTreeView', () => {
                 }),
             );
 
-            const rootChildren = await view.getChildren();
+            const rootChildren = view.getChildren();
 
             expect(rootChildren).toStrictEqual([
                 expect.objectContaining({
@@ -292,7 +281,7 @@ describe('TargetTreeView', () => {
             ]);
         });
 
-        it('only returns the selected target at the root', async () => {
+        it('only returns the selected target at the root', () => {
             const otherTarget = 'user@other.local';
             targetModel.setTargets(loaded([target, otherTarget]));
             targetModel.setSelected(otherTarget);
@@ -300,7 +289,7 @@ describe('TargetTreeView', () => {
                 errored('ssh connection failed'),
             );
 
-            const rootChildren = await view.getChildren();
+            const rootChildren = view.getChildren();
 
             expect(rootChildren).toHaveLength(1);
             expect(rootChildren[0]).toMatchObject({
@@ -326,19 +315,19 @@ describe('TargetTreeView', () => {
                 }),
             );
 
-            const rootChildren = await view.getChildren();
+            const rootChildren = view.getChildren();
 
             expect(rootChildren).toHaveLength(1);
             expect(rootChildren[0].contextValue).toContain('HasFixableIssues');
         });
 
-        it('returns containers for Primary OS and remote processor groups', async () => {
-            const rootChildren = await view.getChildren();
-            const targetChildren = await view.getChildren(rootChildren[0]);
+        it('returns containers for Primary OS and remote processor groups', () => {
+            const rootChildren = view.getChildren();
+            const targetChildren = view.getChildren(rootChildren[0]);
             const processingDomainsGroup = targetChildren.find(
                 (v) => v instanceof TargetProcessingDomainGroupTreeItem,
             );
-            const processingDomainItems = await view.getChildren(
+            const processingDomainItems = view.getChildren(
                 processingDomainsGroup,
             );
             const primaryOsGroup = processingDomainItems.find(
@@ -351,9 +340,9 @@ describe('TargetTreeView', () => {
                 (item) => item.label === 'other-rproc',
             ) as TargetProcessingDomainTreeItem;
 
-            const primaryOsChildren = await view.getChildren(primaryOsGroup);
-            const imxRprocChildren = await view.getChildren(remoteprocGroup);
-            const otherRprocChildren = await view.getChildren(otherRprocGroup);
+            const primaryOsChildren = view.getChildren(primaryOsGroup);
+            const imxRprocChildren = view.getChildren(remoteprocGroup);
+            const otherRprocChildren = view.getChildren(otherRprocGroup);
 
             expect(primaryOsChildren).toHaveLength(1);
             expect(primaryOsChildren[0]).toBeInstanceOf(
@@ -372,17 +361,17 @@ describe('TargetTreeView', () => {
             expect(otherRprocChildren).toHaveLength(0);
         });
 
-        it('returns an error item when containers fail to load', async () => {
+        it('returns an error item when containers fail to load', () => {
             targetModel.setSelectedTargetContainers(
                 errored('container parse failed'),
             );
-            const rootChildren = await view.getChildren();
-            const targetChildren = await view.getChildren(rootChildren[0]);
+            const rootChildren = view.getChildren();
+            const targetChildren = view.getChildren(rootChildren[0]);
             const processingDomainsGroup = targetChildren.find(
                 (v) => v instanceof TargetProcessingDomainGroupTreeItem,
             );
 
-            const got = await view.getChildren(processingDomainsGroup);
+            const got = view.getChildren(processingDomainsGroup);
 
             expect(got).toHaveLength(1);
             expect(got[0]).toBeInstanceOf(ErrorTreeItem);
@@ -393,26 +382,20 @@ describe('TargetTreeView', () => {
             targetModel.setTargets(loaded([]));
             targetModel.setSelected(undefined);
 
-            const rootChildren = await view.getChildren();
+            const rootChildren = view.getChildren();
 
             expect(rootChildren.length).toEqual(0);
-            expect(
-                targetDescriptionStoreMock.getDescription,
-            ).not.toHaveBeenCalled();
         });
 
         it('shows target data issues at the root', async () => {
             const targets = errored('Failed to load targets');
             targetModel.setTargets(targets);
 
-            const rootChildren = await view.getChildren();
+            const rootChildren = view.getChildren();
 
             expect(rootChildren).toStrictEqual([
                 new TargetDataIssueTreeItem(targets),
             ]);
-            expect(
-                targetDescriptionStoreMock.getDescription,
-            ).not.toHaveBeenCalled();
         });
     });
 

@@ -6,7 +6,6 @@ import { TargetProcessingDomainTreeItem } from '../targetTreeView/targetProcessi
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
 import { TargetProcessingDomainGroupTreeItem } from '../targetTreeView/targetProcessingDomainGroupTreeItem';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
-import { TargetDescriptionStore } from '../target/targetDescriptionStore';
 import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
 import { ContainerItem } from '../util/types';
@@ -65,10 +64,7 @@ export class TargetTreeView
 
     private readonly disposables = new DisposableCollector();
 
-    constructor(
-        private readonly targetModel: TargetModel,
-        private readonly targetDescriptionStore: TargetDescriptionStore,
-    ) {
+    constructor(private readonly targetModel: TargetModel) {
         const treeView = vscode.window.createTreeView(TargetTreeView.viewId, {
             treeDataProvider: this,
             showCollapseAll: false,
@@ -88,6 +84,9 @@ export class TargetTreeView
             this.targetModel.onContainersChanged(() => {
                 this.refresh();
             }),
+            this.targetModel.onDescriptionChanged(() => {
+                this._onDidChangeTreeData.fire(undefined);
+            }),
             this._onDidChangeTreeData,
             { dispose: () => this.refresh.cancel() },
             { dispose: () => this.refreshTargets.cancel() },
@@ -97,9 +96,7 @@ export class TargetTreeView
         this.syncSelectedTargetContext();
     }
 
-    public async getChildren(
-        element?: vscode.TreeItem,
-    ): Promise<vscode.TreeItem[]> {
+    public getChildren(element?: vscode.TreeItem): vscode.TreeItem[] {
         if (!element) {
             if (this.targetModel.targets.status === 'errored') {
                 return [new TargetDataIssueTreeItem(this.targetModel.targets)];
@@ -110,18 +107,12 @@ export class TargetTreeView
                 return [];
             }
 
-            const selectedTargetDescription =
-                await this.targetDescriptionStore.getDescription(
-                    selectedTarget,
-                );
-
             return [
                 new TargetTreeItem({
                     target: selectedTarget,
                     health: this.targetModel.selectedTargetHealth,
-                    targetDescription: selectedTargetDescription
-                        ? loaded(selectedTargetDescription)
-                        : undefined,
+                    targetDescription:
+                        this.targetModel.selectedTargetDescription,
                 }),
             ];
         }
