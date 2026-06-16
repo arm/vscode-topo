@@ -22,9 +22,11 @@ describe('ProtocolHandler', () => {
     let protocolHandler: ProtocolHandler;
     let taskExecutor: MockProxy<TaskExecutor>;
 
-    function expectCloneTask(projectName: string, args: string[]): void {
-        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-        const task = taskExecutor.run.mock.calls[0][0];
+    function expectCloneTask(
+        task: vscode.Task,
+        projectName: string,
+        args: string[],
+    ): void {
         expect(task.name).toBe(`Clone ${projectName}`);
         expect(task.execution).toMatchObject({
             process: 'topo',
@@ -51,7 +53,8 @@ describe('ProtocolHandler', () => {
         );
 
         expect(vscode.window.showOpenDialog).not.toHaveBeenCalled();
-        expectCloneTask('repo', [
+        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+        expectCloneTask(taskExecutor.run.mock.calls[0][0], 'repo', [
             'clone',
             'git:https://example.com/repo.git',
             path.join(workspaceUri.fsPath, 'repo'),
@@ -80,7 +83,8 @@ describe('ProtocolHandler', () => {
             canSelectMany: false,
             openLabel: 'Select Destination Folder',
         });
-        expectCloneTask('repo', [
+        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+        expectCloneTask(taskExecutor.run.mock.calls[0][0], 'repo', [
             'clone',
             'git:https://example.com/repo.git',
             path.join(destinationUri.fsPath, 'repo'),
@@ -118,7 +122,8 @@ describe('ProtocolHandler', () => {
             ),
         );
 
-        expectCloneTask('repo', [
+        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+        expectCloneTask(taskExecutor.run.mock.calls[0][0], 'repo', [
             'clone',
             'https://example.com/repo.git',
             path.join(workspaceUri.fsPath, 'repo'),
@@ -139,7 +144,8 @@ describe('ProtocolHandler', () => {
             }),
         );
 
-        expectCloneTask('repo', [
+        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+        expectCloneTask(taskExecutor.run.mock.calls[0][0], 'repo', [
             'clone',
             'https://example.com/repo.git',
             path.join(workspaceUri.fsPath, 'repo'),
@@ -161,11 +167,16 @@ describe('ProtocolHandler', () => {
             ),
         );
 
-        expectCloneTask('topo-lightbulb-moment', [
-            'clone',
-            'https://github.com/Arm-Examples/topo-lightbulb-moment',
-            path.join(workspaceUri.fsPath, 'topo-lightbulb-moment'),
-        ]);
+        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+        expectCloneTask(
+            taskExecutor.run.mock.calls[0][0],
+            'topo-lightbulb-moment',
+            [
+                'clone',
+                'https://github.com/Arm-Examples/topo-lightbulb-moment',
+                path.join(workspaceUri.fsPath, 'topo-lightbulb-moment'),
+            ],
+        );
     });
 
     it('does not attempt clone when source is missing', async () => {
@@ -215,7 +226,8 @@ describe('ProtocolHandler', () => {
             ),
         );
 
-        expectCloneTask('repo', [
+        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+        expectCloneTask(taskExecutor.run.mock.calls[0][0], 'repo', [
             'clone',
             'https://github.com/Arm-Examples/topo-lightbulb-moment',
             path.join(workspaceUri.fsPath, 'repo'),

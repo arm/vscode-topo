@@ -46,11 +46,6 @@ describe('project clone utilities', () => {
         });
     }
 
-    function expectCloneTaskCall(projectName: string, args: string[]): void {
-        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-        expectCloneTask(taskExecutor.run.mock.calls[0][0], projectName, args);
-    }
-
     beforeEach(() => {
         vi.resetAllMocks();
         taskExecutor = mock<TaskExecutor>();
@@ -263,7 +258,8 @@ describe('project clone utilities', () => {
                 prompt: 'Enter the project name',
                 value: 'repo',
             });
-            expectCloneTaskCall('repo', [
+            expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+            expectCloneTask(taskExecutor.run.mock.calls[0][0], 'repo', [
                 'clone',
                 'git:https://example.com/repo.git',
                 path.join(workspaceUri.fsPath, 'repo'),
@@ -283,7 +279,8 @@ describe('project clone utilities', () => {
                 prompt: 'Enter the project name',
                 value: 'repo',
             });
-            expectCloneTaskCall('repo', [
+            expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+            expectCloneTask(taskExecutor.run.mock.calls[0][0], 'repo', [
                 'clone',
                 'git:git@example.com:repo.git',
                 path.join(workspaceUri.fsPath, 'repo'),
@@ -304,7 +301,8 @@ describe('project clone utilities', () => {
                 },
             );
 
-            expectCloneTaskCall('repo', [
+            expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+            expectCloneTask(taskExecutor.run.mock.calls[0][0], 'repo', [
                 'clone',
                 'https://example.com/repo.git',
                 path.join(workspaceUri.fsPath, 'repo'),
@@ -327,7 +325,8 @@ describe('project clone utilities', () => {
                 prompt: 'Enter the project name',
                 value: 'source',
             });
-            expectCloneTaskCall('myproj', [
+            expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+            expectCloneTask(taskExecutor.run.mock.calls[0][0], 'myproj', [
                 'clone',
                 `dir:${localTemplateUri.fsPath}`,
                 path.join(workspaceUri.fsPath, 'myproj'),
@@ -351,7 +350,8 @@ describe('project clone utilities', () => {
                 canSelectMany: false,
                 openLabel: 'Select Destination Folder',
             });
-            expectCloneTaskCall('repo', [
+            expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+            expectCloneTask(taskExecutor.run.mock.calls[0][0], 'repo', [
                 'clone',
                 'git:https://example.com/repo.git',
                 path.join(destinationUri.fsPath, 'repo'),
