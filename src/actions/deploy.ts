@@ -154,6 +154,7 @@ export async function deploy(
         if (choice?.title === viewLogsItem.title) {
             terminal?.show();
         }
+        return;
     }
     vscode.window.showInformationMessage(
         `Deployment to ${target} completed successfully.`,

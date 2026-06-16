@@ -70,6 +70,7 @@ export async function stop(
         if (choice?.title === viewLogsItem.title) {
             terminal?.show();
         }
+        return;
     }
     vscode.window.showInformationMessage(
         `Services on ${target} stopped successfully.`,
