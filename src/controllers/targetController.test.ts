@@ -8,7 +8,11 @@ import { WrappedError } from '../errors/wrappedError';
 import { showAndLogError } from '../util/showAndLogError';
 import { TopoCli } from '../topoCli';
 import { ContainerCommands } from '../target/containerCommands';
-import { DockerInspectItem, DockerPsItem } from '../util/types';
+import {
+    DockerInspectItem,
+    DockerPsItem,
+    TargetDescription,
+} from '../util/types';
 import { errored, loaded } from '../util/loadable';
 import { HealthCheck } from '../topoCliSchema';
 
@@ -63,6 +67,12 @@ const dockerInspectItem: DockerInspectItem = {
     },
 };
 
+const targetDescription: TargetDescription = {
+    hostProcessors: [],
+    remoteProcessors: [{ name: 'imx-rproc' }],
+    totalMemoryKb: 1024,
+};
+
 afterEach(() => {
     vi.clearAllMocks();
 });
@@ -95,6 +105,7 @@ function mockTargetStore(
 
 function mockControllerDependencies() {
     const topoCli = mock<TopoCli>();
+    topoCli.describe.mockResolvedValue(targetDescription);
     topoCli.health.mockResolvedValue(health);
     const containerCommands = mock<ContainerCommands>();
     containerCommands.getContainers.mockResolvedValue([]);
@@ -601,6 +612,7 @@ describe('target unselection', () => {
         const targetStore = mockTargetStore(['user@board'], 'user@board');
         const targetModel = new TargetModel();
         targetModel.setSelected('user@board');
+        targetModel.setSelectedTargetDescription(loaded(targetDescription));
         const { controller } = createController(targetModel, targetStore);
         const targetItem = new TargetTreeItem({
             target: 'user@board',
@@ -612,6 +624,9 @@ describe('target unselection', () => {
         expect(targetModel.selected).toBeUndefined();
         expect(targetModel.selectedTargetHealth).toEqual(loaded(undefined));
         expect(targetModel.selectedTargetContainers).toEqual(loaded([]));
+        expect(targetModel.selectedTargetDescription).toEqual(
+            loaded(undefined),
+        );
     });
 
     it('does nothing when unselect command is executed with a non-target item', async () => {
@@ -622,6 +637,60 @@ describe('target unselection', () => {
         await controller.unselectCommandHandler();
 
         expect(targetStore.setSelected).not.toHaveBeenCalled();
+    });
+});
+
+describe('selected target description load', () => {
+    it('loads description for the selected target', async () => {
+        const targetStore = mockTargetStore([target], target);
+        const targetModel = new TargetModel();
+        targetModel.setSelected(target);
+        const { controller, topoCli } = createController(
+            targetModel,
+            targetStore,
+        );
+
+        await controller.loadSelectedTargetDescriptionCommandHandler();
+
+        expect(targetModel.selectedTargetDescription).toStrictEqual(
+            loaded(targetDescription),
+        );
+        expect(topoCli.describe).toHaveBeenCalledWith(target);
+        expect(topoCli.health).not.toHaveBeenCalled();
+    });
+
+    it('stores a description error when topo describe fails', async () => {
+        const targetStore = mockTargetStore([target], target);
+        const targetModel = new TargetModel();
+        targetModel.setSelected(target);
+        const { controller, topoCli } = createController(
+            targetModel,
+            targetStore,
+        );
+        const error = new Error('invalid json');
+        topoCli.describe.mockRejectedValue(error);
+
+        await controller.loadSelectedTargetDescriptionCommandHandler();
+
+        expect(targetModel.selectedTargetDescription).toStrictEqual(
+            errored(error),
+        );
+    });
+
+    it('does not load description when no target is selected', async () => {
+        const targetStore = mockTargetStore();
+        const targetModel = new TargetModel();
+        const { controller, topoCli } = createController(
+            targetModel,
+            targetStore,
+        );
+
+        await controller.loadSelectedTargetDescriptionCommandHandler();
+
+        expect(targetModel.selectedTargetDescription).toStrictEqual(
+            loaded(undefined),
+        );
+        expect(topoCli.describe).not.toHaveBeenCalled();
     });
 });
 

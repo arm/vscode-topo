@@ -13,7 +13,6 @@ import { TargetStore } from './target/targetStore';
 import { Deploy } from './actions/deploy';
 import { Stop } from './actions/stop';
 import { ProtocolHandler } from './protocolHandler';
-import { TargetDescriptionStore } from './target/targetDescriptionStore';
 import { FixIssue } from './actions/fixIssue';
 import { HostTreeView } from './views/hostTreeView';
 import { logger } from './util/logger';
@@ -46,17 +45,13 @@ export async function activate(
 
     const dockerCommands = new DockerCommands();
     const targetStore = new TargetStore(context);
-    const targetDescriptionStore = new TargetDescriptionStore(topoCli);
     context.subscriptions.push(targetStore);
 
     const targetModel = new TargetModel();
     const hostModel = new HostModel();
 
     const hostTreeView = new HostTreeView(hostModel);
-    const targetTreeView = new TargetTreeView(
-        targetModel,
-        targetDescriptionStore,
-    );
+    const targetTreeView = new TargetTreeView(targetModel);
     const targetStatusBarItemView = new TargetStatusBarItemView(targetModel);
     context.subscriptions.push(
         hostTreeView,
@@ -85,6 +80,7 @@ export async function activate(
             targetController.updateTargetsFromStore(),
         ),
         targetModel.onSelectedChanged(() => {
+            targetController.loadSelectedTargetDescriptionCommandHandler();
             targetController.refreshSelectedTargetDataCommandHandler();
         }),
     );

@@ -58,6 +58,11 @@ describe('commands', () => {
                 commands.refreshHostHealth,
                 handlers.hostController.refreshHealthCommandHandler,
             ],
+            [
+                commands.refreshTargetData,
+                handlers.targetController
+                    .refreshSelectedTargetDataCommandHandler,
+            ],
             [commands.showOutput, vi.mocked(logger.show)],
             [
                 commands.selectTarget,
