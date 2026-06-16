@@ -7,7 +7,7 @@ export class HostController {
         private readonly hostModel: HostModel,
         private readonly topoCli: TopoCli,
     ) {
-        this.refreshHealthCommandHandler();
+        void this.refreshHealthCommandHandler();
     }
 
     public async refreshHealthCommandHandler(): Promise<void> {

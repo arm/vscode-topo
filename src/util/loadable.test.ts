@@ -34,12 +34,10 @@ describe('loadable', () => {
     it('errored() converts non-Error values to Error instances', () => {
         const result = errored('boom');
 
-        if (result.status !== 'errored') {
-            throw new Error('Expected an errored loadable');
-        }
-
-        expect(result.loading).toBe(false);
-        expect(result.error).toBeInstanceOf(Error);
-        expect(result.error.message).toBe('boom');
+        expect(result).toStrictEqual({
+            status: 'errored',
+            error: new Error('boom'),
+            loading: false,
+        });
     });
 });

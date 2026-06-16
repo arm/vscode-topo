@@ -15,7 +15,9 @@ describe('TargetProcessingDomainTreeItem', () => {
         expect(item.label).toBe('PrimaryOS');
         expect(item.contextValue).toBe('ProcessingDomain PrimaryOS');
         expect(item.containers).toBe(containers);
-        expect(item.iconPath).toBeInstanceOf(vscode.ThemeIcon);
+        expect(item.iconPath).toStrictEqual(
+            new vscode.ThemeIcon('multiple-windows'),
+        );
         expect(item.collapsibleState).toBe(
             vscode.TreeItemCollapsibleState.Collapsed,
         );

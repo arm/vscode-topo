@@ -124,23 +124,22 @@ describe('TopoCli', () => {
         execSyncMock.mockImplementation(() => {
             throw execError;
         });
+        const expectedError = new WrappedError(
+            'CLI',
+            'collecting CPU info: "lscpu" not found; connection lost',
+            [
+                {
+                    level: 'Error',
+                    msg: 'collecting CPU info: "lscpu" not found',
+                },
+                { level: 'Error', msg: 'connection lost' },
+            ],
+            { cause: execError },
+        );
 
-        expect.assertions(6);
-        try {
-            topoCli.listTemplates('me@example.com');
-        } catch (error) {
-            expect(error).toBeInstanceOf(WrappedError);
-            const cliError = error as WrappedError;
-            expect(cliError.logs).toHaveLength(2);
-            expect(cliError.logs[0].msg).toBe(
-                'collecting CPU info: "lscpu" not found',
-            );
-            expect(cliError.logs[1].msg).toBe('connection lost');
-            expect(cliError.message).toBe(
-                'collecting CPU info: "lscpu" not found; connection lost',
-            );
-            expect(cliError.cause).toBe(execError);
-        }
+        expect(() => topoCli.listTemplates('me@example.com')).toThrow(
+            expectedError,
+        );
     });
 
     it('listTemplates rethrows original error when stderr has no structured log entries', () => {
@@ -173,16 +172,13 @@ describe('TopoCli', () => {
         execSyncMock.mockImplementation(() => {
             throw execError;
         });
+        const expectedError = new WrappedError('CLI', 'disk full', [
+            { level: 'Info', msg: 'starting up' },
+            { level: 'Error', msg: 'disk full' },
+            { level: 'Warning', msg: 'retrying' },
+        ]);
 
-        expect.assertions(3);
-        try {
-            topoCli.listTemplates();
-        } catch (error) {
-            expect(error).toBeInstanceOf(WrappedError);
-            const cliError = error as WrappedError;
-            expect(cliError.logs).toHaveLength(3);
-            expect(cliError.message).toBe('disk full');
-        }
+        expect(() => topoCli.listTemplates()).toThrow(expectedError);
     });
 
     it('getProject parses JSON output', () => {
@@ -461,8 +457,12 @@ describe('parseWrappedError', () => {
         const result = parseWrappedError(original);
 
         expect(result).toBeInstanceOf(WrappedError);
-        expect(result!.logs).toHaveLength(2);
-        expect(result!.message).toBe('lscpu not found; connection lost');
+        expect(result).toStrictEqual(
+            new WrappedError('CLI', 'lscpu not found; connection lost', [
+                { level: 'Error', msg: 'lscpu not found' },
+                { level: 'Error', msg: 'connection lost' },
+            ]),
+        );
         expect(result!.cause).toBe(original);
     });
 
@@ -477,8 +477,13 @@ describe('parseWrappedError', () => {
         const result = parseWrappedError(original);
 
         expect(result).toBeInstanceOf(WrappedError);
-        expect(result!.message).toBe('disk full');
-        expect(result!.logs).toHaveLength(3);
+        expect(result).toStrictEqual(
+            new WrappedError('CLI', 'disk full', [
+                { level: 'Info', msg: 'starting up' },
+                { level: 'Error', msg: 'disk full' },
+                { level: 'Warning', msg: 'retrying' },
+            ]),
+        );
     });
 
     it('returns undefined when stderr has only non-ERROR entries', () => {
@@ -528,10 +533,11 @@ describe('parseTopoLogEntries', () => {
 
         const entries = parseTopoLogEntries(input);
 
-        expect(entries).toHaveLength(3);
-        expect(entries[0].level).toBe('Info');
-        expect(entries[1].msg).toBe('disk full');
-        expect(entries[2].msg).toBe('aborting');
+        expect(entries).toEqual([
+            { level: 'Info', msg: 'starting' },
+            { level: 'Error', msg: 'disk full' },
+            { level: 'Error', msg: 'aborting' },
+        ]);
     });
 
     it('skips non-JSON lines', () => {

@@ -107,14 +107,6 @@ describe('TargetTreeView', () => {
     });
 
     describe('context', () => {
-        beforeEach(() => {
-            vi.useFakeTimers();
-        });
-
-        afterEach(() => {
-            vi.useRealTimers();
-        });
-
         it('syncs contexts when the view is created', () => {
             const model = new TargetModel();
             model.setTargets(errored('Failed to load targets'));
@@ -138,11 +130,9 @@ describe('TargetTreeView', () => {
         it('syncs target data issue context when target state changes', async () => {
             targetModel.setTargets(errored('Failed to load targets'));
 
-            expect(vscode.commands.executeCommand).not.toHaveBeenCalled();
-
-            await vi.advanceTimersByTimeAsync(500);
-
-            expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            expect(
+                vscode.commands.executeCommand,
+            ).toHaveBeenCalledExactlyOnceWith(
                 'setContext',
                 'topo.targetDataIssue',
                 true,
@@ -151,11 +141,9 @@ describe('TargetTreeView', () => {
             vi.mocked(vscode.commands.executeCommand).mockClear();
             targetModel.setTargets(loaded([target]));
 
-            expect(vscode.commands.executeCommand).not.toHaveBeenCalled();
-
-            await vi.advanceTimersByTimeAsync(500);
-
-            expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            expect(
+                vscode.commands.executeCommand,
+            ).toHaveBeenCalledExactlyOnceWith(
                 'setContext',
                 'topo.targetDataIssue',
                 false,
@@ -165,11 +153,9 @@ describe('TargetTreeView', () => {
         it('syncs selected target context when selected target changes', async () => {
             targetModel.setSelected(undefined);
 
-            expect(vscode.commands.executeCommand).not.toHaveBeenCalled();
-
-            await vi.advanceTimersByTimeAsync(500);
-
-            expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            expect(
+                vscode.commands.executeCommand,
+            ).toHaveBeenCalledExactlyOnceWith(
                 'setContext',
                 'topo.hasSelectedTarget',
                 false,
@@ -178,11 +164,9 @@ describe('TargetTreeView', () => {
             vi.mocked(vscode.commands.executeCommand).mockClear();
             targetModel.setSelected(target);
 
-            expect(vscode.commands.executeCommand).not.toHaveBeenCalled();
-
-            await vi.advanceTimersByTimeAsync(500);
-
-            expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            expect(
+                vscode.commands.executeCommand,
+            ).toHaveBeenCalledExactlyOnceWith(
                 'setContext',
                 'topo.hasSelectedTarget',
                 true,

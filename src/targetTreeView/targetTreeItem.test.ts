@@ -60,8 +60,9 @@ describe('TargetTreeItem', () => {
 
         expect(item.contextValue).toContain('Target');
         expect(item.contextValue).not.toContain('Connected');
-        expect(item.iconPath).toBeInstanceOf(vscode.ThemeIcon);
-        expect((item.iconPath as vscode.ThemeIcon).id).toBe('loading~spin');
+        expect(item.iconPath).toStrictEqual(
+            new vscode.ThemeIcon('loading~spin'),
+        );
         expect(item.collapsibleState).toBe(
             vscode.TreeItemCollapsibleState.None,
         );
@@ -75,10 +76,12 @@ describe('TargetTreeItem', () => {
 
         expect(item.contextValue).toContain('Target');
         expect(item.contextValue).not.toContain('Connected');
-        expect(item.iconPath).toBeInstanceOf(vscode.ThemeIcon);
-        const icon = item.iconPath as vscode.ThemeIcon;
-        expect(icon.id).toBe('error');
-        expect(icon.color?.id).toBe('testing.iconFailed');
+        expect(item.iconPath).toStrictEqual(
+            new vscode.ThemeIcon(
+                'error',
+                new vscode.ThemeColor('testing.iconFailed'),
+            ),
+        );
         expect(item.description).toBe('ssh connection failed');
         expect(item.tooltip).toBe(`${baseTarget}: ssh connection failed`);
         expect(item.collapsibleState).toBe(
