@@ -156,7 +156,7 @@ export class TargetStore {
         await set(this.context.globalState, key, value);
 
         if (vscode.env.uiKind === vscode.UIKind.Desktop) {
-            this.publishExternalTargetsChange();
+            void this.publishExternalTargetsChange();
         }
     }
 
@@ -186,7 +186,7 @@ export class TargetStore {
             }
         }
 
-        this.publishExternalTargetsChange();
+        void this.publishExternalTargetsChange();
     }
 
     public dispose(): void {
