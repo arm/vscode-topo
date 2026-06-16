@@ -1,3 +1,4 @@
+import * as vscode from 'vscode';
 import { HealthCheckDependencyTreeItem } from './healthCheckDependencyTreeItem';
 
 describe('HealthCheckDependencyTreeItem', () => {
@@ -20,7 +21,12 @@ describe('HealthCheckDependencyTreeItem', () => {
         });
 
         expect(item.contextValue).toBe('Dependency Ok');
-        expect(item.iconPath).toBeDefined();
+        expect(item.iconPath).toStrictEqual(
+            new vscode.ThemeIcon(
+                'check',
+                new vscode.ThemeColor('testing.iconPassed'),
+            ),
+        );
     });
 
     it('sets context value and icon for a dependency with a warning', () => {
@@ -31,7 +37,12 @@ describe('HealthCheckDependencyTreeItem', () => {
         });
 
         expect(item.contextValue).toBe('Dependency Warning');
-        expect(item.iconPath).toBeDefined();
+        expect(item.iconPath).toStrictEqual(
+            new vscode.ThemeIcon(
+                'warning',
+                new vscode.ThemeColor('testing.iconQueued'),
+            ),
+        );
     });
 
     it('sets context value and icon for a dependency with an error', () => {
@@ -42,7 +53,12 @@ describe('HealthCheckDependencyTreeItem', () => {
         });
 
         expect(item.contextValue).toBe('Dependency Error');
-        expect(item.iconPath).toBeDefined();
+        expect(item.iconPath).toStrictEqual(
+            new vscode.ThemeIcon(
+                'close',
+                new vscode.ThemeColor('testing.iconFailed'),
+            ),
+        );
     });
 
     it('marks dependency with an executable fix command as fixable', () => {

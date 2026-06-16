@@ -17,8 +17,7 @@ describe('TargetProcessingDomainGroupTreeItem', () => {
         expect(item.contextValue).toBe('ProcessingDomains');
         expect(item.remoteProcessorNames).toBe(remoteProcessorNames);
         expect(item.containers).toBe(containers);
-        expect(item.iconPath).toBeInstanceOf(vscode.ThemeIcon);
-        expect((item.iconPath as vscode.ThemeIcon).id).toBe('layers');
+        expect(item.iconPath).toStrictEqual(new vscode.ThemeIcon('layers'));
         expect(item.collapsibleState).toBe(
             vscode.TreeItemCollapsibleState.Expanded,
         );
@@ -31,7 +30,8 @@ describe('TargetProcessingDomainGroupTreeItem', () => {
             loading(errored('Containers data is not ready')),
         );
 
-        expect(item.iconPath).toBeInstanceOf(vscode.ThemeIcon);
-        expect((item.iconPath as vscode.ThemeIcon).id).toBe('loading~spin');
+        expect(item.iconPath).toStrictEqual(
+            new vscode.ThemeIcon('loading~spin'),
+        );
     });
 });
