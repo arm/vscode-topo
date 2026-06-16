@@ -4,9 +4,11 @@ import { errored, loaded, loading } from '../util/loadable';
 import { findTopLevelComposeProjects } from '../util/project';
 import { DisposableCollector } from '../util/disposableCollector';
 import { COMPOSE_FILE_GLOB } from '../util/composeFile';
+import { LatestAbortableWork } from '../util/latestAbortableWork';
 
 export class ProjectController implements vscode.Disposable {
     private readonly disposables = new DisposableCollector();
+    private readonly projectRefresh = new LatestAbortableWork();
 
     constructor(private readonly model: ProjectModel) {
         const composeFileWatcher =
@@ -16,6 +18,7 @@ export class ProjectController implements vscode.Disposable {
         };
 
         this.disposables.collect(
+            this.projectRefresh,
             composeFileWatcher,
             composeFileWatcher.onDidCreate(refresh),
             composeFileWatcher.onDidChange(refresh),
@@ -29,15 +32,18 @@ export class ProjectController implements vscode.Disposable {
     public async refreshProjects(): Promise<void> {
         this.model.setProjects(loading(this.model.projects));
 
-        let projects;
         try {
-            projects = await findTopLevelComposeProjects();
+            const projects = await this.projectRefresh.run(() =>
+                findTopLevelComposeProjects(),
+            );
+            if (projects === undefined) {
+                return;
+            }
+
+            this.model.setProjects(loaded(projects));
         } catch (error) {
             this.model.setProjects(errored(error));
-            return;
         }
-
-        this.model.setProjects(loaded(projects));
     }
 
     public dispose(): void {

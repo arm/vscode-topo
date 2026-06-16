@@ -26,10 +26,11 @@ describe('ProjectController', () => {
         const model = new ProjectModel();
 
         new ProjectController(model);
-        await Promise.resolve();
 
         expect(findTopLevelComposeProjects).toHaveBeenCalled();
-        expect(model.projects).toStrictEqual(loaded(projects));
+        await vi.waitFor(() => {
+            expect(model.projects).toStrictEqual(loaded(projects));
+        });
     });
 
     it('stores an error when project discovery fails', async () => {
@@ -39,11 +40,43 @@ describe('ProjectController', () => {
         const model = new ProjectModel();
 
         new ProjectController(model);
-        await Promise.resolve();
 
-        expect(model.projects.status).toBe('errored');
+        await vi.waitFor(() => {
+            expect(model.projects.status).toBe('errored');
+        });
         if (model.projects.status === 'errored') {
             expect(model.projects.error.message).toBe('scan failed');
         }
+    });
+
+    it('does not let stale refresh results overwrite newer projects', async () => {
+        const staleProjects: ProjectMetadata[] = [
+            {
+                name: 'stale',
+                uri: vscode.Uri.file('/fake/workspace/stale'),
+                composeFileUri: vscode.Uri.file(
+                    '/fake/workspace/stale/compose.yaml',
+                ),
+                workspaceIndex: 0,
+                workspaceName: 'workspace',
+            },
+        ];
+        const refreshResolvers: ((projects: ProjectMetadata[]) => void)[] = [];
+        vi.mocked(findTopLevelComposeProjects).mockImplementation(
+            () => new Promise((resolve) => refreshResolvers.push(resolve)),
+        );
+        const model = new ProjectModel();
+
+        const controller = new ProjectController(model);
+        const latestRefresh = controller.refreshProjects();
+
+        expect(refreshResolvers).toHaveLength(2);
+        refreshResolvers[1](projects);
+        await latestRefresh;
+        refreshResolvers[0](staleProjects);
+
+        await vi.waitFor(() => {
+            expect(model.projects).toStrictEqual(loaded(projects));
+        });
     });
 });
