@@ -116,9 +116,9 @@ describe('TargetStore', () => {
 
         await expect(addTargetOperation).resolves.toBeUndefined();
         const targets = store.getTargets();
-        expect(targets.has(t)).toBe(true);
+        expect(targets).toContain(t);
         const raw = context.globalState.get('targets') as string | undefined;
-        expect(typeof raw).toBe('string');
+        expect(raw).toBeTypeOf('string');
         const parsed = JSON.parse(raw || '{}');
         expect(parsed[t]).toEqual({});
     });
@@ -160,10 +160,10 @@ describe('TargetStore', () => {
         await store.addTarget(t);
 
         const targets = store.getTargets();
-        expect(targets.has(t)).toBe(true);
+        expect(targets).toContain(t);
 
         const raw = context.globalState.get('targets') as string | undefined;
-        expect(typeof raw).toBe('string');
+        expect(raw).toBeTypeOf('string');
         const parsed = JSON.parse(raw || '{}');
         expect(parsed[t]).toEqual({});
     });
@@ -190,7 +190,6 @@ describe('TargetStore', () => {
         await store.setSelected('carol@example.com');
 
         const selected = store.getSelectedTarget();
-        expect(selected).toBeDefined();
         expect(selected).toBe('carol@example.com');
     });
 
@@ -200,24 +199,18 @@ describe('TargetStore', () => {
             key === 'targets' ? 'not-json' : undefined,
         );
         const store = new TargetStore(context);
-
-        let thrown: unknown;
-        try {
-            store.getTargets();
-        } catch (err) {
-            thrown = err;
-        }
-        expect(thrown).toBeInstanceOf(WrappedError);
-        expect((thrown as WrappedError).code).toBe('STORAGE');
-        expect((thrown as WrappedError).message).toBe(
+        const expectedError = new WrappedError(
+            'STORAGE',
             'Failed to parse stored targets',
+            [
+                {
+                    level: 'Error',
+                    msg: expect.stringContaining('Unexpected token'),
+                },
+            ],
         );
-        expect((thrown as WrappedError).logs).toEqual([
-            {
-                level: 'Error',
-                msg: expect.stringContaining('Unexpected token'),
-            },
-        ]);
+
+        expect(() => store.getTargets()).toThrow(expectedError);
     });
 
     it('throws a STORAGE WrappedError when stored targets fail schema validation', () => {
@@ -228,18 +221,18 @@ describe('TargetStore', () => {
                 : undefined,
         );
         const store = new TargetStore(context);
-
-        let thrown: unknown;
-        try {
-            store.getTargets();
-        } catch (err) {
-            thrown = err;
-        }
-        expect(thrown).toBeInstanceOf(WrappedError);
-        expect((thrown as WrappedError).code).toBe('STORAGE');
-        expect((thrown as WrappedError).message).toBe(
+        const expectedError = new WrappedError(
+            'STORAGE',
             'Failed to parse stored targets',
+            [
+                {
+                    level: 'Error',
+                    msg: expect.stringContaining('Expected an object'),
+                },
+            ],
         );
+
+        expect(() => store.getTargets()).toThrow(expectedError);
     });
 
     it('does not wrap errors when reading stored targets fails', () => {
@@ -289,9 +282,9 @@ describe('TargetStore', () => {
         await store.deleteTarget(t2);
 
         const targets = store.getTargets();
-        expect(targets.has(t2)).toBe(false);
+        expect(targets).not.toContain(t2);
         const selected = store.getSelectedTarget();
-        expect(selected).toBeDefined();
+        expect(selected).toBe(t1);
     });
 
     it('removes the selected target and clears selection even when targets remain', async () => {
@@ -308,7 +301,7 @@ describe('TargetStore', () => {
         await store.deleteTarget(t2);
 
         const targets = store.getTargets();
-        expect(targets.has(t2)).toBe(false);
+        expect(targets).not.toContain(t2);
         const selected = store.getSelectedTarget();
         expect(selected).toBeUndefined();
     });

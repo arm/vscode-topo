@@ -29,15 +29,12 @@ describe('TargetContainerTreeItem', () => {
         expect(item.tooltip).toContain('label1=value1');
         expect(item.tooltip).toContain('10m');
         expect(item.contextValue).toBe('service running Remoteproc');
-
-        // Check iconPath for running status
-        expect(item.iconPath).toBeInstanceOf(vscode.ThemeIcon);
-        expect((item.iconPath as vscode.ThemeIcon).id).toBe(
-            'debug-breakpoint-log',
+        expect(item.iconPath).toStrictEqual(
+            new vscode.ThemeIcon(
+                'debug-breakpoint-log',
+                new vscode.ThemeColor('terminal.ansiGreen'),
+            ),
         );
-        expect((item.iconPath as vscode.ThemeIcon).color).toEqual({
-            id: 'terminal.ansiGreen',
-        });
     });
 
     it('should set correct iconPath for stopped container', () => {
@@ -56,13 +53,12 @@ describe('TargetContainerTreeItem', () => {
             target,
         };
         const item = new TargetContainerTreeItem(container);
-        expect(item.iconPath).toBeInstanceOf(vscode.ThemeIcon);
-        expect((item.iconPath as vscode.ThemeIcon).id).toBe(
-            'debug-breakpoint-log',
+        expect(item.iconPath).toStrictEqual(
+            new vscode.ThemeIcon(
+                'debug-breakpoint-log',
+                new vscode.ThemeColor('terminal.ansiWhite'),
+            ),
         );
-        expect((item.iconPath as vscode.ThemeIcon).color).toEqual({
-            id: 'terminal.ansiWhite',
-        });
     });
 
     it('uses PrimaryOS context for containers running in the primary OS', () => {
