@@ -81,7 +81,12 @@ describe('commands', () => {
                 commands.deployContext,
                 handlers.deploy.deployContextCommandHandler,
             ],
+            [
+                commands.deployProject,
+                handlers.deploy.deployProjectCommandHandler,
+            ],
             [commands.stop, handlers.stop.stopCommandHandler],
+            [commands.stopProject, handlers.stop.stopProjectCommandHandler],
             [
                 commands.openContainerShell,
                 handlers.openContainerShell.openContainerShellCommandHandler,
@@ -142,7 +147,7 @@ describe('commands', () => {
             ).toHaveBeenCalledWith();
         });
 
-        it('deploy project calls the compose file deploy handler', async () => {
+        it('deploy project calls the project deploy handler with the tree node', async () => {
             const composeFileUri = vscode.Uri.file(
                 '/fake/workspace/demo/compose.yaml',
             );
@@ -161,11 +166,11 @@ describe('commands', () => {
             await executeCommand(commands.deployProject, projectItem);
 
             expect(
-                handlers.deploy.deployContextCommandHandler,
-            ).toHaveBeenCalledWith(composeFileUri);
+                handlers.deploy.deployProjectCommandHandler,
+            ).toHaveBeenCalledWith(projectItem);
         });
 
-        it('stop project calls the compose file stop handler', async () => {
+        it('stop project calls the project stop handler with the tree node', async () => {
             const composeFileUri = vscode.Uri.file(
                 '/fake/workspace/demo/compose.yaml',
             );
@@ -183,9 +188,9 @@ describe('commands', () => {
 
             await executeCommand(commands.stopProject, projectItem);
 
-            expect(handlers.stop.stopCommandHandler).toHaveBeenCalledWith(
-                composeFileUri,
-            );
+            expect(
+                handlers.stop.stopProjectCommandHandler,
+            ).toHaveBeenCalledWith(projectItem);
         });
     });
 });

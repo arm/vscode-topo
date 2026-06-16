@@ -14,6 +14,7 @@ import {
     getPreferredComposeFiles,
     type ComposeFileMetadata,
 } from '../util/composeFile';
+import { ProjectTreeItem } from '../treeItems/projectTreeItem';
 
 const viewLogsItem: vscode.MessageItem = {
     title: 'View Logs',
@@ -90,6 +91,16 @@ export class Deploy {
 
         await deploy(this.topoCli.getBinaryPath(), resource.fsPath, target);
         await this.targetController.refreshSelectedTargetDataCommandHandler();
+    }
+
+    public async deployProjectCommandHandler(treeNode: unknown): Promise<void> {
+        if (!(treeNode instanceof ProjectTreeItem)) {
+            throw new Error(
+                'No compose.yaml or compose.yml selected for deployment',
+            );
+        }
+
+        await this.deployContextCommandHandler(treeNode.composeFileUri);
     }
 
     private getSelectedTarget(): string {

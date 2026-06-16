@@ -7,6 +7,7 @@ import { TargetModel } from '../models/targetModel';
 import { TopoCli } from '../topoCli';
 import { mock, MockProxy } from 'vitest-mock-extended';
 import { TargetController } from '../controllers/targetController';
+import { ProjectTreeItem } from '../treeItems/projectTreeItem';
 
 vi.mock('../util/logger');
 vi.mock('../util/executeTask');
@@ -24,6 +25,19 @@ describe('Stop', () => {
     let topoCli: MockProxy<TopoCli>;
     let targetModel: TargetModel;
     let targetController: MockProxy<TargetController>;
+
+    function projectTreeItem(): ProjectTreeItem {
+        return new ProjectTreeItem(
+            {
+                name: 'demo',
+                uri: vscode.Uri.file(path.dirname(composeFilePath)),
+                composeFileUri,
+                workspaceIndex: 0,
+                workspaceName: 'workspace',
+            },
+            false,
+        );
+    }
 
     beforeEach(() => {
         topoCli = mock<TopoCli>();
@@ -83,5 +97,23 @@ describe('Stop', () => {
             [topoBinaryPath, 'stop', '--target', 'topo.local'],
             { cwd: path.dirname(composeFilePath) },
         );
+    });
+
+    it('stops the project tree item compose file', async () => {
+        await stopAction.stopProjectCommandHandler(projectTreeItem());
+
+        expect(executeTaskMock).toHaveBeenCalledWith(
+            'Stop services on topo.local',
+            [topoBinaryPath, 'stop', '--target', 'topo.local'],
+            { cwd: path.dirname(composeFilePath) },
+        );
+    });
+
+    it('throws when project command is called without a project tree item', async () => {
+        await expect(
+            stopAction.stopProjectCommandHandler(undefined),
+        ).rejects.toThrow('No compose.yaml or compose.yml selected for stop');
+
+        expect(executeTaskMock).not.toHaveBeenCalled();
     });
 });

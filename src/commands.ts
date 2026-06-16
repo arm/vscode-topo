@@ -13,7 +13,6 @@ import { ContainerStop } from './actions/containerStop';
 import { ContainerDelete } from './actions/containerDelete';
 import { FixIssue } from './actions/fixIssue';
 import { ProjectClone } from './actions/projectClone';
-import type { ProjectTreeItem } from './treeItems/projectTreeItem';
 
 function command(id: string): string {
     return `${PACKAGE_NAME}.${id}`;
@@ -81,20 +80,14 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
             (resource?: vscode.Uri) =>
                 handlers.deploy.deployContextCommandHandler(resource),
         ),
-        vscode.commands.registerCommand(
-            deployProject,
-            (project?: ProjectTreeItem) =>
-                handlers.deploy.deployContextCommandHandler(
-                    project?.composeFileUri,
-                ),
+        vscode.commands.registerCommand(deployProject, (treeNode) =>
+            handlers.deploy.deployProjectCommandHandler(treeNode),
         ),
         vscode.commands.registerCommand(stop, (resource?: vscode.Uri) =>
             handlers.stop.stopCommandHandler(resource),
         ),
-        vscode.commands.registerCommand(
-            stopProject,
-            (project?: ProjectTreeItem) =>
-                handlers.stop.stopCommandHandler(project?.composeFileUri),
+        vscode.commands.registerCommand(stopProject, (treeNode) =>
+            handlers.stop.stopProjectCommandHandler(treeNode),
         ),
         vscode.commands.registerCommand(openContainerShell, (treeNode) =>
             handlers.openContainerShell.openContainerShellCommandHandler(

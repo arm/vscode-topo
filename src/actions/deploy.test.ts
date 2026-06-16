@@ -8,6 +8,7 @@ import { TopoCli } from '../topoCli';
 import { MockProxy, mock } from 'vitest-mock-extended';
 import { mutable } from '../util/mutable';
 import { TargetController } from '../controllers/targetController';
+import { ProjectTreeItem } from '../treeItems/projectTreeItem';
 
 vi.mock('../util/logger');
 vi.mock('../util/executeTask');
@@ -29,6 +30,19 @@ describe('Deploy', () => {
     let topoCli: MockProxy<TopoCli>;
     let targetModel: TargetModel;
     let targetController: MockProxy<TargetController>;
+
+    function projectTreeItem(): ProjectTreeItem {
+        return new ProjectTreeItem(
+            {
+                name: 'demo',
+                uri: vscode.Uri.file(path.dirname(composeFilePath)),
+                composeFileUri,
+                workspaceIndex: 0,
+                workspaceName: 'workspace',
+            },
+            false,
+        );
+    }
 
     function mockWorkspaceFolders(
         workspaceFolders: vscode.WorkspaceFolder[],
@@ -122,6 +136,16 @@ describe('Deploy', () => {
         );
     });
 
+    it('deploys the project tree item compose file', async () => {
+        await deployAction.deployProjectCommandHandler(projectTreeItem());
+
+        expect(executeTaskMock).toHaveBeenCalledWith(
+            'Deploy to topo.local',
+            [topoBinaryPath, 'deploy', '--target', 'topo.local'],
+            { cwd: path.dirname(composeFilePath) },
+        );
+    });
+
     it('throws when context command is called without a resource', async () => {
         await expect(
             deployAction.deployContextCommandHandler(),
@@ -132,6 +156,16 @@ describe('Deploy', () => {
         expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
         expect(vscode.workspace.findFiles).not.toHaveBeenCalled();
         expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
+        expect(executeTaskMock).not.toHaveBeenCalled();
+    });
+
+    it('throws when project command is called without a project tree item', async () => {
+        await expect(
+            deployAction.deployProjectCommandHandler(undefined),
+        ).rejects.toThrow(
+            'No compose.yaml or compose.yml selected for deployment',
+        );
+
         expect(executeTaskMock).not.toHaveBeenCalled();
     });
 
