@@ -31,19 +31,17 @@ describe('ProjectController', () => {
         vi.resetAllMocks();
         mutable(vscode.workspace).workspaceFolders = undefined;
     });
-
-    it('refreshes projects on creation', async () => {
+    it('refreshes projects when requested', async () => {
         vi.mocked(findTopLevelComposeProjects).mockResolvedValue(projects);
         const model = new ProjectModel();
 
-        new ProjectController(model);
+        const controller = new ProjectController(model);
+        await controller.refreshProjects();
 
         expect(findTopLevelComposeProjects).toHaveBeenCalledWith([
             workspaceFolder,
         ]);
-        await vi.waitFor(() => {
-            expect(model.projects).toStrictEqual(loaded(projects));
-        });
+        expect(model.projects).toStrictEqual(loaded(projects));
     });
 
     it('stores an error when project discovery fails', async () => {
@@ -52,11 +50,10 @@ describe('ProjectController', () => {
         );
         const model = new ProjectModel();
 
-        new ProjectController(model);
+        const controller = new ProjectController(model);
+        await controller.refreshProjects();
 
-        await vi.waitFor(() => {
-            expect(model.projects.status).toBe('errored');
-        });
+        expect(model.projects.status).toBe('errored');
         if (model.projects.status === 'errored') {
             expect(model.projects.error.message).toBe('scan failed');
         }
@@ -81,12 +78,14 @@ describe('ProjectController', () => {
         const model = new ProjectModel();
 
         const controller = new ProjectController(model);
+        const staleRefresh = controller.refreshProjects();
         const latestRefresh = controller.refreshProjects();
 
         expect(refreshResolvers).toHaveLength(2);
         refreshResolvers[1](projects);
         await latestRefresh;
         refreshResolvers[0](staleProjects);
+        await staleRefresh;
 
         await vi.waitFor(() => {
             expect(model.projects).toStrictEqual(loaded(projects));

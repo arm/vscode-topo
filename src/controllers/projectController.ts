@@ -25,8 +25,6 @@ export class ProjectController implements vscode.Disposable {
             composeFileWatcher.onDidDelete(refresh),
             vscode.workspace.onDidChangeWorkspaceFolders(refresh),
         );
-
-        refresh();
     }
 
     public async refreshProjects(): Promise<void> {
