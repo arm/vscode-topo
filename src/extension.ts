@@ -126,7 +126,7 @@ export async function activate(
     );
 
     targetController.updateTargetsFromStore();
-    projectController.refreshProjects();
+    void projectController.refreshProjects();
     topoCli.activate();
     selectedTargetRefreshLoop.start();
 }
