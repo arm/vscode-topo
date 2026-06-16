@@ -4,8 +4,9 @@ import * as path from 'node:path';
 import { TemplateDescription } from '../topoCliSchema';
 import { WrappedError } from '../errors/wrappedError';
 import { getCloneDestinationPath } from './getCloneDestinationPath';
-import { executeTask } from './executeTask';
 import { getErrorMessage } from './getErrorMessage';
+import { TaskExecutor } from './taskExecutor';
+import { createProcessTask } from './task';
 
 interface CloneRemoteSource {
     url: string;
@@ -135,26 +136,23 @@ const getDefaultProjectNameFromSourceString = (
     }
 };
 
-const getCloneCommandFromSourceString = (
-    topoBinaryPath: string,
-    workspacePath: string,
+export function createCloneTask(
     projectName: string,
-    cloneSourceString: string,
+    cloneSource: CloneSource,
+    repositoryPath: string,
     cloneBuildArgs: CloneBuildArgs = {},
-): string[] => {
-    const projectPath = path.join(workspacePath, projectName);
+): vscode.Task {
     const buildArgs = Object.entries(cloneBuildArgs).map(
         ([key, value]) => `${key}=${value}`,
     );
-
-    return [
-        topoBinaryPath,
+    return createProcessTask(`Clone ${projectName}`, [
+        'topo',
         'clone',
-        cloneSourceString,
-        projectPath,
+        getCloneSourceString(cloneSource),
+        repositoryPath,
         ...buildArgs,
-    ];
-};
+    ]);
+}
 
 const getCloneSourceString = (cloneSource: CloneSource): string => {
     switch (cloneSource.type) {
@@ -168,7 +166,7 @@ const getCloneSourceString = (cloneSource: CloneSource): string => {
 };
 
 const cloneWithSource = async (
-    topoBinaryPath: string,
+    taskExecutor: TaskExecutor,
     cloneSource: CloneSource,
     defaultProjectName: string,
     cloneBuildArgs: CloneBuildArgs = {},
@@ -185,16 +183,14 @@ const cloneWithSource = async (
         return { success: false };
     }
     const repositoryPath = path.join(workspacePath, projectName);
-    const cloneSourceString = getCloneSourceString(cloneSource);
-    const cloneCommand = getCloneCommandFromSourceString(
-        topoBinaryPath,
-        workspacePath,
+    const cloneTask = createCloneTask(
         projectName,
-        cloneSourceString,
+        cloneSource,
+        repositoryPath,
         cloneBuildArgs,
     );
     try {
-        await executeTask(`Clone ${projectName}`, cloneCommand);
+        await taskExecutor.run(cloneTask);
         return { success: true, repositoryPath };
     } catch (err) {
         throw new WrappedError('CLONE', getErrorMessage(err), [], {
@@ -228,14 +224,14 @@ export const getTemplateOfChoice = async (
 };
 
 export async function cloneProjectFromSource(
-    topoBinaryPath: string,
+    taskExecutor: TaskExecutor,
     cloneSource: CloneSource,
     cloneBuildArgs: CloneBuildArgs = {},
 ): Promise<boolean> {
     const defaultProjectName =
         getDefaultProjectNameFromSourceString(cloneSource);
     const cloneResult = await cloneWithSource(
-        topoBinaryPath,
+        taskExecutor,
         cloneSource,
         defaultProjectName,
         cloneBuildArgs,

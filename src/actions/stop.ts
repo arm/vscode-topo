@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
 import { getErrorMessage } from '../util/getErrorMessage';
 import path from 'node:path';
-import { executeTask } from '../util/executeTask';
+import { createProcessTask } from '../util/task';
+import { TaskExecutor } from '../util/taskExecutor';
 import { showAndLogError } from '../util/showAndLogError';
 import { TargetModel } from '../models/targetModel';
-import { TopoCli } from '../topoCli';
 import { TargetController } from '../controllers/targetController';
 
 const viewLogsItem: vscode.MessageItem = {
@@ -13,7 +13,7 @@ const viewLogsItem: vscode.MessageItem = {
 
 export class Stop {
     constructor(
-        private readonly topoCli: TopoCli,
+        private readonly taskExecutor: TaskExecutor,
         private readonly targetModel: TargetModel,
         private readonly targetController: TargetController,
     ) {}
@@ -34,29 +34,27 @@ export class Stop {
             return;
         }
 
-        await stop(this.topoCli.getBinaryPath(), resource.fsPath, target);
+        await stop(this.taskExecutor, resource.fsPath, target);
         await this.targetController.refreshSelectedTargetDataCommandHandler();
     }
 }
 
 export async function stop(
-    topoBinaryPath: string,
+    taskExecutor: TaskExecutor,
     composeFilePath: string,
     target: string,
 ): Promise<void> {
-    const taskName = `Stop services on ${target}`;
+    const task = createProcessTask(
+        `Stop services on ${target}`,
+        ['topo', 'stop', '--target', target],
+        {
+            cwd: path.dirname(composeFilePath),
+        },
+    );
+    const taskName = task.name;
 
     try {
-        await executeTask(
-            taskName,
-            [topoBinaryPath, 'stop', '--target', target],
-            {
-                cwd: path.dirname(composeFilePath),
-            },
-        );
-        vscode.window.showInformationMessage(
-            `Services on ${target} stopped successfully.`,
-        );
+        await taskExecutor.run(task);
     } catch (e) {
         const terminal = vscode.window.terminals.find(
             (t) => t.name === taskName,
@@ -72,5 +70,9 @@ export async function stop(
         if (choice?.title === viewLogsItem.title) {
             terminal?.show();
         }
+        return;
     }
+    vscode.window.showInformationMessage(
+        `Services on ${target} stopped successfully.`,
+    );
 }
