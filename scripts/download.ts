@@ -176,7 +176,7 @@ const downloadUrl = `https://artifacts.tools.arm.com/topo/${tag}/${assetPath}`;
 console.log(`→ Downloading ${downloadUrl}`);
 
 // --- Perform download --------------------------------------------------------
-(async () => {
+void (async () => {
     try {
         await downloadFile(downloadUrl, destFilename, topoFilename);
         fs.chmodSync(destFilename, '755');

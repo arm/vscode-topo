@@ -80,8 +80,8 @@ export async function activate(
             targetController.updateTargetsFromStore(),
         ),
         targetModel.onSelectedChanged(() => {
-            targetController.loadSelectedTargetDescriptionCommandHandler();
-            targetController.refreshSelectedTargetDataCommandHandler();
+            void targetController.loadSelectedTargetDescriptionCommandHandler();
+            void targetController.refreshSelectedTargetDataCommandHandler();
         }),
     );
 
