@@ -14,7 +14,7 @@ export class ProjectController implements vscode.Disposable {
         const composeFileWatcher =
             vscode.workspace.createFileSystemWatcher(COMPOSE_FILE_GLOB);
         const refresh = (): void => {
-            void this.refreshProjects();
+            this.refreshProjects();
         };
 
         this.disposables.collect(
