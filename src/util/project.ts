@@ -1,11 +1,6 @@
 import path from 'node:path';
 import * as vscode from 'vscode';
-import {
-    ComposeFileMetadata,
-    compareComposeFiles,
-    getComposeFileMetadata,
-    getPreferredComposeFiles,
-} from './composeFile';
+import { ComposeFileMetadata, findComposeFiles } from './composeFile';
 
 const ROOT_COMPOSE_FILE_GLOB = 'compose.{yaml,yml}';
 const CHILD_COMPOSE_FILE_GLOB = '*/compose.{yaml,yml}';
@@ -49,21 +44,6 @@ async function findProjectComposeFiles(
     }
 
     return findComposeFiles(workspaceFolder, CHILD_COMPOSE_FILE_GLOB);
-}
-
-async function findComposeFiles(
-    workspaceFolder: vscode.WorkspaceFolder,
-    glob: string,
-): Promise<ComposeFileMetadata[]> {
-    const composeFileUris = await vscode.workspace.findFiles(
-        new vscode.RelativePattern(workspaceFolder, glob),
-    );
-
-    return getPreferredComposeFiles(
-        composeFileUris.map((uri) =>
-            getComposeFileMetadata(uri, workspaceFolder),
-        ),
-    ).sort(compareComposeFiles);
 }
 
 function createProjectMetadata(

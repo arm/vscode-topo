@@ -47,6 +47,21 @@ export function compareComposeFiles(
     return a.relativePath.localeCompare(b.relativePath);
 }
 
+export async function findComposeFiles(
+    workspaceFolder: vscode.WorkspaceFolder,
+    glob: string,
+): Promise<ComposeFileMetadata[]> {
+    const composeFileUris = await vscode.workspace.findFiles(
+        new vscode.RelativePattern(workspaceFolder, glob),
+    );
+
+    return getPreferredComposeFiles(
+        composeFileUris.map((uri) =>
+            getComposeFileMetadata(uri, workspaceFolder),
+        ),
+    ).sort(compareComposeFiles);
+}
+
 /**
  * Returns the compose files to show to users, preferring compose.yaml over
  * compose.yml when both exist in the same directory.
