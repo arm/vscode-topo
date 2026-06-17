@@ -1,4 +1,5 @@
 import path from 'node:path';
+import os from 'node:os';
 import * as vscode from 'vscode';
 import {
     cloneProjectFromSource,
@@ -37,12 +38,13 @@ describe('project clone utilities', () => {
         task: vscode.Task,
         projectName: string,
         args: string[],
+        cwd?: string,
     ): void {
         expect(task.name).toBe(`Clone ${projectName}`);
         expect(task.execution).toMatchObject({
             process: 'topo',
             args,
-            options: { cwd: undefined },
+            options: { cwd },
         });
     }
 
@@ -185,12 +187,17 @@ describe('project clone utilities', () => {
                 },
             );
 
-            expectCloneTask(task, 'repo', [
-                'clone',
-                'git:https://example.com/repo.git',
-                repositoryPath,
-                'model=some-huggingface-id',
-            ]);
+            expectCloneTask(
+                task,
+                'repo',
+                [
+                    'clone',
+                    'git:https://example.com/repo.git',
+                    repositoryPath,
+                    'model=some-huggingface-id',
+                ],
+                os.homedir(),
+            );
         });
     });
 
@@ -351,11 +358,16 @@ describe('project clone utilities', () => {
                 openLabel: 'Select Destination Folder',
             });
             expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-            expectCloneTask(taskExecutor.run.mock.calls[0][0], 'repo', [
-                'clone',
-                'git:https://example.com/repo.git',
-                path.join(destinationUri.fsPath, 'repo'),
-            ]);
+            expectCloneTask(
+                taskExecutor.run.mock.calls[0][0],
+                'repo',
+                [
+                    'clone',
+                    'git:https://example.com/repo.git',
+                    path.join(destinationUri.fsPath, 'repo'),
+                ],
+                os.homedir(),
+            );
         });
 
         it('wraps errors thrown by the task executor', async () => {
