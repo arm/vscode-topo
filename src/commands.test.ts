@@ -15,6 +15,7 @@ import { ContainerStop } from './actions/containerStop';
 import { ContainerDelete } from './actions/containerDelete';
 import { FixIssue } from './actions/fixIssue';
 import { ProjectClone } from './actions/projectClone';
+import { ProjectTreeItem } from './treeItems/projectTreeItem';
 
 vi.mock('./util/logger');
 
@@ -85,7 +86,12 @@ describe('commands', () => {
                 commands.deployContext,
                 handlers.deploy.deployContextCommandHandler,
             ],
+            [
+                commands.deployProject,
+                handlers.deploy.deployProjectCommandHandler,
+            ],
             [commands.stop, handlers.stop.stopCommandHandler],
+            [commands.stopProject, handlers.stop.stopProjectCommandHandler],
             [
                 commands.openContainerShell,
                 handlers.openContainerShell.openContainerShellCommandHandler,
@@ -144,6 +150,52 @@ describe('commands', () => {
             expect(
                 handlers.targetController.selectCommandHandler,
             ).toHaveBeenCalledWith();
+        });
+
+        it('deploy project calls the project deploy handler with the tree node', async () => {
+            const composeFileUri = vscode.Uri.file(
+                '/fake/workspace/demo/compose.yaml',
+            );
+            const projectItem = new ProjectTreeItem(
+                {
+                    name: 'demo',
+                    uri: vscode.Uri.file('/fake/workspace/demo'),
+                    composeFileUri,
+                    workspaceIndex: 0,
+                    workspaceName: 'workspace',
+                },
+                false,
+            );
+            commands.register(handlers);
+
+            await executeCommand(commands.deployProject, projectItem);
+
+            expect(
+                handlers.deploy.deployProjectCommandHandler,
+            ).toHaveBeenCalledWith(projectItem);
+        });
+
+        it('stop project calls the project stop handler with the tree node', async () => {
+            const composeFileUri = vscode.Uri.file(
+                '/fake/workspace/demo/compose.yaml',
+            );
+            const projectItem = new ProjectTreeItem(
+                {
+                    name: 'demo',
+                    uri: vscode.Uri.file('/fake/workspace/demo'),
+                    composeFileUri,
+                    workspaceIndex: 0,
+                    workspaceName: 'workspace',
+                },
+                false,
+            );
+            commands.register(handlers);
+
+            await executeCommand(commands.stopProject, projectItem);
+
+            expect(
+                handlers.stop.stopProjectCommandHandler,
+            ).toHaveBeenCalledWith(projectItem);
         });
     });
 });

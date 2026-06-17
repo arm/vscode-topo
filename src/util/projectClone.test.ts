@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 import {
     cloneProjectFromSource,
     createCloneTask,
+    getDefaultProjectNameFromUrl,
     getFirstSentence,
     getLocalSourcePath,
     getTemplateOfChoice,
@@ -85,6 +86,24 @@ describe('project clone utilities', () => {
             await expect(getLocalSourcePath()).resolves.toBe(
                 localTemplateUri.fsPath,
             );
+        });
+    });
+
+    describe('getDefaultProjectNameFromUrl', () => {
+        it('returns the repository name for git URLs with commit refs', () => {
+            expect(
+                getDefaultProjectNameFromUrl(
+                    'https://example.com/repo.git#8303e66db59a7a11e64877121f3db1b688d2011f',
+                ),
+            ).toBe('repo');
+        });
+
+        it('returns the repository name for scp-like SSH URLs with refs', () => {
+            expect(
+                getDefaultProjectNameFromUrl(
+                    'git@example.com:owner/repo.git#main',
+                ),
+            ).toBe('repo');
         });
     });
 
