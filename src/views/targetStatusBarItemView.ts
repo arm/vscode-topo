@@ -9,17 +9,17 @@ import { Loadable } from '../util/loadable';
 import { TargetHealthCheck } from '../topoCliSchema';
 import { selectTarget } from '../commands';
 
-function getStatusIconId(
-    state: Loadable<TargetHealthCheck | undefined>,
-): string {
+function getStatusIconId(state: Loadable<TargetHealthCheck>): string {
     const targetTreeIcon = getTargetTreeItemIcon(state);
     if (targetTreeIcon) {
         return targetTreeIcon.id;
     }
 
-    const dependencies =
-        state.status === 'loaded' && state.data ? state.data.dependencies : [];
-    const status = getWorstIssueCheckStatus(dependencies);
+    if (state.status !== 'loaded') {
+        return 'target';
+    }
+
+    const status = getWorstIssueCheckStatus(state.data.dependencies);
     if (status === 'ok') {
         return 'pass-filled';
     }
@@ -30,7 +30,7 @@ function getStatusIconId(
 function renderStatusBarItem(
     statusBarItem: vscode.StatusBarItem,
     target: string | undefined,
-    selectedHealth: Loadable<TargetHealthCheck | undefined>,
+    selectedHealth: Loadable<TargetHealthCheck>,
 ): void {
     if (target) {
         const iconId = getStatusIconId(selectedHealth);
@@ -64,6 +64,7 @@ export class TargetStatusBarItemView implements vscode.Disposable {
 
         this.disposables.collect(
             this.statusBarItem,
+            this.targetModel.onSelectedChanged(() => this.refresh()),
             this.targetModel.onHealthChanged(() => this.refresh()),
         );
     }

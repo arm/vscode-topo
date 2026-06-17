@@ -145,6 +145,10 @@ export class TargetTreeView
                 ];
             }
 
+            if (element.containers.status === 'unloaded') {
+                return [];
+            }
+
             const sortedContainers = [...element.containers.data].sort(
                 compareContainers,
             );

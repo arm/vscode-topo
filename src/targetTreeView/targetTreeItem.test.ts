@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { TargetTreeItem } from './targetTreeItem';
 import { IssueCheck, TargetHealthCheck } from '../topoCliSchema';
-import { errored, loaded, loading } from '../util/loadable';
+import { errored, loaded, loading, unloaded } from '../util/loadable';
 import { TargetDescription } from '../util/types';
 
 vi.mock('../util/logger');
@@ -42,10 +42,11 @@ describe('TargetTreeItem', () => {
         expect(item.contextValue).toContain('Target');
     });
 
-    it('defaults to target state not ready when health is omitted', () => {
+    it('defaults to unloaded target state when health is omitted', () => {
         const item = new TargetTreeItem({ target: baseTarget });
 
-        expect(item.description).toBe('Target health not available');
+        expect(item.description).toBeUndefined();
+        expect(item.iconPath).toBeUndefined();
         expect(item.contextValue).not.toContain('Connected');
         expect(item.collapsibleState).toBe(
             vscode.TreeItemCollapsibleState.None,
@@ -55,7 +56,7 @@ describe('TargetTreeItem', () => {
     it('shows loading icon while target is refreshing', () => {
         const item = new TargetTreeItem({
             target: baseTarget,
-            health: loading(errored('Target state is not ready')),
+            health: loading(unloaded()),
         });
 
         expect(item.contextValue).toContain('Target');
@@ -89,10 +90,10 @@ describe('TargetTreeItem', () => {
         );
     });
 
-    it('does not mark undefined selected target health as Connected', () => {
+    it('does not mark unloaded selected target health as Connected', () => {
         const item = new TargetTreeItem({
             target: baseTarget,
-            health: loaded(undefined),
+            health: unloaded(),
         });
 
         expect(item.contextValue).not.toContain('Connected');
@@ -116,7 +117,7 @@ describe('TargetTreeItem', () => {
     it('returns no remote processors while description data is pending', () => {
         const item = new TargetTreeItem({
             target: baseTarget,
-            targetDescription: loaded(undefined),
+            targetDescription: unloaded(),
         });
 
         expect(item.remoteProcessorNames).toEqual([]);

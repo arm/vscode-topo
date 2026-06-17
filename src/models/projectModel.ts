@@ -1,8 +1,6 @@
 import * as vscode from 'vscode';
 import { ProjectMetadata } from '../util/project';
-import { Loadable, loaded } from '../util/loadable';
-
-const defaultProjects: Loadable<ProjectMetadata[]> = loaded([]);
+import { Loadable, unloaded } from '../util/loadable';
 
 export class ProjectModel {
     private _onProjectsChanged: vscode.EventEmitter<void> =
@@ -10,7 +8,7 @@ export class ProjectModel {
     public readonly onProjectsChanged: vscode.Event<void> =
         this._onProjectsChanged.event;
 
-    private _projects: Loadable<ProjectMetadata[]> = defaultProjects;
+    private _projects: Loadable<ProjectMetadata[]> = unloaded();
 
     public setProjects(projects: Loadable<ProjectMetadata[]>): void {
         if (projects === this._projects) {

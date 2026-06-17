@@ -8,7 +8,7 @@ import { defaultSshConfigPath, getHosts } from '../util/ssh';
 import * as vscode from 'vscode';
 import { TopoCli } from '../topoCli';
 import { ContainerCommands } from '../target/containerCommands';
-import { errored, Loadable, loaded, loading } from '../util/loadable';
+import { errored, Loadable, loaded, loading, unloaded } from '../util/loadable';
 import {
     ContainerItem,
     DockerInspectItem,
@@ -413,9 +413,9 @@ export class TargetController {
 
         if (
             health.status !== 'loaded' ||
-            health.data?.connectivity.status !== 'ok'
+            health.data.connectivity.status !== 'ok'
         ) {
-            this.model.setSelectedTargetContainers(loaded([]));
+            this.model.setSelectedTargetContainers(unloaded());
             return;
         }
 

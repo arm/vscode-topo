@@ -1,4 +1,4 @@
-import { errored, loaded, loading } from './loadable';
+import { errored, loaded, loading, unloaded } from './loadable';
 
 describe('loadable', () => {
     it('loaded() wraps data in a non-loading loaded state', () => {
@@ -18,6 +18,13 @@ describe('loadable', () => {
             status: 'loaded',
             data: 'hello',
             loading: true,
+        });
+    });
+
+    it('unloaded() creates a non-loading unloaded state', () => {
+        expect(unloaded()).toStrictEqual({
+            status: 'unloaded',
+            loading: false,
         });
     });
 

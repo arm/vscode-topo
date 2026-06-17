@@ -1,14 +1,7 @@
 import * as vscode from 'vscode';
-import { Loadable, loaded } from '../util/loadable';
+import { Loadable, unloaded } from '../util/loadable';
 import { TargetHealthCheck } from '../topoCliSchema';
 import { ContainerItem, TargetDescription } from '../util/types';
-
-const defaultContainers: Loadable<ContainerItem[]> = loaded([]);
-const defaultHealth: Loadable<TargetHealthCheck | undefined> =
-    loaded(undefined);
-const defaultDescription: Loadable<TargetDescription | undefined> =
-    loaded(undefined);
-const defaultTargets: Loadable<string[]> = loaded([]);
 
 export class TargetModel {
     private _onSelectedChanged: vscode.EventEmitter<void> =
@@ -37,11 +30,10 @@ export class TargetModel {
         this._onDescriptionChanged.event;
 
     private _selected?: string;
-    private _targets: Loadable<string[]> = defaultTargets;
-    private _health: Loadable<TargetHealthCheck | undefined> = defaultHealth;
-    private _containers: Loadable<ContainerItem[]> = defaultContainers;
-    private _description: Loadable<TargetDescription | undefined> =
-        defaultDescription;
+    private _targets: Loadable<string[]> = unloaded();
+    private _health: Loadable<TargetHealthCheck> = unloaded();
+    private _containers: Loadable<ContainerItem[]> = unloaded();
+    private _description: Loadable<TargetDescription> = unloaded();
 
     public setSelected(selected: string | undefined): void {
         const changed = this._selected !== selected;
@@ -62,9 +54,7 @@ export class TargetModel {
         }
     }
 
-    public setSelectedTargetHealth(
-        state: Loadable<TargetHealthCheck | undefined>,
-    ) {
+    public setSelectedTargetHealth(state: Loadable<TargetHealthCheck>) {
         const changed = this._health !== state;
         this._health = state;
         if (changed) {
@@ -81,7 +71,7 @@ export class TargetModel {
     }
 
     public clear(): void {
-        this.setTargets(defaultTargets);
+        this.setTargets(unloaded());
         this.setSelected(undefined);
     }
 
@@ -93,7 +83,7 @@ export class TargetModel {
         return this._targets;
     }
 
-    public get selectedTargetHealth(): Loadable<TargetHealthCheck | undefined> {
+    public get selectedTargetHealth(): Loadable<TargetHealthCheck> {
         return this._health;
     }
 
@@ -101,22 +91,20 @@ export class TargetModel {
         return this._containers;
     }
 
-    public get selectedTargetDescription(): Loadable<
-        TargetDescription | undefined
-    > {
+    public get selectedTargetDescription(): Loadable<TargetDescription> {
         return this._description;
     }
 
     public setSelectedTargetDescription(
-        description: Loadable<TargetDescription | undefined>,
+        description: Loadable<TargetDescription>,
     ) {
         this._description = description;
         this._onDescriptionChanged.fire();
     }
 
     private clearSelectedTargetData(): void {
-        this.setSelectedTargetHealth(defaultHealth);
-        this.setSelectedTargetContainers(defaultContainers);
-        this.setSelectedTargetDescription(defaultDescription);
+        this.setSelectedTargetHealth(unloaded());
+        this.setSelectedTargetContainers(unloaded());
+        this.setSelectedTargetDescription(unloaded());
     }
 }
