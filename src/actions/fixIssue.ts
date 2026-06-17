@@ -2,9 +2,9 @@ import * as vscode from 'vscode';
 import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 import { showAndLogError } from '../util/showAndLogError';
-import { executeTask } from '../util/executeTask';
+import { createProcessTask } from '../util/task';
+import { TaskExecutor } from '../util/taskExecutor';
 import { TargetModel } from '../models/targetModel';
-import { TopoCli } from '../topoCli';
 import { TargetController } from '../controllers/targetController';
 import {
     type FixableHealthIssue,
@@ -28,7 +28,7 @@ function getIssueFixQuickPickItems(
 
 export class FixIssue {
     constructor(
-        private readonly topoCli: TopoCli,
+        private readonly taskExecutor: TaskExecutor,
         private readonly targetModel: TargetModel,
         private readonly targetController: TargetController,
     ) {}
@@ -113,13 +113,10 @@ export class FixIssue {
         command: string,
     ): Promise<void> {
         const issueName = issueNames.join(', ');
-        const commandArgs = command.split(/\s+/);
-        if (commandArgs[0] === 'topo') {
-            commandArgs[0] = this.topoCli.getBinaryPath();
-        }
+        const task = createFixIssueTask(target, issueNames, command);
 
         try {
-            await executeTask(`Fix ${issueName} on ${target}`, commandArgs);
+            await this.taskExecutor.run(task);
             vscode.window.showInformationMessage(
                 `${issueName} fixed on target ${target}`,
             );
@@ -130,4 +127,14 @@ export class FixIssue {
             );
         }
     }
+}
+
+export function createFixIssueTask(
+    target: string,
+    issueNames: string[],
+    command: string,
+): vscode.Task {
+    const issueName = issueNames.join(', ');
+    const commandArgs = command.trim().split(/\s+/);
+    return createProcessTask(`Fix ${issueName} on ${target}`, commandArgs);
 }

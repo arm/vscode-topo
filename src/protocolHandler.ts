@@ -4,7 +4,7 @@ import { logger } from './util/logger';
 import { parseCloneSourceString } from './util/parseSourceCloneString';
 import { isWrappedError } from './errors/wrappedError';
 import { showAndLogError } from './util/showAndLogError';
-import { TopoCli } from './topoCli';
+import { TaskExecutor } from './util/taskExecutor';
 
 /**
  * VS Code URI handler for Topo deep links.
@@ -16,7 +16,7 @@ import { TopoCli } from './topoCli';
  * Additional query parameters are forwarded to `topo clone` as `key=value` arguments.
  */
 export class ProtocolHandler implements vscode.UriHandler {
-    constructor(private readonly topoCli: TopoCli) {}
+    constructor(private readonly taskExecutor: TaskExecutor) {}
 
     public async handleUri(uri: vscode.Uri): Promise<void> {
         logger.info(`ProtocolHandler.handleUri(${uri.toString()})`);
@@ -62,7 +62,7 @@ export class ProtocolHandler implements vscode.UriHandler {
         }
 
         const cloneStarted = await cloneProjectFromSource(
-            this.topoCli.getBinaryPath(),
+            this.taskExecutor,
             cloneSource,
             cloneBuildArgs,
         );

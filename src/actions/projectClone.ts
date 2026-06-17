@@ -8,6 +8,7 @@ import {
 } from '../util/projectClone';
 import { isWrappedError } from '../errors/wrappedError';
 import { showAndLogError } from '../util/showAndLogError';
+import { TaskExecutor } from '../util/taskExecutor';
 
 function wrapCloneCommandWithCloneErrorHandling(
     commandHandler: () => Promise<void>,
@@ -28,6 +29,7 @@ export class ProjectClone {
     constructor(
         private readonly topoCli: TopoCli,
         private readonly targetModel: TargetModel,
+        private readonly taskExecutor: TaskExecutor,
     ) {}
 
     public templateCloneCommandHandler = wrapCloneCommandWithCloneErrorHandling(
@@ -40,7 +42,7 @@ export class ProjectClone {
             if (!selectedTemplate) {
                 return;
             }
-            await cloneProjectFromSource(this.topoCli.getBinaryPath(), {
+            await cloneProjectFromSource(this.taskExecutor, {
                 type: 'git',
                 url: selectedTemplate.url,
             });
@@ -53,7 +55,7 @@ export class ProjectClone {
             if (!cloneSourcePath) {
                 return;
             }
-            await cloneProjectFromSource(this.topoCli.getBinaryPath(), {
+            await cloneProjectFromSource(this.taskExecutor, {
                 type: 'dir',
                 path: cloneSourcePath,
             });
@@ -68,7 +70,7 @@ export class ProjectClone {
             if (!cloneSourceRemoteUrl) {
                 return;
             }
-            await cloneProjectFromSource(this.topoCli.getBinaryPath(), {
+            await cloneProjectFromSource(this.taskExecutor, {
                 type: 'git',
                 url: cloneSourceRemoteUrl,
             });

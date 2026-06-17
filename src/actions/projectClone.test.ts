@@ -11,6 +11,7 @@ import {
     getLocalSourcePath,
     getTemplateOfChoice,
 } from '../util/projectClone';
+import { TaskExecutor } from '../util/taskExecutor';
 
 vi.mock('../util/showAndLogError');
 vi.mock('../util/projectClone');
@@ -19,7 +20,6 @@ const cloneProjectFromSourceMock = vi.mocked(cloneProjectFromSource);
 const getLocalSourcePathMock = vi.mocked(getLocalSourcePath);
 const getTemplateOfChoiceMock = vi.mocked(getTemplateOfChoice);
 
-const topoBinaryPath = 'fake/extension/resources/topo';
 const localSourcePath = '/path/to/source';
 const selectedTemplate: TemplateDescription = {
     name: 'template-alpha',
@@ -33,13 +33,13 @@ describe('ProjectClone action', () => {
     let projectClone: ProjectClone;
     let targetModel: TargetModel;
     const topoCli = mock<TopoCli>();
+    const taskExecutor = mock<TaskExecutor>();
 
     beforeEach(() => {
         vi.resetAllMocks();
-        topoCli.getBinaryPath.mockReturnValue(topoBinaryPath);
         cloneProjectFromSourceMock.mockResolvedValue(true);
         targetModel = new TargetModel();
-        projectClone = new ProjectClone(topoCli, targetModel);
+        projectClone = new ProjectClone(topoCli, targetModel, taskExecutor);
     });
 
     describe('remoteCloneCommandHandler', () => {
@@ -61,7 +61,7 @@ describe('ProjectClone action', () => {
             await projectClone.remoteCloneCommandHandler();
 
             expect(cloneProjectFromSourceMock).toHaveBeenCalledWith(
-                topoBinaryPath,
+                taskExecutor,
                 {
                     type: 'git',
                     url: 'https://example.com/repo.git',
@@ -85,7 +85,7 @@ describe('ProjectClone action', () => {
             await projectClone.localCloneCommandHandler();
 
             expect(cloneProjectFromSourceMock).toHaveBeenCalledWith(
-                topoBinaryPath,
+                taskExecutor,
                 {
                     type: 'dir',
                     path: localSourcePath,
@@ -114,7 +114,7 @@ describe('ProjectClone action', () => {
                 'me@example.com',
             );
             expect(cloneProjectFromSourceMock).toHaveBeenCalledWith(
-                topoBinaryPath,
+                taskExecutor,
                 {
                     type: 'git',
                     url: selectedTemplate.url,
