@@ -122,11 +122,25 @@
             },
             {
                 "command": "topo.deploy.context",
-                "title": "Topo Deploy"
+                "title": "Topo Deploy",
+                "icon": "$(rocket)"
             },
             {
                 "command": "topo.stop.context",
-                "title": "Topo Stop"
+                "title": "Topo Stop",
+                "icon": "$(stop)"
+            },
+            {
+                "command": "topo.deployProject",
+                "title": "Deploy",
+                "icon": "$(debug-start)",
+                "category": "Topo"
+            },
+            {
+                "command": "topo.stopProject",
+                "title": "Stop",
+                "icon": "$(debug-stop)",
+                "category": "Topo"
             }
         ],
         "viewsContainers": {
@@ -145,6 +159,12 @@
                     "name": "Host",
                     "visibility": "visible",
                     "icon": "$(vm-small)"
+                },
+                {
+                    "id": "topo.projects",
+                    "name": "Projects",
+                    "visibility": "visible",
+                    "icon": "$(folder-library)"
                 },
                 {
                     "id": "topo.target-manager",
@@ -231,6 +251,14 @@
                     "when": "false"
                 },
                 {
+                    "command": "topo.deployProject",
+                    "when": "false"
+                },
+                {
+                    "command": "topo.stopProject",
+                    "when": "false"
+                },
+                {
                     "command": "topo.refreshHostHealth",
                     "when": "false"
                 },
@@ -288,6 +316,16 @@
                     "command": "topo.deleteContainer",
                     "when": "view === topo.target-manager && viewItem =~ /service/",
                     "group": "inline@5"
+                },
+                {
+                    "command": "topo.deployProject",
+                    "when": "view === topo.projects && viewItem =~ /Project/",
+                    "group": "inline@1"
+                },
+                {
+                    "command": "topo.stopProject",
+                    "when": "view === topo.projects && viewItem =~ /Project/",
+                    "group": "inline@2"
                 }
             ],
             "view/title": [

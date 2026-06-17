@@ -7,6 +7,7 @@ import { MockProxy, mock } from 'vitest-mock-extended';
 import { mutable } from '../util/mutable';
 import { TaskExecutor } from '../util/taskExecutor';
 import { TargetController } from '../controllers/targetController';
+import { ProjectTreeItem } from '../treeItems/projectTreeItem';
 
 describe('Deploy', () => {
     let deployAction: Deploy;
@@ -22,6 +23,19 @@ describe('Deploy', () => {
     let taskExecutor: MockProxy<TaskExecutor>;
     let targetModel: TargetModel;
     let targetController: MockProxy<TargetController>;
+
+    function projectTreeItem(): ProjectTreeItem {
+        return new ProjectTreeItem(
+            {
+                name: 'demo',
+                uri: vscode.Uri.file(path.dirname(composeFilePath)),
+                composeFileUri,
+                workspaceIndex: 0,
+                workspaceName: 'workspace',
+            },
+            false,
+        );
+    }
 
     function expectDeployTask(task: vscode.Task, cwd: string): void {
         expect(task.name).toBe('Deploy to topo.local');
@@ -126,6 +140,19 @@ describe('Deploy', () => {
         ).toHaveBeenCalledOnce();
     });
 
+    it('deploys the project tree item compose file', async () => {
+        await deployAction.deployProjectCommandHandler(projectTreeItem());
+
+        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+        expectDeployTask(
+            taskExecutor.run.mock.calls[0][0],
+            path.dirname(composeFilePath),
+        );
+        expect(
+            targetController.refreshSelectedTargetDataCommandHandler,
+        ).toHaveBeenCalledOnce();
+    });
+
     it('throws when context command is called without a resource', async () => {
         await expect(
             deployAction.deployContextCommandHandler(),
@@ -136,6 +163,19 @@ describe('Deploy', () => {
         expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
         expect(vscode.workspace.findFiles).not.toHaveBeenCalled();
         expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
+        expect(taskExecutor.run).not.toHaveBeenCalled();
+        expect(
+            targetController.refreshSelectedTargetDataCommandHandler,
+        ).not.toHaveBeenCalled();
+    });
+
+    it('throws when project command is called without a project tree item', async () => {
+        await expect(
+            deployAction.deployProjectCommandHandler(undefined),
+        ).rejects.toThrow(
+            'No compose.yaml or compose.yml selected for deployment',
+        );
+
         expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(
             targetController.refreshSelectedTargetDataCommandHandler,

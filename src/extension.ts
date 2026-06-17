@@ -15,15 +15,18 @@ import { Stop } from './actions/stop';
 import { ProtocolHandler } from './protocolHandler';
 import { FixIssue } from './actions/fixIssue';
 import { HostTreeView } from './views/hostTreeView';
+import { ProjectsTreeView } from './views/projectsTreeView';
 import { logger } from './util/logger';
 import { HostModel } from './models/hostModel';
 import { HostController } from './controllers/hostController';
 import { TargetController } from './controllers/targetController';
 import { TargetModel } from './models/targetModel';
+import { ProjectModel } from './models/projectModel';
 import { ProjectClone } from './actions/projectClone';
 import { showAndLogError } from './util/showAndLogError';
 import { topo } from '../package.json';
 import { RefreshLoop } from './util/refreshLoop';
+import { ProjectController } from './controllers/projectController';
 import { TaskExecutor } from './util/taskExecutor';
 
 const SELECTED_TARGET_REFRESH_INTERVAL_MS = 60_000;
@@ -50,17 +53,21 @@ export async function activate(
 
     const targetModel = new TargetModel();
     const hostModel = new HostModel();
+    const projectModel = new ProjectModel();
 
     const hostTreeView = new HostTreeView(hostModel);
+    const projectsTreeView = new ProjectsTreeView(projectModel);
     const targetTreeView = new TargetTreeView(targetModel);
     const targetStatusBarItemView = new TargetStatusBarItemView(targetModel);
     context.subscriptions.push(
         hostTreeView,
+        projectsTreeView,
         targetTreeView,
         targetStatusBarItemView,
     );
 
     const hostController = new HostController(hostModel, topoCli);
+    const projectController = new ProjectController(projectModel);
     const targetController = new TargetController(
         targetModel,
         targetStore,
@@ -75,6 +82,7 @@ export async function activate(
     }, SELECTED_TARGET_REFRESH_INTERVAL_MS);
 
     context.subscriptions.push(
+        projectController,
         targetController,
         selectedTargetRefreshLoop,
         targetStore.onExternalTargetsChanged(() =>
@@ -120,6 +128,7 @@ export async function activate(
     );
 
     targetController.updateTargetsFromStore();
+    void projectController.refreshProjects();
     topoCli.activate();
     selectedTargetRefreshLoop.start();
 }

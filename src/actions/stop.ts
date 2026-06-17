@@ -6,6 +6,7 @@ import { TaskExecutor } from '../util/taskExecutor';
 import { showAndLogError } from '../util/showAndLogError';
 import { TargetModel } from '../models/targetModel';
 import { TargetController } from '../controllers/targetController';
+import { ProjectTreeItem } from '../treeItems/projectTreeItem';
 
 const viewLogsItem: vscode.MessageItem = {
     title: 'View Logs',
@@ -36,6 +37,14 @@ export class Stop {
 
         await stop(this.taskExecutor, resource.fsPath, target);
         await this.targetController.refreshSelectedTargetDataCommandHandler();
+    }
+
+    public async stopProjectCommandHandler(treeNode: unknown): Promise<void> {
+        if (!(treeNode instanceof ProjectTreeItem)) {
+            throw new Error('No compose.yaml or compose.yml selected for stop');
+        }
+
+        await this.stopCommandHandler(treeNode.composeFileUri);
     }
 }
 

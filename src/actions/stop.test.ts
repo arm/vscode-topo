@@ -6,6 +6,7 @@ import { TargetModel } from '../models/targetModel';
 import { mock, MockProxy } from 'vitest-mock-extended';
 import { TaskExecutor } from '../util/taskExecutor';
 import { TargetController } from '../controllers/targetController';
+import { ProjectTreeItem } from '../treeItems/projectTreeItem';
 
 describe('Stop', () => {
     let stopAction: Stop;
@@ -17,6 +18,19 @@ describe('Stop', () => {
     let taskExecutor: MockProxy<TaskExecutor>;
     let targetModel: TargetModel;
     let targetController: MockProxy<TargetController>;
+
+    function projectTreeItem(): ProjectTreeItem {
+        return new ProjectTreeItem(
+            {
+                name: 'demo',
+                uri: vscode.Uri.file(path.dirname(composeFilePath)),
+                composeFileUri,
+                workspaceIndex: 0,
+                workspaceName: 'workspace',
+            },
+            false,
+        );
+    }
 
     function expectStopTask(task: vscode.Task, cwd: string): void {
         expect(task.name).toBe('Stop services on topo.local');
@@ -86,5 +100,29 @@ describe('Stop', () => {
         expect(
             targetController.refreshSelectedTargetDataCommandHandler,
         ).toHaveBeenCalledOnce();
+    });
+
+    it('stops the project tree item compose file', async () => {
+        await stopAction.stopProjectCommandHandler(projectTreeItem());
+
+        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+        expectStopTask(
+            taskExecutor.run.mock.calls[0][0],
+            path.dirname(composeFilePath),
+        );
+        expect(
+            targetController.refreshSelectedTargetDataCommandHandler,
+        ).toHaveBeenCalledOnce();
+    });
+
+    it('throws when project command is called without a project tree item', async () => {
+        await expect(
+            stopAction.stopProjectCommandHandler(undefined),
+        ).rejects.toThrow('No compose.yaml or compose.yml selected for stop');
+
+        expect(taskExecutor.run).not.toHaveBeenCalled();
+        expect(
+            targetController.refreshSelectedTargetDataCommandHandler,
+        ).not.toHaveBeenCalled();
     });
 });

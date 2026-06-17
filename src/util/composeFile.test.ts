@@ -2,6 +2,7 @@ import path from 'node:path';
 import * as vscode from 'vscode';
 import {
     compareComposeFiles,
+    findComposeFiles,
     getComposeFileMetadata,
     getPreferredComposeFiles,
 } from './composeFile';
@@ -67,6 +68,47 @@ describe('getPreferredComposeFiles', () => {
         const composeFiles = getPreferredComposeFiles([ymlFile, yamlFile]);
 
         expect(composeFiles).toEqual([yamlFile]);
+    });
+});
+
+describe('findComposeFiles', () => {
+    afterEach(() => {
+        vi.resetAllMocks();
+    });
+
+    it('finds preferred compose files in a workspace folder sorted by metadata', async () => {
+        const workspaceFolder: vscode.WorkspaceFolder = {
+            uri: vscode.Uri.file('/fake/workspace'),
+            name: 'workspace',
+            index: 0,
+        };
+        const rootComposeFile = vscode.Uri.file('/fake/workspace/compose.yaml');
+        const childYamlFile = vscode.Uri.file(
+            '/fake/workspace/service/compose.yaml',
+        );
+        const childYmlFile = vscode.Uri.file(
+            '/fake/workspace/service/compose.yml',
+        );
+        vi.mocked(vscode.workspace.findFiles).mockResolvedValueOnce([
+            childYmlFile,
+            childYamlFile,
+            rootComposeFile,
+        ]);
+
+        const composeFiles = await findComposeFiles(
+            workspaceFolder,
+            '**/compose.{yaml,yml}',
+        );
+
+        expect(vscode.workspace.findFiles).toHaveBeenCalledWith(
+            new vscode.RelativePattern(
+                workspaceFolder,
+                '**/compose.{yaml,yml}',
+            ),
+        );
+        expect(
+            composeFiles.map((composeFile) => composeFile.relativePath),
+        ).toEqual(['compose.yaml', path.join('service', 'compose.yaml')]);
     });
 });
 

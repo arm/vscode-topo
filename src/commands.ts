@@ -27,7 +27,9 @@ export const unselectTarget = command('unselectTarget');
 export const initProject = command('initProject');
 export const deploy = command('deploy');
 export const deployContext = command('deploy.context');
+export const deployProject = command('deployProject');
 export const stop = command('stop.context');
+export const stopProject = command('stopProject');
 export const openContainerShell = command('openContainerShell');
 export const startContainer = command('startContainer');
 export const stopContainer = command('stopContainer');
@@ -82,8 +84,14 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
             (resource?: vscode.Uri) =>
                 handlers.deploy.deployContextCommandHandler(resource),
         ),
+        vscode.commands.registerCommand(deployProject, (treeNode) =>
+            handlers.deploy.deployProjectCommandHandler(treeNode),
+        ),
         vscode.commands.registerCommand(stop, (resource?: vscode.Uri) =>
             handlers.stop.stopCommandHandler(resource),
+        ),
+        vscode.commands.registerCommand(stopProject, (treeNode) =>
+            handlers.stop.stopProjectCommandHandler(treeNode),
         ),
         vscode.commands.registerCommand(openContainerShell, (treeNode) =>
             handlers.openContainerShell.openContainerShellCommandHandler(
