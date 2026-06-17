@@ -3,11 +3,6 @@ import { Loadable, unloaded } from '../util/loadable';
 import { TargetHealthCheck } from '../topoCliSchema';
 import { ContainerItem, TargetDescription } from '../util/types';
 
-const defaultContainers: Loadable<ContainerItem[]> = unloaded();
-const defaultHealth: Loadable<TargetHealthCheck> = unloaded();
-const defaultDescription: Loadable<TargetDescription> = unloaded();
-const defaultTargets: Loadable<string[]> = unloaded();
-
 export class TargetModel {
     private _onSelectedChanged: vscode.EventEmitter<void> =
         new vscode.EventEmitter<void>();
@@ -35,10 +30,10 @@ export class TargetModel {
         this._onDescriptionChanged.event;
 
     private _selected?: string;
-    private _targets: Loadable<string[]> = defaultTargets;
-    private _health: Loadable<TargetHealthCheck> = defaultHealth;
-    private _containers: Loadable<ContainerItem[]> = defaultContainers;
-    private _description: Loadable<TargetDescription> = defaultDescription;
+    private _targets: Loadable<string[]> = unloaded();
+    private _health: Loadable<TargetHealthCheck> = unloaded();
+    private _containers: Loadable<ContainerItem[]> = unloaded();
+    private _description: Loadable<TargetDescription> = unloaded();
 
     public setSelected(selected: string | undefined): void {
         const changed = this._selected !== selected;
@@ -76,7 +71,7 @@ export class TargetModel {
     }
 
     public clear(): void {
-        this.setTargets(defaultTargets);
+        this.setTargets(unloaded());
         this.setSelected(undefined);
     }
 
@@ -108,8 +103,8 @@ export class TargetModel {
     }
 
     private clearSelectedTargetData(): void {
-        this.setSelectedTargetHealth(defaultHealth);
-        this.setSelectedTargetContainers(defaultContainers);
-        this.setSelectedTargetDescription(defaultDescription);
+        this.setSelectedTargetHealth(unloaded());
+        this.setSelectedTargetContainers(unloaded());
+        this.setSelectedTargetDescription(unloaded());
     }
 }
