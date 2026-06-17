@@ -2,20 +2,18 @@ import path from 'node:path';
 import * as vscode from 'vscode';
 import {
     cloneProjectFromSource,
+    createCloneTask,
     getFirstSentence,
     getLocalSourcePath,
     getTemplateOfChoice,
 } from './projectClone';
 import { mutable } from './mutable';
 import { TopoCli } from '../topoCli';
-import { mock } from 'vitest-mock-extended';
+import { MockProxy, mock } from 'vitest-mock-extended';
 import { TemplateDescription } from '../topoCliSchema';
 import { WrappedError } from '../errors/wrappedError';
-import { executeTask } from './executeTask';
+import { TaskExecutor } from './taskExecutor';
 
-vi.mock('./executeTask');
-
-const executeTaskMock = vi.mocked(executeTask);
 const showInformationMessageMock = vi.mocked(
     vscode.window.showInformationMessage as (
         message: string,
@@ -24,19 +22,33 @@ const showInformationMessageMock = vi.mocked(
     ) => Thenable<string | undefined>,
 );
 
-const workspacePath = path.join('home', 'workspace');
+const workspacePath = path.resolve('home', 'workspace');
 const workspaceUri = vscode.Uri.file(workspacePath);
 const workspaceFolders = [{ uri: workspaceUri, name: 'workspace', index: 0 }];
-const destinationPath = path.join('home', 'destination');
+const destinationPath = path.resolve('home', 'destination');
 const destinationUri = vscode.Uri.file(destinationPath);
-const topoBinaryPath = path.join('fake', 'extension', 'resources', 'topo');
-const localTemplateUri = vscode.Uri.file('/path/to/source');
+const localTemplateUri = vscode.Uri.file(path.resolve('path', 'to', 'source'));
 
 describe('project clone utilities', () => {
     const topoCli = mock<TopoCli>();
+    let taskExecutor: MockProxy<TaskExecutor>;
+
+    function expectCloneTask(
+        task: vscode.Task,
+        projectName: string,
+        args: string[],
+    ): void {
+        expect(task.name).toBe(`Clone ${projectName}`);
+        expect(task.execution).toMatchObject({
+            process: 'topo',
+            args,
+            options: { cwd: undefined },
+        });
+    }
 
     beforeEach(() => {
         vi.resetAllMocks();
+        taskExecutor = mock<TaskExecutor>();
         mutable(vscode.workspace).workspaceFolders = undefined;
     });
 
@@ -121,7 +133,7 @@ describe('project clone utilities', () => {
 
             await expect(getTemplateOfChoice(topoCli)).resolves.toBeUndefined();
 
-            expect(executeTaskMock).not.toHaveBeenCalled();
+            expect(taskExecutor.run).not.toHaveBeenCalled();
         });
 
         it('returns the selected template', async () => {
@@ -154,7 +166,31 @@ describe('project clone utilities', () => {
             await getTemplateOfChoice(topoCli, undefined);
 
             expect(topoCli.listTemplates).toHaveBeenCalledWith(undefined);
-            expect(executeTaskMock).not.toHaveBeenCalled();
+            expect(taskExecutor.run).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('createCloneTask', () => {
+        it('builds a clone task with the topo command name', () => {
+            const repositoryPath = path.resolve('workspace', 'repo');
+            const task = createCloneTask(
+                'repo',
+                {
+                    type: 'git',
+                    url: 'https://example.com/repo.git',
+                },
+                repositoryPath,
+                {
+                    model: 'some-huggingface-id',
+                },
+            );
+
+            expectCloneTask(task, 'repo', [
+                'clone',
+                'git:https://example.com/repo.git',
+                repositoryPath,
+                'model=some-huggingface-id',
+            ]);
         });
     });
 
@@ -163,7 +199,7 @@ describe('project clone utilities', () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
 
             await expect(
-                cloneProjectFromSource(topoBinaryPath, {
+                cloneProjectFromSource(taskExecutor, {
                     type: 'git',
                     url: 'not-a-valid-url',
                 }),
@@ -174,7 +210,7 @@ describe('project clone utilities', () => {
                 }),
             );
 
-            expect(executeTaskMock).not.toHaveBeenCalled();
+            expect(taskExecutor.run).not.toHaveBeenCalled();
         });
 
         it('returns false when no project name is provided', async () => {
@@ -183,27 +219,27 @@ describe('project clone utilities', () => {
             );
 
             await expect(
-                cloneProjectFromSource(topoBinaryPath, {
+                cloneProjectFromSource(taskExecutor, {
                     type: 'git',
                     url: 'https://example.com/repo.git',
                 }),
             ).resolves.toBe(false);
 
             expect(vscode.window.showOpenDialog).not.toHaveBeenCalled();
-            expect(executeTaskMock).not.toHaveBeenCalled();
+            expect(taskExecutor.run).not.toHaveBeenCalled();
         });
 
         it('returns false when destination folder selection is cancelled', async () => {
             vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
 
             await expect(
-                cloneProjectFromSource(topoBinaryPath, {
+                cloneProjectFromSource(taskExecutor, {
                     type: 'git',
                     url: 'https://example.com/repo.git',
                 }),
             ).resolves.toBe(false);
 
-            expect(executeTaskMock).not.toHaveBeenCalled();
+            expect(taskExecutor.run).not.toHaveBeenCalled();
             expect(vscode.window.showInformationMessage).not.toHaveBeenCalled();
         });
 
@@ -212,7 +248,7 @@ describe('project clone utilities', () => {
             vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
 
             await expect(
-                cloneProjectFromSource(topoBinaryPath, {
+                cloneProjectFromSource(taskExecutor, {
                     type: 'git',
                     url: 'https://example.com/repo.git',
                 }),
@@ -222,8 +258,8 @@ describe('project clone utilities', () => {
                 prompt: 'Enter the project name',
                 value: 'repo',
             });
-            expect(executeTaskMock).toHaveBeenCalledWith('Clone repo', [
-                topoBinaryPath,
+            expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+            expectCloneTask(taskExecutor.run.mock.calls[0][0], 'repo', [
                 'clone',
                 'git:https://example.com/repo.git',
                 path.join(workspaceUri.fsPath, 'repo'),
@@ -234,7 +270,7 @@ describe('project clone utilities', () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
             vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
 
-            await cloneProjectFromSource(topoBinaryPath, {
+            await cloneProjectFromSource(taskExecutor, {
                 type: 'git',
                 url: 'git@example.com:repo.git',
             });
@@ -243,8 +279,8 @@ describe('project clone utilities', () => {
                 prompt: 'Enter the project name',
                 value: 'repo',
             });
-            expect(executeTaskMock).toHaveBeenCalledWith('Clone repo', [
-                topoBinaryPath,
+            expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+            expectCloneTask(taskExecutor.run.mock.calls[0][0], 'repo', [
                 'clone',
                 'git:git@example.com:repo.git',
                 path.join(workspaceUri.fsPath, 'repo'),
@@ -256,7 +292,7 @@ describe('project clone utilities', () => {
             vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
 
             await cloneProjectFromSource(
-                topoBinaryPath,
+                taskExecutor,
                 {
                     value: 'https://example.com/repo.git',
                 },
@@ -265,8 +301,8 @@ describe('project clone utilities', () => {
                 },
             );
 
-            expect(executeTaskMock).toHaveBeenCalledWith('Clone repo', [
-                topoBinaryPath,
+            expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+            expectCloneTask(taskExecutor.run.mock.calls[0][0], 'repo', [
                 'clone',
                 'https://example.com/repo.git',
                 path.join(workspaceUri.fsPath, 'repo'),
@@ -280,7 +316,7 @@ describe('project clone utilities', () => {
                 'myproj',
             );
 
-            await cloneProjectFromSource(topoBinaryPath, {
+            await cloneProjectFromSource(taskExecutor, {
                 type: 'dir',
                 path: localTemplateUri.fsPath,
             });
@@ -289,8 +325,8 @@ describe('project clone utilities', () => {
                 prompt: 'Enter the project name',
                 value: 'source',
             });
-            expect(executeTaskMock).toHaveBeenCalledWith('Clone myproj', [
-                topoBinaryPath,
+            expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+            expectCloneTask(taskExecutor.run.mock.calls[0][0], 'myproj', [
                 'clone',
                 `dir:${localTemplateUri.fsPath}`,
                 path.join(workspaceUri.fsPath, 'myproj'),
@@ -303,7 +339,7 @@ describe('project clone utilities', () => {
             ]);
             vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
 
-            await cloneProjectFromSource(topoBinaryPath, {
+            await cloneProjectFromSource(taskExecutor, {
                 type: 'git',
                 url: 'https://example.com/repo.git',
             });
@@ -314,22 +350,22 @@ describe('project clone utilities', () => {
                 canSelectMany: false,
                 openLabel: 'Select Destination Folder',
             });
-            expect(executeTaskMock).toHaveBeenCalledWith('Clone repo', [
-                topoBinaryPath,
+            expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+            expectCloneTask(taskExecutor.run.mock.calls[0][0], 'repo', [
                 'clone',
                 'git:https://example.com/repo.git',
                 path.join(destinationUri.fsPath, 'repo'),
             ]);
         });
 
-        it('wraps errors thrown by executeTask', async () => {
+        it('wraps errors thrown by the task executor', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
             vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
             const err = new Error('task fail');
-            executeTaskMock.mockRejectedValueOnce(err);
+            taskExecutor.run.mockRejectedValueOnce(err);
 
             await expect(
-                cloneProjectFromSource(topoBinaryPath, {
+                cloneProjectFromSource(taskExecutor, {
                     type: 'git',
                     url: 'https://example.com/repo.git',
                 }),
@@ -345,7 +381,7 @@ describe('project clone utilities', () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
             vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
 
-            await cloneProjectFromSource(topoBinaryPath, {
+            await cloneProjectFromSource(taskExecutor, {
                 type: 'git',
                 url: 'https://example.com/repo.git',
             });
@@ -364,7 +400,7 @@ describe('project clone utilities', () => {
             vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
             showInformationMessageMock.mockResolvedValueOnce('Open');
 
-            await cloneProjectFromSource(topoBinaryPath, {
+            await cloneProjectFromSource(taskExecutor, {
                 type: 'git',
                 url: 'https://example.com/repo.git',
             });
@@ -383,7 +419,7 @@ describe('project clone utilities', () => {
                 'Open in New Window',
             );
 
-            await cloneProjectFromSource(topoBinaryPath, {
+            await cloneProjectFromSource(taskExecutor, {
                 type: 'git',
                 url: 'https://example.com/repo.git',
             });
@@ -402,7 +438,7 @@ describe('project clone utilities', () => {
                 'Add to Workspace',
             );
 
-            await cloneProjectFromSource(topoBinaryPath, {
+            await cloneProjectFromSource(taskExecutor, {
                 type: 'git',
                 url: 'https://example.com/repo.git',
             });
@@ -418,10 +454,10 @@ describe('project clone utilities', () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
             vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
             const err = new Error('task fail');
-            executeTaskMock.mockRejectedValueOnce(err);
+            taskExecutor.run.mockRejectedValueOnce(err);
 
             await expect(
-                cloneProjectFromSource(topoBinaryPath, {
+                cloneProjectFromSource(taskExecutor, {
                     type: 'git',
                     url: 'https://example.com/repo.git',
                 }),

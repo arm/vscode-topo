@@ -1,19 +1,15 @@
 import * as vscode from 'vscode';
 import { mock, MockProxy } from 'vitest-mock-extended';
-import { FixIssue } from './fixIssue';
+import { FixIssue, createFixIssueTask } from './fixIssue';
 import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
 import { loaded } from '../util/loadable';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
-import { executeTask } from '../util/executeTask';
 import { IssueCheck } from '../topoCliSchema';
 import { TargetModel } from '../models/targetModel';
-import { TopoCli } from '../topoCli';
+import { TaskExecutor } from '../util/taskExecutor';
 import { TargetController } from '../controllers/targetController';
 
 vi.mock('../util/logger');
-vi.mock('../util/executeTask');
-
-const executeTaskMock = vi.mocked(executeTask);
 
 type ShowQuickPickMany = <T extends vscode.QuickPickItem>(
     items: T[],
@@ -31,11 +27,10 @@ const mockSelectedQuickPickItems = <T extends vscode.QuickPickItem>(
 
 describe('FixIssue', () => {
     let targetModel: TargetModel;
-    let topoCli: MockProxy<TopoCli>;
+    let taskExecutor: MockProxy<TaskExecutor>;
     let targetController: MockProxy<TargetController>;
 
     const target = 'user@topo.local';
-    const topoBinaryPath = '/fake/extension/resources/topo';
     const dependencies: IssueCheck[] = [
         {
             name: 'Container Engine',
@@ -67,6 +62,9 @@ describe('FixIssue', () => {
         value: 'ok',
     };
 
+    const createFixIssue = (): FixIssue =>
+        new FixIssue(taskExecutor, targetModel, targetController);
+
     const createTargetItemWithIssues = (
         targetIssues: IssueCheck[],
         connectivity: IssueCheck = connectedIssue,
@@ -88,15 +86,32 @@ describe('FixIssue', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-        topoCli = mock<TopoCli>();
-        topoCli.getBinaryPath.mockReturnValue(topoBinaryPath);
+        taskExecutor = mock<TaskExecutor>();
         targetController = mock<TargetController>();
         targetModel = new TargetModel();
         targetModel.setSelected(target);
     });
 
+    it('builds a fix task with the topo command name', () => {
+        const command = dependencies[1].fix?.command;
+        if (!command) {
+            throw new Error('Expected debugger dependency to include a fix');
+        }
+        const task = createFixIssueTask(target, ['Debugger'], command);
+
+        expect(task).toMatchObject(
+            expect.objectContaining({
+                name: `Fix Debugger on ${target}`,
+                execution: expect.objectContaining({
+                    process: 'topo',
+                    args: ['install', 'debugger', '--target', target],
+                }),
+            }),
+        );
+    });
+
     it('runs a single dependency fix directly', async () => {
-        const fixIssue = new FixIssue(topoCli, targetModel, targetController);
+        const fixIssue = createFixIssue();
         const dependencyItem = new HealthCheckDependencyTreeItem(
             dependencies[0],
         );
@@ -104,9 +119,14 @@ describe('FixIssue', () => {
         await fixIssue.fixIssueCommandHandler(dependencyItem);
 
         expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
-        expect(executeTaskMock).toHaveBeenCalledWith(
-            `Fix Container Engine on ${target}`,
-            [topoBinaryPath, 'install', 'container-engine', '--target', target],
+        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+        expect(taskExecutor.run).toHaveBeenNthCalledWith(
+            1,
+            expect.objectContaining({
+                execution: expect.objectContaining({
+                    args: ['install', 'container-engine', '--target', target],
+                }),
+            }),
         );
         expect(
             targetController.refreshSelectedTargetDataCommandHandler,
@@ -114,7 +134,7 @@ describe('FixIssue', () => {
     });
 
     it('fails a single dependency fix without an executable command', async () => {
-        const fixIssue = new FixIssue(topoCli, targetModel, targetController);
+        const fixIssue = createFixIssue();
         const dependencyItem = new HealthCheckDependencyTreeItem(
             dependencies[2],
         );
@@ -123,22 +143,22 @@ describe('FixIssue', () => {
             fixIssue.fixIssueCommandHandler(dependencyItem),
         ).rejects.toThrow('No executable fix found for the selected item');
 
-        expect(executeTaskMock).not.toHaveBeenCalled();
+        expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(
             targetController.refreshSelectedTargetDataCommandHandler,
         ).not.toHaveBeenCalled();
     });
 
     it('refreshes after a dependency fix task fails', async () => {
-        executeTaskMock.mockRejectedValueOnce(new Error('fix failed'));
-        const fixIssue = new FixIssue(topoCli, targetModel, targetController);
+        taskExecutor.run.mockRejectedValueOnce(new Error('fix failed'));
+        const fixIssue = createFixIssue();
         const dependencyItem = new HealthCheckDependencyTreeItem(
             dependencies[0],
         );
 
         await fixIssue.fixIssueCommandHandler(dependencyItem);
 
-        expect(executeTaskMock).toHaveBeenCalledOnce();
+        expect(taskExecutor.run).toHaveBeenCalledOnce();
         expect(
             targetController.refreshSelectedTargetDataCommandHandler,
         ).toHaveBeenCalledOnce();
@@ -146,7 +166,7 @@ describe('FixIssue', () => {
 
     it('fails a single dependency fix when no target is selected', async () => {
         targetModel.setSelected(undefined);
-        const fixIssue = new FixIssue(topoCli, targetModel, targetController);
+        const fixIssue = createFixIssue();
         const dependencyItem = new HealthCheckDependencyTreeItem(
             dependencies[0],
         );
@@ -155,14 +175,14 @@ describe('FixIssue', () => {
             fixIssue.fixIssueCommandHandler(dependencyItem),
         ).rejects.toThrow('No selected target found');
 
-        expect(executeTaskMock).not.toHaveBeenCalled();
+        expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(
             targetController.refreshSelectedTargetDataCommandHandler,
         ).not.toHaveBeenCalled();
     });
 
     it('shows a quick pick when only one target issue fix is available', async () => {
-        const fixIssue = new FixIssue(topoCli, targetModel, targetController);
+        const fixIssue = createFixIssue();
         const targetItem = createTargetItemWithIssues([dependencies[0]]);
         mockSelectedQuickPickItems([
             {
@@ -189,9 +209,14 @@ describe('FixIssue', () => {
                 placeHolder: `Select fixes for ${target}`,
             },
         );
-        expect(executeTaskMock).toHaveBeenCalledWith(
-            `Fix Container Engine on ${target}`,
-            [topoBinaryPath, 'install', 'container-engine', '--target', target],
+        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+        expect(taskExecutor.run).toHaveBeenNthCalledWith(
+            1,
+            expect.objectContaining({
+                execution: expect.objectContaining({
+                    args: ['install', 'container-engine', '--target', target],
+                }),
+            }),
         );
         expect(
             targetController.refreshSelectedTargetDataCommandHandler,
@@ -199,7 +224,7 @@ describe('FixIssue', () => {
     });
 
     it('runs fix task for target connectivity issue', async () => {
-        const fixIssue = new FixIssue(topoCli, targetModel, targetController);
+        const fixIssue = createFixIssue();
         const connectivityIssue: IssueCheck = {
             name: 'Connectivity',
             status: 'error',
@@ -221,14 +246,19 @@ describe('FixIssue', () => {
 
         await fixIssue.fixIssueCommandHandler(targetItem);
 
-        expect(executeTaskMock).toHaveBeenCalledWith(
-            `Fix Connectivity on ${target}`,
-            [topoBinaryPath, 'setup-keys', '--target', 'ssh://pi5-rod'],
+        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+        expect(taskExecutor.run).toHaveBeenNthCalledWith(
+            1,
+            expect.objectContaining({
+                execution: expect.objectContaining({
+                    args: ['setup-keys', '--target', 'ssh://pi5-rod'],
+                }),
+            }),
         );
     });
 
     it('shows target issue fixes in a quick pick and runs the selected fix', async () => {
-        const fixIssue = new FixIssue(topoCli, targetModel, targetController);
+        const fixIssue = createFixIssue();
         const targetItem = createTargetItemWithIssues(dependencies);
         mockSelectedQuickPickItems([
             {
@@ -261,14 +291,19 @@ describe('FixIssue', () => {
                 placeHolder: `Select fixes for ${target}`,
             },
         );
-        expect(executeTaskMock).toHaveBeenCalledWith(
-            `Fix Debugger on ${target}`,
-            [topoBinaryPath, 'install', 'debugger', '--target', target],
+        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+        expect(taskExecutor.run).toHaveBeenNthCalledWith(
+            1,
+            expect.objectContaining({
+                execution: expect.objectContaining({
+                    args: ['install', 'debugger', '--target', target],
+                }),
+            }),
         );
     });
 
     it('runs each selected target dependency fix', async () => {
-        const fixIssue = new FixIssue(topoCli, targetModel, targetController);
+        const fixIssue = createFixIssue();
         const targetItem = createTargetItemWithIssues(dependencies);
         mockSelectedQuickPickItems([
             {
@@ -287,15 +322,22 @@ describe('FixIssue', () => {
 
         await fixIssue.fixIssueCommandHandler(targetItem);
 
-        expect(executeTaskMock).toHaveBeenNthCalledWith(
+        expect(taskExecutor.run).toHaveBeenCalledTimes(2);
+        expect(taskExecutor.run).toHaveBeenNthCalledWith(
             1,
-            `Fix Container Engine on ${target}`,
-            [topoBinaryPath, 'install', 'container-engine', '--target', target],
+            expect.objectContaining({
+                execution: expect.objectContaining({
+                    args: ['install', 'container-engine', '--target', target],
+                }),
+            }),
         );
-        expect(executeTaskMock).toHaveBeenNthCalledWith(
+        expect(taskExecutor.run).toHaveBeenNthCalledWith(
             2,
-            `Fix Debugger on ${target}`,
-            [topoBinaryPath, 'install', 'debugger', '--target', target],
+            expect.objectContaining({
+                execution: expect.objectContaining({
+                    args: ['install', 'debugger', '--target', target],
+                }),
+            }),
         );
         expect(
             targetController.refreshSelectedTargetDataCommandHandler,
@@ -322,7 +364,7 @@ describe('FixIssue', () => {
                 command: sharedCommand,
             },
         };
-        const fixIssue = new FixIssue(topoCli, targetModel, targetController);
+        const fixIssue = createFixIssue();
         const targetItem = createTargetItemWithIssues([
             remoteprocRuntime,
             remoteprocShim,
@@ -344,28 +386,33 @@ describe('FixIssue', () => {
 
         await fixIssue.fixIssueCommandHandler(targetItem);
 
-        expect(executeTaskMock).toHaveBeenCalledTimes(1);
-        expect(executeTaskMock).toHaveBeenCalledWith(
-            `Fix Remoteproc Runtime, Remoteproc Shim on ${target}`,
-            [topoBinaryPath, 'install', 'remoteproc', '--target', target],
+        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+        expect(taskExecutor.run).toHaveBeenNthCalledWith(
+            1,
+            expect.objectContaining({
+                name: `Fix Remoteproc Runtime, Remoteproc Shim on ${target}`,
+                execution: expect.objectContaining({
+                    args: ['install', 'remoteproc', '--target', target],
+                }),
+            }),
         );
     });
 
     it('refreshes when target issue selection is cancelled', async () => {
-        const fixIssue = new FixIssue(topoCli, targetModel, targetController);
+        const fixIssue = createFixIssue();
         const targetItem = createTargetItemWithIssues(dependencies);
         mockSelectedQuickPickItems([]);
 
         await fixIssue.fixIssueCommandHandler(targetItem);
 
-        expect(executeTaskMock).not.toHaveBeenCalled();
+        expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(
             targetController.refreshSelectedTargetDataCommandHandler,
         ).toHaveBeenCalledOnce();
     });
 
     it('fails when a target has no executable dependency fixes', async () => {
-        const fixIssue = new FixIssue(topoCli, targetModel, targetController);
+        const fixIssue = createFixIssue();
         const targetItem = createTargetItemWithIssues([dependencies[2]]);
 
         await expect(
@@ -375,14 +422,14 @@ describe('FixIssue', () => {
         );
 
         expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
-        expect(executeTaskMock).not.toHaveBeenCalled();
+        expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(
             targetController.refreshSelectedTargetDataCommandHandler,
         ).not.toHaveBeenCalled();
     });
 
     it('fails when the command is called with an unsupported item', async () => {
-        const fixIssue = new FixIssue(topoCli, targetModel, targetController);
+        const fixIssue = createFixIssue();
 
         await expect(
             fixIssue.fixIssueCommandHandler({ unexpected: true }),

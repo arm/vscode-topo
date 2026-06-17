@@ -16,11 +16,11 @@ function getTaskScope(
     return workspace ?? vscode.TaskScope.Workspace;
 }
 
-export async function executeTask(
+export function createProcessTask(
     taskName: string,
     command: string[],
     opts?: TaskOptions,
-): Promise<void> {
+): vscode.Task {
     const [cmd, ...args] = command;
     if (!cmd) {
         throw new Error('No command passed to task');
@@ -49,8 +49,13 @@ export async function executeTask(
         showReuseMessage: true,
         clear: true,
     };
-    const taskExecution = await vscode.tasks.executeTask(task);
+    return task;
+}
 
+export function waitForTaskProcess(
+    taskExecution: vscode.TaskExecution,
+    taskName = taskExecution.task.name,
+): Promise<void> {
     return new Promise<void>((resolve, reject) => {
         const disposable = vscode.tasks.onDidEndTaskProcess((e) => {
             if (e.execution !== taskExecution) {

@@ -27,6 +27,7 @@ import { showAndLogError } from './util/showAndLogError';
 import { topo } from '../package.json';
 import { RefreshLoop } from './util/refreshLoop';
 import { ProjectController } from './controllers/projectController';
+import { TaskExecutor } from './util/taskExecutor';
 
 const SELECTED_TARGET_REFRESH_INTERVAL_MS = 60_000;
 
@@ -94,9 +95,10 @@ export async function activate(
     );
 
     const projectInit = new ProjectInit(topoCli);
-    const projectClone = new ProjectClone(topoCli, targetModel);
-    const deploy = new Deploy(topoCli, targetModel, targetController);
-    const stop = new Stop(topoCli, targetModel, targetController);
+    const taskExecutor = new TaskExecutor(topoCli);
+    const projectClone = new ProjectClone(topoCli, targetModel, taskExecutor);
+    const deploy = new Deploy(taskExecutor, targetModel, targetController);
+    const stop = new Stop(taskExecutor, targetModel, targetController);
     const openContainerShell = new OpenContainerShell(dockerCommands);
     const containerStart = new ContainerStart(dockerCommands, targetController);
     const containerStop = new ContainerStop(dockerCommands, targetController);
@@ -104,8 +106,8 @@ export async function activate(
         dockerCommands,
         targetController,
     );
-    const fixIssue = new FixIssue(topoCli, targetModel, targetController);
-    const protocolHandler = new ProtocolHandler(topoCli);
+    const fixIssue = new FixIssue(taskExecutor, targetModel, targetController);
+    const protocolHandler = new ProtocolHandler(taskExecutor);
 
     context.subscriptions.push(
         commands.register({
