@@ -266,6 +266,29 @@ describe('project clone utilities', () => {
             ]);
         });
 
+        it('uses the repository name for git URLs with commit refs', async () => {
+            mutable(vscode.workspace).workspaceFolders = workspaceFolders;
+            vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
+
+            await expect(
+                cloneProjectFromSource(taskExecutor, {
+                    type: 'git',
+                    url: 'https://example.com/repo.git#8303e66db59a7a11e64877121f3db1b688d2011f',
+                }),
+            ).resolves.toBe(true);
+
+            expect(vscode.window.showInputBox).toHaveBeenCalledWith({
+                prompt: 'Enter the project name',
+                value: 'repo',
+            });
+            expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+            expectCloneTask(taskExecutor.run.mock.calls[0][0], 'repo', [
+                'clone',
+                'git:https://example.com/repo.git#8303e66db59a7a11e64877121f3db1b688d2011f',
+                path.join(workspaceUri.fsPath, 'repo'),
+            ]);
+        });
+
         it('creates a clone task for a valid SSH git URL', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
             vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');

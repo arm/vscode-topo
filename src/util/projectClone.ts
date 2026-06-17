@@ -101,13 +101,14 @@ export const getLocalSourcePath = async (): Promise<string | undefined> => {
 
 const getDefaultProjectNameFromUrl = (url: string): string => {
     let pathname: string;
+    const [urlWithoutFragment] = url.split('#');
     // Support scp-like SSH URLs (e.g. git@host:owner/repo.git)
-    const scpMatch = url.match(/^(?:[^@]+@)?[^:]+:(.+)$/);
+    const scpMatch = urlWithoutFragment.match(/^(?:[^@]+@)?[^:]+:(.+)$/);
     if (scpMatch) {
         pathname = scpMatch[1];
     } else {
         try {
-            pathname = new URL(url).pathname;
+            pathname = new URL(urlWithoutFragment).pathname;
         } catch {
             throw new WrappedError('CLONE', `Invalid URL: ${url}`);
         }
