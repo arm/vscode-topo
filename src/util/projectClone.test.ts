@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 import {
     cloneProjectFromSource,
     createCloneTask,
+    getDefaultProjectNameFromUrl,
     getFirstSentence,
     getLocalSourcePath,
     getTemplateOfChoice,
@@ -85,6 +86,24 @@ describe('project clone utilities', () => {
             await expect(getLocalSourcePath()).resolves.toBe(
                 localTemplateUri.fsPath,
             );
+        });
+    });
+
+    describe('getDefaultProjectNameFromUrl', () => {
+        it('returns the repository name for git URLs with commit refs', () => {
+            expect(
+                getDefaultProjectNameFromUrl(
+                    'https://example.com/repo.git#8303e66db59a7a11e64877121f3db1b688d2011f',
+                ),
+            ).toBe('repo');
+        });
+
+        it('returns the repository name for scp-like SSH URLs with refs', () => {
+            expect(
+                getDefaultProjectNameFromUrl(
+                    'git@example.com:owner/repo.git#main',
+                ),
+            ).toBe('repo');
         });
     });
 
@@ -262,29 +281,6 @@ describe('project clone utilities', () => {
             expectCloneTask(taskExecutor.run.mock.calls[0][0], 'repo', [
                 'clone',
                 'git:https://example.com/repo.git',
-                path.join(workspaceUri.fsPath, 'repo'),
-            ]);
-        });
-
-        it('uses the repository name for git URLs with commit refs', async () => {
-            mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-            vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
-
-            await expect(
-                cloneProjectFromSource(taskExecutor, {
-                    type: 'git',
-                    url: 'https://example.com/repo.git#8303e66db59a7a11e64877121f3db1b688d2011f',
-                }),
-            ).resolves.toBe(true);
-
-            expect(vscode.window.showInputBox).toHaveBeenCalledWith({
-                prompt: 'Enter the project name',
-                value: 'repo',
-            });
-            expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-            expectCloneTask(taskExecutor.run.mock.calls[0][0], 'repo', [
-                'clone',
-                'git:https://example.com/repo.git#8303e66db59a7a11e64877121f3db1b688d2011f',
                 path.join(workspaceUri.fsPath, 'repo'),
             ]);
         });

@@ -99,7 +99,7 @@ export const getLocalSourcePath = async (): Promise<string | undefined> => {
     return cloneSourceUri[0].fsPath;
 };
 
-const getDefaultProjectNameFromUrl = (url: string): string => {
+export const getDefaultProjectNameFromUrl = (url: string): string => {
     let pathname: string;
     const [urlWithoutFragment] = url.split('#');
     // Support scp-like SSH URLs (e.g. git@host:owner/repo.git)
