@@ -1,6 +1,5 @@
 import { TargetModel } from '../models/targetModel';
 import { TargetStore } from '../target/targetStore';
-import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
 import { isWrappedError } from '../errors/wrappedError';
 import { logger } from '../util/logger';
 import { logError, showAndLogError } from '../util/showAndLogError';
@@ -34,16 +33,6 @@ const removeTargetQuickPickButton: vscode.QuickInputButton = {
     iconPath: new vscode.ThemeIcon('trash'),
     tooltip: 'Remove Target',
 };
-
-function isTargetTreeItem(node: unknown): node is TargetTreeItem {
-    if (node instanceof TargetTreeItem) {
-        return true;
-    }
-
-    const errMsg = `Invalid target type: expected TargetTreeItem but received:`;
-    logger.error(errMsg, node);
-    return false;
-}
 
 async function promptForSshTarget(
     currentTargets: string[],
@@ -264,11 +253,7 @@ export class TargetController {
         await this.promptAndSelectTarget();
     }
 
-    public async unselectCommandHandler(treeNode?: unknown): Promise<void> {
-        if (!isTargetTreeItem(treeNode)) {
-            return;
-        }
-
+    public async unselectCommandHandler(): Promise<void> {
         await this.targetStore.setSelected(undefined);
         this.updateTargetsFromStore();
     }
