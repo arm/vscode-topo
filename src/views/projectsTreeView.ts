@@ -41,6 +41,10 @@ export class ProjectsTreeView
             return [new ErrorTreeItem('Failed to load projects', projects)];
         }
 
+        if (projects.status === 'unloaded') {
+            return [];
+        }
+
         if (projects.loading) {
             return [new LoadingTreeItem('Loading projects')];
         }

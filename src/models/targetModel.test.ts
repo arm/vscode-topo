@@ -1,6 +1,6 @@
 import { TargetHealthCheck } from '../topoCliSchema';
 import { ContainerItem, TargetDescription } from '../util/types';
-import { errored, loaded } from '../util/loadable';
+import { errored, loaded, unloaded } from '../util/loadable';
 import { TargetModel } from './targetModel';
 
 const targetHealth: TargetHealthCheck = {
@@ -43,14 +43,14 @@ const targetDescription: TargetDescription = {
 };
 
 describe('TargetModel', () => {
-    it('defaults to no selected target, an empty target list and empty selected target data', () => {
+    it('defaults to no selected target and unloaded target data', () => {
         const model = new TargetModel();
 
         expect(model.selected).toBeUndefined();
-        expect(model.targets).toEqual(loaded([]));
-        expect(model.selectedTargetHealth).toEqual(loaded(undefined));
-        expect(model.selectedTargetContainers).toEqual(loaded([]));
-        expect(model.selectedTargetDescription).toEqual(loaded(undefined));
+        expect(model.targets).toEqual(unloaded());
+        expect(model.selectedTargetHealth).toEqual(unloaded());
+        expect(model.selectedTargetContainers).toEqual(unloaded());
+        expect(model.selectedTargetDescription).toEqual(unloaded());
     });
 
     it('stores the latest selected target', () => {
@@ -149,10 +149,10 @@ describe('TargetModel', () => {
 
         model.clear();
 
-        expect(model.targets).toEqual(loaded([]));
+        expect(model.targets).toEqual(unloaded());
         expect(model.selected).toBeUndefined();
-        expect(model.selectedTargetHealth).toEqual(loaded(undefined));
-        expect(model.selectedTargetContainers).toEqual(loaded([]));
+        expect(model.selectedTargetHealth).toEqual(unloaded());
+        expect(model.selectedTargetContainers).toEqual(unloaded());
     });
 
     it('clears selected target data when no target is selected', () => {
@@ -163,8 +163,8 @@ describe('TargetModel', () => {
         model.clear();
 
         expect(model.selected).toBeUndefined();
-        expect(model.selectedTargetHealth).toEqual(loaded(undefined));
-        expect(model.selectedTargetContainers).toEqual(loaded([]));
+        expect(model.selectedTargetHealth).toEqual(unloaded());
+        expect(model.selectedTargetContainers).toEqual(unloaded());
     });
 
     it('stores selected target health and containers and fires change events', () => {
@@ -217,8 +217,8 @@ describe('TargetModel', () => {
 
         model.setSelected('user@host');
 
-        expect(model.selectedTargetHealth).toEqual(loaded(undefined));
-        expect(model.selectedTargetContainers).toEqual(loaded([]));
-        expect(model.selectedTargetDescription).toEqual(loaded(undefined));
+        expect(model.selectedTargetHealth).toEqual(unloaded());
+        expect(model.selectedTargetContainers).toEqual(unloaded());
+        expect(model.selectedTargetDescription).toEqual(unloaded());
     });
 });

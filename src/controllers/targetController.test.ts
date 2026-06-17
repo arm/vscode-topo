@@ -13,7 +13,7 @@ import {
     DockerPsItem,
     TargetDescription,
 } from '../util/types';
-import { errored, loaded } from '../util/loadable';
+import { errored, loaded, unloaded } from '../util/loadable';
 import { HealthCheck } from '../topoCliSchema';
 
 vi.mock('../util/logger');
@@ -475,7 +475,7 @@ describe('target addition', () => {
         expect(targetStore.addTarget).not.toHaveBeenCalled();
         expect(targetStore.setSelected).not.toHaveBeenCalled();
         expect(targetModel.selected).toBeUndefined();
-        expect(targetModel.targets).toEqual(loaded([]));
+        expect(targetModel.targets).toEqual(unloaded());
     });
 
     it('removes a saved target from the quick pick item button', async () => {
@@ -622,11 +622,9 @@ describe('target unselection', () => {
 
         expect(targetStore.setSelected).toHaveBeenCalledWith(undefined);
         expect(targetModel.selected).toBeUndefined();
-        expect(targetModel.selectedTargetHealth).toEqual(loaded(undefined));
-        expect(targetModel.selectedTargetContainers).toEqual(loaded([]));
-        expect(targetModel.selectedTargetDescription).toEqual(
-            loaded(undefined),
-        );
+        expect(targetModel.selectedTargetHealth).toEqual(unloaded());
+        expect(targetModel.selectedTargetContainers).toEqual(unloaded());
+        expect(targetModel.selectedTargetDescription).toEqual(unloaded());
     });
 
     it('does nothing when unselect command is executed with a non-target item', async () => {
@@ -687,9 +685,7 @@ describe('selected target description load', () => {
 
         await controller.loadSelectedTargetDescriptionCommandHandler();
 
-        expect(targetModel.selectedTargetDescription).toStrictEqual(
-            loaded(undefined),
-        );
+        expect(targetModel.selectedTargetDescription).toStrictEqual(unloaded());
         expect(topoCli.describe).not.toHaveBeenCalled();
     });
 });
@@ -776,7 +772,7 @@ describe('selected target data refresh', () => {
         expect(containerCommands.inspectContainers).not.toHaveBeenCalled();
     });
 
-    it('sets empty containers when selected target health is disconnected', async () => {
+    it('unloads containers when selected target health is disconnected', async () => {
         const disconnectedHealth: HealthCheck = {
             ...health,
             target: {
@@ -805,7 +801,7 @@ describe('selected target data refresh', () => {
         expect(targetModel.selectedTargetHealth).toStrictEqual(
             loaded(disconnectedHealth.target),
         );
-        expect(targetModel.selectedTargetContainers).toStrictEqual(loaded([]));
+        expect(targetModel.selectedTargetContainers).toStrictEqual(unloaded());
         expect(containerCommands.getContainers).not.toHaveBeenCalled();
     });
 });

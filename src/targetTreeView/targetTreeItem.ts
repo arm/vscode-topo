@@ -1,24 +1,24 @@
 import * as vscode from 'vscode';
 import { IssueCheck, TargetHealthCheck } from '../topoCliSchema';
-import { errored, Loadable } from '../util/loadable';
+import { Loadable, unloaded } from '../util/loadable';
 import { getVisibleTargetIssues } from '../target/getVisibleTargetIssues';
 import { TargetDescription } from '../util/types';
 import { hasFixCommand, type FixableHealthIssue } from '../util/issueFixes';
 
 export interface TargetTreeItemOptions {
     readonly target: string;
-    readonly health?: Loadable<TargetHealthCheck | undefined>;
-    readonly targetDescription?: Loadable<TargetDescription | undefined>;
+    readonly health?: Loadable<TargetHealthCheck>;
+    readonly targetDescription?: Loadable<TargetDescription>;
 }
 
-const defaultTargetHealth = errored('Target health not available');
-const defaultTargetDescription = errored('Target description not available');
+const defaultTargetHealth: Loadable<TargetHealthCheck> = unloaded();
+const defaultTargetDescription: Loadable<TargetDescription> = unloaded();
 
 /** Represents a target */
 export class TargetTreeItem extends vscode.TreeItem {
     public readonly target: string;
-    public readonly health: Loadable<TargetHealthCheck | undefined>;
-    public readonly targetDescription: Loadable<TargetDescription | undefined>;
+    public readonly health: Loadable<TargetHealthCheck>;
+    public readonly targetDescription: Loadable<TargetDescription>;
 
     constructor({
         target,
@@ -54,7 +54,7 @@ export class TargetTreeItem extends vscode.TreeItem {
     public get connected(): boolean {
         return (
             this.health.status === 'loaded' &&
-            this.health.data?.connectivity.status === 'ok'
+            this.health.data.connectivity.status === 'ok'
         );
     }
 
@@ -63,7 +63,7 @@ export class TargetTreeItem extends vscode.TreeItem {
     }
 
     public get visibleIssues(): IssueCheck[] {
-        if (this.health.status !== 'loaded' || this.health.data === undefined) {
+        if (this.health.status !== 'loaded') {
             return [];
         }
 
@@ -77,17 +77,14 @@ export class TargetTreeItem extends vscode.TreeItem {
     public get fixableIssues(): FixableHealthIssue[] {
         const issues: Array<IssueCheck | undefined> = [...this.visibleIssues];
         if (this.health.status === 'loaded') {
-            issues.unshift(this.health.data?.connectivity);
+            issues.unshift(this.health.data.connectivity);
         }
 
         return issues.filter(hasFixCommand);
     }
 
     public get remoteProcessorNames(): string[] {
-        if (
-            this.targetDescription.status !== 'loaded' ||
-            this.targetDescription.data === undefined
-        ) {
+        if (this.targetDescription.status !== 'loaded') {
             return [];
         }
         return this.targetDescription.data.remoteProcessors.map(
@@ -97,7 +94,7 @@ export class TargetTreeItem extends vscode.TreeItem {
 }
 
 const getConnectivityStatusMessage = (
-    health: Loadable<TargetHealthCheck | undefined>,
+    health: Loadable<TargetHealthCheck>,
 ): string | undefined => {
     if (health.status === 'errored') {
         return health.error.message;
@@ -105,9 +102,9 @@ const getConnectivityStatusMessage = (
 
     if (
         health.status === 'loaded' &&
-        health.data?.connectivity.status !== 'ok'
+        health.data.connectivity.status !== 'ok'
     ) {
-        return health.data?.connectivity.value;
+        return health.data.connectivity.value;
     }
 
     return undefined;
@@ -123,14 +120,14 @@ const getTargetTreeItemState = (
 };
 
 export const getTargetTreeItemIcon = (
-    health: Loadable<TargetHealthCheck | undefined>,
+    health: Loadable<TargetHealthCheck>,
 ): vscode.ThemeIcon | undefined => {
     if (health.loading) {
         return new vscode.ThemeIcon('loading~spin');
     }
     if (
         health.status === 'errored' ||
-        health.data?.connectivity.status !== 'ok'
+        (health.status === 'loaded' && health.data.connectivity.status !== 'ok')
     ) {
         return new vscode.ThemeIcon(
             'error',

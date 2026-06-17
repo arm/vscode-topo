@@ -4,7 +4,7 @@ import { TargetTreeView } from './targetTreeView';
 import { mock } from 'vitest-mock-extended';
 import { TargetHealthCheck } from '../topoCliSchema';
 import { TargetModel } from '../models/targetModel';
-import { loaded, loading } from '../util/loadable';
+import { loaded, loading, unloaded } from '../util/loadable';
 import { selectTarget } from '../commands';
 
 vi.mock('../util/logger');
@@ -60,6 +60,19 @@ describe('TargetStatusBarItemView', () => {
         const statusBarItem = vi.mocked(vscode.window.createStatusBarItem).mock
             .results[0].value;
         expect(statusBarItem.text).toBe(`$(loading~spin) ${target}`);
+    });
+
+    it('shows a neutral target icon when selected target health is unloaded', async () => {
+        const target = 'root@localhost';
+        const targetModel = new TargetModel();
+        targetModel.setSelected(target);
+        targetModel.setSelectedTargetHealth(unloaded());
+
+        new TargetStatusBarItemView(targetModel);
+
+        const statusBarItem = vi.mocked(vscode.window.createStatusBarItem).mock
+            .results[0].value;
+        expect(statusBarItem.text).toBe(`$(target) ${target}`);
     });
 
     it('shows a select target item in the status bar when no target is selected', async () => {

@@ -1,6 +1,6 @@
 import { HostModel } from './hostModel';
 import { HostHealthCheck } from '../topoCliSchema';
-import { loaded } from '../util/loadable';
+import { loaded, unloaded } from '../util/loadable';
 
 const hostHealth: HostHealthCheck = {
     host: {
@@ -15,16 +15,10 @@ const hostHealth: HostHealthCheck = {
 };
 
 describe('HostModel', () => {
-    it('defaults to an empty host dependency list', async () => {
+    it('defaults to an unloaded state', async () => {
         const model = new HostModel();
 
-        expect(model.health).toStrictEqual(
-            loaded({
-                host: {
-                    dependencies: [],
-                },
-            }),
-        );
+        expect(model.health).toStrictEqual(unloaded());
     });
 
     it('stores the latest host health loadable', async () => {

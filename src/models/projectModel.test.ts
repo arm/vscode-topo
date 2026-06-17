@@ -1,5 +1,5 @@
 import { ProjectModel } from './projectModel';
-import { loaded } from '../util/loadable';
+import { loaded, unloaded } from '../util/loadable';
 import { ProjectMetadata } from '../util/project';
 import * as vscode from 'vscode';
 
@@ -14,10 +14,10 @@ const projects: ProjectMetadata[] = [
 ];
 
 describe('ProjectModel', () => {
-    it('defaults to an empty project list', () => {
+    it('defaults to an unloaded state', () => {
         const model = new ProjectModel();
 
-        expect(model.projects).toStrictEqual(loaded([]));
+        expect(model.projects).toStrictEqual(unloaded());
     });
 
     it('stores the latest projects loadable', () => {
