@@ -6,8 +6,15 @@ const capitalizeFirstLetter = (s: string) => {
     return s.charAt(0).toUpperCase() + s.slice(1);
 };
 
+interface HealthCheckDependencyTreeItemOptions {
+    readonly loading?: boolean;
+}
+
 export class HealthCheckDependencyTreeItem extends vscode.TreeItem {
-    constructor(public readonly dependency: IssueCheck) {
+    constructor(
+        public readonly dependency: IssueCheck,
+        options: HealthCheckDependencyTreeItemOptions = {},
+    ) {
         super(dependency.name, vscode.TreeItemCollapsibleState.None);
         this.description = dependency.value;
 
@@ -20,6 +27,8 @@ export class HealthCheckDependencyTreeItem extends vscode.TreeItem {
         ]
             .filter(Boolean)
             .join(' ');
-        this.iconPath = getDependencyItemIcon(dependency.status);
+        this.iconPath = options.loading
+            ? new vscode.ThemeIcon('loading~spin')
+            : getDependencyItemIcon(dependency.status);
     }
 }

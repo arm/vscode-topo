@@ -33,4 +33,22 @@ describe('HealthCheckDependencyGroupTreeItem', () => {
             new vscode.ThemeIcon('loading~spin'),
         );
     });
+
+    it('marks the group fixable when a dependency has an executable fix command', () => {
+        const item = new HealthCheckDependencyGroupTreeItem(
+            loaded([
+                {
+                    name: 'Container Engine',
+                    status: 'error',
+                    value: 'missing',
+                    fix: {
+                        description: 'Install container engine',
+                        command: 'topo install container-engine',
+                    },
+                },
+            ]),
+        );
+
+        expect(item.contextValue).toBe('Dependencies HasFixableIssues');
+    });
 });

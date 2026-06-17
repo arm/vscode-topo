@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
+import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 import { showAndLogError } from '../util/showAndLogError';
 import { createProcessTask } from '../util/task';
@@ -7,6 +7,7 @@ import { TaskExecutor } from '../util/taskExecutor';
 import { TargetModel } from '../models/targetModel';
 import { TargetController } from '../controllers/targetController';
 import {
+    hasFixCommand,
     type FixableHealthIssue,
     getIssueFixCommandGroups,
 } from '../util/issueFixes';
@@ -34,13 +35,13 @@ export class FixIssue {
     ) {}
 
     public async fixIssueCommandHandler(treeNode: unknown): Promise<void> {
-        if (treeNode instanceof HealthCheckDependencyTreeItem) {
+        if (treeNode instanceof HealthCheckDependencyGroupTreeItem) {
+            await this.fixDependencyGroupIssuesFromTreeItem(treeNode);
+        } else if (treeNode instanceof HealthCheckDependencyTreeItem) {
             await this.fixDependencyIssueFromTreeItem(treeNode);
-        } else if (treeNode instanceof TargetTreeItem) {
-            await this.fixTargetIssuesFromTreeItem(treeNode);
         } else {
             throw new Error(
-                `Invalid item for fix issues: expected HealthCheckDependencyTreeItem or TargetTreeItem but received: ${String(treeNode)}`,
+                `Invalid item for fix issues: expected HealthCheckDependencyGroupTreeItem or HealthCheckDependencyTreeItem but received: ${String(treeNode)}`,
             );
         }
 
@@ -63,18 +64,23 @@ export class FixIssue {
         await this.executeFix(target, [treeNode.dependency.name], command);
     }
 
-    private async fixTargetIssuesFromTreeItem(
-        treeNode: TargetTreeItem,
+    private async fixDependencyGroupIssuesFromTreeItem(
+        dependencyGroupItem: HealthCheckDependencyGroupTreeItem,
     ): Promise<void> {
-        const fixableIssues = treeNode.fixableIssues;
+        const target = this.targetModel.selected;
+        if (!target) {
+            throw new Error('No selected target found');
+        }
 
+        const fixableIssues =
+            dependencyGroupItem.dependencies.filter(hasFixCommand);
         if (fixableIssues.length === 0) {
             throw new Error(
-                `No executable issue fixes found for target ${treeNode.target}`,
+                `No executable issue fixes found for target ${target}`,
             );
         }
 
-        await this.selectAndFixTargetIssue(treeNode.target, fixableIssues);
+        await this.selectAndFixTargetIssue(target, fixableIssues);
     }
 
     private async selectAndFixTargetIssue(

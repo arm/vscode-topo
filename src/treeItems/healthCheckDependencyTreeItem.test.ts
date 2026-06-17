@@ -84,4 +84,18 @@ describe('HealthCheckDependencyTreeItem', () => {
 
         expect(item.contextValue).toBe('Dependency Ok');
     });
+
+    it('uses a spinning icon when loading', () => {
+        const item = new HealthCheckDependencyTreeItem(
+            {
+                name: 'Connectivity',
+                value: 'Checking target connectivity',
+                status: 'warning',
+            },
+            { loading: true },
+        );
+
+        expect(item.iconPath).toBeInstanceOf(vscode.ThemeIcon);
+        expect((item.iconPath as vscode.ThemeIcon).id).toBe('loading~spin');
+    });
 });

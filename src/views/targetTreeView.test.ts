@@ -1,22 +1,18 @@
 import * as vscode from 'vscode';
 import { TargetTreeView } from './targetTreeView';
-import { TargetContainerTreeItem } from '../targetTreeView/targetContainerTreeItem';
 import { TargetProcessingDomainTreeItem } from '../targetTreeView/targetProcessingDomainTreeItem';
-import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
 import * as manifest from '../manifest';
 import { ContainerItem, TargetDescription } from '../util/types';
 import { mock } from 'vitest-mock-extended';
-import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
-import { TargetProcessingDomainGroupTreeItem } from '../targetTreeView/targetProcessingDomainGroupTreeItem';
 import { IssueCheck, TargetHealthCheck } from '../topoCliSchema';
 import { TargetModel } from '../models/targetModel';
 import { TargetDataIssueTreeItem } from '../targetTreeView/targetDataIssueTreeItem';
 import { errored, loaded, unloaded } from '../util/loadable';
-import { ErrorTreeItem } from '../treeItems/errorTreeItem';
 
 describe('TargetTreeView', () => {
     let view: TargetTreeView;
     let targetModel: TargetModel;
+    let treeView: vscode.TreeView<vscode.TreeItem>;
     const target = 'user@topo.local';
     const targetDescription: TargetDescription = {
         hostProcessors: [],
@@ -102,6 +98,8 @@ describe('TargetTreeView', () => {
         targetModel.setSelectedTargetContainers(loaded(mockContainers));
         targetModel.setSelectedTargetDescription(loaded(targetDescription));
         view = new TargetTreeView(targetModel);
+        treeView = vi.mocked(vscode.window.createTreeView).mock.results[0]
+            .value;
         vi.clearAllTimers();
         vi.clearAllMocks();
     });
@@ -175,19 +173,13 @@ describe('TargetTreeView', () => {
     });
 
     describe('getChildren', () => {
-        it('returns Target at root and Dependencies/Processing Domains as its children', () => {
+        it('returns Dependencies/Processing Domains at the root', () => {
             const rootChildren = view.getChildren();
-            const targetChildren = view.getChildren(rootChildren[0]);
 
-            expect(targetChildren).toHaveLength(2);
-            expect(targetChildren[0]).toBeInstanceOf(
-                HealthCheckDependencyGroupTreeItem,
-            );
-            expect(targetChildren[1]).toBeInstanceOf(
-                TargetProcessingDomainGroupTreeItem,
-            );
-            expect(targetChildren[0].label).toBe('Dependencies');
-            expect(targetChildren[1].label).toBe('Processing Domains');
+            expect(treeView.description).toBe(target);
+            expect(rootChildren).toHaveLength(2);
+            expect(rootChildren[0].label).toBe('Dependencies');
+            expect(rootChildren[1].label).toBe('Processing Domains');
         });
 
         it('returns dependency items for Dependencies group', () => {
@@ -213,13 +205,8 @@ describe('TargetTreeView', () => {
                 }),
             );
             const rootChildren = view.getChildren();
-            const targetChildren = view.getChildren(rootChildren[0]);
-            const dependenciesGroup = targetChildren.find(
-                (v) => v instanceof HealthCheckDependencyGroupTreeItem,
-            );
-            expect(dependenciesGroup).toBeDefined();
 
-            const got = view.getChildren(dependenciesGroup);
+            const got = view.getChildren(rootChildren[0]);
 
             expect(got.map((item) => item.label)).toEqual([
                 dependencies[0].name,
@@ -228,20 +215,29 @@ describe('TargetTreeView', () => {
             ]);
         });
 
-        it('sets disconnected context and tree collapsible state for target with pending health', () => {
-            targetModel.setSelectedTargetHealth(unloaded());
+        it('returns a connectivity item while selected target health is pending', () => {
+            targetModel.setSelectedTargetHealth(unloaded(true));
 
             const rootChildren = view.getChildren();
 
             expect(rootChildren).toHaveLength(1);
-            const targetItem = rootChildren[0] as TargetTreeItem;
-            expect(targetItem.contextValue).toContain('Target');
-            expect(targetItem.collapsibleState).toBe(
-                vscode.TreeItemCollapsibleState.None,
+            expect(rootChildren[0]).toMatchObject({
+                label: 'Connectivity',
+                description: 'Checking target connectivity',
+                contextValue: 'Dependency Warning',
+            });
+            expect((rootChildren[0].iconPath as vscode.ThemeIcon).id).toBe(
+                'loading~spin',
             );
         });
 
-        it('shows health diagnostics on selected target when health has an error', () => {
+        it('returns no children when selected target health is unloaded', () => {
+            targetModel.setSelectedTargetHealth(unloaded());
+
+            expect(view.getChildren()).toEqual([]);
+        });
+
+        it('returns a connectivity item when selected target has a connectivity error', () => {
             const diagnostics = '"ssh" not found on remote target\'s $PATH';
             targetModel.setSelectedTargetHealth(
                 loaded({
@@ -256,16 +252,15 @@ describe('TargetTreeView', () => {
 
             const rootChildren = view.getChildren();
 
-            expect(rootChildren).toStrictEqual([
-                expect.objectContaining({
-                    label: target,
-                    description: diagnostics,
-                    tooltip: `${target}: ${diagnostics}`,
-                }),
-            ]);
+            expect(rootChildren).toHaveLength(1);
+            expect(rootChildren[0]).toMatchObject({
+                label: 'Connectivity',
+                description: diagnostics,
+                contextValue: 'Dependency Error',
+            });
         });
 
-        it('only returns the selected target at the root', () => {
+        it('updates the view description when the selected target changes', () => {
             const otherTarget = 'user@other.local';
             targetModel.setTargets(loaded([target, otherTarget]));
             targetModel.setSelected(otherTarget);
@@ -275,15 +270,15 @@ describe('TargetTreeView', () => {
 
             const rootChildren = view.getChildren();
 
+            expect(treeView.description).toBe(otherTarget);
             expect(rootChildren).toHaveLength(1);
             expect(rootChildren[0]).toMatchObject({
-                label: otherTarget,
+                label: 'Connectivity',
                 description: 'ssh connection failed',
-                tooltip: `${otherTarget}: ssh connection failed`,
             });
         });
 
-        it('marks target with executable subsystem driver fix as fixable when remote processors exist', async () => {
+        it('marks dependencies group fixable when visible target issues have executable fixes', async () => {
             targetModel.setSelectedTargetHealth(
                 loaded({
                     ...targetHealth,
@@ -301,47 +296,33 @@ describe('TargetTreeView', () => {
 
             const rootChildren = view.getChildren();
 
-            expect(rootChildren).toHaveLength(1);
-            expect(rootChildren[0].contextValue).toContain('HasFixableIssues');
+            expect(rootChildren[0].contextValue).toBe(
+                'Dependencies HasFixableIssues',
+            );
         });
 
         it('returns containers for Primary OS and remote processor groups', () => {
             const rootChildren = view.getChildren();
-            const targetChildren = view.getChildren(rootChildren[0]);
-            const processingDomainsGroup = targetChildren.find(
-                (v) => v instanceof TargetProcessingDomainGroupTreeItem,
-            );
-            const processingDomainItems = view.getChildren(
-                processingDomainsGroup,
-            );
-            const primaryOsGroup = processingDomainItems.find(
-                (item) => item.label === 'Primary OS',
-            ) as TargetProcessingDomainTreeItem;
-            const remoteprocGroup = processingDomainItems.find(
-                (item) => item.label === 'imx-rproc',
-            ) as TargetProcessingDomainTreeItem;
-            const otherRprocGroup = processingDomainItems.find(
-                (item) => item.label === 'other-rproc',
-            ) as TargetProcessingDomainTreeItem;
+            const processingDomainItems = view.getChildren(rootChildren[1]);
+            expect(processingDomainItems.map((item) => item.label)).toEqual([
+                'Primary OS',
+                'imx-rproc',
+                'other-rproc',
+            ]);
+            const [primaryOsGroup, remoteprocGroup, otherRprocGroup] =
+                processingDomainItems;
 
             const primaryOsChildren = view.getChildren(primaryOsGroup);
             const imxRprocChildren = view.getChildren(remoteprocGroup);
             const otherRprocChildren = view.getChildren(otherRprocGroup);
 
             expect(primaryOsChildren).toHaveLength(1);
-            expect(primaryOsChildren[0]).toBeInstanceOf(
-                TargetContainerTreeItem,
-            );
-            expect((primaryOsChildren[0] as TargetContainerTreeItem).name).toBe(
-                'cont2',
-            );
+            expect(primaryOsChildren[0]).toMatchObject({ name: 'cont2' });
             expect(imxRprocChildren).toHaveLength(2);
-            expect(imxRprocChildren[0]).toBeInstanceOf(TargetContainerTreeItem);
-            expect(
-                imxRprocChildren.map(
-                    (c) => (c as TargetContainerTreeItem).name,
-                ),
-            ).toEqual(['cont1', 'cont3']);
+            expect(imxRprocChildren).toMatchObject([
+                { name: 'cont1' },
+                { name: 'cont3' },
+            ]);
             expect(otherRprocChildren).toHaveLength(0);
         });
 
@@ -350,27 +331,18 @@ describe('TargetTreeView', () => {
                 errored('container parse failed'),
             );
             const rootChildren = view.getChildren();
-            const targetChildren = view.getChildren(rootChildren[0]);
-            const processingDomainsGroup = targetChildren.find(
-                (v) => v instanceof TargetProcessingDomainGroupTreeItem,
-            );
 
-            const got = view.getChildren(processingDomainsGroup);
+            const got = view.getChildren(rootChildren[1]);
 
             expect(got).toHaveLength(1);
-            expect(got[0]).toBeInstanceOf(ErrorTreeItem);
             expect(got[0].label).toBe('Failed to load containers');
         });
 
         it('returns no processing domains while containers are unloaded', () => {
             targetModel.setSelectedTargetContainers(unloaded());
             const rootChildren = view.getChildren();
-            const targetChildren = view.getChildren(rootChildren[0]);
-            const processingDomainsGroup = targetChildren.find(
-                (v) => v instanceof TargetProcessingDomainGroupTreeItem,
-            );
 
-            const got = view.getChildren(processingDomainsGroup);
+            const got = view.getChildren(rootChildren[1]);
 
             expect(got).toEqual([]);
         });
@@ -382,9 +354,10 @@ describe('TargetTreeView', () => {
             const rootChildren = view.getChildren();
 
             expect(rootChildren.length).toEqual(0);
+            expect(treeView.description).toBeUndefined();
         });
 
-        it('shows target data issues at the root', async () => {
+        it('shows target data issues at the root', () => {
             const targets = errored('Failed to load targets');
             targetModel.setTargets(targets);
 
