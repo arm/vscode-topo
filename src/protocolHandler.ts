@@ -5,6 +5,8 @@ import { parseCloneSourceString } from './util/parseSourceCloneString';
 import { isWrappedError } from './errors/wrappedError';
 import { showAndLogError } from './util/showAndLogError';
 import { TaskExecutor } from './util/taskExecutor';
+import { getRedirectedUri } from './util/getRedirectedUri';
+import { parseQuery } from './util/parseQuery';
 
 /**
  * VS Code URI handler for Topo deep links.
@@ -20,12 +22,12 @@ export class ProtocolHandler implements vscode.UriHandler {
 
     public async handleUri(uri: vscode.Uri): Promise<void> {
         logger.info(`ProtocolHandler.handleUri(${uri.toString()})`);
-        const data = this.parseQuery(uri.query);
+        const data = parseRequestData(uri);
 
         switch (uri.path) {
             case '/clone':
                 try {
-                    await this.handleCloneRequest(uri, data);
+                    await handleCloneRequest(this.taskExecutor, uri, data);
                 } catch (error: unknown) {
                     if (isWrappedError(error, ['CLONE', 'CLI'])) {
                         return showAndLogError(
@@ -43,42 +45,65 @@ export class ProtocolHandler implements vscode.UriHandler {
             }
         }
     }
-
-    private async handleCloneRequest(
-        uri: vscode.Uri,
-        data: Record<string, string>,
-    ): Promise<void> {
-        if (typeof data.source !== 'string') {
-            logger.error(`Failed to open URI: ${uri.toString()}`);
-            return;
-        }
-        const { source, ...cloneBuildArgs } = data;
-        const cloneSource = parseCloneSourceString(source);
-        if (cloneSource.type === 'dir') {
-            const errMessage = `Clone source type 'dir' is not supported for URI-based cloning. Please use the command palette to clone from a local directory. URI: ${uri.toString()}`;
-            vscode.window.showErrorMessage(errMessage);
-            logger.error(errMessage);
-            return;
-        }
-
-        const cloneStarted = await cloneProjectFromSource(
-            this.taskExecutor,
-            cloneSource,
-            cloneBuildArgs,
-        );
-        if (!cloneStarted) {
-            logger.info(`Clone cancelled for URI ${uri.toString()}`);
-        }
-    }
-
-    private parseQuery(query: string): Record<string, string> {
-        // Some protocol URIs may be copied from rendered HTML/Markdown where '&' is entity-escaped.
-        // Normalize those forms back to '&' so URLSearchParams can split query parameters correctly.
-        const normalizedQuery = query.replace(/&(amp|#38|#x26);/gi, '&');
-        const params = new URLSearchParams(normalizedQuery);
-        const parsed: Record<string, string> = Object.fromEntries(
-            params.entries(),
-        );
-        return parsed;
-    }
 }
+
+const handleCloneRequest = async (
+    taskExecutor: TaskExecutor,
+    uri: vscode.Uri,
+    data: Record<string, string>,
+): Promise<void> => {
+    if (typeof data.source !== 'string') {
+        logger.error(`Failed to open URI: ${uri.toString()}`);
+        return;
+    }
+    const { source, ...cloneBuildArgs } = data;
+    const cloneSource = parseCloneSourceString(source);
+    if (cloneSource.type === 'dir') {
+        const errMessage = `Clone source type 'dir' is not supported for URI-based cloning. Please use the command palette to clone from a local directory. URI: ${uri.toString()}`;
+        vscode.window.showErrorMessage(errMessage);
+        logger.error(errMessage);
+        return;
+    }
+
+    const cloneStarted = await cloneProjectFromSource(
+        taskExecutor,
+        cloneSource,
+        cloneBuildArgs,
+    );
+    if (!cloneStarted) {
+        logger.info(`Clone cancelled for URI ${uri.toString()}`);
+    }
+};
+
+const parseRequestData = (uri: vscode.Uri): Record<string, string> => {
+    const data = parseQuery(uri.query);
+    const redirectedUri = getRedirectedUri(uri, data.url);
+
+    if (!redirectedUri) {
+        return withSourceFragment(data, uri.fragment);
+    }
+
+    const { url: _redirectUrl, ...dataWithoutRedirectUrl } = data;
+    const redirectedData = parseQuery(redirectedUri.query);
+    const requestData = {
+        ...dataWithoutRedirectUrl,
+        ...redirectedData,
+    };
+    const fragment = redirectedUri.fragment || uri.fragment;
+
+    return withSourceFragment(requestData, fragment);
+};
+
+const withSourceFragment = (
+    data: Record<string, string>,
+    fragment: string,
+): Record<string, string> => {
+    const { source } = data;
+    if (source === undefined) {
+        return data;
+    }
+    if (!source || !fragment || source.includes('#')) {
+        return { ...data, source };
+    }
+    return { ...data, source: `${source}#${fragment}` };
+};

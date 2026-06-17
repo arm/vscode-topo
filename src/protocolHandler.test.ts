@@ -131,6 +131,72 @@ describe('ProtocolHandler', () => {
         ]);
     });
 
+    it('forwards a url query param when it is a clone option', async () => {
+        mutable(vscode.workspace).workspaceFolders = workspaceFolders;
+        vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
+
+        await protocolHandler.handleUri(
+            vscode.Uri.parse(
+                'vscode://arm.topo/clone?source=https://example.com/repo.git&url=https%3A%2F%2Fexample.com%2Fmodel',
+            ),
+        );
+
+        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+        expectCloneTask(taskExecutor.run.mock.calls[0][0], 'repo', [
+            'clone',
+            'https://example.com/repo.git',
+            path.join(workspaceUri.fsPath, 'repo'),
+            'url=https://example.com/model',
+        ]);
+    });
+
+    it('forwards a url query param when it is not a vscode.dev redirect', async () => {
+        mutable(vscode.workspace).workspaceFolders = workspaceFolders;
+        vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
+
+        await protocolHandler.handleUri(
+            vscode.Uri.parse(
+                'vscode://arm.topo/clone?source=https://example.com/repo.git&url=vscode%3A%2F%2Farm.topo%2Fclone%3Fsource%3Dhttps%253A%252F%252Fexample.com%252Fother.git',
+            ),
+        );
+
+        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+        expectCloneTask(taskExecutor.run.mock.calls[0][0], 'repo', [
+            'clone',
+            'https://example.com/repo.git',
+            path.join(workspaceUri.fsPath, 'repo'),
+            'url=vscode://arm.topo/clone?source=https://example.com/other.git',
+        ]);
+    });
+
+    it('parses vscode.dev redirect metadata without forwarding it as a clone option', async () => {
+        mutable(vscode.workspace).workspaceFolders = workspaceFolders;
+        vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
+            'topo-welcome-test',
+        );
+        const commitHash = '8303e66db59a7a11e64877121f3db1b688d2011f';
+        const sourceUrl = 'https://github.com/Arm-Examples/topo-welcome.git';
+        const redirectedUri = `vscode://arm.topo/clone?source=${encodeURIComponent(`${sourceUrl}#${commitHash}`)}`;
+        const redirectPageUri = `https://vscode.dev/redirect?url=${encodeURIComponent(redirectedUri)}`;
+
+        await protocolHandler.handleUri(
+            vscode.Uri.parse(
+                `vscode://arm.topo/clone?source=${encodeURIComponent(sourceUrl)}&url=${encodeURIComponent(redirectPageUri)}#${commitHash}`,
+            ),
+        );
+
+        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+        expectCloneTask(
+            taskExecutor.run.mock.calls[0][0],
+            'topo-welcome-test',
+            [
+                'clone',
+                'https://github.com/Arm-Examples/topo-welcome.git#8303e66db59a7a11e64877121f3db1b688d2011f',
+                path.join(workspaceUri.fsPath, 'topo-welcome-test'),
+            ],
+        );
+    });
+
     it('parses HTML-escaped ampersands in query params', async () => {
         mutable(vscode.workspace).workspaceFolders = workspaceFolders;
         vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
