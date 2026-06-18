@@ -379,7 +379,7 @@
     },
     "devDependencies": {
         "@eslint/js": "^10.0.1",
-        "@vitest/coverage-v8": "^4.0.14",
+        "@vitest/coverage-v8": "^4.1.9",
         "@types/lodash.debounce": "^4.0.9",
         "@types/node": "^22.19.21",
         "@types/vscode": "^1.101.0",
