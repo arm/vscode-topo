@@ -76,19 +76,12 @@ const handleCloneRequest = async (
 
 const parseRequestData = (uri: vscode.Uri): Record<string, string> => {
     const { url: _redirectUrl, ...data } = parseQuery(uri.query);
-    return withSourceFragment(data, uri.fragment);
-};
-
-const withSourceFragment = (
-    data: Record<string, string>,
-    fragment: string,
-): Record<string, string> => {
     const { source } = data;
     if (source === undefined) {
         return data;
     }
-    if (!source || !fragment || source.includes('#')) {
+    if (!source || !uri.fragment || source.includes('#')) {
         return { ...data, source };
     }
-    return { ...data, source: `${source}#${fragment}` };
+    return { ...data, source: `${source}#${uri.fragment}` };
 };
