@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import path from 'node:path';
+import os from 'node:os';
 import { ProtocolHandler } from './protocolHandler';
 import { mutable } from './util/mutable';
 import { showAndLogError } from './util/showAndLogError';
@@ -26,12 +27,13 @@ describe('ProtocolHandler', () => {
         task: vscode.Task,
         projectName: string,
         args: string[],
+        cwd?: string,
     ): void {
         expect(task.name).toBe(`Clone ${projectName}`);
         expect(task.execution).toMatchObject({
             process: 'topo',
             args,
-            options: { cwd: undefined },
+            options: { cwd },
         });
     }
 
@@ -84,11 +86,16 @@ describe('ProtocolHandler', () => {
             openLabel: 'Select Destination Folder',
         });
         expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-        expectCloneTask(taskExecutor.run.mock.calls[0][0], 'repo', [
-            'clone',
-            'git:https://example.com/repo.git',
-            path.join(destinationUri.fsPath, 'repo'),
-        ]);
+        expectCloneTask(
+            taskExecutor.run.mock.calls[0][0],
+            'repo',
+            [
+                'clone',
+                'git:https://example.com/repo.git',
+                path.join(destinationUri.fsPath, 'repo'),
+            ],
+            os.homedir(),
+        );
     });
 
     it('shows an error when the clone task throws', async () => {

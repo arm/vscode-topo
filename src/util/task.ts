@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import os from 'node:os';
 import { PACKAGE_NAME } from '../manifest';
 
 export interface TaskOptions {
@@ -16,6 +17,15 @@ function getTaskScope(
     return workspace ?? vscode.TaskScope.Workspace;
 }
 
+function getProcessExecutionCwd(cwd: string | undefined): string | undefined {
+    const hasWorkspace = (vscode.workspace.workspaceFolders?.length ?? 0) > 0;
+    if (cwd || hasWorkspace) {
+        return cwd;
+    }
+
+    return os.homedir();
+}
+
 export function createProcessTask(
     taskName: string,
     command: string[],
@@ -31,7 +41,7 @@ export function createProcessTask(
     };
 
     const processExecution = new vscode.ProcessExecution(cmd, args, {
-        cwd: opts?.cwd,
+        cwd: getProcessExecutionCwd(opts?.cwd),
     });
 
     const taskScope = getTaskScope(opts?.cwd);
