@@ -125,67 +125,81 @@ function createController(targetModel: TargetModel, targetStore: TargetStore) {
 }
 
 describe('buildQuickPickItems', () => {
-    it('returns hosts', () => {
-        const items = buildQuickPickItems(['host-a', 'host-b'], '');
+    it('returns discovered targets', () => {
+        const items = buildQuickPickItems(
+            ['discovered-target-a', 'discovered-target-b'],
+            '',
+        );
 
         expect(items).toEqual([
-            { label: 'host-a', target: 'host-a' },
-            { label: 'host-b', target: 'host-b' },
+            { label: 'discovered-target-a', target: 'discovered-target-a' },
+            { label: 'discovered-target-b', target: 'discovered-target-b' },
         ]);
     });
 
-    it('returns current targets before ssh config hosts', () => {
-        const items = buildQuickPickItems(['host-a', 'host-b'], '', [
-            'saved-host',
-            'host-a',
-        ]);
+    it('returns saved targets before discovered targets', () => {
+        const items = buildQuickPickItems(
+            ['discovered-target-a', 'discovered-target-b'],
+            '',
+            ['saved-target', 'discovered-target-a'],
+        );
 
         expect(items).toEqual([
             expect.objectContaining({
-                label: 'saved-host',
-                target: 'saved-host',
+                label: 'saved-target',
+                target: 'saved-target',
                 buttons: expect.any(Array),
             }),
-            { label: 'host-a', target: 'host-a', buttons: undefined },
-            { label: 'host-b', target: 'host-b', buttons: undefined },
+            {
+                label: 'discovered-target-a',
+                target: 'discovered-target-a',
+                buttons: undefined,
+            },
+            {
+                label: 'discovered-target-b',
+                target: 'discovered-target-b',
+                buttons: undefined,
+            },
         ]);
     });
 
-    it('does not add a remove button to saved targets from ssh config', () => {
-        const items = buildQuickPickItems(['host-a'], '', ['host-a']);
+    it('does not add a remove button to saved targets that are also discovered', () => {
+        const items = buildQuickPickItems(['discovered-target'], '', [
+            'discovered-target',
+        ]);
 
         expect(items[0]).toEqual({
-            label: 'host-a',
-            target: 'host-a',
+            label: 'discovered-target',
+            target: 'discovered-target',
             buttons: undefined,
         });
     });
 
-    it('adds a remove button to manual saved targets', () => {
-        const items = buildQuickPickItems([], '', ['manual-host']);
+    it('adds a remove button to saved targets that are not discovered', () => {
+        const items = buildQuickPickItems([], '', ['saved-target']);
 
         expect(items[0]).toEqual({
-            label: 'manual-host',
-            target: 'manual-host',
+            label: 'saved-target',
+            target: 'saved-target',
             buttons: expect.any(Array),
         });
     });
 
-    it('adds remove buttons to all manual saved targets', () => {
+    it('adds remove buttons to all saved targets that are not discovered', () => {
         const items = buildQuickPickItems([], '', [
-            'selected-host',
-            'other-host',
+            'selected-target',
+            'other-saved-target',
         ]);
 
         expect(items).toEqual([
             expect.objectContaining({
-                label: 'selected-host',
-                target: 'selected-host',
+                label: 'selected-target',
+                target: 'selected-target',
                 buttons: expect.any(Array),
             }),
             expect.objectContaining({
-                label: 'other-host',
-                target: 'other-host',
+                label: 'other-saved-target',
+                target: 'other-saved-target',
                 buttons: expect.any(Array),
             }),
         ]);
@@ -195,38 +209,41 @@ describe('buildQuickPickItems', () => {
         const items = buildQuickPickItems(
             [],
             '',
-            ['selected-host', 'other-host'],
-            'selected-host',
+            ['selected-target', 'other-saved-target'],
+            'selected-target',
         );
 
         expect(items).toEqual([
             expect.objectContaining({
-                label: 'selected-host',
-                target: 'selected-host',
+                label: 'selected-target',
+                target: 'selected-target',
                 description: '$(target)',
                 buttons: expect.any(Array),
             }),
             expect.objectContaining({
-                label: 'other-host',
-                target: 'other-host',
+                label: 'other-saved-target',
+                target: 'other-saved-target',
                 buttons: expect.any(Array),
+                description: undefined,
             }),
         ]);
-        expect(items[1]).not.toHaveProperty('description');
     });
 
-    it('does not add a remove button to ssh config hosts that are not saved targets', () => {
-        const items = buildQuickPickItems(['host-a'], '');
+    it('does not add a remove button to discovered targets that are not saved', () => {
+        const items = buildQuickPickItems(['discovered-target'], '');
 
         expect(items[0]).toEqual({
-            label: 'host-a',
-            target: 'host-a',
+            label: 'discovered-target',
+            target: 'discovered-target',
             buttons: undefined,
         });
     });
 
-    it('prepends a manual entry when filter does not match any host', () => {
-        const items = buildQuickPickItems(['host-a'], 'root@10.0.0.1');
+    it('prepends a manual entry when filter does not match any target', () => {
+        const items = buildQuickPickItems(
+            ['discovered-target'],
+            'root@10.0.0.1',
+        );
 
         expect(items[0]).toEqual({
             label: 'root@10.0.0.1',
@@ -234,55 +251,58 @@ describe('buildQuickPickItems', () => {
             description: 'Add new SSH target',
         });
         expect(items[1]).toEqual({
-            label: 'host-a',
-            target: 'host-a',
+            label: 'discovered-target',
+            target: 'discovered-target',
             buttons: undefined,
         });
     });
 
-    it('does not prepend manual entry when filter matches a host (case-insensitive)', () => {
-        const items = buildQuickPickItems(['Host-A'], 'host-a');
+    it('does not prepend manual entry when filter matches a discovered target', () => {
+        const items = buildQuickPickItems(
+            ['discovered-target'],
+            'discovered-target',
+        );
 
         expect(items[0]).toEqual({
-            label: 'Host-A',
-            target: 'Host-A',
+            label: 'discovered-target',
+            target: 'discovered-target',
             buttons: undefined,
         });
     });
 
-    it('does not prepend manual entry when filter matches a current target (case-insensitive)', () => {
-        const items = buildQuickPickItems([], 'saved-host', ['Saved-Host']);
+    it('does not prepend manual entry when filter matches a saved target', () => {
+        const items = buildQuickPickItems([], 'saved-target', ['saved-target']);
 
         expect(items[0]).toEqual(
             expect.objectContaining({
-                label: 'Saved-Host',
-                target: 'Saved-Host',
+                label: 'saved-target',
+                target: 'saved-target',
                 buttons: expect.any(Array),
             }),
         );
     });
 
     it('does not prepend manual entry when filter is whitespace-only', () => {
-        const items = buildQuickPickItems(['host-a'], '   ');
+        const items = buildQuickPickItems(['discovered-target'], '   ');
 
         expect(items[0]).toEqual({
-            label: 'host-a',
-            target: 'host-a',
+            label: 'discovered-target',
+            target: 'discovered-target',
             buttons: undefined,
         });
     });
 
     it('trims whitespace from the filter for the manual entry label', () => {
-        const items = buildQuickPickItems([], '  my-host  ');
+        const items = buildQuickPickItems([], '  manual-target  ');
 
         expect(items[0]).toEqual({
-            label: 'my-host',
-            target: 'my-host',
+            label: 'manual-target',
+            target: 'manual-target',
             description: 'Add new SSH target',
         });
     });
 
-    it('returns nothing when no hosts and empty filter', () => {
+    it('returns nothing when no targets and empty filter', () => {
         const items = buildQuickPickItems([], '');
 
         expect(items).toEqual([]);

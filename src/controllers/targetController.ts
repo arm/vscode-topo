@@ -98,41 +98,25 @@ async function promptForSshTarget(
 }
 
 export function buildQuickPickItems(
-    availableHosts: string[],
+    discoveredTargets: string[],
     filter: string,
-    currentTargets: string[] = [],
+    savedTargets: string[] = [],
     selectedTarget?: string,
 ): TargetQuickPickItem[] {
-    const availableHostsByLowerCase = new Set(
-        availableHosts.map((host) => host.toLowerCase()),
-    );
-    const knownTargets = [
-        ...currentTargets,
-        ...availableHosts.filter(
-            (host) =>
-                !currentTargets.some(
-                    (target) => target.toLowerCase() === host.toLowerCase(),
-                ),
-        ),
-    ];
-    const targetItems: TargetQuickPickItem[] = knownTargets.map((target) => {
-        const isSelected =
-            target.toLowerCase() === selectedTarget?.toLowerCase();
+    const discoveredTargetsSet = new Set(discoveredTargets);
+    const allTargets = new Set([...savedTargets, ...discoveredTargets]);
+    const targetItems: TargetQuickPickItem[] = [...allTargets].map((target) => {
         return {
             label: target,
             target,
-            ...(isSelected ? { description: '$(target)' } : {}),
-            buttons:
-                currentTargets.includes(target) &&
-                !availableHostsByLowerCase.has(target.toLowerCase())
-                    ? [removeTargetQuickPickButton]
-                    : undefined,
+            description: target === selectedTarget ? '$(target)' : undefined,
+            buttons: !discoveredTargetsSet.has(target)
+                ? [removeTargetQuickPickButton]
+                : undefined,
         };
     });
     const trimmed = filter.trim();
-    const isNovelEntry =
-        trimmed.length > 0 &&
-        !knownTargets.some((h) => h.toLowerCase() === trimmed.toLowerCase());
+    const isNovelEntry = trimmed.length > 0 && !allTargets.has(trimmed);
     const manualItem: TargetQuickPickItem | undefined = isNovelEntry
         ? {
               label: trimmed,
@@ -308,8 +292,7 @@ export class TargetController {
         switch (result?.kind) {
             case 'remove':
                 if (
-                    result.target.toLowerCase() ===
-                        this.model.selected?.toLowerCase() &&
+                    result.target === this.model.selected &&
                     !(await this.confirmSelectedTargetRemoval(result.target))
                 ) {
                     return;
