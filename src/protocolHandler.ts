@@ -5,7 +5,6 @@ import { parseCloneSourceString } from './util/parseSourceCloneString';
 import { isWrappedError } from './errors/wrappedError';
 import { showAndLogError } from './util/showAndLogError';
 import { TaskExecutor } from './util/taskExecutor';
-import { getRedirectedUri } from './util/getRedirectedUri';
 import { parseQuery } from './util/parseQuery';
 
 /**
@@ -76,22 +75,8 @@ const handleCloneRequest = async (
 };
 
 const parseRequestData = (uri: vscode.Uri): Record<string, string> => {
-    const data = parseQuery(uri.query);
-    const redirectedUri = getRedirectedUri(uri, data.url);
-
-    if (!redirectedUri) {
-        return withSourceFragment(data, uri.fragment);
-    }
-
-    const { url: _redirectUrl, ...dataWithoutRedirectUrl } = data;
-    const redirectedData = parseQuery(redirectedUri.query);
-    const requestData = {
-        ...dataWithoutRedirectUrl,
-        ...redirectedData,
-    };
-    const fragment = redirectedUri.fragment || uri.fragment;
-
-    return withSourceFragment(requestData, fragment);
+    const { url: _redirectUrl, ...data } = parseQuery(uri.query);
+    return withSourceFragment(data, uri.fragment);
 };
 
 const withSourceFragment = (

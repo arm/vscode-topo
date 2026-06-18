@@ -138,7 +138,7 @@ describe('ProtocolHandler', () => {
         ]);
     });
 
-    it('forwards a url query param when it is a clone option', async () => {
+    it('removes a url query param from clone options', async () => {
         mutable(vscode.workspace).workspaceFolders = workspaceFolders;
         vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
 
@@ -153,11 +153,10 @@ describe('ProtocolHandler', () => {
             'clone',
             'https://example.com/repo.git',
             path.join(workspaceUri.fsPath, 'repo'),
-            'url=https://example.com/model',
         ]);
     });
 
-    it('forwards a url query param when it is not a vscode.dev redirect', async () => {
+    it('removes a nested url query param from clone options', async () => {
         mutable(vscode.workspace).workspaceFolders = workspaceFolders;
         vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
 
@@ -172,7 +171,6 @@ describe('ProtocolHandler', () => {
             'clone',
             'https://example.com/repo.git',
             path.join(workspaceUri.fsPath, 'repo'),
-            'url=vscode://arm.topo/clone?source=https://example.com/other.git',
         ]);
     });
 
