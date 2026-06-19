@@ -40,6 +40,17 @@ describe('parseRequestData', () => {
         });
     });
 
+    it('keeps an invalid url query param', () => {
+        const uri = vscode.Uri.parse(
+            'vscode://arm.topo/clone?source=https://example.com/repo.git&url=not%20a%20valid%20url',
+        );
+
+        expect(parseRequestData(uri)).toEqual({
+            source: 'https://example.com/repo.git',
+            url: 'not a valid url',
+        });
+    });
+
     it('removes a protocol url query param', () => {
         const uri = vscode.Uri.parse(
             'vscode://arm.topo/clone?source=https://example.com/repo.git&url=vscode%3A%2F%2Farm.topo%2Fclone%3Fsource%3Dhttps%253A%252F%252Fexample.com%252Frepo.git',
