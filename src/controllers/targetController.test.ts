@@ -1,7 +1,6 @@
 import { mock } from 'vitest-mock-extended';
 import { buildQuickPickItems, TargetController } from './targetController';
 import * as vscode from 'vscode';
-import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
 import { TargetStore } from '../target/targetStore';
 import { TargetModel } from '../models/targetModel';
 import { WrappedError } from '../errors/wrappedError';
@@ -634,11 +633,8 @@ describe('target unselection', () => {
         targetModel.setSelected('user@board');
         targetModel.setSelectedTargetDescription(loaded(targetDescription));
         const { controller } = createController(targetModel, targetStore);
-        const targetItem = new TargetTreeItem({
-            target: 'user@board',
-        });
 
-        await controller.unselectCommandHandler(targetItem);
+        await controller.unselectCommandHandler();
 
         expect(targetStore.setSelected).toHaveBeenCalledWith(undefined);
         expect(targetModel.selected).toBeUndefined();
@@ -647,14 +643,15 @@ describe('target unselection', () => {
         expect(targetModel.selectedTargetDescription).toEqual(unloaded());
     });
 
-    it('does nothing when unselect command is executed with a non-target item', async () => {
-        const targetStore = mockTargetStore(['user@board'], 'user@board');
+    it('clears selection idempotently when no target is selected', async () => {
+        const targetStore = mockTargetStore(['user@board']);
         const targetModel = new TargetModel();
         const { controller } = createController(targetModel, targetStore);
 
         await controller.unselectCommandHandler();
 
-        expect(targetStore.setSelected).not.toHaveBeenCalled();
+        expect(targetStore.setSelected).toHaveBeenCalledWith(undefined);
+        expect(targetModel.selected).toBeUndefined();
     });
 });
 
