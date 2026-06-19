@@ -216,15 +216,15 @@ describe('TargetTreeView', () => {
             ]);
         });
 
-        it('returns a connectivity item while selected target health is pending', () => {
+        it('returns a health check item while selected target health is pending', () => {
             targetModel.setSelectedTargetHealth(unloaded(true));
 
             const rootChildren = view.getChildren();
 
             expect(rootChildren).toHaveLength(1);
             expect(rootChildren[0]).toMatchObject({
-                label: 'Connectivity',
-                description: 'Checking target connectivity',
+                label: 'Health Check',
+                description: 'Checking target health',
                 contextValue: 'Dependency Warning',
                 iconPath: { id: 'loading~spin' },
             });

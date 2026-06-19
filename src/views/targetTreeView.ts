@@ -64,9 +64,9 @@ function getSelectedTargetChildren(
                 ? [
                       new HealthCheckDependencyTreeItem(
                           {
-                              name: 'Connectivity',
+                              name: 'Health Check',
                               status: 'warning',
-                              value: 'Checking target connectivity',
+                              value: 'Checking target health',
                           },
                           { loading: true },
                       ),
