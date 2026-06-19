@@ -18,8 +18,8 @@ describe('getVisibleTargetDependencies', () => {
                 value: 'docker',
             },
         ],
-        subsystemDriver: {
-            name: 'Subsystem Driver',
+        processingDomainDriver: {
+            name: 'Processing Domain Driver',
             status: 'warning',
             value: 'missing',
         },
@@ -31,29 +31,29 @@ describe('getVisibleTargetDependencies', () => {
             remoteProcessors: [],
             totalMemoryKb: 1024,
         };
-        const healthWithFixableSubsystemDriver: TargetHealthCheck = {
+        const healthWithFixableProcessingDomainDriver: TargetHealthCheck = {
             ...health,
-            subsystemDriver: {
-                name: 'Subsystem Driver',
+            processingDomainDriver: {
+                name: 'Processing Domain Driver',
                 status: 'error',
                 value: 'missing',
                 fix: {
-                    description: 'Install subsystem driver',
-                    command: 'topo install subsystem-driver',
+                    description: 'Install processing domain driver',
+                    command: 'topo install processing-domain-driver',
                 },
             },
         };
         const expectedDependencies = health.dependencies;
 
         const result = getVisibleTargetIssues(
-            healthWithFixableSubsystemDriver,
+            healthWithFixableProcessingDomainDriver,
             targetDescription,
         );
 
         expect(result).toEqual(expectedDependencies);
     });
 
-    it('includes the subsystem driver when remote processors exist', () => {
+    it('includes the processing domain driver when remote processors exist', () => {
         const targetDescription: TargetDescription = {
             hostProcessors: [],
             remoteProcessors: [{ name: 'imx-rproc' }],
@@ -61,7 +61,7 @@ describe('getVisibleTargetDependencies', () => {
         };
         const expectedDependencies = [
             ...health.dependencies,
-            health.subsystemDriver,
+            health.processingDomainDriver,
         ];
 
         const result = getVisibleTargetIssues(health, targetDescription);

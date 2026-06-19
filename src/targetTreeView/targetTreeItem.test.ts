@@ -15,8 +15,8 @@ const testTargetHealth: TargetHealthCheck = {
         value: 'ok',
     },
     dependencies: [],
-    subsystemDriver: {
-        name: 'SubsystemDriver',
+    processingDomainDriver: {
+        name: 'ProcessingDomainDriver',
         status: 'ok',
         value: 'ready',
     },

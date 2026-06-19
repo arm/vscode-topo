@@ -16,8 +16,8 @@ describe('getTargetIssueFixCommandGroups', () => {
             value: '',
         },
         dependencies: [],
-        subsystemDriver: {
-            name: 'Subsystem Driver',
+        processingDomainDriver: {
+            name: 'Processing Domain Driver',
             status: 'ok',
             value: 'installed',
         },
@@ -69,8 +69,8 @@ describe('getTargetIssueFixCommandGroups', () => {
                     command: 'topo install remoteproc',
                 },
             },
-            subsystemDriver: {
-                name: 'Subsystem Driver',
+            processingDomainDriver: {
+                name: 'Processing Domain Driver',
                 status: 'error',
                 value: 'missing',
                 fix: {
@@ -103,7 +103,7 @@ describe('getTargetIssueFixCommandGroups', () => {
             {
                 issueNames: [
                     'Connected',
-                    'Subsystem Driver',
+                    'Processing Domain Driver',
                     'Remoteproc Runtime',
                 ],
                 command: 'topo install remoteproc',
