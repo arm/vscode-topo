@@ -13,6 +13,7 @@ import { TargetDataIssueTreeItem } from '../targetTreeView/targetDataIssueTreeIt
 import { ErrorTreeItem } from '../treeItems/errorTreeItem';
 import { TargetHealthCheck } from '../topoCliSchema';
 import { getVisibleTargetIssues } from '../target/getVisibleTargetIssues';
+import { LoadingTreeItem } from '../treeItems/loadingTreeItem';
 
 function compareByName(a: { name: string }, b: { name: string }): number {
     return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
@@ -61,23 +62,16 @@ function getSelectedTargetChildren(
     switch (health.status) {
         case 'unloaded':
             return health.loading
-                ? [
-                      new HealthCheckDependencyTreeItem(
-                          {
-                              name: 'Health Check',
-                              status: 'warning',
-                              value: 'Checking target health',
-                          },
-                          { loading: true },
-                      ),
-                  ]
+                ? [new LoadingTreeItem('Checking target health')]
                 : [];
         case 'errored':
             return [new ErrorTreeItem('Failed to check target health', health)];
         case 'loaded': {
             if (health.data.connectivity.status !== 'ok') {
                 return [
-                    new HealthCheckDependencyTreeItem(health.data.connectivity),
+                    new HealthCheckDependencyTreeItem(
+                        loaded(health.data.connectivity),
+                    ),
                 ];
             }
 
@@ -188,7 +182,9 @@ export class TargetTreeView
 
         if (element instanceof HealthCheckDependencyGroupTreeItem) {
             const deps = [...element.dependencies].sort(compareByName);
-            return deps.map((d) => new HealthCheckDependencyTreeItem(d));
+            return deps.map(
+                (d) => new HealthCheckDependencyTreeItem(loaded(d)),
+            );
         }
 
         if (element instanceof TargetProcessingDomainGroupTreeItem) {

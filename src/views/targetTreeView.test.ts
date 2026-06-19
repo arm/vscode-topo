@@ -8,6 +8,7 @@ import { IssueCheck, TargetHealthCheck } from '../topoCliSchema';
 import { TargetModel } from '../models/targetModel';
 import { TargetDataIssueTreeItem } from '../targetTreeView/targetDataIssueTreeItem';
 import { ErrorTreeItem } from '../treeItems/errorTreeItem';
+import { LoadingTreeItem } from '../treeItems/loadingTreeItem';
 import { errored, loaded, loading, unloaded } from '../util/loadable';
 
 describe('TargetTreeView', () => {
@@ -222,10 +223,9 @@ describe('TargetTreeView', () => {
             const rootChildren = view.getChildren();
 
             expect(rootChildren).toHaveLength(1);
+            expect(rootChildren[0]).toBeInstanceOf(LoadingTreeItem);
             expect(rootChildren[0]).toMatchObject({
-                label: 'Health Check',
-                description: 'Checking target health',
-                contextValue: 'Dependency Warning',
+                label: 'Checking target health',
                 iconPath: { id: 'loading~spin' },
             });
         });

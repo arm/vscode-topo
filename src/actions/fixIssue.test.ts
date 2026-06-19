@@ -94,7 +94,7 @@ describe('FixIssue', () => {
     it('runs a single dependency fix directly', async () => {
         const fixIssue = createFixIssue();
         const dependencyItem = new HealthCheckDependencyTreeItem(
-            dependencies[0],
+            loaded(dependencies[0]),
         );
 
         await fixIssue.fixIssueCommandHandler(dependencyItem);
@@ -117,7 +117,7 @@ describe('FixIssue', () => {
     it('fails a single dependency fix without an executable command', async () => {
         const fixIssue = createFixIssue();
         const dependencyItem = new HealthCheckDependencyTreeItem(
-            dependencies[2],
+            loaded(dependencies[2]),
         );
 
         await expect(
@@ -134,7 +134,7 @@ describe('FixIssue', () => {
         taskExecutor.run.mockRejectedValueOnce(new Error('fix failed'));
         const fixIssue = createFixIssue();
         const dependencyItem = new HealthCheckDependencyTreeItem(
-            dependencies[0],
+            loaded(dependencies[0]),
         );
 
         await fixIssue.fixIssueCommandHandler(dependencyItem);
@@ -149,7 +149,7 @@ describe('FixIssue', () => {
         targetModel.setSelected(undefined);
         const fixIssue = createFixIssue();
         const dependencyItem = new HealthCheckDependencyTreeItem(
-            dependencies[0],
+            loaded(dependencies[0]),
         );
 
         await expect(

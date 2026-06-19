@@ -56,12 +56,12 @@ export class FixIssue {
             throw new Error('No selected target found');
         }
 
-        const command = treeNode.dependency.fix?.command;
+        const command = treeNode.dependency.data.fix?.command;
         if (!command) {
             throw new Error('No executable fix found for the selected item');
         }
 
-        await this.executeFix(target, [treeNode.dependency.name], command);
+        await this.executeFix(target, [treeNode.dependency.data.name], command);
     }
 
     private async fixDependencyGroupIssuesFromTreeItem(
