@@ -7,7 +7,7 @@ export function getVisibleTargetIssues(
 ): IssueCheck[] {
     const issues = [...health.dependencies];
     if (targetDescription?.remoteProcessors.length) {
-        issues.push(health.subsystemDriver);
+        issues.push(health.processingDomainDriver);
     }
 
     return issues;

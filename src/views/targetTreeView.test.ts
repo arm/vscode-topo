@@ -36,8 +36,8 @@ describe('TargetTreeView', () => {
                 value: 'present',
             },
         ],
-        subsystemDriver: {
-            name: 'SubsystemDriver',
+        processingDomainDriver: {
+            name: 'ProcessingDomainDriver',
             status: 'ok',
             value: 'ready',
         },
@@ -185,7 +185,7 @@ describe('TargetTreeView', () => {
         });
 
         it('returns dependency items for Dependencies group', () => {
-            const subsystemDriverHealth = mock<IssueCheck>({
+            const processingDomainDriverHealth = mock<IssueCheck>({
                 name: 'rproc-driver',
                 status: 'ok',
             });
@@ -203,7 +203,7 @@ describe('TargetTreeView', () => {
                 loaded({
                     ...targetHealth,
                     dependencies,
-                    subsystemDriver: subsystemDriverHealth,
+                    processingDomainDriver: processingDomainDriverHealth,
                 }),
             );
             const rootChildren = view.getChildren();
@@ -212,7 +212,7 @@ describe('TargetTreeView', () => {
 
             expect(got.map((item) => item.label)).toEqual([
                 dependencies[0].name,
-                subsystemDriverHealth.name,
+                processingDomainDriverHealth.name,
                 dependencies[1].name,
             ]);
         });
@@ -295,13 +295,13 @@ describe('TargetTreeView', () => {
             targetModel.setSelectedTargetHealth(
                 loaded({
                     ...targetHealth,
-                    subsystemDriver: {
-                        name: 'SubsystemDriver',
+                    processingDomainDriver: {
+                        name: 'ProcessingDomainDriver',
                         status: 'error',
                         value: 'missing',
                         fix: {
-                            description: 'Install subsystem driver',
-                            command: 'topo install subsystem-driver',
+                            description: 'Install processing domain driver',
+                            command: 'topo install processing-domain-driver',
                         },
                     },
                 }),
