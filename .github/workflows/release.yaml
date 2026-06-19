@@ -29,7 +29,7 @@ jobs:
               with:
                   app_id: ${{ secrets.TOPO_ACCESS_APP_ID }}
                   private_key: ${{ secrets.TOPO_ACCESS_APP_PRIVATE_KEY }}
-            - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+            - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
               with:
                   fetch-depth: 0
             - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
@@ -146,7 +146,7 @@ jobs:
               with:
                   app_id: ${{ secrets.TOPO_ACCESS_APP_ID }}
                   private_key: ${{ secrets.TOPO_ACCESS_APP_PRIVATE_KEY }}
-            - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+            - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
             - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
               with:
                   node-version: ${{ env.NODE_VERSION }}
@@ -191,7 +191,7 @@ jobs:
               with:
                   app_id: ${{ secrets.TOPO_ACCESS_APP_ID }}
                   private_key: ${{ secrets.TOPO_ACCESS_APP_PRIVATE_KEY }}
-            - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+            - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
               with:
                   token: ${{ steps.get-app-token.outputs.token }}
             - name: Download version bump patch
@@ -250,7 +250,7 @@ jobs:
         if: needs.prepare-version.outputs.version
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+            - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
             - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
               with:
                   pattern: vsix-package-*
