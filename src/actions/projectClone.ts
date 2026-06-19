@@ -25,12 +25,51 @@ function wrapCloneCommandWithCloneErrorHandling(
     };
 }
 
+const cloneMethodItems = [
+    {
+        label: 'Remote Project',
+        description: 'Clone from a remote git repository',
+        cloneMethod: 'remote',
+    },
+    {
+        label: 'Template Project',
+        description: 'Clone from a curated set of templates',
+        cloneMethod: 'template',
+    },
+    {
+        label: 'Local Project',
+        description: 'Clone from a local directory on your machine',
+        cloneMethod: 'local',
+    },
+] as const;
+
 export class ProjectClone {
     constructor(
         private readonly topoCli: TopoCli,
         private readonly targetModel: TargetModel,
         private readonly taskExecutor: TaskExecutor,
     ) {}
+
+    public cloneCommandHandler = async (): Promise<void> => {
+        const selectedMethod = await vscode.window.showQuickPick(
+            cloneMethodItems,
+            {
+                placeHolder: 'Select a clone method',
+            },
+        );
+        if (!selectedMethod) {
+            return;
+        }
+
+        switch (selectedMethod.cloneMethod) {
+            case 'remote':
+                return this.remoteCloneCommandHandler();
+            case 'template':
+                return this.templateCloneCommandHandler();
+            case 'local':
+                return this.localCloneCommandHandler();
+        }
+    };
 
     public templateCloneCommandHandler = wrapCloneCommandWithCloneErrorHandling(
         async () => {

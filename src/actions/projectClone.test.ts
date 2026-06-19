@@ -29,6 +29,21 @@ const selectedTemplate: TemplateDescription = {
     features: [],
 };
 
+function selectQuickPickItem(label: string): void {
+    vi.mocked(vscode.window.showQuickPick).mockImplementationOnce(
+        async (items) => {
+            const resolvedItems = await items;
+            const selectedItem = resolvedItems.find(
+                (item) => item.label === label,
+            );
+            if (!selectedItem) {
+                throw new Error(`Missing clone method: ${label}`);
+            }
+            return selectedItem;
+        },
+    );
+}
+
 describe('ProjectClone action', () => {
     let projectClone: ProjectClone;
     let targetModel: TargetModel;
@@ -40,6 +55,84 @@ describe('ProjectClone action', () => {
         cloneProjectFromSourceMock.mockResolvedValue(true);
         targetModel = new TargetModel();
         projectClone = new ProjectClone(topoCli, targetModel, taskExecutor);
+    });
+
+    describe('cloneCommandHandler', () => {
+        it('returns early when no clone method is selected', async () => {
+            vi.mocked(vscode.window.showQuickPick).mockResolvedValueOnce(
+                undefined,
+            );
+
+            await projectClone.cloneCommandHandler();
+
+            expect(vscode.window.showQuickPick).toHaveBeenCalledWith(
+                [
+                    expect.objectContaining({
+                        label: 'Remote Project',
+                    }),
+                    expect.objectContaining({
+                        label: 'Template Project',
+                    }),
+                    expect.objectContaining({
+                        label: 'Local Project',
+                    }),
+                ],
+                { placeHolder: 'Select a clone method' },
+            );
+            expect(cloneProjectFromSourceMock).not.toHaveBeenCalled();
+        });
+
+        it('clones from a remote project when selected', async () => {
+            selectQuickPickItem('Remote Project');
+            vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
+                'https://example.com/repo.git',
+            );
+
+            await projectClone.cloneCommandHandler();
+
+            expect(cloneProjectFromSourceMock).toHaveBeenCalledWith(
+                taskExecutor,
+                {
+                    type: 'git',
+                    url: 'https://example.com/repo.git',
+                },
+            );
+        });
+
+        it('clones from a template project when selected', async () => {
+            targetModel.setSelected('me@example.com');
+            getTemplateOfChoiceMock.mockResolvedValueOnce(selectedTemplate);
+            selectQuickPickItem('Template Project');
+
+            await projectClone.cloneCommandHandler();
+
+            expect(getTemplateOfChoiceMock).toHaveBeenCalledWith(
+                topoCli,
+                'me@example.com',
+            );
+            expect(cloneProjectFromSourceMock).toHaveBeenCalledWith(
+                taskExecutor,
+                {
+                    type: 'git',
+                    url: selectedTemplate.url,
+                },
+            );
+        });
+
+        it('clones from a local project when selected', async () => {
+            getLocalSourcePathMock.mockResolvedValueOnce(localSourcePath);
+            selectQuickPickItem('Local Project');
+
+            await projectClone.cloneCommandHandler();
+
+            expect(cloneProjectFromSourceMock).toHaveBeenCalledWith(
+                taskExecutor,
+                {
+                    type: 'dir',
+                    path: localSourcePath,
+                },
+            );
+        });
     });
 
     describe('remoteCloneCommandHandler', () => {
