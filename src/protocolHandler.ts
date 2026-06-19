@@ -5,7 +5,7 @@ import { parseCloneSourceString } from './util/parseSourceCloneString';
 import { isWrappedError } from './errors/wrappedError';
 import { showAndLogError } from './util/showAndLogError';
 import { TaskExecutor } from './util/taskExecutor';
-import { parseQuery } from './util/parseQuery';
+import { parseRequestData } from './util/protocolRequest';
 
 /**
  * VS Code URI handler for Topo deep links.
@@ -72,16 +72,4 @@ const handleCloneRequest = async (
     if (!cloneStarted) {
         logger.info(`Clone cancelled for URI ${uri.toString()}`);
     }
-};
-
-const parseRequestData = (uri: vscode.Uri): Record<string, string> => {
-    const { url: _redirectUrl, ...data } = parseQuery(uri.query);
-    const { source } = data;
-    if (source === undefined) {
-        return data;
-    }
-    if (!source || !uri.fragment || source.includes('#')) {
-        return { ...data, source };
-    }
-    return { ...data, source: `${source}#${uri.fragment}` };
 };

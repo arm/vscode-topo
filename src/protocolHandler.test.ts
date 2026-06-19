@@ -138,48 +138,6 @@ describe('ProtocolHandler', () => {
         ]);
     });
 
-    it('removes a url query param from clone options', async () => {
-        mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-        vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
-
-        await protocolHandler.handleUri(
-            vscode.Uri.parse(
-                'vscode://arm.topo/clone?source=https://example.com/repo.git&url=https%3A%2F%2Fexample.com%2Fmodel',
-            ),
-        );
-
-        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-        expectCloneTask(taskExecutor.run.mock.calls[0][0], 'repo', [
-            'clone',
-            'https://example.com/repo.git',
-            path.join(workspaceUri.fsPath, 'repo'),
-        ]);
-    });
-
-    it('parses HTML-escaped ampersands in query params', async () => {
-        mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-        vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
-
-        await protocolHandler.handleUri(
-            vscode.Uri.from({
-                scheme: 'vscode',
-                authority: 'arm.topo',
-                path: '/clone',
-                query: 'source=https://example.com/repo.git&amp;model=some-huggingface-id&#38;param=v1&#x26;another=val',
-            }),
-        );
-
-        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-        expectCloneTask(taskExecutor.run.mock.calls[0][0], 'repo', [
-            'clone',
-            'https://example.com/repo.git',
-            path.join(workspaceUri.fsPath, 'repo'),
-            'model=some-huggingface-id',
-            'param=v1',
-            'another=val',
-        ]);
-    });
-
     it('runs a topo clone task for bare github urls', async () => {
         mutable(vscode.workspace).workspaceFolders = workspaceFolders;
         vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
@@ -239,24 +197,5 @@ describe('ProtocolHandler', () => {
         expect(vscode.window.showOpenDialog).not.toHaveBeenCalled();
         expect(vscode.window.showInputBox).not.toHaveBeenCalled();
         expect(taskExecutor.run).not.toHaveBeenCalled();
-    });
-
-    it('forwards repeated query params as array clone options', async () => {
-        mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-        vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
-
-        await protocolHandler.handleUri(
-            vscode.Uri.parse(
-                `vscode://arm.topo/clone?source=https://github.com/Arm-Examples/topo-lightbulb-moment&param=v1&param=v2`,
-            ),
-        );
-
-        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-        expectCloneTask(taskExecutor.run.mock.calls[0][0], 'repo', [
-            'clone',
-            'https://github.com/Arm-Examples/topo-lightbulb-moment',
-            path.join(workspaceUri.fsPath, 'repo'),
-            `param=v2`,
-        ]);
     });
 });
