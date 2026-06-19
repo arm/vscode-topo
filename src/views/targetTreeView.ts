@@ -122,12 +122,13 @@ export class TargetTreeView
             const dependenciesGroup = new HealthCheckDependencyGroupTreeItem(
                 loaded(element.visibleIssues, element.health.loading),
             );
-            const subsystemsGroup = new TargetProcessingDomainGroupTreeItem(
-                element.target,
-                element.remoteProcessorNames,
-                this.targetModel.selectedTargetContainers,
-            );
-            return [dependenciesGroup, subsystemsGroup];
+            const processingDomainsGroup =
+                new TargetProcessingDomainGroupTreeItem(
+                    element.target,
+                    element.remoteProcessorNames,
+                    this.targetModel.selectedTargetContainers,
+                );
+            return [dependenciesGroup, processingDomainsGroup];
         }
 
         if (element instanceof HealthCheckDependencyGroupTreeItem) {

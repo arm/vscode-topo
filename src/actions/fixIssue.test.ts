@@ -76,8 +76,8 @@ describe('FixIssue', () => {
                 isLocalhost: false,
                 connectivity,
                 dependencies: targetIssues,
-                subsystemDriver: {
-                    name: 'SubsystemDriver',
+                processingDomainDriver: {
+                    name: 'ProcessingDomainDriver',
                     status: 'ok',
                     value: 'ready',
                 },
