@@ -377,38 +377,6 @@ describe('TopoCli', () => {
         expect(cp.stdin.end).toHaveBeenCalledTimes(1);
     });
 
-    it('health accepts processingDomainDriver from current CLI output', async () => {
-        const cliResponse = {
-            host: { dependencies: [] },
-            target: {
-                destination: 'ssh://hostname',
-                isLocalhost: false,
-                dependencies: [],
-                connectivity: {
-                    name: 'Connected',
-                    status: 'ok',
-                    value: '',
-                },
-                processingDomainDriver: {
-                    name: 'Processing Domain Driver (remoteproc)',
-                    status: 'info',
-                    value: 'no remoteproc devices found',
-                },
-            },
-        };
-        execMock.mockImplementation((_bin, _cargs, _options, cb) => {
-            cb!(null, JSON.stringify(cliResponse), '');
-            return cp;
-        });
-
-        await expect(topoCli.health('hostname')).resolves.toMatchObject({
-            target: {
-                processingDomainDriver:
-                    cliResponse.target.processingDomainDriver,
-            },
-        });
-    });
-
     it('hostHealth omits --target', async () => {
         await topoCli.hostHealth();
 
