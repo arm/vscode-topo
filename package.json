@@ -29,6 +29,12 @@
                 "category": "Topo"
             },
             {
+                "command": "topo.cloneProject",
+                "title": "Clone Project",
+                "icon": "$(repo-clone)",
+                "category": "Topo"
+            },
+            {
                 "command": "topo.remoteClone",
                 "title": "Clone Remote Project",
                 "category": "Topo"
@@ -207,6 +213,10 @@
             ],
             "commandPalette": [
                 {
+                    "command": "topo.cloneProject",
+                    "when": "false"
+                },
+                {
                     "command": "topo.selectTarget",
                     "when": "false"
                 },
@@ -342,6 +352,11 @@
                 {
                     "command": "topo.refreshHostHealth",
                     "when": "view == topo.host-manager",
+                    "group": "navigation"
+                },
+                {
+                    "command": "topo.cloneProject",
+                    "when": "view == topo.projects",
                     "group": "navigation"
                 }
             ]
