@@ -68,10 +68,10 @@ describe('ProjectClone action', () => {
             expect(vscode.window.showQuickPick).toHaveBeenCalledWith(
                 [
                     expect.objectContaining({
-                        label: 'Remote Project',
+                        label: 'Template Project',
                     }),
                     expect.objectContaining({
-                        label: 'Template Project',
+                        label: 'Remote Project',
                     }),
                     expect.objectContaining({
                         label: 'Local Project',
