@@ -70,7 +70,7 @@ function getSelectedTargetChildren(
             if (health.data.connectivity.status !== 'ok') {
                 return [
                     new HealthCheckDependencyTreeItem(
-                        loaded(health.data.connectivity),
+                        loaded(health.data.connectivity, health.loading),
                     ),
                 ];
             }
