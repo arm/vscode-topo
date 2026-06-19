@@ -95,7 +95,8 @@ describe('HealthCheckDependencyTreeItem', () => {
             { loading: true },
         );
 
-        expect(item.iconPath).toBeInstanceOf(vscode.ThemeIcon);
-        expect((item.iconPath as vscode.ThemeIcon).id).toBe('loading~spin');
+        expect(item.iconPath).toStrictEqual(
+            new vscode.ThemeIcon('loading~spin'),
+        );
     });
 });
