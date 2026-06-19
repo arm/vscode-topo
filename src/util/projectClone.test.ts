@@ -146,6 +146,27 @@ describe('project clone utilities', () => {
             expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
         });
 
+        it('falls back to unfiltered templates when target-specific lookup fails', async () => {
+            topoCli.listTemplates.mockImplementation((sshTarget) => {
+                if (sshTarget) {
+                    throw new WrappedError('CLI', 'target unhealthy');
+                }
+                return templateList;
+            });
+            vi.mocked(vscode.window.showQuickPick).mockResolvedValueOnce(
+                templateQuickPickItems[0],
+            );
+
+            await expect(
+                getTemplateOfChoice(topoCli, 'unhealthy-target'),
+            ).resolves.toEqual(templateList[0]);
+
+            expect(vscode.window.showQuickPick).toHaveBeenCalledWith(
+                templateQuickPickItems,
+                expect.any(Object),
+            );
+        });
+
         it('returns undefined when no template is selected', async () => {
             topoCli.listTemplates.mockReturnValue(templateList);
             vi.mocked(vscode.window.showQuickPick).mockResolvedValueOnce(
