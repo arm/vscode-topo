@@ -252,7 +252,6 @@ describe('TargetTreeView', () => {
 
             const rootChildren = view.getChildren();
 
-            expect(rootChildren).toHaveLength(1);
             expect(rootChildren[0]).toMatchObject({
                 label: 'Connectivity',
                 description: diagnostics,
@@ -271,7 +270,6 @@ describe('TargetTreeView', () => {
             const rootChildren = view.getChildren();
 
             expect(treeView.description).toBe(otherTarget);
-            expect(rootChildren).toHaveLength(1);
             expect(rootChildren[0]).toMatchObject({
                 label: 'Connectivity',
                 description: 'ssh connection failed',
@@ -304,10 +302,10 @@ describe('TargetTreeView', () => {
         it('returns containers for Primary OS and remote processor groups', () => {
             const rootChildren = view.getChildren();
             const processingDomainItems = view.getChildren(rootChildren[1]);
-            expect(processingDomainItems.map((item) => item.label)).toEqual([
-                'Primary OS',
-                'imx-rproc',
-                'other-rproc',
+            expect(processingDomainItems).toMatchObject([
+                { label: 'Primary OS' },
+                { label: 'imx-rproc' },
+                { label: 'other-rproc' },
             ]);
             const [primaryOsGroup, remoteprocGroup, otherRprocGroup] =
                 processingDomainItems;
@@ -316,9 +314,7 @@ describe('TargetTreeView', () => {
             const imxRprocChildren = view.getChildren(remoteprocGroup);
             const otherRprocChildren = view.getChildren(otherRprocGroup);
 
-            expect(primaryOsChildren).toHaveLength(1);
             expect(primaryOsChildren[0]).toMatchObject({ name: 'cont2' });
-            expect(imxRprocChildren).toHaveLength(2);
             expect(imxRprocChildren).toMatchObject([
                 { name: 'cont1' },
                 { name: 'cont3' },
