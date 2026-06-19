@@ -81,6 +81,7 @@ describe('commands', () => {
                 commands.initProject,
                 handlers.projectInit.initProjectCommandHandler,
             ],
+            [commands.cloneProject, handlers.projectClone.cloneCommandHandler],
             [commands.deploy, handlers.deploy.deployCommandHandler],
             [
                 commands.deployContext,
