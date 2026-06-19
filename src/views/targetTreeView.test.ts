@@ -7,7 +7,8 @@ import { mock } from 'vitest-mock-extended';
 import { IssueCheck, TargetHealthCheck } from '../topoCliSchema';
 import { TargetModel } from '../models/targetModel';
 import { TargetDataIssueTreeItem } from '../targetTreeView/targetDataIssueTreeItem';
-import { errored, loaded, unloaded } from '../util/loadable';
+import { ErrorTreeItem } from '../treeItems/errorTreeItem';
+import { errored, loaded, loading, unloaded } from '../util/loadable';
 
 describe('TargetTreeView', () => {
     let view: TargetTreeView;
@@ -225,10 +226,8 @@ describe('TargetTreeView', () => {
                 label: 'Connectivity',
                 description: 'Checking target connectivity',
                 contextValue: 'Dependency Warning',
+                iconPath: { id: 'loading~spin' },
             });
-            expect((rootChildren[0].iconPath as vscode.ThemeIcon).id).toBe(
-                'loading~spin',
-            );
         });
 
         it('returns no children when selected target health is unloaded', () => {
@@ -271,8 +270,24 @@ describe('TargetTreeView', () => {
 
             expect(treeView.description).toBe(otherTarget);
             expect(rootChildren[0]).toMatchObject({
-                label: 'Connectivity',
+                label: 'Failed to check target health',
                 description: 'ssh connection failed',
+                contextValue: 'OpenableError',
+            });
+            expect(rootChildren[0]).toBeInstanceOf(ErrorTreeItem);
+        });
+
+        it('shows loading while failed selected target health is refreshing', () => {
+            targetModel.setSelectedTargetHealth(
+                loading(errored('topo health failed')),
+            );
+
+            const rootChildren = view.getChildren();
+
+            expect(rootChildren[0]).toMatchObject({
+                label: 'Failed to check target health',
+                description: 'topo health failed',
+                iconPath: { id: 'loading~spin' },
             });
         });
 

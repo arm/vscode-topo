@@ -73,13 +73,7 @@ function getSelectedTargetChildren(
                   ]
                 : [];
         case 'errored':
-            return [
-                new HealthCheckDependencyTreeItem({
-                    name: 'Connectivity',
-                    status: 'error',
-                    value: health.error.message,
-                }),
-            ];
+            return [new ErrorTreeItem('Failed to check target health', health)];
         case 'loaded': {
             if (health.data.connectivity.status !== 'ok') {
                 return [
