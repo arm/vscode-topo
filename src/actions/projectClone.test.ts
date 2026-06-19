@@ -30,15 +30,18 @@ const selectedTemplate: TemplateDescription = {
 };
 
 function selectQuickPickItem(label: string): void {
-    vi.mocked(vscode.window.showQuickPick).mockImplementationOnce(((
-        items: readonly vscode.QuickPickItem[],
-    ) => {
-        const selectedItem = items.find((item) => item.label === label);
-        if (!selectedItem) {
-            throw new Error(`Missing clone method: ${label}`);
-        }
-        return Promise.resolve(selectedItem);
-    }) as never);
+    vi.mocked(vscode.window.showQuickPick).mockImplementationOnce(
+        async (items) => {
+            const resolvedItems = await items;
+            const selectedItem = resolvedItems.find(
+                (item) => item.label === label,
+            );
+            if (!selectedItem) {
+                throw new Error(`Missing clone method: ${label}`);
+            }
+            return selectedItem;
+        },
+    );
 }
 
 describe('ProjectClone action', () => {
