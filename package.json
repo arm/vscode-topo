@@ -183,6 +183,7 @@
         "viewsWelcome": [
             {
                 "view": "topo.target-manager",
+                "when": "!topo.targetSelected",
                 "contents": "No target selected\n[Select a target](command:topo.selectTarget)"
             }
         ],
@@ -294,13 +295,8 @@
                 },
                 {
                     "command": "topo.fixTargetIssues",
-                    "when": "view === topo.target-manager && viewItem =~ /Target/ && viewItem =~ /HasFixableIssues/",
-                    "group": "inline@3"
-                },
-                {
-                    "command": "topo.unselectTarget",
-                    "when": "view == topo.target-manager && viewItem =~ /Target/",
-                    "group": "inline@4"
+                    "when": "view === topo.target-manager && viewItem =~ /Dependencies/ && viewItem =~ /HasFixableIssues/",
+                    "group": "inline@1"
                 },
                 {
                     "command": "topo.fixDependencyIssue",
@@ -346,6 +342,11 @@
                 },
                 {
                     "command": "topo.refreshTargetData",
+                    "when": "view == topo.target-manager && topo.hasSelectedTarget",
+                    "group": "navigation"
+                },
+                {
+                    "command": "topo.unselectTarget",
                     "when": "view == topo.target-manager && topo.hasSelectedTarget",
                     "group": "navigation"
                 },

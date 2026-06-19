@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import { getTargetTreeItemIcon } from '../targetTreeView/targetTreeItem';
 import { TargetTreeView } from './targetTreeView';
 import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
@@ -10,9 +9,15 @@ import { TargetHealthCheck } from '../topoCliSchema';
 import { selectTarget } from '../commands';
 
 function getStatusIconId(state: Loadable<TargetHealthCheck>): string {
-    const targetTreeIcon = getTargetTreeItemIcon(state);
-    if (targetTreeIcon) {
-        return targetTreeIcon.id;
+    if (state.loading) {
+        return 'loading~spin';
+    }
+
+    if (
+        state.status === 'errored' ||
+        (state.status === 'loaded' && state.data.connectivity.status !== 'ok')
+    ) {
+        return 'error';
     }
 
     if (state.status !== 'loaded') {

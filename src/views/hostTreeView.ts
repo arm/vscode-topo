@@ -61,7 +61,8 @@ export class HostTreeView
 
         if (element instanceof HealthCheckDependencyGroupTreeItem) {
             return element.dependencies.map(
-                (dependency) => new HealthCheckDependencyTreeItem(dependency),
+                (dependency) =>
+                    new HealthCheckDependencyTreeItem(loaded(dependency)),
             );
         }
 
