@@ -204,10 +204,13 @@ const listTemplatesForChoice = (
     topoCli: TopoCli,
     sshTarget?: string,
 ): TemplateDescription[] => {
+    if (!sshTarget) {
+        return topoCli.listTemplates();
+    }
     try {
         return topoCli.listTemplates(sshTarget);
     } catch (error) {
-        if (!sshTarget || !isWrappedError(error, ['CLI'])) {
+        if (!isWrappedError(error, ['CLI'])) {
             throw error;
         }
         return topoCli.listTemplates();

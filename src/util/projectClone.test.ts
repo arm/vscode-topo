@@ -207,7 +207,7 @@ describe('project clone utilities', () => {
 
             await getTemplateOfChoice(topoCli, undefined);
 
-            expect(topoCli.listTemplates).toHaveBeenCalledWith(undefined);
+            expect(topoCli.listTemplates).toHaveBeenCalledWith();
             expect(taskExecutor.run).not.toHaveBeenCalled();
         });
     });
