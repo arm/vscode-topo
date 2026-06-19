@@ -9,7 +9,11 @@ describe('getWorstDependencyStatus', () => {
         expect(
             getWorstIssueCheckStatus([
                 { name: 'Container Engine', status: 'ok', value: 'docker' },
-                { name: 'Subsystem Driver', status: 'ok', value: 'loaded' },
+                {
+                    name: 'Processing Domain Driver',
+                    status: 'ok',
+                    value: 'loaded',
+                },
             ]),
         ).toBe('ok');
     });
@@ -29,7 +33,7 @@ describe('getWorstDependencyStatus', () => {
                 { name: 'Container Engine', status: 'ok', value: 'docker' },
                 { name: 'Something Else', status: 'warning', value: 'foobar' },
                 {
-                    name: 'Subsystem Driver',
+                    name: 'Processing Domain Driver',
                     status: 'error',
                     value: 'missing',
                 },
