@@ -25,6 +25,7 @@ export const selectTarget = command('selectTarget');
 export const resetExtensionData = command('resetExtensionData');
 export const unselectTarget = command('unselectTarget');
 export const initProject = command('initProject');
+export const cloneProject = command('cloneProject');
 export const deploy = command('deploy');
 export const deployContext = command('deploy.context');
 export const deployProject = command('deployProject');
@@ -75,6 +76,9 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
         ),
         vscode.commands.registerCommand(initProject, () =>
             handlers.projectInit.initProjectCommandHandler(),
+        ),
+        vscode.commands.registerCommand(cloneProject, () =>
+            handlers.projectClone.cloneCommandHandler(),
         ),
         vscode.commands.registerCommand(deploy, () =>
             handlers.deploy.deployCommandHandler(),
