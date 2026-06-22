@@ -2,7 +2,7 @@ import { TARGET_HOST_RUNTIME } from '../manifest';
 import * as vscode from 'vscode';
 import { ContainerDelete } from './containerDelete';
 import { ContainerItem } from '../util/types';
-import { TargetContainerTreeItem } from '../targetTreeView/targetContainerTreeItem';
+import { ContainerTreeItem } from '../treeItems/containerTreeItem';
 import { WrappedError } from '../errors/wrappedError';
 import { mock } from 'vitest-mock-extended';
 import { ContainerCommands } from '../target/containerCommands';
@@ -27,7 +27,7 @@ describe('ContainerDelete', () => {
         ports: {},
         target,
     };
-    const treeItem = new TargetContainerTreeItem(container);
+    const treeItem = new ContainerTreeItem(container);
 
     beforeEach(() => {
         showErrorMessageSpy = vi

@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { TargetContainerTreeItem } from '../targetTreeView/targetContainerTreeItem';
+import { ContainerTreeItem } from '../treeItems/containerTreeItem';
 import * as manifest from '../manifest';
 import { TargetProcessingDomainTreeItem } from '../targetTreeView/targetProcessingDomainTreeItem';
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
@@ -229,7 +229,7 @@ export class TargetTreeView
 
         if (element instanceof TargetProcessingDomainTreeItem) {
             return element.containers.map(
-                (container) => new TargetContainerTreeItem(container),
+                (container) => new ContainerTreeItem(container),
             );
         }
 

@@ -1,7 +1,7 @@
 import { TARGET_HOST_RUNTIME } from '../manifest';
 import * as vscode from 'vscode';
 import { ContainerStart } from './containerStart';
-import { TargetContainerTreeItem } from '../targetTreeView/targetContainerTreeItem';
+import { ContainerTreeItem } from '../treeItems/containerTreeItem';
 import { WrappedError } from '../errors/wrappedError';
 import { mock } from 'vitest-mock-extended';
 import { ContainerItem } from '../util/types';
@@ -26,7 +26,7 @@ describe('ContainerStart', () => {
         ports: {},
         target,
     };
-    const treeItem = new TargetContainerTreeItem(container);
+    const treeItem = new ContainerTreeItem(container);
 
     beforeEach(() => {
         showErrorMessageSpy = vi
