@@ -62,9 +62,10 @@ jobs:
                   done
 
                   labels_to_add=()
-                  breaking_regex='^[a-z]+(\([^)]+\))?!:'
-                  feature_regex='^feat(\([^)]+\))?:'
-                  fix_regex='^fix(\([^)]+\))?:'
+                  shopt -s nocasematch
+                  breaking_regex='.*[[:alnum:]_]+(\(.*\))?!:.*'
+                  feature_regex='.*feat(\(.*\))?:.*'
+                  fix_regex='.*fix(\(.*\))?:.*'
                   docs_regex='^docs(\([^)]+\))?:'
                   chore_regex='^chore(\([^)]+\))?:'
                   refactor_regex='^refactor(\([^)]+\))?:'
