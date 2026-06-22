@@ -1,7 +1,5 @@
 import * as vscode from 'vscode';
-import { ContainerTreeItem } from '../treeItems/containerTreeItem';
 import * as manifest from '../manifest';
-import { TargetProcessingDomainTreeItem } from '../targetTreeView/targetProcessingDomainTreeItem';
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 import { TargetModel } from '../models/targetModel';
@@ -140,12 +138,6 @@ export class TargetTreeView
             const deps = [...element.dependencies].sort(compareByName);
             return deps.map(
                 (d) => new HealthCheckDependencyTreeItem(loaded(d)),
-            );
-        }
-
-        if (element instanceof TargetProcessingDomainTreeItem) {
-            return element.containers.map(
-                (container) => new ContainerTreeItem(container),
             );
         }
 
