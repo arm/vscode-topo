@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { TopoCli } from '../topoCli';
 import * as path from 'node:path';
 import { TemplateDescription } from '../topoCliSchema';
-import { WrappedError } from '../errors/wrappedError';
+import { isWrappedError, WrappedError } from '../errors/wrappedError';
 import { getCloneDestinationPath } from './getCloneDestinationPath';
 import { getErrorMessage } from './getErrorMessage';
 import { TaskExecutor } from './taskExecutor';
@@ -200,11 +200,28 @@ const cloneWithSource = async (
     }
 };
 
+const listTemplatesForChoice = (
+    topoCli: TopoCli,
+    sshTarget?: string,
+): TemplateDescription[] => {
+    if (!sshTarget) {
+        return topoCli.listTemplates();
+    }
+    try {
+        return topoCli.listTemplates(sshTarget);
+    } catch (error) {
+        if (!isWrappedError(error, ['CLI'])) {
+            throw error;
+        }
+        return topoCli.listTemplates();
+    }
+};
+
 export const getTemplateOfChoice = async (
     topoCli: TopoCli,
     sshTarget?: string,
 ): Promise<TemplateDescription | undefined> => {
-    const templates = topoCli.listTemplates(sshTarget);
+    const templates = listTemplatesForChoice(topoCli, sshTarget);
     const templateItems = templates.map((template) => ({
         label: template.name,
         detail: getFirstSentence(template.description),

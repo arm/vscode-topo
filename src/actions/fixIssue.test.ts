@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import { mock, MockProxy } from 'vitest-mock-extended';
 import { FixIssue, createFixIssueTask } from './fixIssue';
-import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
 import { loaded } from '../util/loadable';
+import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 import { IssueCheck } from '../topoCliSchema';
 import { TargetModel } from '../models/targetModel';
@@ -56,33 +56,14 @@ describe('FixIssue', () => {
             value: 'lscpu',
         },
     ];
-    const connectedIssue: IssueCheck = {
-        name: 'Connectivity',
-        status: 'ok',
-        value: 'ok',
-    };
 
     const createFixIssue = (): FixIssue =>
         new FixIssue(taskExecutor, targetModel, targetController);
 
-    const createTargetItemWithIssues = (
+    const createDependencyGroupItem = (
         targetIssues: IssueCheck[],
-        connectivity: IssueCheck = connectedIssue,
-    ): TargetTreeItem =>
-        new TargetTreeItem({
-            target,
-            health: loaded({
-                destination: `ssh://${target}`,
-                isLocalhost: false,
-                connectivity,
-                dependencies: targetIssues,
-                processingDomainDriver: {
-                    name: 'ProcessingDomainDriver',
-                    status: 'ok',
-                    value: 'ready',
-                },
-            }),
-        });
+    ): HealthCheckDependencyGroupTreeItem =>
+        new HealthCheckDependencyGroupTreeItem(loaded(targetIssues));
 
     beforeEach(() => {
         vi.clearAllMocks();
@@ -113,7 +94,7 @@ describe('FixIssue', () => {
     it('runs a single dependency fix directly', async () => {
         const fixIssue = createFixIssue();
         const dependencyItem = new HealthCheckDependencyTreeItem(
-            dependencies[0],
+            loaded(dependencies[0]),
         );
 
         await fixIssue.fixIssueCommandHandler(dependencyItem);
@@ -136,7 +117,7 @@ describe('FixIssue', () => {
     it('fails a single dependency fix without an executable command', async () => {
         const fixIssue = createFixIssue();
         const dependencyItem = new HealthCheckDependencyTreeItem(
-            dependencies[2],
+            loaded(dependencies[2]),
         );
 
         await expect(
@@ -153,7 +134,7 @@ describe('FixIssue', () => {
         taskExecutor.run.mockRejectedValueOnce(new Error('fix failed'));
         const fixIssue = createFixIssue();
         const dependencyItem = new HealthCheckDependencyTreeItem(
-            dependencies[0],
+            loaded(dependencies[0]),
         );
 
         await fixIssue.fixIssueCommandHandler(dependencyItem);
@@ -168,7 +149,7 @@ describe('FixIssue', () => {
         targetModel.setSelected(undefined);
         const fixIssue = createFixIssue();
         const dependencyItem = new HealthCheckDependencyTreeItem(
-            dependencies[0],
+            loaded(dependencies[0]),
         );
 
         await expect(
@@ -183,7 +164,9 @@ describe('FixIssue', () => {
 
     it('shows a quick pick when only one target issue fix is available', async () => {
         const fixIssue = createFixIssue();
-        const targetItem = createTargetItemWithIssues([dependencies[0]]);
+        const dependencyGroupItem = createDependencyGroupItem([
+            dependencies[0],
+        ]);
         mockSelectedQuickPickItems([
             {
                 label: 'Container Engine',
@@ -193,7 +176,7 @@ describe('FixIssue', () => {
             },
         ]);
 
-        await fixIssue.fixIssueCommandHandler(targetItem);
+        await fixIssue.fixIssueCommandHandler(dependencyGroupItem);
 
         expect(vscode.window.showQuickPick).toHaveBeenCalledWith(
             [
@@ -223,43 +206,9 @@ describe('FixIssue', () => {
         ).toHaveBeenCalledOnce();
     });
 
-    it('runs fix task for target connectivity issue', async () => {
-        const fixIssue = createFixIssue();
-        const connectivityIssue: IssueCheck = {
-            name: 'Connectivity',
-            status: 'error',
-            value: 'ssh authentication failed',
-            fix: {
-                description: 'Configure ssh keys',
-                command: 'topo setup-keys --target ssh://pi5-rod',
-            },
-        };
-        const targetItem = createTargetItemWithIssues([], connectivityIssue);
-        mockSelectedQuickPickItems([
-            {
-                label: 'Connectivity',
-                description: 'Configure ssh keys',
-                detail: 'Command: topo setup-keys --target ssh://pi5-rod',
-                issue: connectivityIssue,
-            },
-        ]);
-
-        await fixIssue.fixIssueCommandHandler(targetItem);
-
-        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-        expect(taskExecutor.run).toHaveBeenNthCalledWith(
-            1,
-            expect.objectContaining({
-                execution: expect.objectContaining({
-                    args: ['setup-keys', '--target', 'ssh://pi5-rod'],
-                }),
-            }),
-        );
-    });
-
     it('shows target issue fixes in a quick pick and runs the selected fix', async () => {
         const fixIssue = createFixIssue();
-        const targetItem = createTargetItemWithIssues(dependencies);
+        const dependencyGroupItem = createDependencyGroupItem(dependencies);
         mockSelectedQuickPickItems([
             {
                 label: 'Debugger',
@@ -269,7 +218,7 @@ describe('FixIssue', () => {
             },
         ]);
 
-        await fixIssue.fixIssueCommandHandler(targetItem);
+        await fixIssue.fixIssueCommandHandler(dependencyGroupItem);
 
         expect(vscode.window.showQuickPick).toHaveBeenCalledWith(
             [
@@ -304,7 +253,7 @@ describe('FixIssue', () => {
 
     it('runs each selected target dependency fix', async () => {
         const fixIssue = createFixIssue();
-        const targetItem = createTargetItemWithIssues(dependencies);
+        const dependencyGroupItem = createDependencyGroupItem(dependencies);
         mockSelectedQuickPickItems([
             {
                 label: 'Container Engine',
@@ -320,7 +269,7 @@ describe('FixIssue', () => {
             },
         ]);
 
-        await fixIssue.fixIssueCommandHandler(targetItem);
+        await fixIssue.fixIssueCommandHandler(dependencyGroupItem);
 
         expect(taskExecutor.run).toHaveBeenCalledTimes(2);
         expect(taskExecutor.run).toHaveBeenNthCalledWith(
@@ -365,7 +314,7 @@ describe('FixIssue', () => {
             },
         };
         const fixIssue = createFixIssue();
-        const targetItem = createTargetItemWithIssues([
+        const dependencyGroupItem = createDependencyGroupItem([
             remoteprocRuntime,
             remoteprocShim,
         ]);
@@ -384,7 +333,7 @@ describe('FixIssue', () => {
             },
         ]);
 
-        await fixIssue.fixIssueCommandHandler(targetItem);
+        await fixIssue.fixIssueCommandHandler(dependencyGroupItem);
 
         expect(taskExecutor.run).toHaveBeenCalledTimes(1);
         expect(taskExecutor.run).toHaveBeenNthCalledWith(
@@ -400,10 +349,10 @@ describe('FixIssue', () => {
 
     it('refreshes when target issue selection is cancelled', async () => {
         const fixIssue = createFixIssue();
-        const targetItem = createTargetItemWithIssues(dependencies);
+        const dependencyGroupItem = createDependencyGroupItem(dependencies);
         mockSelectedQuickPickItems([]);
 
-        await fixIssue.fixIssueCommandHandler(targetItem);
+        await fixIssue.fixIssueCommandHandler(dependencyGroupItem);
 
         expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(
@@ -413,10 +362,12 @@ describe('FixIssue', () => {
 
     it('fails when a target has no executable dependency fixes', async () => {
         const fixIssue = createFixIssue();
-        const targetItem = createTargetItemWithIssues([dependencies[2]]);
+        const dependencyGroupItem = createDependencyGroupItem([
+            dependencies[2],
+        ]);
 
         await expect(
-            fixIssue.fixIssueCommandHandler(targetItem),
+            fixIssue.fixIssueCommandHandler(dependencyGroupItem),
         ).rejects.toThrow(
             `No executable issue fixes found for target ${target}`,
         );
@@ -434,7 +385,17 @@ describe('FixIssue', () => {
         await expect(
             fixIssue.fixIssueCommandHandler({ unexpected: true }),
         ).rejects.toThrow(
-            'Invalid item for fix issues: expected HealthCheckDependencyTreeItem or TargetTreeItem but received:',
+            'Invalid item for fix issues: expected HealthCheckDependencyGroupTreeItem or HealthCheckDependencyTreeItem but received:',
+        );
+    });
+
+    it('fails when the command is called without an item', async () => {
+        const fixIssue = createFixIssue();
+
+        await expect(
+            fixIssue.fixIssueCommandHandler(undefined),
+        ).rejects.toThrow(
+            'Invalid item for fix issues: expected HealthCheckDependencyGroupTreeItem or HealthCheckDependencyTreeItem but received: undefined',
         );
     });
 });
