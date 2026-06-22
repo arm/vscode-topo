@@ -50,7 +50,7 @@ const targetHealthCheckSchema = type({
     destination: trimmed(string()),
     isLocalhost: boolean(),
     connectivity: IssueCheckSchema,
-    subsystemDriver: IssueCheckSchema,
+    processingDomainDriver: IssueCheckSchema,
     dependencies: array(IssueCheckSchema),
 });
 

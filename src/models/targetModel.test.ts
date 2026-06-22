@@ -11,8 +11,8 @@ const targetHealth: TargetHealthCheck = {
         status: 'ok',
         value: 'connected',
     },
-    subsystemDriver: {
-        name: 'Subsystem Driver',
+    processingDomainDriver: {
+        name: 'Processing Domain Driver',
         status: 'ok',
         value: 'ready',
     },

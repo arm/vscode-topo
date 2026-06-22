@@ -320,8 +320,8 @@ describe('TopoCli', () => {
                     status: 'ok',
                     value: '',
                 },
-                subsystemDriver: {
-                    name: 'Subsystem Driver (remoteproc)',
+                processingDomainDriver: {
+                    name: 'Processing Domain Driver (remoteproc)',
                     status: 'ok',
                     value: 'driver-x',
                 },
@@ -344,8 +344,8 @@ describe('TopoCli', () => {
                     status: 'ok',
                     value: '',
                 },
-                subsystemDriver: {
-                    name: 'Subsystem Driver (remoteproc)',
+                processingDomainDriver: {
+                    name: 'Processing Domain Driver (remoteproc)',
                     status: 'ok',
                     value: 'driver-x',
                 },

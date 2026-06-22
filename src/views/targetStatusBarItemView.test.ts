@@ -4,7 +4,7 @@ import { TargetTreeView } from './targetTreeView';
 import { mock } from 'vitest-mock-extended';
 import { TargetHealthCheck } from '../topoCliSchema';
 import { TargetModel } from '../models/targetModel';
-import { loaded, loading, unloaded } from '../util/loadable';
+import { errored, loaded, loading, unloaded } from '../util/loadable';
 import { selectTarget } from '../commands';
 
 vi.mock('../util/logger');
@@ -18,9 +18,9 @@ const healthyTarget: TargetHealthCheck = {
         value: '',
     },
     dependencies: [{ status: 'ok', name: 'Container Engine', value: '' }],
-    subsystemDriver: {
+    processingDomainDriver: {
         status: 'ok',
-        name: 'Subsystem Driver',
+        name: 'Processing Domain Driver',
         value: '',
     },
 };
@@ -73,6 +73,41 @@ describe('TargetStatusBarItemView', () => {
         const statusBarItem = vi.mocked(vscode.window.createStatusBarItem).mock
             .results[0].value;
         expect(statusBarItem.text).toBe(`$(target) ${target}`);
+    });
+
+    it('shows an error icon when selected target health failed to load', async () => {
+        const target = 'root@localhost';
+        const targetModel = new TargetModel();
+        targetModel.setSelected(target);
+        targetModel.setSelectedTargetHealth(errored('ssh connection failed'));
+
+        new TargetStatusBarItemView(targetModel);
+
+        const statusBarItem = vi.mocked(vscode.window.createStatusBarItem).mock
+            .results[0].value;
+        expect(statusBarItem.text).toBe(`$(error) ${target}`);
+    });
+
+    it('shows an error icon when selected target connectivity is unhealthy', async () => {
+        const target = 'root@localhost';
+        const targetModel = new TargetModel();
+        targetModel.setSelected(target);
+        targetModel.setSelectedTargetHealth(
+            loaded({
+                ...healthyTarget,
+                connectivity: {
+                    name: 'Connectivity',
+                    status: 'error',
+                    value: 'ssh connection failed',
+                },
+            }),
+        );
+
+        new TargetStatusBarItemView(targetModel);
+
+        const statusBarItem = vi.mocked(vscode.window.createStatusBarItem).mock
+            .results[0].value;
+        expect(statusBarItem.text).toBe(`$(error) ${target}`);
     });
 
     it('shows a select target item in the status bar when no target is selected', async () => {
