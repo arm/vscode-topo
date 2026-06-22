@@ -1,4 +1,14 @@
 import * as vscode from 'vscode';
+import { PACKAGE_NAME, REGISTRY_NAME } from '../manifest';
+
+const isExtensionProtocolUri = (uri: vscode.Uri): boolean => {
+    const protocolScheme = 'vscode';
+    const protocolAuthority = `${REGISTRY_NAME}.${PACKAGE_NAME}`;
+    return (
+        uri.scheme.toLowerCase() === protocolScheme &&
+        uri.authority.toLowerCase() === protocolAuthority
+    );
+};
 
 export const parseQuery = (query: string): Record<string, string> => {
     // Some protocol URIs may be copied from rendered HTML/Markdown where '&' is entity-escaped.
@@ -10,35 +20,42 @@ export const parseQuery = (query: string): Record<string, string> => {
 };
 
 export const parseRequestData = (uri: vscode.Uri): Record<string, string> => {
-    const parsed = parseQuery(uri.query);
-    const data = filterProtocolUrlParam(parsed, uri);
-    const { source } = data;
-    if (source === undefined) {
-        return data;
+    const requestUri = resolveRequestUri(uri);
+    const queryData = parseQuery(requestUri.query);
+    const cleanedQueryData = filterProtocolUrlParam(queryData);
+    return cleanedQueryData;
+};
+
+const resolveRequestUri = (uri: vscode.Uri): vscode.Uri => {
+    if (
+        uri.scheme.toLowerCase() !== 'https' ||
+        uri.authority.toLowerCase() !== 'vscode.dev' ||
+        uri.path !== '/redirect'
+    ) {
+        return uri;
     }
-    if (!uri.fragment || source.includes('#')) {
-        return { ...data, source };
+    const urlPrefix = 'url=';
+    if (!uri.query.startsWith(urlPrefix)) {
+        return uri;
     }
-    const [sourceFragment, ...fragmentQueryParts] = uri.fragment.split('&');
-    const fragmentData = parseQuery(fragmentQueryParts.join('&'));
-    return { ...data, ...fragmentData, source: `${source}#${sourceFragment}` };
+    const parsedUrl = vscode.Uri.parse(uri.query.slice(urlPrefix.length));
+    if (!isExtensionProtocolUri(parsedUrl)) {
+        return uri;
+    }
+    return parsedUrl;
 };
 
 const filterProtocolUrlParam = (
-    data: Record<string, string>,
-    uri: vscode.Uri,
+    queryData: Record<string, string>,
 ): Record<string, string> => {
-    const { url } = data;
+    const { url } = queryData;
     if (!url) {
-        return data;
+        return queryData;
     }
     const parsedUrl = vscode.Uri.parse(url);
-    if (
-        parsedUrl.scheme.toLowerCase() !== uri.scheme.toLowerCase() ||
-        parsedUrl.authority.toLowerCase() !== uri.authority.toLowerCase()
-    ) {
-        return data;
+    if (!isExtensionProtocolUri(parsedUrl)) {
+        return queryData;
     }
-    const { url: _protocolUrl, ...rest } = data;
+    const { url: _protocolUrl, ...rest } = queryData;
     return rest;
 };

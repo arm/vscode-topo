@@ -31,12 +31,24 @@ describe('parseQuery', () => {
 describe('parseRequestData', () => {
     it('keeps a non-protocol url query param', () => {
         const uri = vscode.Uri.parse(
-            'vscode://arm.topo/clone?source=https://example.com/repo.git&url=https%3A%2F%2Fexample.com%2Fmodel',
+            'vscode://arm.topo/clone?source=https://example.com/repo.git%238303e66db59a7a11e64877121f3db1b688d2011f&url=https%3A%2F%2Fexample.com%2Fmodel',
         );
 
         expect(parseRequestData(uri)).toEqual({
-            source: 'https://example.com/repo.git',
+            source: 'https://example.com/repo.git#8303e66db59a7a11e64877121f3db1b688d2011f',
             url: 'https://example.com/model',
+        });
+    });
+
+    it('keeps a non-protocol url query param with later request data', () => {
+        const uri = vscode.Uri.parse(
+            'vscode://arm.topo/clone?source=https://example.com/repo.git%238303e66db59a7a11e64877121f3db1b688d2011f&url=https%3A%2F%2Fexample.com%2Fmodel&GREETING_NAME=F%23ed',
+        );
+
+        expect(parseRequestData(uri)).toEqual({
+            source: 'https://example.com/repo.git#8303e66db59a7a11e64877121f3db1b688d2011f',
+            url: 'https://example.com/model',
+            GREETING_NAME: 'F#ed',
         });
     });
 
@@ -61,15 +73,24 @@ describe('parseRequestData', () => {
         });
     });
 
-    it('parses fragment query params as request data', () => {
+    it('parses wrapped redirect query params as request data', () => {
+        const source =
+            'https://github.com/Arm-Examples/topo-welcome.git#8303e66db59a7a11e64877121f3db1b688d2011f';
+        const greetingName = 'F#ed';
+        const mode = 'test';
+        const protocolQuery = new URLSearchParams();
+        protocolQuery.append('mode', mode);
+        protocolQuery.append('source', source);
+        protocolQuery.append('GREETING_NAME', greetingName);
+        const protocolUri = `vscode://arm.topo/clone?${protocolQuery.toString()}`;
         const uri = vscode.Uri.parse(
-            'vscode://arm.topo/clone?mode=test&source=https://github.com/Arm-Examples/topo-welcome.git#8303e66db59a7a11e64877121f3db1b688d2011f%26GREETING_NAME=Fed',
+            `https://vscode.dev/redirect?url=${encodeURIComponent(protocolUri)}`,
         );
 
         expect(parseRequestData(uri)).toEqual({
-            mode: 'test',
-            source: 'https://github.com/Arm-Examples/topo-welcome.git#8303e66db59a7a11e64877121f3db1b688d2011f',
-            GREETING_NAME: 'Fed',
+            mode,
+            source,
+            GREETING_NAME: greetingName,
         });
     });
 
