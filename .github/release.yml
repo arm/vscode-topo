@@ -3,8 +3,8 @@ changelog:
         labels:
             - chore
             - ci
-            - dependencies
-            - documentation
+            - docs
+            - refactor
             - ignore-for-release
             - skip-changelog
         authors:
@@ -12,18 +12,10 @@ changelog:
     categories:
         - title: Breaking Changes
           labels:
-              - breaking-change
               - breaking
-              - semver-major
         - title: Features and Enhancements
           labels:
-              - enhancement
-              - feature
               - feat
-              - semver-minor
         - title: Fixes
           labels:
-              - bug
-              - bugfix
               - fix
-              - semver-patch

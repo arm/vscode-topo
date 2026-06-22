@@ -39,22 +39,22 @@ jobs:
                           --description "$3" || true
                   }
 
-                  ensure_label semver-major b60205 'Breaking change for release notes'
-                  ensure_label semver-minor 0e8a16 'New feature for release notes'
-                  ensure_label semver-patch 1d76db 'Bug fix for release notes'
+                  ensure_label breaking b60205 'Breaking change for release notes'
+                  ensure_label feat 0e8a16 'Feature or enhancement for release notes'
+                  ensure_label fix 1d76db 'Bug fix for release notes'
+                  ensure_label docs cfd3d7 'Documentation change excluded from release notes'
                   ensure_label chore cfd3d7 'Maintenance change excluded from release notes'
+                  ensure_label refactor cfd3d7 'Refactor change excluded from release notes'
                   ensure_label ci cfd3d7 'CI change excluded from release notes'
-                  ensure_label dependencies cfd3d7 'Dependency change excluded from release notes'
-                  ensure_label documentation cfd3d7 'Documentation change excluded from release notes'
 
                   managed_labels=(
-                      semver-major
-                      semver-minor
-                      semver-patch
+                      breaking
+                      feat
+                      fix
+                      docs
                       chore
+                      refactor
                       ci
-                      dependencies
-                      documentation
                   )
 
                   for label in "${managed_labels[@]}"; do
@@ -62,28 +62,30 @@ jobs:
                   done
 
                   labels_to_add=()
-                  major_regex='^[a-z]+(\([^)]+\))?!:'
+                  breaking_regex='^[a-z]+(\([^)]+\))?!:'
                   feature_regex='^feat(\([^)]+\))?:'
                   fix_regex='^fix(\([^)]+\))?:'
-                  dependencies_regex='^chore\(deps[^)]*\):'
+                  docs_regex='^docs(\([^)]+\))?:'
                   chore_regex='^chore(\([^)]+\))?:'
+                  refactor_regex='^refactor(\([^)]+\))?:'
                   ci_regex='^ci(\([^)]+\))?:'
-                  documentation_regex='^docs(\([^)]+\))?:'
 
-                  if [[ "$PR_TITLE" =~ $major_regex ]]; then
-                      labels_to_add+=(semver-major)
-                  elif [[ "$PR_TITLE" =~ $feature_regex ]]; then
-                      labels_to_add+=(semver-minor)
+                  if [[ "$PR_TITLE" =~ $breaking_regex ]]; then
+                      labels_to_add+=(breaking)
+                  fi
+
+                  if [[ "$PR_TITLE" =~ $feature_regex ]]; then
+                      labels_to_add+=(feat)
                   elif [[ "$PR_TITLE" =~ $fix_regex ]]; then
-                      labels_to_add+=(semver-patch)
-                  elif [[ "$PR_TITLE" =~ $dependencies_regex ]]; then
-                      labels_to_add+=(dependencies)
+                      labels_to_add+=(fix)
+                  elif [[ "$PR_TITLE" =~ $docs_regex ]]; then
+                      labels_to_add+=(docs)
                   elif [[ "$PR_TITLE" =~ $chore_regex ]]; then
                       labels_to_add+=(chore)
+                  elif [[ "$PR_TITLE" =~ $refactor_regex ]]; then
+                      labels_to_add+=(refactor)
                   elif [[ "$PR_TITLE" =~ $ci_regex ]]; then
                       labels_to_add+=(ci)
-                  elif [[ "$PR_TITLE" =~ $documentation_regex ]]; then
-                      labels_to_add+=(documentation)
                   fi
 
                   for label in "${labels_to_add[@]}"; do
