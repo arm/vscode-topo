@@ -36,7 +36,7 @@ describe('extension activation', () => {
     it('shows an error and skips command registration when the topo CLI version check fails', async () => {
         vi.mocked(TopoCli).mockImplementation(function () {
             return mock<TopoCli>({
-                verifyVersion: vi.fn().mockImplementation(() => {
+                assertVersion: vi.fn().mockImplementation(() => {
                     throw new Error('version mismatch');
                 }),
             });
