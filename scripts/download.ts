@@ -154,7 +154,7 @@ if (!section || typeof section.version !== 'string') {
     );
     process.exit(1);
 }
-const version = section.version.replace(/^v/, '');
+const version = section.version;
 
 // --- Determine asset name ---------------------------------------------------
 const assetMapping: Record<DownloadTarget, string> = {

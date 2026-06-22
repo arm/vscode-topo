@@ -19,7 +19,7 @@
     ],
     "main": "./dist/extension.js",
     "topo": {
-        "version": "v7.1.0"
+        "version": "7.1.0"
     },
     "contributes": {
         "commands": [
