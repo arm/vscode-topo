@@ -305,7 +305,7 @@
                 },
                 {
                     "command": "topo.openContainerShell",
-                    "when": "view === topo.target-manager && viewItem =~ /service/ && viewItem =~ /running/ && viewItem =~ /PrimaryOS/",
+                    "when": "view === topo.target-manager && viewItem =~ /service/ && viewItem =~ /running/ && viewItem =~ /Linux Host/",
                     "group": "inline@1"
                 },
                 {

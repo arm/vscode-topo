@@ -1,4 +1,4 @@
-import { ServiceDescription } from '../topoCliSchema';
+import { PsEntry, ServiceDescription } from '../topoCliSchema';
 
 export interface HostProcessor {
     model: string;
@@ -16,49 +16,7 @@ export interface TargetDescription {
     totalMemoryKb: number;
 }
 
-/**
- * Represents the port mapping information from Docker's `NetworkSettings.Ports`.
- *
- * The keys use the format `"<port>/<protocol>"`, for example `"80/tcp"` or `"443/udp"`,
- * describing the container port and protocol. Each key maps to an array of port
- * bindings, where each binding describes how that container port is published on
- * the host.
- *
- * - `HostIp` is the IP address on the host where the port is exposed (e.g. `"0.0.0.0"` or `"127.0.0.1"`).
- * - `HostPort` is the port number on the host as a string (e.g. `"8080"`).
- */
-export type DockerPorts = Record<
-    string,
-    Array<{ HostIp: string; HostPort: string }>
->;
-
-/**
- * Represents a Docker container item.
- *
- * @property {string} id - The unique identifier for the container.
- * @property {string} name - The name assigned to the container.
- * @property {string} image - The Docker image used to create the container.
- * @property {string} state - The current state of the container (e.g., "running", "stopped").
- * @property {string} status - A descriptive status string of the container.
- * @property {string} labels - A string of key-value labels associated with the container.
- * @property {string} runningFor - A description indicating how long the container has been running.
- * @property {string} createdAt - The timestamp indicating when the container was created.
- * @property {string} runtime - The runtime of the container.
- * @property {DockerPorts} ports - The ports exposed by the container.
- * @property {string} target - The target associated with the container.
- */
-export interface ContainerItem {
-    id: string;
-    name: string;
-    image: string;
-    state: string;
-    status: string;
-    labels: string;
-    runningFor: string;
-    createdAt: string;
-    runtime: string;
-    annotations: Record<string, string>;
-    ports: DockerPorts;
+export interface ContainerItem extends PsEntry {
     target: string;
 }
 

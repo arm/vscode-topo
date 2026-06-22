@@ -1,4 +1,3 @@
-import { TARGET_HOST_RUNTIME } from '../manifest';
 import * as vscode from 'vscode';
 import { ContainerDelete } from './containerDelete';
 import { ContainerItem } from '../util/types';
@@ -15,16 +14,12 @@ describe('ContainerDelete', () => {
     const target = 'user@topo.local';
     const container: ContainerItem = {
         id: 'abc123',
-        name: 'my-container',
+        names: 'my-container',
         image: 'nginx',
         state: 'running',
         status: 'Up',
-        labels: '',
-        runningFor: '',
-        runtime: TARGET_HOST_RUNTIME,
-        annotations: {},
-        createdAt: '',
-        ports: {},
+        processingDomain: 'CoolProcessingDomain',
+        address: '1.2.3.4:5678',
         target,
     };
     const treeItem = new ContainerTreeItem(container);

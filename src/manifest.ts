@@ -3,7 +3,5 @@ export const PACKAGE_NAME = 'topo';
 export const DISPLAY_NAME = 'Topo';
 export const CONFIG_LOGGING_VERBOSITY = 'loggingVerbosity';
 export const DEFAULT_LOGGING_VERBOSITY = 'warn';
-export const TARGET_REMOTEPROC_RUNTIME = 'io.containerd.remoteproc.v1';
-export const TARGET_HOST_RUNTIME = 'runc';
 export const TOPO_CLI = 'topo';
 export const TOPO_CLI_WINDOWS = 'topo.exe';
