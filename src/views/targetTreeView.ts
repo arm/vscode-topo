@@ -3,11 +3,10 @@ import { ContainerTreeItem } from '../treeItems/containerTreeItem';
 import * as manifest from '../manifest';
 import { TargetProcessingDomainTreeItem } from '../targetTreeView/targetProcessingDomainTreeItem';
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
-import { TargetProcessingDomainGroupTreeItem } from '../targetTreeView/targetProcessingDomainGroupTreeItem';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
-import { ContainerItem, TargetDescription } from '../util/types';
+import { TargetDescription } from '../util/types';
 import { Loadable, loaded } from '../util/loadable';
 import { TargetDataIssueTreeItem } from '../targetTreeView/targetDataIssueTreeItem';
 import { ErrorTreeItem } from '../treeItems/errorTreeItem';
@@ -18,37 +17,6 @@ import { LoadingTreeItem } from '../treeItems/loadingTreeItem';
 function compareByName(a: { name: string }, b: { name: string }): number {
     return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
 }
-
-function compareContainers(a: ContainerItem, b: ContainerItem): number {
-    if (a.state === 'running' && b.state !== 'running') {
-        return -1;
-    }
-    if (a.state !== 'running' && b.state === 'running') {
-        return 1;
-    }
-    return compareByName(a, b);
-}
-
-function filterContainersForProcessingDomain(
-    containers: ContainerItem[],
-    processingDomainId: string,
-): ContainerItem[] {
-    return containers.filter((item) => {
-        if (processingDomainId === 'PrimaryOS') {
-            return item.runtime === manifest.TARGET_HOST_RUNTIME;
-        }
-
-        return (
-            item.runtime === manifest.TARGET_REMOTEPROC_RUNTIME &&
-            item.annotations?.['remoteproc.name'] === processingDomainId
-        );
-    });
-}
-
-const PRIMARY_OS_PROCESSING_DOMAIN = {
-    id: 'PrimaryOS',
-    label: 'Primary OS',
-};
 
 const hasSelectedTargetContextKey = `${manifest.PACKAGE_NAME}.hasSelectedTarget`;
 const targetDataIssueContextKey = `${manifest.PACKAGE_NAME}.targetDataIssue`;
@@ -173,46 +141,6 @@ export class TargetTreeView
             return deps.map(
                 (d) => new HealthCheckDependencyTreeItem(loaded(d)),
             );
-        }
-
-        if (element instanceof TargetProcessingDomainGroupTreeItem) {
-            if (element.containers.status === 'errored') {
-                return [
-                    new ErrorTreeItem(
-                        'Failed to load containers',
-                        element.containers,
-                    ),
-                ];
-            }
-
-            if (element.containers.status === 'unloaded') {
-                return [];
-            }
-
-            const sortedContainers = [...element.containers.data].sort(
-                compareContainers,
-            );
-
-            const processingDomains = [
-                PRIMARY_OS_PROCESSING_DOMAIN,
-                ...element.remoteProcessorNames.map((name) => ({
-                    id: name,
-                    label: name,
-                })),
-            ];
-            return processingDomains.map((domain) => {
-                const containers = filterContainersForProcessingDomain(
-                    sortedContainers,
-                    domain.id,
-                );
-
-                return new TargetProcessingDomainTreeItem(
-                    domain.id,
-                    element.target,
-                    containers,
-                    domain.label,
-                );
-            });
         }
 
         if (element instanceof TargetProcessingDomainTreeItem) {
