@@ -63,7 +63,7 @@ describe('parseRequestData', () => {
 
     it('parses fragment query params as request data', () => {
         const uri = vscode.Uri.parse(
-            'vscode://arm.topo/clone?mode=test&source=https://github.com/Arm-Examples/topo-welcome.git#8303e66db59a7a11e64877121f3db1b688d2011f&GREETING_NAME=Fed',
+            'vscode://arm.topo/clone?mode=test&source=https://github.com/Arm-Examples/topo-welcome.git#8303e66db59a7a11e64877121f3db1b688d2011f%26GREETING_NAME=Fed',
         );
 
         expect(parseRequestData(uri)).toEqual({
