@@ -87,7 +87,7 @@ describe('Deploy', () => {
         );
         expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(
-            targetController.refreshSelectedTargetDataCommandHandler,
+            targetController.refreshSelectedTargetHealthCommandHandler,
         ).not.toHaveBeenCalled();
     });
 
@@ -103,7 +103,7 @@ describe('Deploy', () => {
         expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
         expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(
-            targetController.refreshSelectedTargetDataCommandHandler,
+            targetController.refreshSelectedTargetHealthCommandHandler,
         ).not.toHaveBeenCalled();
     });
 
@@ -136,7 +136,7 @@ describe('Deploy', () => {
             path.dirname(composeFilePath),
         );
         expect(
-            targetController.refreshSelectedTargetDataCommandHandler,
+            targetController.refreshSelectedTargetHealthCommandHandler,
         ).toHaveBeenCalledOnce();
     });
 
@@ -149,7 +149,7 @@ describe('Deploy', () => {
             path.dirname(composeFilePath),
         );
         expect(
-            targetController.refreshSelectedTargetDataCommandHandler,
+            targetController.refreshSelectedTargetHealthCommandHandler,
         ).toHaveBeenCalledOnce();
     });
 
@@ -165,7 +165,7 @@ describe('Deploy', () => {
         expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
         expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(
-            targetController.refreshSelectedTargetDataCommandHandler,
+            targetController.refreshSelectedTargetHealthCommandHandler,
         ).not.toHaveBeenCalled();
     });
 
@@ -178,7 +178,7 @@ describe('Deploy', () => {
 
         expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(
-            targetController.refreshSelectedTargetDataCommandHandler,
+            targetController.refreshSelectedTargetHealthCommandHandler,
         ).not.toHaveBeenCalled();
     });
 
@@ -211,7 +211,7 @@ describe('Deploy', () => {
             workspaceUri.fsPath,
         );
         expect(
-            targetController.refreshSelectedTargetDataCommandHandler,
+            targetController.refreshSelectedTargetHealthCommandHandler,
         ).toHaveBeenCalledOnce();
     });
 
@@ -226,7 +226,7 @@ describe('Deploy', () => {
 
         expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(
-            targetController.refreshSelectedTargetDataCommandHandler,
+            targetController.refreshSelectedTargetHealthCommandHandler,
         ).not.toHaveBeenCalled();
     });
 });

@@ -27,6 +27,6 @@ export class ContainerDelete {
             }
             throw err;
         }
-        await this.targetController.refreshSelectedTargetDataCommandHandler();
+        await this.targetController.refreshSelectedTargetHealthCommandHandler();
     }
 }

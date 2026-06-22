@@ -27,6 +27,6 @@ export class ContainerStart {
             }
             throw err;
         }
-        await this.targetController.refreshSelectedTargetDataCommandHandler();
+        await this.targetController.refreshSelectedTargetHealthCommandHandler();
     }
 }

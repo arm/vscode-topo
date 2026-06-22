@@ -66,7 +66,7 @@ export class Deploy {
             return;
         }
         await deploy(this.taskExecutor, resource.fsPath, target);
-        await this.targetController.refreshSelectedTargetDataCommandHandler();
+        await this.targetController.refreshSelectedTargetHealthCommandHandler();
     }
 
     public async deployContextCommandHandler(
@@ -90,7 +90,7 @@ export class Deploy {
         }
 
         await deploy(this.taskExecutor, resource.fsPath, target);
-        await this.targetController.refreshSelectedTargetDataCommandHandler();
+        await this.targetController.refreshSelectedTargetHealthCommandHandler();
     }
 
     public async deployProjectCommandHandler(treeNode: unknown): Promise<void> {

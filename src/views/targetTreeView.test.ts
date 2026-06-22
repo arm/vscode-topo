@@ -1,8 +1,6 @@
 import * as vscode from 'vscode';
 import { TargetTreeView } from './targetTreeView';
-import { ProcessingDomainTreeItem } from '../treeItems/processingDomainTreeItem';
-import * as manifest from '../manifest';
-import { ContainerItem, TargetDescription } from '../util/types';
+import { TargetDescription } from '../util/types';
 import { mock } from 'vitest-mock-extended';
 import { IssueCheck, TargetHealthCheck } from '../topoCliSchema';
 import { TargetModel } from '../models/targetModel';
@@ -43,61 +41,11 @@ describe('TargetTreeView', () => {
         },
     };
 
-    const mockContainers: ContainerItem[] = [
-        {
-            id: 'id1',
-            name: 'cont1',
-            image: 'img1',
-            state: 'running',
-            status: 'Up 4 days',
-            labels: 'foo=bar',
-            runningFor: '1h',
-            runtime: manifest.TARGET_REMOTEPROC_RUNTIME,
-            annotations: {
-                'remoteproc.name': 'imx-rproc',
-            },
-            createdAt: '',
-            ports: {},
-            target,
-        },
-        {
-            id: 'id2',
-            name: 'cont2',
-            image: 'img2',
-            state: 'exited',
-            status: 'Exited (0) 2 hours ago',
-            labels: 'baz=qux',
-            runningFor: '2h',
-            runtime: manifest.TARGET_HOST_RUNTIME,
-            annotations: {},
-            createdAt: '',
-            ports: {},
-            target,
-        },
-        {
-            id: 'id3',
-            name: 'cont3',
-            image: 'img3',
-            state: 'running',
-            status: 'Up 1 hour',
-            labels: 'abc=def',
-            runningFor: '30m',
-            runtime: manifest.TARGET_REMOTEPROC_RUNTIME,
-            annotations: {
-                'remoteproc.name': 'imx-rproc',
-            },
-            createdAt: '',
-            ports: {},
-            target,
-        },
-    ];
-
     beforeEach(() => {
         targetModel = new TargetModel();
         targetModel.setTargets(loaded([target]));
         targetModel.setSelected(target);
         targetModel.setSelectedTargetHealth(loaded(targetHealth));
-        targetModel.setSelectedTargetContainers(loaded(mockContainers));
         targetModel.setSelectedTargetDescription(loaded(targetDescription));
         view = new TargetTreeView(targetModel);
         treeView = vi.mocked(vscode.window.createTreeView).mock.results[0]
@@ -175,13 +123,12 @@ describe('TargetTreeView', () => {
     });
 
     describe('getChildren', () => {
-        it('returns Dependencies/Processing Domains at the root', () => {
+        it('returns Dependencies at the root', () => {
             const rootChildren = view.getChildren();
 
             expect(treeView.description).toBe(target);
-            expect(rootChildren).toHaveLength(2);
+            expect(rootChildren).toHaveLength(1);
             expect(rootChildren[0].label).toBe('Dependencies');
-            expect(rootChildren[1].label).toBe('Processing Domains');
         });
 
         it('returns dependency items for Dependencies group', () => {
@@ -314,50 +261,6 @@ describe('TargetTreeView', () => {
             );
         });
 
-        it('returns containers for Primary OS and remote processor groups', () => {
-            const rootChildren = view.getChildren();
-            const processingDomainItems = view.getChildren(rootChildren[1]);
-            expect(processingDomainItems).toMatchObject([
-                { label: 'Primary OS' },
-                { label: 'imx-rproc' },
-                { label: 'other-rproc' },
-            ]);
-            const [primaryOsGroup, remoteprocGroup, otherRprocGroup] =
-                processingDomainItems;
-
-            const primaryOsChildren = view.getChildren(primaryOsGroup);
-            const imxRprocChildren = view.getChildren(remoteprocGroup);
-            const otherRprocChildren = view.getChildren(otherRprocGroup);
-
-            expect(primaryOsChildren[0]).toMatchObject({ name: 'cont2' });
-            expect(imxRprocChildren).toMatchObject([
-                { name: 'cont1' },
-                { name: 'cont3' },
-            ]);
-            expect(otherRprocChildren).toHaveLength(0);
-        });
-
-        it('returns an error item when containers fail to load', () => {
-            targetModel.setSelectedTargetContainers(
-                errored('container parse failed'),
-            );
-            const rootChildren = view.getChildren();
-
-            const got = view.getChildren(rootChildren[1]);
-
-            expect(got).toHaveLength(1);
-            expect(got[0].label).toBe('Failed to load containers');
-        });
-
-        it('returns no processing domains while containers are unloaded', () => {
-            targetModel.setSelectedTargetContainers(unloaded());
-            const rootChildren = view.getChildren();
-
-            const got = view.getChildren(rootChildren[1]);
-
-            expect(got).toEqual([]);
-        });
-
         it('returns empty array when no target is selected', async () => {
             targetModel.setTargets(loaded([]));
             targetModel.setSelected(undefined);
@@ -382,7 +285,7 @@ describe('TargetTreeView', () => {
 
     describe('getTreeItem', () => {
         it('getTreeItem returns the element itself', () => {
-            const item = new ProcessingDomainTreeItem('PrimaryOS', target);
+            const item = new vscode.TreeItem('Target Health');
 
             const treeItem = view.getTreeItem(item);
 

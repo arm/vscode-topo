@@ -62,7 +62,7 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
             handlers.hostController.refreshHealthCommandHandler(),
         ),
         vscode.commands.registerCommand(refreshTargetData, () =>
-            handlers.targetController.refreshSelectedTargetDataCommandHandler(),
+            handlers.targetController.refreshSelectedTargetHealthCommandHandler(),
         ),
         vscode.commands.registerCommand(showOutput, () => logger.show()),
         vscode.commands.registerCommand(selectTarget, () =>

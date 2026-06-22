@@ -36,7 +36,7 @@ export class Stop {
         }
 
         await stop(this.taskExecutor, resource.fsPath, target);
-        await this.targetController.refreshSelectedTargetDataCommandHandler();
+        await this.targetController.refreshSelectedTargetHealthCommandHandler();
     }
 
     public async stopProjectCommandHandler(treeNode: unknown): Promise<void> {

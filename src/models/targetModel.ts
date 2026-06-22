@@ -19,11 +19,6 @@ export class TargetModel {
     public readonly onHealthChanged: vscode.Event<void> =
         this._onHealthChanged.event;
 
-    private _onContainersChanged: vscode.EventEmitter<void> =
-        new vscode.EventEmitter<void>();
-    public readonly onContainersChanged: vscode.Event<void> =
-        this._onContainersChanged.event;
-
     private _onDescriptionChanged: vscode.EventEmitter<void> =
         new vscode.EventEmitter<void>();
     public readonly onDescriptionChanged: vscode.Event<void> =
@@ -62,14 +57,6 @@ export class TargetModel {
         }
     }
 
-    public setSelectedTargetContainers(containers: Loadable<ContainerItem[]>) {
-        const changed = this._containers !== containers;
-        this._containers = containers;
-        if (changed) {
-            this._onContainersChanged.fire();
-        }
-    }
-
     public clear(): void {
         this.setTargets(unloaded());
         this.setSelected(undefined);
@@ -104,7 +91,6 @@ export class TargetModel {
 
     private clearSelectedTargetData(): void {
         this.setSelectedTargetHealth(unloaded());
-        this.setSelectedTargetContainers(unloaded());
         this.setSelectedTargetDescription(unloaded());
     }
 }

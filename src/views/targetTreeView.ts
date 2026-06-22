@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
 import { ContainerTreeItem } from '../treeItems/containerTreeItem';
 import * as manifest from '../manifest';
-import { ProcessingDomainTreeItem } from '../treeItems/processingDomainTreeItem';
+import { TargetProcessingDomainTreeItem } from '../targetTreeView/targetProcessingDomainTreeItem';
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
-import { ProcessingDomainGroupTreeItem } from '../treeItems/processingDomainGroupTreeItem';
+import { TargetProcessingDomainGroupTreeItem } from '../targetTreeView/targetProcessingDomainGroupTreeItem';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
@@ -54,10 +54,8 @@ const hasSelectedTargetContextKey = `${manifest.PACKAGE_NAME}.hasSelectedTarget`
 const targetDataIssueContextKey = `${manifest.PACKAGE_NAME}.targetDataIssue`;
 
 function getSelectedTargetChildren(
-    target: string,
     health: Loadable<TargetHealthCheck>,
     targetDescription: Loadable<TargetDescription>,
-    selectedTargetContainers: Loadable<ContainerItem[]>,
 ): vscode.TreeItem[] {
     switch (health.status) {
         case 'unloaded':
@@ -85,12 +83,7 @@ function getSelectedTargetChildren(
                     health.loading,
                 ),
             );
-            const subsystemsGroup = new ProcessingDomainGroupTreeItem(
-                target,
-                description?.remoteProcessors.map((rp) => rp.name) ?? [],
-                selectedTargetContainers,
-            );
-            return [dependenciesGroup, subsystemsGroup];
+            return [dependenciesGroup];
         }
     }
 }
@@ -150,9 +143,6 @@ export class TargetTreeView
             this.targetModel.onHealthChanged(() => {
                 this.refreshTreeView();
             }),
-            this.targetModel.onContainersChanged(() => {
-                this.refreshTreeView();
-            }),
             this.targetModel.onDescriptionChanged(() => {
                 this.refreshTreeView();
             }),
@@ -173,10 +163,8 @@ export class TargetTreeView
             }
 
             return getSelectedTargetChildren(
-                selectedTarget,
                 this.targetModel.selectedTargetHealth,
                 this.targetModel.selectedTargetDescription,
-                this.targetModel.selectedTargetContainers,
             );
         }
 
@@ -187,7 +175,7 @@ export class TargetTreeView
             );
         }
 
-        if (element instanceof ProcessingDomainGroupTreeItem) {
+        if (element instanceof TargetProcessingDomainGroupTreeItem) {
             if (element.containers.status === 'errored') {
                 return [
                     new ErrorTreeItem(
@@ -218,7 +206,7 @@ export class TargetTreeView
                     domain.id,
                 );
 
-                return new ProcessingDomainTreeItem(
+                return new TargetProcessingDomainTreeItem(
                     domain.id,
                     element.target,
                     containers,
@@ -227,7 +215,7 @@ export class TargetTreeView
             });
         }
 
-        if (element instanceof ProcessingDomainTreeItem) {
+        if (element instanceof TargetProcessingDomainTreeItem) {
             return element.containers.map(
                 (container) => new ContainerTreeItem(container),
             );

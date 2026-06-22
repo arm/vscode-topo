@@ -65,7 +65,7 @@ describe('Stop', () => {
         );
         expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(
-            targetController.refreshSelectedTargetDataCommandHandler,
+            targetController.refreshSelectedTargetHealthCommandHandler,
         ).not.toHaveBeenCalled();
     });
 
@@ -98,7 +98,7 @@ describe('Stop', () => {
             path.dirname(composeFilePath),
         );
         expect(
-            targetController.refreshSelectedTargetDataCommandHandler,
+            targetController.refreshSelectedTargetHealthCommandHandler,
         ).toHaveBeenCalledOnce();
     });
 
@@ -111,7 +111,7 @@ describe('Stop', () => {
             path.dirname(composeFilePath),
         );
         expect(
-            targetController.refreshSelectedTargetDataCommandHandler,
+            targetController.refreshSelectedTargetHealthCommandHandler,
         ).toHaveBeenCalledOnce();
     });
 
@@ -122,7 +122,7 @@ describe('Stop', () => {
 
         expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(
-            targetController.refreshSelectedTargetDataCommandHandler,
+            targetController.refreshSelectedTargetHealthCommandHandler,
         ).not.toHaveBeenCalled();
     });
 });

@@ -72,12 +72,11 @@ export async function activate(
         targetModel,
         targetStore,
         topoCli,
-        dockerCommands,
     );
 
     const selectedTargetRefreshLoop = new RefreshLoop(async () => {
-        if (!targetController.isRefreshingSelectedTargetData()) {
-            await targetController.refreshSelectedTargetDataCommandHandler();
+        if (!targetController.isRefreshingSelectedTargetHealth()) {
+            await targetController.refreshSelectedTargetHealthCommandHandler();
         }
     }, SELECTED_TARGET_REFRESH_INTERVAL_MS);
 
@@ -90,7 +89,7 @@ export async function activate(
         ),
         targetModel.onSelectedChanged(() => {
             void targetController.loadSelectedTargetDescriptionCommandHandler();
-            void targetController.refreshSelectedTargetDataCommandHandler();
+            void targetController.refreshSelectedTargetHealthCommandHandler();
         }),
     );
 

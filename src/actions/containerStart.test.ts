@@ -53,7 +53,7 @@ describe('ContainerStart', () => {
             target,
         );
         expect(
-            targetController.refreshSelectedTargetDataCommandHandler,
+            targetController.refreshSelectedTargetHealthCommandHandler,
         ).toHaveBeenCalledOnce();
     });
 
@@ -76,7 +76,7 @@ describe('ContainerStart', () => {
             ),
         );
         expect(
-            targetController.refreshSelectedTargetDataCommandHandler,
+            targetController.refreshSelectedTargetHealthCommandHandler,
         ).not.toHaveBeenCalled();
     });
 

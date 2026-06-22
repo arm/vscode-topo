@@ -54,7 +54,7 @@ describe('ContainerDelete', () => {
             target,
         );
         expect(
-            targetController.refreshSelectedTargetDataCommandHandler,
+            targetController.refreshSelectedTargetHealthCommandHandler,
         ).toHaveBeenCalledOnce();
     });
 
@@ -77,7 +77,7 @@ describe('ContainerDelete', () => {
             ),
         );
         expect(
-            targetController.refreshSelectedTargetDataCommandHandler,
+            targetController.refreshSelectedTargetHealthCommandHandler,
         ).not.toHaveBeenCalled();
     });
 
