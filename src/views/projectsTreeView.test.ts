@@ -7,7 +7,7 @@ import { loaded, errored, loading, unloaded } from '../util/loadable';
 import { ErrorTreeItem } from '../treeItems/errorTreeItem';
 import { LoadingTreeItem } from '../treeItems/loadingTreeItem';
 import { ContainerTreeItem } from '../treeItems/containerTreeItem';
-import { ProjectProcessingDomainTreeItem } from '../treeItems/projectProcessingDomainTreeItem';
+import { ProcessingDomainTreeItem } from '../treeItems/processingDomainTreeItem';
 import { ProjectMetadata } from '../util/project';
 
 const project: ProjectMetadata = {
@@ -172,7 +172,7 @@ describe('ProjectsTreeView', () => {
         const children = provider.getChildren(projectItem);
 
         expect(children).toHaveLength(1);
-        expect(children[0]).toBeInstanceOf(ProjectProcessingDomainTreeItem);
+        expect(children[0]).toBeInstanceOf(ProcessingDomainTreeItem);
         expect(children[0]).toMatchObject({
             label: 'Linux Host',
             description: '1 container',
@@ -191,7 +191,7 @@ describe('ProjectsTreeView', () => {
             target: 'user@topo.local',
         };
         const provider = createProvider();
-        const processingDomainItem = new ProjectProcessingDomainTreeItem(
+        const processingDomainItem = new ProcessingDomainTreeItem(
             'Linux Host',
             [container],
         );

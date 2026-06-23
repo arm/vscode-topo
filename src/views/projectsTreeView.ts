@@ -7,7 +7,7 @@ import { ErrorTreeItem } from '../treeItems/errorTreeItem';
 import { LoadingTreeItem } from '../treeItems/loadingTreeItem';
 import { ContainerTreeItem } from '../treeItems/containerTreeItem';
 import { ContainerItem } from '../util/types';
-import { ProjectProcessingDomainTreeItem } from '../treeItems/projectProcessingDomainTreeItem';
+import { ProcessingDomainTreeItem } from '../treeItems/processingDomainTreeItem';
 
 function compareContainers(a: ContainerItem, b: ContainerItem): number {
     if (a.state === 'running' && b.state !== 'running') {
@@ -20,8 +20,8 @@ function compareContainers(a: ContainerItem, b: ContainerItem): number {
 }
 
 function compareProcessingDomains(
-    a: ProjectProcessingDomainTreeItem,
-    b: ProjectProcessingDomainTreeItem,
+    a: ProcessingDomainTreeItem,
+    b: ProcessingDomainTreeItem,
 ): number {
     return a.processingDomain.localeCompare(b.processingDomain, undefined, {
         sensitivity: 'base',
@@ -30,7 +30,7 @@ function compareProcessingDomains(
 
 function groupContainersByProcessingDomain(
     containers: ContainerItem[],
-): ProjectProcessingDomainTreeItem[] {
+): ProcessingDomainTreeItem[] {
     const containersByDomain = new Map<string, ContainerItem[]>();
     for (const container of containers) {
         const domain = container.processingDomain || 'Unknown';
@@ -43,7 +43,7 @@ function groupContainersByProcessingDomain(
     return [...containersByDomain.entries()]
         .map(
             ([domain, containers]) =>
-                new ProjectProcessingDomainTreeItem(
+                new ProcessingDomainTreeItem(
                     domain,
                     [...containers].sort(compareContainers),
                 ),
@@ -126,7 +126,7 @@ export class ProjectsTreeView
             return getProjectChildren(element);
         }
 
-        if (element instanceof ProjectProcessingDomainTreeItem) {
+        if (element instanceof ProcessingDomainTreeItem) {
             return element.containers.map(
                 (container) => new ContainerTreeItem(container),
             );

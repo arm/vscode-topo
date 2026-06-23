@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { ProjectProcessingDomainTreeItem } from './projectProcessingDomainTreeItem';
+import { ProcessingDomainTreeItem } from './processingDomainTreeItem';
 import { ContainerItem } from '../util/types';
 
 const containers: ContainerItem[] = [
@@ -15,16 +15,13 @@ const containers: ContainerItem[] = [
     },
 ];
 
-describe('ProjectProcessingDomainTreeItem', () => {
+describe('ProcessingDomainTreeItem', () => {
     it('sets label, description, contextValue, icon, and containers', () => {
-        const item = new ProjectProcessingDomainTreeItem(
-            'Linux Host',
-            containers,
-        );
+        const item = new ProcessingDomainTreeItem('Linux Host', containers);
 
         expect(item.label).toBe('Linux Host');
         expect(item.description).toBe('1 container');
-        expect(item.contextValue).toBe('ProjectProcessingDomain Linux Host');
+        expect(item.contextValue).toBe('ProcessingDomain Linux Host');
         expect(item.iconPath).toStrictEqual(
             new vscode.ThemeIcon('multiple-windows'),
         );
