@@ -27,14 +27,14 @@ function wrapCloneCommandWithCloneErrorHandling(
 
 const cloneMethodItems = [
     {
+        label: 'Template Project',
+        description: 'Clone from a curated catalogue of Templates',
+        cloneMethod: 'template',
+    },
+    {
         label: 'Remote Project',
         description: 'Clone from a remote git repository',
         cloneMethod: 'remote',
-    },
-    {
-        label: 'Template Project',
-        description: 'Clone from a curated set of templates',
-        cloneMethod: 'template',
     },
     {
         label: 'Local Project',
