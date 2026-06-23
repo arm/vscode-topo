@@ -16,12 +16,14 @@ import { ContainerDelete } from './actions/containerDelete';
 import { FixIssue } from './actions/fixIssue';
 import { ProjectClone } from './actions/projectClone';
 import { ProjectTreeItem } from './treeItems/projectTreeItem';
+import { ProjectController } from './controllers/projectController';
 
 vi.mock('./util/logger');
 
 describe('commands', () => {
     const handlers = {
         hostController: mock<HostController>(),
+        projectController: mock<ProjectController>(),
         targetController: mock<TargetController>(),
         projectInit: mock<ProjectInit>(),
         projectClone: mock<ProjectClone>(),
@@ -58,6 +60,10 @@ describe('commands', () => {
             [
                 commands.refreshHostHealth,
                 handlers.hostController.refreshHealthCommandHandler,
+            ],
+            [
+                commands.refreshProjects,
+                handlers.projectController.refreshProjects,
             ],
             [
                 commands.refreshTargetData,
