@@ -1,13 +1,13 @@
 import * as vscode from 'vscode';
-import { TargetProcessingDomainTreeItem } from './targetProcessingDomainTreeItem';
+import { ProcessingDomainTreeItem } from './processingDomainTreeItem';
 import { ContainerItem } from '../util/types';
 
 const target = 'user@topo.local';
 const containers: ContainerItem[] = [];
 
-describe('TargetProcessingDomainTreeItem', () => {
+describe('ProcessingDomainTreeItem', () => {
     it('should set label, contextValue, and container reference', () => {
-        const item = new TargetProcessingDomainTreeItem(
+        const item = new ProcessingDomainTreeItem(
             'PrimaryOS',
             target,
             containers,
@@ -24,7 +24,7 @@ describe('TargetProcessingDomainTreeItem', () => {
     });
 
     it('should accept dynamic processing domain names', () => {
-        const item = new TargetProcessingDomainTreeItem(
+        const item = new ProcessingDomainTreeItem(
             'imx-rproc',
             target,
             containers,

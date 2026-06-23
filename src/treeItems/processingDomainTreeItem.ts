@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { ContainerItem } from '../util/types';
 
-export class TargetProcessingDomainTreeItem extends vscode.TreeItem {
+export class ProcessingDomainTreeItem extends vscode.TreeItem {
     constructor(
         public readonly processingDomainId: string,
         public readonly target: string,

@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
 import { ContainerTreeItem } from '../treeItems/containerTreeItem';
 import * as manifest from '../manifest';
-import { TargetProcessingDomainTreeItem } from '../targetTreeView/targetProcessingDomainTreeItem';
+import { ProcessingDomainTreeItem } from '../treeItems/processingDomainTreeItem';
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
-import { TargetProcessingDomainGroupTreeItem } from '../targetTreeView/targetProcessingDomainGroupTreeItem';
+import { ProcessingDomainGroupTreeItem } from '../treeItems/processingDomainGroupTreeItem';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
@@ -85,7 +85,7 @@ function getSelectedTargetChildren(
                     health.loading,
                 ),
             );
-            const subsystemsGroup = new TargetProcessingDomainGroupTreeItem(
+            const subsystemsGroup = new ProcessingDomainGroupTreeItem(
                 target,
                 description?.remoteProcessors.map((rp) => rp.name) ?? [],
                 selectedTargetContainers,
@@ -187,7 +187,7 @@ export class TargetTreeView
             );
         }
 
-        if (element instanceof TargetProcessingDomainGroupTreeItem) {
+        if (element instanceof ProcessingDomainGroupTreeItem) {
             if (element.containers.status === 'errored') {
                 return [
                     new ErrorTreeItem(
@@ -218,7 +218,7 @@ export class TargetTreeView
                     domain.id,
                 );
 
-                return new TargetProcessingDomainTreeItem(
+                return new ProcessingDomainTreeItem(
                     domain.id,
                     element.target,
                     containers,
@@ -227,7 +227,7 @@ export class TargetTreeView
             });
         }
 
-        if (element instanceof TargetProcessingDomainTreeItem) {
+        if (element instanceof ProcessingDomainTreeItem) {
             return element.containers.map(
                 (container) => new ContainerTreeItem(container),
             );
