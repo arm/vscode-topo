@@ -1,0 +1,19 @@
+changelog:
+    exclude:
+        labels:
+            - chore
+            - ci
+            - docs
+            - refactor
+        authors:
+            - dependabot[bot]
+    categories:
+        - title: Breaking Changes
+          labels:
+              - breaking
+        - title: Features and Enhancements
+          labels:
+              - feat
+        - title: Fixes
+          labels:
+              - fix

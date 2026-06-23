@@ -110,6 +110,12 @@
                 "category": "Topo"
             },
             {
+                "command": "topo.refreshProjects",
+                "title": "Refresh",
+                "icon": "$(refresh)",
+                "category": "Topo"
+            },
+            {
                 "command": "topo.refreshTargetData",
                 "title": "Refresh",
                 "icon": "$(refresh)",
@@ -274,6 +280,10 @@
                     "when": "false"
                 },
                 {
+                    "command": "topo.refreshProjects",
+                    "when": "false"
+                },
+                {
                     "command": "topo.refreshTargetData",
                     "when": "false"
                 },
@@ -357,6 +367,11 @@
                 },
                 {
                     "command": "topo.cloneProject",
+                    "when": "view == topo.projects",
+                    "group": "navigation"
+                },
+                {
+                    "command": "topo.refreshProjects",
                     "when": "view == topo.projects",
                     "group": "navigation"
                 }
