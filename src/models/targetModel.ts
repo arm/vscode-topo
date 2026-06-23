@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { Loadable, unloaded } from '../util/loadable';
 import { TargetHealthCheck } from '../topoCliSchema';
-import { ContainerItem, TargetDescription } from '../util/types';
+import { TargetDescription } from '../util/types';
 
 export class TargetModel {
     private _onSelectedChanged: vscode.EventEmitter<void> =
@@ -27,7 +27,6 @@ export class TargetModel {
     private _selected?: string;
     private _targets: Loadable<string[]> = unloaded();
     private _health: Loadable<TargetHealthCheck> = unloaded();
-    private _containers: Loadable<ContainerItem[]> = unloaded();
     private _description: Loadable<TargetDescription> = unloaded();
 
     public setSelected(selected: string | undefined): void {
@@ -72,10 +71,6 @@ export class TargetModel {
 
     public get selectedTargetHealth(): Loadable<TargetHealthCheck> {
         return this._health;
-    }
-
-    public get selectedTargetContainers(): Loadable<ContainerItem[]> {
-        return this._containers;
     }
 
     public get selectedTargetDescription(): Loadable<TargetDescription> {

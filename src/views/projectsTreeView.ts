@@ -112,14 +112,14 @@ export class ProjectsTreeView
 
             const showWorkspaceName =
                 (vscode.workspace.workspaceFolders?.length ?? 0) > 1;
-            return projects.data.map(
-                (project) =>
-                    new ProjectTreeItem(
-                        project,
-                        showWorkspaceName,
-                        this.model.getProjectContainers(project),
-                    ),
-            );
+            return projects.data.map((project) => {
+                const containers = this.model.getProjectContainers(project);
+                return new ProjectTreeItem(
+                    project,
+                    showWorkspaceName,
+                    containers,
+                );
+            });
         }
 
         if (element instanceof ProjectTreeItem) {
