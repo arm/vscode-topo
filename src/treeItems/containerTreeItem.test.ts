@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
-import { TargetContainerTreeItem } from './targetContainerTreeItem';
+import { ContainerTreeItem } from './containerTreeItem';
 import { TARGET_HOST_RUNTIME, TARGET_REMOTEPROC_RUNTIME } from '../manifest';
 import { ContainerItem } from '../util/types';
 
-describe('TargetContainerTreeItem', () => {
+describe('ContainerTreeItem', () => {
     const target = 'user@topo.local';
     it('should set label (image), description (name - uptime), tooltip, contextValue, command, and iconPath', () => {
         const container: ContainerItem = {
@@ -20,7 +20,7 @@ describe('TargetContainerTreeItem', () => {
             ports: { '80/tcp': [{ HostIp: '0.0.0.0', HostPort: '8080' }] },
             target,
         };
-        const item = new TargetContainerTreeItem(container);
+        const item = new ContainerTreeItem(container);
         expect(item.label).toBe('nginx:latest');
         expect(item.description).toBe('my-container - 10m');
         expect(item.tooltip).toContain('id123');
@@ -52,7 +52,7 @@ describe('TargetContainerTreeItem', () => {
             ports: {},
             target,
         };
-        const item = new TargetContainerTreeItem(container);
+        const item = new ContainerTreeItem(container);
         expect(item.iconPath).toStrictEqual(
             new vscode.ThemeIcon(
                 'debug-breakpoint-log',
@@ -77,7 +77,7 @@ describe('TargetContainerTreeItem', () => {
             target,
         };
 
-        const item = new TargetContainerTreeItem(container);
+        const item = new ContainerTreeItem(container);
 
         expect(item.contextValue).toBe('service running PrimaryOS');
     });

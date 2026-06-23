@@ -2,8 +2,7 @@ import * as vscode from 'vscode';
 import { TARGET_HOST_RUNTIME, TARGET_REMOTEPROC_RUNTIME } from '../manifest';
 import { ContainerItem } from '../util/types';
 
-/** Represents an individual container in the target tree view. */
-export class TargetContainerTreeItem extends vscode.TreeItem {
+export class ContainerTreeItem extends vscode.TreeItem {
     public readonly contextValue: string;
     public readonly state: string;
     public readonly name: string;
@@ -24,9 +23,7 @@ export class TargetContainerTreeItem extends vscode.TreeItem {
             contextValues.push(processingDomainCategory);
         }
         this.contextValue = contextValues.join(' ');
-        this.iconPath = TargetContainerTreeItem.getIconForState(
-            containerItem.state,
-        );
+        this.iconPath = ContainerTreeItem.getIconForState(containerItem.state);
         this.state = containerItem.state;
         this.name = containerItem.name;
     }

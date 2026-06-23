@@ -1,5 +1,5 @@
-import { assertTargetContainerTreeItem } from './assertTargetContainerTreeItem';
-import { TargetContainerTreeItem } from './targetContainerTreeItem';
+import { assertContainerTreeItem } from './assertContainerTreeItem';
+import { ContainerTreeItem } from './containerTreeItem';
 import { logger } from '../util/logger';
 import { ContainerItem } from '../util/types';
 
@@ -11,15 +11,15 @@ vi.mock('../util/logger', () => ({
     },
 }));
 
-describe('assertTargetContainerTreeItem', () => {
+describe('assertContainerTreeItem', () => {
     const errMsg = 'This operation cannot be performed on this item';
-    const loggerErrMsg = `Expected TargetContainerTreeItem but received`;
+    const loggerErrMsg = `Expected ContainerTreeItem but received`;
 
     beforeEach(() => {
         vi.clearAllMocks();
     });
 
-    it('does not throw for an object that is an instance of TargetContainerTreeItem', () => {
+    it('does not throw for an object that is an instance of ContainerTreeItem', () => {
         const containerItem: ContainerItem = {
             id: 'test-id',
             name: 'test-name',
@@ -34,32 +34,32 @@ describe('assertTargetContainerTreeItem', () => {
             ports: {},
             target: 'root@test-host',
         };
-        const instanceLike = new TargetContainerTreeItem(containerItem);
+        const instanceLike = new ContainerTreeItem(containerItem);
 
-        const op = () => assertTargetContainerTreeItem(instanceLike);
+        const op = () => assertContainerTreeItem(instanceLike);
 
         expect(op).not.toThrow();
         expect(logger.error).not.toHaveBeenCalled();
     });
 
-    it('throws and logs an error when given a non TargetContainerTreeItem object', () => {
+    it('throws and logs an error when given a non ContainerTreeItem object', () => {
         const bad = { some: 'object' };
 
-        const op = () => assertTargetContainerTreeItem(bad);
+        const op = () => assertContainerTreeItem(bad);
 
         expect(op).toThrow(errMsg);
         expect(logger.error).toHaveBeenCalledWith(errMsg, loggerErrMsg, bad);
     });
 
     it('throws and logs an error when given null', () => {
-        const op = () => assertTargetContainerTreeItem(null);
+        const op = () => assertContainerTreeItem(null);
 
         expect(op).toThrow(errMsg);
         expect(logger.error).toHaveBeenCalledWith(errMsg, loggerErrMsg, null);
     });
 
     it('throws and logs an error when given undefined', () => {
-        const op = () => assertTargetContainerTreeItem(undefined);
+        const op = () => assertContainerTreeItem(undefined);
 
         expect(op).toThrow(errMsg);
         expect(logger.error).toHaveBeenCalledWith(

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { TargetTreeView } from './targetTreeView';
-import { TargetProcessingDomainTreeItem } from '../targetTreeView/targetProcessingDomainTreeItem';
+import { ProcessingDomainTreeItem } from '../treeItems/processingDomainTreeItem';
 import * as manifest from '../manifest';
 import { ContainerItem, TargetDescription } from '../util/types';
 import { mock } from 'vitest-mock-extended';
@@ -382,10 +382,7 @@ describe('TargetTreeView', () => {
 
     describe('getTreeItem', () => {
         it('getTreeItem returns the element itself', () => {
-            const item = new TargetProcessingDomainTreeItem(
-                'PrimaryOS',
-                target,
-            );
+            const item = new ProcessingDomainTreeItem('PrimaryOS', target);
 
             const treeItem = view.getTreeItem(item);
 
