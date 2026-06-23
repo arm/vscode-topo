@@ -7,6 +7,7 @@ import { loaded, errored, loading, unloaded } from '../util/loadable';
 import { ErrorTreeItem } from '../treeItems/errorTreeItem';
 import { LoadingTreeItem } from '../treeItems/loadingTreeItem';
 import { ContainerTreeItem } from '../treeItems/containerTreeItem';
+import { ProjectProcessingDomainTreeItem } from '../treeItems/projectProcessingDomainTreeItem';
 import { ProjectMetadata } from '../util/project';
 
 const project: ProjectMetadata = {
@@ -148,7 +149,7 @@ describe('ProjectsTreeView', () => {
         expect(children[0].contextValue).toBe('Project');
     });
 
-    it('returns container children below running project items', () => {
+    it('returns processing domain children below running project items', () => {
         model.setProjects(loaded([project]));
         model.setProjectContainers(
             project,
@@ -169,6 +170,33 @@ describe('ProjectsTreeView', () => {
         const projectItem = provider.getChildren()[0];
 
         const children = provider.getChildren(projectItem);
+
+        expect(children).toHaveLength(1);
+        expect(children[0]).toBeInstanceOf(ProjectProcessingDomainTreeItem);
+        expect(children[0]).toMatchObject({
+            label: 'Linux Host',
+            description: '1 container',
+        });
+    });
+
+    it('returns container children below processing domain items', () => {
+        const container = {
+            id: 'abc123',
+            names: 'app',
+            image: 'demo-app',
+            status: 'Up 1 minute',
+            state: 'running' as const,
+            processingDomain: 'Linux Host',
+            address: 'localhost:8000',
+            target: 'user@topo.local',
+        };
+        const provider = createProvider();
+        const processingDomainItem = new ProjectProcessingDomainTreeItem(
+            'Linux Host',
+            [container],
+        );
+
+        const children = provider.getChildren(processingDomainItem);
 
         expect(children).toHaveLength(1);
         expect(children[0]).toBeInstanceOf(ContainerTreeItem);

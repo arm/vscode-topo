@@ -7,6 +7,7 @@ import { ErrorTreeItem } from '../treeItems/errorTreeItem';
 import { LoadingTreeItem } from '../treeItems/loadingTreeItem';
 import { ContainerTreeItem } from '../treeItems/containerTreeItem';
 import { ContainerItem } from '../util/types';
+import { ProjectProcessingDomainTreeItem } from '../treeItems/projectProcessingDomainTreeItem';
 
 function compareContainers(a: ContainerItem, b: ContainerItem): number {
     if (a.state === 'running' && b.state !== 'running') {
@@ -16,6 +17,38 @@ function compareContainers(a: ContainerItem, b: ContainerItem): number {
         return 1;
     }
     return a.names.localeCompare(b.names, undefined, { sensitivity: 'base' });
+}
+
+function compareProcessingDomains(
+    a: ProjectProcessingDomainTreeItem,
+    b: ProjectProcessingDomainTreeItem,
+): number {
+    return a.processingDomain.localeCompare(b.processingDomain, undefined, {
+        sensitivity: 'base',
+    });
+}
+
+function groupContainersByProcessingDomain(
+    containers: ContainerItem[],
+): ProjectProcessingDomainTreeItem[] {
+    const containersByDomain = new Map<string, ContainerItem[]>();
+    for (const container of containers) {
+        const domain = container.processingDomain || 'Unknown';
+        containersByDomain.set(domain, [
+            ...(containersByDomain.get(domain) ?? []),
+            container,
+        ]);
+    }
+
+    return [...containersByDomain.entries()]
+        .map(
+            ([domain, containers]) =>
+                new ProjectProcessingDomainTreeItem(
+                    domain,
+                    [...containers].sort(compareContainers),
+                ),
+        )
+        .sort(compareProcessingDomains);
 }
 
 function getProjectChildren(projectItem: ProjectTreeItem): vscode.TreeItem[] {
@@ -31,9 +64,7 @@ function getProjectChildren(projectItem: ProjectTreeItem): vscode.TreeItem[] {
             : [];
     }
 
-    return [...containers.data]
-        .sort(compareContainers)
-        .map((container) => new ContainerTreeItem(container));
+    return groupContainersByProcessingDomain(containers.data);
 }
 
 export class ProjectsTreeView
@@ -93,6 +124,12 @@ export class ProjectsTreeView
 
         if (element instanceof ProjectTreeItem) {
             return getProjectChildren(element);
+        }
+
+        if (element instanceof ProjectProcessingDomainTreeItem) {
+            return element.containers.map(
+                (container) => new ContainerTreeItem(container),
+            );
         }
 
         return [];
