@@ -50,9 +50,6 @@ const PRIMARY_OS_PROCESSING_DOMAIN = {
     label: 'Primary OS',
 };
 
-const hasSelectedTargetContextKey = `${manifest.PACKAGE_NAME}.hasSelectedTarget`;
-const targetDataIssueContextKey = `${manifest.PACKAGE_NAME}.targetDataIssue`;
-
 function getSelectedTargetChildren(
     target: string,
     health: Loadable<TargetHealthCheck>,
@@ -98,7 +95,7 @@ function getSelectedTargetChildren(
 function syncTargetDataIssueContext(targets: Loadable<string[]>): void {
     void vscode.commands.executeCommand(
         'setContext',
-        targetDataIssueContextKey,
+        manifest.CONTEXT_TARGET_DATA_ISSUE,
         targets.status === 'errored',
     );
 }
@@ -106,7 +103,7 @@ function syncTargetDataIssueContext(targets: Loadable<string[]>): void {
 function syncSelectedTargetContext(selectedTarget: string | undefined): void {
     void vscode.commands.executeCommand(
         'setContext',
-        hasSelectedTargetContextKey,
+        manifest.CONTEXT_HAS_SELECTED_TARGET,
         Boolean(selectedTarget),
     );
 }
