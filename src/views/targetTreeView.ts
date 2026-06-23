@@ -1,17 +1,19 @@
 import * as vscode from 'vscode';
 import { TargetContainerTreeItem } from '../targetTreeView/targetContainerTreeItem';
 import * as manifest from '../manifest';
-import { TargetTreeItem } from '../targetTreeView/targetTreeItem';
 import { TargetProcessingDomainTreeItem } from '../targetTreeView/targetProcessingDomainTreeItem';
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
 import { TargetProcessingDomainGroupTreeItem } from '../targetTreeView/targetProcessingDomainGroupTreeItem';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
-import { ContainerItem } from '../util/types';
-import { loaded } from '../util/loadable';
+import { ContainerItem, TargetDescription } from '../util/types';
+import { Loadable, loaded } from '../util/loadable';
 import { TargetDataIssueTreeItem } from '../targetTreeView/targetDataIssueTreeItem';
 import { ErrorTreeItem } from '../treeItems/errorTreeItem';
+import { TargetHealthCheck } from '../topoCliSchema';
+import { getVisibleTargetIssues } from '../target/getVisibleTargetIssues';
+import { LoadingTreeItem } from '../treeItems/loadingTreeItem';
 
 function compareByName(a: { name: string }, b: { name: string }): number {
     return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
@@ -51,6 +53,72 @@ const PRIMARY_OS_PROCESSING_DOMAIN = {
 const hasSelectedTargetContextKey = `${manifest.PACKAGE_NAME}.hasSelectedTarget`;
 const targetDataIssueContextKey = `${manifest.PACKAGE_NAME}.targetDataIssue`;
 
+function getSelectedTargetChildren(
+    target: string,
+    health: Loadable<TargetHealthCheck>,
+    targetDescription: Loadable<TargetDescription>,
+    selectedTargetContainers: Loadable<ContainerItem[]>,
+): vscode.TreeItem[] {
+    switch (health.status) {
+        case 'unloaded':
+            return health.loading
+                ? [new LoadingTreeItem('Checking target health')]
+                : [];
+        case 'errored':
+            return [new ErrorTreeItem('Failed to check target health', health)];
+        case 'loaded': {
+            if (health.data.connectivity.status !== 'ok') {
+                return [
+                    new HealthCheckDependencyTreeItem(
+                        loaded(health.data.connectivity, health.loading),
+                    ),
+                ];
+            }
+
+            const description =
+                targetDescription.status === 'loaded'
+                    ? targetDescription.data
+                    : undefined;
+            const dependenciesGroup = new HealthCheckDependencyGroupTreeItem(
+                loaded(
+                    getVisibleTargetIssues(health.data, description),
+                    health.loading,
+                ),
+            );
+            const subsystemsGroup = new TargetProcessingDomainGroupTreeItem(
+                target,
+                description?.remoteProcessors.map((rp) => rp.name) ?? [],
+                selectedTargetContainers,
+            );
+            return [dependenciesGroup, subsystemsGroup];
+        }
+    }
+}
+
+function syncTargetDataIssueContext(targets: Loadable<string[]>): void {
+    void vscode.commands.executeCommand(
+        'setContext',
+        targetDataIssueContextKey,
+        targets.status === 'errored',
+    );
+}
+
+function syncSelectedTargetContext(selectedTarget: string | undefined): void {
+    void vscode.commands.executeCommand(
+        'setContext',
+        hasSelectedTargetContextKey,
+        Boolean(selectedTarget),
+    );
+}
+
+function refreshHeader(
+    treeView: vscode.TreeView<vscode.TreeItem>,
+    targetModel: TargetModel,
+): void {
+    treeView.description = targetModel.selected;
+    syncSelectedTargetContext(targetModel.selected);
+}
+
 export class TargetTreeView
     implements vscode.TreeDataProvider<vscode.TreeItem>, vscode.Disposable
 {
@@ -65,18 +133,19 @@ export class TargetTreeView
     constructor(private readonly targetModel: TargetModel) {
         const treeView = vscode.window.createTreeView(TargetTreeView.viewId, {
             treeDataProvider: this,
-            showCollapseAll: false,
+            showCollapseAll: true,
         });
+        refreshHeader(treeView, this.targetModel);
 
         this.disposables.collect(
             treeView,
             this.targetModel.onSelectedChanged(() => {
+                refreshHeader(treeView, this.targetModel);
                 this.refreshTreeView();
-                this.syncSelectedTargetContext();
             }),
             this.targetModel.onTargetsChanged(() => {
+                syncTargetDataIssueContext(this.targetModel.targets);
                 this.refreshTreeView();
-                this.syncTargetDataIssueContext();
             }),
             this.targetModel.onHealthChanged(() => {
                 this.refreshTreeView();
@@ -89,8 +158,7 @@ export class TargetTreeView
             }),
             this._onDidChangeTreeData,
         );
-        this.syncTargetDataIssueContext();
-        this.syncSelectedTargetContext();
+        syncTargetDataIssueContext(this.targetModel.targets);
     }
 
     public getChildren(element?: vscode.TreeItem): vscode.TreeItem[] {
@@ -104,35 +172,19 @@ export class TargetTreeView
                 return [];
             }
 
-            return [
-                new TargetTreeItem({
-                    target: selectedTarget,
-                    health: this.targetModel.selectedTargetHealth,
-                    targetDescription:
-                        this.targetModel.selectedTargetDescription,
-                }),
-            ];
-        }
-
-        if (element instanceof TargetTreeItem) {
-            if (!element.connected) {
-                return [];
-            }
-
-            const dependenciesGroup = new HealthCheckDependencyGroupTreeItem(
-                loaded(element.visibleIssues, element.health.loading),
-            );
-            const subsystemsGroup = new TargetProcessingDomainGroupTreeItem(
-                element.target,
-                element.remoteProcessorNames,
+            return getSelectedTargetChildren(
+                selectedTarget,
+                this.targetModel.selectedTargetHealth,
+                this.targetModel.selectedTargetDescription,
                 this.targetModel.selectedTargetContainers,
             );
-            return [dependenciesGroup, subsystemsGroup];
         }
 
         if (element instanceof HealthCheckDependencyGroupTreeItem) {
             const deps = [...element.dependencies].sort(compareByName);
-            return deps.map((d) => new HealthCheckDependencyTreeItem(d));
+            return deps.map(
+                (d) => new HealthCheckDependencyTreeItem(loaded(d)),
+            );
         }
 
         if (element instanceof TargetProcessingDomainGroupTreeItem) {
@@ -190,22 +242,6 @@ export class TargetTreeView
 
     private refreshTreeView(): void {
         this._onDidChangeTreeData.fire(undefined);
-    }
-
-    private syncTargetDataIssueContext(): void {
-        vscode.commands.executeCommand(
-            'setContext',
-            targetDataIssueContextKey,
-            this.targetModel.targets.status === 'errored',
-        );
-    }
-
-    private syncSelectedTargetContext(): void {
-        vscode.commands.executeCommand(
-            'setContext',
-            hasSelectedTargetContextKey,
-            Boolean(this.targetModel.selected),
-        );
     }
 
     public dispose(): void {

@@ -76,7 +76,7 @@ describe('health', () => {
                 isLocalhost: true,
                 dependencies: expect.any(Array),
                 connectivity: expect.any(Object),
-                subsystemDriver: expect.any(Object),
+                processingDomainDriver: expect.any(Object),
             }),
         });
     });

@@ -58,7 +58,7 @@ export function getIssueFixCommandGroups(
 function getTargetIssues(health: TargetHealthCheck): IssueCheck[] {
     return [
         health.connectivity,
-        health.subsystemDriver,
+        health.processingDomainDriver,
         ...health.dependencies,
     ];
 }

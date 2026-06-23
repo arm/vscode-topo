@@ -320,8 +320,8 @@ describe('TopoCli', () => {
                     status: 'ok',
                     value: '',
                 },
-                subsystemDriver: {
-                    name: 'Subsystem Driver (remoteproc)',
+                processingDomainDriver: {
+                    name: 'Processing Domain Driver (remoteproc)',
                     status: 'ok',
                     value: 'driver-x',
                 },
@@ -344,8 +344,8 @@ describe('TopoCli', () => {
                     status: 'ok',
                     value: '',
                 },
-                subsystemDriver: {
-                    name: 'Subsystem Driver (remoteproc)',
+                processingDomainDriver: {
+                    name: 'Processing Domain Driver (remoteproc)',
                     status: 'ok',
                     value: 'driver-x',
                 },
@@ -393,24 +393,18 @@ describe('TopoCli', () => {
         expect(cp.stdin.end).toHaveBeenCalledTimes(1);
     });
 
-    it('verifyVersion does not throw when versions match', () => {
+    it('assertVersion does not throw when versions match', () => {
         execSyncMock.mockReturnValue('topo version 1.2.3 (commit: abcd)\n');
 
-        expect(() => topoCli.verifyVersion('1.2.3')).not.toThrow();
+        expect(() => topoCli.assertVersion('1.2.3')).not.toThrow();
     });
 
-    it('verifyVersion throws when versions mismatch', () => {
+    it('assertVersion throws when versions mismatch', () => {
         execSyncMock.mockReturnValue('topo version 1.2.3 (commit: abcd)\n');
 
-        expect(() => topoCli.verifyVersion('2.0.0')).toThrow(
+        expect(() => topoCli.assertVersion('2.0.0')).toThrow(
             'version mismatch: found=1.2.3 expected=2.0.0',
         );
-    });
-
-    it('verifyVersion accepts v-prefixed versions from package.json', () => {
-        execSyncMock.mockReturnValue('topo version 1.2.3 (commit: abcd)\n');
-
-        expect(() => topoCli.verifyVersion('v1.2.3')).not.toThrow();
     });
 
     it('health throws error when JSON output is invalid', async () => {

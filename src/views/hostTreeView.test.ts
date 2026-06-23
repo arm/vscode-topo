@@ -99,11 +99,13 @@ describe('HostDependenciesTreeDataProvider', () => {
 
     it('getTreeItem returns the element itself', () => {
         const provider = new HostTreeView(new HostModel());
-        const item = new HealthCheckDependencyTreeItem({
-            name: 'Alpha',
-            status: 'ok',
-            value: 'installed',
-        });
+        const item = new HealthCheckDependencyTreeItem(
+            loaded({
+                name: 'Alpha',
+                status: 'ok',
+                value: 'installed',
+            }),
+        );
 
         const treeItem = provider.getTreeItem(item);
 
