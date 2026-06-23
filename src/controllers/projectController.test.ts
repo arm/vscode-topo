@@ -1,7 +1,7 @@
 import { ProjectController } from './projectController';
 import { ProjectModel } from '../models/projectModel';
 import { findTopLevelComposeProjects, ProjectMetadata } from '../util/project';
-import { loaded, unloaded } from '../util/loadable';
+import { errored, loaded, unloaded } from '../util/loadable';
 import * as vscode from 'vscode';
 import { mutable } from '../util/mutable';
 import { mock } from 'vitest-mock-extended';
@@ -62,27 +62,12 @@ const psOutput: PsOutput = {
     ],
 };
 
-function createTargetModel(): TargetModel {
-    return new TargetModel();
-}
-
-function createHealthyTargetModel(): TargetModel {
-    const targetModel = new TargetModel();
-    targetModel.setSelected(target);
-    targetModel.setSelectedTargetHealth(loaded(healthyTarget));
-    return targetModel;
-}
-
 describe('ProjectController', () => {
-    let topoCli: TopoCli;
-
     beforeEach(() => {
         mutable(vscode.workspace).workspaceFolders = [workspaceFolder];
-        topoCli = mock<TopoCli>();
     });
 
     afterEach(() => {
-        vi.resetAllMocks();
         mutable(vscode.workspace).workspaceFolders = undefined;
     });
 
@@ -92,8 +77,8 @@ describe('ProjectController', () => {
 
         const controller = new ProjectController(
             model,
-            topoCli,
-            createTargetModel(),
+            mock<TopoCli>(),
+            new TargetModel(),
         );
         await controller.refreshProjects();
 
@@ -104,22 +89,18 @@ describe('ProjectController', () => {
     });
 
     it('stores an error when project discovery fails', async () => {
-        vi.mocked(findTopLevelComposeProjects).mockRejectedValue(
-            new Error('scan failed'),
-        );
+        const error = new Error('scan failed');
+        vi.mocked(findTopLevelComposeProjects).mockRejectedValue(error);
         const model = new ProjectModel();
 
         const controller = new ProjectController(
             model,
-            topoCli,
-            createTargetModel(),
+            mock<TopoCli>(),
+            new TargetModel(),
         );
         await controller.refreshProjects();
 
-        expect(model.projects.status).toBe('errored');
-        if (model.projects.status === 'errored') {
-            expect(model.projects.error.message).toBe('scan failed');
-        }
+        expect(model.projects).toStrictEqual(errored(error));
     });
 
     it('does not let stale refresh results overwrite newer projects', async () => {
@@ -142,8 +123,8 @@ describe('ProjectController', () => {
 
         const controller = new ProjectController(
             model,
-            topoCli,
-            createTargetModel(),
+            mock<TopoCli>(),
+            new TargetModel(),
         );
         const staleRefresh = controller.refreshProjects();
         const latestRefresh = controller.refreshProjects();
@@ -160,15 +141,14 @@ describe('ProjectController', () => {
     });
 
     it('loads containers for all projects at once', async () => {
+        const targetModel = new TargetModel();
+        targetModel.setSelected(target);
+        targetModel.setSelectedTargetHealth(loaded(healthyTarget));
         const model = new ProjectModel();
         model.setProjects(loaded([projects[0], otherProject]));
         const topoCli = mock<TopoCli>();
         topoCli.ps.mockResolvedValue(psOutput);
-        const controller = new ProjectController(
-            model,
-            topoCli,
-            createHealthyTargetModel(),
-        );
+        const controller = new ProjectController(model, topoCli, targetModel);
 
         await controller.refreshProjectContainersCommandHandler();
 
@@ -186,6 +166,9 @@ describe('ProjectController', () => {
     });
 
     it('stores per-project errors without failing the whole refresh', async () => {
+        const targetModel = new TargetModel();
+        targetModel.setSelected(target);
+        targetModel.setSelectedTargetHealth(loaded(healthyTarget));
         const model = new ProjectModel();
         model.setProjects(loaded([projects[0], otherProject]));
         const topoCli = mock<TopoCli>();
@@ -195,11 +178,7 @@ describe('ProjectController', () => {
             }
             throw new Error('ps failed');
         });
-        const controller = new ProjectController(
-            model,
-            topoCli,
-            createHealthyTargetModel(),
-        );
+        const controller = new ProjectController(model, topoCli, targetModel);
 
         await controller.refreshProjectContainersCommandHandler();
 
@@ -215,7 +194,7 @@ describe('ProjectController', () => {
         const controller = new ProjectController(
             model,
             mock<TopoCli>(),
-            createHealthyTargetModel(),
+            new TargetModel(),
         );
 
         await controller.refreshProjectContainersCommandHandler();
