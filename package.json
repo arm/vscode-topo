@@ -31,7 +31,7 @@
             {
                 "command": "topo.cloneProject",
                 "title": "Clone Project",
-                "icon": "$(repo-clone)",
+                "icon": "$(desktop-download)",
                 "category": "Topo"
             },
             {
@@ -191,6 +191,10 @@
                 "view": "topo.target-manager",
                 "when": "!topo.hasSelectedTarget",
                 "contents": "No target selected\n[Select a target](command:topo.selectTarget)"
+            },
+            {
+                "view": "topo.projects",
+                "contents": "No projects found\n[Clone a project](command:topo.cloneProject)"
             }
         ],
         "menus": {
