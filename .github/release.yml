@@ -5,8 +5,6 @@ changelog:
             - ci
             - docs
             - refactor
-            - ignore-for-release
-            - skip-changelog
         authors:
             - dependabot[bot]
     categories:
