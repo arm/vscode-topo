@@ -118,6 +118,7 @@ export async function activate(
     context.subscriptions.push(
         commands.register({
             hostController,
+            projectController,
             targetController,
             projectInit,
             deploy,

@@ -16,9 +16,6 @@ function compareByName(a: { name: string }, b: { name: string }): number {
     return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
 }
 
-const hasSelectedTargetContextKey = `${manifest.PACKAGE_NAME}.hasSelectedTarget`;
-const targetDataIssueContextKey = `${manifest.PACKAGE_NAME}.targetDataIssue`;
-
 function getSelectedTargetChildren(
     health: Loadable<TargetHealthCheck>,
     targetDescription: Loadable<TargetDescription>,
@@ -57,7 +54,7 @@ function getSelectedTargetChildren(
 function syncTargetDataIssueContext(targets: Loadable<string[]>): void {
     void vscode.commands.executeCommand(
         'setContext',
-        targetDataIssueContextKey,
+        manifest.CONTEXT_TARGET_DATA_ISSUE,
         targets.status === 'errored',
     );
 }
@@ -65,7 +62,7 @@ function syncTargetDataIssueContext(targets: Loadable<string[]>): void {
 function syncSelectedTargetContext(selectedTarget: string | undefined): void {
     void vscode.commands.executeCommand(
         'setContext',
-        hasSelectedTargetContextKey,
+        manifest.CONTEXT_HAS_SELECTED_TARGET,
         Boolean(selectedTarget),
     );
 }

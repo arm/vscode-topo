@@ -3,5 +3,7 @@ export const PACKAGE_NAME = 'topo';
 export const DISPLAY_NAME = 'Topo';
 export const CONFIG_LOGGING_VERBOSITY = 'loggingVerbosity';
 export const DEFAULT_LOGGING_VERBOSITY = 'warn';
+export const CONTEXT_HAS_SELECTED_TARGET = `${PACKAGE_NAME}.hasSelectedTarget`;
+export const CONTEXT_TARGET_DATA_ISSUE = `${PACKAGE_NAME}.targetDataIssue`;
 export const TOPO_CLI = 'topo';
 export const TOPO_CLI_WINDOWS = 'topo.exe';

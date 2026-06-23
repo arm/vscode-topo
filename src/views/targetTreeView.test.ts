@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as manifest from '../manifest';
 import { TargetTreeView } from './targetTreeView';
 import { TargetDescription } from '../util/types';
 import { mock } from 'vitest-mock-extended';
@@ -64,12 +65,12 @@ describe('TargetTreeView', () => {
 
             expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
                 'setContext',
-                'topo.targetDataIssue',
+                manifest.CONTEXT_TARGET_DATA_ISSUE,
                 true,
             );
             expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
                 'setContext',
-                'topo.hasSelectedTarget',
+                manifest.CONTEXT_HAS_SELECTED_TARGET,
                 true,
             );
             contextView.dispose();
@@ -82,7 +83,7 @@ describe('TargetTreeView', () => {
                 vscode.commands.executeCommand,
             ).toHaveBeenCalledExactlyOnceWith(
                 'setContext',
-                'topo.targetDataIssue',
+                manifest.CONTEXT_TARGET_DATA_ISSUE,
                 true,
             );
 
@@ -93,7 +94,7 @@ describe('TargetTreeView', () => {
                 vscode.commands.executeCommand,
             ).toHaveBeenCalledExactlyOnceWith(
                 'setContext',
-                'topo.targetDataIssue',
+                manifest.CONTEXT_TARGET_DATA_ISSUE,
                 false,
             );
         });
@@ -105,7 +106,7 @@ describe('TargetTreeView', () => {
                 vscode.commands.executeCommand,
             ).toHaveBeenCalledExactlyOnceWith(
                 'setContext',
-                'topo.hasSelectedTarget',
+                manifest.CONTEXT_HAS_SELECTED_TARGET,
                 false,
             );
 
@@ -116,7 +117,7 @@ describe('TargetTreeView', () => {
                 vscode.commands.executeCommand,
             ).toHaveBeenCalledExactlyOnceWith(
                 'setContext',
-                'topo.hasSelectedTarget',
+                manifest.CONTEXT_HAS_SELECTED_TARGET,
                 true,
             );
         });

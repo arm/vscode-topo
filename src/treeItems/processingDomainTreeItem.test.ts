@@ -30,4 +30,13 @@ describe('ProcessingDomainTreeItem', () => {
         );
         expect(item.containers).toBe(containers);
     });
+
+    it('pluralizes the container count', () => {
+        const item = new ProcessingDomainTreeItem('Linux Host', [
+            containers[0],
+            { ...containers[0], id: 'def456' },
+        ]);
+
+        expect(item.description).toBe('2 containers');
+    });
 });

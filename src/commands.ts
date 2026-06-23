@@ -13,12 +13,14 @@ import { ContainerStop } from './actions/containerStop';
 import { ContainerDelete } from './actions/containerDelete';
 import { FixIssue } from './actions/fixIssue';
 import { ProjectClone } from './actions/projectClone';
+import { ProjectController } from './controllers/projectController';
 
 function command(id: string): string {
     return `${PACKAGE_NAME}.${id}`;
 }
 
 export const refreshHostHealth = command('refreshHostHealth');
+export const refreshProjects = command('refreshProjects');
 export const refreshTargetData = command('refreshTargetData');
 export const showOutput = command('showOutput');
 export const selectTarget = command('selectTarget');
@@ -43,6 +45,7 @@ export const templateClone = command('templateClone');
 
 export interface CommandHandlers {
     hostController: HostController;
+    projectController: ProjectController;
     targetController: TargetController;
     projectInit: ProjectInit;
     projectClone: ProjectClone;
@@ -60,6 +63,9 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
     disposables.collect(
         vscode.commands.registerCommand(refreshHostHealth, () =>
             handlers.hostController.refreshHealthCommandHandler(),
+        ),
+        vscode.commands.registerCommand(refreshProjects, () =>
+            handlers.projectController.refreshProjects(),
         ),
         vscode.commands.registerCommand(refreshTargetData, () =>
             handlers.targetController.refreshSelectedTargetHealthCommandHandler(),
