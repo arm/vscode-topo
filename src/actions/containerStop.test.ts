@@ -6,7 +6,7 @@ import { WrappedError } from '../errors/wrappedError';
 import { mock } from 'vitest-mock-extended';
 import { ContainerCommands } from '../target/containerCommands';
 import type { MockInstance } from 'vitest';
-import { TargetController } from '../controllers/targetController';
+import { ProjectController } from '../controllers/projectController';
 
 describe('ContainerStop', () => {
     let showErrorMessageSpy: MockInstance;
@@ -35,10 +35,10 @@ describe('ContainerStop', () => {
 
     it('calls stopContainer and shows info message on success', async () => {
         const containerCommands = mock<ContainerCommands>();
-        const targetController = mock<TargetController>();
+        const projectController = mock<ProjectController>();
         const containerStop = new ContainerStop(
             containerCommands,
-            targetController,
+            projectController,
         );
 
         await containerStop.stopContainerCommandHandler(treeItem);
@@ -48,19 +48,19 @@ describe('ContainerStop', () => {
             target,
         );
         expect(
-            targetController.refreshSelectedTargetHealthCommandHandler,
+            projectController.refreshProjectContainersCommandHandler,
         ).toHaveBeenCalledOnce();
     });
 
     it('shows error message if stopContainer throws a WrappedError', async () => {
         const containerCommands = mock<ContainerCommands>();
-        const targetController = mock<TargetController>();
+        const projectController = mock<ProjectController>();
         containerCommands.stopContainer.mockRejectedValue(
             new WrappedError('DOCKER', 'fail'),
         );
         const containerStop = new ContainerStop(
             containerCommands,
-            targetController,
+            projectController,
         );
 
         await containerStop.stopContainerCommandHandler(treeItem);
@@ -71,7 +71,7 @@ describe('ContainerStop', () => {
             ),
         );
         expect(
-            targetController.refreshSelectedTargetHealthCommandHandler,
+            projectController.refreshProjectContainersCommandHandler,
         ).not.toHaveBeenCalled();
     });
 
@@ -82,7 +82,7 @@ describe('ContainerStop', () => {
         );
         const containerStop = new ContainerStop(
             containerCommands,
-            mock<TargetController>(),
+            mock<ProjectController>(),
         );
 
         await expect(

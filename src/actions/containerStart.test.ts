@@ -6,7 +6,7 @@ import { mock } from 'vitest-mock-extended';
 import { ContainerItem } from '../util/types';
 import { ContainerCommands } from '../target/containerCommands';
 import type { MockInstance } from 'vitest';
-import { TargetController } from '../controllers/targetController';
+import { ProjectController } from '../controllers/projectController';
 
 describe('ContainerStart', () => {
     let showErrorMessageSpy: MockInstance;
@@ -35,10 +35,10 @@ describe('ContainerStart', () => {
 
     it('calls startContainer and shows info message on success', async () => {
         const containerCommands = mock<ContainerCommands>();
-        const targetController = mock<TargetController>();
+        const projectController = mock<ProjectController>();
         const containerStart = new ContainerStart(
             containerCommands,
-            targetController,
+            projectController,
         );
 
         await containerStart.startContainerCommandHandler(treeItem);
@@ -48,19 +48,19 @@ describe('ContainerStart', () => {
             target,
         );
         expect(
-            targetController.refreshSelectedTargetHealthCommandHandler,
+            projectController.refreshProjectContainersCommandHandler,
         ).toHaveBeenCalledOnce();
     });
 
     it('shows error message if startContainer throws a WrappedError', async () => {
         const containerCommands = mock<ContainerCommands>();
-        const targetController = mock<TargetController>();
+        const projectController = mock<ProjectController>();
         containerCommands.startContainer.mockRejectedValue(
             new WrappedError('DOCKER', 'fail'),
         );
         const containerStart = new ContainerStart(
             containerCommands,
-            targetController,
+            projectController,
         );
 
         await containerStart.startContainerCommandHandler(treeItem);
@@ -71,7 +71,7 @@ describe('ContainerStart', () => {
             ),
         );
         expect(
-            targetController.refreshSelectedTargetHealthCommandHandler,
+            projectController.refreshProjectContainersCommandHandler,
         ).not.toHaveBeenCalled();
     });
 
@@ -82,7 +82,7 @@ describe('ContainerStart', () => {
         );
         const containerStart = new ContainerStart(
             containerCommands,
-            mock<TargetController>(),
+            mock<ProjectController>(),
         );
 
         await expect(

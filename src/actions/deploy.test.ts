@@ -6,8 +6,9 @@ import { TargetModel } from '../models/targetModel';
 import { MockProxy, mock } from 'vitest-mock-extended';
 import { mutable } from '../util/mutable';
 import { TaskExecutor } from '../util/taskExecutor';
-import { TargetController } from '../controllers/targetController';
+import { ProjectController } from '../controllers/projectController';
 import { ProjectTreeItem } from '../treeItems/projectTreeItem';
+import { unloaded } from '../util/loadable';
 
 describe('Deploy', () => {
     let deployAction: Deploy;
@@ -22,7 +23,7 @@ describe('Deploy', () => {
     const target = 'topo.local';
     let taskExecutor: MockProxy<TaskExecutor>;
     let targetModel: TargetModel;
-    let targetController: MockProxy<TargetController>;
+    let projectController: MockProxy<ProjectController>;
 
     function projectTreeItem(): ProjectTreeItem {
         return new ProjectTreeItem(
@@ -34,6 +35,7 @@ describe('Deploy', () => {
                 workspaceName: 'workspace',
             },
             false,
+            unloaded(),
         );
     }
 
@@ -62,13 +64,13 @@ describe('Deploy', () => {
         taskExecutor = mock<TaskExecutor>();
         targetModel = new TargetModel();
         targetModel.setSelected(target);
-        targetController = mock<TargetController>();
+        projectController = mock<ProjectController>();
         vi.mocked(vscode.workspace.findFiles).mockResolvedValue([]);
         vi.mocked(vscode.workspace.getWorkspaceFolder).mockReturnValue(
             undefined,
         );
         mutable(vscode.workspace).workspaceFolders = undefined;
-        deployAction = new Deploy(taskExecutor, targetModel, targetController);
+        deployAction = new Deploy(taskExecutor, targetModel, projectController);
     });
 
     afterEach(() => {
@@ -87,7 +89,7 @@ describe('Deploy', () => {
         );
         expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(
-            targetController.refreshSelectedTargetHealthCommandHandler,
+            projectController.refreshProjectContainersCommandHandler,
         ).not.toHaveBeenCalled();
     });
 
@@ -103,7 +105,7 @@ describe('Deploy', () => {
         expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
         expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(
-            targetController.refreshSelectedTargetHealthCommandHandler,
+            projectController.refreshProjectContainersCommandHandler,
         ).not.toHaveBeenCalled();
     });
 
@@ -136,7 +138,7 @@ describe('Deploy', () => {
             path.dirname(composeFilePath),
         );
         expect(
-            targetController.refreshSelectedTargetHealthCommandHandler,
+            projectController.refreshProjectContainersCommandHandler,
         ).toHaveBeenCalledOnce();
     });
 
@@ -149,7 +151,7 @@ describe('Deploy', () => {
             path.dirname(composeFilePath),
         );
         expect(
-            targetController.refreshSelectedTargetHealthCommandHandler,
+            projectController.refreshProjectContainersCommandHandler,
         ).toHaveBeenCalledOnce();
     });
 
@@ -165,7 +167,7 @@ describe('Deploy', () => {
         expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
         expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(
-            targetController.refreshSelectedTargetHealthCommandHandler,
+            projectController.refreshProjectContainersCommandHandler,
         ).not.toHaveBeenCalled();
     });
 
@@ -178,7 +180,7 @@ describe('Deploy', () => {
 
         expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(
-            targetController.refreshSelectedTargetHealthCommandHandler,
+            projectController.refreshProjectContainersCommandHandler,
         ).not.toHaveBeenCalled();
     });
 
@@ -211,7 +213,7 @@ describe('Deploy', () => {
             workspaceUri.fsPath,
         );
         expect(
-            targetController.refreshSelectedTargetHealthCommandHandler,
+            projectController.refreshProjectContainersCommandHandler,
         ).toHaveBeenCalledOnce();
     });
 
@@ -226,7 +228,7 @@ describe('Deploy', () => {
 
         expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(
-            targetController.refreshSelectedTargetHealthCommandHandler,
+            projectController.refreshProjectContainersCommandHandler,
         ).not.toHaveBeenCalled();
     });
 });

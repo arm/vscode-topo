@@ -16,6 +16,7 @@ import { ContainerDelete } from './actions/containerDelete';
 import { FixIssue } from './actions/fixIssue';
 import { ProjectClone } from './actions/projectClone';
 import { ProjectTreeItem } from './treeItems/projectTreeItem';
+import { unloaded } from './util/loadable';
 
 vi.mock('./util/logger');
 
@@ -166,6 +167,7 @@ describe('commands', () => {
                     workspaceName: 'workspace',
                 },
                 false,
+                unloaded(),
             );
             commands.register(handlers);
 
@@ -189,6 +191,7 @@ describe('commands', () => {
                     workspaceName: 'workspace',
                 },
                 false,
+                unloaded(),
             );
             commands.register(handlers);
 

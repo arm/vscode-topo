@@ -2,12 +2,12 @@ import { assertContainerTreeItem } from '../treeItems/assertContainerTreeItem';
 import { showAndLogError } from '../util/showAndLogError';
 import { isWrappedError } from '../errors/wrappedError';
 import { ContainerCommands } from '../target/containerCommands';
-import { TargetController } from '../controllers/targetController';
+import { ProjectController } from '../controllers/projectController';
 
 export class ContainerStop {
     constructor(
         private readonly containerCommands: ContainerCommands,
-        private readonly targetController: TargetController,
+        private readonly projectController: ProjectController,
     ) {}
 
     public async stopContainerCommandHandler(treeNode: unknown): Promise<void> {
@@ -25,6 +25,6 @@ export class ContainerStop {
             }
             throw err;
         }
-        await this.targetController.refreshSelectedTargetHealthCommandHandler();
+        await this.projectController.refreshProjectContainersCommandHandler();
     }
 }
