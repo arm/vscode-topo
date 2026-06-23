@@ -183,7 +183,7 @@
         "viewsWelcome": [
             {
                 "view": "topo.target-manager",
-                "when": "!topo.targetSelected",
+                "when": "!topo.hasSelectedTarget",
                 "contents": "No target selected\n[Select a target](command:topo.selectTarget)"
             }
         ],
