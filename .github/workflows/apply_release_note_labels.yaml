@@ -69,7 +69,8 @@ jobs:
                       gh label create "$1" \
                           --repo "$REPOSITORY" \
                           --color "$2" \
-                          --description "$3" || true
+                          --description "$3" \
+                          --force
                   }
 
                   ensure_label breaking b60205 'Breaking change for release notes'
