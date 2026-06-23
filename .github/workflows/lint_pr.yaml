@@ -6,7 +6,7 @@ on:
         types: [opened, reopened, edited, synchronize]
 
 jobs:
-    main:
+    validate-title:
         name: Validate PR title
         runs-on: ubuntu-slim
         permissions:
