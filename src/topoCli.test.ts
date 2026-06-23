@@ -11,6 +11,7 @@ import { WrappedError } from './errors/wrappedError';
 import {
     HealthCheck,
     ProjectDescription,
+    PsOutput,
     TemplateDescription,
 } from './topoCliSchema';
 import { TargetDescription } from './util/types';
@@ -300,6 +301,88 @@ describe('TopoCli', () => {
             return cp;
         });
         await expect(topoCli.init('t')).rejects.toThrow('err');
+    });
+
+    it('ps parses JSON output and runs topo ps in the project directory', async () => {
+        const output: PsOutput = {
+            containers: [
+                {
+                    id: '5c5f2d9b4a8f',
+                    names: 'demo-linux-1',
+                    image: 'ghcr.io/arm/topo-demo:latest',
+                    status: 'Up 2 minutes',
+                    state: 'running',
+                    processingDomain: 'linux',
+                    address: '192.0.2.10',
+                },
+                {
+                    id: '7a56e7a56f01',
+                    names: 'demo-rproc-1',
+                    image: 'ghcr.io/arm/topo-rproc:latest',
+                    status: 'Exited (0) 1 minute ago',
+                    state: 'exited',
+                    processingDomain: 'imx-rproc',
+                    address: '',
+                },
+            ],
+        };
+        execMock.mockImplementation((_bin, _cargs, _options, cb) => {
+            cb!(null, JSON.stringify(output), '');
+            return cp;
+        });
+
+        const target = 'user@topo.local';
+        const projectPath = '/fake/workspace/demo';
+
+        await expect(topoCli.ps(target, projectPath)).resolves.toEqual(output);
+        expect(execMock).toHaveBeenCalledWith(
+            topoCli.getBinaryPath(),
+            ['ps', '-a', '--target', target, '-o', 'json'],
+            { cwd: projectPath, env: {} },
+            expect.any(Function),
+        );
+    });
+
+    it('ps rejects when topo ps fails', async () => {
+        execMock.mockImplementation((_bin, _args, _options, cb) => {
+            cb!(new Error('fail'), '', 'ps failed');
+            return cp;
+        });
+
+        await expect(topoCli.ps('hostname', '/fake/project')).rejects.toThrow(
+            'ps failed',
+        );
+    });
+
+    it('ps rejects when JSON output is invalid', async () => {
+        execMock.mockImplementation((_bin, _cargs, _options, cb) => {
+            cb!(null, 'invalid json', '');
+            return cp;
+        });
+
+        await expect(topoCli.ps('hostname', '/fake/project')).rejects.toThrow();
+    });
+
+    it('ps rejects when JSON output fails schema validation', async () => {
+        const output = {
+            containers: [
+                {
+                    id: '5c5f2d9b4a8f',
+                    names: 'demo-linux-1',
+                    image: 'ghcr.io/arm/topo-demo:latest',
+                    status: 'Up 2 minutes',
+                    state: 'unknown',
+                    processingDomain: 'linux',
+                    address: '192.0.2.10',
+                },
+            ],
+        };
+        execMock.mockImplementation((_bin, _cargs, _options, cb) => {
+            cb!(null, JSON.stringify(output), '');
+            return cp;
+        });
+
+        await expect(topoCli.ps('hostname', '/fake/project')).rejects.toThrow();
     });
 
     it('health parses JSON output', async () => {
