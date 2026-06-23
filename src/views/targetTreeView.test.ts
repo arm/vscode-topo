@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { TargetTreeView } from './targetTreeView';
-import { TargetProcessingDomainTreeItem } from '../targetTreeView/targetProcessingDomainTreeItem';
+import { ProcessingDomainTreeItem } from '../treeItems/processingDomainTreeItem';
 import * as manifest from '../manifest';
 import { ContainerItem, TargetDescription } from '../util/types';
 import { mock } from 'vitest-mock-extended';
@@ -116,12 +116,12 @@ describe('TargetTreeView', () => {
 
             expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
                 'setContext',
-                'topo.targetDataIssue',
+                manifest.CONTEXT_TARGET_DATA_ISSUE,
                 true,
             );
             expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
                 'setContext',
-                'topo.hasSelectedTarget',
+                manifest.CONTEXT_HAS_SELECTED_TARGET,
                 true,
             );
             contextView.dispose();
@@ -134,7 +134,7 @@ describe('TargetTreeView', () => {
                 vscode.commands.executeCommand,
             ).toHaveBeenCalledExactlyOnceWith(
                 'setContext',
-                'topo.targetDataIssue',
+                manifest.CONTEXT_TARGET_DATA_ISSUE,
                 true,
             );
 
@@ -145,7 +145,7 @@ describe('TargetTreeView', () => {
                 vscode.commands.executeCommand,
             ).toHaveBeenCalledExactlyOnceWith(
                 'setContext',
-                'topo.targetDataIssue',
+                manifest.CONTEXT_TARGET_DATA_ISSUE,
                 false,
             );
         });
@@ -157,7 +157,7 @@ describe('TargetTreeView', () => {
                 vscode.commands.executeCommand,
             ).toHaveBeenCalledExactlyOnceWith(
                 'setContext',
-                'topo.hasSelectedTarget',
+                manifest.CONTEXT_HAS_SELECTED_TARGET,
                 false,
             );
 
@@ -168,7 +168,7 @@ describe('TargetTreeView', () => {
                 vscode.commands.executeCommand,
             ).toHaveBeenCalledExactlyOnceWith(
                 'setContext',
-                'topo.hasSelectedTarget',
+                manifest.CONTEXT_HAS_SELECTED_TARGET,
                 true,
             );
         });
@@ -382,10 +382,7 @@ describe('TargetTreeView', () => {
 
     describe('getTreeItem', () => {
         it('getTreeItem returns the element itself', () => {
-            const item = new TargetProcessingDomainTreeItem(
-                'PrimaryOS',
-                target,
-            );
+            const item = new ProcessingDomainTreeItem('PrimaryOS', target);
 
             const treeItem = view.getTreeItem(item);
 

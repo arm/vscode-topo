@@ -1,19 +1,35 @@
 import * as vscode from 'vscode';
-import { TargetProcessingDomainGroupTreeItem } from './targetProcessingDomainGroupTreeItem';
+import { ProcessingDomainGroupTreeItem } from './processingDomainGroupTreeItem';
 import { ContainerItem } from '../util/types';
 import { errored, loaded, loading } from '../util/loadable';
 
-describe('TargetProcessingDomainGroupTreeItem', () => {
-    it('sets label, contextValue, icon, remote processor names, and containers', () => {
+const container: ContainerItem = {
+    id: 'abc123',
+    name: 'demo-container',
+    image: 'demo-image',
+    state: 'running',
+    status: 'Up',
+    labels: '',
+    runningFor: '1m',
+    createdAt: '',
+    runtime: '',
+    annotations: {},
+    ports: {},
+    target: 'root@host.local',
+};
+
+describe('ProcessingDomainGroupTreeItem', () => {
+    it('sets label, description, contextValue, icon, remote processor names, and containers', () => {
         const remoteProcessorNames = ['imx-rproc'];
-        const containers = loaded<ContainerItem[]>([]);
-        const item = new TargetProcessingDomainGroupTreeItem(
+        const containers = loaded<ContainerItem[]>([container]);
+        const item = new ProcessingDomainGroupTreeItem(
             'root@host.local',
             remoteProcessorNames,
             containers,
         );
 
         expect(item.label).toBe('Processing Domains');
+        expect(item.description).toBe('1 container');
         expect(item.contextValue).toBe('ProcessingDomains');
         expect(item.remoteProcessorNames).toBe(remoteProcessorNames);
         expect(item.containers).toBe(containers);
@@ -24,7 +40,7 @@ describe('TargetProcessingDomainGroupTreeItem', () => {
     });
 
     it('shows a loading icon when containers are refreshing', () => {
-        const item = new TargetProcessingDomainGroupTreeItem(
+        const item = new ProcessingDomainGroupTreeItem(
             'root@host.local',
             [],
             loading(errored('Containers data is not ready')),

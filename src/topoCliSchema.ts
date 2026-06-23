@@ -116,3 +116,33 @@ export const topoLogEntrySchema = type({
     level: topoLogLevelSchema,
     msg: string(),
 });
+
+const containerStateSchema = enums([
+    'created',
+    'restarting',
+    'running',
+    'removing',
+    'paused',
+    'exited',
+    'dead',
+]);
+
+export type ContainerState = Infer<typeof containerStateSchema>;
+
+const psEntrySchema = type({
+    id: string(),
+    names: string(),
+    image: string(),
+    status: string(),
+    state: containerStateSchema,
+    processingDomain: string(),
+    address: string(),
+});
+
+export type PsEntry = Infer<typeof psEntrySchema>;
+
+export const psSchema = type({
+    containers: array(psEntrySchema),
+});
+
+export type PsOutput = Infer<typeof psSchema>;

@@ -7,7 +7,7 @@ import {
 import { mock } from 'vitest-mock-extended';
 import { ContainerItem } from '../util/types';
 import { DockerCommands } from '../target/dockerCommands';
-import { TargetContainerTreeItem } from '../targetTreeView/targetContainerTreeItem';
+import { ContainerTreeItem } from '../treeItems/containerTreeItem';
 
 vi.mock('../util/logger');
 
@@ -31,7 +31,7 @@ describe('OpenContainerShell', () => {
             target,
             state: 'running',
         });
-        const treeItem = new TargetContainerTreeItem(fakeItem);
+        const treeItem = new ContainerTreeItem(fakeItem);
 
         await openContainerShellAction.openContainerShellCommandHandler(
             treeItem,

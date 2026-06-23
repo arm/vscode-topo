@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { ContainerItem } from '../util/types';
 
-export class TargetProcessingDomainTreeItem extends vscode.TreeItem {
+export class ProcessingDomainTreeItem extends vscode.TreeItem {
     constructor(
         public readonly processingDomainId: string,
         public readonly target: string,
@@ -9,6 +9,7 @@ export class TargetProcessingDomainTreeItem extends vscode.TreeItem {
         displayName = processingDomainId,
     ) {
         super(displayName, vscode.TreeItemCollapsibleState.Collapsed);
+        this.description = `${containers.length} container${containers.length === 1 ? '' : 's'}`;
         this.iconPath = new vscode.ThemeIcon('multiple-windows');
         this.contextValue = `ProcessingDomain ${processingDomainId}`;
     }
