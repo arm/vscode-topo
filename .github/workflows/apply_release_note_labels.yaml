@@ -1,0 +1,89 @@
+name: Apply Release Note Labels
+
+on:
+    workflow_run:
+        workflows: ['Lint PR']
+        types: [completed]
+
+jobs:
+    apply-release-note-labels:
+        name: Apply release note labels
+        if: >
+            github.event.workflow_run.event == 'pull_request' &&
+            github.event.workflow_run.conclusion == 'success' &&
+            github.event.workflow_run.pull_requests[0].number
+        runs-on: ubuntu-latest
+        permissions:
+            issues: write
+            pull-requests: read
+        steps:
+            - name: Apply release note labels
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
+                  REPOSITORY: ${{ github.repository }}
+              run: |
+                  set -euo pipefail
+
+                  managed_labels=(
+                      breaking
+                      feat
+                      fix
+                      docs
+                      chore
+                      refactor
+                      ci
+                  )
+
+                  pr_title=$(gh pr view "$PR_NUMBER" --repo "$REPOSITORY" --json title --jq .title)
+
+                  labels_to_add=()
+                  shopt -s nocasematch
+                  breaking_regex='.*[[:alnum:]_]+(\(.*\))?!:.*'
+                  feature_regex='.*feat(\(.*\))?:.*'
+                  fix_regex='.*fix(\(.*\))?:.*'
+                  docs_regex='^docs(\([^)]+\))?:'
+                  chore_regex='^chore(\([^)]+\))?:'
+                  refactor_regex='^refactor(\([^)]+\))?:'
+                  ci_regex='^ci(\([^)]+\))?:'
+
+                  if [[ "$pr_title" =~ $breaking_regex ]]; then
+                      labels_to_add+=(breaking)
+                  fi
+
+                  if [[ "$pr_title" =~ $feature_regex ]]; then
+                      labels_to_add+=(feat)
+                  elif [[ "$pr_title" =~ $fix_regex ]]; then
+                      labels_to_add+=(fix)
+                  elif [[ "$pr_title" =~ $docs_regex ]]; then
+                      labels_to_add+=(docs)
+                  elif [[ "$pr_title" =~ $chore_regex ]]; then
+                      labels_to_add+=(chore)
+                  elif [[ "$pr_title" =~ $refactor_regex ]]; then
+                      labels_to_add+=(refactor)
+                  elif [[ "$pr_title" =~ $ci_regex ]]; then
+                      labels_to_add+=(ci)
+                  fi
+
+                  ensure_label() {
+                      gh label create "$1" \
+                          --repo "$REPOSITORY" \
+                          --color "$2" \
+                          --description "$3" || true
+                  }
+
+                  ensure_label breaking b60205 'Breaking change for release notes'
+                  ensure_label feat 0e8a16 'Feature or enhancement for release notes'
+                  ensure_label fix 1d76db 'Bug fix for release notes'
+                  ensure_label docs cfd3d7 'Documentation change excluded from release notes'
+                  ensure_label chore cfd3d7 'Maintenance change excluded from release notes'
+                  ensure_label refactor cfd3d7 'Refactor change excluded from release notes'
+                  ensure_label ci cfd3d7 'CI change excluded from release notes'
+
+                  for label in "${managed_labels[@]}"; do
+                      gh issue edit "$PR_NUMBER" --repo "$REPOSITORY" --remove-label "$label" || true
+                  done
+
+                  for label in "${labels_to_add[@]}"; do
+                      gh issue edit "$PR_NUMBER" --repo "$REPOSITORY" --add-label "$label"
+                  done
