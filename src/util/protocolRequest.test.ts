@@ -73,7 +73,7 @@ describe('parseRequestData', () => {
         });
     });
 
-    it('parses wrapped redirect query params as request data', () => {
+    it('parses URL-encoded request args', () => {
         const source =
             'https://github.com/Arm-Examples/topo-welcome.git#8303e66db59a7a11e64877121f3db1b688d2011f';
         const greetingName = 'F#ed';
@@ -82,9 +82,8 @@ describe('parseRequestData', () => {
         protocolQuery.append('mode', mode);
         protocolQuery.append('source', source);
         protocolQuery.append('GREETING_NAME', greetingName);
-        const protocolUri = `vscode://arm.topo/clone?${protocolQuery.toString()}`;
         const uri = vscode.Uri.parse(
-            `https://vscode.dev/redirect?url=${encodeURIComponent(protocolUri)}`,
+            `vscode://arm.topo/clone?${protocolQuery.toString()}`,
         );
 
         expect(parseRequestData(uri)).toEqual({

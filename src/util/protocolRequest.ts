@@ -20,29 +20,9 @@ export const parseQuery = (query: string): Record<string, string> => {
 };
 
 export const parseRequestData = (uri: vscode.Uri): Record<string, string> => {
-    const requestUri = resolveRequestUri(uri);
-    const queryData = parseQuery(requestUri.query);
+    const queryData = parseQuery(uri.query);
     const cleanedQueryData = filterProtocolUrlParam(queryData);
     return cleanedQueryData;
-};
-
-const resolveRequestUri = (uri: vscode.Uri): vscode.Uri => {
-    if (
-        uri.scheme.toLowerCase() !== 'https' ||
-        uri.authority.toLowerCase() !== 'vscode.dev' ||
-        uri.path !== '/redirect'
-    ) {
-        return uri;
-    }
-    const urlPrefix = 'url=';
-    if (!uri.query.startsWith(urlPrefix)) {
-        return uri;
-    }
-    const parsedUrl = vscode.Uri.parse(uri.query.slice(urlPrefix.length));
-    if (!isExtensionProtocolUri(parsedUrl)) {
-        return uri;
-    }
-    return parsedUrl;
 };
 
 const filterProtocolUrlParam = (
