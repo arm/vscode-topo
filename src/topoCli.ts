@@ -13,6 +13,8 @@ import {
     targetDescriptionSchema,
     templateSchema,
     topoLogEntrySchema,
+    psSchema,
+    PsOutput,
 } from './topoCliSchema';
 import { array, assert, create, is, Struct } from 'superstruct';
 import {
@@ -243,6 +245,31 @@ export class TopoCli {
                 },
             );
         });
+    }
+
+    public async ps(sshTarget: string, projectPath: string): Promise<PsOutput> {
+        const bin = this.getBinaryPath();
+        const cmd = ['ps', '-a', '--target', sshTarget, '-o', 'json'];
+        const output = await new Promise<string>((resolve, reject) => {
+            childProcess.execFile(
+                bin,
+                cmd,
+                {
+                    cwd: projectPath,
+                    env: this.getProcessEnv(),
+                },
+                (error, stdout, stderr) => {
+                    if (error) {
+                        reject(new Error(stderr || error.message));
+                    } else {
+                        resolve(stdout);
+                    }
+                },
+            );
+        });
+        const containers = JSON.parse(output);
+        assert(containers, psSchema);
+        return containers;
     }
 
     private async runHealth<T>(
