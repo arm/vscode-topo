@@ -9,6 +9,7 @@ import { LoadingTreeItem } from '../treeItems/loadingTreeItem';
 import { ContainerTreeItem } from '../treeItems/containerTreeItem';
 import { ProcessingDomainTreeItem } from '../treeItems/processingDomainTreeItem';
 import { ProjectMetadata } from '../util/project';
+import { ContainerItem } from '../util/types';
 
 const project: ProjectMetadata = {
     name: 'demo',
@@ -18,34 +19,21 @@ const project: ProjectMetadata = {
     workspaceName: 'workspace',
 };
 
+const container: ContainerItem = {
+    id: 'abc123',
+    names: 'app',
+    image: 'demo-app',
+    status: 'Up 1 minute',
+    state: 'running',
+    processingDomain: 'Linux Host',
+    address: 'localhost:8000',
+    target: 'user@topo.local',
+};
+
 describe('ProjectsTreeView', () => {
-    let model: ProjectModel;
-    function createProvider(): ProjectsTreeView {
-        return new ProjectsTreeView(model);
-    }
-
-    function createProjectTreeItem(): ProjectTreeItem {
-        return new ProjectTreeItem(project, false, unloaded());
-    }
-
-    beforeEach(() => {
-        model = new ProjectModel();
-        mutable(vscode.workspace).workspaceFolders = [
-            {
-                uri: vscode.Uri.file('/fake/workspace'),
-                name: 'workspace',
-                index: 0,
-            },
-        ];
-    });
-
-    afterEach(() => {
-        vi.resetAllMocks();
-        mutable(vscode.workspace).workspaceFolders = undefined;
-    });
-
     it('registers the projects tree', () => {
-        const provider = createProvider();
+        const model = new ProjectModel();
+        const provider = new ProjectsTreeView(model);
 
         expect(vscode.window.createTreeView).toHaveBeenCalledWith(
             ProjectsTreeView.viewId,
@@ -57,65 +45,57 @@ describe('ProjectsTreeView', () => {
     });
 
     it('returns project items at the root', () => {
+        const model = new ProjectModel();
         model.setProjects(loaded([project]));
-        const provider = createProvider();
+        const provider = new ProjectsTreeView(model);
 
         const children = provider.getChildren();
 
-        expect(children).toHaveLength(1);
-        expect(children[0]).toBeInstanceOf(ProjectTreeItem);
-        expect(children[0]).toMatchObject({
-            label: 'demo',
-            tooltip: project.uri.fsPath,
-            contextValue: 'Project',
-        });
-        expect((children[0] as ProjectTreeItem).composeFileUri.fsPath).toBe(
-            project.composeFileUri.fsPath,
-        );
-        expect(children[0].resourceUri).toBeUndefined();
+        expect(children).toStrictEqual([
+            new ProjectTreeItem(project, false, unloaded()),
+        ]);
     });
 
     it('shows an error item when project loading fails', () => {
-        model.setProjects(errored(new Error('scan failed')));
-        const provider = createProvider();
+        const model = new ProjectModel();
+        const projects = errored(new Error('scan failed'));
+        model.setProjects(projects);
+        const provider = new ProjectsTreeView(model);
 
         const children = provider.getChildren();
 
-        expect(children).toHaveLength(1);
-        expect(children[0]).toBeInstanceOf(ErrorTreeItem);
-        expect(children[0]).toMatchObject({
-            label: 'Failed to load projects',
-            description: 'scan failed',
-        });
+        expect(children).toStrictEqual([
+            new ErrorTreeItem('Failed to load projects', projects),
+        ]);
     });
 
     it('shows a loading item while projects are loading', () => {
+        const model = new ProjectModel();
         model.setProjects(loading(loaded([])));
-        const provider = createProvider();
+        const provider = new ProjectsTreeView(model);
 
         const children = provider.getChildren();
 
-        expect(children).toHaveLength(1);
-        expect(children[0]).toBeInstanceOf(LoadingTreeItem);
-        expect(children[0].label).toBe('Loading projects');
+        expect(children).toStrictEqual([
+            new LoadingTreeItem('Loading projects'),
+        ]);
     });
 
     it('shows a loading error item when refreshing after project loading failed', () => {
-        model.setProjects(loading(errored(new Error('scan failed'))));
-        const provider = createProvider();
+        const model = new ProjectModel();
+        const projects = loading(errored(new Error('scan failed')));
+        model.setProjects(projects);
+        const provider = new ProjectsTreeView(model);
 
         const children = provider.getChildren();
 
-        expect(children).toHaveLength(1);
-        expect(children[0]).toBeInstanceOf(ErrorTreeItem);
-        expect(children[0]).toMatchObject({
-            label: 'Failed to load projects',
-            description: 'scan failed',
-            iconPath: new vscode.ThemeIcon('loading~spin'),
-        });
+        expect(children).toStrictEqual([
+            new ErrorTreeItem('Failed to load projects', projects),
+        ]);
     });
 
     it('shows workspace names when there are multiple workspace folders', () => {
+        const model = new ProjectModel();
         mutable(vscode.workspace).workspaceFolders = [
             {
                 uri: vscode.Uri.file('/fake/workspace'),
@@ -129,7 +109,7 @@ describe('ProjectsTreeView', () => {
             },
         ];
         model.setProjects(loaded([project]));
-        const provider = createProvider();
+        const provider = new ProjectsTreeView(model);
 
         const children = provider.getChildren();
 
@@ -137,9 +117,10 @@ describe('ProjectsTreeView', () => {
     });
 
     it('marks loaded empty projects as stopped and non-expandable', () => {
+        const model = new ProjectModel();
         model.setProjects(loaded([project]));
         model.setProjectContainers(project, loaded([]));
-        const provider = createProvider();
+        const provider = new ProjectsTreeView(model);
 
         const children = provider.getChildren();
 
@@ -150,47 +131,23 @@ describe('ProjectsTreeView', () => {
     });
 
     it('returns processing domain children below running project items', () => {
+        const model = new ProjectModel();
+        const containers = [container];
         model.setProjects(loaded([project]));
-        model.setProjectContainers(
-            project,
-            loaded([
-                {
-                    id: 'abc123',
-                    names: 'app',
-                    image: 'demo-app',
-                    status: 'Up 1 minute',
-                    state: 'running',
-                    processingDomain: 'Linux Host',
-                    address: 'localhost:8000',
-                    target: 'user@topo.local',
-                },
-            ]),
-        );
-        const provider = createProvider();
+        model.setProjectContainers(project, loaded(containers));
+        const provider = new ProjectsTreeView(model);
         const projectItem = provider.getChildren()[0];
 
         const children = provider.getChildren(projectItem);
 
-        expect(children).toHaveLength(1);
-        expect(children[0]).toBeInstanceOf(ProcessingDomainTreeItem);
-        expect(children[0]).toMatchObject({
-            label: 'Linux Host',
-            description: '1 container',
-        });
+        expect(children).toStrictEqual([
+            new ProcessingDomainTreeItem('Linux Host', containers),
+        ]);
     });
 
     it('returns container children below processing domain items', () => {
-        const container = {
-            id: 'abc123',
-            names: 'app',
-            image: 'demo-app',
-            status: 'Up 1 minute',
-            state: 'running' as const,
-            processingDomain: 'Linux Host',
-            address: 'localhost:8000',
-            target: 'user@topo.local',
-        };
-        const provider = createProvider();
+        const model = new ProjectModel();
+        const provider = new ProjectsTreeView(model);
         const processingDomainItem = new ProcessingDomainTreeItem(
             'Linux Host',
             [container],
@@ -198,13 +155,13 @@ describe('ProjectsTreeView', () => {
 
         const children = provider.getChildren(processingDomainItem);
 
-        expect(children).toHaveLength(1);
-        expect(children[0]).toBeInstanceOf(ContainerTreeItem);
+        expect(children).toStrictEqual([new ContainerTreeItem(container)]);
     });
 
     it('returns no children below projects with unloaded containers', () => {
-        const provider = createProvider();
-        const projectItem = createProjectTreeItem();
+        const model = new ProjectModel();
+        const provider = new ProjectsTreeView(model);
+        const projectItem = new ProjectTreeItem(project, false, unloaded());
 
         const children = provider.getChildren(projectItem);
 
@@ -212,8 +169,9 @@ describe('ProjectsTreeView', () => {
     });
 
     it('getTreeItem returns the element itself', () => {
-        const provider = createProvider();
-        const item = createProjectTreeItem();
+        const model = new ProjectModel();
+        const provider = new ProjectsTreeView(model);
+        const item = new ProjectTreeItem(project, false, unloaded());
 
         const treeItem = provider.getTreeItem(item);
 
