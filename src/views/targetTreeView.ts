@@ -103,8 +103,8 @@ function syncTargetDataIssueContext(targets: Loadable<string[]>): void {
 function syncSelectedTargetContext(selectedTarget: string | undefined): void {
     void vscode.commands.executeCommand(
         'setContext',
-        manifest.CONTEXT_HAS_SELECTED_TARGET,
-        Boolean(selectedTarget),
+        manifest.CONTEXT_SELECTED_TARGET,
+        selectedTarget ?? '',
     );
 }
 

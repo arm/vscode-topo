@@ -1,10 +1,22 @@
 import * as vscode from 'vscode';
-import { PACKAGE_NAME } from '../manifest';
+import { CONTEXT_PROJECT_COUNT, PACKAGE_NAME } from '../manifest';
 import { ProjectTreeItem } from '../treeItems/projectTreeItem';
 import { DisposableCollector } from '../util/disposableCollector';
 import { ProjectModel } from '../models/projectModel';
 import { ErrorTreeItem } from '../treeItems/errorTreeItem';
 import { LoadingTreeItem } from '../treeItems/loadingTreeItem';
+import { Loadable } from '../util/loadable';
+import { ProjectMetadata } from '../util/project';
+
+function syncProjectCountContext(projects: Loadable<ProjectMetadata[]>): void {
+    const count =
+        projects.status === 'loaded' ? projects.data.length : undefined;
+    void vscode.commands.executeCommand(
+        'setContext',
+        CONTEXT_PROJECT_COUNT,
+        count,
+    );
+}
 
 export class ProjectsTreeView
     implements vscode.TreeDataProvider<vscode.TreeItem>, vscode.Disposable
@@ -21,11 +33,13 @@ export class ProjectsTreeView
             treeDataProvider: this,
             showCollapseAll: false,
         });
+        syncProjectCountContext(this.model.projects);
 
         this.disposables.collect(
             treeView,
             this._onDidChangeTreeData,
             this.model.onProjectsChanged(() => {
+                syncProjectCountContext(this.model.projects);
                 this._onDidChangeTreeData.fire(undefined);
             }),
         );

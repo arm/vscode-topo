@@ -189,11 +189,12 @@
         "viewsWelcome": [
             {
                 "view": "topo.target-manager",
-                "when": "!topo.hasSelectedTarget",
+                "when": "topo.selectedTarget == ''",
                 "contents": "No target selected\n[Select a target](command:topo.selectTarget)"
             },
             {
                 "view": "topo.projects",
+                "when": "topo.projectCount == 0",
                 "contents": "No projects found\n[Clone a project](command:topo.cloneProject)"
             }
         ],
@@ -356,12 +357,12 @@
                 },
                 {
                     "command": "topo.refreshTargetData",
-                    "when": "view == topo.target-manager && topo.hasSelectedTarget",
+                    "when": "view == topo.target-manager && topo.selectedTarget",
                     "group": "navigation"
                 },
                 {
                     "command": "topo.unselectTarget",
-                    "when": "view == topo.target-manager && topo.hasSelectedTarget",
+                    "when": "view == topo.target-manager && topo.selectedTarget",
                     "group": "navigation"
                 },
                 {

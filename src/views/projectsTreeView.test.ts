@@ -6,6 +6,7 @@ import { ProjectModel } from '../models/projectModel';
 import { loaded, errored, loading } from '../util/loadable';
 import { ErrorTreeItem } from '../treeItems/errorTreeItem';
 import { LoadingTreeItem } from '../treeItems/loadingTreeItem';
+import * as manifest from '../manifest';
 
 describe('ProjectsTreeView', () => {
     let model: ProjectModel;
@@ -35,6 +36,25 @@ describe('ProjectsTreeView', () => {
                 treeDataProvider: provider,
                 showCollapseAll: false,
             },
+        );
+    });
+
+    it('syncs project count context', () => {
+        new ProjectsTreeView(model);
+
+        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            'setContext',
+            manifest.CONTEXT_PROJECT_COUNT,
+            undefined,
+        );
+
+        vi.mocked(vscode.commands.executeCommand).mockClear();
+        model.setProjects(loaded([]));
+
+        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            'setContext',
+            manifest.CONTEXT_PROJECT_COUNT,
+            0,
         );
     });
 

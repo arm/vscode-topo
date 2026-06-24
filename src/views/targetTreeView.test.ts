@@ -121,8 +121,8 @@ describe('TargetTreeView', () => {
             );
             expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
                 'setContext',
-                manifest.CONTEXT_HAS_SELECTED_TARGET,
-                true,
+                manifest.CONTEXT_SELECTED_TARGET,
+                'my-target',
             );
             contextView.dispose();
         });
@@ -157,8 +157,8 @@ describe('TargetTreeView', () => {
                 vscode.commands.executeCommand,
             ).toHaveBeenCalledExactlyOnceWith(
                 'setContext',
-                manifest.CONTEXT_HAS_SELECTED_TARGET,
-                false,
+                manifest.CONTEXT_SELECTED_TARGET,
+                '',
             );
 
             vi.mocked(vscode.commands.executeCommand).mockClear();
@@ -168,8 +168,8 @@ describe('TargetTreeView', () => {
                 vscode.commands.executeCommand,
             ).toHaveBeenCalledExactlyOnceWith(
                 'setContext',
-                manifest.CONTEXT_HAS_SELECTED_TARGET,
-                true,
+                manifest.CONTEXT_SELECTED_TARGET,
+                target,
             );
         });
     });
