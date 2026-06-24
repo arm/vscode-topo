@@ -58,6 +58,9 @@ describe('TaskExecutor', () => {
                 execution: expect.objectContaining({
                     process: topoBinaryPath,
                     args: ['deploy', '--target', 'topo.local'],
+                    options: expect.objectContaining({
+                        env: expect.any(Object),
+                    }),
                 }),
                 presentationOptions: task.presentationOptions,
             }),

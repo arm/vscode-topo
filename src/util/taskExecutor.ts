@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { waitForTaskProcess } from './task';
 import { TopoCli } from '../topoCli';
+import { withCommonExecutablePath } from './taskEnvironment';
 
 export class TaskExecutor {
     constructor(private readonly topoCli: TopoCli) {}
@@ -24,7 +25,10 @@ export class TaskExecutor {
         const resolvedExecution = new vscode.ProcessExecution(
             this.topoCli.getBinaryPath(),
             execution.args,
-            execution.options,
+            {
+                ...execution.options,
+                env: withCommonExecutablePath(execution.options?.env),
+            },
         );
         const resolvedTask = new vscode.Task(
             task.definition,
