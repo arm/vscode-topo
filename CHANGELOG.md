@@ -8,10 +8,6 @@ All notable changes to the "vscode-topo" extension will be documented in this fi
 * feat: support manual refresh of Target View by @awphi in https://github.com/arm/vscode-topo/pull/245
 * refactor: put target description in target model/controller by @awphi in https://github.com/arm/vscode-topo/pull/239
 * ci: revert removal of publish step by @awphi in https://github.com/arm/vscode-topo/pull/253
-* chore(deps-dev): bump vite from 8.0.14 to 8.0.16 by @dependabot in https://github.com/arm/vscode-topo/pull/258
-* chore(deps-dev): bump markdown-it from 14.1.1 to 14.2.0 by @dependabot in https://github.com/arm/vscode-topo/pull/255
-* chore(deps): bump js-yaml and @textlint/linter-formatter by @dependabot in https://github.com/arm/vscode-topo/pull/256
-* chore(deps-dev): bump form-data from 4.0.4 to 4.0.6 by @dependabot in https://github.com/arm/vscode-topo/pull/257
 * chore: remove debounce in target tree view renders by @awphi in https://github.com/arm/vscode-topo/pull/254
 * chore: avoid floating promises by @federicobozzini in https://github.com/arm/vscode-topo/pull/259
 * test: misc assertion tidy up by @awphi in https://github.com/arm/vscode-topo/pull/260
@@ -21,13 +17,8 @@ All notable changes to the "vscode-topo" extension will be documented in this fi
 * refactor: introduce unloaded state for stationary, unrequested data by @awphi in https://github.com/arm/vscode-topo/pull/261
 * fix: allow execution of tasks without workspaces by @awphi in https://github.com/arm/vscode-topo/pull/263
 * chore: removed unnecessary code from TargetController class by @federicobozzini in https://github.com/arm/vscode-topo/pull/265
-* chore(deps): bump actions/checkout from 6.0.3 to 7.0.0 by @dependabot in https://github.com/arm/vscode-topo/pull/268
-* chore(deps-dev): bump vitest from 4.1.8 to 4.1.9 by @dependabot in https://github.com/arm/vscode-topo/pull/270
-* chore(deps-dev): bump eslint from 10.4.1 to 10.5.0 by @dependabot in https://github.com/arm/vscode-topo/pull/272
-* chore(deps-dev): bump @typescript-eslint/eslint-plugin from 8.61.0 to 8.61.1 by @dependabot in https://github.com/arm/vscode-topo/pull/271
 * feat: make target management case-sensitive by @awphi in https://github.com/arm/vscode-topo/pull/266
 * feat: add single clone command and corresponding project view button by @awphi in https://github.com/arm/vscode-topo/pull/274
-* chore(deps-dev): bump undici from 6.24.1 to 6.27.0 by @dependabot in https://github.com/arm/vscode-topo/pull/276
 * chore: update topo CLI to version 7.1.0 by @federicobozzini in https://github.com/arm/vscode-topo/pull/277
 * feat: make Target view more compact by removing target node element by @federicobozzini in https://github.com/arm/vscode-topo/pull/267
 * fix: allow cloning template projects when selected target is unhealthy by @awphi in https://github.com/arm/vscode-topo/pull/275
