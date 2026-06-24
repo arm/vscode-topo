@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { PACKAGE_NAME, PRIMARY_PROCESSING_DOMAIN } from '../manifest';
+import { PACKAGE_NAME } from '../manifest';
 import { ProjectTreeItem } from '../treeItems/projectTreeItem';
 import { DisposableCollector } from '../util/disposableCollector';
 import { ProjectModel } from '../models/projectModel';
@@ -7,7 +7,10 @@ import { ErrorTreeItem } from '../treeItems/errorTreeItem';
 import { LoadingTreeItem } from '../treeItems/loadingTreeItem';
 import { ContainerTreeItem } from '../treeItems/containerTreeItem';
 import { ContainerItem } from '../util/types';
-import { ProcessingDomainTreeItem } from '../treeItems/processingDomainTreeItem';
+import {
+    compareProcessingDomains,
+    ProcessingDomainTreeItem,
+} from '../treeItems/processingDomainTreeItem';
 
 function compareContainers(a: ContainerItem, b: ContainerItem): number {
     if (a.state === 'running' && b.state !== 'running') {
@@ -17,22 +20,6 @@ function compareContainers(a: ContainerItem, b: ContainerItem): number {
         return 1;
     }
     return a.names.localeCompare(b.names, undefined, { sensitivity: 'base' });
-}
-
-function compareProcessingDomains(
-    a: ProcessingDomainTreeItem,
-    b: ProcessingDomainTreeItem,
-): number {
-    if (a.processingDomain === PRIMARY_PROCESSING_DOMAIN) {
-        return -1;
-    }
-    if (b.processingDomain === PRIMARY_PROCESSING_DOMAIN) {
-        return 1;
-    }
-
-    return a.processingDomain.localeCompare(b.processingDomain, undefined, {
-        sensitivity: 'base',
-    });
 }
 
 function groupContainersByProcessingDomain(
@@ -129,7 +116,7 @@ export class ProjectsTreeView
         }
 
         if (element instanceof ProcessingDomainTreeItem) {
-            return element.containers.map(
+            return (element.containers ?? []).map(
                 (container) => new ContainerTreeItem(container),
             );
         }

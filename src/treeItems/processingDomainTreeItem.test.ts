@@ -45,4 +45,14 @@ describe('ProcessingDomainTreeItem', () => {
 
         expect(item.description).toBe('2 containers');
     });
+
+    it('omits container UI when containers are not provided', () => {
+        const item = new ProcessingDomainTreeItem(PRIMARY_PROCESSING_DOMAIN);
+
+        expect(item.description).toBeUndefined();
+        expect(item.containers).toBeUndefined();
+        expect(item.collapsibleState).toBe(
+            vscode.TreeItemCollapsibleState.None,
+        );
+    });
 });

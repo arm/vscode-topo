@@ -11,9 +11,44 @@ import { ErrorTreeItem } from '../treeItems/errorTreeItem';
 import { TargetHealthCheck } from '../topoCliSchema';
 import { getVisibleTargetIssues } from '../target/getVisibleTargetIssues';
 import { LoadingTreeItem } from '../treeItems/loadingTreeItem';
+import {
+    compareProcessingDomains,
+    ProcessingDomainTreeItem,
+} from '../treeItems/processingDomainTreeItem';
+import { ProcessingDomainGroupTreeItem } from '../treeItems/processingDomainGroupTreeItem';
 
 function compareByName(a: { name: string }, b: { name: string }): number {
     return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+}
+
+function getProcessingDomainGroupChildren(
+    targetDescription: Loadable<TargetDescription>,
+): vscode.TreeItem[] {
+    if (targetDescription.status === 'errored') {
+        return [
+            new ErrorTreeItem(
+                'Failed to load processing domains',
+                targetDescription,
+            ),
+        ];
+    }
+
+    if (targetDescription.status === 'unloaded') {
+        return [];
+    }
+
+    const processingDomains = [
+        manifest.PRIMARY_PROCESSING_DOMAIN,
+        ...targetDescription.data.remoteProcessors.map(
+            (remoteProcessor) => remoteProcessor.name,
+        ),
+    ];
+
+    return processingDomains
+        .map((processingDomain) => {
+            return new ProcessingDomainTreeItem(processingDomain);
+        })
+        .sort(compareProcessingDomains);
 }
 
 function getSelectedTargetChildren(
@@ -46,7 +81,10 @@ function getSelectedTargetChildren(
                     health.loading,
                 ),
             );
-            return [dependenciesGroup];
+            const processingDomainGroup = new ProcessingDomainGroupTreeItem(
+                targetDescription,
+            );
+            return [dependenciesGroup, processingDomainGroup];
         }
     }
 }
@@ -136,6 +174,10 @@ export class TargetTreeView
             return deps.map(
                 (d) => new HealthCheckDependencyTreeItem(loaded(d)),
             );
+        }
+
+        if (element instanceof ProcessingDomainGroupTreeItem) {
+            return getProcessingDomainGroupChildren(element.targetDescription);
         }
 
         return [];

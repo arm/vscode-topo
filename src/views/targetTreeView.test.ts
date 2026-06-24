@@ -8,6 +8,8 @@ import { TargetModel } from '../models/targetModel';
 import { TargetDataIssueTreeItem } from '../targetTreeView/targetDataIssueTreeItem';
 import { ErrorTreeItem } from '../treeItems/errorTreeItem';
 import { LoadingTreeItem } from '../treeItems/loadingTreeItem';
+import { ProcessingDomainTreeItem } from '../treeItems/processingDomainTreeItem';
+import { ProcessingDomainGroupTreeItem } from '../treeItems/processingDomainGroupTreeItem';
 import { errored, loaded, loading, unloaded } from '../util/loadable';
 
 describe('TargetTreeView', () => {
@@ -124,12 +126,15 @@ describe('TargetTreeView', () => {
     });
 
     describe('getChildren', () => {
-        it('returns Dependencies at the root', () => {
+        it('returns Dependencies and Processing Domains at the root', () => {
             const rootChildren = view.getChildren();
 
             expect(treeView.description).toBe(target);
-            expect(rootChildren).toHaveLength(1);
+            expect(rootChildren).toHaveLength(2);
             expect(rootChildren[0].label).toBe('Dependencies');
+            expect(rootChildren[1]).toBeInstanceOf(
+                ProcessingDomainGroupTreeItem,
+            );
         });
 
         it('returns dependency items for Dependencies group', () => {
@@ -260,6 +265,35 @@ describe('TargetTreeView', () => {
             expect(rootChildren[0].contextValue).toBe(
                 'Dependencies HasFixableIssues',
             );
+        });
+
+        it('returns processing domains without rendering container children', () => {
+            const rootChildren = view.getChildren();
+
+            const processingDomainItems = view.getChildren(rootChildren[1]);
+
+            expect(processingDomainItems).toStrictEqual([
+                new ProcessingDomainTreeItem(
+                    manifest.PRIMARY_PROCESSING_DOMAIN,
+                ),
+                new ProcessingDomainTreeItem('imx-rproc'),
+                new ProcessingDomainTreeItem('other-rproc'),
+            ]);
+        });
+
+        it('processing domains group contains an error item when failing to load', () => {
+            const description = errored('Failed to load target description');
+            targetModel.setSelectedTargetDescription(description);
+            const rootChildren = view.getChildren();
+
+            const got = view.getChildren(rootChildren[1]);
+
+            expect(got).toStrictEqual([
+                new ErrorTreeItem(
+                    'Failed to load processing domains',
+                    description,
+                ),
+            ]);
         });
 
         it('returns empty array when no target is selected', async () => {
