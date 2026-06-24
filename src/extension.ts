@@ -28,6 +28,7 @@ import { topo } from '../package.json';
 import { RefreshLoop } from './util/refreshLoop';
 import { ProjectController } from './controllers/projectController';
 import { TaskExecutor } from './util/taskExecutor';
+import { ContextView } from './views/contextView';
 
 const SELECTED_TARGET_REFRESH_INTERVAL_MS = 60_000;
 
@@ -59,11 +60,13 @@ export async function activate(
     const projectsTreeView = new ProjectsTreeView(projectModel);
     const targetTreeView = new TargetTreeView(targetModel);
     const targetStatusBarItemView = new TargetStatusBarItemView(targetModel);
+    const contextView = new ContextView(targetModel, projectModel);
     context.subscriptions.push(
         hostTreeView,
         projectsTreeView,
         targetTreeView,
         targetStatusBarItemView,
+        contextView,
     );
 
     const hostController = new HostController(hostModel, topoCli);
@@ -132,4 +135,5 @@ export async function activate(
     void projectController.refreshProjects();
     topoCli.activate();
     selectedTargetRefreshLoop.start();
+    void contextView.initialize();
 }

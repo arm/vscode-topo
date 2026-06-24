@@ -93,6 +93,7 @@ describe('TargetTreeView', () => {
     ];
 
     beforeEach(() => {
+        vi.clearAllMocks();
         targetModel = new TargetModel();
         targetModel.setTargets(loaded([target]));
         targetModel.setSelected(target);
@@ -104,74 +105,6 @@ describe('TargetTreeView', () => {
             .value;
         vi.clearAllTimers();
         vi.clearAllMocks();
-    });
-
-    describe('context', () => {
-        it('syncs contexts when the view is created', () => {
-            const model = new TargetModel();
-            model.setTargets(errored('Failed to load targets'));
-            model.setSelected('my-target');
-
-            const contextView = new TargetTreeView(model);
-
-            expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
-                'setContext',
-                manifest.CONTEXT_TARGET_DATA_ISSUE,
-                true,
-            );
-            expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
-                'setContext',
-                manifest.CONTEXT_HAS_SELECTED_TARGET,
-                true,
-            );
-            contextView.dispose();
-        });
-
-        it('syncs target data issue context when target state changes', async () => {
-            targetModel.setTargets(errored('Failed to load targets'));
-
-            expect(
-                vscode.commands.executeCommand,
-            ).toHaveBeenCalledExactlyOnceWith(
-                'setContext',
-                manifest.CONTEXT_TARGET_DATA_ISSUE,
-                true,
-            );
-
-            vi.mocked(vscode.commands.executeCommand).mockClear();
-            targetModel.setTargets(loaded([target]));
-
-            expect(
-                vscode.commands.executeCommand,
-            ).toHaveBeenCalledExactlyOnceWith(
-                'setContext',
-                manifest.CONTEXT_TARGET_DATA_ISSUE,
-                false,
-            );
-        });
-
-        it('syncs selected target context when selected target changes', async () => {
-            targetModel.setSelected(undefined);
-
-            expect(
-                vscode.commands.executeCommand,
-            ).toHaveBeenCalledExactlyOnceWith(
-                'setContext',
-                manifest.CONTEXT_HAS_SELECTED_TARGET,
-                false,
-            );
-
-            vi.mocked(vscode.commands.executeCommand).mockClear();
-            targetModel.setSelected(target);
-
-            expect(
-                vscode.commands.executeCommand,
-            ).toHaveBeenCalledExactlyOnceWith(
-                'setContext',
-                manifest.CONTEXT_HAS_SELECTED_TARGET,
-                true,
-            );
-        });
     });
 
     describe('getChildren', () => {

@@ -92,28 +92,11 @@ function getSelectedTargetChildren(
     }
 }
 
-function syncTargetDataIssueContext(targets: Loadable<string[]>): void {
-    void vscode.commands.executeCommand(
-        'setContext',
-        manifest.CONTEXT_TARGET_DATA_ISSUE,
-        targets.status === 'errored',
-    );
-}
-
-function syncSelectedTargetContext(selectedTarget: string | undefined): void {
-    void vscode.commands.executeCommand(
-        'setContext',
-        manifest.CONTEXT_HAS_SELECTED_TARGET,
-        Boolean(selectedTarget),
-    );
-}
-
 function refreshHeader(
     treeView: vscode.TreeView<vscode.TreeItem>,
     targetModel: TargetModel,
 ): void {
     treeView.description = targetModel.selected;
-    syncSelectedTargetContext(targetModel.selected);
 }
 
 export class TargetTreeView
@@ -141,7 +124,6 @@ export class TargetTreeView
                 this.refreshTreeView();
             }),
             this.targetModel.onTargetsChanged(() => {
-                syncTargetDataIssueContext(this.targetModel.targets);
                 this.refreshTreeView();
             }),
             this.targetModel.onHealthChanged(() => {
@@ -155,7 +137,6 @@ export class TargetTreeView
             }),
             this._onDidChangeTreeData,
         );
-        syncTargetDataIssueContext(this.targetModel.targets);
     }
 
     public getChildren(element?: vscode.TreeItem): vscode.TreeItem[] {
