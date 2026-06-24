@@ -1,6 +1,15 @@
 # Change Log
 
 All notable changes to the "vscode-topo" extension will be documented in this file.
+## 0.4.0
+
+<!-- Release notes generated using configuration in .github/release.yml at 36dfad4f6f523d065a13933e500985b0a0ad4a2c -->
+
+
+
+**Full Changelog**: https://github.com/arm/vscode-topo/compare/v0.2.0...v0.4.0
+
+
 ## 0.2.0
 
 ## What's Changed
