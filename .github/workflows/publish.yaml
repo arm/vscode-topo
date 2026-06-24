@@ -211,7 +211,7 @@ jobs:
             - name: Commit new version
               id: commit-version
               run: |
-                  git commit -a -m "${{ needs.prepare-version.outputs.version }}"
+                  git commit -a -m "chore: ${{ needs.prepare-version.outputs.version }} release"
                   COMMIT=$(git rev-parse HEAD)
                   echo "release_commit=$COMMIT" >> "$GITHUB_OUTPUT"
             - name: Push changes
