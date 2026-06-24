@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { PACKAGE_NAME } from '../manifest';
+import { PACKAGE_NAME, PRIMARY_PROCESSING_DOMAIN } from '../manifest';
 import { ProjectTreeItem } from '../treeItems/projectTreeItem';
 import { DisposableCollector } from '../util/disposableCollector';
 import { ProjectModel } from '../models/projectModel';
@@ -23,6 +23,13 @@ function compareProcessingDomains(
     a: ProcessingDomainTreeItem,
     b: ProcessingDomainTreeItem,
 ): number {
+    if (a.processingDomain === PRIMARY_PROCESSING_DOMAIN) {
+        return -1;
+    }
+    if (b.processingDomain === PRIMARY_PROCESSING_DOMAIN) {
+        return 1;
+    }
+
     return a.processingDomain.localeCompare(b.processingDomain, undefined, {
         sensitivity: 'base',
     });
@@ -41,13 +48,10 @@ function groupContainersByProcessingDomain(
     }
 
     return [...containersByDomain.entries()]
-        .map(
-            ([domain, containers]) =>
-                new ProcessingDomainTreeItem(
-                    domain,
-                    [...containers].sort(compareContainers),
-                ),
-        )
+        .map(([domain, containers]) => {
+            const sortedContainers = [...containers].sort(compareContainers);
+            return new ProcessingDomainTreeItem(domain, sortedContainers);
+        })
         .sort(compareProcessingDomains);
 }
 
@@ -59,9 +63,7 @@ function getProjectChildren(projectItem: ProjectTreeItem): vscode.TreeItem[] {
     }
 
     if (containers.status === 'unloaded') {
-        return containers.loading
-            ? [new LoadingTreeItem('Loading containers')]
-            : [];
+        return [];
     }
 
     return groupContainersByProcessingDomain(containers.data);

@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { ProcessingDomainTreeItem } from './processingDomainTreeItem';
 import { ContainerItem } from '../util/types';
+import { PRIMARY_PROCESSING_DOMAIN } from '../manifest';
 
 const containers: ContainerItem[] = [
     {
@@ -9,7 +10,7 @@ const containers: ContainerItem[] = [
         image: 'demo-app',
         status: 'Up 1 minute',
         state: 'running',
-        processingDomain: 'Linux Host',
+        processingDomain: PRIMARY_PROCESSING_DOMAIN,
         address: 'localhost:8000',
         target: 'user@topo.local',
     },
@@ -17,11 +18,16 @@ const containers: ContainerItem[] = [
 
 describe('ProcessingDomainTreeItem', () => {
     it('sets label, description, contextValue, icon, and containers', () => {
-        const item = new ProcessingDomainTreeItem('Linux Host', containers);
+        const item = new ProcessingDomainTreeItem(
+            PRIMARY_PROCESSING_DOMAIN,
+            containers,
+        );
 
-        expect(item.label).toBe('Linux Host');
+        expect(item.label).toBe(PRIMARY_PROCESSING_DOMAIN);
         expect(item.description).toBe('1 container');
-        expect(item.contextValue).toBe('ProcessingDomain Linux Host');
+        expect(item.contextValue).toBe(
+            `ProcessingDomain ${PRIMARY_PROCESSING_DOMAIN}`,
+        );
         expect(item.iconPath).toStrictEqual(
             new vscode.ThemeIcon('multiple-windows'),
         );
@@ -32,7 +38,7 @@ describe('ProcessingDomainTreeItem', () => {
     });
 
     it('pluralizes the container count', () => {
-        const item = new ProcessingDomainTreeItem('Linux Host', [
+        const item = new ProcessingDomainTreeItem(PRIMARY_PROCESSING_DOMAIN, [
             containers[0],
             { ...containers[0], id: 'def456' },
         ]);

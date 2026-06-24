@@ -10,6 +10,7 @@ import { ContainerTreeItem } from '../treeItems/containerTreeItem';
 import { ProcessingDomainTreeItem } from '../treeItems/processingDomainTreeItem';
 import { ProjectMetadata } from '../util/project';
 import { ContainerItem } from '../util/types';
+import { PRIMARY_PROCESSING_DOMAIN } from '../manifest';
 
 const project: ProjectMetadata = {
     name: 'demo',
@@ -25,7 +26,7 @@ const container: ContainerItem = {
     image: 'demo-app',
     status: 'Up 1 minute',
     state: 'running',
-    processingDomain: 'Linux Host',
+    processingDomain: PRIMARY_PROCESSING_DOMAIN,
     address: 'localhost:8000',
     target: 'user@topo.local',
 };
@@ -141,7 +142,10 @@ describe('ProjectsTreeView', () => {
         const children = provider.getChildren(projectItem);
 
         expect(children).toStrictEqual([
-            new ProcessingDomainTreeItem('Linux Host', containers),
+            new ProcessingDomainTreeItem(
+                container.processingDomain,
+                containers,
+            ),
         ]);
     });
 
@@ -149,7 +153,7 @@ describe('ProjectsTreeView', () => {
         const model = new ProjectModel();
         const provider = new ProjectsTreeView(model);
         const processingDomainItem = new ProcessingDomainTreeItem(
-            'Linux Host',
+            container.processingDomain,
             [container],
         );
 
@@ -176,5 +180,28 @@ describe('ProjectsTreeView', () => {
         const treeItem = provider.getTreeItem(item);
 
         expect(treeItem).toBe(item);
+    });
+
+    it('displays primary processing domain first, followed by other domains in alphabetical order', () => {
+        const model = new ProjectModel();
+        const containers = loaded([
+            { ...container, processingDomain: 'another-rproc2' },
+            { ...container, processingDomain: 'some-rproc' },
+            container,
+            { ...container, processingDomain: 'another-rproc' },
+        ]);
+        model.setProjectContainers(project, containers);
+        const provider = new ProjectsTreeView(model);
+
+        const children = provider.getChildren(
+            new ProjectTreeItem(project, false, containers),
+        );
+
+        expect(children).toMatchObject([
+            { label: container.processingDomain },
+            { label: 'another-rproc' },
+            { label: 'another-rproc2' },
+            { label: 'some-rproc' },
+        ]);
     });
 });

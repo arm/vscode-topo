@@ -8,6 +8,7 @@ import { mock } from 'vitest-mock-extended';
 import { TopoCli } from '../topoCli';
 import { PsOutput, TargetHealthCheck } from '../topoCliSchema';
 import { TargetModel } from '../models/targetModel';
+import { PRIMARY_PROCESSING_DOMAIN } from '../manifest';
 
 vi.mock('../util/project');
 
@@ -56,7 +57,7 @@ const psOutput: PsOutput = {
             image: 'demo-app',
             status: 'Up 1 minute',
             state: 'running',
-            processingDomain: 'Linux Host',
+            processingDomain: PRIMARY_PROCESSING_DOMAIN,
             address: 'localhost:8000',
         },
     ],

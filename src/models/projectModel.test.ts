@@ -3,6 +3,7 @@ import { loaded, unloaded } from '../util/loadable';
 import { ProjectMetadata } from '../util/project';
 import * as vscode from 'vscode';
 import { ContainerItem } from '../util/types';
+import { PRIMARY_PROCESSING_DOMAIN } from '../manifest';
 
 const projects: ProjectMetadata[] = [
     {
@@ -28,7 +29,7 @@ const container: ContainerItem = {
     image: 'demo-app',
     status: 'Up 1 minute',
     state: 'running',
-    processingDomain: 'Linux Host',
+    processingDomain: PRIMARY_PROCESSING_DOMAIN,
     address: 'localhost:8000',
     target: 'user@topo.local',
 };
