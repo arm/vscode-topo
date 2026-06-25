@@ -1,7 +1,7 @@
 import {
-    IssueCheck,
+    HealthCheck,
     type HealthCheckFix,
-    type TargetHealthCheck,
+    type TargetHealthReport,
 } from '../topoCliSchema';
 
 export type IssueFixCommandGroup = {
@@ -9,45 +9,55 @@ export type IssueFixCommandGroup = {
     command: string;
 };
 
-export type FixableHealthIssue = IssueCheck & {
+export type HealthIssue = HealthCheck & {
+    fix: HealthCheckFix;
+};
+
+export type FixableIssue = HealthIssue & {
     fix: HealthCheckFix & { command: string };
 };
 
+export function hasFix(
+    healthCheck: HealthCheck | undefined,
+): healthCheck is HealthIssue {
+    return !!healthCheck?.fix;
+}
+
 export function hasFixCommand(
-    issue: IssueCheck | undefined,
-): issue is FixableHealthIssue {
-    return !!issue?.fix?.command;
+    healthCheck: HealthCheck | undefined,
+): healthCheck is FixableIssue {
+    return !!healthCheck?.fix?.command;
 }
 
 export function getTargetIssueFixCommandGroups(
-    health: TargetHealthCheck | undefined,
+    health: TargetHealthReport | undefined,
 ): IssueFixCommandGroup[] {
     if (!health) {
         return [];
     }
 
-    return getIssueFixCommandGroups(getTargetIssues(health));
+    return getIssueFixCommandGroups(getTargetHealthChecks(health));
 }
 
 export function getIssueFixCommandGroups(
-    issues: IssueCheck[],
+    healthChecks: HealthCheck[],
 ): IssueFixCommandGroup[] {
     const groups = new Map<string, IssueFixCommandGroup>();
 
-    for (const issue of issues) {
-        const command = issue.fix?.command;
+    for (const healthCheck of healthChecks) {
+        const command = healthCheck.fix?.command;
         if (!command) {
             continue;
         }
 
         const group = groups.get(command);
         if (group) {
-            group.issueNames.push(issue.name);
+            group.issueNames.push(healthCheck.name);
             continue;
         }
 
         groups.set(command, {
-            issueNames: [issue.name],
+            issueNames: [healthCheck.name],
             command,
         });
     }
@@ -55,7 +65,7 @@ export function getIssueFixCommandGroups(
     return [...groups.values()];
 }
 
-function getTargetIssues(health: TargetHealthCheck): IssueCheck[] {
+function getTargetHealthChecks(health: TargetHealthReport): HealthCheck[] {
     return [
         health.connectivity,
         health.processingDomainDriver,

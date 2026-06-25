@@ -2,17 +2,17 @@ import * as vscode from 'vscode';
 import { ContainerTreeItem } from '../treeItems/containerTreeItem';
 import * as manifest from '../manifest';
 import { ProcessingDomainTreeItem } from '../treeItems/processingDomainTreeItem';
-import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
+import { HealthCheckGroupTreeItem } from '../treeItems/healthCheckGroupTreeItem';
 import { ProcessingDomainGroupTreeItem } from '../treeItems/processingDomainGroupTreeItem';
-import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
+import { HealthCheckTreeItem } from '../treeItems/healthCheckTreeItem';
 import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
 import { ContainerItem, TargetDescription } from '../util/types';
 import { Loadable, loaded } from '../util/loadable';
 import { TargetDataIssueTreeItem } from '../targetTreeView/targetDataIssueTreeItem';
 import { ErrorTreeItem } from '../treeItems/errorTreeItem';
-import { TargetHealthCheck } from '../topoCliSchema';
-import { getVisibleTargetIssues } from '../target/getVisibleTargetIssues';
+import { TargetHealthReport } from '../topoCliSchema';
+import { getVisibleTargetHealthChecks } from '../target/getVisibleTargetHealthChecks';
 import { LoadingTreeItem } from '../treeItems/loadingTreeItem';
 
 function compareByName(a: { name: string }, b: { name: string }): number {
@@ -52,7 +52,7 @@ const PRIMARY_OS_PROCESSING_DOMAIN = {
 
 function getSelectedTargetChildren(
     target: string,
-    health: Loadable<TargetHealthCheck>,
+    health: Loadable<TargetHealthReport>,
     targetDescription: Loadable<TargetDescription>,
     selectedTargetContainers: Loadable<ContainerItem[]>,
 ): vscode.TreeItem[] {
@@ -66,7 +66,7 @@ function getSelectedTargetChildren(
         case 'loaded': {
             if (health.data.connectivity.status !== 'ok') {
                 return [
-                    new HealthCheckDependencyTreeItem(
+                    new HealthCheckTreeItem(
                         loaded(health.data.connectivity, health.loading),
                     ),
                 ];
@@ -76,9 +76,9 @@ function getSelectedTargetChildren(
                 targetDescription.status === 'loaded'
                     ? targetDescription.data
                     : undefined;
-            const dependenciesGroup = new HealthCheckDependencyGroupTreeItem(
+            const healthGroup = new HealthCheckGroupTreeItem(
                 loaded(
-                    getVisibleTargetIssues(health.data, description),
+                    getVisibleTargetHealthChecks(health.data, description),
                     health.loading,
                 ),
             );
@@ -87,7 +87,7 @@ function getSelectedTargetChildren(
                 description?.remoteProcessors.map((rp) => rp.name) ?? [],
                 selectedTargetContainers,
             );
-            return [dependenciesGroup, subsystemsGroup];
+            return [healthGroup, subsystemsGroup];
         }
     }
 }
@@ -177,10 +177,10 @@ export class TargetTreeView
             );
         }
 
-        if (element instanceof HealthCheckDependencyGroupTreeItem) {
-            const deps = [...element.dependencies].sort(compareByName);
-            return deps.map(
-                (d) => new HealthCheckDependencyTreeItem(loaded(d)),
+        if (element instanceof HealthCheckGroupTreeItem) {
+            const healthChecks = [...element.healthChecks].sort(compareByName);
+            return healthChecks.map(
+                (healthCheck) => new HealthCheckTreeItem(loaded(healthCheck)),
             );
         }
 

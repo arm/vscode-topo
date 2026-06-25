@@ -9,7 +9,7 @@ import { mock } from 'vitest-mock-extended';
 import { Writable } from 'node:stream';
 import { WrappedError } from './errors/wrappedError';
 import {
-    HealthCheck,
+    HealthReport,
     ProjectDescription,
     PsOutput,
     TemplateDescription,
@@ -386,7 +386,7 @@ describe('TopoCli', () => {
     });
 
     it('health parses JSON output', async () => {
-        const want: HealthCheck = {
+        const want: HealthReport = {
             host: { dependencies: [] },
             target: {
                 destination: 'ssh://hostname',
@@ -410,7 +410,7 @@ describe('TopoCli', () => {
                 },
             },
         };
-        const cliResponse: HealthCheck = {
+        const cliResponse: HealthReport = {
             host: { dependencies: [] },
             target: {
                 destination: 'ssh://hostname',

@@ -14,7 +14,7 @@ import {
     DockerPsItem,
     TargetDescription,
 } from '../util/types';
-import { HealthCheck, TargetHealthCheck } from '../topoCliSchema';
+import { HealthReport, TargetHealthReport } from '../topoCliSchema';
 import { LatestAbortableWork } from '../util/latestAbortableWork';
 import { DisposableCollector } from '../util/disposableCollector';
 
@@ -143,8 +143,8 @@ function createContainerItem(
 async function loadTargetHealth(
     topoCli: TopoCli,
     target: string,
-): Promise<Loadable<TargetHealthCheck>> {
-    let health: HealthCheck;
+): Promise<Loadable<TargetHealthReport>> {
+    let health: HealthReport;
     try {
         health = await topoCli.health(target);
     } catch (err) {
@@ -387,12 +387,12 @@ export class TargetController {
             return;
         }
 
-        const containerEngineDependency = health.data.dependencies.find(
-            (dep) => dep.name === 'Container Engine',
+        const containerEngineHealth = health.data.dependencies.find(
+            (healthCheck) => healthCheck.name === 'Container Engine',
         );
-        if (containerEngineDependency?.status === 'error') {
+        if (containerEngineHealth?.status === 'error') {
             const err =
-                containerEngineDependency.fix?.description ??
+                containerEngineHealth.fix?.description ??
                 'Container engine unavailable';
             return this.model.setSelectedTargetContainers(errored(err));
         }

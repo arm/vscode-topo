@@ -4,7 +4,7 @@ import { ProcessingDomainTreeItem } from '../treeItems/processingDomainTreeItem'
 import * as manifest from '../manifest';
 import { ContainerItem, TargetDescription } from '../util/types';
 import { mock } from 'vitest-mock-extended';
-import { IssueCheck, TargetHealthCheck } from '../topoCliSchema';
+import { HealthCheck, TargetHealthReport } from '../topoCliSchema';
 import { TargetModel } from '../models/targetModel';
 import { TargetDataIssueTreeItem } from '../targetTreeView/targetDataIssueTreeItem';
 import { ErrorTreeItem } from '../treeItems/errorTreeItem';
@@ -21,7 +21,7 @@ describe('TargetTreeView', () => {
         remoteProcessors: [{ name: 'imx-rproc' }, { name: 'other-rproc' }],
         totalMemoryKb: 1024,
     };
-    const targetHealth: TargetHealthCheck = {
+    const targetHealth: TargetHealthReport = {
         destination: `ssh://${target}`,
         isLocalhost: false,
         connectivity: {
@@ -175,27 +175,27 @@ describe('TargetTreeView', () => {
     });
 
     describe('getChildren', () => {
-        it('returns Dependencies/Processing Domains at the root', () => {
+        it('returns Health/Processing Domains at the root', () => {
             const rootChildren = view.getChildren();
 
             expect(treeView.description).toBe(target);
             expect(rootChildren).toHaveLength(2);
-            expect(rootChildren[0].label).toBe('Dependencies');
+            expect(rootChildren[0].label).toBe('Health');
             expect(rootChildren[1].label).toBe('Processing Domains');
         });
 
-        it('returns dependency items for Dependencies group', () => {
-            const processingDomainDriverHealth = mock<IssueCheck>({
+        it('returns health check items for Health group', () => {
+            const processingDomainDriverHealth = mock<HealthCheck>({
                 name: 'rproc-driver',
                 status: 'ok',
             });
             const dependencies = [
-                mock<IssueCheck>({
+                mock<HealthCheck>({
                     name: 'Container Engine',
                     status: 'ok',
                 }),
-                mock<IssueCheck>({
-                    name: 'Some Dependency',
+                mock<HealthCheck>({
+                    name: 'Some Health Check',
                     status: 'ok',
                 }),
             ];
@@ -254,7 +254,7 @@ describe('TargetTreeView', () => {
             expect(rootChildren[0]).toMatchObject({
                 label: 'Connectivity',
                 description: diagnostics,
-                contextValue: 'Dependency Error',
+                contextValue: 'HealthCheck Error',
             });
         });
 
@@ -291,7 +291,7 @@ describe('TargetTreeView', () => {
             });
         });
 
-        it('marks dependencies group fixable when visible target issues have executable fixes', async () => {
+        it('marks health group fixable when visible target health checks have executable fixes', async () => {
             targetModel.setSelectedTargetHealth(
                 loaded({
                     ...targetHealth,
@@ -310,7 +310,7 @@ describe('TargetTreeView', () => {
             const rootChildren = view.getChildren();
 
             expect(rootChildren[0].contextValue).toBe(
-                'Dependencies HasFixableIssues',
+                'Health HasFixableIssues',
             );
         });
 

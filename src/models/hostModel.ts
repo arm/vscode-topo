@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { HostHealthCheck } from '../topoCliSchema';
+import { HostHealthReport } from '../topoCliSchema';
 import { Loadable, unloaded } from '../util/loadable';
 
 export class HostModel {
@@ -8,14 +8,14 @@ export class HostModel {
     public readonly onHealthChanged: vscode.Event<void> =
         this._onHealthChanged.event;
 
-    private _health: Loadable<HostHealthCheck> = unloaded();
+    private _health: Loadable<HostHealthReport> = unloaded();
 
-    public setHealth(health: Loadable<HostHealthCheck>): void {
+    public setHealth(health: Loadable<HostHealthReport>): void {
         this._health = health;
         this._onHealthChanged.fire();
     }
 
-    public get health(): Loadable<HostHealthCheck> {
+    public get health(): Loadable<HostHealthReport> {
         return this._health;
     }
 }

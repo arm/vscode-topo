@@ -13,13 +13,13 @@ import {
     TargetDescription,
 } from '../util/types';
 import { errored, loaded, unloaded } from '../util/loadable';
-import { HealthCheck } from '../topoCliSchema';
+import { HealthReport } from '../topoCliSchema';
 
 vi.mock('../util/logger');
 vi.mock('../util/showAndLogError');
 
 const target = 'user@target';
-const health: HealthCheck = {
+const health: HealthReport = {
     host: {
         dependencies: [],
     },
@@ -752,8 +752,8 @@ describe('selected target data refresh', () => {
         );
     });
 
-    it('treats container engine dependency error as error when loading containers', async () => {
-        const unhealthyContainerEngineHealth: HealthCheck = {
+    it('treats container engine health error as error when loading containers', async () => {
+        const unhealthyContainerEngineHealth: HealthReport = {
             ...health,
             target: {
                 ...health.target,
@@ -790,7 +790,7 @@ describe('selected target data refresh', () => {
     });
 
     it('unloads containers when selected target health is disconnected', async () => {
-        const disconnectedHealth: HealthCheck = {
+        const disconnectedHealth: HealthReport = {
             ...health,
             target: {
                 ...health.target,

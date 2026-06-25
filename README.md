@@ -40,7 +40,7 @@ The host and target can be the same system.
 
 1. Install the extension from the VS Code Marketplace or a `.vsix` package.
 1. Select a target from the **Target** view in the **Topo** activity bar container.
-1. Review any missing target dependencies and apply suggested fixes.
+1. Review target health and apply suggested fixes.
 1. Clone a [Topo Template](https://github.com/arm/topo-template-format) from our catalog.
 1. Deploy the configured project to your target.
 
@@ -67,7 +67,7 @@ The Target view header shows the selected SSH destination. The tree below it sho
 | **Connectivity**       | SSH or target health connectivity errors when the selected target cannot be used. |
 | **Processing Domains** | Processing domains on the target, including the primary OS and remote processors. |
 | **Services**           | Running or stopped containers grouped by processing domain, with state icons.     |
-| **Dependencies**       | Required target components and driver health-check issues shown for the target.   |
+| **Health**             | Required target components and driver health-check issues shown for the target.   |
 
 If no target is selected, the view shows a **Select a target** button.
 
@@ -75,15 +75,15 @@ If no target is selected, the view shows a **Select a target** button.
 
 Use the buttons in the Target view title bar to access these actions:
 
-| Command             | Description                                                  |
-| ------------------- | ------------------------------------------------------------ |
-| **Select a target** | Select, add, or remove saved manual targets.                 |
-| **Unselect Target** | Clear the active target without deleting it.                 |
-| **Fix Issues**      | Select and run available fixes for target dependency issues. |
+| Command             | Description                                              |
+| ------------------- | -------------------------------------------------------- |
+| **Select a target** | Select, add, or remove saved manual targets.             |
+| **Unselect Target** | Clear the active target without deleting it.             |
+| **Fix Issues**      | Select and run available fixes for target health issues. |
 
-### Dependency Actions
+### Health Actions
 
-Use the inline **Fix** button on a fixable dependency item to run the executable fix command reported by the Topo health check.
+Use the inline **Fix** button on a fixable health issue to run the executable fix command reported by the Topo health check.
 
 ## Container Actions
 
@@ -136,9 +136,9 @@ vscode://arm.topo/clone?source=git:https://github.com/example/repo
 
 ## Host Health Check
 
-The **Host** view appears in the **Topo** activity bar container and shows host dependency health for tools such as Docker and SSH. Missing or unhealthy dependencies are shown in the tree.
+The **Host** view appears in the **Topo** activity bar container and shows host health for tools such as Docker and SSH. Missing or unhealthy health checks are shown in the tree.
 
-Use the refresh button in the Host view title bar to reload host dependency health.
+Use the refresh button in the Host view title bar to reload host health.
 
 ## Commands
 
