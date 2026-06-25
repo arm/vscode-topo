@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { TargetStore } from './targetStore';
-import { mutable } from '../util/mutable';
+import { mutable } from '../util/test/mutable';
 import { WrappedError } from '../errors/wrappedError';
 import { mock, MockProxy } from 'vitest-mock-extended';
 

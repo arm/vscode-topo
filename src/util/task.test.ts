@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import os from 'node:os';
 import { createProcessTask } from './task';
-import { mutable } from './mutable';
+import { mutable } from './test/mutable';
 
 const workspaceFolder: vscode.WorkspaceFolder = {
     uri: vscode.Uri.file('/workspace/project'),
