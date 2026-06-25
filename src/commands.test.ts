@@ -15,7 +15,7 @@ import { ContainerStop } from './actions/containerStop';
 import { ContainerDelete } from './actions/containerDelete';
 import { FixIssue } from './actions/fixIssue';
 import { ProjectClone } from './actions/projectClone';
-import { ProjectTreeItem } from './treeItems/projectTreeItem';
+import { ProjectTreeItem } from './views/treeItems/projectTreeItem';
 import { unloaded } from './util/loadable';
 import { ProjectController } from './controllers/projectController';
 

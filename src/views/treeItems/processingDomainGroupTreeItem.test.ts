@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { ProcessingDomainGroupTreeItem } from './processingDomainGroupTreeItem';
-import { errored, loading, unloaded } from '../util/loadable';
+import { errored, loading, unloaded } from '../../util/loadable';
 
 describe('ProcessingDomainGroupTreeItem', () => {
     it('sets label, contextValue, icon, and expanded state', () => {

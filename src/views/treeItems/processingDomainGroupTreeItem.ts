@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
-import { Loadable } from '../util/loadable';
-import { TargetDescription } from '../util/types';
+import { Loadable } from '../../util/loadable';
+import { TargetDescription } from '../../util/types';
 
 function getCollapsibleState(
     targetDescription: Loadable<TargetDescription>,

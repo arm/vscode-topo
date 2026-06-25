@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
-import { DISPLAY_NAME } from '../manifest';
-import { showOutput } from '../commands';
-import { Errored } from '../util/loadable';
+import { DISPLAY_NAME } from '../../manifest';
+import { showOutput } from '../../commands';
+import { Errored } from '../../util/loadable';
 
 export class ErrorTreeItem extends vscode.TreeItem {
     constructor(label: string, errored?: Errored) {

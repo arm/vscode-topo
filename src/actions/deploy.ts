@@ -14,7 +14,7 @@ import {
     getPreferredComposeFiles,
     type ComposeFileMetadata,
 } from '../util/composeFile';
-import { ProjectTreeItem } from '../treeItems/projectTreeItem';
+import { ProjectTreeItem } from '../views/treeItems/projectTreeItem';
 
 const viewLogsItem: vscode.MessageItem = {
     title: 'View Logs',

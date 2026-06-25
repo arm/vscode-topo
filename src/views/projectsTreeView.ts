@@ -1,18 +1,18 @@
 import * as vscode from 'vscode';
 import { CONTEXT_PROJECT_COUNT, PACKAGE_NAME } from '../manifest';
-import { ProjectTreeItem } from '../treeItems/projectTreeItem';
+import { ProjectTreeItem } from './treeItems/projectTreeItem';
 import { DisposableCollector } from '../util/disposableCollector';
 import { ProjectModel } from '../models/projectModel';
-import { ErrorTreeItem } from '../treeItems/errorTreeItem';
-import { LoadingTreeItem } from '../treeItems/loadingTreeItem';
+import { ErrorTreeItem } from './treeItems/errorTreeItem';
+import { LoadingTreeItem } from './treeItems/loadingTreeItem';
 import { Loadable } from '../util/loadable';
 import { ProjectMetadata } from '../util/project';
-import { ContainerTreeItem } from '../treeItems/containerTreeItem';
+import { ContainerTreeItem } from './treeItems/containerTreeItem';
 import { ContainerItem } from '../util/types';
 import {
     compareProcessingDomains,
     ProcessingDomainTreeItem,
-} from '../treeItems/processingDomainTreeItem';
+} from './treeItems/processingDomainTreeItem';
 
 function syncProjectCountContext(projects: Loadable<ProjectMetadata[]>): void {
     const count =

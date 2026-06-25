@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
 import { PACKAGE_NAME } from '../manifest';
 import { HealthCheck } from '../topoCliSchema';
-import { HealthCheckGroupTreeItem } from '../treeItems/healthCheckGroupTreeItem';
-import { HealthCheckTreeItem } from '../treeItems/healthCheckTreeItem';
-import { ErrorTreeItem } from '../treeItems/errorTreeItem';
+import { HealthCheckGroupTreeItem } from './treeItems/healthCheckGroupTreeItem';
+import { HealthCheckTreeItem } from './treeItems/healthCheckTreeItem';
+import { ErrorTreeItem } from './treeItems/errorTreeItem';
 import { HostModel } from '../models/hostModel';
 import { DisposableCollector } from '../util/disposableCollector';
 import { loaded } from '../util/loadable';

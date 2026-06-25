@@ -1,13 +1,13 @@
 import * as vscode from 'vscode';
 import { ProjectsTreeView } from './projectsTreeView';
-import { ProjectTreeItem } from '../treeItems/projectTreeItem';
+import { ProjectTreeItem } from './treeItems/projectTreeItem';
 import { mutable } from '../util/mutable';
 import { ProjectModel } from '../models/projectModel';
 import { loaded, errored, loading, unloaded } from '../util/loadable';
-import { ErrorTreeItem } from '../treeItems/errorTreeItem';
-import { LoadingTreeItem } from '../treeItems/loadingTreeItem';
-import { ContainerTreeItem } from '../treeItems/containerTreeItem';
-import { ProcessingDomainTreeItem } from '../treeItems/processingDomainTreeItem';
+import { ErrorTreeItem } from './treeItems/errorTreeItem';
+import { LoadingTreeItem } from './treeItems/loadingTreeItem';
+import { ContainerTreeItem } from './treeItems/containerTreeItem';
+import { ProcessingDomainTreeItem } from './treeItems/processingDomainTreeItem';
 import { ProjectMetadata } from '../util/project';
 import { ContainerItem } from '../util/types';
 import * as manifest from '../manifest';

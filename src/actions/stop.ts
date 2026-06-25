@@ -6,7 +6,7 @@ import { TaskExecutor } from '../util/taskExecutor';
 import { showAndLogError } from '../util/showAndLogError';
 import { TargetModel } from '../models/targetModel';
 import { ProjectController } from '../controllers/projectController';
-import { ProjectTreeItem } from '../treeItems/projectTreeItem';
+import { ProjectTreeItem } from '../views/treeItems/projectTreeItem';
 
 const viewLogsItem: vscode.MessageItem = {
     title: 'View Logs',

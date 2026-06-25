@@ -7,7 +7,7 @@ import { MockProxy, mock } from 'vitest-mock-extended';
 import { mutable } from '../util/mutable';
 import { TaskExecutor } from '../util/taskExecutor';
 import { ProjectController } from '../controllers/projectController';
-import { ProjectTreeItem } from '../treeItems/projectTreeItem';
+import { ProjectTreeItem } from '../views/treeItems/projectTreeItem';
 import { unloaded } from '../util/loadable';
 
 describe('Deploy', () => {
