@@ -98,12 +98,19 @@ jobs:
                   sed -E -i \
                       "s| by @[[:alnum:]_-]+(\\[bot\\])? in https://github.com/${GITHUB_REPOSITORY}/pull/([0-9]+)| (#\\2)|g" \
                       "$NOTES_FILE"
+                  awk '
+                      /^## New Contributors$/ { skip = 1; next }
+                      skip && /^\*\*Full Changelog\*\*/ { skip = 0 }
+                      skip && /^## / { skip = 0 }
+                      !skip { print }
+                  ' "$NOTES_FILE" > "$NOTES_FILE.tmp"
+                  mv "$NOTES_FILE.tmp" "$NOTES_FILE"
 
                   cp "$NOTES_FILE" release-notes.md
 
                   {
                       sed -n '1,/^## /{ /^## /q; p; }' CHANGELOG.md
-                      printf '## %s\n\n' "$VERSION"
+                      printf '\n## %s\n\n' "$VERSION"
                       cat "$NOTES_FILE"
                       printf '\n\n'
                       sed -n '/^## /,$p' CHANGELOG.md
