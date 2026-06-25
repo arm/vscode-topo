@@ -3,7 +3,7 @@ import { ProjectModel } from '../models/projectModel';
 import { findTopLevelComposeProjects, ProjectMetadata } from '../util/project';
 import { errored, loaded, loading, unloaded } from '../util/loadable';
 import * as vscode from 'vscode';
-import { mutable } from '../util/mutable';
+import { mutable } from '../util/test/mutable';
 import { mock } from 'vitest-mock-extended';
 import { TopoCli } from '../topoCli';
 import { PsOutput, TargetHealthReport } from '../topoCliSchema';

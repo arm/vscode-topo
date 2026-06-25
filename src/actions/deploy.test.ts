@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
 import { Deploy, deploy as deployServices } from './deploy';
 import { TargetModel } from '../models/targetModel';
 import { MockProxy, mock } from 'vitest-mock-extended';
-import { mutable } from '../util/mutable';
+import { mutable } from '../util/test/mutable';
 import { TaskExecutor } from '../util/taskExecutor';
 import { ProjectController } from '../controllers/projectController';
 import { ProjectTreeItem } from '../views/treeItems/projectTreeItem';

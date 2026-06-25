@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { ProjectsTreeView } from './projectsTreeView';
 import { ProjectTreeItem } from './treeItems/projectTreeItem';
-import { mutable } from '../util/mutable';
+import { mutable } from '../util/test/mutable';
 import { ProjectModel } from '../models/projectModel';
 import { loaded, errored, loading, unloaded } from '../util/loadable';
 import { ErrorTreeItem } from './treeItems/errorTreeItem';
