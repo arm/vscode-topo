@@ -1,6 +1,6 @@
 import { OutputChannelLogger, stringifyMessage } from './logger';
 import * as vscode from 'vscode';
-import { mutable } from './mutable';
+import { mutable } from './test/mutable';
 import { mock, MockProxy } from 'vitest-mock-extended';
 
 describe('OutputChannelLogger', () => {

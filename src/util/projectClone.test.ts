@@ -9,7 +9,7 @@ import {
     getLocalSourcePath,
     getTemplateOfChoice,
 } from './projectClone';
-import { mutable } from './mutable';
+import { mutable } from './test/mutable';
 import { TopoCli } from '../topoCli';
 import { MockProxy, mock } from 'vitest-mock-extended';
 import { TemplateDescription } from '../topoCliSchema';
