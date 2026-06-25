@@ -400,6 +400,11 @@
                     "topo.targetDeploySettings.port": {
                         "type": "string",
                         "description": "Specify the port to use for registry when deploying to the target. If not specified, the default port will be used."
+                    },
+                    "topo.targetDeploySettings.forceRecreate": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "topo deploy will force recreation of containers even if their configuration and image haven't changed."
                     }
                 }
             }
