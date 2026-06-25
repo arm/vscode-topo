@@ -5,6 +5,56 @@ import { DisposableCollector } from '../util/disposableCollector';
 import { ProjectModel } from '../models/projectModel';
 import { ErrorTreeItem } from '../treeItems/errorTreeItem';
 import { LoadingTreeItem } from '../treeItems/loadingTreeItem';
+import { ContainerTreeItem } from '../treeItems/containerTreeItem';
+import { ContainerItem } from '../util/types';
+import {
+    compareProcessingDomains,
+    ProcessingDomainTreeItem,
+} from '../treeItems/processingDomainTreeItem';
+
+function compareContainers(a: ContainerItem, b: ContainerItem): number {
+    if (a.state === 'running' && b.state !== 'running') {
+        return -1;
+    }
+    if (a.state !== 'running' && b.state === 'running') {
+        return 1;
+    }
+    return a.names.localeCompare(b.names, undefined, { sensitivity: 'base' });
+}
+
+function groupContainersByProcessingDomain(
+    containers: ContainerItem[],
+): ProcessingDomainTreeItem[] {
+    const containersByDomain = new Map<string, ContainerItem[]>();
+    for (const container of containers) {
+        const domain = container.processingDomain || 'Unknown';
+        containersByDomain.set(domain, [
+            ...(containersByDomain.get(domain) ?? []),
+            container,
+        ]);
+    }
+
+    return [...containersByDomain.entries()]
+        .map(([domain, containers]) => {
+            const sortedContainers = [...containers].sort(compareContainers);
+            return new ProcessingDomainTreeItem(domain, sortedContainers);
+        })
+        .sort(compareProcessingDomains);
+}
+
+function getProjectChildren(projectItem: ProjectTreeItem): vscode.TreeItem[] {
+    const containers = projectItem.containers;
+
+    if (containers.status === 'errored') {
+        return [new ErrorTreeItem('Failed to load containers', containers)];
+    }
+
+    if (containers.status === 'unloaded') {
+        return [];
+    }
+
+    return groupContainersByProcessingDomain(containers.data);
+}
 
 export class ProjectsTreeView
     implements vscode.TreeDataProvider<vscode.TreeItem>, vscode.Disposable
@@ -28,32 +78,50 @@ export class ProjectsTreeView
             this.model.onProjectsChanged(() => {
                 this._onDidChangeTreeData.fire(undefined);
             }),
+            this.model.onProjectContainersChanged(() => {
+                this._onDidChangeTreeData.fire(undefined);
+            }),
         );
     }
 
-    public getChildren(element?: ProjectTreeItem): vscode.TreeItem[] {
-        if (element) {
-            return [];
+    public getChildren(element?: vscode.TreeItem): vscode.TreeItem[] {
+        if (!element) {
+            const projects = this.model.projects;
+            if (projects.status === 'errored') {
+                return [new ErrorTreeItem('Failed to load projects', projects)];
+            }
+
+            if (projects.status === 'unloaded') {
+                return [];
+            }
+
+            if (projects.loading) {
+                return [new LoadingTreeItem('Loading projects')];
+            }
+
+            const showWorkspaceName =
+                (vscode.workspace.workspaceFolders?.length ?? 0) > 1;
+            return projects.data.map((project) => {
+                const containers = this.model.getProjectContainers(project);
+                return new ProjectTreeItem(
+                    project,
+                    showWorkspaceName,
+                    containers,
+                );
+            });
         }
 
-        const projects = this.model.projects;
-        if (projects.status === 'errored') {
-            return [new ErrorTreeItem('Failed to load projects', projects)];
+        if (element instanceof ProjectTreeItem) {
+            return getProjectChildren(element);
         }
 
-        if (projects.status === 'unloaded') {
-            return [];
+        if (element instanceof ProcessingDomainTreeItem) {
+            return (element.containers ?? []).map(
+                (container) => new ContainerTreeItem(container),
+            );
         }
 
-        if (projects.loading) {
-            return [new LoadingTreeItem('Loading projects')];
-        }
-
-        const showWorkspaceName =
-            (vscode.workspace.workspaceFolders?.length ?? 0) > 1;
-        return projects.data.map(
-            (project) => new ProjectTreeItem(project, showWorkspaceName),
-        );
+        return [];
     }
 
     public getTreeItem(element: vscode.TreeItem): vscode.TreeItem {

@@ -22,16 +22,12 @@ describe('assertContainerTreeItem', () => {
     it('does not throw for an object that is an instance of ContainerTreeItem', () => {
         const containerItem: ContainerItem = {
             id: 'test-id',
-            name: 'test-name',
+            names: 'test-name',
             image: 'test-image',
             state: 'running',
             status: 'Up',
-            labels: '',
-            runningFor: '',
-            createdAt: '',
-            runtime: '',
-            annotations: {},
-            ports: {},
+            processingDomain: 'TestProcessingDomain',
+            address: '',
             target: 'root@test-host',
         };
         const instanceLike = new ContainerTreeItem(containerItem);

@@ -1,60 +1,59 @@
 import * as vscode from 'vscode';
-import { ContainerTreeItem } from '../treeItems/containerTreeItem';
 import * as manifest from '../manifest';
-import { ProcessingDomainTreeItem } from '../treeItems/processingDomainTreeItem';
 import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
-import { ProcessingDomainGroupTreeItem } from '../treeItems/processingDomainGroupTreeItem';
 import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
 import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
-import { ContainerItem, TargetDescription } from '../util/types';
+import { TargetDescription } from '../util/types';
 import { Loadable, loaded } from '../util/loadable';
 import { TargetDataIssueTreeItem } from '../targetTreeView/targetDataIssueTreeItem';
 import { ErrorTreeItem } from '../treeItems/errorTreeItem';
 import { TargetHealthCheck } from '../topoCliSchema';
 import { getVisibleTargetIssues } from '../target/getVisibleTargetIssues';
 import { LoadingTreeItem } from '../treeItems/loadingTreeItem';
+import {
+    compareProcessingDomains,
+    ProcessingDomainTreeItem,
+} from '../treeItems/processingDomainTreeItem';
+import { ProcessingDomainGroupTreeItem } from '../treeItems/processingDomainGroupTreeItem';
 
 function compareByName(a: { name: string }, b: { name: string }): number {
     return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
 }
 
-function compareContainers(a: ContainerItem, b: ContainerItem): number {
-    if (a.state === 'running' && b.state !== 'running') {
-        return -1;
+function getProcessingDomainGroupChildren(
+    targetDescription: Loadable<TargetDescription>,
+): vscode.TreeItem[] {
+    if (targetDescription.status === 'errored') {
+        return [
+            new ErrorTreeItem(
+                'Failed to load processing domains',
+                targetDescription,
+            ),
+        ];
     }
-    if (a.state !== 'running' && b.state === 'running') {
-        return 1;
+
+    if (targetDescription.status === 'unloaded') {
+        return [];
     }
-    return compareByName(a, b);
+
+    const processingDomains = [
+        manifest.PRIMARY_PROCESSING_DOMAIN,
+        ...targetDescription.data.remoteProcessors.map(
+            (remoteProcessor) => remoteProcessor.name,
+        ),
+    ];
+
+    return processingDomains
+        .map((processingDomain) => {
+            return new ProcessingDomainTreeItem(processingDomain);
+        })
+        .sort(compareProcessingDomains);
 }
-
-function filterContainersForProcessingDomain(
-    containers: ContainerItem[],
-    processingDomainId: string,
-): ContainerItem[] {
-    return containers.filter((item) => {
-        if (processingDomainId === 'PrimaryOS') {
-            return item.runtime === manifest.TARGET_HOST_RUNTIME;
-        }
-
-        return (
-            item.runtime === manifest.TARGET_REMOTEPROC_RUNTIME &&
-            item.annotations?.['remoteproc.name'] === processingDomainId
-        );
-    });
-}
-
-const PRIMARY_OS_PROCESSING_DOMAIN = {
-    id: 'PrimaryOS',
-    label: 'Primary OS',
-};
 
 function getSelectedTargetChildren(
-    target: string,
     health: Loadable<TargetHealthCheck>,
     targetDescription: Loadable<TargetDescription>,
-    selectedTargetContainers: Loadable<ContainerItem[]>,
 ): vscode.TreeItem[] {
     switch (health.status) {
         case 'unloaded':
@@ -82,12 +81,10 @@ function getSelectedTargetChildren(
                     health.loading,
                 ),
             );
-            const subsystemsGroup = new ProcessingDomainGroupTreeItem(
-                target,
-                description?.remoteProcessors.map((rp) => rp.name) ?? [],
-                selectedTargetContainers,
+            const processingDomainGroup = new ProcessingDomainGroupTreeItem(
+                targetDescription,
             );
-            return [dependenciesGroup, subsystemsGroup];
+            return [dependenciesGroup, processingDomainGroup];
         }
     }
 }
@@ -147,9 +144,6 @@ export class TargetTreeView
             this.targetModel.onHealthChanged(() => {
                 this.refreshTreeView();
             }),
-            this.targetModel.onContainersChanged(() => {
-                this.refreshTreeView();
-            }),
             this.targetModel.onDescriptionChanged(() => {
                 this.refreshTreeView();
             }),
@@ -170,10 +164,8 @@ export class TargetTreeView
             }
 
             return getSelectedTargetChildren(
-                selectedTarget,
                 this.targetModel.selectedTargetHealth,
                 this.targetModel.selectedTargetDescription,
-                this.targetModel.selectedTargetContainers,
             );
         }
 
@@ -185,49 +177,7 @@ export class TargetTreeView
         }
 
         if (element instanceof ProcessingDomainGroupTreeItem) {
-            if (element.containers.status === 'errored') {
-                return [
-                    new ErrorTreeItem(
-                        'Failed to load containers',
-                        element.containers,
-                    ),
-                ];
-            }
-
-            if (element.containers.status === 'unloaded') {
-                return [];
-            }
-
-            const sortedContainers = [...element.containers.data].sort(
-                compareContainers,
-            );
-
-            const processingDomains = [
-                PRIMARY_OS_PROCESSING_DOMAIN,
-                ...element.remoteProcessorNames.map((name) => ({
-                    id: name,
-                    label: name,
-                })),
-            ];
-            return processingDomains.map((domain) => {
-                const containers = filterContainersForProcessingDomain(
-                    sortedContainers,
-                    domain.id,
-                );
-
-                return new ProcessingDomainTreeItem(
-                    domain.id,
-                    element.target,
-                    containers,
-                    domain.label,
-                );
-            });
-        }
-
-        if (element instanceof ProcessingDomainTreeItem) {
-            return element.containers.map(
-                (container) => new ContainerTreeItem(container),
-            );
+            return getProcessingDomainGroupChildren(element.targetDescription);
         }
 
         return [];
