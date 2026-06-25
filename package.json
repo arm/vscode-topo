@@ -393,23 +393,34 @@
                 }
             ]
         },
-        "configuration": {
-            "title": "Topo",
-            "properties": {
-                "topo.loggingVerbosity": {
-                    "type": "string",
-                    "enum": [
-                        "off",
-                        "error",
-                        "warn",
-                        "info",
-                        "debug"
-                    ],
-                    "default": "warn",
-                    "description": "Specify the logging verbosity of the Topo extension"
+        "configuration": [
+            {
+                "title": "Topo",
+                "properties": {
+                    "topo.loggingVerbosity": {
+                        "type": "string",
+                        "enum": [
+                            "off",
+                            "error",
+                            "warn",
+                            "info",
+                            "debug"
+                        ],
+                        "default": "warn",
+                        "description": "Specify the logging verbosity of the Topo extension"
+                    }
+                }
+            },
+            {
+                "title": "Target Deploy Settings",
+                "properties": {
+                    "topo.targetDeploySettings.port": {
+                        "type": "string",
+                        "description": "Specify the port to use for registry when deploying to the target. If not specified, the default port will be used."
+                    }
                 }
             }
-        }
+        ]
     },
     "scripts": {
         "package": "npm run build && vsce package",

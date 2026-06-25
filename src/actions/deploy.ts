@@ -15,6 +15,7 @@ import {
     type ComposeFileMetadata,
 } from '../util/composeFile';
 import { ProjectTreeItem } from '../views/treeItems/projectTreeItem';
+import { CONFIG_CUSTOM_REGISTRY_PORT, PACKAGE_NAME } from '../manifest';
 
 const viewLogsItem: vscode.MessageItem = {
     title: 'View Logs',
@@ -23,6 +24,10 @@ const viewLogsItem: vscode.MessageItem = {
 type ComposeFileQuickPickItem = vscode.QuickPickItem & {
     uri: vscode.Uri;
 };
+
+export interface DeployOptions {
+    customRegistryPort?: string;
+}
 
 export class Deploy {
     constructor(
@@ -65,8 +70,18 @@ export class Deploy {
         if (!resource) {
             return;
         }
+<<<<<<< HEAD
         await deploy(this.taskExecutor, resource.fsPath, target);
         await this.projectController.refreshProjectContainersCommandHandler();
+=======
+        await deploy(
+            this.taskExecutor,
+            resource.fsPath,
+            target,
+            getDeployOptionsFromConfiguration(),
+        );
+        await this.targetController.refreshSelectedTargetDataCommandHandler();
+>>>>>>> 734fd0d (Pass deploy registry port setting to topo)
     }
 
     public async deployContextCommandHandler(
@@ -89,8 +104,18 @@ export class Deploy {
             throw err;
         }
 
+<<<<<<< HEAD
         await deploy(this.taskExecutor, resource.fsPath, target);
         await this.projectController.refreshProjectContainersCommandHandler();
+=======
+        await deploy(
+            this.taskExecutor,
+            resource.fsPath,
+            target,
+            getDeployOptionsFromConfiguration(),
+        );
+        await this.targetController.refreshSelectedTargetDataCommandHandler();
+>>>>>>> 734fd0d (Pass deploy registry port setting to topo)
     }
 
     public async deployProjectCommandHandler(treeNode: unknown): Promise<void> {
@@ -138,10 +163,11 @@ export async function deploy(
     taskExecutor: TaskExecutor,
     composeFilePath: string,
     target: string,
+    options: DeployOptions = {},
 ): Promise<void> {
     const task = createProcessTask(
         `Deploy to ${target}`,
-        ['topo', 'deploy', '--target', target],
+        ['topo', ...buildDeployArgs(target, options)],
         {
             cwd: path.dirname(composeFilePath),
         },
@@ -170,4 +196,25 @@ export async function deploy(
     vscode.window.showInformationMessage(
         `Deployment to ${target} completed successfully.`,
     );
+}
+
+export function buildDeployArgs(
+    target: string,
+    options: DeployOptions = {},
+): string[] {
+    const args = ['deploy', '--target', target];
+    if (options.customRegistryPort) {
+        args.push('-p', options.customRegistryPort);
+    }
+    return args;
+}
+
+function getDeployOptionsFromConfiguration(): DeployOptions {
+    const port = vscode.workspace
+        .getConfiguration(PACKAGE_NAME)
+        .get<string>(CONFIG_CUSTOM_REGISTRY_PORT);
+    const trimmedPort = port?.trim();
+    return {
+        customRegistryPort: trimmedPort || undefined,
+    };
 }
