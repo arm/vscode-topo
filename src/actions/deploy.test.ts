@@ -9,6 +9,10 @@ import { TaskExecutor } from '../util/taskExecutor';
 import { ProjectController } from '../controllers/projectController';
 import { ProjectTreeItem } from '../views/treeItems/projectTreeItem';
 import { unloaded } from '../util/loadable';
+import {
+    CONFIG_CUSTOM_REGISTRY_PORT,
+    CONFIG_FORCE_RECREATE,
+} from '../manifest';
 
 describe('Deploy', () => {
     let deployAction: Deploy;
@@ -62,6 +66,12 @@ describe('Deploy', () => {
                     uri.fsPath.startsWith(workspaceFolder.uri.fsPath),
                 ),
         );
+    }
+
+    function mockDeployConfiguration(settings: Record<string, unknown>): void {
+        vi.mocked(vscode.workspace.getConfiguration).mockReturnValue({
+            get: vi.fn((key: string) => settings[key]),
+        } as unknown as vscode.WorkspaceConfiguration);
     }
 
     beforeEach(() => {
@@ -150,6 +160,19 @@ describe('Deploy', () => {
         expect(args).toEqual(['deploy', '--target', target, '-p', '5000']);
     });
 
+    it('builds deploy arguments with force recreate enabled', () => {
+        const args = buildDeployArgs(target, {
+            forceRecreate: true,
+        });
+
+        expect(args).toEqual([
+            'deploy',
+            '--target',
+            target,
+            '--force-recreate',
+        ]);
+    });
+
     it('handles task failure', async () => {
         taskExecutor.run.mockRejectedValueOnce(new Error('deploy failed'));
         await deployServices(taskExecutor, composeFilePath, target);
@@ -174,9 +197,10 @@ describe('Deploy', () => {
     });
 
     it('passes the configured custom registry port from the command handler', async () => {
-        vi.mocked(vscode.workspace.getConfiguration).mockReturnValueOnce({
-            get: vi.fn().mockReturnValue(' 5000 '),
-        } as unknown as vscode.WorkspaceConfiguration);
+        mockDeployConfiguration({
+            [CONFIG_CUSTOM_REGISTRY_PORT]: ' 5000 ',
+            [CONFIG_FORCE_RECREATE]: false,
+        });
 
         await deployAction.deployContextCommandHandler(composeFileUri);
 
@@ -185,6 +209,22 @@ describe('Deploy', () => {
             taskExecutor.run.mock.calls[0][0],
             path.dirname(composeFilePath),
             ['deploy', '--target', target, '-p', '5000'],
+        );
+    });
+
+    it('passes force recreate from the command handler', async () => {
+        mockDeployConfiguration({
+            [CONFIG_CUSTOM_REGISTRY_PORT]: '',
+            [CONFIG_FORCE_RECREATE]: true,
+        });
+
+        await deployAction.deployContextCommandHandler(composeFileUri);
+
+        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+        expectDeployTask(
+            taskExecutor.run.mock.calls[0][0],
+            path.dirname(composeFilePath),
+            ['deploy', '--target', target, '--force-recreate'],
         );
     });
 
