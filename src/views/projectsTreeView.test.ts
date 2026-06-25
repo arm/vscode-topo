@@ -10,7 +10,7 @@ import { ContainerTreeItem } from '../treeItems/containerTreeItem';
 import { ProcessingDomainTreeItem } from '../treeItems/processingDomainTreeItem';
 import { ProjectMetadata } from '../util/project';
 import { ContainerItem } from '../util/types';
-import { PRIMARY_PROCESSING_DOMAIN } from '../manifest';
+import * as manifest from '../manifest';
 
 const project: ProjectMetadata = {
     name: 'demo',
@@ -26,7 +26,7 @@ const container: ContainerItem = {
     image: 'demo-app',
     status: 'Up 1 minute',
     state: 'running',
-    processingDomain: PRIMARY_PROCESSING_DOMAIN,
+    processingDomain: manifest.PRIMARY_PROCESSING_DOMAIN,
     address: 'localhost:8000',
     target: 'user@topo.local',
 };
@@ -42,6 +42,26 @@ describe('ProjectsTreeView', () => {
                 treeDataProvider: provider,
                 showCollapseAll: false,
             },
+        );
+    });
+
+    it('syncs project count context', () => {
+        const model = new ProjectModel();
+        new ProjectsTreeView(model);
+
+        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            'setContext',
+            manifest.CONTEXT_PROJECT_COUNT,
+            undefined,
+        );
+
+        vi.mocked(vscode.commands.executeCommand).mockClear();
+        model.setProjects(loaded([]));
+
+        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            'setContext',
+            manifest.CONTEXT_PROJECT_COUNT,
+            0,
         );
     });
 

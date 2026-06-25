@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as manifest from '../manifest';
-import { TargetTreeView } from './targetTreeView';
+import { TargetSelectionState, TargetTreeView } from './targetTreeView';
 import { TargetDescription } from '../util/types';
 import { mock } from 'vitest-mock-extended';
 import { IssueCheck, TargetHealthCheck } from '../topoCliSchema';
@@ -72,8 +72,8 @@ describe('TargetTreeView', () => {
             );
             expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
                 'setContext',
-                manifest.CONTEXT_HAS_SELECTED_TARGET,
-                true,
+                manifest.CONTEXT_SELECTED_TARGET_STATE,
+                TargetSelectionState.Selected,
             );
             contextView.dispose();
         });
@@ -108,8 +108,8 @@ describe('TargetTreeView', () => {
                 vscode.commands.executeCommand,
             ).toHaveBeenCalledExactlyOnceWith(
                 'setContext',
-                manifest.CONTEXT_HAS_SELECTED_TARGET,
-                false,
+                manifest.CONTEXT_SELECTED_TARGET_STATE,
+                TargetSelectionState.Unselected,
             );
 
             vi.mocked(vscode.commands.executeCommand).mockClear();
@@ -119,8 +119,8 @@ describe('TargetTreeView', () => {
                 vscode.commands.executeCommand,
             ).toHaveBeenCalledExactlyOnceWith(
                 'setContext',
-                manifest.CONTEXT_HAS_SELECTED_TARGET,
-                true,
+                manifest.CONTEXT_SELECTED_TARGET_STATE,
+                TargetSelectionState.Selected,
             );
         });
     });
