@@ -92,6 +92,12 @@
                 "category": "Topo"
             },
             {
+                "command": "topo.openTargetSettings",
+                "title": "Target Settings",
+                "icon": "$(gear)",
+                "category": "Topo"
+            },
+            {
                 "command": "topo.fixIssue",
                 "title": "Fix",
                 "icon": "$(wrench)",
@@ -363,6 +369,11 @@
                 {
                     "command": "topo.clearTargetSelection",
                     "when": "view == topo.target-manager && topo.selectedTargetState == 'selected'",
+                    "group": "navigation"
+                },
+                {
+                    "command": "topo.openTargetSettings",
+                    "when": "view == topo.target-manager",
                     "group": "navigation"
                 },
                 {

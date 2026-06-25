@@ -14,6 +14,7 @@ import { ContainerDelete } from './actions/containerDelete';
 import { FixIssue } from './actions/fixIssue';
 import { ProjectClone } from './actions/projectClone';
 import { ProjectController } from './controllers/projectController';
+import { OpenTopoSettings } from './actions/openTopoSettings';
 
 function command(id: string): string {
     return `${PACKAGE_NAME}.${id}`;
@@ -26,6 +27,7 @@ export const showOutput = command('showOutput');
 export const selectTarget = command('selectTarget');
 export const resetExtensionData = command('resetExtensionData');
 export const clearTargetSelection = command('clearTargetSelection');
+export const openTargetSettings = command('openTargetSettings');
 export const initProject = command('initProject');
 export const cloneProject = command('cloneProject');
 export const deploy = command('deploy');
@@ -56,6 +58,7 @@ export interface CommandHandlers {
     containerStop: ContainerStop;
     containerDelete: ContainerDelete;
     fixIssue: FixIssue;
+    openTopoSettings: OpenTopoSettings;
 }
 
 export function register(handlers: CommandHandlers): vscode.Disposable {
@@ -79,6 +82,9 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
         ),
         vscode.commands.registerCommand(clearTargetSelection, () =>
             handlers.targetController.clearSelectionCommandHandler(),
+        ),
+        vscode.commands.registerCommand(openTargetSettings, () =>
+            handlers.openTopoSettings.openTopoSettingsCommandHandler(),
         ),
         vscode.commands.registerCommand(initProject, () =>
             handlers.projectInit.initProjectCommandHandler(),
