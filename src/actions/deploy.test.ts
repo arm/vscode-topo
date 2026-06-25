@@ -1,7 +1,7 @@
 import path from 'node:path';
 import os from 'node:os';
 import * as vscode from 'vscode';
-import { Deploy, deploy as deployServices } from './deploy';
+import { Deploy, buildDeployArgs, deploy as deployServices } from './deploy';
 import { TargetModel } from '../models/targetModel';
 import { MockProxy, mock } from 'vitest-mock-extended';
 import { mutable } from '../util/test/mutable';
@@ -39,11 +39,15 @@ describe('Deploy', () => {
         );
     }
 
-    function expectDeployTask(task: vscode.Task, cwd: string): void {
+    function expectDeployTask(
+        task: vscode.Task,
+        cwd: string,
+        args = ['deploy', '--target', target],
+    ): void {
         expect(task.name).toBe('Deploy to topo.local');
         expect(task.execution).toMatchObject({
             process: 'topo',
-            args: ['deploy', '--target', target],
+            args,
             options: { cwd },
         });
     }
@@ -119,6 +123,33 @@ describe('Deploy', () => {
         );
     });
 
+    it('passes the custom registry port to deploy', async () => {
+        await deployServices(taskExecutor, composeFilePath, target, {
+            customRegistryPort: '5000',
+        });
+
+        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+        expectDeployTask(
+            taskExecutor.run.mock.calls[0][0],
+            path.dirname(composeFilePath),
+            ['deploy', '--target', target, '-p', '5000'],
+        );
+    });
+
+    it('builds deploy arguments without unset options', () => {
+        const args = buildDeployArgs(target);
+
+        expect(args).toEqual(['deploy', '--target', target]);
+    });
+
+    it('builds deploy arguments with configured options', () => {
+        const args = buildDeployArgs(target, {
+            customRegistryPort: '5000',
+        });
+
+        expect(args).toEqual(['deploy', '--target', target, '-p', '5000']);
+    });
+
     it('handles task failure', async () => {
         taskExecutor.run.mockRejectedValueOnce(new Error('deploy failed'));
         await deployServices(taskExecutor, composeFilePath, target);
@@ -140,6 +171,21 @@ describe('Deploy', () => {
         expect(
             projectController.refreshProjectContainersCommandHandler,
         ).toHaveBeenCalledOnce();
+    });
+
+    it('passes the configured custom registry port from the command handler', async () => {
+        vi.mocked(vscode.workspace.getConfiguration).mockReturnValueOnce({
+            get: vi.fn().mockReturnValue(' 5000 '),
+        } as unknown as vscode.WorkspaceConfiguration);
+
+        await deployAction.deployContextCommandHandler(composeFileUri);
+
+        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+        expectDeployTask(
+            taskExecutor.run.mock.calls[0][0],
+            path.dirname(composeFilePath),
+            ['deploy', '--target', target, '-p', '5000'],
+        );
     });
 
     it('deploys the project tree item compose file', async () => {

@@ -392,7 +392,18 @@
                     "group": "navigation"
                 }
             ]
-        }
+        },
+        "configuration": [
+            {
+                "title": "Topo",
+                "properties": {
+                    "topo.targetDeploySettings.port": {
+                        "type": "string",
+                        "description": "Specify the port to use for registry when deploying to the target. If not specified, the default port will be used."
+                    }
+                }
+            }
+        ]
     },
     "scripts": {
         "package": "npm run build && vsce package",
