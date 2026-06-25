@@ -2,6 +2,22 @@
 
 All notable changes to the "vscode-topo" extension will be documented in this file.
 
+
+## 0.6.0
+
+<!-- Release notes generated using configuration in .github/release.yml at ca09aa3a22290edbd544ab0aa16bedf300d13425 -->
+
+## What's Changed
+### Breaking Changes
+* feat!: `Unselect Target` renamed to `Clear Selection` (#296)
+* feat!: rename `Dependencies` tree item to `Health` (#297)
+### Features and Enhancements
+* feat: display containers in project view exclusively (#291)
+* feat: prevent render of welcome views before extension is ready (#293)
+
+**Full Changelog**: https://github.com/arm/vscode-topo/compare/v0.4.0...v0.6.0
+
+
 ## 0.4.0
 
 ## What's Changed
