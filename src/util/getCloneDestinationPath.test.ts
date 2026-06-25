@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { mutable } from './mutable';
+import { mutable } from './test/mutable';
 import { getCloneDestinationPath } from './getCloneDestinationPath';
 
 const workspaceUri = vscode.Uri.file('/home/workspace');

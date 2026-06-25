@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import path from 'node:path';
 import os from 'node:os';
 import { ProtocolHandler } from './protocolHandler';
-import { mutable } from './util/mutable';
+import { mutable } from './util/test/mutable';
 import { showAndLogError } from './util/showAndLogError';
 import { TaskExecutor } from './util/taskExecutor';
 import { MockProxy, mock } from 'vitest-mock-extended';

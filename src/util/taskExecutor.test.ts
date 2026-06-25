@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import path from 'node:path';
 import { TaskExecutor } from './taskExecutor';
 import { createProcessTask } from './task';
-import { mutable } from './mutable';
+import { mutable } from './test/mutable';
 import { TopoCli } from '../topoCli';
 import { mock, MockProxy } from 'vitest-mock-extended';
 import type { Mock } from 'vitest';

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { ProjectInit, initProject } from './projectInit';
-import { mutable } from '../util/mutable';
+import { mutable } from '../util/test/mutable';
 import { mock } from 'vitest-mock-extended';
 import { TopoCli } from '../topoCli';
 
