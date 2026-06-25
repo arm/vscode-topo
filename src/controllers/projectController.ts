@@ -93,10 +93,18 @@ export class ProjectController implements vscode.Disposable {
     public async refreshProjectContainersCommandHandler(): Promise<void> {
         const target = this.targetModel.selected;
         const projects = this.model.projects;
-
         if (!target || projects.status !== 'loaded') {
-            this.clearProjectContainers();
+            return this.clearProjectContainers();
+        }
+
+        const health = this.targetModel.selectedTargetHealth;
+        if (health.loading) {
             return;
+        } else if (
+            health.status !== 'loaded' ||
+            health.data.connectivity.status !== 'ok'
+        ) {
+            return this.clearProjectContainers();
         }
 
         try {

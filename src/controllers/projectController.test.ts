@@ -1,7 +1,7 @@
 import { ProjectController } from './projectController';
 import { ProjectModel } from '../models/projectModel';
 import { findTopLevelComposeProjects, ProjectMetadata } from '../util/project';
-import { errored, loaded, unloaded } from '../util/loadable';
+import { errored, loaded, loading, unloaded } from '../util/loadable';
 import * as vscode from 'vscode';
 import { mutable } from '../util/mutable';
 import { mock } from 'vitest-mock-extended';
@@ -187,6 +187,50 @@ describe('ProjectController', () => {
             loaded([{ ...psOutput.containers[0], target }]),
         );
         expect(model.getProjectContainers(otherProject).status).toBe('errored');
+    });
+
+    it('keeps existing containers while target health is loading', async () => {
+        const targetModel = new TargetModel();
+        targetModel.setSelected(target);
+        targetModel.setSelectedTargetHealth(loading(loaded(healthyTarget)));
+        const model = new ProjectModel();
+        model.setProjects(loaded(projects));
+        model.setProjectContainers(projects[0], loaded([]));
+        const controller = new ProjectController(
+            model,
+            mock<TopoCli>(),
+            targetModel,
+        );
+
+        await controller.refreshProjectContainersCommandHandler();
+
+        expect(model.getProjectContainers(projects[0])).toEqual(loaded([]));
+    });
+
+    it('clears containers when target connectivity is unhealthy', async () => {
+        const targetModel = new TargetModel();
+        targetModel.setSelected(target);
+        targetModel.setSelectedTargetHealth(
+            loaded({
+                ...healthyTarget,
+                connectivity: {
+                    ...healthyTarget.connectivity,
+                    status: 'error',
+                },
+            }),
+        );
+        const model = new ProjectModel();
+        model.setProjects(loaded(projects));
+        model.setProjectContainers(projects[0], loaded([]));
+        const controller = new ProjectController(
+            model,
+            mock<TopoCli>(),
+            targetModel,
+        );
+
+        await controller.refreshProjectContainersCommandHandler();
+
+        expect(model.getProjectContainers(projects[0])).toEqual(unloaded());
     });
 
     it('clears containers when projects are unavailable', async () => {
