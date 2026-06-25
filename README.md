@@ -75,15 +75,15 @@ If no target is selected, the view shows a **Select a target** button.
 
 Use the buttons in the Target view title bar to access these actions:
 
-| Command             | Description                                                  |
-| ------------------- | ------------------------------------------------------------ |
-| **Select a target** | Select, add, or remove saved manual targets.                 |
-| **Unselect Target** | Clear the active target without deleting it.                 |
-| **Fix Issues**      | Select and run available fixes for target dependency issues. |
+| Command             | Description                                  |
+| ------------------- | -------------------------------------------- |
+| **Select a target** | Select, add, or remove saved manual targets. |
+| **Refresh**         | Re-check health for the selected target.     |
+| **Unselect Target** | Clear the active target without deleting it. |
 
 ### Dependency Actions
 
-Use the inline **Fix** button on a fixable dependency item to run the executable fix command reported by the Topo health check.
+Use the inline **Fix** button on a fixable dependency item to run the executable fix command reported by the Topo health check. Use **Fix Issues** on the **Dependencies** row to select and run fixes for multiple target dependency issues.
 
 ## Container Actions
 
