@@ -1,6 +1,5 @@
 import { HealthCheck, TargetHealthReport } from '../topoCliSchema';
 import {
-    hasFix,
     hasFixCommand,
     getIssueFixCommandGroups,
     getTargetIssueFixCommandGroups,
@@ -221,30 +220,5 @@ describe('hasFixCommand', () => {
         const result = hasFixCommand(healthCheck);
 
         expect(result).toBe(expected);
-    });
-});
-
-describe('hasFix', () => {
-    it('treats a health check with fix details as a health issue', () => {
-        const healthCheck: HealthCheck = {
-            name: 'Runtime',
-            status: 'warning',
-            value: 'missing',
-            fix: {
-                description: 'Manual setup required',
-            },
-        };
-
-        expect(hasFix(healthCheck)).toBe(true);
-    });
-
-    it('does not treat a health check without fix details as a health issue', () => {
-        const healthCheck: HealthCheck = {
-            name: 'Runtime',
-            status: 'ok',
-            value: 'installed',
-        };
-
-        expect(hasFix(healthCheck)).toBe(false);
     });
 });

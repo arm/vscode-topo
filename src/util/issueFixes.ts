@@ -9,19 +9,9 @@ export type IssueFixCommandGroup = {
     command: string;
 };
 
-export type HealthIssue = HealthCheck & {
-    fix: HealthCheckFix;
-};
-
-export type FixableIssue = HealthIssue & {
+export type FixableIssue = HealthCheck & {
     fix: HealthCheckFix & { command: string };
 };
-
-export function hasFix(
-    healthCheck: HealthCheck | undefined,
-): healthCheck is HealthIssue {
-    return !!healthCheck?.fix;
-}
 
 export function hasFixCommand(
     healthCheck: HealthCheck | undefined,
