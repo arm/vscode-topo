@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { HealthCheckStatus } from '../../topoCliSchema';
 
-export const getDependencyItemIcon = (
+export const getHealthCheckIcon = (
     status: HealthCheckStatus,
 ): vscode.ThemeIcon => {
     if (status === 'ok') {
@@ -24,12 +24,12 @@ export const getDependencyItemIcon = (
     );
 };
 
-export const getDependencyGroupIcon = (
+export const getHealthGroupIcon = (
     status: HealthCheckStatus,
 ): vscode.ThemeIcon => {
     if (status === 'ok') {
         return new vscode.ThemeIcon('library');
     }
 
-    return getDependencyItemIcon(status);
+    return getHealthCheckIcon(status);
 };

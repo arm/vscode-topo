@@ -1,8 +1,8 @@
 import { HostModel } from './hostModel';
-import { HostHealthCheck } from '../topoCliSchema';
+import { HostHealthReport } from '../topoCliSchema';
 import { loaded, unloaded } from '../util/loadable';
 
-const hostHealth: HostHealthCheck = {
+const hostHealth: HostHealthReport = {
     host: {
         dependencies: [
             {

@@ -1,17 +1,17 @@
 import * as vscode from 'vscode';
 import { HostTreeView } from './hostTreeView';
-import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
-import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
+import { HealthCheckGroupTreeItem } from '../treeItems/healthCheckGroupTreeItem';
+import { HealthCheckTreeItem } from '../treeItems/healthCheckTreeItem';
 import { HostModel } from '../models/hostModel';
 import { errored, loaded } from '../util/loadable';
 import { ErrorTreeItem } from '../treeItems/errorTreeItem';
 
-describe('HostDependenciesTreeDataProvider', () => {
+describe('HostTreeView', () => {
     afterEach(() => {
         vi.clearAllMocks();
     });
 
-    it('registers the host dependencies tree', () => {
+    it('registers the host health tree', () => {
         const provider = new HostTreeView(new HostModel());
 
         expect(vscode.window.createTreeView).toHaveBeenCalledWith(
@@ -23,18 +23,18 @@ describe('HostDependenciesTreeDataProvider', () => {
         );
     });
 
-    it('returns a Dependencies group at the root', async () => {
+    it('returns a Health group at the root', async () => {
         const provider = new HostTreeView(new HostModel());
 
         const children = provider.getChildren();
 
         expect(children).toHaveLength(1);
-        expect(children[0]).toBeInstanceOf(HealthCheckDependencyGroupTreeItem);
-        expect(children[0].label).toBe('Dependencies');
-        expect(children[0].contextValue).toBe('Dependencies');
+        expect(children[0]).toBeInstanceOf(HealthCheckGroupTreeItem);
+        expect(children[0].label).toBe('Health');
+        expect(children[0].contextValue).toBe('Health');
     });
 
-    it('returns host dependency items sorted by name below the Dependencies group', async () => {
+    it('returns host health checks sorted by name below the Health group', async () => {
         const model = new HostModel();
         model.setHealth(
             loaded({
@@ -66,9 +66,7 @@ describe('HostDependenciesTreeDataProvider', () => {
 
         expect(children).toHaveLength(2);
         expect(
-            children.every(
-                (item) => item instanceof HealthCheckDependencyTreeItem,
-            ),
+            children.every((item) => item instanceof HealthCheckTreeItem),
         ).toBe(true);
         expect(children).toMatchObject([
             expect.objectContaining({
@@ -77,7 +75,7 @@ describe('HostDependenciesTreeDataProvider', () => {
             }),
             expect.objectContaining({
                 label: 'Zed',
-                contextValue: 'Dependency Warning Fixable',
+                contextValue: 'HealthCheck Warning Fixable',
                 description: 'missing',
             }),
         ]);
@@ -93,13 +91,13 @@ describe('HostDependenciesTreeDataProvider', () => {
 
         expect(children).toHaveLength(1);
         expect(children[0]).toMatchObject(
-            new ErrorTreeItem('Failed to load dependencies', erroredValue),
+            new ErrorTreeItem('Failed to load health', erroredValue),
         );
     });
 
     it('getTreeItem returns the element itself', () => {
         const provider = new HostTreeView(new HostModel());
-        const item = new HealthCheckDependencyTreeItem(
+        const item = new HealthCheckTreeItem(
             loaded({
                 name: 'Alpha',
                 status: 'ok',

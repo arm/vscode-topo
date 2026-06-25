@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { Loadable, unloaded } from '../util/loadable';
-import { TargetHealthCheck } from '../topoCliSchema';
+import { TargetHealthReport } from '../topoCliSchema';
 import { TargetDescription } from '../util/types';
 
 export class TargetModel {
@@ -26,7 +26,7 @@ export class TargetModel {
 
     private _selected?: string;
     private _targets: Loadable<string[]> = unloaded();
-    private _health: Loadable<TargetHealthCheck> = unloaded();
+    private _health: Loadable<TargetHealthReport> = unloaded();
     private _description: Loadable<TargetDescription> = unloaded();
 
     public setSelected(selected: string | undefined): void {
@@ -48,7 +48,7 @@ export class TargetModel {
         }
     }
 
-    public setSelectedTargetHealth(state: Loadable<TargetHealthCheck>) {
+    public setSelectedTargetHealth(state: Loadable<TargetHealthReport>) {
         const changed = this._health !== state;
         this._health = state;
         if (changed) {
@@ -69,7 +69,7 @@ export class TargetModel {
         return this._targets;
     }
 
-    public get selectedTargetHealth(): Loadable<TargetHealthCheck> {
+    public get selectedTargetHealth(): Loadable<TargetHealthReport> {
         return this._health;
     }
 

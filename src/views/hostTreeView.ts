@@ -1,15 +1,15 @@
 import * as vscode from 'vscode';
 import { PACKAGE_NAME } from '../manifest';
-import { IssueCheck } from '../topoCliSchema';
-import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
-import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
+import { HealthCheck } from '../topoCliSchema';
+import { HealthCheckGroupTreeItem } from '../treeItems/healthCheckGroupTreeItem';
+import { HealthCheckTreeItem } from '../treeItems/healthCheckTreeItem';
 import { ErrorTreeItem } from '../treeItems/errorTreeItem';
 import { HostModel } from '../models/hostModel';
 import { DisposableCollector } from '../util/disposableCollector';
 import { loaded } from '../util/loadable';
 
-function sortIssueChecksByName(issueChecks: IssueCheck[]): IssueCheck[] {
-    return issueChecks.sort((a, b) =>
+function sortHealthChecksByName(healthChecks: HealthCheck[]): HealthCheck[] {
+    return healthChecks.sort((a, b) =>
         a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
     );
 }
@@ -43,26 +43,23 @@ export class HostTreeView
         if (!element) {
             const health = this.model.health;
             if (health.status === 'errored') {
-                return [
-                    new ErrorTreeItem('Failed to load dependencies', health),
-                ];
+                return [new ErrorTreeItem('Failed to load health', health)];
             }
 
-            const deps =
+            const healthChecks =
                 health.status === 'loaded'
-                    ? sortIssueChecksByName(health.data.host.dependencies)
+                    ? sortHealthChecksByName(health.data.host.dependencies)
                     : [];
             return [
-                new HealthCheckDependencyGroupTreeItem(
-                    loaded(deps, health.loading),
+                new HealthCheckGroupTreeItem(
+                    loaded(healthChecks, health.loading),
                 ),
             ];
         }
 
-        if (element instanceof HealthCheckDependencyGroupTreeItem) {
-            return element.dependencies.map(
-                (dependency) =>
-                    new HealthCheckDependencyTreeItem(loaded(dependency)),
+        if (element instanceof HealthCheckGroupTreeItem) {
+            return element.healthChecks.map(
+                (healthCheck) => new HealthCheckTreeItem(loaded(healthCheck)),
             );
         }
 

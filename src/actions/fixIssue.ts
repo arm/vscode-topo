@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
-import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
-import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
+import { HealthCheckGroupTreeItem } from '../treeItems/healthCheckGroupTreeItem';
+import { HealthCheckTreeItem } from '../treeItems/healthCheckTreeItem';
 import { showAndLogError } from '../util/showAndLogError';
 import { createProcessTask } from '../util/task';
 import { TaskExecutor } from '../util/taskExecutor';
@@ -8,16 +8,16 @@ import { TargetModel } from '../models/targetModel';
 import { TargetController } from '../controllers/targetController';
 import {
     hasFixCommand,
-    type FixableHealthIssue,
+    type FixableIssue,
     getIssueFixCommandGroups,
 } from '../util/issueFixes';
 
 type IssueFixQuickPickItem = vscode.QuickPickItem & {
-    issue: FixableHealthIssue;
+    issue: FixableIssue;
 };
 
 function getIssueFixQuickPickItems(
-    issues: FixableHealthIssue[],
+    issues: FixableIssue[],
 ): IssueFixQuickPickItem[] {
     return issues.map((issue) => ({
         label: issue.name,
@@ -35,37 +35,41 @@ export class FixIssue {
     ) {}
 
     public async fixIssueCommandHandler(treeNode: unknown): Promise<void> {
-        if (treeNode instanceof HealthCheckDependencyGroupTreeItem) {
-            await this.fixDependencyGroupIssuesFromTreeItem(treeNode);
-        } else if (treeNode instanceof HealthCheckDependencyTreeItem) {
-            await this.fixDependencyIssueFromTreeItem(treeNode);
+        if (treeNode instanceof HealthCheckGroupTreeItem) {
+            await this.fixHealthGroupChecksFromTreeItem(treeNode);
+        } else if (treeNode instanceof HealthCheckTreeItem) {
+            await this.fixIssueFromTreeItem(treeNode);
         } else {
             throw new Error(
-                `Invalid item for fix issues: expected HealthCheckDependencyGroupTreeItem or HealthCheckDependencyTreeItem but received: ${String(treeNode)}`,
+                `Invalid item for fix issues: expected HealthCheckGroupTreeItem or HealthCheckTreeItem but received: ${String(treeNode)}`,
             );
         }
 
         await this.targetController.refreshSelectedTargetHealthCommandHandler();
     }
 
-    private async fixDependencyIssueFromTreeItem(
-        treeNode: HealthCheckDependencyTreeItem,
+    private async fixIssueFromTreeItem(
+        treeNode: HealthCheckTreeItem,
     ): Promise<void> {
         const target = this.targetModel.selected;
         if (!target) {
             throw new Error('No selected target found');
         }
 
-        const command = treeNode.dependency.data.fix?.command;
+        const command = treeNode.healthCheck.data.fix?.command;
         if (!command) {
             throw new Error('No executable fix found for the selected item');
         }
 
-        await this.executeFix(target, [treeNode.dependency.data.name], command);
+        await this.executeFix(
+            target,
+            [treeNode.healthCheck.data.name],
+            command,
+        );
     }
 
-    private async fixDependencyGroupIssuesFromTreeItem(
-        dependencyGroupItem: HealthCheckDependencyGroupTreeItem,
+    private async fixHealthGroupChecksFromTreeItem(
+        healthGroupItem: HealthCheckGroupTreeItem,
     ): Promise<void> {
         const target = this.targetModel.selected;
         if (!target) {
@@ -73,19 +77,19 @@ export class FixIssue {
         }
 
         const fixableIssues =
-            dependencyGroupItem.dependencies.filter(hasFixCommand);
+            healthGroupItem.healthChecks.filter(hasFixCommand);
         if (fixableIssues.length === 0) {
             throw new Error(
                 `No executable issue fixes found for target ${target}`,
             );
         }
 
-        await this.selectAndFixTargetIssue(target, fixableIssues);
+        await this.selectAndFixTargetIssues(target, fixableIssues);
     }
 
-    private async selectAndFixTargetIssue(
+    private async selectAndFixTargetIssues(
         target: string,
-        issues: FixableHealthIssue[],
+        issues: FixableIssue[],
     ): Promise<void> {
         const selectedFixes = await vscode.window.showQuickPick(
             getIssueFixQuickPickItems(issues),

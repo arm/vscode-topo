@@ -1,15 +1,15 @@
 import * as vscode from 'vscode';
 import * as manifest from '../manifest';
-import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
-import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
+import { HealthCheckGroupTreeItem } from '../treeItems/healthCheckGroupTreeItem';
+import { HealthCheckTreeItem } from '../treeItems/healthCheckTreeItem';
 import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
 import { TargetDescription } from '../util/types';
 import { Loadable, loaded } from '../util/loadable';
 import { TargetDataIssueTreeItem } from '../targetTreeView/targetDataIssueTreeItem';
 import { ErrorTreeItem } from '../treeItems/errorTreeItem';
-import { TargetHealthCheck } from '../topoCliSchema';
-import { getVisibleTargetIssues } from '../target/getVisibleTargetIssues';
+import { TargetHealthReport } from '../topoCliSchema';
+import { getVisibleTargetHealthChecks } from '../target/getVisibleTargetHealthChecks';
 import { LoadingTreeItem } from '../treeItems/loadingTreeItem';
 import {
     compareProcessingDomains,
@@ -57,7 +57,7 @@ function getProcessingDomainGroupChildren(
 }
 
 function getSelectedTargetChildren(
-    health: Loadable<TargetHealthCheck>,
+    health: Loadable<TargetHealthReport>,
     targetDescription: Loadable<TargetDescription>,
 ): vscode.TreeItem[] {
     switch (health.status) {
@@ -70,7 +70,7 @@ function getSelectedTargetChildren(
         case 'loaded': {
             if (health.data.connectivity.status !== 'ok') {
                 return [
-                    new HealthCheckDependencyTreeItem(
+                    new HealthCheckTreeItem(
                         loaded(health.data.connectivity, health.loading),
                     ),
                 ];
@@ -80,16 +80,16 @@ function getSelectedTargetChildren(
                 targetDescription.status === 'loaded'
                     ? targetDescription.data
                     : undefined;
-            const dependenciesGroup = new HealthCheckDependencyGroupTreeItem(
+            const healthGroup = new HealthCheckGroupTreeItem(
                 loaded(
-                    getVisibleTargetIssues(health.data, description),
+                    getVisibleTargetHealthChecks(health.data, description),
                     health.loading,
                 ),
             );
             const processingDomainGroup = new ProcessingDomainGroupTreeItem(
                 targetDescription,
             );
-            return [dependenciesGroup, processingDomainGroup];
+            return [healthGroup, processingDomainGroup];
         }
     }
 }
@@ -180,10 +180,10 @@ export class TargetTreeView
             );
         }
 
-        if (element instanceof HealthCheckDependencyGroupTreeItem) {
-            const deps = [...element.dependencies].sort(compareByName);
-            return deps.map(
-                (d) => new HealthCheckDependencyTreeItem(loaded(d)),
+        if (element instanceof HealthCheckGroupTreeItem) {
+            const healthChecks = [...element.healthChecks].sort(compareByName);
+            return healthChecks.map(
+                (healthCheck) => new HealthCheckTreeItem(loaded(healthCheck)),
             );
         }
 

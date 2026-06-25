@@ -117,10 +117,7 @@ describe('commands', () => {
                 handlers.containerDelete.deleteContainerCommandHandler,
             ],
 
-            [
-                commands.fixDependencyIssue,
-                handlers.fixIssue.fixIssueCommandHandler,
-            ],
+            [commands.fixIssue, handlers.fixIssue.fixIssueCommandHandler],
             [
                 commands.fixTargetIssues,
                 handlers.fixIssue.fixIssueCommandHandler,

@@ -1,23 +1,21 @@
 import * as vscode from 'vscode';
-import { HealthCheckDependencyGroupTreeItem } from './healthCheckDependencyGroupTreeItem';
+import { HealthCheckGroupTreeItem } from './healthCheckGroupTreeItem';
 import { loaded, loading } from '../util/loadable';
 
-describe('HealthCheckDependencyGroupTreeItem', () => {
-    it('sets group metadata for dependencies', () => {
-        const dependencies = [
+describe('HealthCheckGroupTreeItem', () => {
+    it('sets group metadata for health checks', () => {
+        const healthChecks = [
             {
                 name: 'Container Engine',
                 status: 'ok' as const,
                 value: 'docker',
             },
         ];
-        const item = new HealthCheckDependencyGroupTreeItem(
-            loaded(dependencies),
-        );
+        const item = new HealthCheckGroupTreeItem(loaded(healthChecks));
 
-        expect(item.label).toBe('Dependencies');
-        expect(item.contextValue).toBe('Dependencies');
-        expect(item.dependencies).toBe(dependencies);
+        expect(item.label).toBe('Health');
+        expect(item.contextValue).toBe('Health');
+        expect(item.healthChecks).toBe(healthChecks);
         expect(item.collapsibleState).toBe(
             vscode.TreeItemCollapsibleState.Collapsed,
         );
@@ -25,17 +23,15 @@ describe('HealthCheckDependencyGroupTreeItem', () => {
     });
 
     it('sets loading icon when loading', () => {
-        const item = new HealthCheckDependencyGroupTreeItem(
-            loading(loaded([])),
-        );
+        const item = new HealthCheckGroupTreeItem(loading(loaded([])));
 
         expect(item.iconPath).toStrictEqual(
             new vscode.ThemeIcon('loading~spin'),
         );
     });
 
-    it('marks the group fixable when a dependency has an executable fix command', () => {
-        const item = new HealthCheckDependencyGroupTreeItem(
+    it('marks the group fixable when a health check has an executable fix command', () => {
+        const item = new HealthCheckGroupTreeItem(
             loaded([
                 {
                     name: 'Container Engine',
@@ -49,6 +45,6 @@ describe('HealthCheckDependencyGroupTreeItem', () => {
             ]),
         );
 
-        expect(item.contextValue).toBe('Dependencies HasFixableIssues');
+        expect(item.contextValue).toBe('Health HasFixableIssues');
     });
 });

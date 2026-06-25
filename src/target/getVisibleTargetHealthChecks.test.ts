@@ -1,9 +1,9 @@
-import { TargetHealthCheck } from '../topoCliSchema';
+import { TargetHealthReport } from '../topoCliSchema';
 import { TargetDescription } from '../util/types';
-import { getVisibleTargetIssues } from './getVisibleTargetIssues';
+import { getVisibleTargetHealthChecks } from './getVisibleTargetHealthChecks';
 
-describe('getVisibleTargetDependencies', () => {
-    const health: TargetHealthCheck = {
+describe('getVisibleTargetHealthChecks', () => {
+    const health: TargetHealthReport = {
         destination: 'ssh://topo.local',
         isLocalhost: false,
         connectivity: {
@@ -25,13 +25,13 @@ describe('getVisibleTargetDependencies', () => {
         },
     };
 
-    it('returns target dependencies when there are no remote processors', () => {
+    it('returns target health checks when there are no remote processors', () => {
         const targetDescription: TargetDescription = {
             hostProcessors: [],
             remoteProcessors: [],
             totalMemoryKb: 1024,
         };
-        const healthWithFixableProcessingDomainDriver: TargetHealthCheck = {
+        const healthWithFixableProcessingDomainDriver: TargetHealthReport = {
             ...health,
             processingDomainDriver: {
                 name: 'Processing Domain Driver',
@@ -43,14 +43,14 @@ describe('getVisibleTargetDependencies', () => {
                 },
             },
         };
-        const expectedDependencies = health.dependencies;
+        const expectedHealthChecks = health.dependencies;
 
-        const result = getVisibleTargetIssues(
+        const result = getVisibleTargetHealthChecks(
             healthWithFixableProcessingDomainDriver,
             targetDescription,
         );
 
-        expect(result).toEqual(expectedDependencies);
+        expect(result).toEqual(expectedHealthChecks);
     });
 
     it('includes the processing domain driver when remote processors exist', () => {
@@ -59,13 +59,13 @@ describe('getVisibleTargetDependencies', () => {
             remoteProcessors: [{ name: 'imx-rproc' }],
             totalMemoryKb: 1024,
         };
-        const expectedDependencies = [
+        const expectedHealthChecks = [
             ...health.dependencies,
             health.processingDomainDriver,
         ];
 
-        const result = getVisibleTargetIssues(health, targetDescription);
+        const result = getVisibleTargetHealthChecks(health, targetDescription);
 
-        expect(result).toEqual(expectedDependencies);
+        expect(result).toEqual(expectedHealthChecks);
     });
 });

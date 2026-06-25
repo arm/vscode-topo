@@ -6,9 +6,9 @@ import { logError, showAndLogError } from '../util/showAndLogError';
 import { defaultSshConfigPath, getHosts } from '../util/ssh';
 import * as vscode from 'vscode';
 import { TopoCli } from '../topoCli';
+import { HealthReport, TargetHealthReport } from '../topoCliSchema';
 import { errored, Loadable, loaded, loading } from '../util/loadable';
 import { TargetDescription } from '../util/types';
-import { HealthCheck, TargetHealthCheck } from '../topoCliSchema';
 import { LatestAbortableWork } from '../util/latestAbortableWork';
 import { DisposableCollector } from '../util/disposableCollector';
 
@@ -113,8 +113,8 @@ export function buildQuickPickItems(
 async function loadTargetHealth(
     topoCli: TopoCli,
     target: string,
-): Promise<Loadable<TargetHealthCheck>> {
-    let health: HealthCheck;
+): Promise<Loadable<TargetHealthReport>> {
+    let health: HealthReport;
     try {
         health = await topoCli.health(target);
     } catch (err) {

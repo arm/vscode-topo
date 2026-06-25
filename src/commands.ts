@@ -37,7 +37,7 @@ export const openContainerShell = command('openContainerShell');
 export const startContainer = command('startContainer');
 export const stopContainer = command('stopContainer');
 export const deleteContainer = command('deleteContainer');
-export const fixDependencyIssue = command('fixDependencyIssue');
+export const fixIssue = command('fixIssue');
 export const fixTargetIssues = command('fixTargetIssues');
 export const remoteClone = command('remoteClone');
 export const localClone = command('localClone');
@@ -117,7 +117,7 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
         vscode.commands.registerCommand(deleteContainer, (treeNode) =>
             handlers.containerDelete.deleteContainerCommandHandler(treeNode),
         ),
-        vscode.commands.registerCommand(fixDependencyIssue, (treeNode) =>
+        vscode.commands.registerCommand(fixIssue, (treeNode) =>
             handlers.fixIssue.fixIssueCommandHandler(treeNode),
         ),
         vscode.commands.registerCommand(fixTargetIssues, (treeNode) =>
