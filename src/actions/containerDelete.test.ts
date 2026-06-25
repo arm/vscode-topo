@@ -1,4 +1,3 @@
-import { TARGET_HOST_RUNTIME } from '../manifest';
 import * as vscode from 'vscode';
 import { ContainerDelete } from './containerDelete';
 import { ContainerItem } from '../util/types';
@@ -7,7 +6,7 @@ import { WrappedError } from '../errors/wrappedError';
 import { mock } from 'vitest-mock-extended';
 import { ContainerCommands } from '../target/containerCommands';
 import type { MockInstance } from 'vitest';
-import { TargetController } from '../controllers/targetController';
+import { ProjectController } from '../controllers/projectController';
 
 describe('ContainerDelete', () => {
     let showErrorMessageSpy: MockInstance;
@@ -15,16 +14,12 @@ describe('ContainerDelete', () => {
     const target = 'user@topo.local';
     const container: ContainerItem = {
         id: 'abc123',
-        name: 'my-container',
+        names: 'my-container',
         image: 'nginx',
         state: 'running',
         status: 'Up',
-        labels: '',
-        runningFor: '',
-        runtime: TARGET_HOST_RUNTIME,
-        annotations: {},
-        createdAt: '',
-        ports: {},
+        processingDomain: 'CoolProcessingDomain',
+        address: '1.2.3.4:5678',
         target,
     };
     const treeItem = new ContainerTreeItem(container);
@@ -41,10 +36,10 @@ describe('ContainerDelete', () => {
 
     it('calls deleteContainer on success', async () => {
         const containerCommands = mock<ContainerCommands>();
-        const targetController = mock<TargetController>();
+        const projectController = mock<ProjectController>();
         const containerDelete = new ContainerDelete(
             containerCommands,
-            targetController,
+            projectController,
         );
 
         await containerDelete.deleteContainerCommandHandler(treeItem);
@@ -54,19 +49,19 @@ describe('ContainerDelete', () => {
             target,
         );
         expect(
-            targetController.refreshSelectedTargetDataCommandHandler,
+            projectController.refreshProjectContainersCommandHandler,
         ).toHaveBeenCalledOnce();
     });
 
     it('shows error message if deleteContainer throws a WrappedError', async () => {
         const containerCommands = mock<ContainerCommands>();
-        const targetController = mock<TargetController>();
+        const projectController = mock<ProjectController>();
         containerCommands.deleteContainer.mockRejectedValue(
             new WrappedError('DOCKER', 'fail'),
         );
         const containerDelete = new ContainerDelete(
             containerCommands,
-            targetController,
+            projectController,
         );
 
         await containerDelete.deleteContainerCommandHandler(treeItem);
@@ -77,7 +72,7 @@ describe('ContainerDelete', () => {
             ),
         );
         expect(
-            targetController.refreshSelectedTargetDataCommandHandler,
+            projectController.refreshProjectContainersCommandHandler,
         ).not.toHaveBeenCalled();
     });
 
@@ -88,7 +83,7 @@ describe('ContainerDelete', () => {
         );
         const containerDelete = new ContainerDelete(
             containerCommands,
-            mock<TargetController>(),
+            mock<ProjectController>(),
         );
 
         await expect(

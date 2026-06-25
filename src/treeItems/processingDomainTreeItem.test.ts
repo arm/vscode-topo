@@ -1,60 +1,58 @@
 import * as vscode from 'vscode';
 import { ProcessingDomainTreeItem } from './processingDomainTreeItem';
 import { ContainerItem } from '../util/types';
+import { PRIMARY_PROCESSING_DOMAIN } from '../manifest';
 
-const target = 'user@topo.local';
-const container: ContainerItem = {
-    id: 'id1',
-    name: 'cont1',
-    image: 'img1',
-    state: 'running',
-    status: 'Up 4 days',
-    labels: 'foo=bar',
-    runningFor: '1h',
-    runtime: '',
-    annotations: {},
-    createdAt: '',
-    ports: {},
-    target,
-};
-const containers: ContainerItem[] = [container];
+const containers: ContainerItem[] = [
+    {
+        id: 'abc123',
+        names: 'app',
+        image: 'demo-app',
+        status: 'Up 1 minute',
+        state: 'running',
+        processingDomain: PRIMARY_PROCESSING_DOMAIN,
+        address: 'localhost:8000',
+        target: 'user@topo.local',
+    },
+];
 
 describe('ProcessingDomainTreeItem', () => {
-    it('should set label, description, contextValue, and container reference', () => {
+    it('sets label, description, contextValue, icon, and containers', () => {
         const item = new ProcessingDomainTreeItem(
-            'PrimaryOS',
-            target,
+            PRIMARY_PROCESSING_DOMAIN,
             containers,
         );
-        expect(item.label).toBe('PrimaryOS');
+
+        expect(item.label).toBe(PRIMARY_PROCESSING_DOMAIN);
         expect(item.description).toBe('1 container');
-        expect(item.contextValue).toBe('ProcessingDomain PrimaryOS');
-        expect(item.containers).toBe(containers);
+        expect(item.contextValue).toBe(
+            `ProcessingDomain ${PRIMARY_PROCESSING_DOMAIN}`,
+        );
         expect(item.iconPath).toStrictEqual(
             new vscode.ThemeIcon('multiple-windows'),
         );
         expect(item.collapsibleState).toBe(
-            vscode.TreeItemCollapsibleState.Collapsed,
+            vscode.TreeItemCollapsibleState.Expanded,
         );
+        expect(item.containers).toBe(containers);
     });
 
     it('pluralizes the container count', () => {
-        const item = new ProcessingDomainTreeItem('PrimaryOS', target, [
-            container,
-            { ...container, id: 'id2' },
+        const item = new ProcessingDomainTreeItem(PRIMARY_PROCESSING_DOMAIN, [
+            containers[0],
+            { ...containers[0], id: 'def456' },
         ]);
 
         expect(item.description).toBe('2 containers');
     });
 
-    it('should accept dynamic processing domain names', () => {
-        const item = new ProcessingDomainTreeItem(
-            'imx-rproc',
-            target,
-            containers,
+    it('omits container UI when containers are not provided', () => {
+        const item = new ProcessingDomainTreeItem(PRIMARY_PROCESSING_DOMAIN);
+
+        expect(item.description).toBeUndefined();
+        expect(item.containers).toBeUndefined();
+        expect(item.collapsibleState).toBe(
+            vscode.TreeItemCollapsibleState.None,
         );
-        expect(item.label).toBe('imx-rproc');
-        expect(item.contextValue).toBe('ProcessingDomain imx-rproc');
-        expect(item.processingDomainId).toBe('imx-rproc');
     });
 });

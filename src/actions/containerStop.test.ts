@@ -1,4 +1,3 @@
-import { TARGET_HOST_RUNTIME } from '../manifest';
 import * as vscode from 'vscode';
 import { ContainerStop } from './containerStop';
 import { ContainerItem } from '../util/types';
@@ -7,23 +6,19 @@ import { WrappedError } from '../errors/wrappedError';
 import { mock } from 'vitest-mock-extended';
 import { ContainerCommands } from '../target/containerCommands';
 import type { MockInstance } from 'vitest';
-import { TargetController } from '../controllers/targetController';
+import { ProjectController } from '../controllers/projectController';
 
 describe('ContainerStop', () => {
     let showErrorMessageSpy: MockInstance;
     const target = 'user@topo.local';
     const container: ContainerItem = {
         id: 'abc123',
-        name: 'my-container',
+        names: 'my-container',
         image: 'nginx',
         state: 'running',
         status: 'Up',
-        labels: '',
-        runningFor: '',
-        runtime: TARGET_HOST_RUNTIME,
-        annotations: {},
-        createdAt: '',
-        ports: {},
+        processingDomain: 'CoolProcessingDomain',
+        address: '1.2.3.4:5678',
         target,
     };
     const treeItem = new ContainerTreeItem(container);
@@ -40,10 +35,10 @@ describe('ContainerStop', () => {
 
     it('calls stopContainer and shows info message on success', async () => {
         const containerCommands = mock<ContainerCommands>();
-        const targetController = mock<TargetController>();
+        const projectController = mock<ProjectController>();
         const containerStop = new ContainerStop(
             containerCommands,
-            targetController,
+            projectController,
         );
 
         await containerStop.stopContainerCommandHandler(treeItem);
@@ -53,19 +48,19 @@ describe('ContainerStop', () => {
             target,
         );
         expect(
-            targetController.refreshSelectedTargetDataCommandHandler,
+            projectController.refreshProjectContainersCommandHandler,
         ).toHaveBeenCalledOnce();
     });
 
     it('shows error message if stopContainer throws a WrappedError', async () => {
         const containerCommands = mock<ContainerCommands>();
-        const targetController = mock<TargetController>();
+        const projectController = mock<ProjectController>();
         containerCommands.stopContainer.mockRejectedValue(
             new WrappedError('DOCKER', 'fail'),
         );
         const containerStop = new ContainerStop(
             containerCommands,
-            targetController,
+            projectController,
         );
 
         await containerStop.stopContainerCommandHandler(treeItem);
@@ -76,7 +71,7 @@ describe('ContainerStop', () => {
             ),
         );
         expect(
-            targetController.refreshSelectedTargetDataCommandHandler,
+            projectController.refreshProjectContainersCommandHandler,
         ).not.toHaveBeenCalled();
     });
 
@@ -87,7 +82,7 @@ describe('ContainerStop', () => {
         );
         const containerStop = new ContainerStop(
             containerCommands,
-            mock<TargetController>(),
+            mock<ProjectController>(),
         );
 
         await expect(

@@ -1,16 +1,12 @@
 import { WrappedError, WrappedErrorLog } from '../errors/wrappedError';
 import { execFile, ExecFileResult } from '../util/exec';
 import { logger } from '../util/logger';
-import type { DockerInspectItem, DockerPsItem } from '../util/types';
 import type { ContainerCommands } from './containerCommands';
-import { getErrorMessage } from '../util/getErrorMessage';
 
 export interface DockerError extends Error {
     stderr: ExecFileResult['stderr'];
     stdout: ExecFileResult['stdout'];
 }
-
-type DockerInspectOutput = Partial<DockerInspectItem>;
 
 const splitLines = (stdout: string): string[] => {
     return stdout.split(/\r?\n/).filter((l) => l);
@@ -75,83 +71,6 @@ const runDockerCmd = async (
 };
 
 export class DockerCommands implements ContainerCommands {
-    public async getContainers(
-        targetSshConnection: string,
-    ): Promise<DockerPsItem[]> {
-        const warnMsg = `Warnings emitted when listing containers`;
-        const stdout = await runDockerCmd(
-            [
-                '--host',
-                getSshUri(targetSshConnection),
-                'ps',
-                '-a',
-                '--format',
-                '{{json .}}',
-            ],
-            warnMsg,
-        );
-        const lines = splitLines(stdout);
-        return lines.map((l) => JSON.parse(l));
-    }
-
-    public async inspectContainers(
-        containerIds: string[],
-        targetSshConnection: string,
-    ): Promise<DockerInspectItem[]> {
-        if (containerIds.length === 0) {
-            return [];
-        }
-        const warnMsg = `Warnings emitted when inspecting containers ${containerIds.join(', ')}`;
-        const isErrorAWarning = (err: string): boolean => {
-            const lines = splitLines(err);
-            return lines.every((l) => l.startsWith('Error: No such object:'));
-        };
-        const stdout = await runDockerCmd(
-            [
-                '--host',
-                getSshUri(targetSshConnection),
-                'inspect',
-                ...containerIds,
-                '--format',
-                '{{json .}}',
-            ],
-            warnMsg,
-            isErrorAWarning,
-        );
-        const lines = splitLines(stdout);
-
-        const inspectItems: DockerInspectItem[] = [];
-        for (const line of lines) {
-            let parsed: DockerInspectOutput;
-            try {
-                parsed = JSON.parse(line);
-            } catch (err) {
-                throw new Error(
-                    `Failed to parse Docker inspect JSON output. Error: ${getErrorMessage(err)}`,
-                    { cause: err },
-                );
-            }
-            if (!parsed.Id) {
-                logger.error(
-                    `Docker inspect output is missing Id field, skipping container`,
-                );
-                continue;
-            }
-            const ports = parsed.NetworkSettings?.Ports || {};
-            const runtime = parsed.HostConfig?.Runtime || '';
-            const annotations = parsed.HostConfig?.Annotations || {};
-            inspectItems.push({
-                Id: parsed.Id,
-                NetworkSettings: { Ports: ports },
-                HostConfig: {
-                    Runtime: runtime,
-                    Annotations: annotations,
-                },
-            });
-        }
-        return inspectItems;
-    }
-
     public async stopContainer(
         containerId: string,
         targetSshConnection: string,

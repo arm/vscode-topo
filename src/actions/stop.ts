@@ -5,7 +5,7 @@ import { createProcessTask } from '../util/task';
 import { TaskExecutor } from '../util/taskExecutor';
 import { showAndLogError } from '../util/showAndLogError';
 import { TargetModel } from '../models/targetModel';
-import { TargetController } from '../controllers/targetController';
+import { ProjectController } from '../controllers/projectController';
 import { ProjectTreeItem } from '../treeItems/projectTreeItem';
 
 const viewLogsItem: vscode.MessageItem = {
@@ -16,7 +16,7 @@ export class Stop {
     constructor(
         private readonly taskExecutor: TaskExecutor,
         private readonly targetModel: TargetModel,
-        private readonly targetController: TargetController,
+        private readonly projectController: ProjectController,
     ) {}
 
     public async stopCommandHandler(resource?: vscode.Uri): Promise<void> {
@@ -36,7 +36,7 @@ export class Stop {
         }
 
         await stop(this.taskExecutor, resource.fsPath, target);
-        await this.targetController.refreshSelectedTargetDataCommandHandler();
+        await this.projectController.refreshProjectContainersCommandHandler();
     }
 
     public async stopProjectCommandHandler(treeNode: unknown): Promise<void> {
