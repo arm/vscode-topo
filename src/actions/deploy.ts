@@ -5,7 +5,7 @@ import { createProcessTask } from '../util/task';
 import { TaskExecutor } from '../util/taskExecutor';
 import { showAndLogError } from '../util/showAndLogError';
 import { TargetModel } from '../models/targetModel';
-import { TargetController } from '../controllers/targetController';
+import { ProjectController } from '../controllers/projectController';
 import { isWrappedError, WrappedError } from '../errors/wrappedError';
 import {
     COMPOSE_FILE_GLOB,
@@ -28,7 +28,7 @@ export class Deploy {
     constructor(
         private readonly taskExecutor: TaskExecutor,
         private readonly targetModel: TargetModel,
-        private readonly targetController: TargetController,
+        private readonly projectController: ProjectController,
     ) {}
 
     public async deployCommandHandler(): Promise<void> {
@@ -66,7 +66,7 @@ export class Deploy {
             return;
         }
         await deploy(this.taskExecutor, resource.fsPath, target);
-        await this.targetController.refreshSelectedTargetDataCommandHandler();
+        await this.projectController.refreshProjectContainersCommandHandler();
     }
 
     public async deployContextCommandHandler(
@@ -90,7 +90,7 @@ export class Deploy {
         }
 
         await deploy(this.taskExecutor, resource.fsPath, target);
-        await this.targetController.refreshSelectedTargetDataCommandHandler();
+        await this.projectController.refreshProjectContainersCommandHandler();
     }
 
     public async deployProjectCommandHandler(treeNode: unknown): Promise<void> {

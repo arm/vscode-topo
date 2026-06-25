@@ -16,6 +16,7 @@ import { ContainerDelete } from './actions/containerDelete';
 import { FixIssue } from './actions/fixIssue';
 import { ProjectClone } from './actions/projectClone';
 import { ProjectTreeItem } from './treeItems/projectTreeItem';
+import { unloaded } from './util/loadable';
 import { ProjectController } from './controllers/projectController';
 
 vi.mock('./util/logger');
@@ -68,7 +69,7 @@ describe('commands', () => {
             [
                 commands.refreshTargetData,
                 handlers.targetController
-                    .refreshSelectedTargetDataCommandHandler,
+                    .refreshSelectedTargetHealthCommandHandler,
             ],
             [commands.showOutput, vi.mocked(logger.show)],
             [
@@ -172,6 +173,7 @@ describe('commands', () => {
                     workspaceName: 'workspace',
                 },
                 false,
+                unloaded(),
             );
             commands.register(handlers);
 
@@ -195,6 +197,7 @@ describe('commands', () => {
                     workspaceName: 'workspace',
                 },
                 false,
+                unloaded(),
             );
             commands.register(handlers);
 

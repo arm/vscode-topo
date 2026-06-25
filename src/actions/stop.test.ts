@@ -5,8 +5,9 @@ import { Stop, stop as stopServices } from './stop';
 import { TargetModel } from '../models/targetModel';
 import { mock, MockProxy } from 'vitest-mock-extended';
 import { TaskExecutor } from '../util/taskExecutor';
-import { TargetController } from '../controllers/targetController';
+import { ProjectController } from '../controllers/projectController';
 import { ProjectTreeItem } from '../treeItems/projectTreeItem';
+import { unloaded } from '../util/loadable';
 
 describe('Stop', () => {
     let stopAction: Stop;
@@ -17,7 +18,7 @@ describe('Stop', () => {
     const target = 'topo.local';
     let taskExecutor: MockProxy<TaskExecutor>;
     let targetModel: TargetModel;
-    let targetController: MockProxy<TargetController>;
+    let projectController: MockProxy<ProjectController>;
 
     function projectTreeItem(): ProjectTreeItem {
         return new ProjectTreeItem(
@@ -29,6 +30,7 @@ describe('Stop', () => {
                 workspaceName: 'workspace',
             },
             false,
+            unloaded(),
         );
     }
 
@@ -45,9 +47,9 @@ describe('Stop', () => {
         taskExecutor = mock<TaskExecutor>();
         targetModel = new TargetModel();
         targetModel.setSelected(target);
-        targetController = mock<TargetController>();
+        projectController = mock<ProjectController>();
         vi.mocked(vscode.window.showErrorMessage).mockClear();
-        stopAction = new Stop(taskExecutor, targetModel, targetController);
+        stopAction = new Stop(taskExecutor, targetModel, projectController);
     });
 
     afterEach(() => {
@@ -65,7 +67,7 @@ describe('Stop', () => {
         );
         expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(
-            targetController.refreshSelectedTargetDataCommandHandler,
+            projectController.refreshProjectContainersCommandHandler,
         ).not.toHaveBeenCalled();
     });
 
@@ -98,7 +100,7 @@ describe('Stop', () => {
             path.dirname(composeFilePath),
         );
         expect(
-            targetController.refreshSelectedTargetDataCommandHandler,
+            projectController.refreshProjectContainersCommandHandler,
         ).toHaveBeenCalledOnce();
     });
 
@@ -111,7 +113,7 @@ describe('Stop', () => {
             path.dirname(composeFilePath),
         );
         expect(
-            targetController.refreshSelectedTargetDataCommandHandler,
+            projectController.refreshProjectContainersCommandHandler,
         ).toHaveBeenCalledOnce();
     });
 
@@ -122,7 +124,7 @@ describe('Stop', () => {
 
         expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(
-            targetController.refreshSelectedTargetDataCommandHandler,
+            projectController.refreshProjectContainersCommandHandler,
         ).not.toHaveBeenCalled();
     });
 });

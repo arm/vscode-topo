@@ -1,29 +1,25 @@
 import * as vscode from 'vscode';
-import { ContainerItem } from '../util/types';
 import { Loadable } from '../util/loadable';
+import { TargetDescription } from '../util/types';
 
-function describeContainerCount(
-    containers: Loadable<ContainerItem[]>,
-): string | undefined {
-    if (containers.status !== 'loaded') {
-        return undefined;
+function getCollapsibleState(
+    targetDescription: Loadable<TargetDescription>,
+): vscode.TreeItemCollapsibleState {
+    if (targetDescription.status === 'errored') {
+        return vscode.TreeItemCollapsibleState.Expanded;
     }
 
-    return `${containers.data.length} container${containers.data.length === 1 ? '' : 's'}`;
+    return vscode.TreeItemCollapsibleState.Collapsed;
 }
 
 export class ProcessingDomainGroupTreeItem extends vscode.TreeItem {
     constructor(
-        public readonly target: string,
-        public readonly remoteProcessorNames: string[],
-        public readonly containers: Loadable<ContainerItem[]>,
+        public readonly targetDescription: Loadable<TargetDescription>,
     ) {
-        super('Processing Domains', vscode.TreeItemCollapsibleState.Expanded);
-        this.description = describeContainerCount(containers);
-        this.iconPath = new vscode.ThemeIcon('layers');
-        if (containers.loading) {
-            this.iconPath = new vscode.ThemeIcon('loading~spin');
-        }
-        this.contextValue = 'ProcessingDomains';
+        super('Processing Domains');
+        this.collapsibleState = getCollapsibleState(targetDescription);
+        this.iconPath = targetDescription.loading
+            ? new vscode.ThemeIcon('loading~spin')
+            : new vscode.ThemeIcon('layers');
     }
 }
