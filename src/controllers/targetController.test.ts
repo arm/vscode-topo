@@ -626,7 +626,7 @@ describe('target addition', () => {
     });
 });
 
-describe('target unselection', () => {
+describe('target selection clearing', () => {
     it('clears the selected target and updates model', async () => {
         const targetStore = mockTargetStore(['user@board'], 'user@board');
         const targetModel = new TargetModel();
@@ -634,7 +634,7 @@ describe('target unselection', () => {
         targetModel.setSelectedTargetDescription(loaded(targetDescription));
         const { controller } = createController(targetModel, targetStore);
 
-        await controller.unselectCommandHandler();
+        await controller.clearSelectionCommandHandler();
 
         expect(targetStore.setSelected).toHaveBeenCalledWith(undefined);
         expect(targetModel.selected).toBeUndefined();
@@ -648,7 +648,7 @@ describe('target unselection', () => {
         const targetModel = new TargetModel();
         const { controller } = createController(targetModel, targetStore);
 
-        await controller.unselectCommandHandler();
+        await controller.clearSelectionCommandHandler();
 
         expect(targetStore.setSelected).toHaveBeenCalledWith(undefined);
         expect(targetModel.selected).toBeUndefined();

@@ -86,8 +86,8 @@
                 "category": "Topo"
             },
             {
-                "command": "topo.unselectTarget",
-                "title": "Unselect Target",
+                "command": "topo.clearTargetSelection",
+                "title": "Clear Selection",
                 "icon": "$(circle-slash)",
                 "category": "Topo"
             },
@@ -236,7 +236,7 @@
                     "when": "false"
                 },
                 {
-                    "command": "topo.unselectTarget",
+                    "command": "topo.clearTargetSelection",
                     "when": "false"
                 },
                 {
@@ -360,7 +360,7 @@
                     "group": "navigation"
                 },
                 {
-                    "command": "topo.unselectTarget",
+                    "command": "topo.clearTargetSelection",
                     "when": "view == topo.target-manager && topo.hasSelectedTarget",
                     "group": "navigation"
                 },

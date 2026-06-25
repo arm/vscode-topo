@@ -78,7 +78,7 @@ Use the buttons in the Target view title bar to access these actions:
 | Command             | Description                                                  |
 | ------------------- | ------------------------------------------------------------ |
 | **Select a target** | Select, add, or remove saved manual targets.                 |
-| **Unselect Target** | Clear the active target without deleting it.                 |
+| **Clear Selection** | Clear the active target without deleting it.                 |
 | **Fix Issues**      | Select and run available fixes for target dependency issues. |
 
 ### Dependency Actions

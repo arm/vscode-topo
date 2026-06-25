@@ -237,7 +237,7 @@ export class TargetController {
         await this.promptAndSelectTarget();
     }
 
-    public async unselectCommandHandler(): Promise<void> {
+    public async clearSelectionCommandHandler(): Promise<void> {
         await this.targetStore.setSelected(undefined);
         this.updateTargetsFromStore();
     }
