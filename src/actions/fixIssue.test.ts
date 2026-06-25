@@ -130,7 +130,7 @@ describe('FixIssue', () => {
         ).not.toHaveBeenCalled();
     });
 
-    it('refreshes after a issue fix task fails', async () => {
+    it('refreshes after an issue fix task fails', async () => {
         taskExecutor.run.mockRejectedValueOnce(new Error('fix failed'));
         const fixIssue = createFixIssue();
         const healthCheckItem = new HealthCheckTreeItem(
