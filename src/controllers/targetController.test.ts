@@ -8,13 +8,13 @@ import { showAndLogError } from '../util/showAndLogError';
 import { TopoCli } from '../topoCli';
 import { TargetDescription } from '../util/types';
 import { errored, loaded, unloaded } from '../util/loadable';
-import { HealthCheck } from '../topoCliSchema';
+import { HealthReport } from '../topoCliSchema';
 
 vi.mock('../util/logger');
 vi.mock('../util/showAndLogError');
 
 const target = 'user@target';
-const health: HealthCheck = {
+const health: HealthReport = {
     host: {
         dependencies: [],
     },

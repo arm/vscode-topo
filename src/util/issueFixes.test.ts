@@ -1,4 +1,4 @@
-import { IssueCheck, TargetHealthCheck } from '../topoCliSchema';
+import { HealthCheck, TargetHealthReport } from '../topoCliSchema';
 import {
     hasFixCommand,
     getIssueFixCommandGroups,
@@ -7,7 +7,7 @@ import {
 } from './issueFixes';
 
 describe('getTargetIssueFixCommandGroups', () => {
-    const targetHealth: TargetHealthCheck = {
+    const targetHealth: TargetHealthReport = {
         destination: 'ssh://topo.local',
         isLocalhost: false,
         connectivity: {
@@ -23,8 +23,8 @@ describe('getTargetIssueFixCommandGroups', () => {
         },
     };
 
-    it('ignores target health issues without executable fixes', () => {
-        const health: TargetHealthCheck = {
+    it('ignores target health checks without executable fixes', () => {
+        const health: TargetHealthReport = {
             ...targetHealth,
             connectivity: {
                 name: 'Connected',
@@ -57,8 +57,8 @@ describe('getTargetIssueFixCommandGroups', () => {
         expect(result).toEqual(expectedCommandGroups);
     });
 
-    it('groups target health issue fixes by command', () => {
-        const health: TargetHealthCheck = {
+    it('groups target issue fixes by command', () => {
+        const health: TargetHealthReport = {
             ...targetHealth,
             connectivity: {
                 name: 'Connected',
@@ -122,7 +122,7 @@ describe('getTargetIssueFixCommandGroups', () => {
 
 describe('getIssueFixCommandGroups', () => {
     it('groups the provided issues by command', () => {
-        const issues: IssueCheck[] = [
+        const healthChecks: HealthCheck[] = [
             {
                 name: 'Remoteproc Runtime',
                 status: 'error',
@@ -152,7 +152,7 @@ describe('getIssueFixCommandGroups', () => {
             },
         ];
 
-        const result = getIssueFixCommandGroups(issues);
+        const result = getIssueFixCommandGroups(healthChecks);
 
         expect(result).toEqual([
             {
@@ -170,12 +170,12 @@ describe('getIssueFixCommandGroups', () => {
 describe('hasFixCommand', () => {
     it.each<{
         name: string;
-        issue: IssueCheck;
+        healthCheck: HealthCheck;
         expected: boolean;
     }>([
         {
             name: 'executable fix',
-            issue: {
+            healthCheck: {
                 name: 'Container Engine',
                 status: 'error',
                 value: 'missing',
@@ -187,8 +187,8 @@ describe('hasFixCommand', () => {
             expected: true,
         },
         {
-            name: 'healthy dependency',
-            issue: {
+            name: 'healthy health check',
+            healthCheck: {
                 name: 'Debugger',
                 status: 'ok',
                 value: 'installed',
@@ -196,8 +196,8 @@ describe('hasFixCommand', () => {
             expected: false,
         },
         {
-            name: 'informational dependency',
-            issue: {
+            name: 'informational health check',
+            healthCheck: {
                 name: 'Runtime',
                 status: 'info',
                 value: 'available',
@@ -206,7 +206,7 @@ describe('hasFixCommand', () => {
         },
         {
             name: 'manual fix without command',
-            issue: {
+            healthCheck: {
                 name: 'Runtime',
                 status: 'warning',
                 value: 'missing',
@@ -216,12 +216,9 @@ describe('hasFixCommand', () => {
             },
             expected: false,
         },
-    ])('returns $expected for $name', ({ issue, expected }) => {
-        const healthIssue = issue;
-        const expectedResult = expected;
+    ])('returns $expected for $name', ({ healthCheck, expected }) => {
+        const result = hasFixCommand(healthCheck);
 
-        const result = hasFixCommand(healthIssue);
-
-        expect(result).toBe(expectedResult);
+        expect(result).toBe(expected);
     });
 });

@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
-import { HealthCheckDependencyTreeItem } from './healthCheckDependencyTreeItem';
+import { HealthCheckTreeItem } from './healthCheckTreeItem';
 import { loaded } from '../util/loadable';
 
-describe('HealthCheckDependencyTreeItem', () => {
+describe('HealthCheckTreeItem', () => {
     it('sets label and description', () => {
-        const item = new HealthCheckDependencyTreeItem(
+        const item = new HealthCheckTreeItem(
             loaded({
                 name: 'Container Engine',
                 value: 'docker',
@@ -16,8 +16,8 @@ describe('HealthCheckDependencyTreeItem', () => {
         expect(item.description).toBe('docker');
     });
 
-    it('sets context value and icon for an ok dependency', () => {
-        const item = new HealthCheckDependencyTreeItem(
+    it('sets context value and icon for an ok health check', () => {
+        const item = new HealthCheckTreeItem(
             loaded({
                 name: 'Container Engine',
                 value: 'docker',
@@ -25,7 +25,7 @@ describe('HealthCheckDependencyTreeItem', () => {
             }),
         );
 
-        expect(item.contextValue).toBe('Dependency Ok');
+        expect(item.contextValue).toBe('HealthCheck Ok');
         expect(item.iconPath).toStrictEqual(
             new vscode.ThemeIcon(
                 'check',
@@ -34,8 +34,8 @@ describe('HealthCheckDependencyTreeItem', () => {
         );
     });
 
-    it('sets context value and icon for a dependency with a warning', () => {
-        const item = new HealthCheckDependencyTreeItem(
+    it('sets context value and icon for a health check with a warning', () => {
+        const item = new HealthCheckTreeItem(
             loaded({
                 name: 'Container Engine',
                 value: 'docker',
@@ -43,7 +43,7 @@ describe('HealthCheckDependencyTreeItem', () => {
             }),
         );
 
-        expect(item.contextValue).toBe('Dependency Warning');
+        expect(item.contextValue).toBe('HealthCheck Warning');
         expect(item.iconPath).toStrictEqual(
             new vscode.ThemeIcon(
                 'warning',
@@ -52,8 +52,8 @@ describe('HealthCheckDependencyTreeItem', () => {
         );
     });
 
-    it('sets context value and icon for a dependency with an error', () => {
-        const item = new HealthCheckDependencyTreeItem(
+    it('sets context value and icon for a health check with an error', () => {
+        const item = new HealthCheckTreeItem(
             loaded({
                 name: 'Container Engine',
                 value: 'missing',
@@ -61,7 +61,7 @@ describe('HealthCheckDependencyTreeItem', () => {
             }),
         );
 
-        expect(item.contextValue).toBe('Dependency Error');
+        expect(item.contextValue).toBe('HealthCheck Error');
         expect(item.iconPath).toStrictEqual(
             new vscode.ThemeIcon(
                 'close',
@@ -70,8 +70,8 @@ describe('HealthCheckDependencyTreeItem', () => {
         );
     });
 
-    it('marks dependency with an executable fix command as fixable', () => {
-        const item = new HealthCheckDependencyTreeItem(
+    it('marks health check with an executable fix command as fixable', () => {
+        const item = new HealthCheckTreeItem(
             loaded({
                 name: 'Container Engine',
                 value: 'missing',
@@ -84,11 +84,11 @@ describe('HealthCheckDependencyTreeItem', () => {
             }),
         );
 
-        expect(item.contextValue).toBe('Dependency Warning Fixable');
+        expect(item.contextValue).toBe('HealthCheck Warning Fixable');
     });
 
-    it('does not mark healthy remoteproc dependencies as fixable', () => {
-        const item = new HealthCheckDependencyTreeItem(
+    it('does not mark healthy remoteproc health checks as fixable', () => {
+        const item = new HealthCheckTreeItem(
             loaded({
                 name: 'Remoteproc Runtime',
                 value: 'installed',
@@ -96,11 +96,11 @@ describe('HealthCheckDependencyTreeItem', () => {
             }),
         );
 
-        expect(item.contextValue).toBe('Dependency Ok');
+        expect(item.contextValue).toBe('HealthCheck Ok');
     });
 
     it('uses a spinning icon when loading', () => {
-        const item = new HealthCheckDependencyTreeItem(
+        const item = new HealthCheckTreeItem(
             loaded(
                 {
                     name: 'Connectivity',

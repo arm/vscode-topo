@@ -1,13 +1,13 @@
-import { getWorstIssueCheckStatus } from './getWorstIssueCheckStatus';
+import { getWorstHealthCheckStatus } from './getWorstHealthCheckStatus';
 
-describe('getWorstDependencyStatus', () => {
-    it('returns ok when there are no dependencies', () => {
-        expect(getWorstIssueCheckStatus([])).toBe('ok');
+describe('getWorstHealthCheckStatus', () => {
+    it('returns ok when there are no healthChecks', () => {
+        expect(getWorstHealthCheckStatus([])).toBe('ok');
     });
 
-    it('returns ok when all dependencies are healthy', () => {
+    it('returns ok when all health checks are healthy', () => {
         expect(
-            getWorstIssueCheckStatus([
+            getWorstHealthCheckStatus([
                 { name: 'Container Engine', status: 'ok', value: 'docker' },
                 {
                     name: 'Processing Domain Driver',
@@ -18,18 +18,18 @@ describe('getWorstDependencyStatus', () => {
         ).toBe('ok');
     });
 
-    it('returns warning if at least one dependency has a warning', () => {
+    it('returns warning if at least one health check has a warning', () => {
         expect(
-            getWorstIssueCheckStatus([
+            getWorstHealthCheckStatus([
                 { name: 'Container Engine', status: 'ok', value: 'docker' },
                 { name: 'Something Else', status: 'warning', value: 'foobar' },
             ]),
         ).toBe('warning');
     });
 
-    it('returns error if at least one dependency has an error', () => {
+    it('returns error if at least one health check has an error', () => {
         expect(
-            getWorstIssueCheckStatus([
+            getWorstHealthCheckStatus([
                 { name: 'Container Engine', status: 'ok', value: 'docker' },
                 { name: 'Something Else', status: 'warning', value: 'foobar' },
                 {

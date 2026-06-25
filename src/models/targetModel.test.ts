@@ -1,9 +1,9 @@
-import { TargetHealthCheck } from '../topoCliSchema';
+import { TargetHealthReport } from '../topoCliSchema';
 import { TargetDescription } from '../util/types';
 import { errored, loaded, unloaded } from '../util/loadable';
 import { TargetModel } from './targetModel';
 
-const targetHealth: TargetHealthCheck = {
+const targetHealth: TargetHealthReport = {
     destination: 'ssh://target',
     isLocalhost: false,
     connectivity: {

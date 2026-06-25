@@ -1,12 +1,9 @@
 import * as vscode from 'vscode';
-import {
-    getDependencyGroupIcon,
-    getDependencyItemIcon,
-} from './dependencyIcons';
+import { getHealthGroupIcon, getHealthCheckIcon } from './healthIcons';
 
-describe('getDependencyItemIcon', () => {
+describe('getHealthCheckIcon', () => {
     it('maps ok to a passed check icon', () => {
-        const icon = getDependencyItemIcon('ok');
+        const icon = getHealthCheckIcon('ok');
 
         expect(icon).toStrictEqual(
             new vscode.ThemeIcon(
@@ -17,7 +14,7 @@ describe('getDependencyItemIcon', () => {
     });
 
     it('maps warning to a queued warning icon', () => {
-        const icon = getDependencyItemIcon('warning');
+        const icon = getHealthCheckIcon('warning');
 
         expect(icon).toStrictEqual(
             new vscode.ThemeIcon(
@@ -28,7 +25,7 @@ describe('getDependencyItemIcon', () => {
     });
 
     it('maps error to a failed close icon', () => {
-        const icon = getDependencyItemIcon('error');
+        const icon = getHealthCheckIcon('error');
 
         expect(icon).toStrictEqual(
             new vscode.ThemeIcon(
@@ -39,22 +36,22 @@ describe('getDependencyItemIcon', () => {
     });
 });
 
-describe('getDependencyGroupIcon', () => {
+describe('getHealthGroupIcon', () => {
     it('maps ok to a neutral library icon', () => {
-        const icon = getDependencyGroupIcon('ok');
+        const icon = getHealthGroupIcon('ok');
 
         expect(icon).toStrictEqual(new vscode.ThemeIcon('library'));
     });
 
     it('maps warning to a warning item icon', () => {
-        expect(getDependencyGroupIcon('warning')).toEqual(
-            getDependencyItemIcon('warning'),
+        expect(getHealthGroupIcon('warning')).toEqual(
+            getHealthCheckIcon('warning'),
         );
     });
 
     it('maps error to an error item icon', () => {
-        expect(getDependencyGroupIcon('error')).toEqual(
-            getDependencyItemIcon('error'),
+        expect(getHealthGroupIcon('error')).toEqual(
+            getHealthCheckIcon('error'),
         );
     });
 });

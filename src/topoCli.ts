@@ -3,10 +3,10 @@ import * as childProcess from 'node:child_process';
 import * as vscode from 'vscode';
 import * as manifest from './manifest';
 import {
-    HealthCheck,
-    HostHealthCheck,
-    healthCheckSchema,
-    hostHealthCheckSchema,
+    HealthReport,
+    HostHealthReport,
+    healthReportSchema,
+    hostHealthReportSchema,
     ProjectDescription,
     projectDescriptionSchema,
     TemplateDescription,
@@ -305,12 +305,12 @@ export class TopoCli {
         return result;
     }
 
-    public async hostHealth(): Promise<HostHealthCheck> {
-        return this.runHealth(hostHealthCheckSchema);
+    public async hostHealth(): Promise<HostHealthReport> {
+        return this.runHealth(hostHealthReportSchema);
     }
 
-    public async health(sshTarget: string): Promise<HealthCheck> {
-        return this.runHealth(healthCheckSchema, sshTarget);
+    public async health(sshTarget: string): Promise<HealthReport> {
+        return this.runHealth(healthReportSchema, sshTarget);
     }
 
     public assertVersion(expected: string): void {

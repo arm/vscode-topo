@@ -2,14 +2,14 @@ import * as vscode from 'vscode';
 import { TargetStatusBarItemView } from './targetStatusBarItemView';
 import { TargetTreeView } from './targetTreeView';
 import { mock } from 'vitest-mock-extended';
-import { TargetHealthCheck } from '../topoCliSchema';
+import { TargetHealthReport } from '../topoCliSchema';
 import { TargetModel } from '../models/targetModel';
 import { errored, loaded, loading, unloaded } from '../util/loadable';
 import { selectTarget } from '../commands';
 
 vi.mock('../util/logger');
 
-const healthyTarget: TargetHealthCheck = {
+const healthyTarget: TargetHealthReport = {
     destination: 'ssh://root@localhost',
     isLocalhost: false,
     connectivity: {
@@ -143,7 +143,7 @@ describe('TargetStatusBarItemView', () => {
         expect(statusBarItem.hide).not.toHaveBeenCalled();
     });
 
-    it('shows unhealthy target dependencies with an icon only', async () => {
+    it('shows unhealthy target health with an icon only', async () => {
         const statusBarItem = mock<vscode.StatusBarItem>();
         vi.mocked(vscode.window).createStatusBarItem.mockReturnValue(
             statusBarItem,

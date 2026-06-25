@@ -2,9 +2,9 @@ import * as vscode from 'vscode';
 import { mock, MockProxy } from 'vitest-mock-extended';
 import { FixIssue, createFixIssueTask } from './fixIssue';
 import { loaded } from '../util/loadable';
-import { HealthCheckDependencyGroupTreeItem } from '../treeItems/healthCheckDependencyGroupTreeItem';
-import { HealthCheckDependencyTreeItem } from '../treeItems/healthCheckDependencyTreeItem';
-import { IssueCheck } from '../topoCliSchema';
+import { HealthCheckGroupTreeItem } from '../treeItems/healthCheckGroupTreeItem';
+import { HealthCheckTreeItem } from '../treeItems/healthCheckTreeItem';
+import { HealthCheck } from '../topoCliSchema';
 import { TargetModel } from '../models/targetModel';
 import { TaskExecutor } from '../util/taskExecutor';
 import { TargetController } from '../controllers/targetController';
@@ -31,7 +31,7 @@ describe('FixIssue', () => {
     let targetController: MockProxy<TargetController>;
 
     const target = 'user@topo.local';
-    const dependencies: IssueCheck[] = [
+    const healthChecks: HealthCheck[] = [
         {
             name: 'Container Engine',
             status: 'error',
@@ -60,10 +60,10 @@ describe('FixIssue', () => {
     const createFixIssue = (): FixIssue =>
         new FixIssue(taskExecutor, targetModel, targetController);
 
-    const createDependencyGroupItem = (
-        targetIssues: IssueCheck[],
-    ): HealthCheckDependencyGroupTreeItem =>
-        new HealthCheckDependencyGroupTreeItem(loaded(targetIssues));
+    const createHealthGroupItem = (
+        targetHealthChecks: HealthCheck[],
+    ): HealthCheckGroupTreeItem =>
+        new HealthCheckGroupTreeItem(loaded(targetHealthChecks));
 
     beforeEach(() => {
         vi.clearAllMocks();
@@ -74,9 +74,9 @@ describe('FixIssue', () => {
     });
 
     it('builds a fix task with the topo command name', () => {
-        const command = dependencies[1].fix?.command;
+        const command = healthChecks[1].fix?.command;
         if (!command) {
-            throw new Error('Expected debugger dependency to include a fix');
+            throw new Error('Expected debugger health check to include a fix');
         }
         const task = createFixIssueTask(target, ['Debugger'], command);
 
@@ -91,13 +91,13 @@ describe('FixIssue', () => {
         );
     });
 
-    it('runs a single dependency fix directly', async () => {
+    it('runs a single issue fix directly', async () => {
         const fixIssue = createFixIssue();
-        const dependencyItem = new HealthCheckDependencyTreeItem(
-            loaded(dependencies[0]),
+        const healthCheckItem = new HealthCheckTreeItem(
+            loaded(healthChecks[0]),
         );
 
-        await fixIssue.fixIssueCommandHandler(dependencyItem);
+        await fixIssue.fixIssueCommandHandler(healthCheckItem);
 
         expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
         expect(taskExecutor.run).toHaveBeenCalledTimes(1);
@@ -114,14 +114,14 @@ describe('FixIssue', () => {
         ).toHaveBeenCalledOnce();
     });
 
-    it('fails a single dependency fix without an executable command', async () => {
+    it('fails a single issue fix without an executable command', async () => {
         const fixIssue = createFixIssue();
-        const dependencyItem = new HealthCheckDependencyTreeItem(
-            loaded(dependencies[2]),
+        const healthCheckItem = new HealthCheckTreeItem(
+            loaded(healthChecks[2]),
         );
 
         await expect(
-            fixIssue.fixIssueCommandHandler(dependencyItem),
+            fixIssue.fixIssueCommandHandler(healthCheckItem),
         ).rejects.toThrow('No executable fix found for the selected item');
 
         expect(taskExecutor.run).not.toHaveBeenCalled();
@@ -130,14 +130,14 @@ describe('FixIssue', () => {
         ).not.toHaveBeenCalled();
     });
 
-    it('refreshes after a dependency fix task fails', async () => {
+    it('refreshes after an issue fix task fails', async () => {
         taskExecutor.run.mockRejectedValueOnce(new Error('fix failed'));
         const fixIssue = createFixIssue();
-        const dependencyItem = new HealthCheckDependencyTreeItem(
-            loaded(dependencies[0]),
+        const healthCheckItem = new HealthCheckTreeItem(
+            loaded(healthChecks[0]),
         );
 
-        await fixIssue.fixIssueCommandHandler(dependencyItem);
+        await fixIssue.fixIssueCommandHandler(healthCheckItem);
 
         expect(taskExecutor.run).toHaveBeenCalledOnce();
         expect(
@@ -145,15 +145,15 @@ describe('FixIssue', () => {
         ).toHaveBeenCalledOnce();
     });
 
-    it('fails a single dependency fix when no target is selected', async () => {
+    it('fails a single issue fix when no target is selected', async () => {
         targetModel.setSelected(undefined);
         const fixIssue = createFixIssue();
-        const dependencyItem = new HealthCheckDependencyTreeItem(
-            loaded(dependencies[0]),
+        const healthCheckItem = new HealthCheckTreeItem(
+            loaded(healthChecks[0]),
         );
 
         await expect(
-            fixIssue.fixIssueCommandHandler(dependencyItem),
+            fixIssue.fixIssueCommandHandler(healthCheckItem),
         ).rejects.toThrow('No selected target found');
 
         expect(taskExecutor.run).not.toHaveBeenCalled();
@@ -164,19 +164,17 @@ describe('FixIssue', () => {
 
     it('shows a quick pick when only one target issue fix is available', async () => {
         const fixIssue = createFixIssue();
-        const dependencyGroupItem = createDependencyGroupItem([
-            dependencies[0],
-        ]);
+        const healthGroupItem = createHealthGroupItem([healthChecks[0]]);
         mockSelectedQuickPickItems([
             {
                 label: 'Container Engine',
                 description: 'Install container engine',
                 detail: `Command: topo install container-engine --target ${target}`,
-                issue: dependencies[0],
+                issue: healthChecks[0],
             },
         ]);
 
-        await fixIssue.fixIssueCommandHandler(dependencyGroupItem);
+        await fixIssue.fixIssueCommandHandler(healthGroupItem);
 
         expect(vscode.window.showQuickPick).toHaveBeenCalledWith(
             [
@@ -184,7 +182,7 @@ describe('FixIssue', () => {
                     label: 'Container Engine',
                     description: 'Install container engine',
                     detail: `Command: topo install container-engine --target ${target}`,
-                    issue: dependencies[0],
+                    issue: healthChecks[0],
                 },
             ],
             {
@@ -208,17 +206,17 @@ describe('FixIssue', () => {
 
     it('shows target issue fixes in a quick pick and runs the selected fix', async () => {
         const fixIssue = createFixIssue();
-        const dependencyGroupItem = createDependencyGroupItem(dependencies);
+        const healthGroupItem = createHealthGroupItem(healthChecks);
         mockSelectedQuickPickItems([
             {
                 label: 'Debugger',
                 description: 'Install debugger',
                 detail: `Command: topo install debugger --target ${target}`,
-                issue: dependencies[1],
+                issue: healthChecks[1],
             },
         ]);
 
-        await fixIssue.fixIssueCommandHandler(dependencyGroupItem);
+        await fixIssue.fixIssueCommandHandler(healthGroupItem);
 
         expect(vscode.window.showQuickPick).toHaveBeenCalledWith(
             [
@@ -226,13 +224,13 @@ describe('FixIssue', () => {
                     label: 'Container Engine',
                     description: 'Install container engine',
                     detail: `Command: topo install container-engine --target ${target}`,
-                    issue: dependencies[0],
+                    issue: healthChecks[0],
                 },
                 {
                     label: 'Debugger',
                     description: 'Install debugger',
                     detail: `Command: topo install debugger --target ${target}`,
-                    issue: dependencies[1],
+                    issue: healthChecks[1],
                 },
             ],
             {
@@ -251,25 +249,25 @@ describe('FixIssue', () => {
         );
     });
 
-    it('runs each selected target dependency fix', async () => {
+    it('runs each selected target issue fix', async () => {
         const fixIssue = createFixIssue();
-        const dependencyGroupItem = createDependencyGroupItem(dependencies);
+        const healthGroupItem = createHealthGroupItem(healthChecks);
         mockSelectedQuickPickItems([
             {
                 label: 'Container Engine',
                 description: 'Install container engine',
                 detail: `Command: topo install container-engine --target ${target}`,
-                issue: dependencies[0],
+                issue: healthChecks[0],
             },
             {
                 label: 'Debugger',
                 description: 'Install debugger',
                 detail: `Command: topo install debugger --target ${target}`,
-                issue: dependencies[1],
+                issue: healthChecks[1],
             },
         ]);
 
-        await fixIssue.fixIssueCommandHandler(dependencyGroupItem);
+        await fixIssue.fixIssueCommandHandler(healthGroupItem);
 
         expect(taskExecutor.run).toHaveBeenCalledTimes(2);
         expect(taskExecutor.run).toHaveBeenNthCalledWith(
@@ -293,9 +291,9 @@ describe('FixIssue', () => {
         ).toHaveBeenCalledOnce();
     });
 
-    it('runs a shared target dependency fix only once', async () => {
+    it('runs a shared target issue fix only once', async () => {
         const sharedCommand = `topo install remoteproc --target ${target}`;
-        const remoteprocRuntime: IssueCheck = {
+        const remoteprocRuntime: HealthCheck = {
             name: 'Remoteproc Runtime',
             status: 'error',
             value: 'missing',
@@ -304,7 +302,7 @@ describe('FixIssue', () => {
                 command: sharedCommand,
             },
         };
-        const remoteprocShim: IssueCheck = {
+        const remoteprocShim: HealthCheck = {
             name: 'Remoteproc Shim',
             status: 'error',
             value: 'missing',
@@ -314,7 +312,7 @@ describe('FixIssue', () => {
             },
         };
         const fixIssue = createFixIssue();
-        const dependencyGroupItem = createDependencyGroupItem([
+        const healthGroupItem = createHealthGroupItem([
             remoteprocRuntime,
             remoteprocShim,
         ]);
@@ -333,7 +331,7 @@ describe('FixIssue', () => {
             },
         ]);
 
-        await fixIssue.fixIssueCommandHandler(dependencyGroupItem);
+        await fixIssue.fixIssueCommandHandler(healthGroupItem);
 
         expect(taskExecutor.run).toHaveBeenCalledTimes(1);
         expect(taskExecutor.run).toHaveBeenNthCalledWith(
@@ -349,10 +347,10 @@ describe('FixIssue', () => {
 
     it('refreshes when target issue selection is cancelled', async () => {
         const fixIssue = createFixIssue();
-        const dependencyGroupItem = createDependencyGroupItem(dependencies);
+        const healthGroupItem = createHealthGroupItem(healthChecks);
         mockSelectedQuickPickItems([]);
 
-        await fixIssue.fixIssueCommandHandler(dependencyGroupItem);
+        await fixIssue.fixIssueCommandHandler(healthGroupItem);
 
         expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(
@@ -360,14 +358,12 @@ describe('FixIssue', () => {
         ).toHaveBeenCalledOnce();
     });
 
-    it('fails when a target has no executable dependency fixes', async () => {
+    it('fails when a target has no executable issue fixes', async () => {
         const fixIssue = createFixIssue();
-        const dependencyGroupItem = createDependencyGroupItem([
-            dependencies[2],
-        ]);
+        const healthGroupItem = createHealthGroupItem([healthChecks[2]]);
 
         await expect(
-            fixIssue.fixIssueCommandHandler(dependencyGroupItem),
+            fixIssue.fixIssueCommandHandler(healthGroupItem),
         ).rejects.toThrow(
             `No executable issue fixes found for target ${target}`,
         );
@@ -385,7 +381,7 @@ describe('FixIssue', () => {
         await expect(
             fixIssue.fixIssueCommandHandler({ unexpected: true }),
         ).rejects.toThrow(
-            'Invalid item for fix issues: expected HealthCheckDependencyGroupTreeItem or HealthCheckDependencyTreeItem but received:',
+            'Invalid item for fix issues: expected HealthCheckGroupTreeItem or HealthCheckTreeItem but received:',
         );
     });
 
@@ -395,7 +391,7 @@ describe('FixIssue', () => {
         await expect(
             fixIssue.fixIssueCommandHandler(undefined),
         ).rejects.toThrow(
-            'Invalid item for fix issues: expected HealthCheckDependencyGroupTreeItem or HealthCheckDependencyTreeItem but received: undefined',
+            'Invalid item for fix issues: expected HealthCheckGroupTreeItem or HealthCheckTreeItem but received: undefined',
         );
     });
 });

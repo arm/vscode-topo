@@ -92,7 +92,7 @@
                 "category": "Topo"
             },
             {
-                "command": "topo.fixDependencyIssue",
+                "command": "topo.fixIssue",
                 "title": "Fix",
                 "icon": "$(wrench)",
                 "category": "Topo"
@@ -241,7 +241,7 @@
                     "when": "false"
                 },
                 {
-                    "command": "topo.fixDependencyIssue",
+                    "command": "topo.fixIssue",
                     "when": "false"
                 },
                 {
@@ -310,12 +310,12 @@
                 },
                 {
                     "command": "topo.fixTargetIssues",
-                    "when": "view === topo.target-manager && viewItem =~ /Dependencies/ && viewItem =~ /HasFixableIssues/",
+                    "when": "view === topo.target-manager && viewItem =~ /Health/ && viewItem =~ /HasFixableIssues/",
                     "group": "inline@1"
                 },
                 {
-                    "command": "topo.fixDependencyIssue",
-                    "when": "view === topo.target-manager && viewItem =~ /Dependency/ && viewItem =~ /Fixable/",
+                    "command": "topo.fixIssue",
+                    "when": "view === topo.target-manager && viewItem =~ /HealthCheck/ && viewItem =~ /Fixable/",
                     "group": "inline@1"
                 },
                 {

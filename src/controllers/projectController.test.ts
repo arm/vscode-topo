@@ -6,7 +6,7 @@ import * as vscode from 'vscode';
 import { mutable } from '../util/mutable';
 import { mock } from 'vitest-mock-extended';
 import { TopoCli } from '../topoCli';
-import { PsOutput, TargetHealthCheck } from '../topoCliSchema';
+import { PsOutput, TargetHealthReport } from '../topoCliSchema';
 import { TargetModel } from '../models/targetModel';
 import { PRIMARY_PROCESSING_DOMAIN } from '../manifest';
 
@@ -34,7 +34,7 @@ const workspaceFolder: vscode.WorkspaceFolder = {
     name: 'workspace',
     index: 0,
 };
-const healthyTarget: TargetHealthCheck = {
+const healthyTarget: TargetHealthReport = {
     destination: `ssh://${target}`,
     isLocalhost: false,
     connectivity: {
