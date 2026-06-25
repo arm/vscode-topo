@@ -25,7 +25,7 @@ export const refreshTargetData = command('refreshTargetData');
 export const showOutput = command('showOutput');
 export const selectTarget = command('selectTarget');
 export const resetExtensionData = command('resetExtensionData');
-export const unselectTarget = command('unselectTarget');
+export const clearTargetSelection = command('clearTargetSelection');
 export const initProject = command('initProject');
 export const cloneProject = command('cloneProject');
 export const deploy = command('deploy');
@@ -77,8 +77,8 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
         vscode.commands.registerCommand(resetExtensionData, () =>
             handlers.targetController.resetExtensionDataCommandHandler(),
         ),
-        vscode.commands.registerCommand(unselectTarget, () =>
-            handlers.targetController.unselectCommandHandler(),
+        vscode.commands.registerCommand(clearTargetSelection, () =>
+            handlers.targetController.clearSelectionCommandHandler(),
         ),
         vscode.commands.registerCommand(initProject, () =>
             handlers.projectInit.initProjectCommandHandler(),

@@ -75,11 +75,12 @@ If no target is selected, the view shows a **Select a target** button.
 
 Use the buttons in the Target view title bar to access these actions:
 
-| Command             | Description                                  |
-| ------------------- | -------------------------------------------- |
-| **Select a target** | Select, add, or remove saved manual targets. |
-| **Refresh**         | Re-check health for the selected target.     |
-| **Unselect Target** | Clear the active target without deleting it. |
+| Command             | Description                                                  |
+| ------------------- | ------------------------------------------------------------ |
+| **Select a target** | Select, add, or remove saved manual targets.                 |
+| **Refresh**         | Re-check health for the selected target.                     |
+| **Clear Selection** | Clear the active target without deleting it.                 |
+| **Fix Issues**      | Select and run available fixes for target dependency issues. |
 
 ### Dependency Actions
 

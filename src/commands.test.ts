@@ -81,8 +81,8 @@ describe('commands', () => {
                 handlers.targetController.resetExtensionDataCommandHandler,
             ],
             [
-                commands.unselectTarget,
-                handlers.targetController.unselectCommandHandler,
+                commands.clearTargetSelection,
+                handlers.targetController.clearSelectionCommandHandler,
             ],
             [
                 commands.initProject,
