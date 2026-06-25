@@ -17,6 +17,11 @@ import {
 } from '../treeItems/processingDomainTreeItem';
 import { ProcessingDomainGroupTreeItem } from '../treeItems/processingDomainGroupTreeItem';
 
+export const TargetSelectionState = {
+    Unselected: 'unselected',
+    Selected: 'selected',
+} as const;
+
 function compareByName(a: { name: string }, b: { name: string }): number {
     return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
 }
@@ -97,11 +102,14 @@ function syncTargetDataIssueContext(targets: Loadable<string[]>): void {
     );
 }
 
-function syncSelectedTargetContext(selectedTarget: string | undefined): void {
+function syncSelectedTargetContext(targetModel: TargetModel): void {
+    const state = targetModel.selected
+        ? TargetSelectionState.Selected
+        : TargetSelectionState.Unselected;
     void vscode.commands.executeCommand(
         'setContext',
-        manifest.CONTEXT_HAS_SELECTED_TARGET,
-        Boolean(selectedTarget),
+        manifest.CONTEXT_SELECTED_TARGET_STATE,
+        state,
     );
 }
 
@@ -110,7 +118,7 @@ function refreshHeader(
     targetModel: TargetModel,
 ): void {
     treeView.description = targetModel.selected;
-    syncSelectedTargetContext(targetModel.selected);
+    syncSelectedTargetContext(targetModel);
 }
 
 export class TargetTreeView
@@ -139,6 +147,9 @@ export class TargetTreeView
             }),
             this.targetModel.onTargetsChanged(() => {
                 syncTargetDataIssueContext(this.targetModel.targets);
+                if (!this.targetModel.selected) {
+                    syncSelectedTargetContext(this.targetModel);
+                }
                 this.refreshTreeView();
             }),
             this.targetModel.onHealthChanged(() => {
