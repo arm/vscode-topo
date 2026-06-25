@@ -189,7 +189,7 @@
         "viewsWelcome": [
             {
                 "view": "topo.target-manager",
-                "when": "topo.selectedTarget == ''",
+                "when": "topo.selectedTargetState == 'unselected'",
                 "contents": "No target selected\n[Select a target](command:topo.selectTarget)"
             },
             {
@@ -357,12 +357,12 @@
                 },
                 {
                     "command": "topo.refreshTargetData",
-                    "when": "view == topo.target-manager && topo.selectedTarget",
+                    "when": "view == topo.target-manager && topo.selectedTargetState == 'selected'",
                     "group": "navigation"
                 },
                 {
                     "command": "topo.unselectTarget",
-                    "when": "view == topo.target-manager && topo.selectedTarget",
+                    "when": "view == topo.target-manager && topo.selectedTargetState == 'selected'",
                     "group": "navigation"
                 },
                 {
