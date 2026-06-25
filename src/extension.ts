@@ -67,17 +67,20 @@ export async function activate(
     );
 
     const hostController = new HostController(hostModel, topoCli);
-    const projectController = new ProjectController(projectModel);
+    const projectController = new ProjectController(
+        projectModel,
+        topoCli,
+        targetModel,
+    );
     const targetController = new TargetController(
         targetModel,
         targetStore,
         topoCli,
-        dockerCommands,
     );
 
     const selectedTargetRefreshLoop = new RefreshLoop(async () => {
-        if (!targetController.isRefreshingSelectedTargetData()) {
-            await targetController.refreshSelectedTargetDataCommandHandler();
+        if (!targetController.isRefreshingSelectedTargetHealth()) {
+            await targetController.refreshSelectedTargetHealthCommandHandler();
         }
     }, SELECTED_TARGET_REFRESH_INTERVAL_MS);
 
@@ -90,21 +93,24 @@ export async function activate(
         ),
         targetModel.onSelectedChanged(() => {
             void targetController.loadSelectedTargetDescriptionCommandHandler();
-            void targetController.refreshSelectedTargetDataCommandHandler();
+            void targetController.refreshSelectedTargetHealthCommandHandler();
         }),
     );
 
     const projectInit = new ProjectInit(topoCli);
     const taskExecutor = new TaskExecutor(topoCli);
     const projectClone = new ProjectClone(topoCli, targetModel, taskExecutor);
-    const deploy = new Deploy(taskExecutor, targetModel, targetController);
-    const stop = new Stop(taskExecutor, targetModel, targetController);
+    const deploy = new Deploy(taskExecutor, targetModel, projectController);
+    const stop = new Stop(taskExecutor, targetModel, projectController);
     const openContainerShell = new OpenContainerShell(dockerCommands);
-    const containerStart = new ContainerStart(dockerCommands, targetController);
-    const containerStop = new ContainerStop(dockerCommands, targetController);
+    const containerStart = new ContainerStart(
+        dockerCommands,
+        projectController,
+    );
+    const containerStop = new ContainerStop(dockerCommands, projectController);
     const containerDelete = new ContainerDelete(
         dockerCommands,
-        targetController,
+        projectController,
     );
     const fixIssue = new FixIssue(taskExecutor, targetModel, targetController);
     const protocolHandler = new ProtocolHandler(taskExecutor);

@@ -86,8 +86,8 @@
                 "category": "Topo"
             },
             {
-                "command": "topo.unselectTarget",
-                "title": "Unselect Target",
+                "command": "topo.clearTargetSelection",
+                "title": "Clear Selection",
                 "icon": "$(circle-slash)",
                 "category": "Topo"
             },
@@ -189,11 +189,12 @@
         "viewsWelcome": [
             {
                 "view": "topo.target-manager",
-                "when": "!topo.hasSelectedTarget",
+                "when": "topo.selectedTargetState == 'unselected'",
                 "contents": "No target selected\n[Select a target](command:topo.selectTarget)"
             },
             {
                 "view": "topo.projects",
+                "when": "topo.projectCount == 0",
                 "contents": "No projects found\n[Clone a project](command:topo.cloneProject)"
             }
         ],
@@ -236,7 +237,7 @@
                     "when": "false"
                 },
                 {
-                    "command": "topo.unselectTarget",
+                    "command": "topo.clearTargetSelection",
                     "when": "false"
                 },
                 {
@@ -319,22 +320,22 @@
                 },
                 {
                     "command": "topo.openContainerShell",
-                    "when": "view === topo.target-manager && viewItem =~ /service/ && viewItem =~ /running/ && viewItem =~ /PrimaryOS/",
+                    "when": "view === topo.projects && viewItem =~ /service/ && viewItem =~ /running/ && viewItem =~ /Linux Host/",
                     "group": "inline@1"
                 },
                 {
                     "command": "topo.startContainer",
-                    "when": "view === topo.target-manager && viewItem =~ /service/ && viewItem =~ /exited/",
+                    "when": "view === topo.projects && viewItem =~ /service/ && viewItem =~ /exited/",
                     "group": "inline@4"
                 },
                 {
                     "command": "topo.stopContainer",
-                    "when": "view === topo.target-manager && viewItem =~ /service/ && viewItem =~ /running/",
+                    "when": "view === topo.projects && viewItem =~ /service/ && viewItem =~ /running/",
                     "group": "inline@4"
                 },
                 {
                     "command": "topo.deleteContainer",
-                    "when": "view === topo.target-manager && viewItem =~ /service/",
+                    "when": "view === topo.projects && viewItem =~ /service/",
                     "group": "inline@5"
                 },
                 {
@@ -356,12 +357,12 @@
                 },
                 {
                     "command": "topo.refreshTargetData",
-                    "when": "view == topo.target-manager && topo.hasSelectedTarget",
+                    "when": "view == topo.target-manager && topo.selectedTargetState == 'selected'",
                     "group": "navigation"
                 },
                 {
-                    "command": "topo.unselectTarget",
-                    "when": "view == topo.target-manager && topo.hasSelectedTarget",
+                    "command": "topo.clearTargetSelection",
+                    "when": "view == topo.target-manager && topo.selectedTargetState == 'selected'",
                     "group": "navigation"
                 },
                 {

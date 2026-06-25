@@ -110,7 +110,7 @@ describe('FixIssue', () => {
             }),
         );
         expect(
-            targetController.refreshSelectedTargetDataCommandHandler,
+            targetController.refreshSelectedTargetHealthCommandHandler,
         ).toHaveBeenCalledOnce();
     });
 
@@ -126,7 +126,7 @@ describe('FixIssue', () => {
 
         expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(
-            targetController.refreshSelectedTargetDataCommandHandler,
+            targetController.refreshSelectedTargetHealthCommandHandler,
         ).not.toHaveBeenCalled();
     });
 
@@ -141,7 +141,7 @@ describe('FixIssue', () => {
 
         expect(taskExecutor.run).toHaveBeenCalledOnce();
         expect(
-            targetController.refreshSelectedTargetDataCommandHandler,
+            targetController.refreshSelectedTargetHealthCommandHandler,
         ).toHaveBeenCalledOnce();
     });
 
@@ -158,7 +158,7 @@ describe('FixIssue', () => {
 
         expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(
-            targetController.refreshSelectedTargetDataCommandHandler,
+            targetController.refreshSelectedTargetHealthCommandHandler,
         ).not.toHaveBeenCalled();
     });
 
@@ -200,7 +200,7 @@ describe('FixIssue', () => {
             }),
         );
         expect(
-            targetController.refreshSelectedTargetDataCommandHandler,
+            targetController.refreshSelectedTargetHealthCommandHandler,
         ).toHaveBeenCalledOnce();
     });
 
@@ -287,7 +287,7 @@ describe('FixIssue', () => {
             }),
         );
         expect(
-            targetController.refreshSelectedTargetDataCommandHandler,
+            targetController.refreshSelectedTargetHealthCommandHandler,
         ).toHaveBeenCalledOnce();
     });
 
@@ -354,7 +354,7 @@ describe('FixIssue', () => {
 
         expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(
-            targetController.refreshSelectedTargetDataCommandHandler,
+            targetController.refreshSelectedTargetHealthCommandHandler,
         ).toHaveBeenCalledOnce();
     });
 
@@ -371,7 +371,7 @@ describe('FixIssue', () => {
         expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
         expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(
-            targetController.refreshSelectedTargetDataCommandHandler,
+            targetController.refreshSelectedTargetHealthCommandHandler,
         ).not.toHaveBeenCalled();
     });
 

@@ -1,60 +1,64 @@
 import * as vscode from 'vscode';
-import { ContainerTreeItem } from '../treeItems/containerTreeItem';
 import * as manifest from '../manifest';
-import { ProcessingDomainTreeItem } from '../treeItems/processingDomainTreeItem';
 import { HealthCheckGroupTreeItem } from '../treeItems/healthCheckGroupTreeItem';
-import { ProcessingDomainGroupTreeItem } from '../treeItems/processingDomainGroupTreeItem';
 import { HealthCheckTreeItem } from '../treeItems/healthCheckTreeItem';
 import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
-import { ContainerItem, TargetDescription } from '../util/types';
+import { TargetDescription } from '../util/types';
 import { Loadable, loaded } from '../util/loadable';
 import { TargetDataIssueTreeItem } from '../targetTreeView/targetDataIssueTreeItem';
 import { ErrorTreeItem } from '../treeItems/errorTreeItem';
 import { TargetHealthReport } from '../topoCliSchema';
 import { getVisibleTargetHealthChecks } from '../target/getVisibleTargetHealthChecks';
 import { LoadingTreeItem } from '../treeItems/loadingTreeItem';
+import {
+    compareProcessingDomains,
+    ProcessingDomainTreeItem,
+} from '../treeItems/processingDomainTreeItem';
+import { ProcessingDomainGroupTreeItem } from '../treeItems/processingDomainGroupTreeItem';
+
+export const TargetSelectionState = {
+    Unselected: 'unselected',
+    Selected: 'selected',
+} as const;
 
 function compareByName(a: { name: string }, b: { name: string }): number {
     return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
 }
 
-function compareContainers(a: ContainerItem, b: ContainerItem): number {
-    if (a.state === 'running' && b.state !== 'running') {
-        return -1;
+function getProcessingDomainGroupChildren(
+    targetDescription: Loadable<TargetDescription>,
+): vscode.TreeItem[] {
+    if (targetDescription.status === 'errored') {
+        return [
+            new ErrorTreeItem(
+                'Failed to load processing domains',
+                targetDescription,
+            ),
+        ];
     }
-    if (a.state !== 'running' && b.state === 'running') {
-        return 1;
+
+    if (targetDescription.status === 'unloaded') {
+        return [];
     }
-    return compareByName(a, b);
+
+    const processingDomains = [
+        manifest.PRIMARY_PROCESSING_DOMAIN,
+        ...targetDescription.data.remoteProcessors.map(
+            (remoteProcessor) => remoteProcessor.name,
+        ),
+    ];
+
+    return processingDomains
+        .map((processingDomain) => {
+            return new ProcessingDomainTreeItem(processingDomain);
+        })
+        .sort(compareProcessingDomains);
 }
-
-function filterContainersForProcessingDomain(
-    containers: ContainerItem[],
-    processingDomainId: string,
-): ContainerItem[] {
-    return containers.filter((item) => {
-        if (processingDomainId === 'PrimaryOS') {
-            return item.runtime === manifest.TARGET_HOST_RUNTIME;
-        }
-
-        return (
-            item.runtime === manifest.TARGET_REMOTEPROC_RUNTIME &&
-            item.annotations?.['remoteproc.name'] === processingDomainId
-        );
-    });
-}
-
-const PRIMARY_OS_PROCESSING_DOMAIN = {
-    id: 'PrimaryOS',
-    label: 'Primary OS',
-};
 
 function getSelectedTargetChildren(
-    target: string,
     health: Loadable<TargetHealthReport>,
     targetDescription: Loadable<TargetDescription>,
-    selectedTargetContainers: Loadable<ContainerItem[]>,
 ): vscode.TreeItem[] {
     switch (health.status) {
         case 'unloaded':
@@ -82,12 +86,10 @@ function getSelectedTargetChildren(
                     health.loading,
                 ),
             );
-            const subsystemsGroup = new ProcessingDomainGroupTreeItem(
-                target,
-                description?.remoteProcessors.map((rp) => rp.name) ?? [],
-                selectedTargetContainers,
+            const processingDomainGroup = new ProcessingDomainGroupTreeItem(
+                targetDescription,
             );
-            return [healthGroup, subsystemsGroup];
+            return [healthGroup, processingDomainGroup];
         }
     }
 }
@@ -100,11 +102,14 @@ function syncTargetDataIssueContext(targets: Loadable<string[]>): void {
     );
 }
 
-function syncSelectedTargetContext(selectedTarget: string | undefined): void {
+function syncSelectedTargetContext(targetModel: TargetModel): void {
+    const state = targetModel.selected
+        ? TargetSelectionState.Selected
+        : TargetSelectionState.Unselected;
     void vscode.commands.executeCommand(
         'setContext',
-        manifest.CONTEXT_HAS_SELECTED_TARGET,
-        Boolean(selectedTarget),
+        manifest.CONTEXT_SELECTED_TARGET_STATE,
+        state,
     );
 }
 
@@ -113,7 +118,7 @@ function refreshHeader(
     targetModel: TargetModel,
 ): void {
     treeView.description = targetModel.selected;
-    syncSelectedTargetContext(targetModel.selected);
+    syncSelectedTargetContext(targetModel);
 }
 
 export class TargetTreeView
@@ -142,12 +147,12 @@ export class TargetTreeView
             }),
             this.targetModel.onTargetsChanged(() => {
                 syncTargetDataIssueContext(this.targetModel.targets);
+                if (!this.targetModel.selected) {
+                    syncSelectedTargetContext(this.targetModel);
+                }
                 this.refreshTreeView();
             }),
             this.targetModel.onHealthChanged(() => {
-                this.refreshTreeView();
-            }),
-            this.targetModel.onContainersChanged(() => {
                 this.refreshTreeView();
             }),
             this.targetModel.onDescriptionChanged(() => {
@@ -170,10 +175,8 @@ export class TargetTreeView
             }
 
             return getSelectedTargetChildren(
-                selectedTarget,
                 this.targetModel.selectedTargetHealth,
                 this.targetModel.selectedTargetDescription,
-                this.targetModel.selectedTargetContainers,
             );
         }
 
@@ -185,49 +188,7 @@ export class TargetTreeView
         }
 
         if (element instanceof ProcessingDomainGroupTreeItem) {
-            if (element.containers.status === 'errored') {
-                return [
-                    new ErrorTreeItem(
-                        'Failed to load containers',
-                        element.containers,
-                    ),
-                ];
-            }
-
-            if (element.containers.status === 'unloaded') {
-                return [];
-            }
-
-            const sortedContainers = [...element.containers.data].sort(
-                compareContainers,
-            );
-
-            const processingDomains = [
-                PRIMARY_OS_PROCESSING_DOMAIN,
-                ...element.remoteProcessorNames.map((name) => ({
-                    id: name,
-                    label: name,
-                })),
-            ];
-            return processingDomains.map((domain) => {
-                const containers = filterContainersForProcessingDomain(
-                    sortedContainers,
-                    domain.id,
-                );
-
-                return new ProcessingDomainTreeItem(
-                    domain.id,
-                    element.target,
-                    containers,
-                    domain.label,
-                );
-            });
-        }
-
-        if (element instanceof ProcessingDomainTreeItem) {
-            return element.containers.map(
-                (container) => new ContainerTreeItem(container),
-            );
+            return getProcessingDomainGroupChildren(element.targetDescription);
         }
 
         return [];

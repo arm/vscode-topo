@@ -1,12 +1,6 @@
-import {
-    DockerCommands,
-    DockerError,
-    parseDockerStderr,
-} from './dockerCommands';
+import { DockerCommands, parseDockerStderr } from './dockerCommands';
 import { execFile } from '../util/exec';
 import { logger } from '../util/logger';
-import { DockerInspectItem } from '../util/types';
-import { WrappedError } from '../errors/wrappedError';
 import type { Mock } from 'vitest';
 
 vi.mock('../util/exec', () => ({
@@ -16,13 +10,6 @@ vi.mock('../util/exec', () => ({
 vi.mock('../util/logger');
 
 const execFileMock: Mock = vi.mocked(execFile);
-
-function makeDockerError(stdout: string, stderr: string): DockerError {
-    const e = new Error('Command failed: docker something') as DockerError;
-    e.stdout = stdout;
-    e.stderr = stderr;
-    return e;
-}
 
 describe('DockerCommands', () => {
     let dockerCommands: DockerCommands;
@@ -35,159 +22,6 @@ describe('DockerCommands', () => {
             stderr: '',
         }));
         dockerCommands = new DockerCommands();
-    });
-
-    describe('getContainers', () => {
-        it('parses docker ps json lines', async () => {
-            const containerItem = { ID: '1', Names: 'c1' };
-            execFileMock.mockResolvedValueOnce({
-                stdout: `${JSON.stringify(containerItem)}\n`,
-                stderr: '',
-            });
-
-            const arr = await dockerCommands.getContainers('ctx');
-
-            expect(execFileMock).toHaveBeenCalledWith('docker', [
-                '--host',
-                'ssh://ctx',
-                'ps',
-                '-a',
-                '--format',
-                '{{json .}}',
-            ]);
-            expect(arr).toEqual([containerItem]);
-        });
-
-        it('passes target shell metacharacters as one host argument', async () => {
-            execFileMock.mockResolvedValueOnce({ stdout: '\n', stderr: '' });
-
-            await dockerCommands.getContainers('ctx; touch /tmp/pwned');
-
-            expect(execFileMock).toHaveBeenCalledWith('docker', [
-                '--host',
-                'ssh://ctx; touch /tmp/pwned',
-                'ps',
-                '-a',
-                '--format',
-                '{{json .}}',
-            ]);
-        });
-
-        it('returns empty array when no lines', async () => {
-            execFileMock.mockResolvedValueOnce({ stdout: '\n', stderr: '' });
-
-            const arr = await dockerCommands.getContainers('ctx');
-
-            expect(arr).toHaveLength(0);
-        });
-    });
-
-    describe('inspectContainers', () => {
-        it('returns inspect output on success', async () => {
-            const inspectItem: DockerInspectItem = {
-                Id: 'id',
-                NetworkSettings: { Ports: {} },
-                HostConfig: { Runtime: 'r', Annotations: {} },
-            };
-            execFileMock.mockResolvedValueOnce({
-                stdout: JSON.stringify(inspectItem),
-                stderr: '',
-            });
-
-            const out = await dockerCommands.inspectContainers(
-                ['a'],
-                'user@host',
-            );
-
-            expect(out).toEqual([inspectItem]);
-            expect(execFileMock).toHaveBeenCalledWith('docker', [
-                '--host',
-                'ssh://user@host',
-                'inspect',
-                'a',
-                '--format',
-                '{{json .}}',
-            ]);
-        });
-
-        it('passes container IDs and target shell metacharacters as separate arguments', async () => {
-            const inspectItem: DockerInspectItem = {
-                Id: 'id',
-                NetworkSettings: { Ports: {} },
-                HostConfig: { Runtime: 'r', Annotations: {} },
-            };
-            execFileMock.mockResolvedValueOnce({
-                stdout: JSON.stringify(inspectItem),
-                stderr: '',
-            });
-
-            await dockerCommands.inspectContainers(
-                ['a; touch /tmp/a', 'b'],
-                'user@host; touch /tmp/host',
-            );
-
-            expect(execFileMock).toHaveBeenCalledWith('docker', [
-                '--host',
-                'ssh://user@host; touch /tmp/host',
-                'inspect',
-                'a; touch /tmp/a',
-                'b',
-                '--format',
-                '{{json .}}',
-            ]);
-        });
-
-        it('returns partial output when exec rejects with only not-found errors', async () => {
-            const inspectItem: DockerInspectItem = {
-                Id: 'id',
-                NetworkSettings: { Ports: {} },
-                HostConfig: { Runtime: 'r', Annotations: {} },
-            };
-            const err = makeDockerError(
-                JSON.stringify(inspectItem),
-                'Error: No such object: a\nError: No such object: b',
-            );
-            execFileMock.mockRejectedValueOnce(err);
-
-            const out = await dockerCommands.inspectContainers(
-                ['a', 'b'],
-                'user@host',
-            );
-
-            expect(logger.warn).toHaveBeenCalledWith(
-                expect.any(String),
-                err.stderr,
-            );
-            expect(out).toEqual([inspectItem]);
-        });
-
-        it('rethrows when exec rejects with unknown error', async () => {
-            const err = new Error('boom');
-            execFileMock.mockRejectedValueOnce(err);
-
-            await expect(
-                dockerCommands.inspectContainers(['a'], 'ctx'),
-            ).rejects.toBe(err);
-        });
-
-        it('throws a WrappedError when exec rejects with a DockerError', async () => {
-            const dockerErr = makeDockerError('', 'some docker error');
-            execFileMock.mockRejectedValue(dockerErr);
-
-            await expect(
-                dockerCommands.inspectContainers(['a'], 'ctx'),
-            ).rejects.toThrow(WrappedError);
-            await expect(
-                dockerCommands.inspectContainers(['a'], 'ctx'),
-            ).rejects.toThrow('some docker error');
-        });
-
-        it('returns empty array when provided with an empty array', async () => {
-            const out = await dockerCommands.inspectContainers([], 'ctx');
-
-            expect(out).toEqual([]);
-            expect(execFileMock).not.toHaveBeenCalled();
-        });
     });
 
     describe('stopContainer', () => {

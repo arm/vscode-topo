@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { Loadable, unloaded } from '../util/loadable';
 import { TargetHealthReport } from '../topoCliSchema';
-import { ContainerItem, TargetDescription } from '../util/types';
+import { TargetDescription } from '../util/types';
 
 export class TargetModel {
     private _onSelectedChanged: vscode.EventEmitter<void> =
@@ -19,11 +19,6 @@ export class TargetModel {
     public readonly onHealthChanged: vscode.Event<void> =
         this._onHealthChanged.event;
 
-    private _onContainersChanged: vscode.EventEmitter<void> =
-        new vscode.EventEmitter<void>();
-    public readonly onContainersChanged: vscode.Event<void> =
-        this._onContainersChanged.event;
-
     private _onDescriptionChanged: vscode.EventEmitter<void> =
         new vscode.EventEmitter<void>();
     public readonly onDescriptionChanged: vscode.Event<void> =
@@ -32,7 +27,6 @@ export class TargetModel {
     private _selected?: string;
     private _targets: Loadable<string[]> = unloaded();
     private _health: Loadable<TargetHealthReport> = unloaded();
-    private _containers: Loadable<ContainerItem[]> = unloaded();
     private _description: Loadable<TargetDescription> = unloaded();
 
     public setSelected(selected: string | undefined): void {
@@ -62,14 +56,6 @@ export class TargetModel {
         }
     }
 
-    public setSelectedTargetContainers(containers: Loadable<ContainerItem[]>) {
-        const changed = this._containers !== containers;
-        this._containers = containers;
-        if (changed) {
-            this._onContainersChanged.fire();
-        }
-    }
-
     public clear(): void {
         this.setTargets(unloaded());
         this.setSelected(undefined);
@@ -87,10 +73,6 @@ export class TargetModel {
         return this._health;
     }
 
-    public get selectedTargetContainers(): Loadable<ContainerItem[]> {
-        return this._containers;
-    }
-
     public get selectedTargetDescription(): Loadable<TargetDescription> {
         return this._description;
     }
@@ -104,7 +86,6 @@ export class TargetModel {
 
     private clearSelectedTargetData(): void {
         this.setSelectedTargetHealth(unloaded());
-        this.setSelectedTargetContainers(unloaded());
         this.setSelectedTargetDescription(unloaded());
     }
 }

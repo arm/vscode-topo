@@ -45,7 +45,7 @@ export class FixIssue {
             );
         }
 
-        await this.targetController.refreshSelectedTargetDataCommandHandler();
+        await this.targetController.refreshSelectedTargetHealthCommandHandler();
     }
 
     private async fixIssueFromTreeItem(

@@ -3,30 +3,37 @@ import { ProjectsTreeView } from './projectsTreeView';
 import { ProjectTreeItem } from '../treeItems/projectTreeItem';
 import { mutable } from '../util/mutable';
 import { ProjectModel } from '../models/projectModel';
-import { loaded, errored, loading } from '../util/loadable';
+import { loaded, errored, loading, unloaded } from '../util/loadable';
 import { ErrorTreeItem } from '../treeItems/errorTreeItem';
 import { LoadingTreeItem } from '../treeItems/loadingTreeItem';
+import { ContainerTreeItem } from '../treeItems/containerTreeItem';
+import { ProcessingDomainTreeItem } from '../treeItems/processingDomainTreeItem';
+import { ProjectMetadata } from '../util/project';
+import { ContainerItem } from '../util/types';
+import * as manifest from '../manifest';
+
+const project: ProjectMetadata = {
+    name: 'demo',
+    uri: vscode.Uri.file('/fake/workspace/demo'),
+    composeFileUri: vscode.Uri.file('/fake/workspace/demo/compose.yaml'),
+    workspaceIndex: 0,
+    workspaceName: 'workspace',
+};
+
+const container: ContainerItem = {
+    id: 'abc123',
+    names: 'app',
+    image: 'demo-app',
+    status: 'Up 1 minute',
+    state: 'running',
+    processingDomain: manifest.PRIMARY_PROCESSING_DOMAIN,
+    address: 'localhost:8000',
+    target: 'user@topo.local',
+};
 
 describe('ProjectsTreeView', () => {
-    let model: ProjectModel;
-
-    beforeEach(() => {
-        model = new ProjectModel();
-        mutable(vscode.workspace).workspaceFolders = [
-            {
-                uri: vscode.Uri.file('/fake/workspace'),
-                name: 'workspace',
-                index: 0,
-            },
-        ];
-    });
-
-    afterEach(() => {
-        vi.resetAllMocks();
-        mutable(vscode.workspace).workspaceFolders = undefined;
-    });
-
     it('registers the projects tree', () => {
+        const model = new ProjectModel();
         const provider = new ProjectsTreeView(model);
 
         expect(vscode.window.createTreeView).toHaveBeenCalledWith(
@@ -38,80 +45,78 @@ describe('ProjectsTreeView', () => {
         );
     });
 
+    it('syncs project count context', () => {
+        const model = new ProjectModel();
+        new ProjectsTreeView(model);
+
+        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            'setContext',
+            manifest.CONTEXT_PROJECT_COUNT,
+            undefined,
+        );
+
+        vi.mocked(vscode.commands.executeCommand).mockClear();
+        model.setProjects(loaded([]));
+
+        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            'setContext',
+            manifest.CONTEXT_PROJECT_COUNT,
+            0,
+        );
+    });
+
     it('returns project items at the root', () => {
-        const projectUri = vscode.Uri.file('/fake/workspace/demo');
-        const composeFileUri = vscode.Uri.file(
-            '/fake/workspace/demo/compose.yaml',
-        );
-        model.setProjects(
-            loaded([
-                {
-                    name: 'demo',
-                    uri: projectUri,
-                    composeFileUri,
-                    workspaceIndex: 0,
-                    workspaceName: 'workspace',
-                },
-            ]),
-        );
+        const model = new ProjectModel();
+        model.setProjects(loaded([project]));
         const provider = new ProjectsTreeView(model);
 
         const children = provider.getChildren();
 
-        expect(children).toHaveLength(1);
-        expect(children[0]).toBeInstanceOf(ProjectTreeItem);
-        expect(children[0]).toMatchObject({
-            label: 'demo',
-            tooltip: projectUri.fsPath,
-            contextValue: 'Project',
-        });
-        expect((children[0] as ProjectTreeItem).composeFileUri.fsPath).toBe(
-            composeFileUri.fsPath,
-        );
-        expect(children[0].resourceUri).toBeUndefined();
+        expect(children).toStrictEqual([
+            new ProjectTreeItem(project, false, unloaded()),
+        ]);
     });
 
     it('shows an error item when project loading fails', () => {
-        model.setProjects(errored(new Error('scan failed')));
+        const model = new ProjectModel();
+        const projects = errored(new Error('scan failed'));
+        model.setProjects(projects);
         const provider = new ProjectsTreeView(model);
 
         const children = provider.getChildren();
 
-        expect(children).toHaveLength(1);
-        expect(children[0]).toBeInstanceOf(ErrorTreeItem);
-        expect(children[0]).toMatchObject({
-            label: 'Failed to load projects',
-            description: 'scan failed',
-        });
+        expect(children).toStrictEqual([
+            new ErrorTreeItem('Failed to load projects', projects),
+        ]);
     });
 
     it('shows a loading item while projects are loading', () => {
+        const model = new ProjectModel();
         model.setProjects(loading(loaded([])));
         const provider = new ProjectsTreeView(model);
 
         const children = provider.getChildren();
 
-        expect(children).toHaveLength(1);
-        expect(children[0]).toBeInstanceOf(LoadingTreeItem);
-        expect(children[0].label).toBe('Loading projects');
+        expect(children).toStrictEqual([
+            new LoadingTreeItem('Loading projects'),
+        ]);
     });
 
     it('shows a loading error item when refreshing after project loading failed', () => {
-        model.setProjects(loading(errored(new Error('scan failed'))));
+        const model = new ProjectModel();
+        const projects = loading(errored(new Error('scan failed')));
+        model.setProjects(projects);
         const provider = new ProjectsTreeView(model);
 
         const children = provider.getChildren();
 
-        expect(children).toHaveLength(1);
-        expect(children[0]).toBeInstanceOf(ErrorTreeItem);
-        expect(children[0]).toMatchObject({
-            label: 'Failed to load projects',
-            description: 'scan failed',
-            iconPath: new vscode.ThemeIcon('loading~spin'),
-        });
+        expect(children).toStrictEqual([
+            new ErrorTreeItem('Failed to load projects', projects),
+        ]);
     });
 
     it('shows workspace names when there are multiple workspace folders', () => {
+        const model = new ProjectModel();
         mutable(vscode.workspace).workspaceFolders = [
             {
                 uri: vscode.Uri.file('/fake/workspace'),
@@ -124,19 +129,7 @@ describe('ProjectsTreeView', () => {
                 index: 1,
             },
         ];
-        model.setProjects(
-            loaded([
-                {
-                    name: 'demo',
-                    uri: vscode.Uri.file('/fake/workspace/demo'),
-                    composeFileUri: vscode.Uri.file(
-                        '/fake/workspace/demo/compose.yaml',
-                    ),
-                    workspaceIndex: 0,
-                    workspaceName: 'workspace',
-                },
-            ]),
-        );
+        model.setProjects(loaded([project]));
         const provider = new ProjectsTreeView(model);
 
         const children = provider.getChildren();
@@ -144,20 +137,55 @@ describe('ProjectsTreeView', () => {
         expect(children[0].description).toBe('workspace');
     });
 
-    it('returns no children below project items', () => {
+    it('marks loaded empty projects as stopped and non-expandable', () => {
+        const model = new ProjectModel();
+        model.setProjects(loaded([project]));
+        model.setProjectContainers(project, loaded([]));
         const provider = new ProjectsTreeView(model);
-        const projectItem = new ProjectTreeItem(
-            {
-                name: 'demo',
-                uri: vscode.Uri.file('/fake/workspace/demo'),
-                composeFileUri: vscode.Uri.file(
-                    '/fake/workspace/demo/compose.yaml',
-                ),
-                workspaceIndex: 0,
-                workspaceName: 'workspace',
-            },
-            false,
+
+        const children = provider.getChildren();
+
+        expect(children[0].collapsibleState).toBe(
+            vscode.TreeItemCollapsibleState.None,
         );
+        expect(children[0].contextValue).toBe('Project');
+    });
+
+    it('returns processing domain children below running project items', () => {
+        const model = new ProjectModel();
+        const containers = [container];
+        model.setProjects(loaded([project]));
+        model.setProjectContainers(project, loaded(containers));
+        const provider = new ProjectsTreeView(model);
+        const projectItem = provider.getChildren()[0];
+
+        const children = provider.getChildren(projectItem);
+
+        expect(children).toStrictEqual([
+            new ProcessingDomainTreeItem(
+                container.processingDomain,
+                containers,
+            ),
+        ]);
+    });
+
+    it('returns container children below processing domain items', () => {
+        const model = new ProjectModel();
+        const provider = new ProjectsTreeView(model);
+        const processingDomainItem = new ProcessingDomainTreeItem(
+            container.processingDomain,
+            [container],
+        );
+
+        const children = provider.getChildren(processingDomainItem);
+
+        expect(children).toStrictEqual([new ContainerTreeItem(container)]);
+    });
+
+    it('returns no children below projects with unloaded containers', () => {
+        const model = new ProjectModel();
+        const provider = new ProjectsTreeView(model);
+        const projectItem = new ProjectTreeItem(project, false, unloaded());
 
         const children = provider.getChildren(projectItem);
 
@@ -165,22 +193,35 @@ describe('ProjectsTreeView', () => {
     });
 
     it('getTreeItem returns the element itself', () => {
+        const model = new ProjectModel();
         const provider = new ProjectsTreeView(model);
-        const item = new ProjectTreeItem(
-            {
-                name: 'demo',
-                uri: vscode.Uri.file('/fake/workspace/demo'),
-                composeFileUri: vscode.Uri.file(
-                    '/fake/workspace/demo/compose.yaml',
-                ),
-                workspaceIndex: 0,
-                workspaceName: 'workspace',
-            },
-            false,
-        );
+        const item = new ProjectTreeItem(project, false, unloaded());
 
         const treeItem = provider.getTreeItem(item);
 
         expect(treeItem).toBe(item);
+    });
+
+    it('displays primary processing domain first, followed by other domains in alphabetical order', () => {
+        const model = new ProjectModel();
+        const containers = loaded([
+            { ...container, processingDomain: 'another-rproc2' },
+            { ...container, processingDomain: 'some-rproc' },
+            container,
+            { ...container, processingDomain: 'another-rproc' },
+        ]);
+        model.setProjectContainers(project, containers);
+        const provider = new ProjectsTreeView(model);
+
+        const children = provider.getChildren(
+            new ProjectTreeItem(project, false, containers),
+        );
+
+        expect(children).toMatchObject([
+            { label: container.processingDomain },
+            { label: 'another-rproc' },
+            { label: 'another-rproc2' },
+            { label: 'some-rproc' },
+        ]);
     });
 });

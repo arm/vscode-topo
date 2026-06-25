@@ -43,6 +43,7 @@ The host and target can be the same system.
 1. Review target health and apply suggested fixes.
 1. Clone a [Topo Template](https://github.com/arm/topo-template-format) from our catalog.
 1. Deploy the configured project to your target.
+1. Expand the project in the **Projects** view to see deployed containers grouped by processing domain.
 
 ---
 
@@ -62,12 +63,11 @@ Saved targets that do not come from SSH config can be removed from the picker wi
 
 The Target view header shows the selected SSH destination. The tree below it shows:
 
-| Item                   | Description                                                                       |
-| ---------------------- | --------------------------------------------------------------------------------- |
-| **Connectivity**       | SSH or target health connectivity errors when the selected target cannot be used. |
-| **Processing Domains** | Processing domains on the target, including the primary OS and remote processors. |
-| **Services**           | Running or stopped containers grouped by processing domain, with state icons.     |
-| **Health**             | Required target components and driver health-check issues shown for the target.   |
+| Item                   | Description                                                                                       |
+| ---------------------- | ------------------------------------------------------------------------------------------------- |
+| **Connectivity**       | SSH or target health connectivity errors when the selected target cannot be used.                 |
+| **Health**             | Required target components and processing-domain driver health-check issues shown for the target. |
+| **Processing Domains** | Processing domains available on the target, including the Linux Host and remote processors.       |
 
 If no target is selected, the view shows a **Select a target** button.
 
@@ -78,23 +78,24 @@ Use the buttons in the Target view title bar to access these actions:
 | Command             | Description                                              |
 | ------------------- | -------------------------------------------------------- |
 | **Select a target** | Select, add, or remove saved manual targets.             |
-| **Unselect Target** | Clear the active target without deleting it.             |
+| **Refresh**         | Re-check health for the selected target.                 |
+| **Clear Selection** | Clear the active target without deleting it.             |
 | **Fix Issues**      | Select and run available fixes for target health issues. |
 
 ### Health Actions
 
-Use the inline **Fix** button on a fixable health issue to run the executable fix command reported by the Topo health check.
+Use the inline **Fix** button on a fixable health issue to run the executable fix command reported by the Topo health check. Use **Fix Issues** on the **Health** row to select and run fixes for multiple target health issues.
 
 ## Container Actions
 
-Use the inline buttons on a service in the Target tree to manage individual containers:
+Use the inline buttons on a service in the Projects tree to manage individual containers:
 
-| Command                  | Description                                                                          |
-| ------------------------ | ------------------------------------------------------------------------------------ |
-| **Start**                | Start a stopped container.                                                           |
-| **Stop**                 | Stop a running container.                                                            |
-| **Delete**               | Remove a container.                                                                  |
-| **Open Container Shell** | Open a VS Code terminal connected to a running container in the target's primary OS. |
+| Command                  | Description                                                          |
+| ------------------------ | -------------------------------------------------------------------- |
+| **Start**                | Start a stopped container.                                           |
+| **Stop**                 | Stop a running container.                                            |
+| **Delete**               | Remove a container.                                                  |
+| **Open Container Shell** | Open a VS Code terminal connected to a running Linux Host container. |
 
 ## Deploy and Stop
 
@@ -107,6 +108,8 @@ Deploy or stop a project on the selected target. A deploy operation builds conta
 ## Project Management
 
 The **Projects** view appears in the **Topo** activity bar container and lists workspace projects discovered from top-level `compose.yaml` or `compose.yml` files.
+
+When a target is selected, each project can expand to show deployed containers for that project, grouped by processing domain.
 
 Use the inline buttons on a project row to deploy or stop that project's compose file on the selected target. These actions behave the same as running **Topo Deploy** or **Topo Stop** from the context menu of the project's compose file.
 

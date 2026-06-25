@@ -6,12 +6,7 @@ import { TargetModel } from '../models/targetModel';
 import { WrappedError } from '../errors/wrappedError';
 import { showAndLogError } from '../util/showAndLogError';
 import { TopoCli } from '../topoCli';
-import { ContainerCommands } from '../target/containerCommands';
-import {
-    DockerInspectItem,
-    DockerPsItem,
-    TargetDescription,
-} from '../util/types';
+import { TargetDescription } from '../util/types';
 import { errored, loaded, unloaded } from '../util/loadable';
 import { HealthReport } from '../topoCliSchema';
 
@@ -37,32 +32,6 @@ const health: HealthReport = {
             value: 'ready',
         },
         dependencies: [],
-    },
-};
-
-const dockerPsItem: DockerPsItem = {
-    ID: 'abcdef',
-    Names: 'service',
-    Image: 'image',
-    State: 'running',
-    Status: 'Up 1 minute',
-    Labels: '',
-    RunningFor: '1 minute',
-    CreatedAt: '',
-};
-
-const dockerInspectItem: DockerInspectItem = {
-    Id: 'abcdef123456',
-    HostConfig: {
-        Runtime: 'runc',
-        Annotations: {
-            key: 'value',
-        },
-    },
-    NetworkSettings: {
-        Ports: {
-            '80/tcp': [{ HostIp: '0.0.0.0', HostPort: '8080' }],
-        },
     },
 };
 
@@ -106,21 +75,13 @@ function mockControllerDependencies() {
     const topoCli = mock<TopoCli>();
     topoCli.describe.mockResolvedValue(targetDescription);
     topoCli.health.mockResolvedValue(health);
-    const containerCommands = mock<ContainerCommands>();
-    containerCommands.getContainers.mockResolvedValue([]);
-    containerCommands.inspectContainers.mockResolvedValue([]);
-    return { topoCli, containerCommands };
+    return { topoCli };
 }
 
 function createController(targetModel: TargetModel, targetStore: TargetStore) {
-    const { topoCli, containerCommands } = mockControllerDependencies();
-    const controller = new TargetController(
-        targetModel,
-        targetStore,
-        topoCli,
-        containerCommands,
-    );
-    return { controller, topoCli, containerCommands };
+    const { topoCli } = mockControllerDependencies();
+    const controller = new TargetController(targetModel, targetStore, topoCli);
+    return { controller, topoCli };
 }
 
 describe('buildQuickPickItems', () => {
@@ -626,7 +587,7 @@ describe('target addition', () => {
     });
 });
 
-describe('target unselection', () => {
+describe('target selection clearing', () => {
     it('clears the selected target and updates model', async () => {
         const targetStore = mockTargetStore(['user@board'], 'user@board');
         const targetModel = new TargetModel();
@@ -634,12 +595,11 @@ describe('target unselection', () => {
         targetModel.setSelectedTargetDescription(loaded(targetDescription));
         const { controller } = createController(targetModel, targetStore);
 
-        await controller.unselectCommandHandler();
+        await controller.clearSelectionCommandHandler();
 
         expect(targetStore.setSelected).toHaveBeenCalledWith(undefined);
         expect(targetModel.selected).toBeUndefined();
         expect(targetModel.selectedTargetHealth).toEqual(unloaded());
-        expect(targetModel.selectedTargetContainers).toEqual(unloaded());
         expect(targetModel.selectedTargetDescription).toEqual(unloaded());
     });
 
@@ -648,7 +608,7 @@ describe('target unselection', () => {
         const targetModel = new TargetModel();
         const { controller } = createController(targetModel, targetStore);
 
-        await controller.unselectCommandHandler();
+        await controller.clearSelectionCommandHandler();
 
         expect(targetStore.setSelected).toHaveBeenCalledWith(undefined);
         expect(targetModel.selected).toBeUndefined();
@@ -707,118 +667,21 @@ describe('selected target description load', () => {
     });
 });
 
-describe('selected target data refresh', () => {
-    it('loads health and containers for the selected target', async () => {
+describe('selected target health refresh', () => {
+    it('loads health for the selected target', async () => {
         const targetStore = mockTargetStore([target], target);
         const targetModel = new TargetModel();
         targetModel.setSelected(target);
-        const { controller, topoCli, containerCommands } = createController(
+        const { controller, topoCli } = createController(
             targetModel,
             targetStore,
         );
-        containerCommands.getContainers.mockResolvedValue([dockerPsItem]);
-        containerCommands.inspectContainers.mockResolvedValue([
-            dockerInspectItem,
-        ]);
 
-        await controller.refreshSelectedTargetDataCommandHandler();
+        await controller.refreshSelectedTargetHealthCommandHandler();
 
-        expect(targetModel.selectedTargetContainers).toStrictEqual(
-            loaded([
-                {
-                    id: dockerPsItem.ID,
-                    name: dockerPsItem.Names,
-                    image: dockerPsItem.Image,
-                    state: dockerPsItem.State,
-                    status: dockerPsItem.Status,
-                    labels: dockerPsItem.Labels,
-                    runningFor: dockerPsItem.RunningFor,
-                    createdAt: dockerPsItem.CreatedAt,
-                    runtime: dockerInspectItem.HostConfig.Runtime,
-                    annotations: dockerInspectItem.HostConfig.Annotations,
-                    ports: dockerInspectItem.NetworkSettings.Ports,
-                    target,
-                },
-            ]),
-        );
         expect(targetModel.selectedTargetHealth).toStrictEqual(
             loaded(health.target),
         );
         expect(topoCli.health).toHaveBeenCalledWith(target);
-        expect(containerCommands.getContainers).toHaveBeenCalledWith(target);
-        expect(containerCommands.inspectContainers).toHaveBeenCalledWith(
-            [dockerPsItem.ID],
-            target,
-        );
-    });
-
-    it('treats container engine health error as error when loading containers', async () => {
-        const unhealthyContainerEngineHealth: HealthReport = {
-            ...health,
-            target: {
-                ...health.target,
-                dependencies: [
-                    {
-                        name: 'Container Engine',
-                        status: 'error',
-                        value: 'missing',
-                        fix: {
-                            description: 'Install container engine',
-                        },
-                    },
-                ],
-            },
-        };
-        const targetStore = mockTargetStore([target], target);
-        const targetModel = new TargetModel();
-        targetModel.setSelected(target);
-        const { controller, topoCli, containerCommands } = createController(
-            targetModel,
-            targetStore,
-        );
-        topoCli.health.mockResolvedValue(unhealthyContainerEngineHealth);
-
-        await controller.refreshSelectedTargetDataCommandHandler();
-
-        expect(targetModel.selectedTargetContainers).toStrictEqual({
-            status: 'errored',
-            error: new Error('Install container engine'),
-            loading: false,
-        });
-        expect(containerCommands.getContainers).not.toHaveBeenCalled();
-        expect(containerCommands.inspectContainers).not.toHaveBeenCalled();
-    });
-
-    it('unloads containers when selected target health is disconnected', async () => {
-        const disconnectedHealth: HealthReport = {
-            ...health,
-            target: {
-                ...health.target,
-                connectivity: {
-                    name: 'Connectivity',
-                    status: 'error',
-                    value: 'unreachable',
-                    fix: {
-                        description: 'Connect the target',
-                    },
-                },
-            },
-        };
-        const targetStore = mockTargetStore([target], target);
-        const targetModel = new TargetModel();
-        targetModel.setSelected(target);
-        const { controller, topoCli, containerCommands } = createController(
-            targetModel,
-            targetStore,
-        );
-        topoCli.health.mockResolvedValue(disconnectedHealth);
-
-        await controller.refreshSelectedTargetDataCommandHandler();
-
-        expect(targetModel.selectedTargetHealth).toStrictEqual(
-            loaded(disconnectedHealth.target),
-        );
-        expect(targetModel.selectedTargetContainers).toStrictEqual(unloaded());
-        expect(containerCommands.getContainers).not.toHaveBeenCalled();
     });
 });

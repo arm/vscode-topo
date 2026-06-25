@@ -1,4 +1,3 @@
-import { TARGET_HOST_RUNTIME } from '../manifest';
 import * as vscode from 'vscode';
 import { ContainerStart } from './containerStart';
 import { ContainerTreeItem } from '../treeItems/containerTreeItem';
@@ -7,23 +6,19 @@ import { mock } from 'vitest-mock-extended';
 import { ContainerItem } from '../util/types';
 import { ContainerCommands } from '../target/containerCommands';
 import type { MockInstance } from 'vitest';
-import { TargetController } from '../controllers/targetController';
+import { ProjectController } from '../controllers/projectController';
 
 describe('ContainerStart', () => {
     let showErrorMessageSpy: MockInstance;
     const target = 'user@topo.local';
     const container: ContainerItem = {
         id: 'abc123',
-        name: 'my-container',
+        names: 'my-container',
         image: 'nginx',
         state: 'running',
         status: 'Up',
-        labels: '',
-        runningFor: '',
-        runtime: TARGET_HOST_RUNTIME,
-        annotations: {},
-        createdAt: '',
-        ports: {},
+        processingDomain: 'CoolProcessingDomain',
+        address: '1.2.3.4:5678',
         target,
     };
     const treeItem = new ContainerTreeItem(container);
@@ -40,10 +35,10 @@ describe('ContainerStart', () => {
 
     it('calls startContainer and shows info message on success', async () => {
         const containerCommands = mock<ContainerCommands>();
-        const targetController = mock<TargetController>();
+        const projectController = mock<ProjectController>();
         const containerStart = new ContainerStart(
             containerCommands,
-            targetController,
+            projectController,
         );
 
         await containerStart.startContainerCommandHandler(treeItem);
@@ -53,19 +48,19 @@ describe('ContainerStart', () => {
             target,
         );
         expect(
-            targetController.refreshSelectedTargetDataCommandHandler,
+            projectController.refreshProjectContainersCommandHandler,
         ).toHaveBeenCalledOnce();
     });
 
     it('shows error message if startContainer throws a WrappedError', async () => {
         const containerCommands = mock<ContainerCommands>();
-        const targetController = mock<TargetController>();
+        const projectController = mock<ProjectController>();
         containerCommands.startContainer.mockRejectedValue(
             new WrappedError('DOCKER', 'fail'),
         );
         const containerStart = new ContainerStart(
             containerCommands,
-            targetController,
+            projectController,
         );
 
         await containerStart.startContainerCommandHandler(treeItem);
@@ -76,7 +71,7 @@ describe('ContainerStart', () => {
             ),
         );
         expect(
-            targetController.refreshSelectedTargetDataCommandHandler,
+            projectController.refreshProjectContainersCommandHandler,
         ).not.toHaveBeenCalled();
     });
 
@@ -87,7 +82,7 @@ describe('ContainerStart', () => {
         );
         const containerStart = new ContainerStart(
             containerCommands,
-            mock<TargetController>(),
+            mock<ProjectController>(),
         );
 
         await expect(

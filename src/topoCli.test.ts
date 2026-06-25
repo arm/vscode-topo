@@ -312,7 +312,7 @@ describe('TopoCli', () => {
                     image: 'ghcr.io/arm/topo-demo:latest',
                     status: 'Up 2 minutes',
                     state: 'running',
-                    processingDomain: 'linux',
+                    processingDomain: manifest.PRIMARY_PROCESSING_DOMAIN,
                     address: '192.0.2.10',
                 },
                 {
@@ -372,7 +372,7 @@ describe('TopoCli', () => {
                     image: 'ghcr.io/arm/topo-demo:latest',
                     status: 'Up 2 minutes',
                     state: 'unknown',
-                    processingDomain: 'linux',
+                    processingDomain: manifest.PRIMARY_PROCESSING_DOMAIN,
                     address: '192.0.2.10',
                 },
             ],
