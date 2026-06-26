@@ -9,7 +9,7 @@ import { Loadable, loaded } from '../util/loadable';
 import { TargetDataIssueTreeItem } from './treeItems/targetDataIssueTreeItem';
 import { ErrorTreeItem } from './treeItems/errorTreeItem';
 import { TargetHealthReport } from '../topoCliSchema';
-import { getVisibleTargetHealthChecks } from '../target/getVisibleTargetHealthChecks';
+import { getVisibleTargetHealthChecks } from './util/getVisibleTargetHealthChecks';
 import { LoadingTreeItem } from './treeItems/loadingTreeItem';
 import {
     compareProcessingDomains,
