@@ -114,7 +114,7 @@ export async function activate(
         projectController,
     );
     const fixIssue = new FixIssue(taskExecutor, targetModel, targetController);
-    const openTopoSettings = new OpenTopoSettings();
+    const openTopoSettings = new OpenTopoSettings(targetStore);
     const protocolHandler = new ProtocolHandler(taskExecutor);
 
     context.subscriptions.push(
