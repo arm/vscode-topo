@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
-import { HealthCheck } from '../topoCliSchema';
-import { getHealthCheckIcon } from '../views/util/healthIcons';
-import { Loaded } from '../util/loadable';
+import { HealthCheck } from '../../topoCliSchema';
+import { getHealthCheckIcon } from '../util/healthIcons';
+import { Loaded } from '../../util/loadable';
 
 const capitalizeFirstLetter = (s: string) => {
     return s.charAt(0).toUpperCase() + s.slice(1);

@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
 import { HostTreeView } from './hostTreeView';
-import { HealthCheckGroupTreeItem } from '../treeItems/healthCheckGroupTreeItem';
-import { HealthCheckTreeItem } from '../treeItems/healthCheckTreeItem';
+import { HealthCheckGroupTreeItem } from './treeItems/healthCheckGroupTreeItem';
+import { HealthCheckTreeItem } from './treeItems/healthCheckTreeItem';
 import { HostModel } from '../models/hostModel';
 import { errored, loaded } from '../util/loadable';
-import { ErrorTreeItem } from '../treeItems/errorTreeItem';
+import { ErrorTreeItem } from './treeItems/errorTreeItem';
 
 describe('HostTreeView', () => {
     afterEach(() => {

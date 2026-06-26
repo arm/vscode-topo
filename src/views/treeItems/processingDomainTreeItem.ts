@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
-import { ContainerItem } from '../util/types';
-import { PRIMARY_PROCESSING_DOMAIN } from '../manifest';
+import { ContainerItem } from '../../util/types';
+import { PRIMARY_PROCESSING_DOMAIN } from '../../manifest';
 
 export function compareProcessingDomains(
     a: ProcessingDomainTreeItem,

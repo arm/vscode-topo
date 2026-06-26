@@ -5,11 +5,11 @@ import { TargetDescription } from '../util/types';
 import { mock } from 'vitest-mock-extended';
 import { HealthCheck, TargetHealthReport } from '../topoCliSchema';
 import { TargetModel } from '../models/targetModel';
-import { TargetDataIssueTreeItem } from '../targetTreeView/targetDataIssueTreeItem';
-import { ErrorTreeItem } from '../treeItems/errorTreeItem';
-import { LoadingTreeItem } from '../treeItems/loadingTreeItem';
-import { ProcessingDomainTreeItem } from '../treeItems/processingDomainTreeItem';
-import { ProcessingDomainGroupTreeItem } from '../treeItems/processingDomainGroupTreeItem';
+import { TargetDataIssueTreeItem } from './treeItems/targetDataIssueTreeItem';
+import { ErrorTreeItem } from './treeItems/errorTreeItem';
+import { LoadingTreeItem } from './treeItems/loadingTreeItem';
+import { ProcessingDomainTreeItem } from './treeItems/processingDomainTreeItem';
+import { ProcessingDomainGroupTreeItem } from './treeItems/processingDomainGroupTreeItem';
 import { errored, loaded, loading, unloaded } from '../util/loadable';
 
 describe('TargetTreeView', () => {
