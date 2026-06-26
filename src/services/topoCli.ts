@@ -1,7 +1,7 @@
 import * as path from 'node:path';
 import * as childProcess from 'node:child_process';
 import * as vscode from 'vscode';
-import * as manifest from './manifest';
+import * as manifest from '../manifest';
 import {
     HealthReport,
     HostHealthReport,
@@ -21,9 +21,9 @@ import {
     WrappedError,
     WrappedErrorLog,
     WrappedErrorLogLevel,
-} from './errors/wrappedError';
-import { getErrorMessage } from './util/getErrorMessage';
-import { TargetDescription } from './util/types';
+} from '../errors/wrappedError';
+import { getErrorMessage } from '../util/getErrorMessage';
+import { TargetDescription } from '../util/types';
 
 export interface TopoCliVersion {
     version: string;

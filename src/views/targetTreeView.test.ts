@@ -3,7 +3,7 @@ import * as manifest from '../manifest';
 import { TargetSelectionState, TargetTreeView } from './targetTreeView';
 import { TargetDescription } from '../util/types';
 import { mock } from 'vitest-mock-extended';
-import { HealthCheck, TargetHealthReport } from '../topoCliSchema';
+import { HealthCheck, TargetHealthReport } from '../services/topoCliSchema';
 import { TargetModel } from '../models/targetModel';
 import { TargetDataIssueTreeItem } from './treeItems/targetDataIssueTreeItem';
 import { ErrorTreeItem } from './treeItems/errorTreeItem';

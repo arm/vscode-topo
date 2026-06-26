@@ -5,7 +5,7 @@ import { DisposableCollector } from '../util/disposableCollector';
 import { getWorstHealthCheckStatus } from '../util/getWorstHealthCheckStatus';
 import { getHealthGroupIcon } from './util/healthIcons';
 import { Loadable } from '../util/loadable';
-import { TargetHealthReport } from '../topoCliSchema';
+import { TargetHealthReport } from '../services/topoCliSchema';
 import { selectTarget } from '../commands';
 
 function getStatusIconId(state: Loadable<TargetHealthReport>): string {

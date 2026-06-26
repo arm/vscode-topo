@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { TopoCli } from '../topoCli';
+import { TopoCli } from '../services/topoCli';
 
 export class ProjectInit {
     constructor(private readonly topoCli: TopoCli) {}

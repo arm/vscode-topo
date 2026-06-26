@@ -1,4 +1,4 @@
-import { HealthCheck, HealthCheckStatus } from '../topoCliSchema';
+import { HealthCheck, HealthCheckStatus } from '../services/topoCliSchema';
 
 export const getWorstHealthCheckStatus = (
     healthChecks: HealthCheck[],

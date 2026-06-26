@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { HealthCheck } from '../../topoCliSchema';
+import { HealthCheck } from '../../services/topoCliSchema';
 import { getWorstHealthCheckStatus } from '../../util/getWorstHealthCheckStatus';
 import { getHealthGroupIcon } from '../util/healthIcons';
 import { Loaded } from '../../util/loadable';

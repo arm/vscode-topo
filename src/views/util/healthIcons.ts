@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { HealthCheckStatus } from '../../topoCliSchema';
+import { HealthCheckStatus } from '../../services/topoCliSchema';
 
 export const getHealthCheckIcon = (
     status: HealthCheckStatus,

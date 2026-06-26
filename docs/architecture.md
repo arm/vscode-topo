@@ -1,67 +1,28 @@
 # Codebase Architecture
 
-As a VS Code extension, interaction is mostly done via [commands](https://code.visualstudio.com/api/extension-guides/command)-based. Our responsibility is to handle commands from the user, their agent(s) or other parts of the extension and do something useful.
+As a VS Code extension, interaction is mostly done via [commands](https://code.visualstudio.com/api/extension-guides/command). Our responsibility is to handle commands from the user, their agent(s) or other parts of the extension and do something useful.
 
-There are two primary types of command - ones that need to directly update the UI by querying the outside world, and those that are side-effect only that are mostly designed to surface useful operations the user may want to perform in VS Code. The former type of commands are handled by **controllers**, while the latter are handled by **actions**.
+There are two primary types of command - ones that need to directly update the UI by querying the outside world, and those that are side-effect only that are mostly designed to surface useful operations the user may want to perform in VS Code. The former type of commands are handled by **controllers**, while the latter are handled by **actions**. Both **controllers** and **actions** can call **services** to talk to external systems.
 
 At the top-level of the extension we create a command registry which is responsible for routing VS Code command strings to action/controller command handlers. At this same level, the extension has the option to register any method of invoking command handlers that it needs. For example, we run a periodic refresh event of certain target state every few seconds. We register such systems alongside the command router than making use of it for type safety guarantees and to skip the VS Code plumbing where it is unneeded.
 
 ```mermaid
 flowchart LR
     vscode["VS Code Commands<br/>(user/app/agent)"] --> router["Command Router<br/>(commands.ts)"]
+    scheduled["Scheduled jobs<br/>(automatic refreshes)"] --> controller
 
-    subgraph controllers["Controllers"]
-        direction TB
-        controllerX["ControllerX"]
-        controllerY["ControllerY"]
-        controllerZ["ControllerZ"]
-    end
+    router --> controller["Controller"]
+    router --> action["Action"]
 
-    subgraph actions["Actions"]
-        direction TB
-        actionA["ActionA"]
-        actionB["ActionB"]
-        actionC["ActionC"]
-    end
+    controller <--> service["Service<br/>(e.g. TopoCli)"]
+    action <--> service
+    service <--> outsideWorld["External systems<br/>(e.g. CLI)"]
 
-    subgraph models["Models"]
-        direction TB
-        modelX["ModelX"]
-        modelY["ModelY"]
-        modelZ["ModelZ"]
-    end
+    controller -->|Mutates| model["Model"]
+    model -->|Read by| view["View"]
 
-    subgraph views["Views"]
-        direction TB
-        viewW["ViewW"]
-        viewX["ViewX"]
-        viewY["ViewY"]
-        viewZ["ViewZ"]
-    end
-
-    scheduled["Scheduled jobs<br/>i.e. automatic refreshes"] --> controllerX
-
-    router --> controllerX
-    router --> controllerY
-    router --> controllerZ
-
-    router --> actionA
-    router --> actionB
-    router --> actionC
-
-    controllerX --> modelX
-    controllerY --> modelY
-    controllerZ --> modelZ
-
-    modelX --> viewW
-    modelX --> viewX
-    modelY --> viewX
-    modelY --> viewY
-    modelZ --> viewY
-    modelZ --> viewZ
-
-    actionB --> fireVscode1["Invoke more VS Code commands"]
-    viewY --> fireVscode2["Invoke more VS Code commands"]
+    action --> command["Invoke more<br/>VS Code commands"]
+    view --> command
 ```
 
 ## Actions
@@ -69,6 +30,10 @@ flowchart LR
 Actions are standalone operations that users may want to perform that we surface as commands. Commands can be invoked by a variety of means including the command palette, tree view buttons, agents or custom task definitions.
 
 The important distinction for us is that actions are command handlers that do not need to directly update the state of UI. This means they're usually side-effect-like operations like launching terminals or displaying the output of a given topo command in an editor tab. However, they can invoke other commands which may mutate the UI if required.
+
+## Services
+
+Services wrap external systems and persistence, such as the Topo CLI. Controllers and actions call services; services must not mutate models, render views, or register commands.
 
 ## MVC
 
@@ -90,7 +55,7 @@ Some views may need to invoke mutations of the model as a result of user interac
 
 ### Controllers
 
-Controllers are the top-level orchestrators that actually talk to the outside world (topo CLI, vscode memento objects, docker CLI etc.) to query the state of the world. It has the responsibility of converting the world state into domain objects that can be passed to the models.
+Controllers are the top-level orchestrators for UI state. They call services to query or mutate the outside world and convert the result into domain objects that can be passed to models.
 
 Our UIs need to render these domain objects in three distinct states:
 
@@ -98,21 +63,4 @@ Our UIs need to render these domain objects in three distinct states:
 - Loaded - with the freshly loaded domain object
 - Error - with some data related to the error to render
 
-Since the controller is the object with the power to query the outside world, orchestrating error and loading states is solely its responsbility. Furthermore, it's a good idea to only mutate each model from one controller to make orchestration async operations easier by virtue of centralization of control.
-
-### Diagram
-
-```mermaid
-flowchart TD
-    A["VS Code Commands<br/>(from user, from elsewhere in the app,<br/>from polling - whatever)"] --> B["Controller"]
-
-    B -- "Inspect via TopoCli,<br/>DockerCommands etc." --> C["World<br/>(host health, target health,<br/>containers etc.)"]
-
-    B -- "Mutates" --> D["Model"]
-
-    D -- "Pulls data by R/O reference" --> E["View<br/>(tree data provider,<br/>status bar item etc.)"]
-
-    D -- "Subscribes to change events" --> E
-
-    E --> F["User invokes<br/>commands presented<br/>on view"]
-```
+Since the controller owns the async orchestration around service calls, managing error and loading states is solely its responsibility. Furthermore, it's a good idea to only mutate each model from one controller to make async orchestration easier by virtue of centralization of control.

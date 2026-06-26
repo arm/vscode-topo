@@ -2,19 +2,19 @@ import * as path from 'node:path';
 import * as childProcess from 'node:child_process';
 import * as vscode from 'vscode';
 import { TopoCli, parseWrappedError, parseTopoLogEntries } from './topoCli';
-import { Mutable } from './util/types';
-import * as manifest from './manifest';
+import { Mutable } from '../util/types';
+import * as manifest from '../manifest';
 import { ChildProcessWithoutNullStreams } from 'node:child_process';
 import { mock } from 'vitest-mock-extended';
 import { Writable } from 'node:stream';
-import { WrappedError } from './errors/wrappedError';
+import { WrappedError } from '../errors/wrappedError';
 import {
     HealthReport,
     ProjectDescription,
     PsOutput,
     TemplateDescription,
 } from './topoCliSchema';
-import { TargetDescription } from './util/types';
+import { TargetDescription } from '../util/types';
 
 vi.mock('node:child_process');
 vi.mock('node:fs');

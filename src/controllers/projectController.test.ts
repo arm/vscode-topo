@@ -5,8 +5,8 @@ import { errored, loaded, loading, unloaded } from '../util/loadable';
 import * as vscode from 'vscode';
 import { mutable } from '../util/test/mutable';
 import { mock } from 'vitest-mock-extended';
-import { TopoCli } from '../topoCli';
-import { PsOutput, TargetHealthReport } from '../topoCliSchema';
+import { TopoCli } from '../services/topoCli';
+import { PsOutput, TargetHealthReport } from '../services/topoCliSchema';
 import { TargetModel } from '../models/targetModel';
 import { PRIMARY_PROCESSING_DOMAIN } from '../manifest';
 

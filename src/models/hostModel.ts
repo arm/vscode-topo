@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { HostHealthReport } from '../topoCliSchema';
+import { HostHealthReport } from '../services/topoCliSchema';
 import { Loadable, unloaded } from '../util/loadable';
 
 export class HostModel {

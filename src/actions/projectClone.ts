@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { TopoCli } from '../topoCli';
+import { TopoCli } from '../services/topoCli';
 import { TargetModel } from '../models/targetModel';
 import {
     cloneProjectFromSource,

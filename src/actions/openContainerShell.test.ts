@@ -6,7 +6,7 @@ import {
 } from '../actions/openContainerShell';
 import { mock } from 'vitest-mock-extended';
 import { ContainerItem } from '../util/types';
-import { DockerCommands } from '../target/dockerCommands';
+import { DockerCommands } from '../services/dockerCommands';
 import { ContainerTreeItem } from '../views/treeItems/containerTreeItem';
 
 vi.mock('../util/logger');

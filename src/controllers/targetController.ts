@@ -1,12 +1,12 @@
 import { TargetModel } from '../models/targetModel';
-import { TargetStore } from '../target/targetStore';
+import { TargetStore } from '../services/targetStore';
 import { isWrappedError } from '../errors/wrappedError';
 import { logger } from '../util/logger';
 import { logError, showAndLogError } from '../util/showAndLogError';
 import { defaultSshConfigPath, getHosts } from '../util/ssh';
 import * as vscode from 'vscode';
-import { TopoCli } from '../topoCli';
-import { HealthReport, TargetHealthReport } from '../topoCliSchema';
+import { TopoCli } from '../services/topoCli';
+import { HealthReport, TargetHealthReport } from '../services/topoCliSchema';
 import { errored, Loadable, loaded, loading } from '../util/loadable';
 import { TargetDescription } from '../util/types';
 import { LatestAbortableWork } from '../util/latestAbortableWork';
