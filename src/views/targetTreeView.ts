@@ -1,21 +1,21 @@
 import * as vscode from 'vscode';
 import * as manifest from '../manifest';
-import { HealthCheckGroupTreeItem } from '../treeItems/healthCheckGroupTreeItem';
-import { HealthCheckTreeItem } from '../treeItems/healthCheckTreeItem';
+import { HealthCheckGroupTreeItem } from './treeItems/healthCheckGroupTreeItem';
+import { HealthCheckTreeItem } from './treeItems/healthCheckTreeItem';
 import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
 import { TargetDescription } from '../util/types';
 import { Loadable, loaded } from '../util/loadable';
-import { TargetDataIssueTreeItem } from '../targetTreeView/targetDataIssueTreeItem';
-import { ErrorTreeItem } from '../treeItems/errorTreeItem';
+import { TargetDataIssueTreeItem } from './treeItems/targetDataIssueTreeItem';
+import { ErrorTreeItem } from './treeItems/errorTreeItem';
 import { TargetHealthReport } from '../topoCliSchema';
 import { getVisibleTargetHealthChecks } from '../target/getVisibleTargetHealthChecks';
-import { LoadingTreeItem } from '../treeItems/loadingTreeItem';
+import { LoadingTreeItem } from './treeItems/loadingTreeItem';
 import {
     compareProcessingDomains,
     ProcessingDomainTreeItem,
-} from '../treeItems/processingDomainTreeItem';
-import { ProcessingDomainGroupTreeItem } from '../treeItems/processingDomainGroupTreeItem';
+} from './treeItems/processingDomainTreeItem';
+import { ProcessingDomainGroupTreeItem } from './treeItems/processingDomainGroupTreeItem';
 
 export const TargetSelectionState = {
     Unselected: 'unselected',

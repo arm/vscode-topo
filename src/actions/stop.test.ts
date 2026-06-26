@@ -6,7 +6,7 @@ import { TargetModel } from '../models/targetModel';
 import { mock, MockProxy } from 'vitest-mock-extended';
 import { TaskExecutor } from '../util/taskExecutor';
 import { ProjectController } from '../controllers/projectController';
-import { ProjectTreeItem } from '../treeItems/projectTreeItem';
+import { ProjectTreeItem } from '../views/treeItems/projectTreeItem';
 import { unloaded } from '../util/loadable';
 
 describe('Stop', () => {

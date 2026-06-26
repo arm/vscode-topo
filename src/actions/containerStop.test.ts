@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { ContainerStop } from './containerStop';
 import { ContainerItem } from '../util/types';
-import { ContainerTreeItem } from '../treeItems/containerTreeItem';
+import { ContainerTreeItem } from '../views/treeItems/containerTreeItem';
 import { WrappedError } from '../errors/wrappedError';
 import { mock } from 'vitest-mock-extended';
 import { ContainerCommands } from '../target/containerCommands';

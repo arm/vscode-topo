@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { ProcessingDomainTreeItem } from './processingDomainTreeItem';
-import { ContainerItem } from '../util/types';
-import { PRIMARY_PROCESSING_DOMAIN } from '../manifest';
+import { ContainerItem } from '../../util/types';
+import { PRIMARY_PROCESSING_DOMAIN } from '../../manifest';
 
 const containers: ContainerItem[] = [
     {

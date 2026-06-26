@@ -1,9 +1,9 @@
 import { assertContainerTreeItem } from './assertContainerTreeItem';
 import { ContainerTreeItem } from './containerTreeItem';
-import { logger } from '../util/logger';
-import { ContainerItem } from '../util/types';
+import { logger } from '../../util/logger';
+import { ContainerItem } from '../../util/types';
 
-vi.mock('../util/logger', () => ({
+vi.mock('../../util/logger', () => ({
     logger: {
         error: vi.fn(),
         info: vi.fn(),

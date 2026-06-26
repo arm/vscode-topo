@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { Errored } from '../util/loadable';
+import { Errored } from '../../util/loadable';
 
 const targetDataIssueErrorMessage = 'The target data could not be loaded';
 

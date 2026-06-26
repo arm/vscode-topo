@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { HealthCheckTreeItem } from './healthCheckTreeItem';
-import { loaded } from '../util/loadable';
+import { loaded } from '../../util/loadable';
 
 describe('HealthCheckTreeItem', () => {
     it('sets label and description', () => {

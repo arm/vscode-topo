@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
-import { ProjectMetadata } from '../util/project';
-import { Loadable } from '../util/loadable';
-import { ContainerItem } from '../util/types';
+import { ProjectMetadata } from '../../util/project';
+import { Loadable } from '../../util/loadable';
+import { ContainerItem } from '../../util/types';
 
 function getCollapsibleState(
     containers: Loadable<ContainerItem[]>,

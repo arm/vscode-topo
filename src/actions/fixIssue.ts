@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
-import { HealthCheckGroupTreeItem } from '../treeItems/healthCheckGroupTreeItem';
-import { HealthCheckTreeItem } from '../treeItems/healthCheckTreeItem';
+import { HealthCheckGroupTreeItem } from '../views/treeItems/healthCheckGroupTreeItem';
+import { HealthCheckTreeItem } from '../views/treeItems/healthCheckTreeItem';
 import { showAndLogError } from '../util/showAndLogError';
 import { createProcessTask } from '../util/task';
 import { TaskExecutor } from '../util/taskExecutor';

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { ContainerTreeItem } from './containerTreeItem';
-import { ContainerItem } from '../util/types';
+import { ContainerItem } from '../../util/types';
 
 describe('ContainerTreeItem', () => {
     const target = 'user@topo.local';

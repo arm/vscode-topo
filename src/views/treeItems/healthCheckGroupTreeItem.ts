@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
-import { HealthCheck } from '../topoCliSchema';
-import { getWorstHealthCheckStatus } from '../util/getWorstHealthCheckStatus';
-import { getHealthGroupIcon } from '../views/util/healthIcons';
-import { Loaded } from '../util/loadable';
-import { hasFixCommand } from '../util/issueFixes';
+import { HealthCheck } from '../../topoCliSchema';
+import { getWorstHealthCheckStatus } from '../../util/getWorstHealthCheckStatus';
+import { getHealthGroupIcon } from '../util/healthIcons';
+import { Loaded } from '../../util/loadable';
+import { hasFixCommand } from '../../util/issueFixes';
 
 export class HealthCheckGroupTreeItem extends vscode.TreeItem {
     public readonly healthChecks: HealthCheck[];

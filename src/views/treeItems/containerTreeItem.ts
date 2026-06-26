@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { ContainerItem } from '../util/types';
+import { ContainerItem } from '../../util/types';
 
 function getContainerItemTooltip(containerItem: ContainerItem): string {
     return `ID: ${containerItem.id}

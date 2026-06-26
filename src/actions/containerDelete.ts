@@ -1,4 +1,4 @@
-import { assertContainerTreeItem } from '../treeItems/assertContainerTreeItem';
+import { assertContainerTreeItem } from '../views/treeItems/assertContainerTreeItem';
 import { showAndLogError } from '../util/showAndLogError';
 import { isWrappedError } from '../errors/wrappedError';
 import { ContainerCommands } from '../target/containerCommands';

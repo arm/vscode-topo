@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { HealthCheckGroupTreeItem } from './healthCheckGroupTreeItem';
-import { loaded, loading } from '../util/loadable';
+import { loaded, loading } from '../../util/loadable';
 
 describe('HealthCheckGroupTreeItem', () => {
     it('sets group metadata for health checks', () => {

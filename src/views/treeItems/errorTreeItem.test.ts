@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
-import { showOutput } from '../commands';
-import { DISPLAY_NAME } from '../manifest';
+import { showOutput } from '../../commands';
+import { DISPLAY_NAME } from '../../manifest';
 import { ErrorTreeItem } from './errorTreeItem';
-import { errored, loading } from '../util/loadable';
+import { errored, loading } from '../../util/loadable';
 
 describe('ErrorTreeItem', () => {
     it('sets the visual properties correctly', () => {
