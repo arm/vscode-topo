@@ -16,10 +16,9 @@ import {
 } from '../util/composeFile';
 import { ProjectTreeItem } from '../views/treeItems/projectTreeItem';
 import {
-    CONFIG_CUSTOM_REGISTRY_PORT,
-    CONFIG_FORCE_RECREATE,
-    PACKAGE_NAME,
-} from '../manifest';
+    DeployOptions,
+    getDeployOptionsForTarget,
+} from '../services/targetDeploySettings';
 
 const viewLogsItem: vscode.MessageItem = {
     title: 'View Logs',
@@ -28,11 +27,6 @@ const viewLogsItem: vscode.MessageItem = {
 type ComposeFileQuickPickItem = vscode.QuickPickItem & {
     uri: vscode.Uri;
 };
-
-export interface DeployOptions {
-    customRegistryPort?: string;
-    forceRecreate?: boolean;
-}
 
 export class Deploy {
     constructor(
@@ -79,7 +73,7 @@ export class Deploy {
             this.taskExecutor,
             resource.fsPath,
             target,
-            getDeployOptionsFromConfiguration(),
+            getDeployOptionsForTarget(target),
         );
         await this.projectController.refreshProjectContainersCommandHandler();
     }
@@ -108,7 +102,7 @@ export class Deploy {
             this.taskExecutor,
             resource.fsPath,
             target,
-            getDeployOptionsFromConfiguration(),
+            getDeployOptionsForTarget(target),
         );
         await this.projectController.refreshProjectContainersCommandHandler();
     }
@@ -205,18 +199,4 @@ export function buildDeployArgs(
         args.push('--force-recreate');
     }
     return args;
-}
-
-function getDeployOptionsFromConfiguration(): DeployOptions {
-    const port = vscode.workspace
-        .getConfiguration(PACKAGE_NAME)
-        .get<string>(CONFIG_CUSTOM_REGISTRY_PORT);
-    const trimmedPort = port?.trim();
-    const forceRecreate = vscode.workspace
-        .getConfiguration(PACKAGE_NAME)
-        .get<boolean>(CONFIG_FORCE_RECREATE);
-    return {
-        customRegistryPort: trimmedPort || undefined,
-        forceRecreate,
-    };
 }
