@@ -37,10 +37,8 @@ describe('getHealthCheckIcon', () => {
 });
 
 describe('getHealthGroupIcon', () => {
-    it('maps ok to a neutral library icon', () => {
-        const icon = getHealthGroupIcon('ok');
-
-        expect(icon).toStrictEqual(new vscode.ThemeIcon('library'));
+    it('maps ok to a passed check icon', () => {
+        expect(getHealthGroupIcon('ok')).toEqual(getHealthCheckIcon('ok'));
     });
 
     it('maps warning to a warning item icon', () => {

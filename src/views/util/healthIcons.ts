@@ -27,9 +27,5 @@ export const getHealthCheckIcon = (
 export const getHealthGroupIcon = (
     status: HealthCheckStatus,
 ): vscode.ThemeIcon => {
-    if (status === 'ok') {
-        return new vscode.ThemeIcon('library');
-    }
-
     return getHealthCheckIcon(status);
 };
