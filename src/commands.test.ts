@@ -18,7 +18,7 @@ import { ProjectClone } from './actions/projectClone';
 import { ProjectTreeItem } from './views/treeItems/projectTreeItem';
 import { unloaded } from './util/loadable';
 import { ProjectController } from './controllers/projectController';
-import { OpenTopoSettings } from './actions/openTopoSettings';
+import { OpenTargetDeploySettings } from './actions/openTargetDeploySettings';
 
 vi.mock('./util/logger');
 
@@ -36,7 +36,7 @@ describe('commands', () => {
         containerStop: mock<ContainerStop>(),
         containerDelete: mock<ContainerDelete>(),
         fixIssue: mock<FixIssue>(),
-        openTopoSettings: mock<OpenTopoSettings>(),
+        openTargetDeploySettings: mock<OpenTargetDeploySettings>(),
     } satisfies commands.CommandHandlers;
 
     afterEach(() => {
@@ -87,8 +87,9 @@ describe('commands', () => {
                 handlers.targetController.clearSelectionCommandHandler,
             ],
             [
-                commands.openTargetSettings,
-                handlers.openTopoSettings.openTopoSettingsCommandHandler,
+                commands.openTargetDeploySettings,
+                handlers.openTargetDeploySettings
+                    .openTargetDeploySettingsCommandHandler,
             ],
             [
                 commands.initProject,

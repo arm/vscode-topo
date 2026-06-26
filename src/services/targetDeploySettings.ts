@@ -11,6 +11,8 @@ export interface TargetDeploySettings {
 }
 
 export type TargetDeploySettingsByTarget = Record<string, TargetDeploySettings>;
+type RawTargetDeploySettingsByTarget = Record<string, unknown>;
+type TargetDeploySettingsKey = keyof TargetDeploySettings;
 
 export interface DeployOptions {
     customRegistryPort?: string;
@@ -22,8 +24,46 @@ const defaultTargetDeploySettings: TargetDeploySettings = {
     forceRecreate: false,
 };
 
+const targetDeploySettingsKeys = new Set<TargetDeploySettingsKey>([
+    'port',
+    'forceRecreate',
+]);
+
+function isTargetDeploySettingsKey(
+    key: string,
+): key is TargetDeploySettingsKey {
+    return targetDeploySettingsKeys.has(key as TargetDeploySettingsKey);
+}
+
+function isPortSetting(value: unknown): value is string {
+    if (typeof value !== 'string') {
+        return false;
+    }
+
+    const trimmedPort = value.trim();
+    if (!trimmedPort) {
+        return true;
+    }
+
+    if (!/^[1-9][0-9]*$/.test(trimmedPort)) {
+        return false;
+    }
+
+    const port = Number(trimmedPort);
+    return port <= 65_535;
+}
+
 function isTargetDeploySettings(value: unknown): value is TargetDeploySettings {
-    return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+        return false;
+    }
+
+    const { port, forceRecreate } = value as Record<string, unknown>;
+    return (
+        Object.keys(value).every(isTargetDeploySettingsKey) &&
+        (port === undefined || isPortSetting(port)) &&
+        (forceRecreate === undefined || typeof forceRecreate === 'boolean')
+    );
 }
 
 function getTargetDeploySettingsConfiguration(
@@ -39,6 +79,17 @@ function getTargetDeploySettingsConfiguration(
             isTargetDeploySettings(value),
         ),
     );
+}
+
+function getRawTargetDeploySettingsConfiguration(
+    config: vscode.WorkspaceConfiguration,
+): RawTargetDeploySettingsByTarget {
+    const settings = config.get<unknown>(CONFIG_TARGET_DEPLOY_SETTINGS);
+    if (!settings || typeof settings !== 'object' || Array.isArray(settings)) {
+        return {};
+    }
+
+    return settings as RawTargetDeploySettingsByTarget;
 }
 
 function toDeployOptions(settings: TargetDeploySettings): DeployOptions {
@@ -92,8 +143,7 @@ export async function ensureCachedTargetDeploySettings(
     targets: Iterable<string>,
 ): Promise<void> {
     const config = vscode.workspace.getConfiguration(PACKAGE_NAME);
-    const currentSettings = getTargetDeploySettingsConfiguration(config);
-    const defaultSettings = getDefaultTargetDeploySettings(config);
+    const currentSettings = getRawTargetDeploySettingsConfiguration(config);
     const targetNames = [...new Set(targets)].sort();
     const missingTarget = targetNames.find(
         (target) => currentSettings[target] === undefined,
@@ -102,11 +152,11 @@ export async function ensureCachedTargetDeploySettings(
         return;
     }
 
-    const nextSettings: TargetDeploySettingsByTarget = { ...currentSettings };
+    const nextSettings: RawTargetDeploySettingsByTarget = {
+        ...currentSettings,
+    };
     for (const target of targetNames) {
-        nextSettings[target] = nextSettings[target] ?? {
-            ...defaultSettings,
-        };
+        nextSettings[target] = nextSettings[target] ?? {};
     }
 
     await config.update(

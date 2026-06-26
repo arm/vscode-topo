@@ -92,8 +92,8 @@
                 "category": "Topo"
             },
             {
-                "command": "topo.openTargetSettings",
-                "title": "Target Settings",
+                "command": "topo.openTargetDeploySettings",
+                "title": "Target Deploy Settings",
                 "icon": "$(gear)",
                 "category": "Topo"
             },
@@ -372,7 +372,7 @@
                     "group": "navigation"
                 },
                 {
-                    "command": "topo.openTargetSettings",
+                    "command": "topo.openTargetDeploySettings",
                     "when": "view == topo.target-manager",
                     "group": "navigation"
                 },
@@ -404,10 +404,12 @@
                             "forceRecreate": false
                         },
                         "description": "Default deploy settings to use for cached targets that do not have target-specific settings.",
+                        "additionalProperties": false,
                         "properties": {
                             "port": {
                                 "type": "string",
-                                "description": "Specify the default port to use for registry when deploying to a target. If not specified, the default port will be used."
+                                "pattern": "^\\s*(?:|[1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])\\s*$",
+                                "description": "Specify the default port to use for registry when deploying to a target. Use 1-65535. If not specified, the default port will be used."
                             },
                             "forceRecreate": {
                                 "type": "boolean",
@@ -422,10 +424,12 @@
                         "description": "Per-target deploy settings for cached targets.",
                         "additionalProperties": {
                             "type": "object",
+                            "additionalProperties": false,
                             "properties": {
                                 "port": {
                                     "type": "string",
-                                    "description": "Specify the port to use for registry when deploying to the target. If not specified, the default port will be used."
+                                    "pattern": "^\\s*(?:|[1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])\\s*$",
+                                    "description": "Specify the port to use for registry when deploying to the target. Use 1-65535. If not specified, the default port will be used."
                                 },
                                 "forceRecreate": {
                                     "type": "boolean",
