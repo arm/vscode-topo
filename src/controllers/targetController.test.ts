@@ -1,14 +1,14 @@
 import { mock } from 'vitest-mock-extended';
 import { buildQuickPickItems, TargetController } from './targetController';
 import * as vscode from 'vscode';
-import { TargetStore } from '../target/targetStore';
+import { TargetStore } from '../services/targetStore';
 import { TargetModel } from '../models/targetModel';
 import { WrappedError } from '../errors/wrappedError';
 import { showAndLogError } from '../util/showAndLogError';
-import { TopoCli } from '../topoCli';
+import { TopoCli } from '../services/topoCli';
 import { TargetDescription } from '../util/types';
 import { errored, loaded, unloaded } from '../util/loadable';
-import { HealthReport } from '../topoCliSchema';
+import { HealthReport } from '../services/topoCliSchema';
 
 vi.mock('../util/logger');
 vi.mock('../util/showAndLogError');

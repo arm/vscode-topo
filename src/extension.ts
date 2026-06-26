@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as commands from './commands';
-import { TopoCli } from './topoCli';
+import { TopoCli } from './services/topoCli';
 import { ProjectInit } from './actions/projectInit';
 import { TargetStatusBarItemView } from './views/targetStatusBarItemView';
 import { TargetTreeView } from './views/targetTreeView';
@@ -8,8 +8,8 @@ import { ContainerStart } from './actions/containerStart';
 import { ContainerStop } from './actions/containerStop';
 import { OpenContainerShell } from './actions/openContainerShell';
 import { ContainerDelete } from './actions/containerDelete';
-import { DockerCommands } from './target/dockerCommands';
-import { TargetStore } from './target/targetStore';
+import { DockerCommands } from './services/dockerCommands';
+import { TargetStore } from './services/targetStore';
 import { Deploy } from './actions/deploy';
 import { Stop } from './actions/stop';
 import { ProtocolHandler } from './protocolHandler';

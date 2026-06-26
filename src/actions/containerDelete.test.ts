@@ -4,7 +4,7 @@ import { ContainerItem } from '../util/types';
 import { ContainerTreeItem } from '../views/treeItems/containerTreeItem';
 import { WrappedError } from '../errors/wrappedError';
 import { mock } from 'vitest-mock-extended';
-import { ContainerCommands } from '../target/containerCommands';
+import { ContainerCommands } from '../services/containerCommands';
 import type { MockInstance } from 'vitest';
 import { ProjectController } from '../controllers/projectController';
 

@@ -1,7 +1,7 @@
 import { assertContainerTreeItem } from '../views/treeItems/assertContainerTreeItem';
 import { showAndLogError } from '../util/showAndLogError';
 import { isWrappedError } from '../errors/wrappedError';
-import { ContainerCommands } from '../target/containerCommands';
+import { ContainerCommands } from '../services/containerCommands';
 import { ProjectController } from '../controllers/projectController';
 
 export class ContainerDelete {

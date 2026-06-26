@@ -2,7 +2,7 @@ import {
     HealthCheck,
     type HealthCheckFix,
     type TargetHealthReport,
-} from '../topoCliSchema';
+} from '../services/topoCliSchema';
 
 export type IssueFixCommandGroup = {
     issueNames: string[];

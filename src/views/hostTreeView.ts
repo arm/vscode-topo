@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { PACKAGE_NAME } from '../manifest';
-import { HealthCheck } from '../topoCliSchema';
+import { HealthCheck } from '../services/topoCliSchema';
 import { HealthCheckGroupTreeItem } from './treeItems/healthCheckGroupTreeItem';
 import { HealthCheckTreeItem } from './treeItems/healthCheckTreeItem';
 import { ErrorTreeItem } from './treeItems/errorTreeItem';

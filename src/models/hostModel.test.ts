@@ -1,5 +1,5 @@
 import { HostModel } from './hostModel';
-import { HostHealthReport } from '../topoCliSchema';
+import { HostHealthReport } from '../services/topoCliSchema';
 import { loaded, unloaded } from '../util/loadable';
 
 const hostHealth: HostHealthReport = {

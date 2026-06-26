@@ -4,7 +4,7 @@ import { FixIssue, createFixIssueTask } from './fixIssue';
 import { loaded } from '../util/loadable';
 import { HealthCheckGroupTreeItem } from '../views/treeItems/healthCheckGroupTreeItem';
 import { HealthCheckTreeItem } from '../views/treeItems/healthCheckTreeItem';
-import { HealthCheck } from '../topoCliSchema';
+import { HealthCheck } from '../services/topoCliSchema';
 import { TargetModel } from '../models/targetModel';
 import { TaskExecutor } from '../util/taskExecutor';
 import { TargetController } from '../controllers/targetController';

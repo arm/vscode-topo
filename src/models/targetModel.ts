@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { Loadable, unloaded } from '../util/loadable';
-import { TargetHealthReport } from '../topoCliSchema';
+import { TargetHealthReport } from '../services/topoCliSchema';
 import { TargetDescription } from '../util/types';
 
 export class TargetModel {
