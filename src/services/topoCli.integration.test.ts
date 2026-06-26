@@ -5,7 +5,7 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import { ProjectDescription } from './topoCliSchema';
 
-const extensionPath = path.resolve(__dirname, '..');
+const extensionPath = path.resolve(__dirname, '../..');
 const topoCli = new TopoCli(
     extensionPath,
     {} as vscode.EnvironmentVariableCollection,

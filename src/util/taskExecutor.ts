@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { waitForTaskProcess } from './task';
-import { TopoCli } from '../topoCli';
+import { TopoCli } from '../services/topoCli';
 
 export class TaskExecutor {
     constructor(private readonly topoCli: TopoCli) {}

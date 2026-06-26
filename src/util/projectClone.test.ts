@@ -10,9 +10,9 @@ import {
     getTemplateOfChoice,
 } from './projectClone';
 import { mutable } from './test/mutable';
-import { TopoCli } from '../topoCli';
+import { TopoCli } from '../services/topoCli';
 import { MockProxy, mock } from 'vitest-mock-extended';
-import { TemplateDescription } from '../topoCliSchema';
+import { TemplateDescription } from '../services/topoCliSchema';
 import { WrappedError } from '../errors/wrappedError';
 import { TaskExecutor } from './taskExecutor';
 

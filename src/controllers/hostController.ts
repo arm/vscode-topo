@@ -1,5 +1,5 @@
 import { HostModel } from '../models/hostModel';
-import { TopoCli } from '../topoCli';
+import { TopoCli } from '../services/topoCli';
 import { errored, loaded, loading } from '../util/loadable';
 
 export class HostController {

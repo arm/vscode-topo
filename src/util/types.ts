@@ -1,4 +1,4 @@
-import { PsEntry, ServiceDescription } from '../topoCliSchema';
+import { PsEntry, ServiceDescription } from '../services/topoCliSchema';
 
 export interface HostProcessor {
     model: string;

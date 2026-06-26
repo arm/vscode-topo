@@ -1,11 +1,11 @@
 import * as vscode from 'vscode';
 import { mock } from 'vitest-mock-extended';
 import { activate } from './extension';
-import { TopoCli } from './topoCli';
+import { TopoCli } from './services/topoCli';
 
 vi.mock('child_process');
 vi.mock('./util/logger');
-vi.mock('./topoCli');
+vi.mock('./services/topoCli');
 
 describe('extension activation', () => {
     afterEach(() => {

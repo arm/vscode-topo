@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
-import { TopoCli } from '../topoCli';
+import { TopoCli } from '../services/topoCli';
 import * as path from 'node:path';
-import { TemplateDescription } from '../topoCliSchema';
+import { TemplateDescription } from '../services/topoCliSchema';
 import { isWrappedError, WrappedError } from '../errors/wrappedError';
 import { getCloneDestinationPath } from './getCloneDestinationPath';
 import { getErrorMessage } from './getErrorMessage';

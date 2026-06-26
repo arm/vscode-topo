@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
 import { mock } from 'vitest-mock-extended';
 import { ProjectClone } from './projectClone';
-import { TopoCli } from '../topoCli';
+import { TopoCli } from '../services/topoCli';
 import { TargetModel } from '../models/targetModel';
-import { TemplateDescription } from '../topoCliSchema';
+import { TemplateDescription } from '../services/topoCliSchema';
 import { WrappedError } from '../errors/wrappedError';
 import { showAndLogError } from '../util/showAndLogError';
 import {

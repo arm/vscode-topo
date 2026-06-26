@@ -1,4 +1,4 @@
-import { TargetHealthReport } from '../topoCliSchema';
+import { TargetHealthReport } from '../services/topoCliSchema';
 import { TargetDescription } from '../util/types';
 import { errored, loaded, unloaded } from '../util/loadable';
 import { TargetModel } from './targetModel';

@@ -1,4 +1,4 @@
-import { HealthCheck, TargetHealthReport } from '../topoCliSchema';
+import { HealthCheck, TargetHealthReport } from '../services/topoCliSchema';
 import {
     hasFixCommand,
     getIssueFixCommandGroups,
