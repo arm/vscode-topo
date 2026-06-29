@@ -200,15 +200,15 @@ const cloneWithSource = async (
     }
 };
 
-const listTemplatesForChoice = (
+const listTemplatesForChoice = async (
     topoCli: TopoCli,
     sshTarget?: string,
-): TemplateDescription[] => {
+): Promise<TemplateDescription[]> => {
     if (!sshTarget) {
         return topoCli.listTemplates();
     }
     try {
-        return topoCli.listTemplates(sshTarget);
+        return await topoCli.listTemplates(sshTarget);
     } catch (error) {
         if (!isWrappedError(error, ['CLI'])) {
             throw error;
@@ -221,7 +221,7 @@ export const getTemplateOfChoice = async (
     topoCli: TopoCli,
     sshTarget?: string,
 ): Promise<TemplateDescription | undefined> => {
-    const templates = listTemplatesForChoice(topoCli, sshTarget);
+    const templates = await listTemplatesForChoice(topoCli, sshTarget);
     const templateItems = templates.map((template) => ({
         label: template.name,
         detail: getFirstSentence(template.description),

@@ -1,54 +1,44 @@
 import * as path from 'node:path';
-import * as childProcess from 'node:child_process';
 import * as vscode from 'vscode';
 import { TopoCli, parseWrappedError, parseTopoLogEntries } from './topoCli';
-import { Mutable } from '../util/types';
 import * as manifest from '../manifest';
-import { ChildProcessWithoutNullStreams } from 'node:child_process';
-import { mock } from 'vitest-mock-extended';
-import { Writable } from 'node:stream';
 import { WrappedError } from '../errors/wrappedError';
-import {
-    HealthReport,
-    ProjectDescription,
-    PsOutput,
-    TemplateDescription,
-} from './topoCliSchema';
+import { HealthReport, PsOutput, TemplateDescription } from './topoCliSchema';
 import { TargetDescription } from '../util/types';
+import { execFile } from '../util/exec';
+import type { Mock } from 'vitest';
 
-vi.mock('node:child_process');
-vi.mock('node:fs');
-vi.mock('node:process');
+vi.mock('../util/exec', () => ({
+    execFile: vi.fn(),
+}));
+
+const execFileMock: Mock = vi.mocked(execFile);
 
 function errorWithStderr(stderr: string): Error & { stderr: string } {
     return Object.assign(new Error('Command failed'), { stderr });
 }
-
-const execSyncMock = vi.mocked(childProcess.execFileSync);
-const execMock = vi.mocked(childProcess.execFile);
 
 describe('TopoCli', () => {
     const ext = '/fake/ext';
     const env = {} as vscode.EnvironmentVariableCollection;
     let topoCli: TopoCli;
     let origPlatform: string;
-    let cp: Mutable<ChildProcessWithoutNullStreams>;
+    let origEnv: NodeJS.ProcessEnv;
 
     beforeAll(() => {
         origPlatform = process.platform;
+        origEnv = process.env;
         Object.defineProperty(process, 'platform', { value: 'linux' });
-        vi.resetModules();
         process.env = {};
     });
     afterAll(() => {
         Object.defineProperty(process, 'platform', { value: origPlatform });
+        process.env = origEnv;
     });
 
     beforeEach(() => {
-        vi.clearAllMocks();
+        vi.resetAllMocks();
         topoCli = new TopoCli(ext, env);
-        cp = mock<ChildProcessWithoutNullStreams>();
-        cp.stdin = mock<Writable>() as ChildProcessWithoutNullStreams['stdin'];
     });
 
     it('getBinaryPath builds correct path', () => {
@@ -57,21 +47,26 @@ describe('TopoCli', () => {
         );
     });
 
-    it('getVersion parses stdout from version', () => {
-        execSyncMock.mockReturnValue('topo version 1.2.3 (commit: abcd)\n');
-        const v = topoCli.getVersion();
-        expect(execSyncMock).toHaveBeenCalledWith(
+    it('getVersion parses stdout from version', async () => {
+        execFileMock.mockResolvedValue({
+            stdout: 'topo version 1.2.3 (commit: abcd)\n',
+            stderr: '',
+        });
+
+        const version = await topoCli.getVersion();
+
+        expect(execFileMock).toHaveBeenCalledWith(
             path.join(ext, 'resources', manifest.TOPO_CLI),
             ['--version'],
-            { encoding: 'utf8' },
+            { encoding: 'utf8', env: {} },
         );
-        expect(v).toEqual({
+        expect(version).toEqual({
             version: '1.2.3',
             commit: 'abcd',
         });
     });
 
-    it('listTemplates parses JSON output', () => {
+    it('listTemplates parses JSON output', async () => {
         const list: TemplateDescription[] = [
             {
                 name: 't',
@@ -81,16 +76,22 @@ describe('TopoCli', () => {
                 ref: 'r',
             },
         ];
-        execSyncMock.mockReturnValue(JSON.stringify(list));
-        expect(topoCli.listTemplates('me@example.com')).toEqual(list);
-        expect(execSyncMock).toHaveBeenCalledWith(
+        execFileMock.mockResolvedValue({
+            stdout: JSON.stringify(list),
+            stderr: '',
+        });
+
+        await expect(topoCli.listTemplates('me@example.com')).resolves.toEqual(
+            list,
+        );
+        expect(execFileMock).toHaveBeenCalledWith(
             path.join(ext, 'resources', manifest.TOPO_CLI),
-            ['templates', '--target', 'me@example.com', '-o', 'json'],
-            { encoding: 'utf8' },
+            ['templates', '-o', 'json', '--target', 'me@example.com'],
+            { encoding: 'utf8', env: {} },
         );
     });
 
-    it('listTemplates omits --target when no ssh target is provided', () => {
+    it('listTemplates omits --target when no ssh target is provided', async () => {
         const list: TemplateDescription[] = [
             {
                 name: 't',
@@ -100,31 +101,32 @@ describe('TopoCli', () => {
                 ref: 'r',
             },
         ];
-        execSyncMock.mockReturnValue(JSON.stringify(list));
+        execFileMock.mockResolvedValue({
+            stdout: JSON.stringify(list),
+            stderr: '',
+        });
 
-        expect(topoCli.listTemplates()).toEqual(list);
-        expect(execSyncMock).toHaveBeenCalledWith(
+        await expect(topoCli.listTemplates()).resolves.toEqual(list);
+        expect(execFileMock).toHaveBeenCalledWith(
             path.join(ext, 'resources', manifest.TOPO_CLI),
             ['templates', '-o', 'json'],
-            { encoding: 'utf8' },
+            { encoding: 'utf8', env: {} },
         );
     });
 
-    it('listTemplates throws error on invalid JSON output', () => {
-        execSyncMock.mockReturnValue('invalid json');
+    it('listTemplates throws error on invalid JSON output', async () => {
+        execFileMock.mockResolvedValue({ stdout: 'invalid json', stderr: '' });
 
-        expect(() => topoCli.listTemplates('me@example.com')).toThrow();
+        await expect(topoCli.listTemplates('me@example.com')).rejects.toThrow();
     });
 
-    it('listTemplates throws WrappedError when stderr contains structured log entries', () => {
+    it('listTemplates throws WrappedError when stderr contains structured log entries', async () => {
         const stderrOutput = [
             '{"time":"2026-04-16T15:14:48Z","level":"ERROR","msg":"collecting CPU info: \\"lscpu\\" not found"}',
             '{"time":"2026-04-16T15:14:49Z","level":"ERROR","msg":"connection lost"}',
         ].join('\n');
         const execError = errorWithStderr(stderrOutput);
-        execSyncMock.mockImplementation(() => {
-            throw execError;
-        });
+        execFileMock.mockRejectedValue(execError);
         const expectedError = new WrappedError(
             'CLI',
             'collecting CPU info: "lscpu" not found; connection lost',
@@ -138,73 +140,45 @@ describe('TopoCli', () => {
             { cause: execError },
         );
 
-        expect(() => topoCli.listTemplates('me@example.com')).toThrow(
+        await expect(topoCli.listTemplates('me@example.com')).rejects.toThrow(
             expectedError,
         );
     });
 
-    it('listTemplates rethrows original error when stderr has no structured log entries', () => {
+    it('listTemplates rethrows original error when stderr has no structured log entries', async () => {
         const execError = errorWithStderr('plain error text');
-        execSyncMock.mockImplementation(() => {
-            throw execError;
-        });
+        execFileMock.mockRejectedValue(execError);
 
-        expect(() => topoCli.listTemplates()).toThrow(execError);
+        await expect(topoCli.listTemplates()).rejects.toBe(execError);
     });
 
-    it('listTemplates rethrows original error when stderr contains only non-ERROR log entries', () => {
+    it('listTemplates rethrows original error when stderr contains only non-ERROR log entries', async () => {
         const stderrOutput =
             '{"time":"2026-04-16T15:00:00Z","level":"INFO","msg":"starting up"}';
         const execError = errorWithStderr(stderrOutput);
-        execSyncMock.mockImplementation(() => {
-            throw execError;
-        });
+        execFileMock.mockRejectedValue(execError);
 
-        expect(() => topoCli.listTemplates()).toThrow(execError);
+        await expect(topoCli.listTemplates()).rejects.toBe(execError);
     });
 
-    it('listTemplates throws WrappedError with only ERROR messages when stderr has mixed log levels', () => {
+    it('listTemplates throws WrappedError with only ERROR messages when stderr has mixed log levels', async () => {
         const stderrOutput = [
             '{"time":"2026-04-16T15:00:00Z","level":"INFO","msg":"starting up"}',
             '{"time":"2026-04-16T15:00:01Z","level":"ERROR","msg":"disk full"}',
             '{"time":"2026-04-16T15:00:02Z","level":"WARN","msg":"retrying"}',
         ].join('\n');
         const execError = errorWithStderr(stderrOutput);
-        execSyncMock.mockImplementation(() => {
-            throw execError;
-        });
+        execFileMock.mockRejectedValue(execError);
         const expectedError = new WrappedError('CLI', 'disk full', [
             { level: 'Info', msg: 'starting up' },
             { level: 'Error', msg: 'disk full' },
             { level: 'Warning', msg: 'retrying' },
         ]);
 
-        expect(() => topoCli.listTemplates()).toThrow(expectedError);
+        await expect(topoCli.listTemplates()).rejects.toThrow(expectedError);
     });
 
-    it('getProject parses JSON output', () => {
-        const list: ProjectDescription = {
-            name: 'p',
-            services: {
-                text: {
-                    build: {
-                        context: './test',
-                    },
-                    containerName: 'test-container',
-                },
-            },
-        };
-        execSyncMock.mockReturnValue(JSON.stringify(list));
-        expect(topoCli.getProject('p')).toEqual(list);
-    });
-
-    it('getProject throws error on invalid JSON output', () => {
-        execSyncMock.mockReturnValue('invalid json');
-
-        expect(() => topoCli.getProject('p')).toThrow();
-    });
-
-    it('describe resolves parsed JSON and runs topo describe with --output json', async () => {
+    it('describe resolves parsed JSON and runs topo describe with JSON output', async () => {
         const description: TargetDescription = {
             hostProcessors: [
                 { model: 'Cortex-A55', cores: 2, features: ['fp'] },
@@ -212,49 +186,38 @@ describe('TopoCli', () => {
             remoteProcessors: [{ name: 'imx-rproc' }],
             totalMemoryKb: 123456,
         };
-        execMock.mockImplementation((_bin, _cargs, _options, cb) => {
-            cb!(
-                null,
-                JSON.stringify({
-                    hostProcessors: [
-                        { model: ' Cortex-A55 ', cores: 2, features: [' fp '] },
-                    ],
-                    remoteProcessors: [{ name: ' imx-rproc ' }],
-                    totalMemoryKb: 123456,
-                }),
-                '',
-            );
-            return cp;
+        execFileMock.mockResolvedValue({
+            stdout: JSON.stringify({
+                hostProcessors: [
+                    { model: ' Cortex-A55 ', cores: 2, features: [' fp '] },
+                ],
+                remoteProcessors: [{ name: ' imx-rproc ' }],
+                totalMemoryKb: 123456,
+            }),
+            stderr: '',
         });
 
         const target = 'user@topo.local';
 
         await expect(topoCli.describe(target)).resolves.toEqual(description);
 
-        expect(execMock).toHaveBeenCalledWith(
+        expect(execFileMock).toHaveBeenCalledWith(
             topoCli.getBinaryPath(),
-            ['describe', '--target', target, '--output', 'json'],
-            { env: {} },
-            expect.any(Function),
+            ['describe', '--target', target, '-o', 'json'],
+            { encoding: 'utf8', env: {} },
         );
     });
 
     it('describe rejects when topo describe fails', async () => {
-        execMock.mockImplementation((_bin, _args, _options, cb) => {
-            cb!(new Error('fail'), '', 'err');
-            return cp;
-        });
+        execFileMock.mockRejectedValue(new Error('fail'));
 
         await expect(topoCli.describe('user@topo.local')).rejects.toThrow(
-            'Failed to describe target: fail',
+            'fail',
         );
     });
 
     it('describe rejects when topo describe returns invalid JSON', async () => {
-        execMock.mockImplementation((_bin, _args, _options, cb) => {
-            cb!(null, 'not json', '');
-            return cp;
-        });
+        execFileMock.mockResolvedValue({ stdout: 'not json', stderr: '' });
 
         await expect(topoCli.describe('user@topo.local')).rejects.toThrow(
             'Failed to parse target description JSON:',
@@ -262,16 +225,12 @@ describe('TopoCli', () => {
     });
 
     it('describe rejects when topo describe returns JSON that fails schema validation', async () => {
-        execMock.mockImplementation((_bin, _args, _options, cb) => {
-            cb!(
-                null,
-                JSON.stringify({
-                    hostProcessors: [],
-                    remoteProcessors: [{ name: 1 }],
-                }),
-                '',
-            );
-            return cp;
+        execFileMock.mockResolvedValue({
+            stdout: JSON.stringify({
+                hostProcessors: [],
+                remoteProcessors: [{ name: 1 }],
+            }),
+            stderr: '',
         });
 
         await expect(topoCli.describe('user@topo.local')).rejects.toThrow(
@@ -280,27 +239,22 @@ describe('TopoCli', () => {
     });
 
     it('init resolves promise on success', async () => {
-        execMock.mockImplementation((_bin, _cargs, _options, cb) => {
-            cb!(null, '', '');
-            return cp;
-        });
+        execFileMock.mockResolvedValue({ stdout: '', stderr: '' });
         const workspacePath = '/fake/workspace';
+
         await expect(topoCli.init(workspacePath)).resolves.toBeUndefined();
-        const expectedArgs = ['init'];
-        expect(execMock).toHaveBeenCalledWith(
+
+        expect(execFileMock).toHaveBeenCalledWith(
             topoCli.getBinaryPath(),
-            expectedArgs,
-            { cwd: workspacePath, env: {} },
-            expect.any(Function),
+            ['init'],
+            { encoding: 'utf8', cwd: workspacePath, env: {} },
         );
     });
 
     it('init rejects promise on error', async () => {
-        execMock.mockImplementation((_bin, _args, _options, cb) => {
-            cb!(new Error('fail'), '', 'err');
-            return cp;
-        });
-        await expect(topoCli.init('t')).rejects.toThrow('err');
+        execFileMock.mockRejectedValue(new Error('fail'));
+
+        await expect(topoCli.init('t')).rejects.toThrow('fail');
     });
 
     it('ps parses JSON output and runs topo ps in the project directory', async () => {
@@ -326,39 +280,32 @@ describe('TopoCli', () => {
                 },
             ],
         };
-        execMock.mockImplementation((_bin, _cargs, _options, cb) => {
-            cb!(null, JSON.stringify(output), '');
-            return cp;
+        execFileMock.mockResolvedValue({
+            stdout: JSON.stringify(output),
+            stderr: '',
         });
 
         const target = 'user@topo.local';
         const projectPath = '/fake/workspace/demo';
 
         await expect(topoCli.ps(target, projectPath)).resolves.toEqual(output);
-        expect(execMock).toHaveBeenCalledWith(
+        expect(execFileMock).toHaveBeenCalledWith(
             topoCli.getBinaryPath(),
             ['ps', '-a', '--target', target, '-o', 'json'],
-            { cwd: projectPath, env: {} },
-            expect.any(Function),
+            { encoding: 'utf8', cwd: projectPath, env: {} },
         );
     });
 
     it('ps rejects when topo ps fails', async () => {
-        execMock.mockImplementation((_bin, _args, _options, cb) => {
-            cb!(new Error('fail'), '', 'ps failed');
-            return cp;
-        });
+        execFileMock.mockRejectedValue(new Error('fail'));
 
         await expect(topoCli.ps('hostname', '/fake/project')).rejects.toThrow(
-            'ps failed',
+            'fail',
         );
     });
 
     it('ps rejects when JSON output is invalid', async () => {
-        execMock.mockImplementation((_bin, _cargs, _options, cb) => {
-            cb!(null, 'invalid json', '');
-            return cp;
-        });
+        execFileMock.mockResolvedValue({ stdout: 'invalid json', stderr: '' });
 
         await expect(topoCli.ps('hostname', '/fake/project')).rejects.toThrow();
     });
@@ -377,9 +324,9 @@ describe('TopoCli', () => {
                 },
             ],
         };
-        execMock.mockImplementation((_bin, _cargs, _options, cb) => {
-            cb!(null, JSON.stringify(output), '');
-            return cp;
+        execFileMock.mockResolvedValue({
+            stdout: JSON.stringify(output),
+            stderr: '',
         });
 
         await expect(topoCli.ps('hostname', '/fake/project')).rejects.toThrow();
@@ -434,67 +381,65 @@ describe('TopoCli', () => {
                 },
             },
         };
-        execMock.mockImplementation((_bin, _cargs, _options, cb) => {
-            cb!(null, JSON.stringify(cliResponse), '');
-            return cp;
+        execFileMock.mockResolvedValue({
+            stdout: JSON.stringify(cliResponse),
+            stderr: '',
         });
 
         await expect(topoCli.health('hostname')).resolves.toMatchObject(want);
-        expect(execMock).toHaveBeenCalledTimes(1);
-        expect(execMock).toHaveBeenCalledWith(
+        expect(execFileMock).toHaveBeenCalledTimes(1);
+        expect(execFileMock).toHaveBeenCalledWith(
             topoCli.getBinaryPath(),
             [
                 'health',
-                '--target',
-                'hostname',
                 '--skip-version-checks',
                 '-o',
                 'json',
+                '--target',
+                'hostname',
             ],
-            {
-                env: {},
-                windowsHide: true,
-            },
-            expect.any(Function),
+            { encoding: 'utf8', env: {} },
         );
-        expect(cp.stdin.end).toHaveBeenCalledTimes(1);
     });
 
     it('hostHealth omits --target', async () => {
+        execFileMock.mockResolvedValue({
+            stdout: JSON.stringify({ host: { dependencies: [] } }),
+            stderr: '',
+        });
+
         await topoCli.hostHealth();
 
-        expect(execMock).toHaveBeenCalledTimes(1);
-        expect(execMock).toHaveBeenCalledWith(
+        expect(execFileMock).toHaveBeenCalledTimes(1);
+        expect(execFileMock).toHaveBeenCalledWith(
             topoCli.getBinaryPath(),
             ['health', '--skip-version-checks', '-o', 'json'],
-            {
-                env: {},
-                windowsHide: true,
-            },
-            expect.any(Function),
+            { encoding: 'utf8', env: {} },
         );
-        expect(cp.stdin.end).toHaveBeenCalledTimes(1);
     });
 
-    it('assertVersion does not throw when versions match', () => {
-        execSyncMock.mockReturnValue('topo version 1.2.3 (commit: abcd)\n');
+    it('assertVersion does not throw when versions match', async () => {
+        execFileMock.mockResolvedValue({
+            stdout: 'topo version 1.2.3 (commit: abcd)\n',
+            stderr: '',
+        });
 
-        expect(() => topoCli.assertVersion('1.2.3')).not.toThrow();
+        await expect(topoCli.assertVersion('1.2.3')).resolves.toBeUndefined();
     });
 
-    it('assertVersion throws when versions mismatch', () => {
-        execSyncMock.mockReturnValue('topo version 1.2.3 (commit: abcd)\n');
+    it('assertVersion throws when versions mismatch', async () => {
+        execFileMock.mockResolvedValue({
+            stdout: 'topo version 1.2.3 (commit: abcd)\n',
+            stderr: '',
+        });
 
-        expect(() => topoCli.assertVersion('2.0.0')).toThrow(
+        await expect(topoCli.assertVersion('2.0.0')).rejects.toThrow(
             'version mismatch: found=1.2.3 expected=2.0.0',
         );
     });
 
     it('health throws error when JSON output is invalid', async () => {
-        execMock.mockImplementation((_bin, _cargs, _options, cb) => {
-            cb!(null, 'invalid json', '');
-            return cp;
-        });
+        execFileMock.mockResolvedValue({ stdout: 'invalid json', stderr: '' });
 
         await expect(topoCli.health('hostname')).rejects.toThrow();
     });

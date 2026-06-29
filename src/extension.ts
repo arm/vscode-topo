@@ -41,7 +41,7 @@ export async function activate(
     context.subscriptions.push(topoCli);
 
     try {
-        topoCli.assertVersion(topo.version);
+        await topoCli.assertVersion(topo.version);
     } catch (err) {
         showAndLogError(`Topo CLI version check failed`, err);
         return;
