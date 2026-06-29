@@ -1,4 +1,4 @@
-import { PsEntry, ServiceDescription } from '../services/topoCliSchema';
+import { PsEntry } from '../services/topoCliSchema';
 
 export interface HostProcessor {
     model: string;
@@ -19,13 +19,5 @@ export interface TargetDescription {
 export interface ContainerItem extends PsEntry {
     target: string;
 }
-
-export interface ServiceCreationDescription extends ServiceDescription {
-    name: string;
-}
-
-export type MessagePoster = {
-    postMessage(message: unknown): void | Thenable<boolean>;
-};
 
 export type Mutable<T> = { -readonly [P in keyof T]: T[P] };

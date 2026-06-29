@@ -7,8 +7,6 @@ import {
     HostHealthReport,
     healthReportSchema,
     hostHealthReportSchema,
-    ProjectDescription,
-    projectDescriptionSchema,
     TemplateDescription,
     targetDescriptionSchema,
     templateSchema,
@@ -166,16 +164,6 @@ export class TopoCli {
         const templates = JSON.parse(out);
         assert(templates, array(templateSchema));
         return templates;
-    }
-
-    /** Return project (via get-project). */
-    public getProject(composeFilepath: string): ProjectDescription {
-        const bin = this.getBinaryPath();
-        const cmd = ['get-project', composeFilepath];
-        const out = childProcess.execFileSync(bin, cmd, { encoding: 'utf8' });
-        const project = JSON.parse(out);
-        assert(project, projectDescriptionSchema);
-        return project;
     }
 
     /** Returns target description data from topo describe JSON output. */
