@@ -19,3 +19,5 @@ export interface TargetDescription {
 export interface ContainerItem extends PsEntry {
     target: string;
 }
+
+export type Mutable<T> = { -readonly [P in keyof T]: T[P] };

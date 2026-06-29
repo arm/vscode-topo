@@ -2,6 +2,7 @@ import * as path from 'node:path';
 import * as childProcess from 'node:child_process';
 import * as vscode from 'vscode';
 import { TopoCli, parseWrappedError, parseTopoLogEntries } from './topoCli';
+import { Mutable } from '../util/types';
 import * as manifest from '../manifest';
 import { ChildProcessWithoutNullStreams } from 'node:child_process';
 import { mock } from 'vitest-mock-extended';
@@ -26,7 +27,7 @@ describe('TopoCli', () => {
     const env = {} as vscode.EnvironmentVariableCollection;
     let topoCli: TopoCli;
     let origPlatform: string;
-    let cp: ChildProcessWithoutNullStreams;
+    let cp: Mutable<ChildProcessWithoutNullStreams>;
 
     beforeAll(() => {
         origPlatform = process.platform;
