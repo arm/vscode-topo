@@ -37,7 +37,7 @@ export class ContainerTreeItem extends vscode.TreeItem {
             case 'paused':
             case 'restarting':
                 return new vscode.ThemeIcon(
-                    'debug-breakpoint-log',
+                    'debug-breakpoint-log-unverified',
                     new vscode.ThemeColor('terminal.ansiWhite'),
                 );
             case 'running':

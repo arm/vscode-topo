@@ -46,7 +46,7 @@ describe('ContainerTreeItem', () => {
         const item = new ContainerTreeItem(container);
         expect(item.iconPath).toStrictEqual(
             new vscode.ThemeIcon(
-                'debug-breakpoint-log',
+                'debug-breakpoint-log-unverified',
                 new vscode.ThemeColor('terminal.ansiWhite'),
             ),
         );

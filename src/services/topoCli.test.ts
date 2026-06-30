@@ -8,12 +8,7 @@ import { ChildProcessWithoutNullStreams } from 'node:child_process';
 import { mock } from 'vitest-mock-extended';
 import { Writable } from 'node:stream';
 import { WrappedError } from '../errors/wrappedError';
-import {
-    HealthReport,
-    ProjectDescription,
-    PsOutput,
-    TemplateDescription,
-} from './topoCliSchema';
+import { HealthReport, PsOutput, TemplateDescription } from './topoCliSchema';
 import { TargetDescription } from '../util/types';
 
 vi.mock('node:child_process');
@@ -180,28 +175,6 @@ describe('TopoCli', () => {
         ]);
 
         expect(() => topoCli.listTemplates()).toThrow(expectedError);
-    });
-
-    it('getProject parses JSON output', () => {
-        const list: ProjectDescription = {
-            name: 'p',
-            services: {
-                text: {
-                    build: {
-                        context: './test',
-                    },
-                    containerName: 'test-container',
-                },
-            },
-        };
-        execSyncMock.mockReturnValue(JSON.stringify(list));
-        expect(topoCli.getProject('p')).toEqual(list);
-    });
-
-    it('getProject throws error on invalid JSON output', () => {
-        execSyncMock.mockReturnValue('invalid json');
-
-        expect(() => topoCli.getProject('p')).toThrow();
     });
 
     it('describe resolves parsed JSON and runs topo describe with --output json', async () => {

@@ -6,7 +6,6 @@ import {
     number,
     nullable,
     optional,
-    record,
     string,
     trimmed,
     type,
@@ -72,26 +71,6 @@ export const healthReportSchema = type({
 });
 
 export type HealthReport = Infer<typeof healthReportSchema>;
-
-const serviceDescriptionSchema = type({
-    build: optional(
-        type({
-            context: string(),
-        }),
-    ),
-    containerName: optional(string()),
-    runtime: optional(string()),
-    annotations: optional(record(string(), string())),
-});
-
-export type ServiceDescription = Infer<typeof serviceDescriptionSchema>;
-
-export const projectDescriptionSchema = type({
-    name: string(),
-    services: record(string(), serviceDescriptionSchema),
-});
-
-export type ProjectDescription = Infer<typeof projectDescriptionSchema>;
 
 const describeHostProcessorSchema = type({
     model: trimmed(string()),
