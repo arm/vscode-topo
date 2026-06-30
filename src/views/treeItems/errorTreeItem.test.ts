@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
+import packageJson from '../../../package.json';
 import { showOutput } from '../../commands';
-import { DISPLAY_NAME } from '../../manifest';
 import { ErrorTreeItem } from './errorTreeItem';
 import { errored, loading } from '../../util/loadable';
 
@@ -10,6 +10,7 @@ describe('ErrorTreeItem', () => {
 
         expect(item.label).toBe('Failed to load');
         expect(item.description).toBe('uh oh');
+        expect(item.tooltip).toBe('Failed to load: uh oh');
         expect(item.collapsibleState).toBe(
             vscode.TreeItemCollapsibleState.None,
         );
@@ -21,17 +22,19 @@ describe('ErrorTreeItem', () => {
         );
     });
 
-    it('sets context and command to open the output channel', () => {
+    it('sets context for the inline output action without a row command', () => {
         const item = new ErrorTreeItem('Another error');
 
         expect(item.contextValue).toBe('OpenableError');
-        expect(item.command).toStrictEqual({
+        expect(item.command).toBeUndefined();
+        expect(item.tooltip).toBeUndefined();
+        expect(
+            packageJson.contributes.menus['view/item/context'],
+        ).toContainEqual({
             command: showOutput,
-            title: `Open ${DISPLAY_NAME} Output`,
+            when: 'viewItem =~ /OpenableError/',
+            group: 'inline@1',
         });
-        expect(item.tooltip).toBe(
-            `Open the ${DISPLAY_NAME} output channel for details.`,
-        );
     });
 
     it('sets loading icon when loading', () => {
