@@ -8,25 +8,30 @@ import {
 export interface TargetDeploySettings {
     port?: string;
     forceRecreate?: boolean;
+    noRecreate?: boolean;
 }
 
 export type TargetDeploySettingsByTarget = Record<string, TargetDeploySettings>;
 type RawTargetDeploySettingsByTarget = Record<string, unknown>;
+type RawTargetDeploySettings = Record<string, unknown>;
 type TargetDeploySettingsKey = keyof TargetDeploySettings;
 
 export interface DeployOptions {
     customRegistryPort?: string;
     forceRecreate?: boolean;
+    noRecreate?: boolean;
 }
 
 const defaultTargetDeploySettings: TargetDeploySettings = {
     port: '',
     forceRecreate: false,
+    noRecreate: false,
 };
 
 const targetDeploySettingsKeys = new Set<TargetDeploySettingsKey>([
     'port',
     'forceRecreate',
+    'noRecreate',
 ]);
 
 function isTargetDeploySettingsKey(
@@ -58,11 +63,16 @@ function isTargetDeploySettings(value: unknown): value is TargetDeploySettings {
         return false;
     }
 
-    const { port, forceRecreate } = value as Record<string, unknown>;
+    const { port, forceRecreate, noRecreate } = value as Record<
+        string,
+        unknown
+    >;
     return (
         Object.keys(value).every(isTargetDeploySettingsKey) &&
         (port === undefined || isPortSetting(port)) &&
-        (forceRecreate === undefined || typeof forceRecreate === 'boolean')
+        (forceRecreate === undefined || typeof forceRecreate === 'boolean') &&
+        (noRecreate === undefined || typeof noRecreate === 'boolean') &&
+        !(forceRecreate === true && noRecreate === true)
     );
 }
 
@@ -92,11 +102,25 @@ function getRawTargetDeploySettingsConfiguration(
     return settings as RawTargetDeploySettingsByTarget;
 }
 
+function getRawDefaultTargetDeploySettingsConfiguration(
+    config: vscode.WorkspaceConfiguration,
+): RawTargetDeploySettings {
+    const settings = config.inspect<unknown>(
+        CONFIG_DEFAULT_TARGET_DEPLOY_SETTINGS,
+    )?.globalValue;
+    if (!settings || typeof settings !== 'object' || Array.isArray(settings)) {
+        return {};
+    }
+
+    return settings as RawTargetDeploySettings;
+}
+
 function toDeployOptions(settings: TargetDeploySettings): DeployOptions {
     const trimmedPort = settings.port?.trim();
     return {
         customRegistryPort: trimmedPort || undefined,
         forceRecreate: settings.forceRecreate,
+        noRecreate: settings.noRecreate,
     };
 }
 
@@ -104,10 +128,18 @@ function mergeTargetDeploySettings(
     defaultSettings: TargetDeploySettings,
     targetSettings: TargetDeploySettings | undefined,
 ): TargetDeploySettings {
+    const hasTargetRecreateSettings =
+        targetSettings?.forceRecreate !== undefined ||
+        targetSettings?.noRecreate !== undefined;
+
     return {
         port: targetSettings?.port ?? defaultSettings.port,
-        forceRecreate:
-            targetSettings?.forceRecreate ?? defaultSettings.forceRecreate,
+        forceRecreate: hasTargetRecreateSettings
+            ? (targetSettings.forceRecreate ?? false)
+            : defaultSettings.forceRecreate,
+        noRecreate: hasTargetRecreateSettings
+            ? (targetSettings.noRecreate ?? false)
+            : defaultSettings.noRecreate,
     };
 }
 
@@ -137,6 +169,29 @@ export function getDeployOptionsForTarget(target: string): DeployOptions {
     );
 
     return toDeployOptions(settings);
+}
+
+export async function ensureDefaultTargetDeploySettings(): Promise<void> {
+    const config = vscode.workspace.getConfiguration(PACKAGE_NAME);
+    const currentSettings =
+        getRawDefaultTargetDeploySettingsConfiguration(config);
+    const nextSettings: RawTargetDeploySettings = {
+        ...defaultTargetDeploySettings,
+        ...currentSettings,
+    };
+
+    const needsUpdate = Object.keys(defaultTargetDeploySettings).some(
+        (key) => currentSettings[key] === undefined,
+    );
+    if (!needsUpdate) {
+        return;
+    }
+
+    await config.update(
+        CONFIG_DEFAULT_TARGET_DEPLOY_SETTINGS,
+        nextSettings,
+        vscode.ConfigurationTarget.Global,
+    );
 }
 
 export async function ensureCachedTargetDeploySettings(
