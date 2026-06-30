@@ -114,6 +114,7 @@ export class TopoCli {
         try {
             const { stdout } = await execFile(bin, cmd, {
                 encoding: 'utf8',
+                windowsHide: true,
                 ...opts,
                 env: {
                     ...process.env,

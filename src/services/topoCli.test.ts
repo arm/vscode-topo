@@ -13,6 +13,11 @@ vi.mock('../util/exec', () => ({
 }));
 
 const execFileMock: Mock = vi.mocked(execFile);
+const defaultExecOptions = {
+    encoding: 'utf8',
+    env: {},
+    windowsHide: true,
+};
 
 function errorWithStderr(stderr: string): Error & { stderr: string } {
     return Object.assign(new Error('Command failed'), { stderr });
@@ -58,7 +63,7 @@ describe('TopoCli', () => {
         expect(execFileMock).toHaveBeenCalledWith(
             path.join(ext, 'resources', manifest.TOPO_CLI),
             ['--version'],
-            { encoding: 'utf8', env: {} },
+            defaultExecOptions,
         );
         expect(version).toEqual({
             version: '1.2.3',
@@ -87,7 +92,7 @@ describe('TopoCli', () => {
         expect(execFileMock).toHaveBeenCalledWith(
             path.join(ext, 'resources', manifest.TOPO_CLI),
             ['templates', '-o', 'json', '--target', 'me@example.com'],
-            { encoding: 'utf8', env: {} },
+            defaultExecOptions,
         );
     });
 
@@ -110,7 +115,7 @@ describe('TopoCli', () => {
         expect(execFileMock).toHaveBeenCalledWith(
             path.join(ext, 'resources', manifest.TOPO_CLI),
             ['templates', '-o', 'json'],
-            { encoding: 'utf8', env: {} },
+            defaultExecOptions,
         );
     });
 
@@ -204,7 +209,7 @@ describe('TopoCli', () => {
         expect(execFileMock).toHaveBeenCalledWith(
             topoCli.getBinaryPath(),
             ['describe', '--target', target, '-o', 'json'],
-            { encoding: 'utf8', env: {} },
+            defaultExecOptions,
         );
     });
 
@@ -247,7 +252,7 @@ describe('TopoCli', () => {
         expect(execFileMock).toHaveBeenCalledWith(
             topoCli.getBinaryPath(),
             ['init'],
-            { encoding: 'utf8', cwd: workspacePath, env: {} },
+            { ...defaultExecOptions, cwd: workspacePath },
         );
     });
 
@@ -292,7 +297,7 @@ describe('TopoCli', () => {
         expect(execFileMock).toHaveBeenCalledWith(
             topoCli.getBinaryPath(),
             ['ps', '-a', '--target', target, '-o', 'json'],
-            { encoding: 'utf8', cwd: projectPath, env: {} },
+            { ...defaultExecOptions, cwd: projectPath },
         );
     });
 
@@ -398,7 +403,7 @@ describe('TopoCli', () => {
                 '--target',
                 'hostname',
             ],
-            { encoding: 'utf8', env: {} },
+            defaultExecOptions,
         );
     });
 
@@ -414,7 +419,7 @@ describe('TopoCli', () => {
         expect(execFileMock).toHaveBeenCalledWith(
             topoCli.getBinaryPath(),
             ['health', '--skip-version-checks', '-o', 'json'],
-            { encoding: 'utf8', env: {} },
+            defaultExecOptions,
         );
     });
 
