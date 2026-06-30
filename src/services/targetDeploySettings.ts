@@ -22,7 +22,7 @@ export interface DeployOptions {
     noRecreate?: boolean;
 }
 
-const defaultTargetDeploySettings: TargetDeploySettings = {
+const fallbackTargetDeploySettings: TargetDeploySettings = {
     port: '',
     forceRecreate: false,
     noRecreate: false,
@@ -151,12 +151,12 @@ function getDefaultTargetDeploySettings(
     );
     if (isTargetDeploySettings(configured)) {
         return mergeTargetDeploySettings(
-            defaultTargetDeploySettings,
+            fallbackTargetDeploySettings,
             configured,
         );
     }
 
-    return defaultTargetDeploySettings;
+    return fallbackTargetDeploySettings;
 }
 
 export function getDeployOptionsForTarget(target: string): DeployOptions {
@@ -176,11 +176,11 @@ export async function ensureDefaultTargetDeploySettings(): Promise<void> {
     const currentSettings =
         getRawDefaultTargetDeploySettingsConfiguration(config);
     const nextSettings: RawTargetDeploySettings = {
-        ...defaultTargetDeploySettings,
+        ...fallbackTargetDeploySettings,
         ...currentSettings,
     };
 
-    const needsUpdate = Object.keys(defaultTargetDeploySettings).some(
+    const needsUpdate = Object.keys(fallbackTargetDeploySettings).some(
         (key) => currentSettings[key] === undefined,
     );
     if (!needsUpdate) {
