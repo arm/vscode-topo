@@ -191,12 +191,19 @@ export function buildDeployArgs(
     target: string,
     options: DeployOptions = {},
 ): string[] {
+    if (options.forceRecreate && options.noRecreate) {
+        throw new Error('Cannot use both force recreate and no recreate');
+    }
+
     const args = ['deploy', '--target', target];
     if (options.customRegistryPort) {
         args.push('-p', options.customRegistryPort);
     }
     if (options.forceRecreate) {
         args.push('--force-recreate');
+    }
+    if (options.noRecreate) {
+        args.push('--no-recreate');
     }
     return args;
 }

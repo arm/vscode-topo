@@ -5,17 +5,26 @@ import {
 } from './openTargetDeploySettings';
 import { TargetStore } from '../services/targetStore';
 import { mock } from 'vitest-mock-extended';
-import { CONFIG_TARGET_DEPLOY_SETTINGS } from '../manifest';
+import {
+    CONFIG_DEFAULT_TARGET_DEPLOY_SETTINGS,
+    CONFIG_TARGET_DEPLOY_SETTINGS,
+} from '../manifest';
 
 describe('OpenTargetDeploySettings', () => {
     afterEach(() => {
         vi.clearAllMocks();
     });
 
-    function mockConfiguration(settings: Record<string, unknown> = {}) {
+    function mockConfiguration(
+        settings: Record<string, unknown> = {},
+        globalSettings: Record<string, unknown> = settings,
+    ) {
         const update = vi.fn();
         vi.mocked(vscode.workspace.getConfiguration).mockReturnValue({
             get: vi.fn((key: string) => settings[key]),
+            inspect: vi.fn((key: string) => ({
+                globalValue: globalSettings[key],
+            })),
             update,
         } as unknown as vscode.WorkspaceConfiguration);
         return { update };
@@ -44,6 +53,73 @@ describe('OpenTargetDeploySettings', () => {
             'workbench.action.openSettings',
             '@ext:arm.topo',
         );
+    });
+
+    it('adds missing default target deploy settings before opening settings', async () => {
+        const { update } = mockConfiguration({
+            [CONFIG_DEFAULT_TARGET_DEPLOY_SETTINGS]: {
+                port: '5000',
+            },
+        });
+
+        await openTargetDeploySettings([]);
+
+        expect(update).toHaveBeenCalledWith(
+            CONFIG_DEFAULT_TARGET_DEPLOY_SETTINGS,
+            {
+                port: '5000',
+                forceRecreate: false,
+                noRecreate: false,
+            },
+            vscode.ConfigurationTarget.Global,
+        );
+        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            'workbench.action.openSettings',
+            '@ext:arm.topo',
+        );
+    });
+
+    it('adds missing raw default target deploy settings when effective defaults are present', async () => {
+        const { update } = mockConfiguration(
+            {
+                [CONFIG_DEFAULT_TARGET_DEPLOY_SETTINGS]: {
+                    port: '5000',
+                    forceRecreate: false,
+                    noRecreate: false,
+                },
+            },
+            {
+                [CONFIG_DEFAULT_TARGET_DEPLOY_SETTINGS]: {
+                    port: '5000',
+                },
+            },
+        );
+
+        await openTargetDeploySettings([]);
+
+        expect(update).toHaveBeenCalledWith(
+            CONFIG_DEFAULT_TARGET_DEPLOY_SETTINGS,
+            {
+                port: '5000',
+                forceRecreate: false,
+                noRecreate: false,
+            },
+            vscode.ConfigurationTarget.Global,
+        );
+    });
+
+    it('does not rewrite complete default target deploy settings', async () => {
+        const { update } = mockConfiguration({
+            [CONFIG_DEFAULT_TARGET_DEPLOY_SETTINGS]: {
+                port: '',
+                forceRecreate: false,
+                noRecreate: false,
+            },
+        });
+
+        await openTargetDeploySettings([]);
+
+        expect(update).not.toHaveBeenCalled();
     });
 
     it('adds cached target entries before opening settings', async () => {
@@ -100,6 +176,11 @@ describe('OpenTargetDeploySettings', () => {
 
     it('does not rewrite settings when all cached targets already have entries', async () => {
         const { update } = mockConfiguration({
+            [CONFIG_DEFAULT_TARGET_DEPLOY_SETTINGS]: {
+                port: '',
+                forceRecreate: false,
+                noRecreate: false,
+            },
             [CONFIG_TARGET_DEPLOY_SETTINGS]: {
                 'root@192.0.2.1': {
                     port: '5000',

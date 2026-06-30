@@ -418,10 +418,25 @@
                         "type": "object",
                         "default": {
                             "port": "",
-                            "forceRecreate": false
+                            "forceRecreate": false,
+                            "noRecreate": false
                         },
                         "description": "Default deploy settings to use for cached targets that do not have target-specific settings.",
                         "additionalProperties": false,
+                        "not": {
+                            "properties": {
+                                "forceRecreate": {
+                                    "const": true
+                                },
+                                "noRecreate": {
+                                    "const": true
+                                }
+                            },
+                            "required": [
+                                "forceRecreate",
+                                "noRecreate"
+                            ]
+                        },
                         "properties": {
                             "port": {
                                 "type": "string",
@@ -432,6 +447,11 @@
                                 "type": "boolean",
                                 "default": false,
                                 "description": "topo deploy will force recreation of containers by default, even if their configuration and image haven't changed."
+                            },
+                            "noRecreate": {
+                                "type": "boolean",
+                                "default": false,
+                                "description": "topo deploy will prevent recreation of containers by default, even if their configuration and image have changed."
                             }
                         }
                     },
@@ -442,6 +462,20 @@
                         "additionalProperties": {
                             "type": "object",
                             "additionalProperties": false,
+                            "not": {
+                                "properties": {
+                                    "forceRecreate": {
+                                        "const": true
+                                    },
+                                    "noRecreate": {
+                                        "const": true
+                                    }
+                                },
+                                "required": [
+                                    "forceRecreate",
+                                    "noRecreate"
+                                ]
+                            },
                             "properties": {
                                 "port": {
                                     "type": "string",
@@ -452,6 +486,11 @@
                                     "type": "boolean",
                                     "default": false,
                                     "description": "topo deploy will force recreation of containers even if their configuration and image haven't changed."
+                                },
+                                "noRecreate": {
+                                    "type": "boolean",
+                                    "default": false,
+                                    "description": "topo deploy will prevent recreation of containers even if their configuration and image have changed."
                                 }
                             }
                         }

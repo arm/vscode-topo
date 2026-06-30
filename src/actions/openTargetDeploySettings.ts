@@ -1,7 +1,10 @@
 import * as vscode from 'vscode';
 import { PACKAGE_NAME, REGISTRY_NAME } from '../manifest';
 import { TargetStore } from '../services/targetStore';
-import { ensureCachedTargetDeploySettings } from '../services/targetDeploySettings';
+import {
+    ensureCachedTargetDeploySettings,
+    ensureDefaultTargetDeploySettings,
+} from '../services/targetDeploySettings';
 import { showAndLogError } from '../util/showAndLogError';
 
 const TOPO_EXTENSION_SETTINGS_FILTER = `@ext:${REGISTRY_NAME}.${PACKAGE_NAME}`;
@@ -21,6 +24,7 @@ export class OpenTargetDeploySettings {
 export async function openTargetDeploySettings(
     cachedTargets: Iterable<string> = [],
 ): Promise<void> {
+    await ensureDefaultTargetDeploySettings();
     await ensureCachedTargetDeploySettings(cachedTargets);
     await vscode.commands.executeCommand(
         'workbench.action.openSettings',
