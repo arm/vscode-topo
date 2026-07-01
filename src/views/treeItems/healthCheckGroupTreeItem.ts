@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { HealthCheck } from '../../services/topoCliSchema';
 import { getWorstHealthCheckStatus } from '../../util/getWorstHealthCheckStatus';
-import { getHealthGroupIcon } from '../util/healthIcons';
+import { getHealthCheckIcon } from '../util/healthIcons';
 import { Loaded } from '../../util/loadable';
 import { hasFixCommand } from '../../util/issueFixes';
 
@@ -17,7 +17,7 @@ export class HealthCheckGroupTreeItem extends vscode.TreeItem {
         this.healthChecks = healthChecks.data;
 
         const worstStatus = getWorstHealthCheckStatus(healthChecks.data);
-        this.iconPath = getHealthGroupIcon(worstStatus);
+        this.iconPath = getHealthCheckIcon(worstStatus);
         if (healthChecks.loading) {
             this.iconPath = new vscode.ThemeIcon('loading~spin');
         }

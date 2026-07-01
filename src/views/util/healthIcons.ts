@@ -23,13 +23,3 @@ export const getHealthCheckIcon = (
         new vscode.ThemeColor('testing.iconFailed'),
     );
 };
-
-export const getHealthGroupIcon = (
-    status: HealthCheckStatus,
-): vscode.ThemeIcon => {
-    if (status === 'ok') {
-        return new vscode.ThemeIcon('library');
-    }
-
-    return getHealthCheckIcon(status);
-};

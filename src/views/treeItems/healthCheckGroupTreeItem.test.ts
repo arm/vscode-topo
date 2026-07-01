@@ -19,7 +19,12 @@ describe('HealthCheckGroupTreeItem', () => {
         expect(item.collapsibleState).toBe(
             vscode.TreeItemCollapsibleState.Collapsed,
         );
-        expect(item.iconPath).toStrictEqual(new vscode.ThemeIcon('library'));
+        expect(item.iconPath).toStrictEqual(
+            new vscode.ThemeIcon(
+                'check',
+                new vscode.ThemeColor('testing.iconPassed'),
+            ),
+        );
     });
 
     it('sets loading icon when loading', () => {
