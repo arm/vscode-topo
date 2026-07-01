@@ -3,7 +3,7 @@ import { TargetTreeView } from './targetTreeView';
 import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
 import { getWorstHealthCheckStatus } from '../util/getWorstHealthCheckStatus';
-import { getHealthGroupIcon } from './util/healthIcons';
+import { getHealthCheckIcon } from './util/healthIcons';
 import { Loadable } from '../util/loadable';
 import { TargetHealthReport } from '../services/topoCliSchema';
 import { selectTarget } from '../commands';
@@ -29,7 +29,7 @@ function getStatusIconId(state: Loadable<TargetHealthReport>): string {
         return 'pass-filled';
     }
 
-    return getHealthGroupIcon(status).id;
+    return getHealthCheckIcon(status).id;
 }
 
 function renderStatusBarItem(

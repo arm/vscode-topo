@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { getHealthGroupIcon, getHealthCheckIcon } from './healthIcons';
+import { getHealthCheckIcon } from './healthIcons';
 
 describe('getHealthCheckIcon', () => {
     it('maps ok to a passed check icon', () => {
@@ -32,24 +32,6 @@ describe('getHealthCheckIcon', () => {
                 'close',
                 new vscode.ThemeColor('testing.iconFailed'),
             ),
-        );
-    });
-});
-
-describe('getHealthGroupIcon', () => {
-    it('maps ok to a passed check icon', () => {
-        expect(getHealthGroupIcon('ok')).toEqual(getHealthCheckIcon('ok'));
-    });
-
-    it('maps warning to a warning item icon', () => {
-        expect(getHealthGroupIcon('warning')).toEqual(
-            getHealthCheckIcon('warning'),
-        );
-    });
-
-    it('maps error to an error item icon', () => {
-        expect(getHealthGroupIcon('error')).toEqual(
-            getHealthCheckIcon('error'),
         );
     });
 });
