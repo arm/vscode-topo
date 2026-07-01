@@ -2,10 +2,13 @@
     "compilerOptions": {
         "target": "ES2022",
         "module": "commonjs",
+        "lib": ["ES2022"],
+        "types": ["node", "vitest/globals"],
         "sourceMap": true,
         "strict": true,
         "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true,
         "skipLibCheck": true
-    }
+    },
+    "include": ["src"]
 }
