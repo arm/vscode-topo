@@ -2,6 +2,10 @@ import * as vscode from 'vscode';
 import { mock } from 'vitest-mock-extended';
 import { activate } from './extension';
 import { TopoCli } from './services/topoCli';
+import { logger } from './util/logger';
+import { HostModel } from './models/hostModel';
+import { ProjectModel } from './models/projectModel';
+import { TargetModel } from './models/targetModel';
 
 vi.mock('child_process');
 vi.mock('./util/logger');
@@ -27,6 +31,18 @@ describe('extension activation', () => {
 
         expect(vscode.commands.registerCommand).toHaveBeenCalled();
         expect(context.subscriptions.length).toBeGreaterThan(0);
+        expect(
+            context.subscriptions.filter((item) => item === logger),
+        ).toHaveLength(1);
+        expect(
+            context.subscriptions.some((item) => item instanceof TargetModel),
+        ).toBe(true);
+        expect(
+            context.subscriptions.some((item) => item instanceof HostModel),
+        ).toBe(true);
+        expect(
+            context.subscriptions.some((item) => item instanceof ProjectModel),
+        ).toBe(true);
         expect(setTimeoutSpy).toHaveBeenCalledWith(
             expect.any(Function),
             60_000,
@@ -51,5 +67,6 @@ describe('extension activation', () => {
             expect.stringContaining('version mismatch'),
         );
         expect(vscode.commands.registerCommand).not.toHaveBeenCalled();
+        expect(context.subscriptions).toContain(logger);
     });
 });
