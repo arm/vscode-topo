@@ -147,7 +147,7 @@ describe('project clone utilities', () => {
         });
 
         it('falls back to unfiltered templates when target-specific lookup fails', async () => {
-            topoCli.listTemplates.mockImplementation((sshTarget) => {
+            topoCli.listTemplates.mockImplementation(async (sshTarget) => {
                 if (sshTarget) {
                     throw new WrappedError('CLI', 'target unhealthy');
                 }
@@ -168,7 +168,7 @@ describe('project clone utilities', () => {
         });
 
         it('returns undefined when no template is selected', async () => {
-            topoCli.listTemplates.mockReturnValue(templateList);
+            topoCli.listTemplates.mockResolvedValue(templateList);
             vi.mocked(vscode.window.showQuickPick).mockResolvedValueOnce(
                 undefined,
             );
@@ -179,7 +179,7 @@ describe('project clone utilities', () => {
         });
 
         it('returns the selected template', async () => {
-            topoCli.listTemplates.mockReturnValue(templateList);
+            topoCli.listTemplates.mockResolvedValue(templateList);
             vi.mocked(vscode.window.showQuickPick).mockResolvedValueOnce(
                 templateQuickPickItems[0],
             );
@@ -200,7 +200,7 @@ describe('project clone utilities', () => {
         });
 
         it('lists templates without a target when none is selected', async () => {
-            topoCli.listTemplates.mockReturnValue(templateList);
+            topoCli.listTemplates.mockResolvedValue(templateList);
             vi.mocked(vscode.window.showQuickPick).mockResolvedValueOnce(
                 undefined,
             );

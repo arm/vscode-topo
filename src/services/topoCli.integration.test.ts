@@ -15,7 +15,7 @@ vi.setConfig({ testTimeout: process.platform === 'win32' ? 60_000 : 15_000 });
 
 describe('getVersion', () => {
     it('parses output', async () => {
-        const version = topoCli.getVersion();
+        const version = await topoCli.getVersion();
 
         expect(version).toEqual(
             expect.objectContaining({
@@ -27,8 +27,8 @@ describe('getVersion', () => {
 });
 
 describe('listTemplates', () => {
-    it('parses templates correctly', () => {
-        const templates = topoCli.listTemplates();
+    it('parses templates correctly', async () => {
+        const templates = await topoCli.listTemplates();
 
         expect(templates.length).toBeGreaterThan(0);
         for (const template of templates) {
