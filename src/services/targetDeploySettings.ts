@@ -1,9 +1,5 @@
 import * as vscode from 'vscode';
-import {
-    CONFIG_DEFAULT_TARGET_DEPLOY_SETTINGS,
-    CONFIG_TARGET_DEPLOY_SETTINGS,
-    PACKAGE_NAME,
-} from '../manifest';
+import { CONFIG_TARGET_DEPLOY_SETTINGS, PACKAGE_NAME } from '../manifest';
 
 export interface TargetDeploySettings {
     port?: string;
@@ -13,7 +9,6 @@ export interface TargetDeploySettings {
 
 export type TargetDeploySettingsByTarget = Record<string, TargetDeploySettings>;
 type RawTargetDeploySettingsByTarget = Record<string, unknown>;
-type RawTargetDeploySettings = Record<string, unknown>;
 type TargetDeploySettingsKey = keyof TargetDeploySettings;
 
 export interface DeployOptions {
@@ -22,7 +17,7 @@ export interface DeployOptions {
     noRecreate?: boolean;
 }
 
-const fallbackTargetDeploySettings: TargetDeploySettings = {
+const defaultTargetDeploySettings: Required<TargetDeploySettings> = {
     port: '',
     forceRecreate: false,
     noRecreate: false,
@@ -102,19 +97,6 @@ function getRawTargetDeploySettingsConfiguration(
     return settings as RawTargetDeploySettingsByTarget;
 }
 
-function getRawDefaultTargetDeploySettingsConfiguration(
-    config: vscode.WorkspaceConfiguration,
-): RawTargetDeploySettings {
-    const settings = config.inspect<unknown>(
-        CONFIG_DEFAULT_TARGET_DEPLOY_SETTINGS,
-    )?.globalValue;
-    if (!settings || typeof settings !== 'object' || Array.isArray(settings)) {
-        return {};
-    }
-
-    return settings as RawTargetDeploySettings;
-}
-
 function toDeployOptions(settings: TargetDeploySettings): DeployOptions {
     const trimmedPort = settings.port?.trim();
     return {
@@ -143,55 +125,15 @@ function mergeTargetDeploySettings(
     };
 }
 
-function getDefaultTargetDeploySettings(
-    config: vscode.WorkspaceConfiguration,
-): TargetDeploySettings {
-    const configured = config.get<unknown>(
-        CONFIG_DEFAULT_TARGET_DEPLOY_SETTINGS,
-    );
-    if (isTargetDeploySettings(configured)) {
-        return mergeTargetDeploySettings(
-            fallbackTargetDeploySettings,
-            configured,
-        );
-    }
-
-    return fallbackTargetDeploySettings;
-}
-
 export function getDeployOptionsForTarget(target: string): DeployOptions {
     const config = vscode.workspace.getConfiguration(PACKAGE_NAME);
     const settingsByTarget = getTargetDeploySettingsConfiguration(config);
-    const defaultSettings = getDefaultTargetDeploySettings(config);
     const settings = mergeTargetDeploySettings(
-        defaultSettings,
+        defaultTargetDeploySettings,
         settingsByTarget[target],
     );
 
     return toDeployOptions(settings);
-}
-
-export async function ensureDefaultTargetDeploySettings(): Promise<void> {
-    const config = vscode.workspace.getConfiguration(PACKAGE_NAME);
-    const currentSettings =
-        getRawDefaultTargetDeploySettingsConfiguration(config);
-    const nextSettings: RawTargetDeploySettings = {
-        ...fallbackTargetDeploySettings,
-        ...currentSettings,
-    };
-
-    const needsUpdate = Object.keys(fallbackTargetDeploySettings).some(
-        (key) => currentSettings[key] === undefined,
-    );
-    if (!needsUpdate) {
-        return;
-    }
-
-    await config.update(
-        CONFIG_DEFAULT_TARGET_DEPLOY_SETTINGS,
-        nextSettings,
-        vscode.ConfigurationTarget.Global,
-    );
 }
 
 export async function ensureCachedTargetDeploySettings(

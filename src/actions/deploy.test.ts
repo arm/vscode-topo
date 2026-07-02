@@ -9,10 +9,7 @@ import { TaskExecutor } from '../util/taskExecutor';
 import { ProjectController } from '../controllers/projectController';
 import { ProjectTreeItem } from '../views/treeItems/projectTreeItem';
 import { unloaded } from '../util/loadable';
-import {
-    CONFIG_DEFAULT_TARGET_DEPLOY_SETTINGS,
-    CONFIG_TARGET_DEPLOY_SETTINGS,
-} from '../manifest';
+import { CONFIG_TARGET_DEPLOY_SETTINGS } from '../manifest';
 
 describe('Deploy', () => {
     let deployAction: Deploy;
@@ -235,11 +232,6 @@ describe('Deploy', () => {
 
     it('passes force recreate from the command handler', async () => {
         mockDeployConfiguration({
-            [CONFIG_DEFAULT_TARGET_DEPLOY_SETTINGS]: {
-                port: '5000',
-                forceRecreate: false,
-                noRecreate: false,
-            },
             [CONFIG_TARGET_DEPLOY_SETTINGS]: {
                 [target]: {
                     port: '',
@@ -261,11 +253,6 @@ describe('Deploy', () => {
 
     it('passes no recreate from the command handler', async () => {
         mockDeployConfiguration({
-            [CONFIG_DEFAULT_TARGET_DEPLOY_SETTINGS]: {
-                port: '5000',
-                forceRecreate: false,
-                noRecreate: false,
-            },
             [CONFIG_TARGET_DEPLOY_SETTINGS]: {
                 [target]: {
                     port: '',
@@ -285,63 +272,8 @@ describe('Deploy', () => {
         );
     });
 
-    it('lets target no recreate override default force recreate', async () => {
+    it('uses code defaults when the target has no settings entry', async () => {
         mockDeployConfiguration({
-            [CONFIG_DEFAULT_TARGET_DEPLOY_SETTINGS]: {
-                port: '5000',
-                forceRecreate: true,
-                noRecreate: false,
-            },
-            [CONFIG_TARGET_DEPLOY_SETTINGS]: {
-                [target]: {
-                    port: '',
-                    noRecreate: true,
-                },
-            },
-        });
-
-        await deployAction.deployContextCommandHandler(composeFileUri);
-
-        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-        expectDeployTask(
-            taskExecutor.run.mock.calls[0][0],
-            path.dirname(composeFilePath),
-            ['deploy', '--target', target, '--no-recreate'],
-        );
-    });
-
-    it('lets target force recreate override default no recreate', async () => {
-        mockDeployConfiguration({
-            [CONFIG_DEFAULT_TARGET_DEPLOY_SETTINGS]: {
-                port: '5000',
-                forceRecreate: false,
-                noRecreate: true,
-            },
-            [CONFIG_TARGET_DEPLOY_SETTINGS]: {
-                [target]: {
-                    port: '',
-                    forceRecreate: true,
-                },
-            },
-        });
-
-        await deployAction.deployContextCommandHandler(composeFileUri);
-
-        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-        expectDeployTask(
-            taskExecutor.run.mock.calls[0][0],
-            path.dirname(composeFilePath),
-            ['deploy', '--target', target, '--force-recreate'],
-        );
-    });
-
-    it('falls back to default target settings when the target has no entry', async () => {
-        mockDeployConfiguration({
-            [CONFIG_DEFAULT_TARGET_DEPLOY_SETTINGS]: {
-                port: ' 5001 ',
-                forceRecreate: true,
-                noRecreate: false,
-            },
             [CONFIG_TARGET_DEPLOY_SETTINGS]: {},
         });
 
@@ -351,17 +283,11 @@ describe('Deploy', () => {
         expectDeployTask(
             taskExecutor.run.mock.calls[0][0],
             path.dirname(composeFilePath),
-            ['deploy', '--target', target, '-p', '5001', '--force-recreate'],
         );
     });
 
-    it('uses default target settings for missing target-specific fields', async () => {
+    it('uses code defaults for missing target-specific fields', async () => {
         mockDeployConfiguration({
-            [CONFIG_DEFAULT_TARGET_DEPLOY_SETTINGS]: {
-                port: '5002',
-                forceRecreate: true,
-                noRecreate: false,
-            },
             [CONFIG_TARGET_DEPLOY_SETTINGS]: {
                 [target]: {
                     port: '5003',
@@ -375,17 +301,12 @@ describe('Deploy', () => {
         expectDeployTask(
             taskExecutor.run.mock.calls[0][0],
             path.dirname(composeFilePath),
-            ['deploy', '--target', target, '-p', '5003', '--force-recreate'],
+            ['deploy', '--target', target, '-p', '5003'],
         );
     });
 
     it('ignores malformed target settings', async () => {
         mockDeployConfiguration({
-            [CONFIG_DEFAULT_TARGET_DEPLOY_SETTINGS]: {
-                port: '5004',
-                forceRecreate: true,
-                noRecreate: false,
-            },
             [CONFIG_TARGET_DEPLOY_SETTINGS]: {
                 [target]: {
                     port: 5003,
@@ -401,17 +322,11 @@ describe('Deploy', () => {
         expectDeployTask(
             taskExecutor.run.mock.calls[0][0],
             path.dirname(composeFilePath),
-            ['deploy', '--target', target, '-p', '5004', '--force-recreate'],
         );
     });
 
     it('ignores target settings with conflicting recreate options', async () => {
         mockDeployConfiguration({
-            [CONFIG_DEFAULT_TARGET_DEPLOY_SETTINGS]: {
-                port: '5009',
-                forceRecreate: false,
-                noRecreate: true,
-            },
             [CONFIG_TARGET_DEPLOY_SETTINGS]: {
                 [target]: {
                     port: '5010',
@@ -427,17 +342,11 @@ describe('Deploy', () => {
         expectDeployTask(
             taskExecutor.run.mock.calls[0][0],
             path.dirname(composeFilePath),
-            ['deploy', '--target', target, '-p', '5009', '--no-recreate'],
         );
     });
 
     it('ignores target settings with an invalid port', async () => {
         mockDeployConfiguration({
-            [CONFIG_DEFAULT_TARGET_DEPLOY_SETTINGS]: {
-                port: '5005',
-                forceRecreate: false,
-                noRecreate: false,
-            },
             [CONFIG_TARGET_DEPLOY_SETTINGS]: {
                 [target]: {
                     port: '65536',
@@ -453,81 +362,17 @@ describe('Deploy', () => {
         expectDeployTask(
             taskExecutor.run.mock.calls[0][0],
             path.dirname(composeFilePath),
-            ['deploy', '--target', target, '-p', '5005'],
         );
     });
 
     it('ignores target settings with unknown fields', async () => {
         mockDeployConfiguration({
-            [CONFIG_DEFAULT_TARGET_DEPLOY_SETTINGS]: {
-                port: '5006',
-                forceRecreate: false,
-                noRecreate: false,
-            },
             [CONFIG_TARGET_DEPLOY_SETTINGS]: {
                 [target]: {
                     port: '5007',
                     forceRecrate: true,
                 },
             },
-        });
-
-        await deployAction.deployContextCommandHandler(composeFileUri);
-
-        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-        expectDeployTask(
-            taskExecutor.run.mock.calls[0][0],
-            path.dirname(composeFilePath),
-            ['deploy', '--target', target, '-p', '5006'],
-        );
-    });
-
-    it('ignores default target settings with an invalid port', async () => {
-        mockDeployConfiguration({
-            [CONFIG_DEFAULT_TARGET_DEPLOY_SETTINGS]: {
-                port: 'abc',
-                forceRecreate: true,
-                noRecreate: false,
-            },
-            [CONFIG_TARGET_DEPLOY_SETTINGS]: {},
-        });
-
-        await deployAction.deployContextCommandHandler(composeFileUri);
-
-        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-        expectDeployTask(
-            taskExecutor.run.mock.calls[0][0],
-            path.dirname(composeFilePath),
-        );
-    });
-
-    it('ignores default target settings with unknown fields', async () => {
-        mockDeployConfiguration({
-            [CONFIG_DEFAULT_TARGET_DEPLOY_SETTINGS]: {
-                port: '5008',
-                forceRecrate: true,
-                noRecreate: false,
-            },
-            [CONFIG_TARGET_DEPLOY_SETTINGS]: {},
-        });
-
-        await deployAction.deployContextCommandHandler(composeFileUri);
-
-        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-        expectDeployTask(
-            taskExecutor.run.mock.calls[0][0],
-            path.dirname(composeFilePath),
-        );
-    });
-
-    it('ignores default target settings with conflicting recreate options', async () => {
-        mockDeployConfiguration({
-            [CONFIG_DEFAULT_TARGET_DEPLOY_SETTINGS]: {
-                port: '5011',
-                forceRecreate: true,
-                noRecreate: true,
-            },
-            [CONFIG_TARGET_DEPLOY_SETTINGS]: {},
         });
 
         await deployAction.deployContextCommandHandler(composeFileUri);
