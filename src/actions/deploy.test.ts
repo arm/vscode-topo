@@ -1,7 +1,7 @@
 import path from 'node:path';
 import os from 'node:os';
 import * as vscode from 'vscode';
-import { Deploy, deploy as deployServices } from './deploy';
+import { Deploy, buildDeployArgs, deploy as deployServices } from './deploy';
 import { TargetModel } from '../models/targetModel';
 import { MockProxy, mock } from 'vitest-mock-extended';
 import { mutable } from '../util/test/mutable';
@@ -9,6 +9,7 @@ import { TaskExecutor } from '../util/taskExecutor';
 import { ProjectController } from '../controllers/projectController';
 import { ProjectTreeItem } from '../views/treeItems/projectTreeItem';
 import { unloaded } from '../util/loadable';
+import { CONFIG_TARGET_DEPLOY_SETTINGS } from '../manifest';
 
 describe('Deploy', () => {
     let deployAction: Deploy;
@@ -39,11 +40,15 @@ describe('Deploy', () => {
         );
     }
 
-    function expectDeployTask(task: vscode.Task, cwd: string): void {
+    function expectDeployTask(
+        task: vscode.Task,
+        cwd: string,
+        args = ['deploy', '--target', target],
+    ): void {
         expect(task.name).toBe('Deploy to topo.local');
         expect(task.execution).toMatchObject({
             process: 'topo',
-            args: ['deploy', '--target', target],
+            args,
             options: { cwd },
         });
     }
@@ -58,6 +63,12 @@ describe('Deploy', () => {
                     uri.fsPath.startsWith(workspaceFolder.uri.fsPath),
                 ),
         );
+    }
+
+    function mockDeployConfiguration(settings: Record<string, unknown>): void {
+        vi.mocked(vscode.workspace.getConfiguration).mockReturnValue({
+            get: vi.fn((key: string) => settings[key]),
+        } as unknown as vscode.WorkspaceConfiguration);
     }
 
     beforeEach(() => {
@@ -119,6 +130,63 @@ describe('Deploy', () => {
         );
     });
 
+    it('passes the custom registry port to deploy', async () => {
+        await deployServices(taskExecutor, composeFilePath, target, {
+            customRegistryPort: '5000',
+        });
+
+        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+        expectDeployTask(
+            taskExecutor.run.mock.calls[0][0],
+            path.dirname(composeFilePath),
+            ['deploy', '--target', target, '-p', '5000'],
+        );
+    });
+
+    it('builds deploy arguments without unset options', () => {
+        const args = buildDeployArgs(target);
+
+        expect(args).toEqual(['deploy', '--target', target]);
+    });
+
+    it('builds deploy arguments with configured options', () => {
+        const args = buildDeployArgs(target, {
+            customRegistryPort: '5000',
+        });
+
+        expect(args).toEqual(['deploy', '--target', target, '-p', '5000']);
+    });
+
+    it('builds deploy arguments with force recreate enabled', () => {
+        const args = buildDeployArgs(target, {
+            forceRecreate: true,
+        });
+
+        expect(args).toEqual([
+            'deploy',
+            '--target',
+            target,
+            '--force-recreate',
+        ]);
+    });
+
+    it('builds deploy arguments with no recreate enabled', () => {
+        const args = buildDeployArgs(target, {
+            noRecreate: true,
+        });
+
+        expect(args).toEqual(['deploy', '--target', target, '--no-recreate']);
+    });
+
+    it('throws when deploy arguments contain conflicting recreate options', () => {
+        expect(() =>
+            buildDeployArgs(target, {
+                forceRecreate: true,
+                noRecreate: true,
+            }),
+        ).toThrow('Cannot use both force recreate and no recreate');
+    });
+
     it('handles task failure', async () => {
         taskExecutor.run.mockRejectedValueOnce(new Error('deploy failed'));
         await deployServices(taskExecutor, composeFilePath, target);
@@ -140,6 +208,180 @@ describe('Deploy', () => {
         expect(
             projectController.refreshProjectContainersCommandHandler,
         ).toHaveBeenCalledOnce();
+    });
+
+    it('passes the configured custom registry port from the command handler', async () => {
+        mockDeployConfiguration({
+            [CONFIG_TARGET_DEPLOY_SETTINGS]: {
+                [target]: {
+                    port: ' 5000 ',
+                    forceRecreate: false,
+                },
+            },
+        });
+
+        await deployAction.deployContextCommandHandler(composeFileUri);
+
+        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+        expectDeployTask(
+            taskExecutor.run.mock.calls[0][0],
+            path.dirname(composeFilePath),
+            ['deploy', '--target', target, '-p', '5000'],
+        );
+    });
+
+    it('passes force recreate from the command handler', async () => {
+        mockDeployConfiguration({
+            [CONFIG_TARGET_DEPLOY_SETTINGS]: {
+                [target]: {
+                    port: '',
+                    forceRecreate: true,
+                    noRecreate: false,
+                },
+            },
+        });
+
+        await deployAction.deployContextCommandHandler(composeFileUri);
+
+        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+        expectDeployTask(
+            taskExecutor.run.mock.calls[0][0],
+            path.dirname(composeFilePath),
+            ['deploy', '--target', target, '--force-recreate'],
+        );
+    });
+
+    it('passes no recreate from the command handler', async () => {
+        mockDeployConfiguration({
+            [CONFIG_TARGET_DEPLOY_SETTINGS]: {
+                [target]: {
+                    port: '',
+                    forceRecreate: false,
+                    noRecreate: true,
+                },
+            },
+        });
+
+        await deployAction.deployContextCommandHandler(composeFileUri);
+
+        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+        expectDeployTask(
+            taskExecutor.run.mock.calls[0][0],
+            path.dirname(composeFilePath),
+            ['deploy', '--target', target, '--no-recreate'],
+        );
+    });
+
+    it('uses code defaults when the target has no settings entry', async () => {
+        mockDeployConfiguration({
+            [CONFIG_TARGET_DEPLOY_SETTINGS]: {},
+        });
+
+        await deployAction.deployContextCommandHandler(composeFileUri);
+
+        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+        expectDeployTask(
+            taskExecutor.run.mock.calls[0][0],
+            path.dirname(composeFilePath),
+        );
+    });
+
+    it('uses code defaults for missing target-specific fields', async () => {
+        mockDeployConfiguration({
+            [CONFIG_TARGET_DEPLOY_SETTINGS]: {
+                [target]: {
+                    port: '5003',
+                },
+            },
+        });
+
+        await deployAction.deployContextCommandHandler(composeFileUri);
+
+        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+        expectDeployTask(
+            taskExecutor.run.mock.calls[0][0],
+            path.dirname(composeFilePath),
+            ['deploy', '--target', target, '-p', '5003'],
+        );
+    });
+
+    it('ignores malformed target settings', async () => {
+        mockDeployConfiguration({
+            [CONFIG_TARGET_DEPLOY_SETTINGS]: {
+                [target]: {
+                    port: 5003,
+                    forceRecreate: 'yes',
+                    noRecreate: false,
+                },
+            },
+        });
+
+        await deployAction.deployContextCommandHandler(composeFileUri);
+
+        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+        expectDeployTask(
+            taskExecutor.run.mock.calls[0][0],
+            path.dirname(composeFilePath),
+        );
+    });
+
+    it('ignores target settings with conflicting recreate options', async () => {
+        mockDeployConfiguration({
+            [CONFIG_TARGET_DEPLOY_SETTINGS]: {
+                [target]: {
+                    port: '5010',
+                    forceRecreate: true,
+                    noRecreate: true,
+                },
+            },
+        });
+
+        await deployAction.deployContextCommandHandler(composeFileUri);
+
+        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+        expectDeployTask(
+            taskExecutor.run.mock.calls[0][0],
+            path.dirname(composeFilePath),
+        );
+    });
+
+    it('ignores target settings with an invalid port', async () => {
+        mockDeployConfiguration({
+            [CONFIG_TARGET_DEPLOY_SETTINGS]: {
+                [target]: {
+                    port: '65536',
+                    forceRecreate: true,
+                    noRecreate: false,
+                },
+            },
+        });
+
+        await deployAction.deployContextCommandHandler(composeFileUri);
+
+        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+        expectDeployTask(
+            taskExecutor.run.mock.calls[0][0],
+            path.dirname(composeFilePath),
+        );
+    });
+
+    it('ignores target settings with unknown fields', async () => {
+        mockDeployConfiguration({
+            [CONFIG_TARGET_DEPLOY_SETTINGS]: {
+                [target]: {
+                    port: '5007',
+                    forceRecrate: true,
+                },
+            },
+        });
+
+        await deployAction.deployContextCommandHandler(composeFileUri);
+
+        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+        expectDeployTask(
+            taskExecutor.run.mock.calls[0][0],
+            path.dirname(composeFilePath),
+        );
     });
 
     it('deploys the project tree item compose file', async () => {

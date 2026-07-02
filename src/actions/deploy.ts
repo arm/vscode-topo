@@ -15,6 +15,10 @@ import {
     type ComposeFileMetadata,
 } from '../util/composeFile';
 import { ProjectTreeItem } from '../views/treeItems/projectTreeItem';
+import {
+    DeployOptions,
+    getDeployOptionsForTarget,
+} from '../services/targetDeploySettings';
 
 const viewLogsItem: vscode.MessageItem = {
     title: 'View Logs',
@@ -65,7 +69,12 @@ export class Deploy {
         if (!resource) {
             return;
         }
-        await deploy(this.taskExecutor, resource.fsPath, target);
+        await deploy(
+            this.taskExecutor,
+            resource.fsPath,
+            target,
+            getDeployOptionsForTarget(target),
+        );
         await this.projectController.refreshProjectContainersCommandHandler();
     }
 
@@ -89,7 +98,12 @@ export class Deploy {
             throw err;
         }
 
-        await deploy(this.taskExecutor, resource.fsPath, target);
+        await deploy(
+            this.taskExecutor,
+            resource.fsPath,
+            target,
+            getDeployOptionsForTarget(target),
+        );
         await this.projectController.refreshProjectContainersCommandHandler();
     }
 
@@ -138,10 +152,11 @@ export async function deploy(
     taskExecutor: TaskExecutor,
     composeFilePath: string,
     target: string,
+    options: DeployOptions = {},
 ): Promise<void> {
     const task = createProcessTask(
         `Deploy to ${target}`,
-        ['topo', 'deploy', '--target', target],
+        ['topo', ...buildDeployArgs(target, options)],
         {
             cwd: path.dirname(composeFilePath),
         },
@@ -170,4 +185,25 @@ export async function deploy(
     vscode.window.showInformationMessage(
         `Deployment to ${target} completed successfully.`,
     );
+}
+
+export function buildDeployArgs(
+    target: string,
+    options: DeployOptions = {},
+): string[] {
+    if (options.forceRecreate && options.noRecreate) {
+        throw new Error('Cannot use both force recreate and no recreate');
+    }
+
+    const args = ['deploy', '--target', target];
+    if (options.customRegistryPort) {
+        args.push('-p', options.customRegistryPort);
+    }
+    if (options.forceRecreate) {
+        args.push('--force-recreate');
+    }
+    if (options.noRecreate) {
+        args.push('--no-recreate');
+    }
+    return args;
 }
