@@ -411,7 +411,7 @@
         "calculate-new-version": "node --no-warnings --experimental-strip-types scripts/calculate-new-version.ts",
         "prettier-check": "prettier -c .",
         "eslint-check": "eslint .",
-        "tsc-check": "tsc --noEmit -p src/tsconfig.json"
+        "tsc-check": "tsc --noEmit -p tsconfig.json"
     },
     "devDependencies": {
         "@eslint/js": "^10.0.1",

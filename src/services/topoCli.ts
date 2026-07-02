@@ -1,5 +1,4 @@
 import * as path from 'node:path';
-import * as childProcess from 'node:child_process';
 import * as vscode from 'vscode';
 import * as manifest from '../manifest';
 import {
@@ -22,6 +21,7 @@ import {
 } from '../errors/wrappedError';
 import { getErrorMessage } from '../util/getErrorMessage';
 import { TargetDescription } from '../util/types';
+import { execFile } from '../util/exec';
 
 export interface TopoCliVersion {
     version: string;
@@ -86,9 +86,6 @@ export function parseWrappedError(error: unknown): WrappedError | undefined {
     return new WrappedError('CLI', message, logEntries, { cause: error });
 }
 
-/**
- * Encapsulates operations against the topo binary.
- */
 export class TopoCli {
     constructor(
         private readonly extensionPath: string,
@@ -108,14 +105,28 @@ export class TopoCli {
         return path.join(this.extensionPath, 'resources');
     }
 
-    private getProcessEnv(): NodeJS.ProcessEnv {
-        return { ...process.env };
+    private async exec(
+        cmd: string[],
+        opts?: { cwd?: string },
+    ): Promise<string> {
+        const bin = this.getBinaryPath();
+        let out: string;
+        try {
+            const { stdout } = await execFile(bin, cmd, {
+                encoding: 'utf8',
+                windowsHide: true,
+                ...opts,
+                env: {
+                    ...process.env,
+                },
+            });
+            out = stdout;
+        } catch (error: unknown) {
+            throw parseWrappedError(error) ?? error;
+        }
+        return out;
     }
 
-    /**
-     * Returns the file system path to the topo binary.
-     * On Windows, always appends the .exe extension.
-     */
     public getBinaryPath(): string {
         const binaryFolder = this.getBinaryFolder();
         const isWin = process.platform === 'win32';
@@ -126,12 +137,8 @@ export class TopoCli {
         return base;
     }
 
-    /** Returns the version string of the binary (via version). */
-    public getVersion(): TopoCliVersion {
-        const bin = this.getBinaryPath();
-        const out = childProcess.execFileSync(bin, ['--version'], {
-            encoding: 'utf8',
-        });
+    public async getVersion(): Promise<TopoCliVersion> {
+        const out = await this.exec(['--version']);
         const match = out.match(
             /topo version (?<version>\S+) \(commit: (?<commit>\S+)\)/i,
         );
@@ -145,53 +152,22 @@ export class TopoCli {
         return versionInfo;
     }
 
-    /** Lists templates (via templates). */
-    public listTemplates(sshTarget?: string): TemplateDescription[] {
-        const bin = this.getBinaryPath();
-        const cmd = ['templates'];
+    public async listTemplates(
+        sshTarget?: string,
+    ): Promise<TemplateDescription[]> {
+        const cmd = ['templates', '-o', 'json'];
         if (sshTarget) {
             cmd.push('--target', sshTarget);
         }
-        cmd.push('-o', 'json');
-        let out: string;
-        try {
-            out = childProcess.execFileSync(bin, cmd, {
-                encoding: 'utf8',
-            });
-        } catch (error: unknown) {
-            throw parseWrappedError(error) ?? error;
-        }
+        const out = await this.exec(cmd);
         const templates = JSON.parse(out);
         assert(templates, array(templateSchema));
         return templates;
     }
 
-    /** Returns target description data from topo describe JSON output. */
     public async describe(sshTarget: string): Promise<TargetDescription> {
-        const bin = this.getBinaryPath();
-        const cmd = ['describe', '--target', sshTarget, '--output', 'json'];
-        const output = await new Promise<string>((resolve, reject) => {
-            childProcess.execFile(
-                bin,
-                cmd,
-                {
-                    env: this.getProcessEnv(),
-                },
-                (error, stdout) => {
-                    if (error) {
-                        reject(
-                            new Error(
-                                `Failed to describe target: ${error.message}`,
-                                { cause: error },
-                            ),
-                        );
-                        return;
-                    }
-
-                    resolve(stdout);
-                },
-            );
-        });
+        const cmd = ['describe', '--target', sshTarget, '-o', 'json'];
+        const output = await this.exec(cmd);
 
         let parsedDescription: unknown;
         try {
@@ -213,48 +189,13 @@ export class TopoCli {
         }
     }
 
-    /** Runs the binary to initialize a project. */
-    public init(projectPath: string): Promise<void> {
-        return new Promise((resolve, reject) => {
-            const cmd = ['init'];
-            childProcess.execFile(
-                this.getBinaryPath(),
-                cmd,
-                {
-                    cwd: projectPath,
-                    env: this.getProcessEnv(),
-                },
-                (error, _stdout, stderr) => {
-                    if (error) {
-                        reject(new Error(stderr || error.message));
-                    } else {
-                        resolve();
-                    }
-                },
-            );
-        });
+    public async init(projectPath: string): Promise<void> {
+        await this.exec(['init'], { cwd: projectPath });
     }
 
     public async ps(sshTarget: string, projectPath: string): Promise<PsOutput> {
-        const bin = this.getBinaryPath();
         const cmd = ['ps', '-a', '--target', sshTarget, '-o', 'json'];
-        const output = await new Promise<string>((resolve, reject) => {
-            childProcess.execFile(
-                bin,
-                cmd,
-                {
-                    cwd: projectPath,
-                    env: this.getProcessEnv(),
-                },
-                (error, stdout, stderr) => {
-                    if (error) {
-                        reject(new Error(stderr || error.message));
-                    } else {
-                        resolve(stdout);
-                    }
-                },
-            );
-        });
+        const output = await this.exec(cmd, { cwd: projectPath });
         const containers = JSON.parse(output);
         assert(containers, psSchema);
         return containers;
@@ -264,31 +205,12 @@ export class TopoCli {
         schema: Struct<T>,
         sshTarget?: string,
     ): Promise<T> {
-        const bin = this.getBinaryPath();
-        const cmd = ['health'];
+        const cmd = ['health', '--skip-version-checks', '-o', 'json'];
         if (sshTarget) {
             cmd.push('--target', sshTarget);
         }
-        cmd.push('--skip-version-checks', '-o', 'json');
-        const promise = await new Promise<string>((resolve, reject) => {
-            const child = childProcess.execFile(
-                bin,
-                cmd,
-                {
-                    env: this.getProcessEnv(),
-                    windowsHide: true,
-                },
-                (error, stdout, stderr) => {
-                    if (error) {
-                        reject(new Error(stderr || error.message));
-                    } else {
-                        resolve(stdout);
-                    }
-                },
-            );
-            child.stdin?.end();
-        });
-        const result = JSON.parse(promise);
+        const output = await this.exec(cmd);
+        const result = JSON.parse(output);
         assert(result, schema);
         return result;
     }
@@ -301,8 +223,8 @@ export class TopoCli {
         return this.runHealth(healthReportSchema, sshTarget);
     }
 
-    public assertVersion(expected: string): void {
-        const actual = this.getVersion().version;
+    public async assertVersion(expected: string): Promise<void> {
+        const actual = (await this.getVersion()).version;
         if (actual !== expected) {
             throw new Error(
                 `version mismatch: found=${actual} expected=${expected}`,
