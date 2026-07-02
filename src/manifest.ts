@@ -2,8 +2,6 @@ export const REGISTRY_NAME = 'arm';
 export const PACKAGE_NAME = 'topo';
 export const DISPLAY_NAME = 'Topo';
 export const CONFIG_LOGGING_VERBOSITY = 'loggingVerbosity';
-export const CONFIG_DEFAULT_TARGET_DEPLOY_SETTINGS =
-    'defaultTargetDeploySettings';
 export const CONFIG_TARGET_DEPLOY_SETTINGS = 'targetDeploySettings';
 export const DEFAULT_LOGGING_VERBOSITY = 'warn';
 export const CONTEXT_SELECTED_TARGET_STATE = `${PACKAGE_NAME}.selectedTargetState`;
