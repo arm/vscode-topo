@@ -1,8 +1,6 @@
 export const REGISTRY_NAME = 'arm';
 export const PACKAGE_NAME = 'topo';
 export const DISPLAY_NAME = 'Topo';
-export const CONFIG_LOGGING_VERBOSITY = 'loggingVerbosity';
-export const DEFAULT_LOGGING_VERBOSITY = 'warn';
 export const CONTEXT_SELECTED_TARGET_STATE = `${PACKAGE_NAME}.selectedTargetState`;
 export const CONTEXT_PROJECT_COUNT = `${PACKAGE_NAME}.projectCount`;
 export const CONTEXT_TARGET_DATA_ISSUE = `${PACKAGE_NAME}.targetDataIssue`;
