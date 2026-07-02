@@ -422,7 +422,7 @@
         "@typescript-eslint/eslint-plugin": "^8.62.0",
         "@typescript-eslint/parser": "^8.62.0",
         "@vscode/vsce": "^3.6.2",
-        "eslint": "^10.5.0",
+        "eslint": "^10.6.0",
         "extract-zip": "^2.0.1",
         "globals": "^17.7.0",
         "prettier": "^3.8.4",
