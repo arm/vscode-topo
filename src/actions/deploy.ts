@@ -15,10 +15,17 @@ import {
     type ComposeFileMetadata,
 } from '../util/composeFile';
 import { ProjectTreeItem } from '../views/treeItems/projectTreeItem';
+import type { TargetHealthReport } from '../services/topoCliSchema';
 
 const viewLogsItem: vscode.MessageItem = {
     title: 'View Logs',
 };
+
+const deployTargetErrorCodes = [
+    'NO_TARGET_SELECTED',
+    'TARGET_HEALTH_CHECK_IN_PROGRESS',
+    'TARGET_CONNECTIVITY_NOT_OK',
+] as const;
 
 type ComposeFileQuickPickItem = vscode.QuickPickItem & {
     uri: vscode.Uri;
@@ -36,7 +43,7 @@ export class Deploy {
         try {
             target = this.getSelectedTarget();
         } catch (err: unknown) {
-            if (isWrappedError(err, ['NO_TARGET_SELECTED'])) {
+            if (isWrappedError(err, [...deployTargetErrorCodes])) {
                 showAndLogError('Error executing deploy command', err);
                 return;
             }
@@ -82,7 +89,7 @@ export class Deploy {
         try {
             target = this.getSelectedTarget();
         } catch (err: unknown) {
-            if (isWrappedError(err, ['NO_TARGET_SELECTED'])) {
+            if (isWrappedError(err, [...deployTargetErrorCodes])) {
                 showAndLogError('Error executing deploy command', err);
                 return;
             }
@@ -111,8 +118,37 @@ export class Deploy {
                 'No target selected. Please select a target before deploying.',
             );
         }
+
+        const health = this.targetModel.selectedTargetHealth;
+        if (health.loading) {
+            throw new WrappedError(
+                'TARGET_HEALTH_CHECK_IN_PROGRESS',
+                `Target ${target} health is still being checked. Wait for target health checks to finish before deploying.`,
+            );
+        }
+
+        if (
+            health.status === 'loaded' &&
+            health.data.connectivity.status !== 'ok'
+        ) {
+            throw new WrappedError(
+                'TARGET_CONNECTIVITY_NOT_OK',
+                getConnectivityFailureMessage(target, health.data),
+            );
+        }
+
         return target;
     }
+}
+
+function getConnectivityFailureMessage(
+    target: string,
+    health: TargetHealthReport,
+): string {
+    const details = health.connectivity.value
+        ? `: ${health.connectivity.value}`
+        : '';
+    return `Target ${target} connectivity is ${health.connectivity.status}${details}. Resolve target connectivity before deploying.`;
 }
 
 async function promptForComposeFile(
