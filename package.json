@@ -425,7 +425,7 @@
         "eslint": "^10.6.0",
         "extract-zip": "^2.0.1",
         "globals": "^17.7.0",
-        "prettier": "^3.8.4",
+        "prettier": "^3.9.4",
         "tar": "^7.5.19",
         "typescript": "^6.0.2",
         "vite": "^8.1.0",
