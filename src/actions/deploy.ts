@@ -16,8 +16,8 @@ import {
 } from '../util/composeFile';
 import { ProjectTreeItem } from '../views/treeItems/projectTreeItem';
 import {
-    DeployOptions,
-    getDeployOptionsForTarget,
+    TargetDeploySettings,
+    getTargetDeploySettingsForTarget,
 } from '../services/targetDeploySettings';
 
 const viewLogsItem: vscode.MessageItem = {
@@ -73,7 +73,7 @@ export class Deploy {
             this.taskExecutor,
             resource.fsPath,
             target,
-            getDeployOptionsForTarget(target),
+            getTargetDeploySettingsForTarget(target),
         );
         await this.projectController.refreshProjectContainersCommandHandler();
     }
@@ -102,7 +102,7 @@ export class Deploy {
             this.taskExecutor,
             resource.fsPath,
             target,
-            getDeployOptionsForTarget(target),
+            getTargetDeploySettingsForTarget(target),
         );
         await this.projectController.refreshProjectContainersCommandHandler();
     }
@@ -152,11 +152,11 @@ export async function deploy(
     taskExecutor: TaskExecutor,
     composeFilePath: string,
     target: string,
-    options: DeployOptions = {},
+    settings: TargetDeploySettings = {},
 ): Promise<void> {
     const task = createProcessTask(
         `Deploy to ${target}`,
-        ['topo', ...buildDeployArgs(target, options)],
+        ['topo', ...buildDeployArgs(target, settings)],
         {
             cwd: path.dirname(composeFilePath),
         },
@@ -189,20 +189,21 @@ export async function deploy(
 
 export function buildDeployArgs(
     target: string,
-    options: DeployOptions = {},
+    settings: TargetDeploySettings = {},
 ): string[] {
-    if (options.forceRecreate && options.noRecreate) {
+    if (settings.forceRecreate && settings.noRecreate) {
         throw new Error('Cannot use both force recreate and no recreate');
     }
 
     const args = ['deploy', '--target', target];
-    if (options.customRegistryPort) {
-        args.push('-p', options.customRegistryPort);
+    const port = settings.port?.trim();
+    if (port) {
+        args.push('-p', port);
     }
-    if (options.forceRecreate) {
+    if (settings.forceRecreate) {
         args.push('--force-recreate');
     }
-    if (options.noRecreate) {
+    if (settings.noRecreate) {
         args.push('--no-recreate');
     }
     return args;

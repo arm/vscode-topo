@@ -132,7 +132,7 @@ describe('Deploy', () => {
 
     it('passes the custom registry port to deploy', async () => {
         await deployServices(taskExecutor, composeFilePath, target, {
-            customRegistryPort: '5000',
+            port: '5000',
         });
 
         expect(taskExecutor.run).toHaveBeenCalledTimes(1);
@@ -151,7 +151,7 @@ describe('Deploy', () => {
 
     it('builds deploy arguments with configured options', () => {
         const args = buildDeployArgs(target, {
-            customRegistryPort: '5000',
+            port: '5000',
         });
 
         expect(args).toEqual(['deploy', '--target', target, '-p', '5000']);

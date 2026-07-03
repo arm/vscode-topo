@@ -11,12 +11,6 @@ export type TargetDeploySettingsByTarget = Record<string, TargetDeploySettings>;
 type RawTargetDeploySettingsByTarget = Record<string, unknown>;
 type TargetDeploySettingsKey = keyof TargetDeploySettings;
 
-export interface DeployOptions {
-    customRegistryPort?: string;
-    forceRecreate?: boolean;
-    noRecreate?: boolean;
-}
-
 const defaultTargetDeploySettings: Required<TargetDeploySettings> = {
     port: '',
     forceRecreate: false,
@@ -97,15 +91,6 @@ function getRawTargetDeploySettingsConfiguration(
     return settings as RawTargetDeploySettingsByTarget;
 }
 
-function toDeployOptions(settings: TargetDeploySettings): DeployOptions {
-    const trimmedPort = settings.port?.trim();
-    return {
-        customRegistryPort: trimmedPort || undefined,
-        forceRecreate: settings.forceRecreate,
-        noRecreate: settings.noRecreate,
-    };
-}
-
 function mergeTargetDeploySettings(
     defaultSettings: TargetDeploySettings,
     targetSettings: TargetDeploySettings | undefined,
@@ -125,15 +110,15 @@ function mergeTargetDeploySettings(
     };
 }
 
-export function getDeployOptionsForTarget(target: string): DeployOptions {
+export function getTargetDeploySettingsForTarget(
+    target: string,
+): TargetDeploySettings {
     const config = vscode.workspace.getConfiguration(PACKAGE_NAME);
     const settingsByTarget = getTargetDeploySettingsConfiguration(config);
-    const settings = mergeTargetDeploySettings(
+    return mergeTargetDeploySettings(
         defaultTargetDeploySettings,
         settingsByTarget[target],
     );
-
-    return toDeployOptions(settings);
 }
 
 export async function ensureCachedTargetDeploySettings(
