@@ -1,39 +1,16 @@
 import * as vscode from 'vscode';
+import {
+    boolean,
+    Infer,
+    is,
+    object,
+    optional,
+    refine,
+    string,
+} from 'superstruct';
 import { CONFIG_TARGET_DEPLOY_SETTINGS, PACKAGE_NAME } from '../manifest';
 
-export interface TargetDeploySettings {
-    port?: string;
-    forceRecreate?: boolean;
-    noRecreate?: boolean;
-}
-
-export type TargetDeploySettingsByTarget = Record<string, TargetDeploySettings>;
-type RawTargetDeploySettingsByTarget = Record<string, unknown>;
-type TargetDeploySettingsKey = keyof TargetDeploySettings;
-
-const defaultTargetDeploySettings: Required<TargetDeploySettings> = {
-    port: '',
-    forceRecreate: false,
-    noRecreate: false,
-};
-
-const targetDeploySettingsKeys = new Set<TargetDeploySettingsKey>([
-    'port',
-    'forceRecreate',
-    'noRecreate',
-]);
-
-function isTargetDeploySettingsKey(
-    key: string,
-): key is TargetDeploySettingsKey {
-    return targetDeploySettingsKeys.has(key as TargetDeploySettingsKey);
-}
-
-function isPortSetting(value: unknown): value is string {
-    if (typeof value !== 'string') {
-        return false;
-    }
-
+const portSchema = refine(string(), 'port', (value) => {
     const trimmedPort = value.trim();
     if (!trimmedPort) {
         return true;
@@ -45,24 +22,32 @@ function isPortSetting(value: unknown): value is string {
 
     const port = Number(trimmedPort);
     return port <= 65_535;
-}
+});
+
+const targetDeploySettingsSchema = refine(
+    object({
+        port: optional(portSchema),
+        forceRecreate: optional(boolean()),
+        noRecreate: optional(boolean()),
+    }),
+    'recreateOptions',
+    (settings) =>
+        !(settings.forceRecreate === true && settings.noRecreate === true),
+);
+
+export type TargetDeploySettings = Infer<typeof targetDeploySettingsSchema>;
+
+export type TargetDeploySettingsByTarget = Record<string, TargetDeploySettings>;
+type RawTargetDeploySettingsByTarget = Record<string, unknown>;
+
+const defaultTargetDeploySettings: Required<TargetDeploySettings> = {
+    port: '',
+    forceRecreate: false,
+    noRecreate: false,
+};
 
 function isTargetDeploySettings(value: unknown): value is TargetDeploySettings {
-    if (!value || typeof value !== 'object' || Array.isArray(value)) {
-        return false;
-    }
-
-    const { port, forceRecreate, noRecreate } = value as Record<
-        string,
-        unknown
-    >;
-    return (
-        Object.keys(value).every(isTargetDeploySettingsKey) &&
-        (port === undefined || isPortSetting(port)) &&
-        (forceRecreate === undefined || typeof forceRecreate === 'boolean') &&
-        (noRecreate === undefined || typeof noRecreate === 'boolean') &&
-        !(forceRecreate === true && noRecreate === true)
-    );
+    return is(value, targetDeploySettingsSchema);
 }
 
 function getTargetDeploySettingsConfiguration(
