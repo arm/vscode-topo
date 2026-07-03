@@ -14,7 +14,7 @@ import { ContainerDelete } from './actions/containerDelete';
 import { FixIssue } from './actions/fixIssue';
 import { ProjectClone } from './actions/projectClone';
 import { ProjectController } from './controllers/projectController';
-import { OpenTargetDeploySettings } from './actions/openTargetDeploySettings';
+import { OpenSettings } from './actions/openSettings';
 
 function command(id: string): string {
     return `${PACKAGE_NAME}.${id}`;
@@ -27,7 +27,7 @@ export const showOutput = command('showOutput');
 export const selectTarget = command('selectTarget');
 export const resetExtensionData = command('resetExtensionData');
 export const clearTargetSelection = command('clearTargetSelection');
-export const openTargetDeploySettings = command('openTargetDeploySettings');
+export const openSettings = command('openSettings');
 export const initProject = command('initProject');
 export const cloneProject = command('cloneProject');
 export const deploy = command('deploy');
@@ -58,7 +58,7 @@ export interface CommandHandlers {
     containerStop: ContainerStop;
     containerDelete: ContainerDelete;
     fixIssue: FixIssue;
-    openTargetDeploySettings: OpenTargetDeploySettings;
+    openSettings: OpenSettings;
 }
 
 export function register(handlers: CommandHandlers): vscode.Disposable {
@@ -83,8 +83,8 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
         vscode.commands.registerCommand(clearTargetSelection, () =>
             handlers.targetController.clearSelectionCommandHandler(),
         ),
-        vscode.commands.registerCommand(openTargetDeploySettings, () =>
-            handlers.openTargetDeploySettings.openTargetDeploySettingsCommandHandler(),
+        vscode.commands.registerCommand(openSettings, () =>
+            handlers.openSettings.openSettingsCommandHandler(),
         ),
         vscode.commands.registerCommand(initProject, () =>
             handlers.projectInit.initProjectCommandHandler(),

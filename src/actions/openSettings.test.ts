@@ -1,13 +1,10 @@
 import * as vscode from 'vscode';
-import {
-    OpenTargetDeploySettings,
-    openTargetDeploySettings,
-} from './openTargetDeploySettings';
+import { OpenSettings, openSettings } from './openSettings';
 import { TargetStore } from '../services/targetStore';
 import { mock } from 'vitest-mock-extended';
 import { CONFIG_TARGET_DEPLOY_SETTINGS } from '../manifest';
 
-describe('OpenTargetDeploySettings', () => {
+describe('OpenSettings', () => {
     afterEach(() => {
         vi.clearAllMocks();
     });
@@ -31,9 +28,9 @@ describe('OpenTargetDeploySettings', () => {
         mockConfiguration();
         const targetStore = mock<TargetStore>();
         targetStore.getTargets.mockReturnValue(new Set(['root@192.0.2.1']));
-        const action = new OpenTargetDeploySettings(targetStore);
+        const action = new OpenSettings(targetStore);
 
-        await action.openTargetDeploySettingsCommandHandler();
+        await action.openSettingsCommandHandler();
 
         expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
             'workbench.action.openSettings',
@@ -44,7 +41,7 @@ describe('OpenTargetDeploySettings', () => {
     it('opens the Topo extension settings', async () => {
         mockConfiguration();
 
-        await openTargetDeploySettings([]);
+        await openSettings([]);
 
         expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
             'workbench.action.openSettings',
@@ -62,7 +59,7 @@ describe('OpenTargetDeploySettings', () => {
             },
         });
 
-        await openTargetDeploySettings(['user@topo.local', 'root@192.0.2.1']);
+        await openSettings(['user@topo.local', 'root@192.0.2.1']);
 
         expect(update).toHaveBeenCalledWith(
             CONFIG_TARGET_DEPLOY_SETTINGS,
@@ -92,7 +89,7 @@ describe('OpenTargetDeploySettings', () => {
             },
         });
 
-        await openTargetDeploySettings(['user@topo.local', 'root@192.0.2.1']);
+        await openSettings(['user@topo.local', 'root@192.0.2.1']);
 
         expect(update).toHaveBeenCalledWith(
             CONFIG_TARGET_DEPLOY_SETTINGS,
@@ -114,7 +111,7 @@ describe('OpenTargetDeploySettings', () => {
             },
         });
 
-        await openTargetDeploySettings(['root@192.0.2.1']);
+        await openSettings(['root@192.0.2.1']);
 
         expect(update).not.toHaveBeenCalled();
     });

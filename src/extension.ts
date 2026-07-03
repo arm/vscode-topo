@@ -28,7 +28,7 @@ import { topo } from '../package.json';
 import { RefreshLoop } from './util/refreshLoop';
 import { ProjectController } from './controllers/projectController';
 import { TaskExecutor } from './util/taskExecutor';
-import { OpenTargetDeploySettings } from './actions/openTargetDeploySettings';
+import { OpenSettings } from './actions/openSettings';
 
 const SELECTED_TARGET_REFRESH_INTERVAL_MS = 60_000;
 
@@ -117,7 +117,7 @@ export async function activate(
         projectController,
     );
     const fixIssue = new FixIssue(taskExecutor, targetModel, targetController);
-    const openTargetDeploySettings = new OpenTargetDeploySettings(targetStore);
+    const openSettings = new OpenSettings(targetStore);
     const protocolHandler = new ProtocolHandler(taskExecutor);
 
     context.subscriptions.push(
@@ -134,7 +134,7 @@ export async function activate(
             containerDelete,
             fixIssue,
             projectClone,
-            openTargetDeploySettings,
+            openSettings,
         }),
         vscode.window.registerUriHandler(protocolHandler),
     );

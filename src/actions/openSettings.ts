@@ -6,19 +6,19 @@ import { showAndLogError } from '../util/showAndLogError';
 
 const TOPO_EXTENSION_SETTINGS_FILTER = `@ext:${REGISTRY_NAME}.${PACKAGE_NAME}`;
 
-export class OpenTargetDeploySettings {
+export class OpenSettings {
     constructor(private readonly targetStore: TargetStore) {}
 
-    public async openTargetDeploySettingsCommandHandler(): Promise<void> {
+    public async openSettingsCommandHandler(): Promise<void> {
         try {
-            await openTargetDeploySettings(this.targetStore.getTargets());
+            await openSettings(this.targetStore.getTargets());
         } catch (err) {
             showAndLogError('Failed to open target deploy settings', err);
         }
     }
 }
 
-export async function openTargetDeploySettings(
+export async function openSettings(
     cachedTargets: Iterable<string> = [],
 ): Promise<void> {
     await ensureCachedTargetDeploySettings(cachedTargets);
