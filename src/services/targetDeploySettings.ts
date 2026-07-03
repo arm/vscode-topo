@@ -16,12 +16,13 @@ const portSchema = refine(string(), 'port', (value) => {
         return true;
     }
 
-    if (!/^[1-9][0-9]*$/.test(trimmedPort)) {
-        return false;
-    }
-
     const port = Number(trimmedPort);
-    return port <= 65_535;
+    return (
+        Number.isInteger(port) &&
+        String(port) === trimmedPort &&
+        port >= 1 &&
+        port <= 65_535
+    );
 });
 
 const targetDeploySettingsSchema = refine(
