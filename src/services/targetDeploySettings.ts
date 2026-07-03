@@ -80,18 +80,9 @@ function mergeTargetDeploySettings(
     defaultSettings: TargetDeploySettings,
     targetSettings: TargetDeploySettings | undefined,
 ): TargetDeploySettings {
-    const hasTargetRecreateSettings =
-        targetSettings?.forceRecreate !== undefined ||
-        targetSettings?.noRecreate !== undefined;
-
     return {
-        port: targetSettings?.port ?? defaultSettings.port,
-        forceRecreate: hasTargetRecreateSettings
-            ? (targetSettings.forceRecreate ?? false)
-            : defaultSettings.forceRecreate,
-        noRecreate: hasTargetRecreateSettings
-            ? (targetSettings.noRecreate ?? false)
-            : defaultSettings.noRecreate,
+        ...defaultSettings,
+        ...targetSettings,
     };
 }
 
