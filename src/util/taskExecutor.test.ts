@@ -20,8 +20,7 @@ describe('TaskExecutor', () => {
     };
 
     let taskEndListener:
-        | ((event: vscode.TaskProcessEndEvent) => void)
-        | undefined;
+        ((event: vscode.TaskProcessEndEvent) => void) | undefined;
     let dispose: Mock;
     let topoCli: MockProxy<TopoCli>;
 
