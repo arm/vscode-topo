@@ -3,7 +3,7 @@ import { Loadable, unloaded } from '../util/loadable';
 import { TargetHealthReport } from '../services/topoCliSchema';
 import { TargetDescription } from '../util/types';
 
-export class TargetModel {
+export class TargetModel implements vscode.Disposable {
     private _onSelectedChanged: vscode.EventEmitter<void> =
         new vscode.EventEmitter<void>();
     public readonly onSelectedChanged: vscode.Event<void> =
@@ -87,5 +87,12 @@ export class TargetModel {
     private clearSelectedTargetData(): void {
         this.setSelectedTargetHealth(unloaded());
         this.setSelectedTargetDescription(unloaded());
+    }
+
+    public dispose(): void {
+        this._onSelectedChanged.dispose();
+        this._onTargetsChanged.dispose();
+        this._onHealthChanged.dispose();
+        this._onDescriptionChanged.dispose();
     }
 }

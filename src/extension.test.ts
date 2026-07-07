@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { mock } from 'vitest-mock-extended';
 import { activate } from './extension';
 import { TopoCli } from './services/topoCli';
+import { logger } from './util/logger';
 
 vi.mock('child_process');
 vi.mock('./util/logger');
@@ -51,5 +52,6 @@ describe('extension activation', () => {
             expect.stringContaining('version mismatch'),
         );
         expect(vscode.commands.registerCommand).not.toHaveBeenCalled();
+        expect(context.subscriptions).toContain(logger);
     });
 });
