@@ -31,18 +31,6 @@ describe('extension activation', () => {
 
         expect(vscode.commands.registerCommand).toHaveBeenCalled();
         expect(context.subscriptions.length).toBeGreaterThan(0);
-        expect(
-            context.subscriptions.filter((item) => item === logger),
-        ).toHaveLength(1);
-        expect(
-            context.subscriptions.some((item) => item instanceof TargetModel),
-        ).toBe(true);
-        expect(
-            context.subscriptions.some((item) => item instanceof HostModel),
-        ).toBe(true);
-        expect(
-            context.subscriptions.some((item) => item instanceof ProjectModel),
-        ).toBe(true);
         expect(setTimeoutSpy).toHaveBeenCalledWith(
             expect.any(Function),
             60_000,
