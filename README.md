@@ -157,11 +157,9 @@ Commands available from the Command Palette:
 
 Additional commands are available through inline buttons in the Target, Host, and Projects tree views.
 
-## Settings
+## Logging
 
-| Setting                 | Type                                            | Default | Description                                     |
-| ----------------------- | ----------------------------------------------- | ------- | ----------------------------------------------- |
-| `topo.loggingVerbosity` | `off` \| `error` \| `warn` \| `info` \| `debug` | `warn`  | Control the logging verbosity of the extension. |
+Topo writes extension logs to the `Topo` output channel. Use the log level selector in VS Code's Output view to control which messages are shown.
 
 ## Development
 
