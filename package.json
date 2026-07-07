@@ -441,35 +441,44 @@
                 }
             },
             {
-                "title": "Target Deploy Settings",
+                "title": "Target Settings",
                 "properties": {
-                    "topo.targetDeploySettings": {
+                    "topo.targetSettings": {
                         "type": "object",
                         "default": {},
-                        "description": "Per-target deploy settings.",
-                        "markdownDescription": "Per-target deploy settings. Add target names as keys, then configure deploy options for that target. Example: `{ \"root@192.0.2.1\": { \"port\": \"5000\", \"forceRecreate\": true } }`. Use either `forceRecreate` or `noRecreate`, not both.",
+                        "description": "Per-target settings.",
+                        "markdownDescription": "Per-target settings. Add target names as keys, then use `deploy` to configure deploy options for that target.",
                         "additionalProperties": {
                             "type": "object",
                             "additionalProperties": false,
-                            "markdownDescription": "Deploy settings for one target. Suggested properties: `port`, `forceRecreate`, or `noRecreate`.",
+                            "markdownDescription": "Settings for one target. Suggested properties: `deploy`.",
                             "properties": {
-                                "port": {
-                                    "type": "string",
-                                    "pattern": "^\\s*(?:|[1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])\\s*$",
-                                    "description": "Specify the port to use for registry when deploying to the target. Use 1-65535. If not specified, the default port will be used.",
-                                    "markdownDescription": "Registry port to use when deploying to the target. Use `1`-`65535`, for example `\"5000\"`. Leave empty to use the default port."
-                                },
-                                "forceRecreate": {
-                                    "type": "boolean",
-                                    "default": false,
-                                    "description": "topo deploy will force recreation of containers even if their configuration and image haven't changed.",
-                                    "markdownDescription": "Pass `--force-recreate` to `topo deploy`, recreating containers even when their configuration and image have not changed. Do not use with `noRecreate`."
-                                },
-                                "noRecreate": {
-                                    "type": "boolean",
-                                    "default": false,
-                                    "description": "topo deploy will not recreate existing containers.",
-                                    "markdownDescription": "Pass `--no-recreate` to `topo deploy`, keeping existing containers instead of recreating them. Do not use with `forceRecreate`."
+                                "deploy": {
+                                    "type": "object",
+                                    "default": {},
+                                    "description": "Deploy settings for this target.",
+                                    "markdownDescription": "Deploy settings for this target. Example: `{ \"port\": \"5000\", \"forceRecreate\": true }`. Use either `forceRecreate` or `noRecreate`, not both.",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                        "port": {
+                                            "type": "string",
+                                            "pattern": "^\\s*(?:|[1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])\\s*$",
+                                            "description": "Specify the port to use for registry when deploying to the target. Use 1-65535. If not specified, the default port will be used.",
+                                            "markdownDescription": "Registry port to use when deploying to the target. Use `1`-`65535`, for example `\"5000\"`. Leave empty to use the default port."
+                                        },
+                                        "forceRecreate": {
+                                            "type": "boolean",
+                                            "default": false,
+                                            "description": "topo deploy will force recreation of containers even if their configuration and image haven't changed.",
+                                            "markdownDescription": "Pass `--force-recreate` to `topo deploy`, recreating containers even when their configuration and image have not changed. Do not use with `noRecreate`."
+                                        },
+                                        "noRecreate": {
+                                            "type": "boolean",
+                                            "default": false,
+                                            "description": "topo deploy will not recreate existing containers.",
+                                            "markdownDescription": "Pass `--no-recreate` to `topo deploy`, keeping existing containers instead of recreating them. Do not use with `forceRecreate`."
+                                        }
+                                    }
                                 }
                             }
                         }

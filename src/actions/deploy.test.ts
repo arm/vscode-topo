@@ -9,7 +9,10 @@ import { TaskExecutor } from '../util/taskExecutor';
 import { ProjectController } from '../controllers/projectController';
 import { ProjectTreeItem } from '../views/treeItems/projectTreeItem';
 import { unloaded } from '../util/loadable';
-import { CONFIG_TARGET_DEPLOY_SETTINGS } from '../manifest';
+import {
+    CONFIG_TARGET_SETTINGS,
+    CONFIG_TARGET_SETTINGS_DEPLOY,
+} from '../manifest';
 
 describe('Deploy', () => {
     let deployAction: Deploy;
@@ -71,11 +74,30 @@ describe('Deploy', () => {
         } as unknown as vscode.WorkspaceConfiguration);
     }
 
+    function mockTargetDeploySettings(
+        deploySettingsByTarget: Record<string, unknown>,
+    ): void {
+        const targetSettings = Object.fromEntries(
+            Object.entries(deploySettingsByTarget).map(
+                ([targetName, deploySettings]) => [
+                    targetName,
+                    {
+                        [CONFIG_TARGET_SETTINGS_DEPLOY]: deploySettings,
+                    },
+                ],
+            ),
+        );
+
+        mockDeployConfiguration({
+            [CONFIG_TARGET_SETTINGS]: targetSettings,
+        });
+    }
+
     function expectInvalidTargetDeploySettings(
         validationMessage: string,
     ): void {
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-            `Error executing deploy command. Invalid topo.targetDeploySettings entry for "topo.local": ${validationMessage}`,
+            `Error executing deploy command. Invalid topo.targetSettings.deploy entry for "topo.local": ${validationMessage}`,
         );
         expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(
@@ -223,12 +245,10 @@ describe('Deploy', () => {
     });
 
     it('passes the configured custom registry port from the command handler', async () => {
-        mockDeployConfiguration({
-            [CONFIG_TARGET_DEPLOY_SETTINGS]: {
-                [target]: {
-                    port: ' 5000 ',
-                    forceRecreate: false,
-                },
+        mockTargetDeploySettings({
+            [target]: {
+                port: ' 5000 ',
+                forceRecreate: false,
             },
         });
 
@@ -243,13 +263,11 @@ describe('Deploy', () => {
     });
 
     it('passes force recreate from the command handler', async () => {
-        mockDeployConfiguration({
-            [CONFIG_TARGET_DEPLOY_SETTINGS]: {
-                [target]: {
-                    port: '',
-                    forceRecreate: true,
-                    noRecreate: false,
-                },
+        mockTargetDeploySettings({
+            [target]: {
+                port: '',
+                forceRecreate: true,
+                noRecreate: false,
             },
         });
 
@@ -264,13 +282,11 @@ describe('Deploy', () => {
     });
 
     it('passes no recreate from the command handler', async () => {
-        mockDeployConfiguration({
-            [CONFIG_TARGET_DEPLOY_SETTINGS]: {
-                [target]: {
-                    port: '',
-                    forceRecreate: false,
-                    noRecreate: true,
-                },
+        mockTargetDeploySettings({
+            [target]: {
+                port: '',
+                forceRecreate: false,
+                noRecreate: true,
             },
         });
 
@@ -285,8 +301,22 @@ describe('Deploy', () => {
     });
 
     it('uses code defaults when the target has no settings entry', async () => {
+        mockTargetDeploySettings({});
+
+        await deployAction.deployContextCommandHandler(composeFileUri);
+
+        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+        expectDeployTask(
+            taskExecutor.run.mock.calls[0][0],
+            path.dirname(composeFilePath),
+        );
+    });
+
+    it('uses code defaults when the target has no deploy settings', async () => {
         mockDeployConfiguration({
-            [CONFIG_TARGET_DEPLOY_SETTINGS]: {},
+            [CONFIG_TARGET_SETTINGS]: {
+                [target]: {},
+            },
         });
 
         await deployAction.deployContextCommandHandler(composeFileUri);
@@ -299,11 +329,9 @@ describe('Deploy', () => {
     });
 
     it('uses code defaults for missing target-specific fields', async () => {
-        mockDeployConfiguration({
-            [CONFIG_TARGET_DEPLOY_SETTINGS]: {
-                [target]: {
-                    port: '5003',
-                },
+        mockTargetDeploySettings({
+            [target]: {
+                port: '5003',
             },
         });
 
@@ -318,15 +346,13 @@ describe('Deploy', () => {
     });
 
     it('uses selected target settings when another target has malformed settings', async () => {
-        mockDeployConfiguration({
-            [CONFIG_TARGET_DEPLOY_SETTINGS]: {
-                [target]: {
-                    port: '5003',
-                },
-                'other.local': {
-                    port: 5004,
-                    forceRecreate: 'yes',
-                },
+        mockTargetDeploySettings({
+            [target]: {
+                port: '5003',
+            },
+            'other.local': {
+                port: 5004,
+                forceRecreate: 'yes',
             },
         });
 
@@ -341,13 +367,11 @@ describe('Deploy', () => {
     });
 
     it('shows an error when selected target settings are malformed', async () => {
-        mockDeployConfiguration({
-            [CONFIG_TARGET_DEPLOY_SETTINGS]: {
-                [target]: {
-                    port: 5003,
-                    forceRecreate: 'yes',
-                    noRecreate: false,
-                },
+        mockTargetDeploySettings({
+            [target]: {
+                port: 5003,
+                forceRecreate: 'yes',
+                noRecreate: false,
             },
         });
 
@@ -359,13 +383,11 @@ describe('Deploy', () => {
     });
 
     it('shows an error when selected target settings contain conflicting recreate options', async () => {
-        mockDeployConfiguration({
-            [CONFIG_TARGET_DEPLOY_SETTINGS]: {
-                [target]: {
-                    port: '5010',
-                    forceRecreate: true,
-                    noRecreate: true,
-                },
+        mockTargetDeploySettings({
+            [target]: {
+                port: '5010',
+                forceRecreate: true,
+                noRecreate: true,
             },
         });
 
@@ -377,13 +399,11 @@ describe('Deploy', () => {
     });
 
     it('shows an error when selected target settings contain an invalid port', async () => {
-        mockDeployConfiguration({
-            [CONFIG_TARGET_DEPLOY_SETTINGS]: {
-                [target]: {
-                    port: '65536',
-                    forceRecreate: true,
-                    noRecreate: false,
-                },
+        mockTargetDeploySettings({
+            [target]: {
+                port: '65536',
+                forceRecreate: true,
+                noRecreate: false,
             },
         });
 
@@ -395,12 +415,10 @@ describe('Deploy', () => {
     });
 
     it('shows an error when selected target settings contain unknown fields', async () => {
-        mockDeployConfiguration({
-            [CONFIG_TARGET_DEPLOY_SETTINGS]: {
-                [target]: {
-                    port: '5007',
-                    forceRecrate: true,
-                },
+        mockTargetDeploySettings({
+            [target]: {
+                port: '5007',
+                forceRecrate: true,
             },
         });
 
@@ -412,11 +430,9 @@ describe('Deploy', () => {
     });
 
     it('shows an error before prompting when deploy command uses invalid selected target settings', async () => {
-        mockDeployConfiguration({
-            [CONFIG_TARGET_DEPLOY_SETTINGS]: {
-                [target]: {
-                    port: 'not-a-port',
-                },
+        mockTargetDeploySettings({
+            [target]: {
+                port: 'not-a-port',
             },
         });
 

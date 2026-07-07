@@ -9,7 +9,11 @@ import {
     string,
     validate,
 } from 'superstruct';
-import { CONFIG_TARGET_DEPLOY_SETTINGS, PACKAGE_NAME } from '../manifest';
+import {
+    CONFIG_TARGET_SETTINGS,
+    CONFIG_TARGET_SETTINGS_DEPLOY,
+    PACKAGE_NAME,
+} from '../manifest';
 
 const portSchema = refine(string(), 'port', (value) => {
     const trimmedPort = value.trim();
@@ -40,7 +44,8 @@ const targetDeploySettingsSchema = refine(
 export type TargetDeploySettings = Infer<typeof targetDeploySettingsSchema>;
 
 export type TargetDeploySettingsByTarget = Record<string, TargetDeploySettings>;
-type RawTargetDeploySettingsByTarget = Record<string, unknown>;
+type RawTargetSettingsByTarget = Record<string, unknown>;
+type RawTargetSettings = Record<string, unknown>;
 
 const defaultTargetDeploySettings: Required<TargetDeploySettings> = {
     port: '',
@@ -48,15 +53,15 @@ const defaultTargetDeploySettings: Required<TargetDeploySettings> = {
     noRecreate: false,
 };
 
-function getRawTargetDeploySettingsConfiguration(
+function getRawTargetSettingsConfiguration(
     config: vscode.WorkspaceConfiguration,
-): RawTargetDeploySettingsByTarget {
-    const settings = config.get<unknown>(CONFIG_TARGET_DEPLOY_SETTINGS);
+): RawTargetSettingsByTarget {
+    const settings = config.get<unknown>(CONFIG_TARGET_SETTINGS);
     if (!settings || typeof settings !== 'object' || Array.isArray(settings)) {
         return {};
     }
 
-    return settings as RawTargetDeploySettingsByTarget;
+    return settings as RawTargetSettingsByTarget;
 }
 
 function getSettingPath(failure: Failure): string {
@@ -78,7 +83,7 @@ function getTargetDeploySettingsValidationMessage(failure: Failure): string {
     }
 
     if (failure.path.length === 0) {
-        return 'The target entry must be an object.';
+        return '`deploy` must be an object.';
     }
 
     return `\`${settingPath}\` is invalid: ${failure.message}.`;
@@ -98,14 +103,31 @@ export function getTargetDeploySettingsForTarget(
     target: string,
 ): TargetDeploySettings {
     const config = vscode.workspace.getConfiguration(PACKAGE_NAME);
-    const settingsByTarget = getRawTargetDeploySettingsConfiguration(config);
+    const settingsByTarget = getRawTargetSettingsConfiguration(config);
     const targetSettings = settingsByTarget[target];
     if (targetSettings === undefined) {
         return defaultTargetDeploySettings;
     }
 
+    if (
+        !targetSettings ||
+        typeof targetSettings !== 'object' ||
+        Array.isArray(targetSettings)
+    ) {
+        throw new Error(
+            `Invalid ${PACKAGE_NAME}.${CONFIG_TARGET_SETTINGS} entry for "${target}": The target entry must be an object.`,
+        );
+    }
+
+    const targetDeploySettings = (targetSettings as RawTargetSettings)[
+        CONFIG_TARGET_SETTINGS_DEPLOY
+    ];
+    if (targetDeploySettings === undefined) {
+        return defaultTargetDeploySettings;
+    }
+
     const [validationError, validTargetSettings] = validate(
-        targetSettings,
+        targetDeploySettings,
         targetDeploySettingsSchema,
     );
     if (validationError) {
@@ -113,7 +135,7 @@ export function getTargetDeploySettingsForTarget(
             validationError.failures()[0],
         );
         throw new Error(
-            `Invalid ${PACKAGE_NAME}.${CONFIG_TARGET_DEPLOY_SETTINGS} entry for "${target}": ${validationMessage}`,
+            `Invalid ${PACKAGE_NAME}.${CONFIG_TARGET_SETTINGS}.${CONFIG_TARGET_SETTINGS_DEPLOY} entry for "${target}": ${validationMessage}`,
         );
     }
 
