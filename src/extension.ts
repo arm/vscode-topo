@@ -34,6 +34,8 @@ const SELECTED_TARGET_REFRESH_INTERVAL_MS = 60_000;
 export async function activate(
     context: vscode.ExtensionContext,
 ): Promise<void> {
+    context.subscriptions.push(logger);
+
     const topoCli = new TopoCli(
         context.extensionPath,
         context.environmentVariableCollection,
@@ -54,6 +56,7 @@ export async function activate(
     const targetModel = new TargetModel();
     const hostModel = new HostModel();
     const projectModel = new ProjectModel();
+    context.subscriptions.push(targetModel, hostModel, projectModel);
 
     const hostTreeView = new HostTreeView(hostModel);
     const projectsTreeView = new ProjectsTreeView(projectModel);
@@ -130,7 +133,6 @@ export async function activate(
             fixIssue,
             projectClone,
         }),
-        logger,
         vscode.window.registerUriHandler(protocolHandler),
     );
 
