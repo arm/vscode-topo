@@ -3,9 +3,6 @@ import { mock } from 'vitest-mock-extended';
 import { activate } from './extension';
 import { TopoCli } from './services/topoCli';
 import { logger } from './util/logger';
-import { HostModel } from './models/hostModel';
-import { ProjectModel } from './models/projectModel';
-import { TargetModel } from './models/targetModel';
 
 vi.mock('child_process');
 vi.mock('./util/logger');
