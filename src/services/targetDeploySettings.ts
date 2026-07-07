@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
 import {
     boolean,
+    create,
+    defaulted,
     type Failure,
     Infer,
     object,
@@ -32,9 +34,9 @@ const portSchema = refine(string(), 'port', (value) => {
 
 const targetDeploySettingsSchema = refine(
     object({
-        port: optional(portSchema),
-        forceRecreate: optional(boolean()),
-        noRecreate: optional(boolean()),
+        port: defaulted(optional(portSchema), ''),
+        forceRecreate: defaulted(optional(boolean()), false),
+        noRecreate: defaulted(optional(boolean()), false),
     }),
     'recreateOptions',
     (settings) => !(settings.forceRecreate && settings.noRecreate),
@@ -45,12 +47,6 @@ export type TargetDeploySettings = Infer<typeof targetDeploySettingsSchema>;
 export type TargetDeploySettingsByTarget = Record<string, TargetDeploySettings>;
 type RawTargetSettingsByTarget = Record<string, unknown>;
 type RawTargetSettings = Record<string, unknown>;
-
-const defaultTargetDeploySettings: Required<TargetDeploySettings> = {
-    port: '',
-    forceRecreate: false,
-    noRecreate: false,
-};
 
 function getRawTargetSettingsConfiguration(
     config: vscode.WorkspaceConfiguration,
@@ -88,16 +84,6 @@ function getTargetDeploySettingsValidationMessage(failure: Failure): string {
     return `\`${settingPath}\` is invalid: ${failure.message}.`;
 }
 
-function mergeTargetDeploySettings(
-    defaultSettings: TargetDeploySettings,
-    targetSettings: TargetDeploySettings | undefined,
-): TargetDeploySettings {
-    return {
-        ...defaultSettings,
-        ...targetSettings,
-    };
-}
-
 export function getTargetDeploySettingsForTarget(
     target: string,
 ): TargetDeploySettings {
@@ -105,7 +91,7 @@ export function getTargetDeploySettingsForTarget(
     const settingsByTarget = getRawTargetSettingsConfiguration(config);
     const targetSettings = settingsByTarget[target];
     if (targetSettings === undefined) {
-        return defaultTargetDeploySettings;
+        return create({}, targetDeploySettingsSchema);
     }
 
     if (
@@ -122,12 +108,13 @@ export function getTargetDeploySettingsForTarget(
         CONFIG_TARGET_SETTINGS_DEPLOY
     ];
     if (targetDeploySettings === undefined) {
-        return defaultTargetDeploySettings;
+        return create({}, targetDeploySettingsSchema);
     }
 
     const [validationError, validTargetSettings] = validate(
         targetDeploySettings,
         targetDeploySettingsSchema,
+        { coerce: true },
     );
     if (validationError) {
         const validationMessage = getTargetDeploySettingsValidationMessage(
@@ -138,8 +125,5 @@ export function getTargetDeploySettingsForTarget(
         );
     }
 
-    return mergeTargetDeploySettings(
-        defaultTargetDeploySettings,
-        validTargetSettings,
-    );
+    return validTargetSettings;
 }
