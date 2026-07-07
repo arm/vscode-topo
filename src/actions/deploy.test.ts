@@ -71,6 +71,18 @@ describe('Deploy', () => {
         } as unknown as vscode.WorkspaceConfiguration);
     }
 
+    function expectInvalidTargetDeploySettings(
+        validationMessage: string,
+    ): void {
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
+            `Error executing deploy command. Invalid topo.targetDeploySettings entry for "topo.local": ${validationMessage}`,
+        );
+        expect(taskExecutor.run).not.toHaveBeenCalled();
+        expect(
+            projectController.refreshProjectContainersCommandHandler,
+        ).not.toHaveBeenCalled();
+    }
+
     beforeEach(() => {
         taskExecutor = mock<TaskExecutor>();
         targetModel = new TargetModel();
@@ -305,7 +317,30 @@ describe('Deploy', () => {
         );
     });
 
-    it('ignores malformed target settings', async () => {
+    it('uses selected target settings when another target has malformed settings', async () => {
+        mockDeployConfiguration({
+            [CONFIG_TARGET_DEPLOY_SETTINGS]: {
+                [target]: {
+                    port: '5003',
+                },
+                'other.local': {
+                    port: 5004,
+                    forceRecreate: 'yes',
+                },
+            },
+        });
+
+        await deployAction.deployContextCommandHandler(composeFileUri);
+
+        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+        expectDeployTask(
+            taskExecutor.run.mock.calls[0][0],
+            path.dirname(composeFilePath),
+            ['deploy', '--target', target, '-p', '5003'],
+        );
+    });
+
+    it('shows an error when selected target settings are malformed', async () => {
         mockDeployConfiguration({
             [CONFIG_TARGET_DEPLOY_SETTINGS]: {
                 [target]: {
@@ -318,14 +353,12 @@ describe('Deploy', () => {
 
         await deployAction.deployContextCommandHandler(composeFileUri);
 
-        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-        expectDeployTask(
-            taskExecutor.run.mock.calls[0][0],
-            path.dirname(composeFilePath),
+        expectInvalidTargetDeploySettings(
+            '`port` is invalid: Expected a string, but received: 5003.',
         );
     });
 
-    it('ignores target settings with conflicting recreate options', async () => {
+    it('shows an error when selected target settings contain conflicting recreate options', async () => {
         mockDeployConfiguration({
             [CONFIG_TARGET_DEPLOY_SETTINGS]: {
                 [target]: {
@@ -338,14 +371,12 @@ describe('Deploy', () => {
 
         await deployAction.deployContextCommandHandler(composeFileUri);
 
-        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-        expectDeployTask(
-            taskExecutor.run.mock.calls[0][0],
-            path.dirname(composeFilePath),
+        expectInvalidTargetDeploySettings(
+            '`forceRecreate` and `noRecreate` cannot both be true.',
         );
     });
 
-    it('ignores target settings with an invalid port', async () => {
+    it('shows an error when selected target settings contain an invalid port', async () => {
         mockDeployConfiguration({
             [CONFIG_TARGET_DEPLOY_SETTINGS]: {
                 [target]: {
@@ -358,14 +389,12 @@ describe('Deploy', () => {
 
         await deployAction.deployContextCommandHandler(composeFileUri);
 
-        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-        expectDeployTask(
-            taskExecutor.run.mock.calls[0][0],
-            path.dirname(composeFilePath),
+        expectInvalidTargetDeploySettings(
+            '`port` must be empty or an integer from 1 to 65535.',
         );
     });
 
-    it('ignores target settings with unknown fields', async () => {
+    it('shows an error when selected target settings contain unknown fields', async () => {
         mockDeployConfiguration({
             [CONFIG_TARGET_DEPLOY_SETTINGS]: {
                 [target]: {
@@ -377,11 +406,27 @@ describe('Deploy', () => {
 
         await deployAction.deployContextCommandHandler(composeFileUri);
 
-        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-        expectDeployTask(
-            taskExecutor.run.mock.calls[0][0],
-            path.dirname(composeFilePath),
+        expectInvalidTargetDeploySettings(
+            '`forceRecrate` is not a supported setting. Use only `port`, `forceRecreate`, or `noRecreate`.',
         );
+    });
+
+    it('shows an error before prompting when deploy command uses invalid selected target settings', async () => {
+        mockDeployConfiguration({
+            [CONFIG_TARGET_DEPLOY_SETTINGS]: {
+                [target]: {
+                    port: 'not-a-port',
+                },
+            },
+        });
+
+        await deployAction.deployCommandHandler();
+
+        expectInvalidTargetDeploySettings(
+            '`port` must be empty or an integer from 1 to 65535.',
+        );
+        expect(vscode.workspace.findFiles).not.toHaveBeenCalled();
+        expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
     });
 
     it('deploys the project tree item compose file', async () => {

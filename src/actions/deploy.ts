@@ -6,7 +6,7 @@ import { TaskExecutor } from '../util/taskExecutor';
 import { showAndLogError } from '../util/showAndLogError';
 import { TargetModel } from '../models/targetModel';
 import { ProjectController } from '../controllers/projectController';
-import { isWrappedError, WrappedError } from '../errors/wrappedError';
+import { WrappedError } from '../errors/wrappedError';
 import {
     COMPOSE_FILE_GLOB,
     compareComposeFiles,
@@ -37,14 +37,13 @@ export class Deploy {
 
     public async deployCommandHandler(): Promise<void> {
         let target: string;
+        let targetDeploySettings: TargetDeploySettings;
         try {
             target = this.getSelectedTarget();
+            targetDeploySettings = getTargetDeploySettingsForTarget(target);
         } catch (err: unknown) {
-            if (isWrappedError(err, ['NO_TARGET_SELECTED'])) {
-                showAndLogError('Error executing deploy command', err);
-                return;
-            }
-            throw err;
+            showAndLogError('Error executing deploy command', err);
+            return;
         }
 
         const files = await vscode.workspace.findFiles(COMPOSE_FILE_GLOB);
@@ -73,7 +72,7 @@ export class Deploy {
             this.taskExecutor,
             resource.fsPath,
             target,
-            getTargetDeploySettingsForTarget(target),
+            targetDeploySettings,
         );
         await this.projectController.refreshProjectContainersCommandHandler();
     }
@@ -88,21 +87,20 @@ export class Deploy {
         }
 
         let target: string;
+        let targetDeploySettings: TargetDeploySettings;
         try {
             target = this.getSelectedTarget();
+            targetDeploySettings = getTargetDeploySettingsForTarget(target);
         } catch (err: unknown) {
-            if (isWrappedError(err, ['NO_TARGET_SELECTED'])) {
-                showAndLogError('Error executing deploy command', err);
-                return;
-            }
-            throw err;
+            showAndLogError('Error executing deploy command', err);
+            return;
         }
 
         await deploy(
             this.taskExecutor,
             resource.fsPath,
             target,
-            getTargetDeploySettingsForTarget(target),
+            targetDeploySettings,
         );
         await this.projectController.refreshProjectContainersCommandHandler();
     }
