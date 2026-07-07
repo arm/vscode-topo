@@ -37,8 +37,7 @@ const targetDeploySettingsSchema = refine(
         noRecreate: optional(boolean()),
     }),
     'recreateOptions',
-    (settings) =>
-        !(settings.forceRecreate === true && settings.noRecreate === true),
+    (settings) => !(settings.forceRecreate && settings.noRecreate),
 );
 
 export type TargetDeploySettings = Infer<typeof targetDeploySettingsSchema>;
