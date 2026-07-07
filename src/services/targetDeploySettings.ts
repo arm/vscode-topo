@@ -39,7 +39,6 @@ const targetDeploySettingsSchema = refine(
 export type TargetDeploySettings = Infer<typeof targetDeploySettingsSchema>;
 
 export type TargetDeploySettingsByTarget = Record<string, TargetDeploySettings>;
-type RawTargetDeploySettingsByTarget = Record<string, unknown>;
 
 const defaultTargetDeploySettings: Required<TargetDeploySettings> = {
     port: '',
@@ -66,17 +65,6 @@ function getTargetDeploySettingsConfiguration(
     );
 }
 
-function getRawTargetDeploySettingsConfiguration(
-    config: vscode.WorkspaceConfiguration,
-): RawTargetDeploySettingsByTarget {
-    const settings = config.get<unknown>(CONFIG_TARGET_DEPLOY_SETTINGS);
-    if (!settings || typeof settings !== 'object' || Array.isArray(settings)) {
-        return {};
-    }
-
-    return settings as RawTargetDeploySettingsByTarget;
-}
-
 function mergeTargetDeploySettings(
     defaultSettings: TargetDeploySettings,
     targetSettings: TargetDeploySettings | undefined,
@@ -95,32 +83,5 @@ export function getTargetDeploySettingsForTarget(
     return mergeTargetDeploySettings(
         defaultTargetDeploySettings,
         settingsByTarget[target],
-    );
-}
-
-export async function ensureCachedTargetDeploySettings(
-    targets: Iterable<string>,
-): Promise<void> {
-    const config = vscode.workspace.getConfiguration(PACKAGE_NAME);
-    const currentSettings = getRawTargetDeploySettingsConfiguration(config);
-    const targetNames = [...new Set(targets)].sort();
-    const missingTarget = targetNames.find(
-        (target) => currentSettings[target] === undefined,
-    );
-    if (!missingTarget) {
-        return;
-    }
-
-    const nextSettings: RawTargetDeploySettingsByTarget = {
-        ...currentSettings,
-    };
-    for (const target of targetNames) {
-        nextSettings[target] = nextSettings[target] ?? {};
-    }
-
-    await config.update(
-        CONFIG_TARGET_DEPLOY_SETTINGS,
-        nextSettings,
-        vscode.ConfigurationTarget.Global,
     );
 }

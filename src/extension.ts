@@ -117,7 +117,7 @@ export async function activate(
         projectController,
     );
     const fixIssue = new FixIssue(taskExecutor, targetModel, targetController);
-    const openSettings = new OpenSettings(targetStore);
+    const openSettings = new OpenSettings();
     const protocolHandler = new ProtocolHandler(taskExecutor);
 
     context.subscriptions.push(

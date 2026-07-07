@@ -446,7 +446,7 @@
                     "topo.targetDeploySettings": {
                         "type": "object",
                         "default": {},
-                        "description": "Per-target deploy settings for cached targets.",
+                        "description": "Per-target deploy settings.",
                         "additionalProperties": {
                             "type": "object",
                             "additionalProperties": false,
