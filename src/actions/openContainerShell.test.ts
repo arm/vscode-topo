@@ -2,7 +2,6 @@ import * as vscode from 'vscode';
 import {
     OpenContainerShell,
     openContainerShell,
-    attachSSH,
 } from '../actions/openContainerShell';
 import { mock } from 'vitest-mock-extended';
 import { ContainerItem } from '../util/types';
@@ -70,20 +69,6 @@ describe('OpenContainerShell', () => {
             name: 'Shell: clabel',
             shellPath: expectedCommand[0],
             shellArgs: expectedCommand.slice(1),
-        });
-        const terminal = vi.mocked(vscode.window.createTerminal).mock.results[0]
-            .value;
-        expect(terminal.sendText).not.toHaveBeenCalled();
-        expect(terminal.show).toHaveBeenCalled();
-    });
-
-    it('attachSSH opens terminal for a target', () => {
-        attachSSH(target);
-
-        expect(vscode.window.createTerminal).toHaveBeenCalledWith({
-            name: `SSH: ${target}`,
-            shellPath: 'ssh',
-            shellArgs: [target],
         });
         const terminal = vi.mocked(vscode.window.createTerminal).mock.results[0]
             .value;

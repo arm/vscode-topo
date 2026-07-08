@@ -75,12 +75,13 @@ If no target is selected, the view shows a **Select a target** button.
 
 Use the buttons in the Target view title bar to access these actions:
 
-| Command             | Description                                              |
-| ------------------- | -------------------------------------------------------- |
-| **Select a target** | Select, add, or remove saved manual targets.             |
-| **Refresh**         | Re-check health for the selected target.                 |
-| **Clear Selection** | Clear the active target without deleting it.             |
-| **Fix Issues**      | Select and run available fixes for target health issues. |
+| Command             | Description                                               |
+| ------------------- | --------------------------------------------------------- |
+| **Select a target** | Select, add, or remove saved manual targets.              |
+| **Connect via SSH** | Open an SSH terminal when target connectivity is healthy. |
+| **Refresh**         | Re-check health for the selected target.                  |
+| **Clear Selection** | Clear the active target without deleting it.              |
+| **Fix Issues**      | Select and run available fixes for target health issues.  |
 
 ### Health Actions
 

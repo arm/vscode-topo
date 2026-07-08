@@ -14,6 +14,7 @@ import { ContainerDelete } from './actions/containerDelete';
 import { FixIssue } from './actions/fixIssue';
 import { ProjectClone } from './actions/projectClone';
 import { ProjectController } from './controllers/projectController';
+import { ConnectViaSSH } from './actions/connectViaSSH';
 
 function command(id: string): string {
     return `${PACKAGE_NAME}.${id}`;
@@ -34,6 +35,7 @@ export const deployProject = command('deployProject');
 export const stop = command('stop.context');
 export const stopProject = command('stopProject');
 export const openContainerShell = command('openContainerShell');
+export const connectViaSSH = command('connectViaSSH');
 export const startContainer = command('startContainer');
 export const stopContainer = command('stopContainer');
 export const deleteContainer = command('deleteContainer');
@@ -52,6 +54,7 @@ export interface CommandHandlers {
     deploy: Deploy;
     stop: Stop;
     openContainerShell: OpenContainerShell;
+    connectViaSSH: ConnectViaSSH;
     containerStart: ContainerStart;
     containerStop: ContainerStop;
     containerDelete: ContainerDelete;
@@ -107,6 +110,9 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
             handlers.openContainerShell.openContainerShellCommandHandler(
                 treeNode,
             ),
+        ),
+        vscode.commands.registerCommand(connectViaSSH, () =>
+            handlers.connectViaSSH.connectViaSSHCommandHandler(),
         ),
         vscode.commands.registerCommand(startContainer, (treeNode) =>
             handlers.containerStart.startContainerCommandHandler(treeNode),
