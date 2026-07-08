@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { showAndLogError, showAndLogWarning } from './showAndLogError';
+import { showAndLogError, showAndLogWarning } from './showAndLog';
 import { logger } from './logger';
 import { WrappedError } from '../errors/wrappedError';
 

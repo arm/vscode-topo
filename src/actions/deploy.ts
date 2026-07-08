@@ -3,7 +3,7 @@ import { getErrorMessage } from '../util/getErrorMessage';
 import path from 'node:path';
 import { createProcessTask } from '../util/task';
 import { TaskExecutor } from '../util/taskExecutor';
-import { showAndLogWarning } from '../util/showAndLogError';
+import { showAndLogWarning } from '../util/showAndLog';
 import { TargetModel } from '../models/targetModel';
 import { ProjectController } from '../controllers/projectController';
 import { isWrappedError, WrappedError } from '../errors/wrappedError';
