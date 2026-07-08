@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { HostHealthReport } from '../services/topoCliSchema';
 import { Loadable, unloaded } from '../util/loadable';
 
-export class HostModel {
+export class HostModel implements vscode.Disposable {
     private _onHealthChanged: vscode.EventEmitter<void> =
         new vscode.EventEmitter<void>();
     public readonly onHealthChanged: vscode.Event<void> =
@@ -17,5 +17,9 @@ export class HostModel {
 
     public get health(): Loadable<HostHealthReport> {
         return this._health;
+    }
+
+    public dispose(): void {
+        this._onHealthChanged.dispose();
     }
 }

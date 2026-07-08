@@ -7,7 +7,7 @@ function getProjectKey(project: ProjectMetadata): string {
     return project.composeFileUri.fsPath;
 }
 
-export class ProjectModel {
+export class ProjectModel implements vscode.Disposable {
     private _onProjectsChanged: vscode.EventEmitter<void> =
         new vscode.EventEmitter<void>();
     public readonly onProjectsChanged: vscode.Event<void> =
@@ -57,5 +57,10 @@ export class ProjectModel {
 
     public get projects(): Loadable<ProjectMetadata[]> {
         return this._projects;
+    }
+
+    public dispose(): void {
+        this._onProjectsChanged.dispose();
+        this._onProjectContainersChanged.dispose();
     }
 }
