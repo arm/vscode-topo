@@ -28,6 +28,11 @@ type ComposeFileQuickPickItem = vscode.QuickPickItem & {
     uri: vscode.Uri;
 };
 
+type DeployTarget = {
+    target: string;
+    settings: TargetDeploySettings;
+};
+
 export class Deploy {
     constructor(
         private readonly taskExecutor: TaskExecutor,
@@ -36,22 +41,8 @@ export class Deploy {
     ) {}
 
     public async deployCommandHandler(): Promise<void> {
-        let target: string;
-        let targetDeploySettings: TargetDeploySettings;
-        try {
-            target = this.getSelectedTarget();
-        } catch (err: unknown) {
-            if (isWrappedError(err, ['NO_TARGET_SELECTED'])) {
-                showAndLogError('Error executing deploy command', err);
-                return;
-            }
-            throw err;
-        }
-
-        try {
-            targetDeploySettings = getTargetDeploySettingsForTarget(target);
-        } catch (err: unknown) {
-            showAndLogError('Error retrieving target deploy settings', err);
+        const deployTarget = this.getSelectedDeployTarget();
+        if (!deployTarget) {
             return;
         }
 
@@ -77,13 +68,7 @@ export class Deploy {
         if (!resource) {
             return;
         }
-        await deploy(
-            this.taskExecutor,
-            resource.fsPath,
-            target,
-            targetDeploySettings,
-        );
-        await this.projectController.refreshProjectContainersCommandHandler();
+        await this.deployComposeFile(resource, deployTarget);
     }
 
     public async deployContextCommandHandler(
@@ -95,23 +80,12 @@ export class Deploy {
             );
         }
 
-        let target: string;
-        let targetDeploySettings: TargetDeploySettings;
-        try {
-            target = this.getSelectedTarget();
-            targetDeploySettings = getTargetDeploySettingsForTarget(target);
-        } catch (err: unknown) {
-            showAndLogError('Error executing deploy command', err);
+        const deployTarget = this.getSelectedDeployTarget();
+        if (!deployTarget) {
             return;
         }
 
-        await deploy(
-            this.taskExecutor,
-            resource.fsPath,
-            target,
-            targetDeploySettings,
-        );
-        await this.projectController.refreshProjectContainersCommandHandler();
+        await this.deployComposeFile(resource, deployTarget);
     }
 
     public async deployProjectCommandHandler(treeNode: unknown): Promise<void> {
@@ -133,6 +107,42 @@ export class Deploy {
             );
         }
         return target;
+    }
+
+    private getSelectedDeployTarget(): DeployTarget | undefined {
+        let target: string;
+        try {
+            target = this.getSelectedTarget();
+        } catch (err: unknown) {
+            if (isWrappedError(err, ['NO_TARGET_SELECTED'])) {
+                showAndLogError('Error executing deploy command', err);
+                return undefined;
+            }
+            throw err;
+        }
+
+        try {
+            return {
+                target,
+                settings: getTargetDeploySettingsForTarget(target),
+            };
+        } catch (err: unknown) {
+            showAndLogError('Error retrieving target deploy settings', err);
+            return undefined;
+        }
+    }
+
+    private async deployComposeFile(
+        resource: vscode.Uri,
+        deployTarget: DeployTarget,
+    ): Promise<void> {
+        await deploy(
+            this.taskExecutor,
+            resource.fsPath,
+            deployTarget.target,
+            deployTarget.settings,
+        );
+        await this.projectController.refreshProjectContainersCommandHandler();
     }
 }
 
