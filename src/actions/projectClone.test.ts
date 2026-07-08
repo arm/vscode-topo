@@ -5,7 +5,7 @@ import { TopoCli } from '../services/topoCli';
 import { TargetModel } from '../models/targetModel';
 import { TemplateDescription } from '../services/topoCliSchema';
 import { WrappedError } from '../errors/wrappedError';
-import { showAndLogError } from '../util/showAndLogError';
+import { showAndLogError } from '../util/showAndLog';
 import {
     cloneProjectFromSource,
     getLocalSourcePath,
@@ -13,7 +13,7 @@ import {
 } from '../util/projectClone';
 import { TaskExecutor } from '../util/taskExecutor';
 
-vi.mock('../util/showAndLogError');
+vi.mock('../util/showAndLog');
 vi.mock('../util/projectClone');
 
 const cloneProjectFromSourceMock = vi.mocked(cloneProjectFromSource);

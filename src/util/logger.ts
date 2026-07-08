@@ -1,34 +1,5 @@
 import * as vscode from 'vscode';
 import * as manifest from '../manifest';
-import * as util from 'node:util';
-
-export const stringifyMessage = (message: unknown): string => {
-    if (message === null || message === undefined) {
-        return String(message);
-    }
-
-    if (typeof message === 'string') {
-        return message;
-    }
-
-    if (typeof message === 'number') {
-        return Number.isFinite(message) ? message.toString() : String(message);
-    }
-
-    if (Buffer.isBuffer(message)) {
-        return message.toString();
-    }
-
-    if (util.types.isNativeError(message)) {
-        return message.stack || message.message;
-    }
-
-    try {
-        return JSON.stringify(message, undefined, '\t');
-    } catch {
-        return String(message);
-    }
-};
 
 export class OutputChannelLogger implements vscode.Disposable {
     public static instance = new OutputChannelLogger();
@@ -45,33 +16,28 @@ export class OutputChannelLogger implements vscode.Disposable {
         return this.outputChannel;
     }
 
-    private logMessages(
-        messages: unknown[],
-        logMessage: (message: string) => void,
-    ): void {
-        for (const message of messages) {
-            logMessage(stringifyMessage(message));
-        }
-    }
-
-    public error = (...messages: unknown[]): void => {
-        const outputChannel = this.getOutputChannel();
-        this.logMessages(messages, (message) => outputChannel.error(message));
+    public error = (
+        ...args: Parameters<vscode.LogOutputChannel['error']>
+    ): void => {
+        this.getOutputChannel().error(...args);
     };
 
-    public warn = (...messages: unknown[]): void => {
-        const outputChannel = this.getOutputChannel();
-        this.logMessages(messages, (message) => outputChannel.warn(message));
+    public warn = (
+        ...args: Parameters<vscode.LogOutputChannel['warn']>
+    ): void => {
+        this.getOutputChannel().warn(...args);
     };
 
-    public info = (...messages: unknown[]): void => {
-        const outputChannel = this.getOutputChannel();
-        this.logMessages(messages, (message) => outputChannel.info(message));
+    public info = (
+        ...args: Parameters<vscode.LogOutputChannel['info']>
+    ): void => {
+        this.getOutputChannel().info(...args);
     };
 
-    public debug = (...messages: unknown[]): void => {
-        const outputChannel = this.getOutputChannel();
-        this.logMessages(messages, (message) => outputChannel.debug(message));
+    public debug = (
+        ...args: Parameters<vscode.LogOutputChannel['debug']>
+    ): void => {
+        this.getOutputChannel().debug(...args);
     };
 
     public show(): void {
