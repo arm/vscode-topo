@@ -33,7 +33,6 @@ const targetDeploySettingsSchema = refine(
 
 export type TargetDeploySettings = Infer<typeof targetDeploySettingsSchema>;
 
-export type TargetDeploySettingsByTarget = Record<string, TargetDeploySettings>;
 type RawTargetSettingsByTarget = Record<string, unknown>;
 type RawTargetSettings = Record<string, unknown>;
 
