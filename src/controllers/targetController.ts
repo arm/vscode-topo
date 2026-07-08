@@ -2,7 +2,7 @@ import { TargetModel } from '../models/targetModel';
 import { TargetStore } from '../services/targetStore';
 import { isWrappedError } from '../errors/wrappedError';
 import { logger } from '../util/logger';
-import { logError, showAndLogError } from '../util/showAndLogError';
+import { logError, showAndLogError } from '../util/showAndLog';
 import { defaultSshConfigPath, getHosts } from '../util/ssh';
 import * as vscode from 'vscode';
 import { TopoCli } from '../services/topoCli';

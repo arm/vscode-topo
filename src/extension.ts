@@ -23,7 +23,7 @@ import { TargetController } from './controllers/targetController';
 import { TargetModel } from './models/targetModel';
 import { ProjectModel } from './models/projectModel';
 import { ProjectClone } from './actions/projectClone';
-import { showAndLogError } from './util/showAndLogError';
+import { showAndLogError } from './util/showAndLog';
 import { topo } from '../package.json';
 import { RefreshLoop } from './util/refreshLoop';
 import { ProjectController } from './controllers/projectController';
