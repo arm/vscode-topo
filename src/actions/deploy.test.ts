@@ -93,15 +93,15 @@ describe('Deploy', () => {
         vi.resetAllMocks();
     });
 
-    it('shows an error in the command handler with no target selected', async () => {
+    it('shows a warning in the command handler with no target selected', async () => {
         targetModel.setSelected(undefined);
 
         const deployOperation =
             deployAction.deployContextCommandHandler(composeFileUri);
 
         await expect(deployOperation).resolves.toBeUndefined();
-        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-            'Error executing deploy command. No target selected. Please select a target before deploying.',
+        expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
+            'Cannot deploy. No target selected. Please select a target before deploying.',
         );
         expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(
@@ -109,7 +109,7 @@ describe('Deploy', () => {
         ).not.toHaveBeenCalled();
     });
 
-    it('shows an error and does not deploy when target connectivity is unhealthy', async () => {
+    it('shows a warning and does not deploy when target connectivity is unhealthy', async () => {
         targetModel.setSelectedTargetHealth(
             loaded({
                 ...targetHealth,
@@ -125,8 +125,8 @@ describe('Deploy', () => {
             deployAction.deployContextCommandHandler(composeFileUri);
 
         await expect(deployOperation).resolves.toBeUndefined();
-        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-            'Error executing deploy command. Target topo.local connectivity is error: unreachable. Resolve target connectivity before deploying.',
+        expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
+            'Cannot deploy. Target topo.local connectivity is error: unreachable. Resolve target connectivity before deploying.',
         );
         expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(
@@ -134,15 +134,15 @@ describe('Deploy', () => {
         ).not.toHaveBeenCalled();
     });
 
-    it('shows an error and does not deploy when target health is loading', async () => {
+    it('shows a warning and does not deploy when target health is loading', async () => {
         targetModel.setSelectedTargetHealth(unloaded(true));
 
         const deployOperation =
             deployAction.deployContextCommandHandler(composeFileUri);
 
         await expect(deployOperation).resolves.toBeUndefined();
-        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-            'Error executing deploy command. Target topo.local health is still being checked. Wait for target health checks to finish before deploying.',
+        expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
+            'Cannot deploy. Target topo.local health is still being checked. Wait for target health checks to finish before deploying.',
         );
         expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(

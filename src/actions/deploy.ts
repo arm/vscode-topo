@@ -3,7 +3,7 @@ import { getErrorMessage } from '../util/getErrorMessage';
 import path from 'node:path';
 import { createProcessTask } from '../util/task';
 import { TaskExecutor } from '../util/taskExecutor';
-import { showAndLogError } from '../util/showAndLogError';
+import { showAndLogWarning } from '../util/showAndLogError';
 import { TargetModel } from '../models/targetModel';
 import { ProjectController } from '../controllers/projectController';
 import { isWrappedError, WrappedError } from '../errors/wrappedError';
@@ -21,12 +21,6 @@ const viewLogsItem: vscode.MessageItem = {
     title: 'View Logs',
 };
 
-const deployTargetErrorCodes = [
-    'NO_TARGET_SELECTED',
-    'TARGET_HEALTH_CHECK_IN_PROGRESS',
-    'TARGET_CONNECTIVITY_NOT_OK',
-] as const;
-
 type ComposeFileQuickPickItem = vscode.QuickPickItem & {
     uri: vscode.Uri;
 };
@@ -43,8 +37,8 @@ export class Deploy {
         try {
             target = this.getSelectedTarget();
         } catch (err: unknown) {
-            if (isWrappedError(err, [...deployTargetErrorCodes])) {
-                showAndLogError('Error executing deploy command', err);
+            if (isWrappedError(err, ['TARGET'])) {
+                showAndLogWarning('Cannot deploy', err);
                 return;
             }
             throw err;
@@ -89,8 +83,8 @@ export class Deploy {
         try {
             target = this.getSelectedTarget();
         } catch (err: unknown) {
-            if (isWrappedError(err, [...deployTargetErrorCodes])) {
-                showAndLogError('Error executing deploy command', err);
+            if (isWrappedError(err, ['TARGET'])) {
+                showAndLogWarning('Cannot deploy', err);
                 return;
             }
             throw err;
@@ -114,7 +108,7 @@ export class Deploy {
         const target = this.targetModel.selected;
         if (!target) {
             throw new WrappedError(
-                'NO_TARGET_SELECTED',
+                'TARGET',
                 'No target selected. Please select a target before deploying.',
             );
         }
@@ -122,7 +116,7 @@ export class Deploy {
         const health = this.targetModel.selectedTargetHealth;
         if (health.loading) {
             throw new WrappedError(
-                'TARGET_HEALTH_CHECK_IN_PROGRESS',
+                'TARGET',
                 `Target ${target} health is still being checked. Wait for target health checks to finish before deploying.`,
             );
         }
@@ -132,7 +126,7 @@ export class Deploy {
             health.data.connectivity.status !== 'ok'
         ) {
             throw new WrappedError(
-                'TARGET_CONNECTIVITY_NOT_OK',
+                'TARGET',
                 getConnectivityFailureMessage(target, health.data),
             );
         }

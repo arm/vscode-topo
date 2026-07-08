@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { showAndLogError } from './showAndLogError';
+import { showAndLogError, showAndLogWarning } from './showAndLogError';
 import { logger } from './logger';
 import { WrappedError } from '../errors/wrappedError';
 
@@ -103,5 +103,36 @@ describe('showAndLogError', () => {
             'Something happened',
             'string error',
         );
+    });
+});
+
+describe('showAndLogWarning', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
+    it('shows warning message and logs warning for plain errors', () => {
+        const error = new Error('target is not ready');
+
+        showAndLogWarning('Cannot deploy', error);
+
+        expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
+            'Cannot deploy. target is not ready',
+        );
+        expect(logger.warn).toHaveBeenCalledWith('Cannot deploy', error);
+        expect(logger.error).not.toHaveBeenCalled();
+    });
+
+    it('logs WrappedError message as a warning', () => {
+        const error = new WrappedError('TARGET', 'No target selected');
+
+        showAndLogWarning('Cannot deploy', error);
+
+        expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
+            'Cannot deploy. No target selected',
+        );
+        expect(logger.warn).toHaveBeenNthCalledWith(1, 'Cannot deploy');
+        expect(logger.warn).toHaveBeenNthCalledWith(2, 'No target selected');
+        expect(logger.error).not.toHaveBeenCalled();
     });
 });

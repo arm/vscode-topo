@@ -3,9 +3,7 @@ export type WrappedErrorCode =
     | 'CLONE'
     | 'CLI'
     | 'STORAGE'
-    | 'NO_TARGET_SELECTED'
-    | 'TARGET_HEALTH_CHECK_IN_PROGRESS'
-    | 'TARGET_CONNECTIVITY_NOT_OK'
+    | 'TARGET'
     | 'INVALID_SSH_DESTINATION';
 
 export type WrappedErrorLogLevel = 'Error' | 'Warning' | 'Info' | 'Debug';
