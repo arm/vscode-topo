@@ -421,12 +421,12 @@
                                         "forceRecreate": {
                                             "type": "boolean",
                                             "default": false,
-                                            "markdownDescription": "Pass `--force-recreate` to `topo deploy`, recreating containers even when their configuration and image have not changed. Do not use with `noRecreate`."
+                                            "markdownDescription": "Recreates containers even when their configuration and image have not changed. Do not use with `noRecreate`."
                                         },
                                         "noRecreate": {
                                             "type": "boolean",
                                             "default": false,
-                                            "markdownDescription": "Pass `--no-recreate` to `topo deploy`, keeping existing containers instead of recreating them. Do not use with `forceRecreate`."
+                                            "markdownDescription": "Keeps existing containers instead of recreating them. Do not use with `forceRecreate`."
                                         }
                                     }
                                 }
