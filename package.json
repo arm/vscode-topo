@@ -400,7 +400,6 @@
                     "topo.defaultTargetDeploySettings": {
                         "type": "object",
                         "default": {
-                            "port": "",
                             "forceRecreate": false,
                             "noRecreate": false
                         },
@@ -422,8 +421,9 @@
                         },
                         "properties": {
                             "port": {
-                                "type": "string",
-                                "pattern": "^\\s*(?:|[1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])\\s*$",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 65535,
                                 "description": "Specify the default port to use for registry when deploying to a target. Use 1-65535. If not specified, the default port will be used."
                             },
                             "forceRecreate": {
@@ -457,14 +457,15 @@
                                     "type": "object",
                                     "default": {},
                                     "description": "Deploy settings for this target.",
-                                    "markdownDescription": "Deploy settings for this target. Example: `{ \"port\": \"5000\", \"forceRecreate\": true }`. Use either `forceRecreate` or `noRecreate`, not both.",
+                                    "markdownDescription": "Deploy settings for this target. Example: `{ \"port\": 5000, \"forceRecreate\": true }`. Use either `forceRecreate` or `noRecreate`, not both.",
                                     "additionalProperties": false,
                                     "properties": {
                                         "port": {
-                                            "type": "string",
-                                            "pattern": "^\\s*(?:|[1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])\\s*$",
+                                            "type": "integer",
+                                            "minimum": 1,
+                                            "maximum": 65535,
                                             "description": "Specify the port to use for registry when deploying to the target. Use 1-65535. If not specified, the default port will be used.",
-                                            "markdownDescription": "Registry port to use when deploying to the target. Use `1`-`65535`, for example `\"5000\"`. Leave empty to use the default port."
+                                            "markdownDescription": "Registry port to use when deploying to the target. Use `1`-`65535`, for example `5000`. Omit this setting to use the default port."
                                         },
                                         "forceRecreate": {
                                             "type": "boolean",

@@ -203,9 +203,8 @@ export function buildDeployArgs(
     }
 
     const args = ['deploy', '--target', target];
-    const port = settings.port?.trim();
-    if (port) {
-        args.push('-p', port);
+    if (settings.port !== undefined) {
+        args.push('-p', String(settings.port));
     }
     if (settings.forceRecreate) {
         args.push('--force-recreate');

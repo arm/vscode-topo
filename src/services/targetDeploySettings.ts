@@ -5,11 +5,12 @@ import {
     defaulted,
     type Failure,
     Infer,
+    integer,
+    max,
+    min,
     object,
     optional,
-    pattern,
     refine,
-    string,
     validate,
 } from 'superstruct';
 import {
@@ -18,14 +19,11 @@ import {
     PACKAGE_NAME,
 } from '../manifest';
 
-const portSchema = pattern(
-    string(),
-    /^\s*(?:|[1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])\s*$/,
-);
+const portSchema = max(min(integer(), 1), 65_535);
 
 const targetDeploySettingsSchema = refine(
     object({
-        port: defaulted(optional(portSchema), ''),
+        port: optional(portSchema),
         forceRecreate: defaulted(optional(boolean()), false),
         noRecreate: defaulted(optional(boolean()), false),
     }),
@@ -60,8 +58,8 @@ function getTargetDeploySettingsValidationMessage(failure: Failure): string {
         return '`forceRecreate` and `noRecreate` cannot both be true.';
     }
 
-    if (failure.refinement === 'pattern' && failure.path[0] === 'port') {
-        return '`port` must be empty or an integer from 1 to 65535.';
+    if (failure.path[0] === 'port') {
+        return '`port` must be an integer from 1 to 65535.';
     }
 
     if (failure.type === 'never') {

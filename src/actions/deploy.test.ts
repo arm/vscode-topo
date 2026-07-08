@@ -167,7 +167,7 @@ describe('Deploy', () => {
 
     it('passes the custom registry port to deploy', async () => {
         await deployServices(taskExecutor, composeFilePath, target, {
-            port: '5000',
+            port: 5000,
         });
 
         expect(taskExecutor.run).toHaveBeenCalledTimes(1);
@@ -186,7 +186,7 @@ describe('Deploy', () => {
 
     it('builds deploy arguments with configured options', () => {
         const args = buildDeployArgs(target, {
-            port: '5000',
+            port: 5000,
         });
 
         expect(args).toEqual(['deploy', '--target', target, '-p', '5000']);
@@ -248,7 +248,7 @@ describe('Deploy', () => {
     it('passes the configured custom registry port from the command handler', async () => {
         mockTargetDeploySettings({
             [target]: {
-                port: ' 5000 ',
+                port: 5000,
                 forceRecreate: false,
             },
         });
@@ -266,7 +266,6 @@ describe('Deploy', () => {
     it('passes force recreate from the command handler', async () => {
         mockTargetDeploySettings({
             [target]: {
-                port: '',
                 forceRecreate: true,
                 noRecreate: false,
             },
@@ -285,7 +284,6 @@ describe('Deploy', () => {
     it('passes no recreate from the command handler', async () => {
         mockTargetDeploySettings({
             [target]: {
-                port: '',
                 forceRecreate: false,
                 noRecreate: true,
             },
@@ -332,7 +330,7 @@ describe('Deploy', () => {
     it('uses code defaults for missing target-specific fields', async () => {
         mockTargetDeploySettings({
             [target]: {
-                port: '5003',
+                port: 5003,
             },
         });
 
@@ -349,10 +347,10 @@ describe('Deploy', () => {
     it('uses selected target settings when another target has malformed settings', async () => {
         mockTargetDeploySettings({
             [target]: {
-                port: '5003',
+                port: 5003,
             },
             'other.local': {
-                port: 5004,
+                port: '5004',
                 forceRecreate: 'yes',
             },
         });
@@ -370,7 +368,7 @@ describe('Deploy', () => {
     it('shows an error when selected target settings are malformed', async () => {
         mockTargetDeploySettings({
             [target]: {
-                port: 5003,
+                port: '5003',
                 forceRecreate: 'yes',
                 noRecreate: false,
             },
@@ -379,14 +377,14 @@ describe('Deploy', () => {
         await deployAction.deployContextCommandHandler(composeFileUri);
 
         expectInvalidTargetDeploySettings(
-            '`port` is invalid: Expected a string, but received: 5003.',
+            '`port` must be an integer from 1 to 65535.',
         );
     });
 
     it('shows an error when selected target settings contain conflicting recreate options', async () => {
         mockTargetDeploySettings({
             [target]: {
-                port: '5010',
+                port: 5010,
                 forceRecreate: true,
                 noRecreate: true,
             },
@@ -402,7 +400,7 @@ describe('Deploy', () => {
     it('shows an error when selected target settings contain an invalid port', async () => {
         mockTargetDeploySettings({
             [target]: {
-                port: '65536',
+                port: 65536,
                 forceRecreate: true,
                 noRecreate: false,
             },
@@ -411,14 +409,14 @@ describe('Deploy', () => {
         await deployAction.deployContextCommandHandler(composeFileUri);
 
         expectInvalidTargetDeploySettings(
-            '`port` must be empty or an integer from 1 to 65535.',
+            '`port` must be an integer from 1 to 65535.',
         );
     });
 
     it('shows an error when selected target settings contain unknown fields', async () => {
         mockTargetDeploySettings({
             [target]: {
-                port: '5007',
+                port: 5007,
                 forceRecrate: true,
             },
         });
@@ -440,7 +438,7 @@ describe('Deploy', () => {
         await deployAction.deployCommandHandler();
 
         expectInvalidTargetDeploySettings(
-            '`port` must be empty or an integer from 1 to 65535.',
+            '`port` must be an integer from 1 to 65535.',
             'Error retrieving target deploy settings',
         );
         expect(vscode.workspace.findFiles).not.toHaveBeenCalled();
