@@ -158,7 +158,7 @@ describe('getTargetDeploySettingsForTarget', () => {
         });
 
         expect(() => getTargetDeploySettingsForTarget(target)).toThrow(
-            'Invalid topo.targetSettings.deploy entry for "topo.local": `forceRecrate` is not a supported setting. Use only `port`, `forceRecreate`, or `noRecreate`.',
+            'Invalid topo.targetSettings.deploy entry for "topo.local": `forceRecrate` is not a supported setting.',
         );
     });
 });

@@ -3,6 +3,7 @@ import {
     boolean,
     create,
     defaulted,
+    type,
     type Failure,
     Infer,
     integer,
@@ -34,7 +35,6 @@ const targetDeploySettingsSchema = refine(
 export type TargetDeploySettings = Infer<typeof targetDeploySettingsSchema>;
 
 type RawTargetSettingsByTarget = Record<string, unknown>;
-type RawTargetSettings = Record<string, unknown>;
 
 function getRawTargetSettingsConfiguration(
     config: vscode.WorkspaceConfiguration,
@@ -47,25 +47,45 @@ function getRawTargetSettingsConfiguration(
     return settings as RawTargetSettingsByTarget;
 }
 
-function getSettingPath(failure: Failure): string {
-    return failure.path.length > 0 ? failure.path.join('.') : 'value';
+function getSettingPath(path: Failure['path']): string {
+    return path.length > 0 ? path.join('.') : 'value';
 }
 
-function getTargetDeploySettingsValidationMessage(failure: Failure): string {
-    const settingPath = getSettingPath(failure);
+function getDeploySettingsFailurePath(
+    failure: Failure,
+    target: string,
+): Failure['path'] {
+    if (
+        failure.path[0] === target &&
+        failure.path[1] === CONFIG_TARGET_SETTINGS_DEPLOY
+    ) {
+        return failure.path.slice(2);
+    }
+    return failure.path;
+}
+
+function getTargetDeploySettingsValidationMessage(
+    failure: Failure,
+    target: string,
+): string {
+    const deploySettingsFailurePath = getDeploySettingsFailurePath(
+        failure,
+        target,
+    );
+    const settingPath = getSettingPath(deploySettingsFailurePath);
     if (failure.refinement === 'recreateOptions') {
         return '`forceRecreate` and `noRecreate` cannot both be true.';
     }
 
-    if (failure.path[0] === 'port') {
+    if (deploySettingsFailurePath[0] === 'port') {
         return '`port` must be an integer from 1 to 65535.';
     }
 
     if (failure.type === 'never') {
-        return `\`${settingPath}\` is not a supported setting. Use only \`port\`, \`forceRecreate\`, or \`noRecreate\`.`;
+        return `\`${settingPath}\` is not a supported setting.`;
     }
 
-    if (failure.path.length === 0) {
+    if (deploySettingsFailurePath.length === 0) {
         return '`deploy` must be an object.';
     }
 
@@ -77,41 +97,42 @@ export function getTargetDeploySettingsForTarget(
 ): TargetDeploySettings {
     const config = vscode.workspace.getConfiguration(PACKAGE_NAME);
     const settingsByTarget = getRawTargetSettingsConfiguration(config);
-    const targetSettings = settingsByTarget[target];
-    if (targetSettings === undefined) {
-        return create({}, targetDeploySettingsSchema);
-    }
+    const guardSchema = optional(
+        type({
+            [target]: optional(
+                object({
+                    [CONFIG_TARGET_SETTINGS_DEPLOY]: optional(
+                        targetDeploySettingsSchema,
+                    ),
+                }),
+            ),
+        }),
+    );
 
-    if (
-        !targetSettings ||
-        typeof targetSettings !== 'object' ||
-        Array.isArray(targetSettings)
-    ) {
-        throw new Error(
-            `Invalid ${PACKAGE_NAME}.${CONFIG_TARGET_SETTINGS} entry for "${target}": The target entry must be an object.`,
-        );
-    }
-
-    const targetDeploySettings = (targetSettings as RawTargetSettings)[
-        CONFIG_TARGET_SETTINGS_DEPLOY
-    ];
-    if (targetDeploySettings === undefined) {
-        return create({}, targetDeploySettingsSchema);
-    }
-
-    const [validationError, validTargetSettings] = validate(
-        targetDeploySettings,
-        targetDeploySettingsSchema,
+    const [validationError, validSettingsByTarget] = validate(
+        settingsByTarget,
+        guardSchema,
         { coerce: true },
     );
     if (validationError) {
+        const failure = validationError.failures()[0];
+        if (failure.path[0] === target && failure.path.length === 1) {
+            throw new Error(
+                `Invalid ${PACKAGE_NAME}.${CONFIG_TARGET_SETTINGS} entry for "${target}": The target entry must be an object.`,
+            );
+        }
+
         const validationMessage = getTargetDeploySettingsValidationMessage(
-            validationError.failures()[0],
+            failure,
+            target,
         );
         throw new Error(
             `Invalid ${PACKAGE_NAME}.${CONFIG_TARGET_SETTINGS}.${CONFIG_TARGET_SETTINGS_DEPLOY} entry for "${target}": ${validationMessage}`,
         );
     }
 
-    return validTargetSettings;
+    return (
+        validSettingsByTarget?.[target]?.[CONFIG_TARGET_SETTINGS_DEPLOY] ??
+        create({}, targetDeploySettingsSchema)
+    );
 }
