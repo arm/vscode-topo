@@ -1,5 +1,5 @@
 import { assertContainerTreeItem } from '../views/treeItems/assertContainerTreeItem';
-import { showAndLogError } from '../util/showAndLogError';
+import { showAndLogError } from '../util/showAndLog';
 import { isWrappedError } from '../errors/wrappedError';
 import { ContainerCommands } from '../services/containerCommands';
 import { ProjectController } from '../controllers/projectController';

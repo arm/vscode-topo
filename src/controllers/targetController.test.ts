@@ -4,14 +4,14 @@ import * as vscode from 'vscode';
 import { TargetStore } from '../services/targetStore';
 import { TargetModel } from '../models/targetModel';
 import { WrappedError } from '../errors/wrappedError';
-import { showAndLogError } from '../util/showAndLogError';
+import { showAndLogError } from '../util/showAndLog';
 import { TopoCli } from '../services/topoCli';
 import { TargetDescription } from '../util/types';
 import { errored, loaded, unloaded } from '../util/loadable';
 import { HealthReport } from '../services/topoCliSchema';
 
 vi.mock('../util/logger');
-vi.mock('../util/showAndLogError');
+vi.mock('../util/showAndLog');
 
 const target = 'user@target';
 const health: HealthReport = {

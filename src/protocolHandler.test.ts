@@ -3,11 +3,11 @@ import path from 'node:path';
 import os from 'node:os';
 import { ProtocolHandler } from './protocolHandler';
 import { mutable } from './util/test/mutable';
-import { showAndLogError } from './util/showAndLogError';
+import { showAndLogError } from './util/showAndLog';
 import { TaskExecutor } from './util/taskExecutor';
 import { MockProxy, mock } from 'vitest-mock-extended';
 
-vi.mock('./util/showAndLogError', () => ({
+vi.mock('./util/showAndLog', () => ({
     showAndLogError: vi.fn(),
 }));
 

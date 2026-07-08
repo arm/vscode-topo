@@ -3,7 +3,7 @@ import { getErrorMessage } from '../util/getErrorMessage';
 import path from 'node:path';
 import { createProcessTask } from '../util/task';
 import { TaskExecutor } from '../util/taskExecutor';
-import { showAndLogError } from '../util/showAndLogError';
+import { showAndLogWarning } from '../util/showAndLog';
 import { TargetModel } from '../models/targetModel';
 import { ProjectController } from '../controllers/projectController';
 import { isWrappedError, WrappedError } from '../errors/wrappedError';
@@ -19,6 +19,7 @@ import {
     TargetDeploySettings,
     getTargetDeploySettingsForTarget,
 } from '../services/targetDeploySettings';
+import type { TargetHealthReport } from '../services/topoCliSchema';
 
 const viewLogsItem: vscode.MessageItem = {
     title: 'View Logs',
@@ -102,10 +103,29 @@ export class Deploy {
         const target = this.targetModel.selected;
         if (!target) {
             throw new WrappedError(
-                'NO_TARGET_SELECTED',
+                'TARGET',
                 'No target selected. Please select a target before deploying.',
             );
         }
+
+        const health = this.targetModel.selectedTargetHealth;
+        if (health.loading) {
+            throw new WrappedError(
+                'TARGET',
+                `Target ${target} health is still being checked. Wait for target health checks to finish before deploying.`,
+            );
+        }
+
+        if (
+            health.status === 'loaded' &&
+            health.data.connectivity.status !== 'ok'
+        ) {
+            throw new WrappedError(
+                'TARGET',
+                getConnectivityFailureMessage(target, health.data),
+            );
+        }
+
         return target;
     }
 
@@ -144,6 +164,16 @@ export class Deploy {
         );
         await this.projectController.refreshProjectContainersCommandHandler();
     }
+}
+
+function getConnectivityFailureMessage(
+    target: string,
+    health: TargetHealthReport,
+): string {
+    const details = health.connectivity.value
+        ? `: ${health.connectivity.value}`
+        : '';
+    return `Target ${target} connectivity is ${health.connectivity.status}${details}. Resolve target connectivity before deploying.`;
 }
 
 async function promptForComposeFile(
