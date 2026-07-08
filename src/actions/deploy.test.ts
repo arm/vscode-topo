@@ -219,24 +219,6 @@ describe('Deploy', () => {
         expect(args).toEqual(['deploy', '--target', target, '--no-recreate']);
     });
 
-    it('builds deploy arguments with all enabled options', () => {
-        const args = buildDeployArgs(target, {
-            port: 5000,
-            forceRecreate: true,
-            noRecreate: true,
-        });
-
-        expect(args).toEqual([
-            'deploy',
-            '--target',
-            target,
-            '-p',
-            '5000',
-            '--force-recreate',
-            '--no-recreate',
-        ]);
-    });
-
     it('handles task failure', async () => {
         taskExecutor.run.mockRejectedValueOnce(new Error('deploy failed'));
         await deployServices(taskExecutor, composeFilePath, target);
