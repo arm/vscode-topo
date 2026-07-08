@@ -395,58 +395,11 @@
         },
         "configuration": [
             {
-                "title": "Topo",
-                "properties": {
-                    "topo.defaultTargetDeploySettings": {
-                        "type": "object",
-                        "default": {
-                            "forceRecreate": false,
-                            "noRecreate": false
-                        },
-                        "description": "Default deploy settings to use for cached targets that do not have target-specific settings.",
-                        "additionalProperties": false,
-                        "not": {
-                            "properties": {
-                                "forceRecreate": {
-                                    "const": true
-                                },
-                                "noRecreate": {
-                                    "const": true
-                                }
-                            },
-                            "required": [
-                                "forceRecreate",
-                                "noRecreate"
-                            ]
-                        },
-                        "properties": {
-                            "port": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "maximum": 65535,
-                                "description": "Specify the default port to use for registry when deploying to a target. Use 1-65535. If not specified, the default port will be used."
-                            },
-                            "forceRecreate": {
-                                "type": "boolean",
-                                "default": false,
-                                "description": "topo deploy will force recreation of containers by default, even if their configuration and image haven't changed."
-                            },
-                            "noRecreate": {
-                                "type": "boolean",
-                                "default": false,
-                                "description": "topo deploy will prevent recreation of containers by default, even if their configuration and image have changed."
-                            }
-                        }
-                    }
-                }
-            },
-            {
                 "title": "Target Settings",
                 "properties": {
                     "topo.targetSettings": {
                         "type": "object",
                         "default": {},
-                        "description": "Per-target settings.",
                         "markdownDescription": "Per-target settings. Add target names as keys, then use `deploy` to configure deploy options for that target.",
                         "additionalProperties": {
                             "type": "object",
@@ -456,7 +409,6 @@
                                 "deploy": {
                                     "type": "object",
                                     "default": {},
-                                    "description": "Deploy settings for this target.",
                                     "markdownDescription": "Deploy settings for this target. Example: `{ \"port\": 5000, \"forceRecreate\": true }`. Use either `forceRecreate` or `noRecreate`, not both.",
                                     "additionalProperties": false,
                                     "properties": {
@@ -464,19 +416,16 @@
                                             "type": "integer",
                                             "minimum": 1,
                                             "maximum": 65535,
-                                            "description": "Specify the port to use for registry when deploying to the target. Use 1-65535. If not specified, the default port will be used.",
                                             "markdownDescription": "Registry port to use when deploying to the target. Use `1`-`65535`, for example `5000`. Omit this setting to use the default port."
                                         },
                                         "forceRecreate": {
                                             "type": "boolean",
                                             "default": false,
-                                            "description": "topo deploy will force recreation of containers even if their configuration and image haven't changed.",
                                             "markdownDescription": "Pass `--force-recreate` to `topo deploy`, recreating containers even when their configuration and image have not changed. Do not use with `noRecreate`."
                                         },
                                         "noRecreate": {
                                             "type": "boolean",
                                             "default": false,
-                                            "description": "topo deploy will not recreate existing containers.",
                                             "markdownDescription": "Pass `--no-recreate` to `topo deploy`, keeping existing containers instead of recreating them. Do not use with `forceRecreate`."
                                         }
                                     }
