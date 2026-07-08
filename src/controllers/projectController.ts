@@ -9,7 +9,7 @@ import { TopoCli } from '../services/topoCli';
 import { PsEntry, PsOutput } from '../services/topoCliSchema';
 import { ContainerItem } from '../util/types';
 import { TargetModel } from '../models/targetModel';
-import { showAndLogError } from '../util/showAndLogError';
+import { showAndLogError } from '../util/showAndLog';
 
 function createContainerItem(item: PsEntry, target: string): ContainerItem {
     return {
