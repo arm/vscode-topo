@@ -14,6 +14,7 @@ import { ContainerDelete } from './actions/containerDelete';
 import { FixIssue } from './actions/fixIssue';
 import { ProjectClone } from './actions/projectClone';
 import { ProjectController } from './controllers/projectController';
+import { OpenContainerInBrowser } from './actions/openContainerInBrowser';
 
 function command(id: string): string {
     return `${PACKAGE_NAME}.${id}`;
@@ -34,6 +35,7 @@ export const deployProject = command('deployProject');
 export const stop = command('stop.context');
 export const stopProject = command('stopProject');
 export const openContainerShell = command('openContainerShell');
+export const openContainerInBrowser = command('openContainerInBrowser');
 export const startContainer = command('startContainer');
 export const stopContainer = command('stopContainer');
 export const deleteContainer = command('deleteContainer');
@@ -52,6 +54,7 @@ export interface CommandHandlers {
     deploy: Deploy;
     stop: Stop;
     openContainerShell: OpenContainerShell;
+    openContainerInBrowser: OpenContainerInBrowser;
     containerStart: ContainerStart;
     containerStop: ContainerStop;
     containerDelete: ContainerDelete;
@@ -105,6 +108,11 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
         ),
         vscode.commands.registerCommand(openContainerShell, (treeNode) =>
             handlers.openContainerShell.openContainerShellCommandHandler(
+                treeNode,
+            ),
+        ),
+        vscode.commands.registerCommand(openContainerInBrowser, (treeNode) =>
+            handlers.openContainerInBrowser.openContainerInBrowserCommandHandler(
                 treeNode,
             ),
         ),

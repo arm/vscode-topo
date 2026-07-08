@@ -51,4 +51,38 @@ describe('ContainerTreeItem', () => {
             ),
         );
     });
+
+    it('marks running containers with a likely web endpoint as browser-openable', () => {
+        const container: ContainerItem = {
+            id: 'id789',
+            names: 'web-container',
+            image: 'nginx',
+            state: 'running',
+            status: 'Up 10 minutes',
+            processingDomain: 'Linux Host',
+            address: 'topo.local:8080',
+            target,
+        };
+
+        const item = new ContainerTreeItem(container);
+
+        expect(item.contextValue).toBe('service running Linux Host browser');
+    });
+
+    it('does not mark stopped containers as browser-openable', () => {
+        const container: ContainerItem = {
+            id: 'id987',
+            names: 'stopped-web-container',
+            image: 'nginx',
+            state: 'exited',
+            status: 'Exited (0)',
+            processingDomain: 'Linux Host',
+            address: 'topo.local:80',
+            target,
+        };
+
+        const item = new ContainerTreeItem(container);
+
+        expect(item.contextValue).toBe('service exited Linux Host');
+    });
 });

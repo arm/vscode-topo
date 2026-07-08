@@ -18,6 +18,7 @@ import { ProjectClone } from './actions/projectClone';
 import { ProjectTreeItem } from './views/treeItems/projectTreeItem';
 import { unloaded } from './util/loadable';
 import { ProjectController } from './controllers/projectController';
+import { OpenContainerInBrowser } from './actions/openContainerInBrowser';
 
 vi.mock('./util/logger');
 
@@ -31,6 +32,7 @@ describe('commands', () => {
         deploy: mock<Deploy>(),
         stop: mock<Stop>(),
         openContainerShell: mock<OpenContainerShell>(),
+        openContainerInBrowser: mock<OpenContainerInBrowser>(),
         containerStart: mock<ContainerStart>(),
         containerStop: mock<ContainerStop>(),
         containerDelete: mock<ContainerDelete>(),
@@ -103,6 +105,11 @@ describe('commands', () => {
             [
                 commands.openContainerShell,
                 handlers.openContainerShell.openContainerShellCommandHandler,
+            ],
+            [
+                commands.openContainerInBrowser,
+                handlers.openContainerInBrowser
+                    .openContainerInBrowserCommandHandler,
             ],
             [
                 commands.startContainer,
