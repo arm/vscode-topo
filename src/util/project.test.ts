@@ -22,7 +22,9 @@ describe('findTopLevelComposeProjects', () => {
         pattern: vscode.RelativePattern,
     ): string {
         const base = pattern.base as
-            string | vscode.Uri | vscode.WorkspaceFolder;
+            | string
+            | vscode.Uri
+            | vscode.WorkspaceFolder;
         if (typeof base === 'string') {
             return base;
         }
