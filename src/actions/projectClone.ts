@@ -7,7 +7,7 @@ import {
     getTemplateOfChoice,
 } from '../util/projectClone';
 import { isWrappedError } from '../errors/wrappedError';
-import { showAndLogError } from '../util/showAndLogError';
+import { showAndLogError } from '../util/showAndLog';
 import { TaskExecutor } from '../util/taskExecutor';
 
 function wrapCloneCommandWithCloneErrorHandling(
