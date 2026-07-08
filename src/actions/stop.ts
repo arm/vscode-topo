@@ -3,10 +3,12 @@ import { getErrorMessage } from '../util/getErrorMessage';
 import path from 'node:path';
 import { createProcessTask } from '../util/task';
 import { TaskExecutor } from '../util/taskExecutor';
-import { showAndLogError } from '../util/showAndLog';
+import { showAndLogWarning } from '../util/showAndLog';
 import { TargetModel } from '../models/targetModel';
 import { ProjectController } from '../controllers/projectController';
 import { ProjectTreeItem } from '../views/treeItems/projectTreeItem';
+import { isWrappedError } from '../errors/wrappedError';
+import { getHealthyTarget } from '../util/getHealthyTarget';
 
 const viewLogsItem: vscode.MessageItem = {
     title: 'View Logs',
@@ -23,16 +25,16 @@ export class Stop {
         if (!resource) {
             throw new Error('No compose.yaml or compose.yml selected for stop');
         }
-        const target = this.targetModel.selected;
 
-        if (!target) {
-            showAndLogError(
-                'Error executing stop command',
-                new Error(
-                    'No target selected. Please select a target before stopping.',
-                ),
-            );
-            return;
+        let target: string;
+        try {
+            target = getHealthyTarget(this.targetModel);
+        } catch (err: unknown) {
+            if (isWrappedError(err, ['TARGET'])) {
+                showAndLogWarning('Cannot stop', err);
+                return;
+            }
+            throw err;
         }
 
         await stop(this.taskExecutor, resource.fsPath, target);
