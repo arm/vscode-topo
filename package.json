@@ -400,7 +400,7 @@
                     "topo.targetSettings": {
                         "type": "object",
                         "default": {},
-                        "markdownDescription": "Per-target settings. Add target names as keys, then use `deploy` to configure deploy options for that target.",
+                        "markdownDescription": "Per-target settings. Add target names as keys, then use `deploy` to configure deploy options for that target. Example: `{ \"root@192.0.2.1\": { \"deploy\": { \"port\": 5000, \"forceRecreate\": true } } }`.",
                         "additionalProperties": {
                             "type": "object",
                             "additionalProperties": false,
