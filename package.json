@@ -381,23 +381,6 @@
                     "group": "navigation"
                 }
             ]
-        },
-        "configuration": {
-            "title": "Topo",
-            "properties": {
-                "topo.loggingVerbosity": {
-                    "type": "string",
-                    "enum": [
-                        "off",
-                        "error",
-                        "warn",
-                        "info",
-                        "debug"
-                    ],
-                    "default": "warn",
-                    "description": "Specify the logging verbosity of the Topo extension"
-                }
-            }
         }
     },
     "scripts": {

@@ -2,14 +2,6 @@ import * as vscode from 'vscode';
 import * as manifest from '../manifest';
 import * as util from 'node:util';
 
-export enum Verbosity {
-    off = 0,
-    error = 1,
-    warn = 2,
-    info = 3,
-    debug = 4,
-}
-
 export const stringifyMessage = (message: unknown): string => {
     if (message === null || message === undefined) {
         return String(message);
@@ -38,81 +30,55 @@ export const stringifyMessage = (message: unknown): string => {
     }
 };
 
-abstract class Logger implements vscode.Disposable {
-    private logVerbosity: Verbosity;
-    private configurationChangeDisposable: vscode.Disposable;
-
-    constructor() {
-        this.logVerbosity = this.getVerbosity();
-        this.configurationChangeDisposable =
-            vscode.workspace.onDidChangeConfiguration((e) => {
-                if (
-                    e.affectsConfiguration(
-                        `${manifest.PACKAGE_NAME}.${manifest.CONFIG_LOGGING_VERBOSITY}`,
-                    )
-                ) {
-                    this.logVerbosity = this.getVerbosity();
-                }
-            });
-    }
-
-    public getVerbosity(): Verbosity {
-        const config =
-            vscode.workspace
-                .getConfiguration(manifest.PACKAGE_NAME)
-                .get<string>(manifest.CONFIG_LOGGING_VERBOSITY) ||
-            manifest.DEFAULT_LOGGING_VERBOSITY;
-        return Verbosity[config as keyof typeof Verbosity];
-    }
-
-    protected abstract logMessage(message: string): void;
-
-    public log(verbosity: Verbosity, ...messages: unknown[]): void {
-        if (this.logVerbosity === Verbosity.off) {
-            return;
-        }
-
-        if (verbosity <= this.logVerbosity) {
-            for (const message of messages) {
-                this.logMessage(stringifyMessage(message));
-            }
-        }
-    }
-
-    public error = (...messages: unknown[]): void =>
-        this.log(Verbosity.error, ...messages);
-    public warn = (...messages: unknown[]): void =>
-        this.log(Verbosity.warn, ...messages);
-    public info = (...messages: unknown[]): void =>
-        this.log(Verbosity.info, ...messages);
-    public debug = (...messages: unknown[]): void =>
-        this.log(Verbosity.debug, ...messages);
-
-    public dispose(): void {
-        this.configurationChangeDisposable.dispose();
-    }
-}
-
-export class OutputChannelLogger extends Logger {
+export class OutputChannelLogger implements vscode.Disposable {
     public static instance = new OutputChannelLogger();
 
-    private outputChannel: vscode.OutputChannel | undefined;
+    private outputChannel: vscode.LogOutputChannel | undefined;
 
-    protected logMessage(message: string): void {
+    private getOutputChannel(): vscode.LogOutputChannel {
         if (!this.outputChannel) {
             this.outputChannel = vscode.window.createOutputChannel(
                 manifest.DISPLAY_NAME,
+                { log: true },
             );
         }
-        this.outputChannel.appendLine(message);
+        return this.outputChannel;
     }
+
+    private logMessages(
+        messages: unknown[],
+        logMessage: (message: string) => void,
+    ): void {
+        for (const message of messages) {
+            logMessage(stringifyMessage(message));
+        }
+    }
+
+    public error = (...messages: unknown[]): void => {
+        const outputChannel = this.getOutputChannel();
+        this.logMessages(messages, (message) => outputChannel.error(message));
+    };
+
+    public warn = (...messages: unknown[]): void => {
+        const outputChannel = this.getOutputChannel();
+        this.logMessages(messages, (message) => outputChannel.warn(message));
+    };
+
+    public info = (...messages: unknown[]): void => {
+        const outputChannel = this.getOutputChannel();
+        this.logMessages(messages, (message) => outputChannel.info(message));
+    };
+
+    public debug = (...messages: unknown[]): void => {
+        const outputChannel = this.getOutputChannel();
+        this.logMessages(messages, (message) => outputChannel.debug(message));
+    };
 
     public show(): void {
-        this.outputChannel?.show();
+        this.getOutputChannel().show();
     }
 
-    public override dispose(): void {
-        super.dispose();
+    public dispose(): void {
         this.outputChannel?.dispose();
         this.outputChannel = undefined;
     }
