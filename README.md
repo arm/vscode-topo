@@ -26,7 +26,7 @@ Not sure what these terms mean? The [glossary](https://github.com/arm/topo/blob/
 
 - Visual Studio Code v1.101.0 or newer
 - [Docker](https://docs.docker.com/get-docker/)
-- SSH client
+- OpenSSH Client
 - curl
 
 **Target machine** (the remote Arm system):
