@@ -6,7 +6,7 @@ import { TaskExecutor } from '../util/taskExecutor';
 import { showAndLogError } from '../util/showAndLogError';
 import { TargetModel } from '../models/targetModel';
 import { ProjectController } from '../controllers/projectController';
-import { WrappedError } from '../errors/wrappedError';
+import { isWrappedError, WrappedError } from '../errors/wrappedError';
 import {
     COMPOSE_FILE_GLOB,
     compareComposeFiles,
@@ -40,9 +40,18 @@ export class Deploy {
         let targetDeploySettings: TargetDeploySettings;
         try {
             target = this.getSelectedTarget();
+        } catch (err: unknown) {
+            if (isWrappedError(err, ['NO_TARGET_SELECTED'])) {
+                showAndLogError('Error executing deploy command', err);
+                return;
+            }
+            throw err;
+        }
+
+        try {
             targetDeploySettings = getTargetDeploySettingsForTarget(target);
         } catch (err: unknown) {
-            showAndLogError('Error executing deploy command', err);
+            showAndLogError('Error retrieving target deploy settings', err);
             return;
         }
 
