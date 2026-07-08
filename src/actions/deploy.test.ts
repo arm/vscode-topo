@@ -95,9 +95,10 @@ describe('Deploy', () => {
 
     function expectInvalidTargetDeploySettings(
         validationMessage: string,
+        errorPrefix = 'Error executing deploy command',
     ): void {
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-            `Error executing deploy command. Invalid topo.targetSettings.deploy entry for "topo.local": ${validationMessage}`,
+            `${errorPrefix}. Invalid topo.targetSettings.deploy entry for "topo.local": ${validationMessage}`,
         );
         expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(
@@ -440,6 +441,7 @@ describe('Deploy', () => {
 
         expectInvalidTargetDeploySettings(
             '`port` must be empty or an integer from 1 to 65535.',
+            'Error retrieving target deploy settings',
         );
         expect(vscode.workspace.findFiles).not.toHaveBeenCalled();
         expect(vscode.window.showQuickPick).not.toHaveBeenCalled();

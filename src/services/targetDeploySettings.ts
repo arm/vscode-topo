@@ -7,6 +7,7 @@ import {
     Infer,
     object,
     optional,
+    pattern,
     refine,
     string,
     validate,
@@ -17,20 +18,10 @@ import {
     PACKAGE_NAME,
 } from '../manifest';
 
-const portSchema = refine(string(), 'port', (value) => {
-    const trimmedPort = value.trim();
-    if (!trimmedPort) {
-        return true;
-    }
-
-    const port = Number(trimmedPort);
-    return (
-        Number.isInteger(port) &&
-        String(port) === trimmedPort &&
-        port >= 1 &&
-        port <= 65_535
-    );
-});
+const portSchema = pattern(
+    string(),
+    /^\s*(?:|[1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])\s*$/,
+);
 
 const targetDeploySettingsSchema = refine(
     object({
@@ -69,7 +60,7 @@ function getTargetDeploySettingsValidationMessage(failure: Failure): string {
         return '`forceRecreate` and `noRecreate` cannot both be true.';
     }
 
-    if (failure.refinement === 'port') {
+    if (failure.refinement === 'pattern' && failure.path[0] === 'port') {
         return '`port` must be empty or an integer from 1 to 65535.';
     }
 
