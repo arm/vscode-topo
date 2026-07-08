@@ -208,10 +208,6 @@ export function buildDeployArgs(
     target: string,
     settings: TargetDeploySettings = {},
 ): string[] {
-    if (settings.forceRecreate && settings.noRecreate) {
-        throw new Error('Cannot use both force recreate and no recreate');
-    }
-
     const args = ['deploy', '--target', target];
     if (settings.port !== undefined) {
         args.push('-p', String(settings.port));

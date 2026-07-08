@@ -219,13 +219,22 @@ describe('Deploy', () => {
         expect(args).toEqual(['deploy', '--target', target, '--no-recreate']);
     });
 
-    it('throws when deploy arguments contain conflicting recreate options', () => {
-        expect(() =>
-            buildDeployArgs(target, {
-                forceRecreate: true,
-                noRecreate: true,
-            }),
-        ).toThrow('Cannot use both force recreate and no recreate');
+    it('builds deploy arguments with all enabled options', () => {
+        const args = buildDeployArgs(target, {
+            port: 5000,
+            forceRecreate: true,
+            noRecreate: true,
+        });
+
+        expect(args).toEqual([
+            'deploy',
+            '--target',
+            target,
+            '-p',
+            '5000',
+            '--force-recreate',
+            '--no-recreate',
+        ]);
     });
 
     it('handles task failure', async () => {
