@@ -65,7 +65,7 @@ describe('getSettingsForTarget', () => {
 
     it('throws when target settings are malformed', () => {
         expect(() => resolveSettingsForTarget(target, 'not-an-object')).toThrow(
-            'Invalid topo.targetSettings.deploy entry for "topo.local": `deploy` must be an object.',
+            'Invalid topo.targetSettings.deploy entry for "topo.local": Expected an object, but received: "not-an-object"',
         );
     });
 
@@ -126,7 +126,7 @@ describe('getSettingsForTarget', () => {
                 [target]: 'not-an-object',
             }),
         ).toThrow(
-            'Invalid topo.targetSettings.deploy entry for "topo.local": `topo.local` is invalid: Expected an object, but received: "not-an-object".',
+            'Invalid topo.targetSettings.deploy entry for "topo.local": Expected an object, but received: "not-an-object"',
         );
     });
 
@@ -139,7 +139,7 @@ describe('getSettingsForTarget', () => {
                 }),
             ),
         ).toThrow(
-            'Invalid topo.targetSettings.deploy entry for "topo.local": `deploy` must be an object.',
+            'Invalid topo.targetSettings.deploy entry for "topo.local": Expected an object, but received: "not-an-object"',
         );
     });
 
@@ -154,7 +154,7 @@ describe('getSettingsForTarget', () => {
                 }),
             ),
         ).toThrow(
-            'Invalid topo.targetSettings.deploy entry for "topo.local": `port` is invalid: Expected a integer less than or equal to 65535 but received `65536`.',
+            'Invalid topo.targetSettings.deploy entry for "topo.local": Expected a integer less than or equal to 65535 but received `65536`',
         );
     });
 
@@ -185,7 +185,7 @@ describe('getSettingsForTarget', () => {
                 }),
             ),
         ).toThrow(
-            'Invalid topo.targetSettings.deploy entry for "topo.local": `forceRecrate` is invalid: Expected a value of type `never`, but received: `true`.',
+            'Invalid topo.targetSettings.deploy entry for "topo.local": Expected a value of type `never`, but received: `true`',
         );
     });
 });

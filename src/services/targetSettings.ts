@@ -4,7 +4,6 @@ import {
     create,
     defaulted,
     type,
-    type Failure,
     integer,
     max,
     min,
@@ -56,39 +55,6 @@ function getTargetSchema(target: string) {
     );
 }
 
-function getSettingPath(path: Failure['path']): string {
-    return path.length > 0 ? path.join('.') : 'value';
-}
-
-function getDeploySettingsFailurePath(
-    failure: Failure,
-    target: string,
-): Failure['path'] {
-    if (
-        failure.path[0] === target &&
-        failure.path[1] === CONFIG_TARGET_SETTINGS_DEPLOY
-    ) {
-        return failure.path.slice(2);
-    }
-    return failure.path;
-}
-
-function getTargetSettingsValidationMessage(
-    failure: Failure,
-    target: string,
-): string {
-    const deploySettingsFailurePath = getDeploySettingsFailurePath(
-        failure,
-        target,
-    );
-    const settingPath = getSettingPath(deploySettingsFailurePath);
-    if (deploySettingsFailurePath.length === 0) {
-        return '`deploy` must be an object.';
-    }
-
-    return `\`${settingPath}\` is invalid: ${failure.message}.`;
-}
-
 export function resolveSettingsForTarget(
     target: string,
     settingsByTarget: unknown,
@@ -100,12 +66,8 @@ export function resolveSettingsForTarget(
     );
     if (validationError) {
         const failure = validationError.failures()[0];
-        const validationMessage = getTargetSettingsValidationMessage(
-            failure,
-            target,
-        );
         throw new Error(
-            `Invalid ${PACKAGE_NAME}.${CONFIG_TARGET_SETTINGS}.${CONFIG_TARGET_SETTINGS_DEPLOY} entry for "${target}": ${validationMessage}`,
+            `Invalid ${PACKAGE_NAME}.${CONFIG_TARGET_SETTINGS}.${CONFIG_TARGET_SETTINGS_DEPLOY} entry for "${target}": ${failure.message}`,
             { cause: validationError },
         );
     }

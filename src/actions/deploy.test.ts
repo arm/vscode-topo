@@ -328,7 +328,7 @@ describe('Deploy', () => {
         await deployAction.deployCommandHandler();
 
         expectInvalidTargetSettings(
-            '`port` is invalid: Expected an integer, but received: "not-a-port".',
+            'Expected an integer, but received: "not-a-port"',
             'Error retrieving target settings',
         );
         expect(vscode.workspace.findFiles).not.toHaveBeenCalled();
