@@ -19,6 +19,7 @@ import { ProjectTreeItem } from './views/treeItems/projectTreeItem';
 import { unloaded } from './util/loadable';
 import { ProjectController } from './controllers/projectController';
 import { OpenContainerInBrowser } from './actions/openContainerInBrowser';
+import { OpenSettings } from './actions/openSettings';
 
 vi.mock('./util/logger');
 
@@ -37,6 +38,7 @@ describe('commands', () => {
         containerStop: mock<ContainerStop>(),
         containerDelete: mock<ContainerDelete>(),
         fixIssue: mock<FixIssue>(),
+        openSettings: mock<OpenSettings>(),
     } satisfies commands.CommandHandlers;
 
     afterEach(() => {
@@ -85,6 +87,10 @@ describe('commands', () => {
             [
                 commands.clearTargetSelection,
                 handlers.targetController.clearSelectionCommandHandler,
+            ],
+            [
+                commands.openSettings,
+                handlers.openSettings.openSettingsCommandHandler,
             ],
             [
                 commands.initProject,
