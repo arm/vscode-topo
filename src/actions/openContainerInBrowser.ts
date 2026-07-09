@@ -1,6 +1,11 @@
 import * as vscode from 'vscode';
-import { getContainerWebUrl } from '../util/getContainerWebUrl';
+import { getContainerWebEndpoints } from '../util/getContainerWebEndpoints';
+import type { ContainerWebEndpoint } from '../util/getContainerWebEndpoints';
 import { assertContainerTreeItem } from '../views/treeItems/assertContainerTreeItem';
+
+type EndpointQuickPickItem = vscode.QuickPickItem & {
+    endpoint: ContainerWebEndpoint;
+};
 
 export class OpenContainerInBrowser {
     public async openContainerInBrowserCommandHandler(
@@ -13,13 +18,33 @@ export class OpenContainerInBrowser {
             );
         }
 
-        const url = getContainerWebUrl(treeNode.containerItem.address);
-        if (!url) {
+        const endpoints = getContainerWebEndpoints(
+            treeNode.containerItem.address,
+        );
+        if (endpoints.length === 0) {
             throw new Error(
-                `Container ${treeNode.containerItem.id} has no likely web endpoint`,
+                `Container ${treeNode.containerItem.id} has no published ports`,
             );
         }
 
-        await vscode.env.openExternal(vscode.Uri.parse(url));
+        let [endpoint] = endpoints;
+        if (endpoints.length > 1) {
+            const items: EndpointQuickPickItem[] = endpoints.map(
+                (candidate) => ({
+                    label: `Port ${candidate.port}`,
+                    description: candidate.url,
+                    endpoint: candidate,
+                }),
+            );
+            const selected = await vscode.window.showQuickPick(items, {
+                placeHolder: 'Select a port to open in the browser',
+            });
+            if (!selected) {
+                return;
+            }
+            endpoint = selected.endpoint;
+        }
+
+        await vscode.env.openExternal(vscode.Uri.parse(endpoint.url));
     }
 }

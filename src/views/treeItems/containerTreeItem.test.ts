@@ -23,7 +23,7 @@ describe('ContainerTreeItem', () => {
         expect(item.tooltip).toContain('my-container');
         expect(item.tooltip).toContain('Remoteproc');
         expect(item.tooltip).toContain('topo.local:4121');
-        expect(item.contextValue).toBe('service running Remoteproc');
+        expect(item.contextValue).toBe('service running Remoteproc browser');
         expect(item.iconPath).toStrictEqual(
             new vscode.ThemeIcon(
                 'debug-breakpoint-log',
@@ -52,7 +52,7 @@ describe('ContainerTreeItem', () => {
         );
     });
 
-    it('marks running containers with a likely web endpoint as browser-openable', () => {
+    it('marks running containers with a published port as browser-openable', () => {
         const container: ContainerItem = {
             id: 'id789',
             names: 'web-container',
@@ -67,6 +67,23 @@ describe('ContainerTreeItem', () => {
         const item = new ContainerTreeItem(container);
 
         expect(item.contextValue).toBe('service running Linux Host browser');
+    });
+
+    it('does not mark running containers without a published port as browser-openable', () => {
+        const container: ContainerItem = {
+            id: 'id000',
+            names: 'no-port-container',
+            image: 'nginx',
+            state: 'running',
+            status: 'Up 10 minutes',
+            processingDomain: 'Linux Host',
+            address: 'topo.local',
+            target,
+        };
+
+        const item = new ContainerTreeItem(container);
+
+        expect(item.contextValue).toBe('service running Linux Host');
     });
 
     it('does not mark stopped containers as browser-openable', () => {
