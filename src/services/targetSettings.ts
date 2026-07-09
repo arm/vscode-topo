@@ -96,12 +96,12 @@ function getTargetSettingsValidationMessage(
     return `\`${settingPath}\` is invalid: ${failure.message}.`;
 }
 
-export function getSettingsForTarget(target: string): TargetSettings {
-    const config = vscode.workspace.getConfiguration(PACKAGE_NAME);
-    const settingsByTarget = config.get<unknown>(CONFIG_TARGET_SETTINGS) ?? {};
-
+export function resolveSettingsForTarget(
+    target: string,
+    settingsByTarget: unknown,
+): TargetSettings {
     const [validationError, validSettingsByTarget] = validate(
-        settingsByTarget,
+        settingsByTarget ?? {},
         getTargetSchema(target),
         { coerce: true },
     );
@@ -131,5 +131,13 @@ export function getSettingsForTarget(target: string): TargetSettings {
     return (
         validSettingsByTarget?.[target]?.[CONFIG_TARGET_SETTINGS_DEPLOY] ??
         create({}, getTargetDeploySchema())
+    );
+}
+
+export function getSettingsForTarget(target: string): TargetSettings {
+    const config = vscode.workspace.getConfiguration(PACKAGE_NAME);
+    return resolveSettingsForTarget(
+        target,
+        config.get<unknown>(CONFIG_TARGET_SETTINGS),
     );
 }

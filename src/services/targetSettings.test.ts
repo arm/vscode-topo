@@ -3,7 +3,10 @@ import {
     CONFIG_TARGET_SETTINGS,
     CONFIG_TARGET_SETTINGS_DEPLOY,
 } from '../manifest';
-import { getSettingsForTarget } from './targetSettings';
+import {
+    getSettingsForTarget,
+    resolveSettingsForTarget,
+} from './targetSettings';
 
 describe('getSettingsForTarget', () => {
     const target = 'topo.local';
@@ -14,18 +17,10 @@ describe('getSettingsForTarget', () => {
         } as unknown as vscode.WorkspaceConfiguration);
     }
 
-    function mockTargetSettingsByTarget(
+    function getTargetSettingsByTarget(
         settingsByTarget: Record<string, unknown>,
-    ): void {
-        mockConfiguration({
-            [CONFIG_TARGET_SETTINGS]: settingsByTarget,
-        });
-    }
-
-    function mockTargetSettings(
-        settingsByTarget: Record<string, unknown>,
-    ): void {
-        const targetSettings = Object.fromEntries(
+    ): Record<string, unknown> {
+        return Object.fromEntries(
             Object.entries(settingsByTarget).map(
                 ([targetName, deploySettings]) => [
                     targetName,
@@ -35,8 +30,6 @@ describe('getSettingsForTarget', () => {
                 ],
             ),
         );
-
-        mockTargetSettingsByTarget(targetSettings);
     }
 
     afterEach(() => {
@@ -44,9 +37,7 @@ describe('getSettingsForTarget', () => {
     });
 
     it('returns defaults when target settings are not configured', () => {
-        mockConfiguration({});
-
-        const settings = getSettingsForTarget(target);
+        const settings = resolveSettingsForTarget(target, undefined);
 
         expect(settings).toEqual({
             forceRecreate: false,
@@ -54,22 +45,34 @@ describe('getSettingsForTarget', () => {
         });
     });
 
-    it('throws when target settings are malformed', () => {
+    it('reads target settings from workspace configuration', () => {
         mockConfiguration({
-            [CONFIG_TARGET_SETTINGS]: 'not-an-object',
+            [CONFIG_TARGET_SETTINGS]: getTargetSettingsByTarget({
+                [target]: {
+                    port: 5003,
+                },
+            }),
         });
 
-        expect(() => getSettingsForTarget(target)).toThrow(
+        const settings = getSettingsForTarget(target);
+
+        expect(settings).toEqual({
+            port: 5003,
+            forceRecreate: false,
+            noRecreate: false,
+        });
+    });
+
+    it('throws when target settings are malformed', () => {
+        expect(() => resolveSettingsForTarget(target, 'not-an-object')).toThrow(
             'Invalid topo.targetSettings entry: `targetSettings` must be an object.',
         );
     });
 
     it('returns defaults when the target has no deploy settings', () => {
-        mockTargetSettingsByTarget({
+        const settings = resolveSettingsForTarget(target, {
             [target]: {},
         });
-
-        const settings = getSettingsForTarget(target);
 
         expect(settings).toEqual({
             forceRecreate: false,
@@ -78,19 +81,20 @@ describe('getSettingsForTarget', () => {
     });
 
     it('returns validated deploy settings for the selected target', () => {
-        mockTargetSettings({
-            [target]: {
-                port: 5003,
-                forceRecreate: true,
-                noRecreate: false,
-            },
-            'other.local': {
-                port: '5004',
-                forceRecreate: 'yes',
-            },
-        });
-
-        const settings = getSettingsForTarget(target);
+        const settings = resolveSettingsForTarget(
+            target,
+            getTargetSettingsByTarget({
+                [target]: {
+                    port: 5003,
+                    forceRecreate: true,
+                    noRecreate: false,
+                },
+                'other.local': {
+                    port: '5004',
+                    forceRecreate: 'yes',
+                },
+            }),
+        );
 
         expect(settings).toEqual({
             port: 5003,
@@ -100,13 +104,14 @@ describe('getSettingsForTarget', () => {
     });
 
     it('defaults missing deploy fields', () => {
-        mockTargetSettings({
-            [target]: {
-                port: 5003,
-            },
-        });
-
-        const settings = getSettingsForTarget(target);
+        const settings = resolveSettingsForTarget(
+            target,
+            getTargetSettingsByTarget({
+                [target]: {
+                    port: 5003,
+                },
+            }),
+        );
 
         expect(settings).toEqual({
             port: 5003,
@@ -116,58 +121,70 @@ describe('getSettingsForTarget', () => {
     });
 
     it('throws when the target entry is malformed', () => {
-        mockTargetSettingsByTarget({
-            [target]: 'not-an-object',
-        });
-
-        expect(() => getSettingsForTarget(target)).toThrow(
+        expect(() =>
+            resolveSettingsForTarget(target, {
+                [target]: 'not-an-object',
+            }),
+        ).toThrow(
             'Invalid topo.targetSettings entry for "topo.local": The target entry must be an object.',
         );
     });
 
     it('throws when deploy settings are malformed', () => {
-        mockTargetSettings({
-            [target]: 'not-an-object',
-        });
-
-        expect(() => getSettingsForTarget(target)).toThrow(
+        expect(() =>
+            resolveSettingsForTarget(
+                target,
+                getTargetSettingsByTarget({
+                    [target]: 'not-an-object',
+                }),
+            ),
+        ).toThrow(
             'Invalid topo.targetSettings.deploy entry for "topo.local": `deploy` must be an object.',
         );
     });
 
     it('throws when port is invalid', () => {
-        mockTargetSettings({
-            [target]: {
-                port: 65536,
-            },
-        });
-
-        expect(() => getSettingsForTarget(target)).toThrow(
+        expect(() =>
+            resolveSettingsForTarget(
+                target,
+                getTargetSettingsByTarget({
+                    [target]: {
+                        port: 65536,
+                    },
+                }),
+            ),
+        ).toThrow(
             'Invalid topo.targetSettings.deploy entry for "topo.local": `port` must be an integer from 1 to 65535.',
         );
     });
 
     it('throws when recreate options conflict', () => {
-        mockTargetSettings({
-            [target]: {
-                forceRecreate: true,
-                noRecreate: true,
-            },
-        });
-
-        expect(() => getSettingsForTarget(target)).toThrow(
+        expect(() =>
+            resolveSettingsForTarget(
+                target,
+                getTargetSettingsByTarget({
+                    [target]: {
+                        forceRecreate: true,
+                        noRecreate: true,
+                    },
+                }),
+            ),
+        ).toThrow(
             'Invalid topo.targetSettings.deploy entry for "topo.local": `forceRecreate` and `noRecreate` cannot both be true.',
         );
     });
 
     it('throws when deploy settings contain an unknown field', () => {
-        mockTargetSettings({
-            [target]: {
-                forceRecrate: true,
-            },
-        });
-
-        expect(() => getSettingsForTarget(target)).toThrow(
+        expect(() =>
+            resolveSettingsForTarget(
+                target,
+                getTargetSettingsByTarget({
+                    [target]: {
+                        forceRecrate: true,
+                    },
+                }),
+            ),
+        ).toThrow(
             'Invalid topo.targetSettings.deploy entry for "topo.local": `forceRecrate` is not a supported setting.',
         );
     });
