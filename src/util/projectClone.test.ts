@@ -371,6 +371,29 @@ describe('project clone utilities', () => {
             ]);
         });
 
+        it('passes raw clone sources and arbitrary clone options through to topo clone', async () => {
+            mutable(vscode.workspace).workspaceFolders = workspaceFolders;
+            vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
+
+            await cloneProjectFromSource(
+                taskExecutor,
+                {
+                    value: 'https://example.com/repo.git',
+                },
+                {
+                    model: 'some-huggingface-id',
+                },
+            );
+
+            expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+            expectCloneTask(taskExecutor.run.mock.calls[0][0], 'repo', [
+                'clone',
+                'https://example.com/repo.git',
+                path.join(workspaceUri.fsPath, 'repo'),
+                'model=some-huggingface-id',
+            ]);
+        });
+
         it('creates a clone task for a local path', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
             vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce(

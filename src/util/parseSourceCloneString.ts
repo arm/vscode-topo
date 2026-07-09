@@ -12,7 +12,7 @@ export const parseCloneSourceString = (
     cloneSourceString: string,
 ): CloneSource => {
     if (isGitURL(cloneSourceString)) {
-        return { type: 'git', url: cloneSourceString };
+        return { value: cloneSourceString };
     }
     const [sourceType, ...valueParts] = cloneSourceString.split(':');
     if (!sourceType || valueParts.length === 0) {

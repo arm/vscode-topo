@@ -18,7 +18,12 @@ interface CloneLocalSource {
     type: 'dir';
 }
 
-export type CloneSource = CloneRemoteSource | CloneLocalSource;
+interface CloneRawSource {
+    value: string;
+    type?: never;
+}
+
+export type CloneSource = CloneRemoteSource | CloneLocalSource | CloneRawSource;
 
 type CloneResult =
     | {
@@ -131,6 +136,8 @@ const getDefaultProjectNameFromSourceString = (
             return path.basename(cloneSource.path);
         case 'git':
             return getDefaultProjectNameFromUrl(cloneSource.url);
+        case undefined:
+            return getDefaultProjectNameFromUrl(cloneSource.value);
     }
 };
 
@@ -158,6 +165,8 @@ const getCloneSourceString = (cloneSource: CloneSource): string => {
             return `dir:${cloneSource.path}`;
         case 'git':
             return `git:${cloneSource.url}`;
+        case undefined:
+            return cloneSource.value;
     }
 };
 

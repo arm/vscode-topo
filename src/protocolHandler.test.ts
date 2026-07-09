@@ -132,7 +132,7 @@ describe('ProtocolHandler', () => {
         expect(taskExecutor.run).toHaveBeenCalledTimes(1);
         expectCloneTask(taskExecutor.run.mock.calls[0][0], 'repo', [
             'clone',
-            'git:https://example.com/repo.git',
+            'https://example.com/repo.git',
             path.join(workspaceUri.fsPath, 'repo'),
             'model=some-huggingface-id',
         ]);
@@ -156,7 +156,7 @@ describe('ProtocolHandler', () => {
             'topo-lightbulb-moment',
             [
                 'clone',
-                'git:https://github.com/Arm-Examples/topo-lightbulb-moment',
+                'https://github.com/Arm-Examples/topo-lightbulb-moment',
                 path.join(workspaceUri.fsPath, 'topo-lightbulb-moment'),
             ],
         );

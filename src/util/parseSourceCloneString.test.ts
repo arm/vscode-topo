@@ -17,18 +17,15 @@ describe('parseCloneSourceString', () => {
         });
     });
 
-    it('returns git clone sources for known git URLs without an explicit type', () => {
+    it('returns raw clone sources when no explicit type is provided', () => {
         expect(parseCloneSourceString('https://example.com/repo.git')).toEqual({
-            type: 'git',
-            url: 'https://example.com/repo.git',
+            value: 'https://example.com/repo.git',
         });
         expect(parseCloneSourceString('ssh://example.com/repo.git')).toEqual({
-            type: 'git',
-            url: 'ssh://example.com/repo.git',
+            value: 'ssh://example.com/repo.git',
         });
         expect(parseCloneSourceString('git@example.com:repo.git')).toEqual({
-            type: 'git',
-            url: 'git@example.com:repo.git',
+            value: 'git@example.com:repo.git',
         });
     });
 
