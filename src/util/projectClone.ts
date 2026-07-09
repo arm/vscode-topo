@@ -243,9 +243,10 @@ export const promptForRemoteCloneSource = async (
 
     const quickPick =
         vscode.window.createQuickPick<RemoteProjectQuickPickItem>();
+    quickPick.matchOnDescription = true;
     quickPick.title = 'Select a Project to clone';
     quickPick.placeholder =
-        '`git@github.com:repo.git`, `https://github.com/repo.git` or select from the list below';
+        'Enter a git repository URL or select a project from the catalog below';
     quickPick.items = buildRemoteQuickPickItems(templateItems, '');
     quickPick.onDidChangeValue((value) => {
         quickPick.items = buildRemoteQuickPickItems(templateItems, value);
