@@ -7,7 +7,6 @@ import {
     getDefaultProjectNameFromUrl,
     getFirstSentence,
     getLocalSourcePath,
-    parseCloneSourceString,
     promptForRemoteCloneSource,
 } from './projectClone';
 import { mutable } from './test/mutable';
@@ -229,7 +228,8 @@ describe('project clone utilities', () => {
 
             expect(quickPick.items).toEqual([
                 {
-                    label: `$(cloud-download) Clone from ${url}`,
+                    label: `$(cloud-download) Custom URL`,
+                    description: url,
                     url,
                 },
                 ...templateQuickPickItems,
@@ -531,78 +531,5 @@ describe('project clone utilities', () => {
 
             expect(vscode.window.showInformationMessage).not.toHaveBeenCalled();
         });
-    });
-});
-
-describe('parseCloneSourceString', () => {
-    it('parses git clone sources', () => {
-        expect(
-            parseCloneSourceString('git:https://example.com/repo.git'),
-        ).toEqual({
-            type: 'git',
-            url: 'https://example.com/repo.git',
-        });
-    });
-
-    it('parses dir clone sources', () => {
-        expect(parseCloneSourceString('dir:/tmp/project')).toEqual({
-            type: 'dir',
-            path: '/tmp/project',
-        });
-    });
-
-    it('returns git clone sources for known git URLs without an explicit type', () => {
-        expect(parseCloneSourceString('https://example.com/repo.git')).toEqual({
-            url: 'https://example.com/repo.git',
-            type: 'git',
-        });
-        expect(parseCloneSourceString('ssh://example.com/repo.git')).toEqual({
-            url: 'ssh://example.com/repo.git',
-            type: 'git',
-        });
-        expect(parseCloneSourceString('git@example.com:repo.git')).toEqual({
-            url: 'git@example.com:repo.git',
-            type: 'git',
-        });
-    });
-
-    it('throws a clone error for invalid explicit types wrapping a URL', () => {
-        expect(() =>
-            parseCloneSourceString('invalid:https://example.com/repo.git'),
-        ).toThrow(
-            expect.objectContaining({
-                code: 'CLONE',
-                message: 'Invalid type: invalid',
-            }),
-        );
-        expect(() =>
-            parseCloneSourceString('invalid:ssh://example.com/repo.git'),
-        ).toThrow(
-            expect.objectContaining({
-                code: 'CLONE',
-                message: 'Invalid type: invalid',
-            }),
-        );
-    });
-
-    it('throws a clone error for invalid clone source strings', () => {
-        expect(() => parseCloneSourceString('not-a-valid-url')).toThrow(
-            expect.objectContaining({
-                code: 'CLONE',
-                message: 'Invalid URL: not-a-valid-url',
-            }),
-        );
-        expect(() => parseCloneSourceString('foo:bar')).toThrow(
-            expect.objectContaining({
-                code: 'CLONE',
-                message: 'Invalid type: foo',
-            }),
-        );
-        expect(() => parseCloneSourceString('template:hello-world')).toThrow(
-            expect.objectContaining({
-                code: 'CLONE',
-                message: 'Invalid type: template',
-            }),
-        );
     });
 });

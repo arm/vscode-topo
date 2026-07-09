@@ -217,10 +217,11 @@ const buildRemoteQuickPickItems = (
     filter: string,
 ): RemoteProjectQuickPickItem[] => {
     const entry = filter.trim();
-    if (isGitURL(entry)) {
+    if (entry.length > 0) {
         return [
             {
-                label: `$(cloud-download) Clone from ${entry}`,
+                label: `$(cloud-download) Custom URL`,
+                description: entry,
                 url: entry,
             },
             ...templateItems,
@@ -287,32 +288,3 @@ export async function cloneProjectFromSource(
     }
     return cloneResult.success;
 }
-
-const isGitURL = (source: string): boolean =>
-    source.startsWith('git@') ||
-    source.startsWith('ssh://') ||
-    source.startsWith('https://') ||
-    source.startsWith('http://') ||
-    source.startsWith('git://');
-
-export const parseCloneSourceString = (
-    cloneSourceString: string,
-): CloneSource => {
-    if (isGitURL(cloneSourceString)) {
-        return { url: cloneSourceString, type: 'git' };
-    }
-    const [sourceType, ...valueParts] = cloneSourceString.split(':');
-    if (!sourceType || valueParts.length === 0) {
-        throw new WrappedError('CLONE', `Invalid URL: ${cloneSourceString}`);
-    }
-    const value = valueParts.join(':');
-
-    switch (sourceType) {
-        case 'dir':
-            return { type: 'dir', path: value };
-        case 'git':
-            return { type: 'git', url: value };
-        default:
-            throw new WrappedError('CLONE', `Invalid type: ${sourceType}`);
-    }
-};
