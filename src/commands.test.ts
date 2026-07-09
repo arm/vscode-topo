@@ -136,10 +136,6 @@ describe('commands', () => {
                 commands.localClone,
                 handlers.projectClone.localCloneCommandHandler,
             ],
-            [
-                commands.templateClone,
-                handlers.projectClone.templateCloneCommandHandler,
-            ],
         ];
 
         it.each(cases)(

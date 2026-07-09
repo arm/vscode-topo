@@ -40,11 +40,6 @@
                 "category": "Topo"
             },
             {
-                "command": "topo.templateClone",
-                "title": "Clone Template Project",
-                "category": "Topo"
-            },
-            {
                 "command": "topo.localClone",
                 "title": "Clone Local Project",
                 "category": "Topo"

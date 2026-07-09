@@ -3,13 +3,12 @@ import { mock } from 'vitest-mock-extended';
 import { ProjectClone } from './projectClone';
 import { TopoCli } from '../services/topoCli';
 import { TargetModel } from '../models/targetModel';
-import { TemplateDescription } from '../services/topoCliSchema';
 import { WrappedError } from '../errors/wrappedError';
 import { showAndLogError } from '../util/showAndLog';
 import {
     cloneProjectFromSource,
     getLocalSourcePath,
-    getTemplateOfChoice,
+    promptForRemoteCloneSource,
 } from '../util/projectClone';
 import { TaskExecutor } from '../util/taskExecutor';
 
@@ -18,16 +17,9 @@ vi.mock('../util/projectClone');
 
 const cloneProjectFromSourceMock = vi.mocked(cloneProjectFromSource);
 const getLocalSourcePathMock = vi.mocked(getLocalSourcePath);
-const getTemplateOfChoiceMock = vi.mocked(getTemplateOfChoice);
+const promptForRemoteCloneSourceMock = vi.mocked(promptForRemoteCloneSource);
 
 const localSourcePath = '/path/to/source';
-const selectedTemplate: TemplateDescription = {
-    name: 'template-alpha',
-    url: 'https://example.com/templates/template-alpha.git',
-    description: 'Template Apple description.',
-    ref: 'r',
-    features: [],
-};
 
 function selectQuickPickItem(label: string): void {
     vi.mocked(vscode.window.showQuickPick).mockImplementationOnce(
@@ -68,9 +60,6 @@ describe('ProjectClone action', () => {
             expect(vscode.window.showQuickPick).toHaveBeenCalledWith(
                 [
                     expect.objectContaining({
-                        label: 'Template Project',
-                    }),
-                    expect.objectContaining({
                         label: 'Remote Project',
                     }),
                     expect.objectContaining({
@@ -84,9 +73,10 @@ describe('ProjectClone action', () => {
 
         it('clones from a remote project when selected', async () => {
             selectQuickPickItem('Remote Project');
-            vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
-                'https://example.com/repo.git',
-            );
+            promptForRemoteCloneSourceMock.mockResolvedValueOnce({
+                type: 'git',
+                url: 'https://example.com/repo.git',
+            });
 
             await projectClone.cloneCommandHandler();
 
@@ -95,26 +85,6 @@ describe('ProjectClone action', () => {
                 {
                     type: 'git',
                     url: 'https://example.com/repo.git',
-                },
-            );
-        });
-
-        it('clones from a template project when selected', async () => {
-            targetModel.setSelected('me@example.com');
-            getTemplateOfChoiceMock.mockResolvedValueOnce(selectedTemplate);
-            selectQuickPickItem('Template Project');
-
-            await projectClone.cloneCommandHandler();
-
-            expect(getTemplateOfChoiceMock).toHaveBeenCalledWith(
-                topoCli,
-                'me@example.com',
-            );
-            expect(cloneProjectFromSourceMock).toHaveBeenCalledWith(
-                taskExecutor,
-                {
-                    type: 'git',
-                    url: selectedTemplate.url,
                 },
             );
         });
@@ -136,29 +106,31 @@ describe('ProjectClone action', () => {
     });
 
     describe('remoteCloneCommandHandler', () => {
-        it('returns early when no clone url is provided', async () => {
-            vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
-                undefined,
-            );
+        it('returns early when no remote source is selected', async () => {
+            promptForRemoteCloneSourceMock.mockResolvedValueOnce(undefined);
 
             await projectClone.remoteCloneCommandHandler();
 
             expect(cloneProjectFromSourceMock).not.toHaveBeenCalled();
         });
 
-        it('clones from the provided git URL', async () => {
-            vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
-                'https://example.com/repo.git',
-            );
+        it('clones the selected remote source for the selected target', async () => {
+            targetModel.setSelected('me@example.com');
+            const source = {
+                type: 'git' as const,
+                url: 'https://example.com/repo.git',
+            };
+            promptForRemoteCloneSourceMock.mockResolvedValueOnce(source);
 
             await projectClone.remoteCloneCommandHandler();
 
+            expect(promptForRemoteCloneSourceMock).toHaveBeenCalledWith(
+                topoCli,
+                'me@example.com',
+            );
             expect(cloneProjectFromSourceMock).toHaveBeenCalledWith(
                 taskExecutor,
-                {
-                    type: 'git',
-                    url: 'https://example.com/repo.git',
-                },
+                source,
             );
         });
     });
@@ -187,52 +159,13 @@ describe('ProjectClone action', () => {
         });
     });
 
-    describe('templateCloneCommandHandler', () => {
-        it('returns early when no template is selected', async () => {
-            getTemplateOfChoiceMock.mockResolvedValueOnce(undefined);
-
-            await projectClone.templateCloneCommandHandler();
-
-            expect(cloneProjectFromSourceMock).not.toHaveBeenCalled();
-        });
-
-        it('fetches templates for the selected target and clones the selected template', async () => {
-            targetModel.setSelected('me@example.com');
-            getTemplateOfChoiceMock.mockResolvedValueOnce(selectedTemplate);
-
-            await projectClone.templateCloneCommandHandler();
-
-            expect(getTemplateOfChoiceMock).toHaveBeenCalledWith(
-                topoCli,
-                'me@example.com',
-            );
-            expect(cloneProjectFromSourceMock).toHaveBeenCalledWith(
-                taskExecutor,
-                {
-                    type: 'git',
-                    url: selectedTemplate.url,
-                },
-            );
-        });
-
-        it('fetches templates without a target when none is selected', async () => {
-            getTemplateOfChoiceMock.mockResolvedValueOnce(undefined);
-
-            await projectClone.templateCloneCommandHandler();
-
-            expect(getTemplateOfChoiceMock).toHaveBeenCalledWith(
-                topoCli,
-                undefined,
-            );
-        });
-    });
-
     describe('clone error handling', () => {
         it('shows clone errors instead of throwing them', async () => {
             const error = new WrappedError('CLONE', 'task fail');
-            vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
-                'https://example.com/repo.git',
-            );
+            promptForRemoteCloneSourceMock.mockResolvedValueOnce({
+                type: 'git',
+                url: 'https://example.com/repo.git',
+            });
             cloneProjectFromSourceMock.mockRejectedValueOnce(error);
 
             await projectClone.remoteCloneCommandHandler();
@@ -246,9 +179,9 @@ describe('ProjectClone action', () => {
         it('shows CLI errors from template lookup instead of throwing them, preserving log entries', async () => {
             const logs = [{ level: 'Error' as const, msg: 'lscpu not found' }];
             const error = new WrappedError('CLI', 'boom', logs);
-            getTemplateOfChoiceMock.mockRejectedValueOnce(error);
+            promptForRemoteCloneSourceMock.mockRejectedValueOnce(error);
 
-            await projectClone.templateCloneCommandHandler();
+            await projectClone.remoteCloneCommandHandler();
 
             expect(showAndLogError).toHaveBeenCalledWith(
                 'Failed to clone project',

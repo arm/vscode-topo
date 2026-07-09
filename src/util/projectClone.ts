@@ -18,12 +18,7 @@ interface CloneLocalSource {
     type: 'dir';
 }
 
-interface CloneRawSource {
-    value: string;
-    type?: never;
-}
-
-export type CloneSource = CloneRemoteSource | CloneLocalSource | CloneRawSource;
+export type CloneSource = CloneRemoteSource | CloneLocalSource;
 
 type CloneResult =
     | {
@@ -35,6 +30,10 @@ type CloneResult =
       };
 
 type CloneBuildArgs = Record<string, string>;
+
+type RemoteProjectQuickPickItem = vscode.QuickPickItem & {
+    url: string;
+};
 
 const postCloneAction = async (repositoryPath: string) => {
     let message = 'Would you like to open the cloned repository?';
@@ -132,8 +131,6 @@ const getDefaultProjectNameFromSourceString = (
             return path.basename(cloneSource.path);
         case 'git':
             return getDefaultProjectNameFromUrl(cloneSource.url);
-        case undefined:
-            return getDefaultProjectNameFromUrl(cloneSource.value);
     }
 };
 
@@ -161,8 +158,6 @@ const getCloneSourceString = (cloneSource: CloneSource): string => {
             return `dir:${cloneSource.path}`;
         case 'git':
             return `git:${cloneSource.url}`;
-        case undefined:
-            return cloneSource.value;
     }
 };
 
@@ -200,7 +195,7 @@ const cloneWithSource = async (
     }
 };
 
-const listTemplatesForChoice = async (
+const listTemplates = async (
     topoCli: TopoCli,
     sshTarget?: string,
 ): Promise<TemplateDescription[]> => {
@@ -217,28 +212,61 @@ const listTemplatesForChoice = async (
     }
 };
 
-export const getTemplateOfChoice = async (
+const buildRemoteQuickPickItems = (
+    templateItems: RemoteProjectQuickPickItem[],
+    filter: string,
+): RemoteProjectQuickPickItem[] => {
+    const entry = filter.trim();
+    if (isGitURL(entry)) {
+        return [
+            {
+                label: `$(cloud-download) Clone from ${entry}`,
+                url: entry,
+            },
+            ...templateItems,
+        ];
+    }
+    return templateItems;
+};
+
+export const promptForRemoteCloneSource = async (
     topoCli: TopoCli,
     sshTarget?: string,
-): Promise<TemplateDescription | undefined> => {
-    const templates = await listTemplatesForChoice(topoCli, sshTarget);
+): Promise<CloneSource | undefined> => {
+    const templates = await listTemplates(topoCli, sshTarget);
     const templateItems = templates.map((template) => ({
-        label: template.name,
+        label: `$(repo) ${template.name}`,
         detail: getFirstSentence(template.description),
-        template,
+        url: template.url,
     }));
 
-    const selectedTemplateItem = await vscode.window.showQuickPick(
-        templateItems,
-        {
-            placeHolder: 'Select a template to clone',
-        },
-    );
-    if (!selectedTemplateItem) {
-        return undefined;
-    }
+    const quickPick =
+        vscode.window.createQuickPick<RemoteProjectQuickPickItem>();
+    quickPick.title = 'Select a Project to clone';
+    quickPick.placeholder =
+        '`git@github.com:repo.git`, `https://github.com/repo.git` or select from the list below';
+    quickPick.items = buildRemoteQuickPickItems(templateItems, '');
+    quickPick.onDidChangeValue((value) => {
+        quickPick.items = buildRemoteQuickPickItems(templateItems, value);
+    });
 
-    return selectedTemplateItem.template;
+    return new Promise<CloneSource | undefined>((resolve) => {
+        quickPick.onDidAccept(() => {
+            const selectedItem = quickPick.selectedItems[0];
+            resolve(
+                selectedItem
+                    ? { type: 'git', url: selectedItem.url }
+                    : undefined,
+            );
+            quickPick.hide();
+        });
+
+        quickPick.onDidHide(() => {
+            resolve(undefined);
+        });
+
+        quickPick.show();
+    }).finally(() => quickPick.dispose());
 };
 
 export async function cloneProjectFromSource(
@@ -259,3 +287,32 @@ export async function cloneProjectFromSource(
     }
     return cloneResult.success;
 }
+
+const isGitURL = (source: string): boolean =>
+    source.startsWith('git@') ||
+    source.startsWith('ssh://') ||
+    source.startsWith('https://') ||
+    source.startsWith('http://') ||
+    source.startsWith('git://');
+
+export const parseCloneSourceString = (
+    cloneSourceString: string,
+): CloneSource => {
+    if (isGitURL(cloneSourceString)) {
+        return { url: cloneSourceString, type: 'git' };
+    }
+    const [sourceType, ...valueParts] = cloneSourceString.split(':');
+    if (!sourceType || valueParts.length === 0) {
+        throw new WrappedError('CLONE', `Invalid URL: ${cloneSourceString}`);
+    }
+    const value = valueParts.join(':');
+
+    switch (sourceType) {
+        case 'dir':
+            return { type: 'dir', path: value };
+        case 'git':
+            return { type: 'git', url: value };
+        default:
+            throw new WrappedError('CLONE', `Invalid type: ${sourceType}`);
+    }
+};

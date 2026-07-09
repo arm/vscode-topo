@@ -1,7 +1,9 @@
 import * as vscode from 'vscode';
-import { cloneProjectFromSource } from './util/projectClone';
+import {
+    cloneProjectFromSource,
+    parseCloneSourceString,
+} from './util/projectClone';
 import { logger } from './util/logger';
-import { parseCloneSourceString } from './util/parseSourceCloneString';
 import { isWrappedError } from './errors/wrappedError';
 import { showAndLogError } from './util/showAndLog';
 import { TaskExecutor } from './util/taskExecutor';

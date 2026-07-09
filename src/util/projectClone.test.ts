@@ -7,7 +7,8 @@ import {
     getDefaultProjectNameFromUrl,
     getFirstSentence,
     getLocalSourcePath,
-    getTemplateOfChoice,
+    parseCloneSourceString,
+    promptForRemoteCloneSource,
 } from './projectClone';
 import { mutable } from './test/mutable';
 import { TopoCli } from '../services/topoCli';
@@ -23,6 +24,36 @@ const showInformationMessageMock = vi.mocked(
         ...items: string[]
     ) => Thenable<string | undefined>,
 );
+
+function mockRemoteQuickPick<T extends vscode.QuickPickItem>({
+    value,
+    selectedIndex,
+}: {
+    value?: string;
+    selectedIndex?: number;
+} = {}): MockProxy<vscode.QuickPick<T>> {
+    const onDidAcceptEmitter = new vscode.EventEmitter<void>();
+    const onDidHideEmitter = new vscode.EventEmitter<void>();
+    const onDidChangeValueEmitter = new vscode.EventEmitter<string>();
+    const quickPick = mock<vscode.QuickPick<T>>({
+        onDidAccept: onDidAcceptEmitter.event,
+        onDidHide: onDidHideEmitter.event,
+        onDidChangeValue: onDidChangeValueEmitter.event,
+        show: vi.fn(() => {
+            if (value !== undefined) {
+                onDidChangeValueEmitter.fire(value);
+            }
+            if (selectedIndex === undefined) {
+                onDidHideEmitter.fire();
+                return;
+            }
+            quickPick.selectedItems = [quickPick.items[selectedIndex]];
+            onDidAcceptEmitter.fire();
+        }),
+    });
+    vi.mocked(vscode.window.createQuickPick).mockReturnValueOnce(quickPick);
+    return quickPick;
+}
 
 const workspacePath = path.resolve('home', 'workspace');
 const workspaceUri = vscode.Uri.file(workspacePath);
@@ -109,7 +140,7 @@ describe('project clone utilities', () => {
         });
     });
 
-    describe('getTemplateOfChoice', () => {
+    describe('promptForRemoteCloneSource', () => {
         const templateList: TemplateDescription[] = [
             {
                 name: 'template-alpha',
@@ -129,21 +160,21 @@ describe('project clone utilities', () => {
         ];
 
         const templateQuickPickItems = templateList.map((template) => ({
-            label: template.name,
+            label: `$(repo) ${template.name}`,
             detail: getFirstSentence(template.description),
-            template,
+            url: template.url,
         }));
 
         it('propagates errors from listTemplates', async () => {
-            topoCli.listTemplates.mockImplementation(() => {
-                throw new Error('command failed');
-            });
+            topoCli.listTemplates.mockRejectedValueOnce(
+                new Error('command failed'),
+            );
 
-            await expect(getTemplateOfChoice(topoCli)).rejects.toThrow(
+            await expect(promptForRemoteCloneSource(topoCli)).rejects.toThrow(
                 'command failed',
             );
 
-            expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
+            expect(vscode.window.createQuickPick).not.toHaveBeenCalled();
         });
 
         it('falls back to unfiltered templates when target-specific lookup fails', async () => {
@@ -153,62 +184,68 @@ describe('project clone utilities', () => {
                 }
                 return templateList;
             });
-            vi.mocked(vscode.window.showQuickPick).mockResolvedValueOnce(
-                templateQuickPickItems[0],
-            );
+            mockRemoteQuickPick();
 
-            await expect(
-                getTemplateOfChoice(topoCli, 'unhealthy-target'),
-            ).resolves.toEqual(templateList[0]);
+            await promptForRemoteCloneSource(topoCli, 'unhealthy-target');
 
-            expect(vscode.window.showQuickPick).toHaveBeenCalledWith(
-                templateQuickPickItems,
-                expect.any(Object),
+            expect(topoCli.listTemplates).toHaveBeenNthCalledWith(
+                1,
+                'unhealthy-target',
             );
+            expect(topoCli.listTemplates).toHaveBeenNthCalledWith(2);
         });
 
-        it('returns undefined when no template is selected', async () => {
+        it('returns the selected catalog template as a git source', async () => {
             topoCli.listTemplates.mockResolvedValue(templateList);
-            vi.mocked(vscode.window.showQuickPick).mockResolvedValueOnce(
-                undefined,
-            );
-
-            await expect(getTemplateOfChoice(topoCli)).resolves.toBeUndefined();
-
-            expect(taskExecutor.run).not.toHaveBeenCalled();
-        });
-
-        it('returns the selected template', async () => {
-            topoCli.listTemplates.mockResolvedValue(templateList);
-            vi.mocked(vscode.window.showQuickPick).mockResolvedValueOnce(
-                templateQuickPickItems[0],
-            );
+            const quickPick = mockRemoteQuickPick({
+                selectedIndex: 1,
+            });
 
             await expect(
-                getTemplateOfChoice(topoCli, 'me@example.com'),
-            ).resolves.toEqual(templateList[0]);
+                promptForRemoteCloneSource(topoCli, 'me@example.com'),
+            ).resolves.toEqual({
+                type: 'git',
+                url: templateList[1].url,
+            });
 
             expect(topoCli.listTemplates).toHaveBeenCalledWith(
                 'me@example.com',
             );
-            expect(vscode.window.showQuickPick).toHaveBeenCalledWith(
-                templateQuickPickItems,
-                {
-                    placeHolder: 'Select a template to clone',
-                },
-            );
+            expect(quickPick.items).toEqual(templateQuickPickItems);
         });
 
-        it('lists templates without a target when none is selected', async () => {
+        it('offers a typed git URL before the catalog templates', async () => {
+            const url = 'https://example.com/repo.git';
             topoCli.listTemplates.mockResolvedValue(templateList);
-            vi.mocked(vscode.window.showQuickPick).mockResolvedValueOnce(
-                undefined,
-            );
+            const quickPick = mockRemoteQuickPick({
+                value: `  ${url}  `,
+                selectedIndex: 0,
+            });
 
-            await getTemplateOfChoice(topoCli, undefined);
+            await expect(promptForRemoteCloneSource(topoCli)).resolves.toEqual({
+                type: 'git',
+                url,
+            });
+
+            expect(quickPick.items).toEqual([
+                {
+                    label: `$(cloud-download) Clone from ${url}`,
+                    url,
+                },
+                ...templateQuickPickItems,
+            ]);
+        });
+
+        it('returns undefined and disposes the quick pick when dismissed', async () => {
+            topoCli.listTemplates.mockResolvedValue(templateList);
+            const quickPick = mockRemoteQuickPick();
+
+            await expect(
+                promptForRemoteCloneSource(topoCli),
+            ).resolves.toBeUndefined();
 
             expect(topoCli.listTemplates).toHaveBeenCalledWith();
-            expect(taskExecutor.run).not.toHaveBeenCalled();
+            expect(quickPick.dispose).toHaveBeenCalledOnce();
         });
     });
 
@@ -331,29 +368,6 @@ describe('project clone utilities', () => {
                 'clone',
                 'git:git@example.com:repo.git',
                 path.join(workspaceUri.fsPath, 'repo'),
-            ]);
-        });
-
-        it('passes raw clone sources and arbitrary clone options through to topo clone', async () => {
-            mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-            vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
-
-            await cloneProjectFromSource(
-                taskExecutor,
-                {
-                    value: 'https://example.com/repo.git',
-                },
-                {
-                    model: 'some-huggingface-id',
-                },
-            );
-
-            expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-            expectCloneTask(taskExecutor.run.mock.calls[0][0], 'repo', [
-                'clone',
-                'https://example.com/repo.git',
-                path.join(workspaceUri.fsPath, 'repo'),
-                'model=some-huggingface-id',
             ]);
         });
 
@@ -517,5 +531,78 @@ describe('project clone utilities', () => {
 
             expect(vscode.window.showInformationMessage).not.toHaveBeenCalled();
         });
+    });
+});
+
+describe('parseCloneSourceString', () => {
+    it('parses git clone sources', () => {
+        expect(
+            parseCloneSourceString('git:https://example.com/repo.git'),
+        ).toEqual({
+            type: 'git',
+            url: 'https://example.com/repo.git',
+        });
+    });
+
+    it('parses dir clone sources', () => {
+        expect(parseCloneSourceString('dir:/tmp/project')).toEqual({
+            type: 'dir',
+            path: '/tmp/project',
+        });
+    });
+
+    it('returns git clone sources for known git URLs without an explicit type', () => {
+        expect(parseCloneSourceString('https://example.com/repo.git')).toEqual({
+            url: 'https://example.com/repo.git',
+            type: 'git',
+        });
+        expect(parseCloneSourceString('ssh://example.com/repo.git')).toEqual({
+            url: 'ssh://example.com/repo.git',
+            type: 'git',
+        });
+        expect(parseCloneSourceString('git@example.com:repo.git')).toEqual({
+            url: 'git@example.com:repo.git',
+            type: 'git',
+        });
+    });
+
+    it('throws a clone error for invalid explicit types wrapping a URL', () => {
+        expect(() =>
+            parseCloneSourceString('invalid:https://example.com/repo.git'),
+        ).toThrow(
+            expect.objectContaining({
+                code: 'CLONE',
+                message: 'Invalid type: invalid',
+            }),
+        );
+        expect(() =>
+            parseCloneSourceString('invalid:ssh://example.com/repo.git'),
+        ).toThrow(
+            expect.objectContaining({
+                code: 'CLONE',
+                message: 'Invalid type: invalid',
+            }),
+        );
+    });
+
+    it('throws a clone error for invalid clone source strings', () => {
+        expect(() => parseCloneSourceString('not-a-valid-url')).toThrow(
+            expect.objectContaining({
+                code: 'CLONE',
+                message: 'Invalid URL: not-a-valid-url',
+            }),
+        );
+        expect(() => parseCloneSourceString('foo:bar')).toThrow(
+            expect.objectContaining({
+                code: 'CLONE',
+                message: 'Invalid type: foo',
+            }),
+        );
+        expect(() => parseCloneSourceString('template:hello-world')).toThrow(
+            expect.objectContaining({
+                code: 'CLONE',
+                message: 'Invalid type: template',
+            }),
+        );
     });
 });
