@@ -3,7 +3,7 @@ import { getErrorMessage } from '../util/getErrorMessage';
 import path from 'node:path';
 import { createProcessTask } from '../util/task';
 import { TaskExecutor } from '../util/taskExecutor';
-import { showAndLogWarning } from '../util/showAndLog';
+import { showAndLogError, showAndLogWarning } from '../util/showAndLog';
 import { TargetModel } from '../models/targetModel';
 import { ProjectController } from '../controllers/projectController';
 import { isWrappedError, WrappedError } from '../errors/wrappedError';
@@ -134,8 +134,8 @@ export class Deploy {
         try {
             target = this.getSelectedTarget();
         } catch (err: unknown) {
-            if (isWrappedError(err, ['NO_TARGET_SELECTED'])) {
-                showAndLogError('Error executing deploy command', err);
+            if (isWrappedError(err, ['TARGET'])) {
+                showAndLogWarning('Error executing deploy command', err);
                 return undefined;
             }
             throw err;
