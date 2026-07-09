@@ -232,6 +232,11 @@ const TaskRevealKind = {
     Silent: 2,
     Never: 3,
 };
+const ConfigurationTarget = {
+    Global: 1,
+    Workspace: 2,
+    WorkspaceFolder: 3,
+};
 
 const TreeItem = class {
     /**
@@ -323,6 +328,7 @@ module.exports = {
     window,
     workspace,
     TaskRevealKind,
+    ConfigurationTarget,
     TreeItem,
     TreeItemCollapsibleState,
     ThemeColor,

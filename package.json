@@ -92,6 +92,12 @@
                 "category": "Topo"
             },
             {
+                "command": "topo.openSettings",
+                "title": "Target Deploy Settings",
+                "icon": "$(gear)",
+                "category": "Topo"
+            },
+            {
                 "command": "topo.fixIssue",
                 "title": "Fix",
                 "icon": "$(wrench)",
@@ -366,6 +372,11 @@
                     "group": "navigation"
                 },
                 {
+                    "command": "topo.openSettings",
+                    "when": "view == topo.target-manager",
+                    "group": "navigation"
+                },
+                {
                     "command": "topo.refreshHostHealth",
                     "when": "view == topo.host-manager",
                     "group": "navigation"
@@ -381,7 +392,50 @@
                     "group": "navigation"
                 }
             ]
-        }
+        },
+        "configuration": [
+            {
+                "title": "Target Settings",
+                "properties": {
+                    "topo.targetSettings": {
+                        "type": "object",
+                        "default": {},
+                        "markdownDescription": "Per-target settings. Add target names as keys, then use `deploy` to configure deploy options for that target. Example: `{ \"root@192.0.2.1\": { \"deploy\": { \"port\": 5000, \"forceRecreate\": true } } }`.",
+                        "additionalProperties": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "markdownDescription": "Settings for one target. Suggested properties: `deploy`.",
+                            "properties": {
+                                "deploy": {
+                                    "type": "object",
+                                    "default": {},
+                                    "markdownDescription": "Deploy settings for this target. Example: `{ \"port\": 5000, \"forceRecreate\": true }`. Use either `forceRecreate` or `noRecreate`, not both.",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                        "port": {
+                                            "type": "integer",
+                                            "minimum": 1,
+                                            "maximum": 65535,
+                                            "markdownDescription": "Registry port to use when deploying to the target. Use `1`-`65535`, for example `5000`. Omit this setting to use the default port."
+                                        },
+                                        "forceRecreate": {
+                                            "type": "boolean",
+                                            "default": false,
+                                            "markdownDescription": "Recreates containers even when their configuration and image have not changed. Do not use with `noRecreate`."
+                                        },
+                                        "noRecreate": {
+                                            "type": "boolean",
+                                            "default": false,
+                                            "markdownDescription": "Keeps existing containers instead of recreating them. Do not use with `forceRecreate`."
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        ]
     },
     "scripts": {
         "package": "npm run build && vsce package",
