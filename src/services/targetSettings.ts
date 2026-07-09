@@ -113,6 +113,7 @@ export function resolveSettingsForTarget(
         );
         throw new Error(
             `Invalid ${PACKAGE_NAME}.${CONFIG_TARGET_SETTINGS}.${CONFIG_TARGET_SETTINGS_DEPLOY} entry for "${target}": ${validationMessage}`,
+            { cause: validationError },
         );
     }
 
