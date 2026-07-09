@@ -107,18 +107,6 @@ export function resolveSettingsForTarget(
     );
     if (validationError) {
         const failure = validationError.failures()[0];
-        if (failure.path.length === 0) {
-            throw new Error(
-                `Invalid ${PACKAGE_NAME}.${CONFIG_TARGET_SETTINGS} entry: \`${CONFIG_TARGET_SETTINGS}\` must be an object.`,
-            );
-        }
-
-        if (failure.path[0] === target && failure.path.length === 1) {
-            throw new Error(
-                `Invalid ${PACKAGE_NAME}.${CONFIG_TARGET_SETTINGS} entry for "${target}": The target entry must be an object.`,
-            );
-        }
-
         const validationMessage = getTargetSettingsValidationMessage(
             failure,
             target,

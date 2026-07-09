@@ -65,7 +65,7 @@ describe('getSettingsForTarget', () => {
 
     it('throws when target settings are malformed', () => {
         expect(() => resolveSettingsForTarget(target, 'not-an-object')).toThrow(
-            'Invalid topo.targetSettings entry: `targetSettings` must be an object.',
+            'Invalid topo.targetSettings.deploy entry for "topo.local": `deploy` must be an object.',
         );
     });
 
@@ -126,7 +126,7 @@ describe('getSettingsForTarget', () => {
                 [target]: 'not-an-object',
             }),
         ).toThrow(
-            'Invalid topo.targetSettings entry for "topo.local": The target entry must be an object.',
+            'Invalid topo.targetSettings.deploy entry for "topo.local": `topo.local` is invalid: Expected an object, but received: "not-an-object".',
         );
     });
 
