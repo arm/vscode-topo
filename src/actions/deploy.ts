@@ -16,9 +16,9 @@ import {
 } from '../util/composeFile';
 import { ProjectTreeItem } from '../views/treeItems/projectTreeItem';
 import {
-    TargetDeploySettings,
-    getTargetDeploySettingsForTarget,
-} from '../services/targetDeploySettings';
+    TargetSettings,
+    getSettingsForTarget,
+} from '../services/targetSettings';
 import type { TargetHealthReport } from '../services/topoCliSchema';
 
 const viewLogsItem: vscode.MessageItem = {
@@ -31,7 +31,7 @@ type ComposeFileQuickPickItem = vscode.QuickPickItem & {
 
 type DeployTarget = {
     target: string;
-    settings: TargetDeploySettings;
+    settings: TargetSettings;
 };
 
 export class Deploy {
@@ -144,10 +144,10 @@ export class Deploy {
         try {
             return {
                 target,
-                settings: getTargetDeploySettingsForTarget(target),
+                settings: getSettingsForTarget(target),
             };
         } catch (err: unknown) {
-            showAndLogError('Error retrieving target deploy settings', err);
+            showAndLogError('Error retrieving target settings', err);
             return undefined;
         }
     }
@@ -199,7 +199,7 @@ export async function deploy(
     taskExecutor: TaskExecutor,
     composeFilePath: string,
     target: string,
-    settings: TargetDeploySettings = {},
+    settings: TargetSettings = {},
 ): Promise<void> {
     const task = createProcessTask(
         `Deploy to ${target}`,
@@ -236,7 +236,7 @@ export async function deploy(
 
 export function buildDeployArgs(
     target: string,
-    settings: TargetDeploySettings = {},
+    settings: TargetSettings = {},
 ): string[] {
     const args = ['deploy', '--target', target];
     if (settings.port !== undefined) {

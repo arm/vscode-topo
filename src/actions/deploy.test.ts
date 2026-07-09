@@ -90,11 +90,11 @@ describe('Deploy', () => {
         } as unknown as vscode.WorkspaceConfiguration);
     }
 
-    function mockTargetDeploySettings(
-        deploySettingsByTarget: Record<string, unknown>,
+    function mockTargetSettings(
+        settingsByTarget: Record<string, unknown>,
     ): void {
         const targetSettings = Object.fromEntries(
-            Object.entries(deploySettingsByTarget).map(
+            Object.entries(settingsByTarget).map(
                 ([targetName, deploySettings]) => [
                     targetName,
                     {
@@ -109,7 +109,7 @@ describe('Deploy', () => {
         });
     }
 
-    function expectInvalidTargetDeploySettings(
+    function expectInvalidTargetSettings(
         validationMessage: string,
         errorPrefix = 'Error executing deploy command',
     ): void {
@@ -300,7 +300,7 @@ describe('Deploy', () => {
     });
 
     it('passes configured deploy arguments from the command handler', async () => {
-        mockTargetDeploySettings({
+        mockTargetSettings({
             [target]: {
                 port: 5000,
                 forceRecreate: true,
@@ -319,7 +319,7 @@ describe('Deploy', () => {
     });
 
     it('shows an error before prompting when deploy command uses invalid selected target settings', async () => {
-        mockTargetDeploySettings({
+        mockTargetSettings({
             [target]: {
                 port: 'not-a-port',
             },
@@ -327,9 +327,9 @@ describe('Deploy', () => {
 
         await deployAction.deployCommandHandler();
 
-        expectInvalidTargetDeploySettings(
+        expectInvalidTargetSettings(
             '`port` must be an integer from 1 to 65535.',
-            'Error retrieving target deploy settings',
+            'Error retrieving target settings',
         );
         expect(vscode.workspace.findFiles).not.toHaveBeenCalled();
         expect(vscode.window.showQuickPick).not.toHaveBeenCalled();

@@ -5,7 +5,6 @@ import {
     defaulted,
     type,
     type Failure,
-    Infer,
     integer,
     max,
     min,
@@ -20,31 +19,36 @@ import {
     PACKAGE_NAME,
 } from '../manifest';
 
-const portSchema = max(min(integer(), 1), 65_535);
+export type TargetSettings = {
+    port?: number;
+    forceRecreate?: boolean;
+    noRecreate?: boolean;
+};
 
-const targetDeploySettingsSchema = refine(
-    object({
-        port: optional(portSchema),
-        forceRecreate: defaulted(optional(boolean()), false),
-        noRecreate: defaulted(optional(boolean()), false),
-    }),
-    'recreateOptions',
-    (settings) => !(settings.forceRecreate && settings.noRecreate),
-);
+function getTargetDeploySchema() {
+    return refine(
+        object({
+            port: optional(max(min(integer(), 1), 65_535)),
+            forceRecreate: defaulted(optional(boolean()), false),
+            noRecreate: defaulted(optional(boolean()), false),
+        }),
+        'recreateOptions',
+        (settings) => !(settings.forceRecreate && settings.noRecreate),
+    );
+}
 
-export type TargetDeploySettings = Infer<typeof targetDeploySettingsSchema>;
-
-type RawTargetSettingsByTarget = Record<string, unknown>;
-
-function getRawTargetSettingsConfiguration(
-    config: vscode.WorkspaceConfiguration,
-): RawTargetSettingsByTarget {
-    const settings = config.get<unknown>(CONFIG_TARGET_SETTINGS);
-    if (!settings || typeof settings !== 'object' || Array.isArray(settings)) {
-        return {};
-    }
-
-    return settings as RawTargetSettingsByTarget;
+function getTargetSchema(target: string) {
+    return optional(
+        type({
+            [target]: optional(
+                object({
+                    [CONFIG_TARGET_SETTINGS_DEPLOY]: optional(
+                        getTargetDeploySchema(),
+                    ),
+                }),
+            ),
+        }),
+    );
 }
 
 function getSettingPath(path: Failure['path']): string {
@@ -64,7 +68,7 @@ function getDeploySettingsFailurePath(
     return failure.path;
 }
 
-function getTargetDeploySettingsValidationMessage(
+function getTargetSettingsValidationMessage(
     failure: Failure,
     target: string,
 ): string {
@@ -92,37 +96,30 @@ function getTargetDeploySettingsValidationMessage(
     return `\`${settingPath}\` is invalid: ${failure.message}.`;
 }
 
-export function getTargetDeploySettingsForTarget(
-    target: string,
-): TargetDeploySettings {
+export function getSettingsForTarget(target: string): TargetSettings {
     const config = vscode.workspace.getConfiguration(PACKAGE_NAME);
-    const settingsByTarget = getRawTargetSettingsConfiguration(config);
-    const guardSchema = optional(
-        type({
-            [target]: optional(
-                object({
-                    [CONFIG_TARGET_SETTINGS_DEPLOY]: optional(
-                        targetDeploySettingsSchema,
-                    ),
-                }),
-            ),
-        }),
-    );
+    const settingsByTarget = config.get<unknown>(CONFIG_TARGET_SETTINGS) ?? {};
 
     const [validationError, validSettingsByTarget] = validate(
         settingsByTarget,
-        guardSchema,
+        getTargetSchema(target),
         { coerce: true },
     );
     if (validationError) {
         const failure = validationError.failures()[0];
+        if (failure.path.length === 0) {
+            throw new Error(
+                `Invalid ${PACKAGE_NAME}.${CONFIG_TARGET_SETTINGS} entry: \`${CONFIG_TARGET_SETTINGS}\` must be an object.`,
+            );
+        }
+
         if (failure.path[0] === target && failure.path.length === 1) {
             throw new Error(
                 `Invalid ${PACKAGE_NAME}.${CONFIG_TARGET_SETTINGS} entry for "${target}": The target entry must be an object.`,
             );
         }
 
-        const validationMessage = getTargetDeploySettingsValidationMessage(
+        const validationMessage = getTargetSettingsValidationMessage(
             failure,
             target,
         );
@@ -133,6 +130,6 @@ export function getTargetDeploySettingsForTarget(
 
     return (
         validSettingsByTarget?.[target]?.[CONFIG_TARGET_SETTINGS_DEPLOY] ??
-        create({}, targetDeploySettingsSchema)
+        create({}, getTargetDeploySchema())
     );
 }

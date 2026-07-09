@@ -3,9 +3,9 @@ import {
     CONFIG_TARGET_SETTINGS,
     CONFIG_TARGET_SETTINGS_DEPLOY,
 } from '../manifest';
-import { getTargetDeploySettingsForTarget } from './targetDeploySettings';
+import { getSettingsForTarget } from './targetSettings';
 
-describe('getTargetDeploySettingsForTarget', () => {
+describe('getSettingsForTarget', () => {
     const target = 'topo.local';
 
     function mockConfiguration(settings: Record<string, unknown>): void {
@@ -14,7 +14,7 @@ describe('getTargetDeploySettingsForTarget', () => {
         } as unknown as vscode.WorkspaceConfiguration);
     }
 
-    function mockTargetSettings(
+    function mockTargetSettingsByTarget(
         settingsByTarget: Record<string, unknown>,
     ): void {
         mockConfiguration({
@@ -22,11 +22,11 @@ describe('getTargetDeploySettingsForTarget', () => {
         });
     }
 
-    function mockTargetDeploySettings(
-        deploySettingsByTarget: Record<string, unknown>,
+    function mockTargetSettings(
+        settingsByTarget: Record<string, unknown>,
     ): void {
         const targetSettings = Object.fromEntries(
-            Object.entries(deploySettingsByTarget).map(
+            Object.entries(settingsByTarget).map(
                 ([targetName, deploySettings]) => [
                     targetName,
                     {
@@ -36,7 +36,7 @@ describe('getTargetDeploySettingsForTarget', () => {
             ),
         );
 
-        mockTargetSettings(targetSettings);
+        mockTargetSettingsByTarget(targetSettings);
     }
 
     afterEach(() => {
@@ -46,7 +46,7 @@ describe('getTargetDeploySettingsForTarget', () => {
     it('returns defaults when target settings are not configured', () => {
         mockConfiguration({});
 
-        const settings = getTargetDeploySettingsForTarget(target);
+        const settings = getSettingsForTarget(target);
 
         expect(settings).toEqual({
             forceRecreate: false,
@@ -54,12 +54,22 @@ describe('getTargetDeploySettingsForTarget', () => {
         });
     });
 
+    it('throws when target settings are malformed', () => {
+        mockConfiguration({
+            [CONFIG_TARGET_SETTINGS]: 'not-an-object',
+        });
+
+        expect(() => getSettingsForTarget(target)).toThrow(
+            'Invalid topo.targetSettings entry: `targetSettings` must be an object.',
+        );
+    });
+
     it('returns defaults when the target has no deploy settings', () => {
-        mockTargetSettings({
+        mockTargetSettingsByTarget({
             [target]: {},
         });
 
-        const settings = getTargetDeploySettingsForTarget(target);
+        const settings = getSettingsForTarget(target);
 
         expect(settings).toEqual({
             forceRecreate: false,
@@ -68,7 +78,7 @@ describe('getTargetDeploySettingsForTarget', () => {
     });
 
     it('returns validated deploy settings for the selected target', () => {
-        mockTargetDeploySettings({
+        mockTargetSettings({
             [target]: {
                 port: 5003,
                 forceRecreate: true,
@@ -80,7 +90,7 @@ describe('getTargetDeploySettingsForTarget', () => {
             },
         });
 
-        const settings = getTargetDeploySettingsForTarget(target);
+        const settings = getSettingsForTarget(target);
 
         expect(settings).toEqual({
             port: 5003,
@@ -90,13 +100,13 @@ describe('getTargetDeploySettingsForTarget', () => {
     });
 
     it('defaults missing deploy fields', () => {
-        mockTargetDeploySettings({
+        mockTargetSettings({
             [target]: {
                 port: 5003,
             },
         });
 
-        const settings = getTargetDeploySettingsForTarget(target);
+        const settings = getSettingsForTarget(target);
 
         expect(settings).toEqual({
             port: 5003,
@@ -106,58 +116,58 @@ describe('getTargetDeploySettingsForTarget', () => {
     });
 
     it('throws when the target entry is malformed', () => {
-        mockTargetSettings({
+        mockTargetSettingsByTarget({
             [target]: 'not-an-object',
         });
 
-        expect(() => getTargetDeploySettingsForTarget(target)).toThrow(
+        expect(() => getSettingsForTarget(target)).toThrow(
             'Invalid topo.targetSettings entry for "topo.local": The target entry must be an object.',
         );
     });
 
     it('throws when deploy settings are malformed', () => {
-        mockTargetDeploySettings({
+        mockTargetSettings({
             [target]: 'not-an-object',
         });
 
-        expect(() => getTargetDeploySettingsForTarget(target)).toThrow(
+        expect(() => getSettingsForTarget(target)).toThrow(
             'Invalid topo.targetSettings.deploy entry for "topo.local": `deploy` must be an object.',
         );
     });
 
     it('throws when port is invalid', () => {
-        mockTargetDeploySettings({
+        mockTargetSettings({
             [target]: {
                 port: 65536,
             },
         });
 
-        expect(() => getTargetDeploySettingsForTarget(target)).toThrow(
+        expect(() => getSettingsForTarget(target)).toThrow(
             'Invalid topo.targetSettings.deploy entry for "topo.local": `port` must be an integer from 1 to 65535.',
         );
     });
 
     it('throws when recreate options conflict', () => {
-        mockTargetDeploySettings({
+        mockTargetSettings({
             [target]: {
                 forceRecreate: true,
                 noRecreate: true,
             },
         });
 
-        expect(() => getTargetDeploySettingsForTarget(target)).toThrow(
+        expect(() => getSettingsForTarget(target)).toThrow(
             'Invalid topo.targetSettings.deploy entry for "topo.local": `forceRecreate` and `noRecreate` cannot both be true.',
         );
     });
 
     it('throws when deploy settings contain an unknown field', () => {
-        mockTargetDeploySettings({
+        mockTargetSettings({
             [target]: {
                 forceRecrate: true,
             },
         });
 
-        expect(() => getTargetDeploySettingsForTarget(target)).toThrow(
+        expect(() => getSettingsForTarget(target)).toThrow(
             'Invalid topo.targetSettings.deploy entry for "topo.local": `forceRecrate` is not a supported setting.',
         );
     });
