@@ -135,7 +135,7 @@ export class Deploy {
             target = this.getSelectedTarget();
         } catch (err: unknown) {
             if (isWrappedError(err, ['TARGET'])) {
-                showAndLogWarning('Error executing deploy command', err);
+                showAndLogWarning('Cannot deploy', err);
                 return undefined;
             }
             throw err;
