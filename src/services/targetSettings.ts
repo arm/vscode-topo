@@ -33,7 +33,12 @@ function getTargetDeploySchema() {
             noRecreate: defaulted(optional(boolean()), false),
         }),
         'recreateOptions',
-        (settings) => !(settings.forceRecreate && settings.noRecreate),
+        (settings) => {
+            if (settings.forceRecreate && settings.noRecreate) {
+                return '`forceRecreate` and `noRecreate` cannot both be true.';
+            }
+            return true;
+        },
     );
 }
 
@@ -77,18 +82,6 @@ function getTargetSettingsValidationMessage(
         target,
     );
     const settingPath = getSettingPath(deploySettingsFailurePath);
-    if (failure.refinement === 'recreateOptions') {
-        return '`forceRecreate` and `noRecreate` cannot both be true.';
-    }
-
-    if (deploySettingsFailurePath[0] === 'port') {
-        return '`port` must be an integer from 1 to 65535.';
-    }
-
-    if (failure.type === 'never') {
-        return `\`${settingPath}\` is not a supported setting.`;
-    }
-
     if (deploySettingsFailurePath.length === 0) {
         return '`deploy` must be an object.';
     }

@@ -154,7 +154,7 @@ describe('getSettingsForTarget', () => {
                 }),
             ),
         ).toThrow(
-            'Invalid topo.targetSettings.deploy entry for "topo.local": `port` must be an integer from 1 to 65535.',
+            'Invalid topo.targetSettings.deploy entry for "topo.local": `port` is invalid: Expected a integer less than or equal to 65535 but received `65536`.',
         );
     });
 
@@ -185,7 +185,7 @@ describe('getSettingsForTarget', () => {
                 }),
             ),
         ).toThrow(
-            'Invalid topo.targetSettings.deploy entry for "topo.local": `forceRecrate` is not a supported setting.',
+            'Invalid topo.targetSettings.deploy entry for "topo.local": `forceRecrate` is invalid: Expected a value of type `never`, but received: `true`.',
         );
     });
 });
