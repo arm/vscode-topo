@@ -56,6 +56,12 @@
                 "category": "Topo"
             },
             {
+                "command": "topo.connectViaSSH",
+                "title": "Connect via SSH",
+                "icon": "$(terminal)",
+                "category": "Topo"
+            },
+            {
                 "command": "topo.openContainerInBrowser",
                 "title": "Open in Browser",
                 "icon": "$(globe)",
@@ -277,6 +283,10 @@
                     "when": "false"
                 },
                 {
+                    "command": "topo.connectViaSSH",
+                    "when": "false"
+                },
+                {
                     "command": "topo.openContainerInBrowser",
                     "when": "false"
                 },
@@ -374,6 +384,11 @@
                 {
                     "command": "topo.selectTarget",
                     "when": "view == topo.target-manager && !topo.targetDataIssue",
+                    "group": "navigation"
+                },
+                {
+                    "command": "topo.connectViaSSH",
+                    "when": "view == topo.target-manager && topo.selectedTargetState == 'selected' && topo.selectedTargetConnected",
                     "group": "navigation"
                 },
                 {

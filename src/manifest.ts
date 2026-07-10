@@ -4,6 +4,7 @@ export const DISPLAY_NAME = 'Topo';
 export const CONFIG_TARGET_SETTINGS = 'targetSettings';
 export const CONFIG_TARGET_SETTINGS_DEPLOY = 'deploy';
 export const CONTEXT_SELECTED_TARGET_STATE = `${PACKAGE_NAME}.selectedTargetState`;
+export const CONTEXT_SELECTED_TARGET_CONNECTED = `${PACKAGE_NAME}.selectedTargetConnected`;
 export const CONTEXT_PROJECT_COUNT = `${PACKAGE_NAME}.projectCount`;
 export const CONTEXT_TARGET_DATA_ISSUE = `${PACKAGE_NAME}.targetDataIssue`;
 export const PRIMARY_PROCESSING_DOMAIN = 'Linux Host';

@@ -29,12 +29,3 @@ export function openContainerShell(
     });
     terminal.show();
 }
-
-export function attachSSH(target: string): void {
-    const terminal = vscode.window.createTerminal({
-        name: `SSH: ${target}`,
-        shellPath: 'ssh',
-        shellArgs: [target],
-    });
-    terminal.show();
-}
