@@ -24,7 +24,7 @@ Not sure what these terms mean? The [glossary](https://github.com/arm/topo/blob/
 
 **Host machine** (where this extension will run):
 
-- Visual Studio Code v1.101.0 or newer
+- Visual Studio Code v1.123.0 or newer
 - [Docker](https://docs.docker.com/get-docker/)
 - Curl
 

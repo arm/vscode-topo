@@ -9,7 +9,7 @@ on:
                 default: false
 
 env:
-    NODE_VERSION: 22.x
+    NODE_VERSION: 24.x
     PRE_RELEASE_FLAG: ${{ inputs.pre-release && '--pre-release' || '' }}
 
 jobs:

@@ -4,8 +4,8 @@ This document covers how to build, test, and package the Topo VS Code extension 
 
 ## Prerequisites
 
-- Node.js (^22.0.0)
-- npm (^10.0.0)
+- Node.js (^24.0.0)
+- npm (^11.0.0)
 - VS Code Extension Manager (vsce) for packaging (`npm install -g vsce`)
 
 ## Setup

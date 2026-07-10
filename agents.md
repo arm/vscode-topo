@@ -77,9 +77,9 @@ Organizing code well makes it easy to navigate, maintain, and extend. A logical 
 
 ## Environment
 
-- **Use the required Node.js version**: Work with Node.js `^22.0.0`.
+- **Use the required Node.js version**: Work with Node.js `^24.0.0`.
 
-- **Use the required npm version**: Work with npm `^10.0.0`.
+- **Use the required npm version**: Work with npm `^11.0.0`.
 
 ## Repository Workflow
 
