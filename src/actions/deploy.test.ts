@@ -126,6 +126,7 @@ describe('Deploy', () => {
         taskExecutor = mock<TaskExecutor>();
         targetModel = new TargetModel();
         targetModel.setSelected(target);
+        targetModel.setSelectedTargetHealth(loaded(targetHealth));
         projectController = mock<ProjectController>();
         vi.mocked(vscode.workspace.findFiles).mockResolvedValue([]);
         vi.mocked(vscode.workspace.getWorkspaceFolder).mockReturnValue(
@@ -147,7 +148,7 @@ describe('Deploy', () => {
 
         await expect(deployOperation).resolves.toBeUndefined();
         expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
-            'Cannot deploy. No target selected. Please select a target before deploying.',
+            'Cannot deploy. No target selected. Please select a target.',
         );
         expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(
@@ -172,7 +173,7 @@ describe('Deploy', () => {
 
         await expect(deployOperation).resolves.toBeUndefined();
         expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
-            'Cannot deploy. Target topo.local connectivity is error: unreachable. Resolve target connectivity before deploying.',
+            "Cannot deploy. Target topo.local connectivity is 'error': unreachable.",
         );
         expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(
@@ -188,7 +189,7 @@ describe('Deploy', () => {
 
         await expect(deployOperation).resolves.toBeUndefined();
         expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
-            'Cannot deploy. Target topo.local health is still being checked. Wait for target health checks to finish before deploying.',
+            'Cannot deploy. Target topo.local health is still being checked. Wait for target health checks to finish.',
         );
         expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(

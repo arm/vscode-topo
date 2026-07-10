@@ -6,7 +6,7 @@ import { TaskExecutor } from '../util/taskExecutor';
 import { showAndLogError, showAndLogWarning } from '../util/showAndLog';
 import { TargetModel } from '../models/targetModel';
 import { ProjectController } from '../controllers/projectController';
-import { isWrappedError, WrappedError } from '../errors/wrappedError';
+import { isWrappedError } from '../errors/wrappedError';
 import {
     COMPOSE_FILE_GLOB,
     compareComposeFiles,
@@ -16,10 +16,13 @@ import {
 } from '../util/composeFile';
 import { ProjectTreeItem } from '../views/treeItems/projectTreeItem';
 import {
+    assertTargetConnected,
+    assertTargetSelected,
+} from '../util/assertTargetReady';
+import {
     TargetSettings,
     getSettingsForTarget,
 } from '../services/targetSettings';
-import type { TargetHealthReport } from '../services/topoCliSchema';
 
 const viewLogsItem: vscode.MessageItem = {
     title: 'View Logs',
@@ -99,40 +102,12 @@ export class Deploy {
         await this.deployContextCommandHandler(treeNode.composeFileUri);
     }
 
-    private getSelectedTarget(): string {
-        const target = this.targetModel.selected;
-        if (!target) {
-            throw new WrappedError(
-                'TARGET',
-                'No target selected. Please select a target before deploying.',
-            );
-        }
-
-        const health = this.targetModel.selectedTargetHealth;
-        if (health.loading) {
-            throw new WrappedError(
-                'TARGET',
-                `Target ${target} health is still being checked. Wait for target health checks to finish before deploying.`,
-            );
-        }
-
-        if (
-            health.status === 'loaded' &&
-            health.data.connectivity.status !== 'ok'
-        ) {
-            throw new WrappedError(
-                'TARGET',
-                getConnectivityFailureMessage(target, health.data),
-            );
-        }
-
-        return target;
-    }
-
     private getSelectedDeployTarget(): DeployTarget | undefined {
-        let target: string;
+        const target = this.targetModel.selected;
+        const health = this.targetModel.selectedTargetHealth;
         try {
-            target = this.getSelectedTarget();
+            assertTargetSelected(target);
+            assertTargetConnected(target, health);
         } catch (err: unknown) {
             if (isWrappedError(err, ['TARGET'])) {
                 showAndLogWarning('Cannot deploy', err);
@@ -164,16 +139,6 @@ export class Deploy {
         );
         await this.projectController.refreshProjectContainersCommandHandler();
     }
-}
-
-function getConnectivityFailureMessage(
-    target: string,
-    health: TargetHealthReport,
-): string {
-    const details = health.connectivity.value
-        ? `: ${health.connectivity.value}`
-        : '';
-    return `Target ${target} connectivity is ${health.connectivity.status}${details}. Resolve target connectivity before deploying.`;
 }
 
 async function promptForComposeFile(

@@ -7,7 +7,8 @@ import { mock, MockProxy } from 'vitest-mock-extended';
 import { TaskExecutor } from '../util/taskExecutor';
 import { ProjectController } from '../controllers/projectController';
 import { ProjectTreeItem } from '../views/treeItems/projectTreeItem';
-import { unloaded } from '../util/loadable';
+import { loaded, unloaded } from '../util/loadable';
+import type { TargetHealthReport } from '../services/topoCliSchema';
 
 describe('Stop', () => {
     let stopAction: Stop;
@@ -16,6 +17,21 @@ describe('Stop', () => {
     );
     const composeFilePath = composeFileUri.fsPath;
     const target = 'topo.local';
+    const targetHealth: TargetHealthReport = {
+        destination: `ssh://${target}`,
+        isLocalhost: false,
+        connectivity: {
+            name: 'Connectivity',
+            status: 'ok',
+            value: 'connected',
+        },
+        processingDomainDriver: {
+            name: 'Processing Domain Driver',
+            status: 'ok',
+            value: 'ready',
+        },
+        dependencies: [],
+    };
     let taskExecutor: MockProxy<TaskExecutor>;
     let targetModel: TargetModel;
     let projectController: MockProxy<ProjectController>;
@@ -47,8 +63,10 @@ describe('Stop', () => {
         taskExecutor = mock<TaskExecutor>();
         targetModel = new TargetModel();
         targetModel.setSelected(target);
+        targetModel.setSelectedTargetHealth(loaded(targetHealth));
         projectController = mock<ProjectController>();
         vi.mocked(vscode.window.showErrorMessage).mockClear();
+        vi.mocked(vscode.window.showWarningMessage).mockClear();
         stopAction = new Stop(taskExecutor, targetModel, projectController);
     });
 
@@ -56,14 +74,53 @@ describe('Stop', () => {
         vi.restoreAllMocks();
     });
 
-    it('shows an error in the command handler with no target selected', async () => {
+    it('shows a warning in the command handler with no target selected', async () => {
         targetModel.setSelected(undefined);
 
         const stopOperation = stopAction.stopCommandHandler(composeFileUri);
 
         await expect(stopOperation).resolves.toBeUndefined();
-        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-            'Error executing stop command. No target selected. Please select a target before stopping.',
+        expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
+            'Cannot stop. No target selected. Please select a target.',
+        );
+        expect(taskExecutor.run).not.toHaveBeenCalled();
+        expect(
+            projectController.refreshProjectContainersCommandHandler,
+        ).not.toHaveBeenCalled();
+    });
+
+    it('shows a warning and does not stop when target connectivity is unhealthy', async () => {
+        targetModel.setSelectedTargetHealth(
+            loaded({
+                ...targetHealth,
+                connectivity: {
+                    ...targetHealth.connectivity,
+                    status: 'error',
+                    value: 'unreachable',
+                },
+            }),
+        );
+
+        const stopOperation = stopAction.stopCommandHandler(composeFileUri);
+
+        await expect(stopOperation).resolves.toBeUndefined();
+        expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
+            "Cannot stop. Target topo.local connectivity is 'error': unreachable.",
+        );
+        expect(taskExecutor.run).not.toHaveBeenCalled();
+        expect(
+            projectController.refreshProjectContainersCommandHandler,
+        ).not.toHaveBeenCalled();
+    });
+
+    it('shows a warning and does not stop when target health is loading', async () => {
+        targetModel.setSelectedTargetHealth(unloaded(true));
+
+        const stopOperation = stopAction.stopCommandHandler(composeFileUri);
+
+        await expect(stopOperation).resolves.toBeUndefined();
+        expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
+            'Cannot stop. Target topo.local health is still being checked. Wait for target health checks to finish.',
         );
         expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(
