@@ -12,7 +12,7 @@ import {
 import { mutable } from './test/mutable';
 import { TopoCli } from '../services/topoCli';
 import { MockProxy, mock } from 'vitest-mock-extended';
-import { TemplateDescription } from '../services/topoCliSchema';
+import { ProjectDescription } from '../services/topoCliSchema';
 import { WrappedError } from '../errors/wrappedError';
 import { TaskExecutor } from './taskExecutor';
 import { showAndLogError } from './showAndLog';
@@ -61,7 +61,7 @@ const workspaceUri = vscode.Uri.file(workspacePath);
 const workspaceFolders = [{ uri: workspaceUri, name: 'workspace', index: 0 }];
 const destinationPath = path.resolve('home', 'destination');
 const destinationUri = vscode.Uri.file(destinationPath);
-const localTemplateUri = vscode.Uri.file(path.resolve('path', 'to', 'source'));
+const localProjectUri = vscode.Uri.file(path.resolve('path', 'to', 'source'));
 
 describe('project clone utilities', () => {
     const topoCli = mock<TopoCli>();
@@ -90,16 +90,16 @@ describe('project clone utilities', () => {
     describe('getFirstSentence', () => {
         it('returns the first sentence from text containing multiple sentences', () => {
             const got = getFirstSentence(
-                'Template Apple description. Apple is a fruit.',
+                'Project Apple description. Apple is a fruit.',
             );
 
-            expect(got).toBe('Template Apple description.');
+            expect(got).toBe('Project Apple description.');
         });
 
         it('returns trimmed text when no sentence terminator exists', () => {
-            const got = getFirstSentence('  Template Apple description  ');
+            const got = getFirstSentence('  Project Apple description  ');
 
-            expect(got).toBe('Template Apple description');
+            expect(got).toBe('Project Apple description');
         });
     });
 
@@ -114,11 +114,11 @@ describe('project clone utilities', () => {
 
         it('returns the selected folder path', async () => {
             vi.mocked(vscode.window.showOpenDialog).mockResolvedValueOnce([
-                localTemplateUri,
+                localProjectUri,
             ]);
 
             await expect(getLocalSourcePath()).resolves.toBe(
-                localTemplateUri.fsPath,
+                localProjectUri.fsPath,
             );
         });
     });
@@ -142,34 +142,34 @@ describe('project clone utilities', () => {
     });
 
     describe('promptForRemoteCloneSource', () => {
-        const templateList: TemplateDescription[] = [
+        const projectList: ProjectDescription[] = [
             {
-                name: 'template-alpha',
-                url: 'https://example.com/templates/template-alpha.git',
-                description: 'Template Apple description. Apple is a fruit.',
+                name: 'project-alpha',
+                url: 'https://example.com/projects/project-alpha.git',
+                description: 'Project Apple description. Apple is a fruit.',
                 ref: 'r',
                 features: [],
             },
             {
-                name: 'template-banana',
-                url: 'https://example.com/templates/template-banana.git',
+                name: 'project-banana',
+                url: 'https://example.com/projects/project-banana.git',
                 description:
-                    'Template Cabbage description. Cabbage is a vegetable.',
+                    'Project Cabbage description. Cabbage is a vegetable.',
                 ref: 'r',
                 features: [],
             },
         ];
 
-        const templateQuickPickItems = templateList.map((template) => ({
-            label: `$(repo) ${template.name}`,
-            detail: getFirstSentence(template.description),
-            url: template.url,
+        const projectQuickPickItems = projectList.map((project) => ({
+            label: `$(repo) ${project.name}`,
+            detail: getFirstSentence(project.description),
+            url: project.url,
         }));
 
-        it('allows a custom URL when listing templates fails', async () => {
+        it('allows a custom URL when listing projects fails', async () => {
             const error = new Error('command failed');
             const url = 'https://example.com/repo.git';
-            topoCli.listTemplates.mockRejectedValueOnce(error);
+            topoCli.listProjects.mockRejectedValueOnce(error);
             const { enterValue, acceptItem } = mockRemoteQuickPick();
 
             const sourcePromise = promptForRemoteCloneSource(topoCli);
@@ -181,17 +181,17 @@ describe('project clone utilities', () => {
                 url,
             });
             expect(showAndLogError).toHaveBeenCalledWith(
-                'Failed to list templates',
+                'Failed to list projects',
                 error,
             );
         });
 
-        it('falls back to unfiltered templates when target-specific lookup fails', async () => {
-            topoCli.listTemplates.mockImplementation(async (sshTarget) => {
+        it('falls back to unfiltered projects when target-specific lookup fails', async () => {
+            topoCli.listProjects.mockImplementation(async (sshTarget) => {
                 if (sshTarget) {
                     throw new WrappedError('CLI', 'target unhealthy');
                 }
-                return templateList;
+                return projectList;
             });
             const { quickPick } = mockRemoteQuickPick();
 
@@ -202,15 +202,15 @@ describe('project clone utilities', () => {
             quickPick.hide();
 
             await expect(sourcePromise).resolves.toBeUndefined();
-            expect(topoCli.listTemplates).toHaveBeenNthCalledWith(
+            expect(topoCli.listProjects).toHaveBeenNthCalledWith(
                 1,
                 'unhealthy-target',
             );
-            expect(topoCli.listTemplates).toHaveBeenNthCalledWith(2);
+            expect(topoCli.listProjects).toHaveBeenNthCalledWith(2);
         });
 
-        it('returns the selected catalog template as a git source', async () => {
-            topoCli.listTemplates.mockResolvedValue(templateList);
+        it('returns the selected catalog project as a git source', async () => {
+            topoCli.listProjects.mockResolvedValue(projectList);
             const { quickPick, acceptItem } = mockRemoteQuickPick();
 
             const sourcePromise = promptForRemoteCloneSource(
@@ -218,22 +218,20 @@ describe('project clone utilities', () => {
                 'me@example.com',
             );
             await vi.waitFor(() =>
-                expect(quickPick.items).toEqual(templateQuickPickItems),
+                expect(quickPick.items).toEqual(projectQuickPickItems),
             );
             acceptItem(1);
 
             await expect(sourcePromise).resolves.toEqual({
                 type: 'git',
-                url: templateList[1].url,
+                url: projectList[1].url,
             });
-            expect(topoCli.listTemplates).toHaveBeenCalledWith(
-                'me@example.com',
-            );
+            expect(topoCli.listProjects).toHaveBeenCalledWith('me@example.com');
         });
 
-        it('offers a typed git URL before the catalog templates', async () => {
+        it('offers a typed git URL before the catalog projects', async () => {
             const url = 'https://example.com/repo.git';
-            topoCli.listTemplates.mockResolvedValue(templateList);
+            topoCli.listProjects.mockResolvedValue(projectList);
             const { quickPick, enterValue, acceptItem } = mockRemoteQuickPick();
 
             const sourcePromise = promptForRemoteCloneSource(topoCli);
@@ -251,19 +249,19 @@ describe('project clone utilities', () => {
                     description: url,
                     url,
                 },
-                ...templateQuickPickItems,
+                ...projectQuickPickItems,
             ]);
         });
 
         it('returns undefined and disposes the quick pick when dismissed', async () => {
-            topoCli.listTemplates.mockResolvedValue(templateList);
+            topoCli.listProjects.mockResolvedValue(projectList);
             const { quickPick } = mockRemoteQuickPick();
 
             const sourcePromise = promptForRemoteCloneSource(topoCli);
             quickPick.hide();
 
             await expect(sourcePromise).resolves.toBeUndefined();
-            expect(topoCli.listTemplates).toHaveBeenCalledWith();
+            expect(topoCli.listProjects).toHaveBeenCalledWith();
             expect(quickPick.dispose).toHaveBeenCalledOnce();
         });
     });
@@ -421,7 +419,7 @@ describe('project clone utilities', () => {
 
             await cloneProjectFromSource(taskExecutor, {
                 type: 'dir',
-                path: localTemplateUri.fsPath,
+                path: localProjectUri.fsPath,
             });
 
             expect(vscode.window.showInputBox).toHaveBeenCalledWith({
@@ -431,7 +429,7 @@ describe('project clone utilities', () => {
             expect(taskExecutor.run).toHaveBeenCalledTimes(1);
             expectCloneTask(taskExecutor.run.mock.calls[0][0], 'myproj', [
                 'clone',
-                `dir:${localTemplateUri.fsPath}`,
+                `dir:${localProjectUri.fsPath}`,
                 path.join(workspaceUri.fsPath, 'myproj'),
             ]);
         });

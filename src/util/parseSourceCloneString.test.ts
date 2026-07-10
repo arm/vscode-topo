@@ -61,10 +61,10 @@ describe('parseCloneSourceString', () => {
                 message: 'Invalid type: foo',
             }),
         );
-        expect(() => parseCloneSourceString('template:hello-world')).toThrow(
+        expect(() => parseCloneSourceString('archive:hello-world')).toThrow(
             expect.objectContaining({
                 code: 'CLONE',
-                message: 'Invalid type: template',
+                message: 'Invalid type: archive',
             }),
         );
     });
