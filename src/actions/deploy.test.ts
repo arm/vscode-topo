@@ -126,6 +126,7 @@ describe('Deploy', () => {
         taskExecutor = mock<TaskExecutor>();
         targetModel = new TargetModel();
         targetModel.setSelected(target);
+        targetModel.setSelectedTargetHealth(loaded(targetHealth));
         projectController = mock<ProjectController>();
         vi.mocked(vscode.workspace.findFiles).mockResolvedValue([]);
         vi.mocked(vscode.workspace.getWorkspaceFolder).mockReturnValue(

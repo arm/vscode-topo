@@ -15,7 +15,10 @@ import {
     type ComposeFileMetadata,
 } from '../util/composeFile';
 import { ProjectTreeItem } from '../views/treeItems/projectTreeItem';
-import { getHealthyTarget } from '../util/getHealthyTarget';
+import {
+    assertTargetConnected,
+    assertTargetSelected,
+} from '../util/assertTargetReady';
 import {
     TargetSettings,
     getSettingsForTarget,
@@ -100,9 +103,11 @@ export class Deploy {
     }
 
     private getSelectedDeployTarget(): DeployTarget | undefined {
-        let target: string;
+        const target = this.targetModel.selected;
+        const health = this.targetModel.selectedTargetHealth;
         try {
-            target = getHealthyTarget(this.targetModel);
+            assertTargetSelected(target);
+            assertTargetConnected(target, health);
         } catch (err: unknown) {
             if (isWrappedError(err, ['TARGET'])) {
                 showAndLogWarning('Cannot deploy', err);

@@ -63,6 +63,7 @@ describe('Stop', () => {
         taskExecutor = mock<TaskExecutor>();
         targetModel = new TargetModel();
         targetModel.setSelected(target);
+        targetModel.setSelectedTargetHealth(loaded(targetHealth));
         projectController = mock<ProjectController>();
         vi.mocked(vscode.window.showErrorMessage).mockClear();
         vi.mocked(vscode.window.showWarningMessage).mockClear();
