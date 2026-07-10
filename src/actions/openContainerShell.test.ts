@@ -29,6 +29,7 @@ describe('OpenContainerShell', () => {
             image: 'clabel',
             target,
             state: 'running',
+            address: '',
         });
         const treeItem = new ContainerTreeItem(fakeItem);
 

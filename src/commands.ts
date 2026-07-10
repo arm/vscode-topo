@@ -15,6 +15,8 @@ import { FixIssue } from './actions/fixIssue';
 import { ProjectClone } from './actions/projectClone';
 import { ProjectController } from './controllers/projectController';
 import { ConnectViaSSH } from './actions/connectViaSSH';
+import { OpenContainerInBrowser } from './actions/openContainerInBrowser';
+import { OpenSettings } from './actions/openSettings';
 
 function command(id: string): string {
     return `${PACKAGE_NAME}.${id}`;
@@ -27,6 +29,7 @@ export const showOutput = command('showOutput');
 export const selectTarget = command('selectTarget');
 export const resetExtensionData = command('resetExtensionData');
 export const clearTargetSelection = command('clearTargetSelection');
+export const openSettings = command('openSettings');
 export const initProject = command('initProject');
 export const cloneProject = command('cloneProject');
 export const deploy = command('deploy');
@@ -36,6 +39,7 @@ export const stop = command('stop.context');
 export const stopProject = command('stopProject');
 export const openContainerShell = command('openContainerShell');
 export const connectViaSSH = command('connectViaSSH');
+export const openContainerInBrowser = command('openContainerInBrowser');
 export const startContainer = command('startContainer');
 export const stopContainer = command('stopContainer');
 export const deleteContainer = command('deleteContainer');
@@ -55,10 +59,12 @@ export interface CommandHandlers {
     stop: Stop;
     openContainerShell: OpenContainerShell;
     connectViaSSH: ConnectViaSSH;
+    openContainerInBrowser: OpenContainerInBrowser;
     containerStart: ContainerStart;
     containerStop: ContainerStop;
     containerDelete: ContainerDelete;
     fixIssue: FixIssue;
+    openSettings: OpenSettings;
 }
 
 export function register(handlers: CommandHandlers): vscode.Disposable {
@@ -82,6 +88,9 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
         ),
         vscode.commands.registerCommand(clearTargetSelection, () =>
             handlers.targetController.clearSelectionCommandHandler(),
+        ),
+        vscode.commands.registerCommand(openSettings, () =>
+            handlers.openSettings.openSettingsCommandHandler(),
         ),
         vscode.commands.registerCommand(initProject, () =>
             handlers.projectInit.initProjectCommandHandler(),
@@ -113,6 +122,11 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
         ),
         vscode.commands.registerCommand(connectViaSSH, () =>
             handlers.connectViaSSH.connectViaSSHCommandHandler(),
+        ),
+        vscode.commands.registerCommand(openContainerInBrowser, (treeNode) =>
+            handlers.openContainerInBrowser.openContainerInBrowserCommandHandler(
+                treeNode,
+            ),
         ),
         vscode.commands.registerCommand(startContainer, (treeNode) =>
             handlers.containerStart.startContainerCommandHandler(treeNode),

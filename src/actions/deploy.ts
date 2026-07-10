@@ -3,7 +3,7 @@ import { getErrorMessage } from '../util/getErrorMessage';
 import path from 'node:path';
 import { createProcessTask } from '../util/task';
 import { TaskExecutor } from '../util/taskExecutor';
-import { showAndLogWarning } from '../util/showAndLog';
+import { showAndLogError, showAndLogWarning } from '../util/showAndLog';
 import { TargetModel } from '../models/targetModel';
 import { ProjectController } from '../controllers/projectController';
 import { isWrappedError, WrappedError } from '../errors/wrappedError';
@@ -15,6 +15,10 @@ import {
     type ComposeFileMetadata,
 } from '../util/composeFile';
 import { ProjectTreeItem } from '../views/treeItems/projectTreeItem';
+import {
+    TargetSettings,
+    getSettingsForTarget,
+} from '../services/targetSettings';
 import type { TargetHealthReport } from '../services/topoCliSchema';
 
 const viewLogsItem: vscode.MessageItem = {
@@ -25,6 +29,11 @@ type ComposeFileQuickPickItem = vscode.QuickPickItem & {
     uri: vscode.Uri;
 };
 
+type DeployTarget = {
+    target: string;
+    settings: TargetSettings;
+};
+
 export class Deploy {
     constructor(
         private readonly taskExecutor: TaskExecutor,
@@ -33,15 +42,9 @@ export class Deploy {
     ) {}
 
     public async deployCommandHandler(): Promise<void> {
-        let target: string;
-        try {
-            target = this.getSelectedTarget();
-        } catch (err: unknown) {
-            if (isWrappedError(err, ['TARGET'])) {
-                showAndLogWarning('Cannot deploy', err);
-                return;
-            }
-            throw err;
+        const deployTarget = this.getSelectedDeployTarget();
+        if (!deployTarget) {
+            return;
         }
 
         const files = await vscode.workspace.findFiles(COMPOSE_FILE_GLOB);
@@ -66,8 +69,7 @@ export class Deploy {
         if (!resource) {
             return;
         }
-        await deploy(this.taskExecutor, resource.fsPath, target);
-        await this.projectController.refreshProjectContainersCommandHandler();
+        await this.deployComposeFile(resource, deployTarget);
     }
 
     public async deployContextCommandHandler(
@@ -79,19 +81,12 @@ export class Deploy {
             );
         }
 
-        let target: string;
-        try {
-            target = this.getSelectedTarget();
-        } catch (err: unknown) {
-            if (isWrappedError(err, ['TARGET'])) {
-                showAndLogWarning('Cannot deploy', err);
-                return;
-            }
-            throw err;
+        const deployTarget = this.getSelectedDeployTarget();
+        if (!deployTarget) {
+            return;
         }
 
-        await deploy(this.taskExecutor, resource.fsPath, target);
-        await this.projectController.refreshProjectContainersCommandHandler();
+        await this.deployComposeFile(resource, deployTarget);
     }
 
     public async deployProjectCommandHandler(treeNode: unknown): Promise<void> {
@@ -133,6 +128,42 @@ export class Deploy {
 
         return target;
     }
+
+    private getSelectedDeployTarget(): DeployTarget | undefined {
+        let target: string;
+        try {
+            target = this.getSelectedTarget();
+        } catch (err: unknown) {
+            if (isWrappedError(err, ['TARGET'])) {
+                showAndLogWarning('Cannot deploy', err);
+                return undefined;
+            }
+            throw err;
+        }
+
+        try {
+            return {
+                target,
+                settings: getSettingsForTarget(target),
+            };
+        } catch (err: unknown) {
+            showAndLogError('Error retrieving target settings', err);
+            return undefined;
+        }
+    }
+
+    private async deployComposeFile(
+        resource: vscode.Uri,
+        deployTarget: DeployTarget,
+    ): Promise<void> {
+        await deploy(
+            this.taskExecutor,
+            resource.fsPath,
+            deployTarget.target,
+            deployTarget.settings,
+        );
+        await this.projectController.refreshProjectContainersCommandHandler();
+    }
 }
 
 function getConnectivityFailureMessage(
@@ -168,10 +199,11 @@ export async function deploy(
     taskExecutor: TaskExecutor,
     composeFilePath: string,
     target: string,
+    settings: TargetSettings = {},
 ): Promise<void> {
     const task = createProcessTask(
         `Deploy to ${target}`,
-        ['topo', 'deploy', '--target', target],
+        ['topo', ...buildDeployArgs(target, settings)],
         {
             cwd: path.dirname(composeFilePath),
         },
@@ -200,4 +232,21 @@ export async function deploy(
     vscode.window.showInformationMessage(
         `Deployment to ${target} completed successfully.`,
     );
+}
+
+export function buildDeployArgs(
+    target: string,
+    settings: TargetSettings = {},
+): string[] {
+    const args = ['deploy', '--target', target];
+    if (settings.port !== undefined) {
+        args.push('-p', String(settings.port));
+    }
+    if (settings.forceRecreate) {
+        args.push('--force-recreate');
+    }
+    if (settings.noRecreate) {
+        args.push('--no-recreate');
+    }
+    return args;
 }

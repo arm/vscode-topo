@@ -97,6 +97,7 @@ Use the inline buttons on a service in the Projects tree to manage individual co
 | **Stop**                 | Stop a running container.                                            |
 | **Delete**               | Remove a container.                                                  |
 | **Open Container Shell** | Open a VS Code terminal connected to a running Linux Host container. |
+| **Open in Browser**      | Open a running container's web endpoint in your browser.             |
 
 ## Deploy and Stop
 
