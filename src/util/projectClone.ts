@@ -35,7 +35,7 @@ type CloneResult =
           success: false;
       };
 
-type CloneBuildArgs = Record<string, string>;
+type CloneParameters = Record<string, string>;
 
 type RemoteProjectQuickPickItem = vscode.QuickPickItem & {
     url: string;
@@ -146,9 +146,9 @@ export function createCloneTask(
     projectName: string,
     cloneSource: CloneSource,
     repositoryPath: string,
-    cloneBuildArgs: CloneBuildArgs = {},
+    cloneParameters: CloneParameters = {},
 ): vscode.Task {
-    const buildArgs = Object.entries(cloneBuildArgs).map(
+    const parameters = Object.entries(cloneParameters).map(
         ([key, value]) => `${key}=${value}`,
     );
     return createProcessTask(`Clone ${projectName}`, [
@@ -156,7 +156,7 @@ export function createCloneTask(
         'clone',
         getCloneSourceString(cloneSource),
         repositoryPath,
-        ...buildArgs,
+        ...parameters,
     ]);
 }
 
@@ -175,7 +175,7 @@ const cloneWithSource = async (
     taskExecutor: TaskExecutor,
     cloneSource: CloneSource,
     defaultProjectName: string,
-    cloneBuildArgs: CloneBuildArgs = {},
+    cloneParameters: CloneParameters = {},
 ): Promise<CloneResult> => {
     const projectName = await vscode.window.showInputBox({
         prompt: 'Enter the project name',
@@ -193,7 +193,7 @@ const cloneWithSource = async (
         projectName,
         cloneSource,
         repositoryPath,
-        cloneBuildArgs,
+        cloneParameters,
     );
     try {
         await taskExecutor.run(cloneTask);
@@ -303,7 +303,7 @@ export const promptForRemoteCloneSource = async (
 export async function cloneProjectFromSource(
     taskExecutor: TaskExecutor,
     cloneSource: CloneSource,
-    cloneBuildArgs: CloneBuildArgs = {},
+    cloneParameters: CloneParameters = {},
 ): Promise<boolean> {
     const defaultProjectName =
         getDefaultProjectNameFromSourceString(cloneSource);
@@ -311,7 +311,7 @@ export async function cloneProjectFromSource(
         taskExecutor,
         cloneSource,
         defaultProjectName,
-        cloneBuildArgs,
+        cloneParameters,
     );
     if (cloneResult.success) {
         await postCloneAction(cloneResult.repositoryPath);
