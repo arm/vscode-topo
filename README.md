@@ -26,7 +26,8 @@ Not sure what these terms mean? The [glossary](https://github.com/arm/topo/blob/
 
 - Visual Studio Code v1.101.0 or newer
 - [Docker](https://docs.docker.com/get-docker/)
-- Curl
+- OpenSSH Client
+- curl
 
 **Target machine** (the remote Arm system):
 
@@ -75,12 +76,13 @@ If no target is selected, the view shows a **Select a target** button.
 
 Use the buttons in the Target view title bar to access these actions:
 
-| Command             | Description                                              |
-| ------------------- | -------------------------------------------------------- |
-| **Select a target** | Select, add, or remove saved manual targets.             |
-| **Refresh**         | Re-check health for the selected target.                 |
-| **Clear Selection** | Clear the active target without deleting it.             |
-| **Fix Issues**      | Select and run available fixes for target health issues. |
+| Command             | Description                                               |
+| ------------------- | --------------------------------------------------------- |
+| **Select a target** | Select, add, or remove saved manual targets.              |
+| **Connect via SSH** | Open an SSH terminal when target connectivity is healthy. |
+| **Refresh**         | Re-check health for the selected target.                  |
+| **Clear Selection** | Clear the active target without deleting it.              |
+| **Fix Issues**      | Select and run available fixes for target health issues.  |
 
 ### Health Actions
 
@@ -96,6 +98,7 @@ Use the inline buttons on a service in the Projects tree to manage individual co
 | **Stop**                 | Stop a running container.                                            |
 | **Delete**               | Remove a container.                                                  |
 | **Open Container Shell** | Open a VS Code terminal connected to a running Linux Host container. |
+| **Open in Browser**      | Open a running container's web endpoint in your browser.             |
 
 ## Deploy and Stop
 

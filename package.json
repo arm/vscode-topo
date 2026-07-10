@@ -56,6 +56,18 @@
                 "category": "Topo"
             },
             {
+                "command": "topo.connectViaSSH",
+                "title": "Connect via SSH",
+                "icon": "$(terminal)",
+                "category": "Topo"
+            },
+            {
+                "command": "topo.openContainerInBrowser",
+                "title": "Open in Browser",
+                "icon": "$(globe)",
+                "category": "Topo"
+            },
+            {
                 "command": "topo.startContainer",
                 "title": "Start",
                 "icon": "$(play)",
@@ -89,6 +101,12 @@
                 "command": "topo.clearTargetSelection",
                 "title": "Clear Selection",
                 "icon": "$(circle-slash)",
+                "category": "Topo"
+            },
+            {
+                "command": "topo.openSettings",
+                "title": "Target Deploy Settings",
+                "icon": "$(gear)",
                 "category": "Topo"
             },
             {
@@ -265,6 +283,14 @@
                     "when": "false"
                 },
                 {
+                    "command": "topo.connectViaSSH",
+                    "when": "false"
+                },
+                {
+                    "command": "topo.openContainerInBrowser",
+                    "when": "false"
+                },
+                {
                     "command": "topo.deploy.context",
                     "when": "false"
                 },
@@ -324,6 +350,11 @@
                     "group": "inline@1"
                 },
                 {
+                    "command": "topo.openContainerInBrowser",
+                    "when": "view === topo.projects && viewItem =~ /service/ && viewItem =~ /running/ && viewItem =~ /browser/",
+                    "group": "inline@2"
+                },
+                {
                     "command": "topo.startContainer",
                     "when": "view === topo.projects && viewItem =~ /service/ && viewItem =~ /exited/",
                     "group": "inline@4"
@@ -356,6 +387,11 @@
                     "group": "navigation"
                 },
                 {
+                    "command": "topo.connectViaSSH",
+                    "when": "view == topo.target-manager && topo.selectedTargetState == 'selected' && topo.selectedTargetConnected",
+                    "group": "navigation"
+                },
+                {
                     "command": "topo.refreshTargetData",
                     "when": "view == topo.target-manager && topo.selectedTargetState == 'selected'",
                     "group": "navigation"
@@ -363,6 +399,11 @@
                 {
                     "command": "topo.clearTargetSelection",
                     "when": "view == topo.target-manager && topo.selectedTargetState == 'selected'",
+                    "group": "navigation"
+                },
+                {
+                    "command": "topo.openSettings",
+                    "when": "view == topo.target-manager",
                     "group": "navigation"
                 },
                 {
@@ -381,7 +422,50 @@
                     "group": "navigation"
                 }
             ]
-        }
+        },
+        "configuration": [
+            {
+                "title": "Target Settings",
+                "properties": {
+                    "topo.targetSettings": {
+                        "type": "object",
+                        "default": {},
+                        "markdownDescription": "Per-target settings. Add target names as keys, then use `deploy` to configure deploy options for that target. Example: `{ \"root@192.0.2.1\": { \"deploy\": { \"port\": 5000, \"forceRecreate\": true } } }`.",
+                        "additionalProperties": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "markdownDescription": "Settings for one target. Suggested properties: `deploy`.",
+                            "properties": {
+                                "deploy": {
+                                    "type": "object",
+                                    "default": {},
+                                    "markdownDescription": "Deploy settings for this target. Example: `{ \"port\": 5000, \"forceRecreate\": true }`. Use either `forceRecreate` or `noRecreate`, not both.",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                        "port": {
+                                            "type": "integer",
+                                            "minimum": 1,
+                                            "maximum": 65535,
+                                            "markdownDescription": "Registry port to use when deploying to the target. Use `1`-`65535`, for example `5000`. Omit this setting to use the default port."
+                                        },
+                                        "forceRecreate": {
+                                            "type": "boolean",
+                                            "default": false,
+                                            "markdownDescription": "Recreates containers even when their configuration and image have not changed. Do not use with `noRecreate`."
+                                        },
+                                        "noRecreate": {
+                                            "type": "boolean",
+                                            "default": false,
+                                            "markdownDescription": "Keeps existing containers instead of recreating them. Do not use with `forceRecreate`."
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        ]
     },
     "scripts": {
         "package": "npm run build && vsce package",
@@ -398,7 +482,7 @@
     },
     "devDependencies": {
         "@eslint/js": "^10.0.1",
-        "@vitest/coverage-v8": "^4.0.14",
+        "@vitest/coverage-v8": "^4.1.10",
         "@types/lodash.debounce": "^4.0.9",
         "@types/node": "^22.19.21",
         "@types/vscode": "^1.101.0",
@@ -411,14 +495,14 @@
         "prettier": "^3.9.4",
         "tar": "^7.5.19",
         "typescript": "^6.0.2",
-        "vite": "^8.1.0",
+        "vite": "^8.1.4",
         "vitest": "^4.1.9",
         "vitest-mock-extended": "^4.0.0",
         "yargs": "^18.0.0"
     },
     "dependencies": {
         "lodash.debounce": "^4.0.8",
-        "ssh-config": "^5.1.0",
+        "ssh-config": "^5.2.0",
         "superstruct": "^2.0.2",
         "vscode-uri": "^3.1.0"
     },

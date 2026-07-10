@@ -18,6 +18,9 @@ import { ProjectClone } from './actions/projectClone';
 import { ProjectTreeItem } from './views/treeItems/projectTreeItem';
 import { unloaded } from './util/loadable';
 import { ProjectController } from './controllers/projectController';
+import { ConnectViaSSH } from './actions/connectViaSSH';
+import { OpenContainerInBrowser } from './actions/openContainerInBrowser';
+import { OpenSettings } from './actions/openSettings';
 
 vi.mock('./util/logger');
 
@@ -31,10 +34,13 @@ describe('commands', () => {
         deploy: mock<Deploy>(),
         stop: mock<Stop>(),
         openContainerShell: mock<OpenContainerShell>(),
+        connectViaSSH: mock<ConnectViaSSH>(),
+        openContainerInBrowser: mock<OpenContainerInBrowser>(),
         containerStart: mock<ContainerStart>(),
         containerStop: mock<ContainerStop>(),
         containerDelete: mock<ContainerDelete>(),
         fixIssue: mock<FixIssue>(),
+        openSettings: mock<OpenSettings>(),
     } satisfies commands.CommandHandlers;
 
     afterEach(() => {
@@ -85,6 +91,10 @@ describe('commands', () => {
                 handlers.targetController.clearSelectionCommandHandler,
             ],
             [
+                commands.openSettings,
+                handlers.openSettings.openSettingsCommandHandler,
+            ],
+            [
                 commands.initProject,
                 handlers.projectInit.initProjectCommandHandler,
             ],
@@ -103,6 +113,15 @@ describe('commands', () => {
             [
                 commands.openContainerShell,
                 handlers.openContainerShell.openContainerShellCommandHandler,
+            ],
+            [
+                commands.connectViaSSH,
+                handlers.connectViaSSH.connectViaSSHCommandHandler,
+            ],
+            [
+                commands.openContainerInBrowser,
+                handlers.openContainerInBrowser
+                    .openContainerInBrowserCommandHandler,
             ],
             [
                 commands.startContainer,
@@ -154,6 +173,16 @@ describe('commands', () => {
 
             expect(
                 handlers.targetController.selectCommandHandler,
+            ).toHaveBeenCalledWith();
+        });
+
+        it('connects via SSH without a tree node argument', async () => {
+            commands.register(handlers);
+
+            await executeCommand(commands.connectViaSSH, 'argument');
+
+            expect(
+                handlers.connectViaSSH.connectViaSSHCommandHandler,
             ).toHaveBeenCalledWith();
         });
 
