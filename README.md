@@ -124,11 +124,10 @@ Use the **Topo: Initialize Project** command from the Command Palette to create 
 
 Three clone commands are available from the Command Palette:
 
-| Command                          | Description                                 |
-| -------------------------------- | ------------------------------------------- |
-| **Topo: Clone Remote Project**   | Clone from a Git repository.                |
-| **Topo: Clone Template Project** | Clone from a curated list of Arm Templates. |
-| **Topo: Clone Local Project**    | Clone from a local directory.               |
+| Command                        | Description                                                   |
+| ------------------------------ | ------------------------------------------------------------- |
+| **Topo: Clone Remote Project** | Clone from a custom git repo or curated catalog of Templates. |
+| **Topo: Clone Local Project**  | Clone from a local directory.                                 |
 
 After cloning, the extension offers to open the project in the current window, a new window, or add it to the workspace.
 
