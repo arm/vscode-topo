@@ -250,7 +250,7 @@ export const promptForRemoteCloneSource = async (
     quickPick.busy = true;
     quickPick.title = 'Select a Project to clone';
     quickPick.placeholder =
-        'Enter a git repository URL or select a project from the catalog below';
+        'Enter a git repository URL or search for a project from the catalog below';
 
     return new Promise<CloneSource | undefined>((resolve) => {
         let open = true;
