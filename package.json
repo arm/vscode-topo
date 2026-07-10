@@ -56,6 +56,12 @@
                 "category": "Topo"
             },
             {
+                "command": "topo.openContainerInBrowser",
+                "title": "Open in Browser",
+                "icon": "$(globe)",
+                "category": "Topo"
+            },
+            {
                 "command": "topo.startContainer",
                 "title": "Start",
                 "icon": "$(play)",
@@ -271,6 +277,10 @@
                     "when": "false"
                 },
                 {
+                    "command": "topo.openContainerInBrowser",
+                    "when": "false"
+                },
+                {
                     "command": "topo.deploy.context",
                     "when": "false"
                 },
@@ -328,6 +338,11 @@
                     "command": "topo.openContainerShell",
                     "when": "view === topo.projects && viewItem =~ /service/ && viewItem =~ /running/ && viewItem =~ /Linux Host/",
                     "group": "inline@1"
+                },
+                {
+                    "command": "topo.openContainerInBrowser",
+                    "when": "view === topo.projects && viewItem =~ /service/ && viewItem =~ /running/ && viewItem =~ /browser/",
+                    "group": "inline@2"
                 },
                 {
                     "command": "topo.startContainer",
