@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { HealthCheckGroupTreeItem } from '../views/treeItems/healthCheckGroupTreeItem';
 import { HealthCheckTreeItem } from '../views/treeItems/healthCheckTreeItem';
-import { showAndLogError } from '../util/showAndLogError';
+import { showAndLogError } from '../util/showAndLog';
 import { createProcessTask } from '../util/task';
 import { TaskExecutor } from '../util/taskExecutor';
 import { TargetModel } from '../models/targetModel';

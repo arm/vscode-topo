@@ -113,6 +113,18 @@ function syncSelectedTargetContext(targetModel: TargetModel): void {
     );
 }
 
+function syncSelectedTargetConnectedContext(
+    health: Loadable<TargetHealthReport>,
+): void {
+    const connected =
+        health.status === 'loaded' && health.data.connectivity.status === 'ok';
+    void vscode.commands.executeCommand(
+        'setContext',
+        manifest.CONTEXT_SELECTED_TARGET_CONNECTED,
+        connected,
+    );
+}
+
 function refreshHeader(
     treeView: vscode.TreeView<vscode.TreeItem>,
     targetModel: TargetModel,
@@ -153,6 +165,9 @@ export class TargetTreeView
                 this.refreshTreeView();
             }),
             this.targetModel.onHealthChanged(() => {
+                syncSelectedTargetConnectedContext(
+                    this.targetModel.selectedTargetHealth,
+                );
                 this.refreshTreeView();
             }),
             this.targetModel.onDescriptionChanged(() => {
@@ -161,6 +176,9 @@ export class TargetTreeView
             this._onDidChangeTreeData,
         );
         syncTargetDataIssueContext(this.targetModel.targets);
+        syncSelectedTargetConnectedContext(
+            this.targetModel.selectedTargetHealth,
+        );
     }
 
     public getChildren(element?: vscode.TreeItem): vscode.TreeItem[] {

@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { ContainerItem } from '../../util/types';
+import { getContainerWebEndpoints } from '../../util/getContainerWebEndpoints';
 
 function getContainerItemTooltip(containerItem: ContainerItem): string {
     return `ID: ${containerItem.id}
@@ -21,6 +22,12 @@ export class ContainerTreeItem extends vscode.TreeItem {
             containerItem.state,
             containerItem.processingDomain,
         ];
+        if (
+            containerItem.state === 'running' &&
+            getContainerWebEndpoints(containerItem.address).length > 0
+        ) {
+            contextValues.push('browser');
+        }
         this.contextValue = contextValues.join(' ');
         this.iconPath = ContainerTreeItem.getIconForState(containerItem.state);
     }

@@ -1,14 +1,19 @@
 import path from 'node:path';
 import os from 'node:os';
 import * as vscode from 'vscode';
-import { Deploy, deploy as deployServices } from './deploy';
+import { Deploy, buildDeployArgs, deploy as deployServices } from './deploy';
 import { TargetModel } from '../models/targetModel';
 import { MockProxy, mock } from 'vitest-mock-extended';
 import { mutable } from '../util/test/mutable';
 import { TaskExecutor } from '../util/taskExecutor';
 import { ProjectController } from '../controllers/projectController';
 import { ProjectTreeItem } from '../views/treeItems/projectTreeItem';
-import { unloaded } from '../util/loadable';
+import {
+    CONFIG_TARGET_SETTINGS,
+    CONFIG_TARGET_SETTINGS_DEPLOY,
+} from '../manifest';
+import { loaded, unloaded } from '../util/loadable';
+import type { TargetHealthReport } from '../services/topoCliSchema';
 
 describe('Deploy', () => {
     let deployAction: Deploy;
@@ -21,6 +26,21 @@ describe('Deploy', () => {
     );
     const composeFilePath = composeFileUri.fsPath;
     const target = 'topo.local';
+    const targetHealth: TargetHealthReport = {
+        destination: `ssh://${target}`,
+        isLocalhost: false,
+        connectivity: {
+            name: 'Connectivity',
+            status: 'ok',
+            value: 'connected',
+        },
+        processingDomainDriver: {
+            name: 'Processing Domain Driver',
+            status: 'ok',
+            value: 'ready',
+        },
+        dependencies: [],
+    };
     let taskExecutor: MockProxy<TaskExecutor>;
     let targetModel: TargetModel;
     let projectController: MockProxy<ProjectController>;
@@ -39,11 +59,15 @@ describe('Deploy', () => {
         );
     }
 
-    function expectDeployTask(task: vscode.Task, cwd: string): void {
+    function expectDeployTask(
+        task: vscode.Task,
+        cwd: string,
+        args = ['deploy', '--target', target],
+    ): void {
         expect(task.name).toBe('Deploy to topo.local');
         expect(task.execution).toMatchObject({
             process: 'topo',
-            args: ['deploy', '--target', target],
+            args,
             options: { cwd },
         });
     }
@@ -58,6 +82,44 @@ describe('Deploy', () => {
                     uri.fsPath.startsWith(workspaceFolder.uri.fsPath),
                 ),
         );
+    }
+
+    function mockDeployConfiguration(settings: Record<string, unknown>): void {
+        vi.mocked(vscode.workspace.getConfiguration).mockReturnValue({
+            get: vi.fn((key: string) => settings[key]),
+        } as unknown as vscode.WorkspaceConfiguration);
+    }
+
+    function mockTargetSettings(
+        settingsByTarget: Record<string, unknown>,
+    ): void {
+        const targetSettings = Object.fromEntries(
+            Object.entries(settingsByTarget).map(
+                ([targetName, deploySettings]) => [
+                    targetName,
+                    {
+                        [CONFIG_TARGET_SETTINGS_DEPLOY]: deploySettings,
+                    },
+                ],
+            ),
+        );
+
+        mockDeployConfiguration({
+            [CONFIG_TARGET_SETTINGS]: targetSettings,
+        });
+    }
+
+    function expectInvalidTargetSettings(
+        validationMessage: string,
+        errorPrefix = 'Error executing deploy command',
+    ): void {
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
+            `${errorPrefix}. Invalid topo.targetSettings.deploy entry for "topo.local": ${validationMessage}`,
+        );
+        expect(taskExecutor.run).not.toHaveBeenCalled();
+        expect(
+            projectController.refreshProjectContainersCommandHandler,
+        ).not.toHaveBeenCalled();
     }
 
     beforeEach(() => {
@@ -77,15 +139,56 @@ describe('Deploy', () => {
         vi.resetAllMocks();
     });
 
-    it('shows an error in the command handler with no target selected', async () => {
+    it('shows a warning in the command handler with no target selected', async () => {
         targetModel.setSelected(undefined);
 
         const deployOperation =
             deployAction.deployContextCommandHandler(composeFileUri);
 
         await expect(deployOperation).resolves.toBeUndefined();
-        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-            'Error executing deploy command. No target selected. Please select a target before deploying.',
+        expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
+            'Cannot deploy. No target selected. Please select a target before deploying.',
+        );
+        expect(taskExecutor.run).not.toHaveBeenCalled();
+        expect(
+            projectController.refreshProjectContainersCommandHandler,
+        ).not.toHaveBeenCalled();
+    });
+
+    it('shows a warning and does not deploy when target connectivity is unhealthy', async () => {
+        targetModel.setSelectedTargetHealth(
+            loaded({
+                ...targetHealth,
+                connectivity: {
+                    ...targetHealth.connectivity,
+                    status: 'error',
+                    value: 'unreachable',
+                },
+            }),
+        );
+
+        const deployOperation =
+            deployAction.deployContextCommandHandler(composeFileUri);
+
+        await expect(deployOperation).resolves.toBeUndefined();
+        expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
+            'Cannot deploy. Target topo.local connectivity is error: unreachable. Resolve target connectivity before deploying.',
+        );
+        expect(taskExecutor.run).not.toHaveBeenCalled();
+        expect(
+            projectController.refreshProjectContainersCommandHandler,
+        ).not.toHaveBeenCalled();
+    });
+
+    it('shows a warning and does not deploy when target health is loading', async () => {
+        targetModel.setSelectedTargetHealth(unloaded(true));
+
+        const deployOperation =
+            deployAction.deployContextCommandHandler(composeFileUri);
+
+        await expect(deployOperation).resolves.toBeUndefined();
+        expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
+            'Cannot deploy. Target topo.local health is still being checked. Wait for target health checks to finish before deploying.',
         );
         expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(
@@ -119,6 +222,60 @@ describe('Deploy', () => {
         );
     });
 
+    it('passes the custom registry port to deploy', async () => {
+        await deployServices(taskExecutor, composeFilePath, target, {
+            port: 5000,
+        });
+
+        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+        expectDeployTask(
+            taskExecutor.run.mock.calls[0][0],
+            path.dirname(composeFilePath),
+            ['deploy', '--target', target, '-p', '5000'],
+        );
+    });
+
+    it('builds deploy arguments without unset options', () => {
+        const args = buildDeployArgs(target);
+
+        expect(args).toEqual(['deploy', '--target', target]);
+    });
+
+    it('builds deploy arguments with default settings', () => {
+        const args = buildDeployArgs(target, {});
+
+        expect(args).toEqual(['deploy', '--target', target]);
+    });
+
+    it('builds deploy arguments with configured options', () => {
+        const args = buildDeployArgs(target, {
+            port: 5000,
+        });
+
+        expect(args).toEqual(['deploy', '--target', target, '-p', '5000']);
+    });
+
+    it('builds deploy arguments with force recreate enabled', () => {
+        const args = buildDeployArgs(target, {
+            forceRecreate: true,
+        });
+
+        expect(args).toEqual([
+            'deploy',
+            '--target',
+            target,
+            '--force-recreate',
+        ]);
+    });
+
+    it('builds deploy arguments with no recreate enabled', () => {
+        const args = buildDeployArgs(target, {
+            noRecreate: true,
+        });
+
+        expect(args).toEqual(['deploy', '--target', target, '--no-recreate']);
+    });
+
     it('handles task failure', async () => {
         taskExecutor.run.mockRejectedValueOnce(new Error('deploy failed'));
         await deployServices(taskExecutor, composeFilePath, target);
@@ -140,6 +297,42 @@ describe('Deploy', () => {
         expect(
             projectController.refreshProjectContainersCommandHandler,
         ).toHaveBeenCalledOnce();
+    });
+
+    it('passes configured deploy arguments from the command handler', async () => {
+        mockTargetSettings({
+            [target]: {
+                port: 5000,
+                forceRecreate: true,
+                noRecreate: false,
+            },
+        });
+
+        await deployAction.deployContextCommandHandler(composeFileUri);
+
+        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+        expectDeployTask(
+            taskExecutor.run.mock.calls[0][0],
+            path.dirname(composeFilePath),
+            ['deploy', '--target', target, '-p', '5000', '--force-recreate'],
+        );
+    });
+
+    it('shows an error before prompting when deploy command uses invalid selected target settings', async () => {
+        mockTargetSettings({
+            [target]: {
+                port: 'not-a-port',
+            },
+        });
+
+        await deployAction.deployCommandHandler();
+
+        expectInvalidTargetSettings(
+            'Expected an integer, but received: "not-a-port"',
+            'Error retrieving target settings',
+        );
+        expect(vscode.workspace.findFiles).not.toHaveBeenCalled();
+        expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
     });
 
     it('deploys the project tree item compose file', async () => {
