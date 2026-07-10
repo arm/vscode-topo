@@ -75,6 +75,11 @@ describe('TargetTreeView', () => {
                 manifest.CONTEXT_SELECTED_TARGET_STATE,
                 TargetSelectionState.Selected,
             );
+            expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+                'setContext',
+                manifest.CONTEXT_SELECTED_TARGET_CONNECTED,
+                false,
+            );
             contextView.dispose();
         });
 
@@ -104,23 +109,97 @@ describe('TargetTreeView', () => {
         it('syncs selected target context when selected target changes', async () => {
             targetModel.setSelected(undefined);
 
-            expect(
-                vscode.commands.executeCommand,
-            ).toHaveBeenCalledExactlyOnceWith(
+            expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
                 'setContext',
                 manifest.CONTEXT_SELECTED_TARGET_STATE,
                 TargetSelectionState.Unselected,
             );
+            expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+                'setContext',
+                manifest.CONTEXT_SELECTED_TARGET_CONNECTED,
+                false,
+            );
+            expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(2);
 
             vi.mocked(vscode.commands.executeCommand).mockClear();
             targetModel.setSelected(target);
+
+            expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+                'setContext',
+                manifest.CONTEXT_SELECTED_TARGET_STATE,
+                TargetSelectionState.Selected,
+            );
+            expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+                'setContext',
+                manifest.CONTEXT_SELECTED_TARGET_CONNECTED,
+                false,
+            );
+            expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(2);
+        });
+
+        it('syncs connected target context when target health changes', () => {
+            targetModel.setSelectedTargetHealth(
+                loaded({
+                    ...targetHealth,
+                    connectivity: {
+                        ...targetHealth.connectivity,
+                        status: 'error',
+                    },
+                }),
+            );
 
             expect(
                 vscode.commands.executeCommand,
             ).toHaveBeenCalledExactlyOnceWith(
                 'setContext',
-                manifest.CONTEXT_SELECTED_TARGET_STATE,
-                TargetSelectionState.Selected,
+                manifest.CONTEXT_SELECTED_TARGET_CONNECTED,
+                false,
+            );
+
+            vi.mocked(vscode.commands.executeCommand).mockClear();
+            targetModel.setSelectedTargetHealth(loaded(targetHealth));
+
+            expect(
+                vscode.commands.executeCommand,
+            ).toHaveBeenCalledExactlyOnceWith(
+                'setContext',
+                manifest.CONTEXT_SELECTED_TARGET_CONNECTED,
+                true,
+            );
+        });
+
+        it('keeps a target connected when dependencies have issues', () => {
+            targetModel.setSelectedTargetHealth(
+                loaded({
+                    ...targetHealth,
+                    dependencies: [
+                        {
+                            name: 'Container Engine',
+                            status: 'warning',
+                            value: 'missing',
+                        },
+                    ],
+                }),
+            );
+
+            expect(
+                vscode.commands.executeCommand,
+            ).toHaveBeenCalledExactlyOnceWith(
+                'setContext',
+                manifest.CONTEXT_SELECTED_TARGET_CONNECTED,
+                true,
+            );
+        });
+
+        it('keeps a target connected while its health is refreshing', () => {
+            targetModel.setSelectedTargetHealth(loading(loaded(targetHealth)));
+
+            expect(
+                vscode.commands.executeCommand,
+            ).toHaveBeenCalledExactlyOnceWith(
+                'setContext',
+                manifest.CONTEXT_SELECTED_TARGET_CONNECTED,
+                true,
             );
         });
     });

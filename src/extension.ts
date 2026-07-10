@@ -28,6 +28,8 @@ import { topo } from '../package.json';
 import { RefreshLoop } from './util/refreshLoop';
 import { ProjectController } from './controllers/projectController';
 import { TaskExecutor } from './util/taskExecutor';
+import { ConnectViaSSH } from './actions/connectViaSSH';
+import { OpenContainerInBrowser } from './actions/openContainerInBrowser';
 import { OpenSettings } from './actions/openSettings';
 
 const SELECTED_TARGET_REFRESH_INTERVAL_MS = 60_000;
@@ -107,6 +109,8 @@ export async function activate(
     const deploy = new Deploy(taskExecutor, targetModel, projectController);
     const stop = new Stop(taskExecutor, targetModel, projectController);
     const openContainerShell = new OpenContainerShell(dockerCommands);
+    const connectViaSSH = new ConnectViaSSH(targetModel);
+    const openContainerInBrowser = new OpenContainerInBrowser();
     const containerStart = new ContainerStart(
         dockerCommands,
         projectController,
@@ -129,6 +133,8 @@ export async function activate(
             deploy,
             stop,
             openContainerShell,
+            connectViaSSH,
+            openContainerInBrowser,
             containerStart,
             containerStop,
             containerDelete,
