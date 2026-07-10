@@ -7,6 +7,7 @@ import { getCloneDestinationPath } from './getCloneDestinationPath';
 import { getErrorMessage } from './getErrorMessage';
 import { TaskExecutor } from './taskExecutor';
 import { createProcessTask } from './task';
+import { showAndLogError } from './showAndLog';
 
 interface CloneRemoteSource {
     url: string;
@@ -35,6 +36,10 @@ type CloneResult =
       };
 
 type CloneBuildArgs = Record<string, string>;
+
+type RemoteProjectQuickPickItem = vscode.QuickPickItem & {
+    url: string;
+};
 
 const postCloneAction = async (repositoryPath: string) => {
     let message = 'Would you like to open the cloned repository?';
@@ -200,7 +205,7 @@ const cloneWithSource = async (
     }
 };
 
-const listTemplatesForChoice = async (
+const listTemplates = async (
     topoCli: TopoCli,
     sshTarget?: string,
 ): Promise<TemplateDescription[]> => {
@@ -217,28 +222,82 @@ const listTemplatesForChoice = async (
     }
 };
 
-export const getTemplateOfChoice = async (
+const buildRemoteQuickPickItems = (
+    templateItems: RemoteProjectQuickPickItem[],
+    filter: string,
+): RemoteProjectQuickPickItem[] => {
+    const entry = filter.trim();
+    if (entry.length > 0) {
+        return [
+            {
+                label: `$(cloud-download) Custom URL`,
+                description: entry,
+                url: entry,
+            },
+            ...templateItems,
+        ];
+    }
+    return templateItems;
+};
+
+export const promptForRemoteCloneSource = async (
     topoCli: TopoCli,
     sshTarget?: string,
-): Promise<TemplateDescription | undefined> => {
-    const templates = await listTemplatesForChoice(topoCli, sshTarget);
-    const templateItems = templates.map((template) => ({
-        label: template.name,
-        detail: getFirstSentence(template.description),
-        template,
-    }));
+): Promise<CloneSource | undefined> => {
+    const quickPick =
+        vscode.window.createQuickPick<RemoteProjectQuickPickItem>();
+    quickPick.matchOnDescription = true;
+    quickPick.busy = true;
+    quickPick.title = 'Select a Project to clone';
+    quickPick.placeholder =
+        'Enter a git repository URL or search for a project from the catalog below';
 
-    const selectedTemplateItem = await vscode.window.showQuickPick(
-        templateItems,
-        {
-            placeHolder: 'Select a template to clone',
-        },
-    );
-    if (!selectedTemplateItem) {
-        return undefined;
-    }
+    return new Promise<CloneSource | undefined>((resolve) => {
+        let open = true;
+        let templateItems: RemoteProjectQuickPickItem[] = [];
 
-    return selectedTemplateItem.template;
+        void (async () => {
+            let templates: TemplateDescription[] = [];
+            try {
+                templates = await listTemplates(topoCli, sshTarget);
+            } catch (e) {
+                showAndLogError('Failed to list templates', e);
+            }
+            templateItems = templates.map((template) => ({
+                label: `$(repo) ${template.name}`,
+                detail: getFirstSentence(template.description),
+                url: template.url,
+            }));
+            if (open) {
+                quickPick.items = buildRemoteQuickPickItems(
+                    templateItems,
+                    quickPick.value,
+                );
+                quickPick.busy = false;
+            }
+        })();
+
+        quickPick.onDidChangeValue((value) => {
+            quickPick.items = buildRemoteQuickPickItems(templateItems, value);
+        });
+
+        quickPick.onDidAccept(() => {
+            const selectedItem = quickPick.selectedItems[0];
+            resolve(
+                selectedItem
+                    ? { type: 'git', url: selectedItem.url }
+                    : undefined,
+            );
+            quickPick.hide();
+        });
+
+        quickPick.onDidHide(() => {
+            open = false;
+            resolve(undefined);
+        });
+
+        quickPick.show();
+    }).finally(() => quickPick.dispose());
 };
 
 export async function cloneProjectFromSource(

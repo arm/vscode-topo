@@ -47,7 +47,6 @@ export const fixIssue = command('fixIssue');
 export const fixTargetIssues = command('fixTargetIssues');
 export const remoteClone = command('remoteClone');
 export const localClone = command('localClone');
-export const templateClone = command('templateClone');
 
 export interface CommandHandlers {
     hostController: HostController;
@@ -148,9 +147,6 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
         ),
         vscode.commands.registerCommand(localClone, () =>
             handlers.projectClone.localCloneCommandHandler(),
-        ),
-        vscode.commands.registerCommand(templateClone, () =>
-            handlers.projectClone.templateCloneCommandHandler(),
         ),
     );
 
