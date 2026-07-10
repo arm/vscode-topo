@@ -12,7 +12,7 @@ Features include:
 
 ## Who is this for?
 
-**You just got a board and want to see what it can do.** Topo scans your target and finds [Topo Projects](https://github.com/arm/topo-project-specification) that showcase its capabilities, from running an LLM to comparing SIMD performance. Each project deploys in minutes and is a real Compose project you can learn from or build on.
+**You just got a board and want to see what it can do.** Topo scans your target and finds [Topo Projects](https://github.com/arm/topo-project-specification) that showcase its capabilities, from running an LLM to comparing SIMD performance. Each one deploys in minutes and is a real Compose project you can learn from or build on.
 
 **You want a faster edit-build-deploy loop.** Build on your laptop and deploy to a Pi or Jetson over SSH. Rebuilds are incremental, so after the first deploy you're often iterating in seconds.
 
@@ -124,10 +124,10 @@ Use the **Topo: Initialize Project** command from the Command Palette to create 
 
 Two clone commands are available from the Command Palette:
 
-| Command                        | Description                                                                |
-| ------------------------------ | -------------------------------------------------------------------------- |
-| **Topo: Clone Remote Project** | Clone from a custom Git repository or a curated list of Arm Topo Projects. |
-| **Topo: Clone Local Project**  | Clone from a local directory.                                              |
+| Command                        | Description                                                       |
+| ------------------------------ | ----------------------------------------------------------------- |
+| **Topo: Clone Remote Project** | Clone from a custom Git repository or a curated list of projects. |
+| **Topo: Clone Local Project**  | Clone from a local directory.                                     |
 
 After cloning, the extension offers to open the project in the current window, a new window, or add it to the workspace.
 
@@ -149,12 +149,12 @@ Use the refresh button in the Host view title bar to reload host health.
 
 Commands available from the Command Palette:
 
-| Command                      | Description                                                                |
-| ---------------------------- | -------------------------------------------------------------------------- |
-| `Topo: Initialize Project`   | Initialize a new Topo project in the workspace.                            |
-| `Topo: Clone Remote Project` | Clone from a custom Git repository or a curated list of Arm Topo Projects. |
-| `Topo: Clone Local Project`  | Clone a project from a local directory.                                    |
-| `Topo: Deploy`               | Select and deploy a compose file to the target.                            |
+| Command                      | Description                                                       |
+| ---------------------------- | ----------------------------------------------------------------- |
+| `Topo: Initialize Project`   | Initialize a new Topo project in the workspace.                   |
+| `Topo: Clone Remote Project` | Clone from a custom Git repository or a curated list of projects. |
+| `Topo: Clone Local Project`  | Clone a project from a local directory.                           |
+| `Topo: Deploy`               | Select and deploy a compose file to the target.                   |
 
 Additional commands are available through inline buttons in the Target, Host, and Projects tree views.
 
