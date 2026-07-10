@@ -4,7 +4,7 @@ import { TargetModel } from '../models/targetModel';
 import {
     cloneProjectFromSource,
     getLocalSourcePath,
-    getTemplateOfChoice,
+    promptForRemoteCloneSource,
 } from '../util/projectClone';
 import { isWrappedError } from '../errors/wrappedError';
 import { showAndLogError } from '../util/showAndLog';
@@ -27,13 +27,9 @@ function wrapCloneCommandWithCloneErrorHandling(
 
 const cloneMethodItems = [
     {
-        label: 'Template Project',
-        description: 'Clone from a curated catalogue of Templates',
-        cloneMethod: 'template',
-    },
-    {
         label: 'Remote Project',
-        description: 'Clone from a remote git repository',
+        description:
+            'Clone from a custom git repo or curated catalog of Templates',
         cloneMethod: 'remote',
     },
     {
@@ -64,27 +60,22 @@ export class ProjectClone {
         switch (selectedMethod.cloneMethod) {
             case 'remote':
                 return this.remoteCloneCommandHandler();
-            case 'template':
-                return this.templateCloneCommandHandler();
             case 'local':
                 return this.localCloneCommandHandler();
         }
     };
 
-    public templateCloneCommandHandler = wrapCloneCommandWithCloneErrorHandling(
+    public remoteCloneCommandHandler = wrapCloneCommandWithCloneErrorHandling(
         async () => {
             const selectedTarget = this.targetModel.selected;
-            const selectedTemplate = await getTemplateOfChoice(
+            const source = await promptForRemoteCloneSource(
                 this.topoCli,
                 selectedTarget,
             );
-            if (!selectedTemplate) {
+            if (!source) {
                 return;
             }
-            await cloneProjectFromSource(this.taskExecutor, {
-                type: 'git',
-                url: selectedTemplate.url,
-            });
+            await cloneProjectFromSource(this.taskExecutor, source);
         },
     );
 
@@ -97,21 +88,6 @@ export class ProjectClone {
             await cloneProjectFromSource(this.taskExecutor, {
                 type: 'dir',
                 path: cloneSourcePath,
-            });
-        },
-    );
-
-    public remoteCloneCommandHandler = wrapCloneCommandWithCloneErrorHandling(
-        async () => {
-            const cloneSourceRemoteUrl = await vscode.window.showInputBox({
-                prompt: 'Enter the git URL to clone from',
-            });
-            if (!cloneSourceRemoteUrl) {
-                return;
-            }
-            await cloneProjectFromSource(this.taskExecutor, {
-                type: 'git',
-                url: cloneSourceRemoteUrl,
             });
         },
     );

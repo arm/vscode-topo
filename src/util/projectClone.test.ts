@@ -7,7 +7,7 @@ import {
     getDefaultProjectNameFromUrl,
     getFirstSentence,
     getLocalSourcePath,
-    getTemplateOfChoice,
+    promptForRemoteCloneSource,
 } from './projectClone';
 import { mutable } from './test/mutable';
 import { TopoCli } from '../services/topoCli';
@@ -15,6 +15,9 @@ import { MockProxy, mock } from 'vitest-mock-extended';
 import { TemplateDescription } from '../services/topoCliSchema';
 import { WrappedError } from '../errors/wrappedError';
 import { TaskExecutor } from './taskExecutor';
+import { showAndLogError } from './showAndLog';
+
+vi.mock('./showAndLog');
 
 const showInformationMessageMock = vi.mocked(
     vscode.window.showInformationMessage as (
@@ -23,6 +26,35 @@ const showInformationMessageMock = vi.mocked(
         ...items: string[]
     ) => Thenable<string | undefined>,
 );
+
+function mockRemoteQuickPick<T extends vscode.QuickPickItem>() {
+    const onDidAcceptEmitter = new vscode.EventEmitter<void>();
+    const onDidHideEmitter = new vscode.EventEmitter<void>();
+    const onDidChangeValueEmitter = new vscode.EventEmitter<string>();
+    const quickPick = mock<vscode.QuickPick<T>>({
+        busy: false,
+        items: [],
+        onDidAccept: onDidAcceptEmitter.event,
+        onDidHide: onDidHideEmitter.event,
+        onDidChangeValue: onDidChangeValueEmitter.event,
+        selectedItems: [],
+        value: '',
+        hide: vi.fn(() => onDidHideEmitter.fire()),
+    });
+    vi.mocked(vscode.window.createQuickPick).mockReturnValueOnce(quickPick);
+
+    return {
+        quickPick,
+        enterValue: (value: string) => {
+            quickPick.value = value;
+            onDidChangeValueEmitter.fire(value);
+        },
+        acceptItem: (index: number) => {
+            quickPick.selectedItems = [quickPick.items[index]];
+            onDidAcceptEmitter.fire();
+        },
+    };
+}
 
 const workspacePath = path.resolve('home', 'workspace');
 const workspaceUri = vscode.Uri.file(workspacePath);
@@ -109,7 +141,7 @@ describe('project clone utilities', () => {
         });
     });
 
-    describe('getTemplateOfChoice', () => {
+    describe('promptForRemoteCloneSource', () => {
         const templateList: TemplateDescription[] = [
             {
                 name: 'template-alpha',
@@ -129,21 +161,29 @@ describe('project clone utilities', () => {
         ];
 
         const templateQuickPickItems = templateList.map((template) => ({
-            label: template.name,
+            label: `$(repo) ${template.name}`,
             detail: getFirstSentence(template.description),
-            template,
+            url: template.url,
         }));
 
-        it('propagates errors from listTemplates', async () => {
-            topoCli.listTemplates.mockImplementation(() => {
-                throw new Error('command failed');
+        it('allows a custom URL when listing templates fails', async () => {
+            const error = new Error('command failed');
+            const url = 'https://example.com/repo.git';
+            topoCli.listTemplates.mockRejectedValueOnce(error);
+            const { enterValue, acceptItem } = mockRemoteQuickPick();
+
+            const sourcePromise = promptForRemoteCloneSource(topoCli);
+            enterValue(`  ${url}  `);
+            acceptItem(0);
+
+            await expect(sourcePromise).resolves.toEqual({
+                type: 'git',
+                url,
             });
-
-            await expect(getTemplateOfChoice(topoCli)).rejects.toThrow(
-                'command failed',
+            expect(showAndLogError).toHaveBeenCalledWith(
+                'Failed to list templates',
+                error,
             );
-
-            expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
         });
 
         it('falls back to unfiltered templates when target-specific lookup fails', async () => {
@@ -153,62 +193,78 @@ describe('project clone utilities', () => {
                 }
                 return templateList;
             });
-            vi.mocked(vscode.window.showQuickPick).mockResolvedValueOnce(
-                templateQuickPickItems[0],
-            );
+            const { quickPick } = mockRemoteQuickPick();
 
-            await expect(
-                getTemplateOfChoice(topoCli, 'unhealthy-target'),
-            ).resolves.toEqual(templateList[0]);
-
-            expect(vscode.window.showQuickPick).toHaveBeenCalledWith(
-                templateQuickPickItems,
-                expect.any(Object),
+            const sourcePromise = promptForRemoteCloneSource(
+                topoCli,
+                'unhealthy-target',
             );
+            quickPick.hide();
+
+            await expect(sourcePromise).resolves.toBeUndefined();
+            expect(topoCli.listTemplates).toHaveBeenNthCalledWith(
+                1,
+                'unhealthy-target',
+            );
+            expect(topoCli.listTemplates).toHaveBeenNthCalledWith(2);
         });
 
-        it('returns undefined when no template is selected', async () => {
+        it('returns the selected catalog template as a git source', async () => {
             topoCli.listTemplates.mockResolvedValue(templateList);
-            vi.mocked(vscode.window.showQuickPick).mockResolvedValueOnce(
-                undefined,
+            const { quickPick, acceptItem } = mockRemoteQuickPick();
+
+            const sourcePromise = promptForRemoteCloneSource(
+                topoCli,
+                'me@example.com',
             );
-
-            await expect(getTemplateOfChoice(topoCli)).resolves.toBeUndefined();
-
-            expect(taskExecutor.run).not.toHaveBeenCalled();
-        });
-
-        it('returns the selected template', async () => {
-            topoCli.listTemplates.mockResolvedValue(templateList);
-            vi.mocked(vscode.window.showQuickPick).mockResolvedValueOnce(
-                templateQuickPickItems[0],
+            await vi.waitFor(() =>
+                expect(quickPick.items).toEqual(templateQuickPickItems),
             );
+            acceptItem(1);
 
-            await expect(
-                getTemplateOfChoice(topoCli, 'me@example.com'),
-            ).resolves.toEqual(templateList[0]);
-
+            await expect(sourcePromise).resolves.toEqual({
+                type: 'git',
+                url: templateList[1].url,
+            });
             expect(topoCli.listTemplates).toHaveBeenCalledWith(
                 'me@example.com',
             );
-            expect(vscode.window.showQuickPick).toHaveBeenCalledWith(
-                templateQuickPickItems,
-                {
-                    placeHolder: 'Select a template to clone',
-                },
-            );
         });
 
-        it('lists templates without a target when none is selected', async () => {
+        it('offers a typed git URL before the catalog templates', async () => {
+            const url = 'https://example.com/repo.git';
             topoCli.listTemplates.mockResolvedValue(templateList);
-            vi.mocked(vscode.window.showQuickPick).mockResolvedValueOnce(
-                undefined,
-            );
+            const { quickPick, enterValue, acceptItem } = mockRemoteQuickPick();
 
-            await getTemplateOfChoice(topoCli, undefined);
+            const sourcePromise = promptForRemoteCloneSource(topoCli);
+            enterValue(`  ${url}  `);
+            await vi.waitFor(() => expect(quickPick.busy).toBe(false));
+            acceptItem(0);
 
+            await expect(sourcePromise).resolves.toEqual({
+                type: 'git',
+                url,
+            });
+            expect(quickPick.items).toEqual([
+                {
+                    label: `$(cloud-download) Custom URL`,
+                    description: url,
+                    url,
+                },
+                ...templateQuickPickItems,
+            ]);
+        });
+
+        it('returns undefined and disposes the quick pick when dismissed', async () => {
+            topoCli.listTemplates.mockResolvedValue(templateList);
+            const { quickPick } = mockRemoteQuickPick();
+
+            const sourcePromise = promptForRemoteCloneSource(topoCli);
+            quickPick.hide();
+
+            await expect(sourcePromise).resolves.toBeUndefined();
             expect(topoCli.listTemplates).toHaveBeenCalledWith();
-            expect(taskExecutor.run).not.toHaveBeenCalled();
+            expect(quickPick.dispose).toHaveBeenCalledOnce();
         });
     });
 
