@@ -7,6 +7,7 @@ import { getCloneDestinationPath } from './getCloneDestinationPath';
 import { getErrorMessage } from './getErrorMessage';
 import { TaskExecutor } from './taskExecutor';
 import { createProcessTask } from './task';
+import { showAndLogError } from './showAndLog';
 
 interface CloneRemoteSource {
     url: string;
@@ -243,25 +244,43 @@ export const promptForRemoteCloneSource = async (
     topoCli: TopoCli,
     sshTarget?: string,
 ): Promise<CloneSource | undefined> => {
-    const templates = await listTemplates(topoCli, sshTarget);
-    const templateItems = templates.map((template) => ({
-        label: `$(repo) ${template.name}`,
-        detail: getFirstSentence(template.description),
-        url: template.url,
-    }));
-
     const quickPick =
         vscode.window.createQuickPick<RemoteProjectQuickPickItem>();
     quickPick.matchOnDescription = true;
+    quickPick.busy = true;
     quickPick.title = 'Select a Project to clone';
     quickPick.placeholder =
         'Enter a git repository URL or select a project from the catalog below';
-    quickPick.items = buildRemoteQuickPickItems(templateItems, '');
-    quickPick.onDidChangeValue((value) => {
-        quickPick.items = buildRemoteQuickPickItems(templateItems, value);
-    });
 
     return new Promise<CloneSource | undefined>((resolve) => {
+        let open = true;
+        let templateItems: RemoteProjectQuickPickItem[] = [];
+
+        void (async () => {
+            let templates: TemplateDescription[] = [];
+            try {
+                templates = await listTemplates(topoCli, sshTarget);
+            } catch (e) {
+                showAndLogError('Failed to list templates', e);
+            }
+            templateItems = templates.map((template) => ({
+                label: `$(repo) ${template.name}`,
+                detail: getFirstSentence(template.description),
+                url: template.url,
+            }));
+            if (open) {
+                quickPick.items = buildRemoteQuickPickItems(
+                    templateItems,
+                    quickPick.value,
+                );
+                quickPick.busy = false;
+            }
+        })();
+
+        quickPick.onDidChangeValue((value) => {
+            quickPick.items = buildRemoteQuickPickItems(templateItems, value);
+        });
+
         quickPick.onDidAccept(() => {
             const selectedItem = quickPick.selectedItems[0];
             resolve(
@@ -273,6 +292,7 @@ export const promptForRemoteCloneSource = async (
         });
 
         quickPick.onDidHide(() => {
+            open = false;
             resolve(undefined);
         });
 
