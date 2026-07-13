@@ -12,18 +12,18 @@ import {
     defaulted,
 } from 'superstruct';
 
-const templateCompatibilitySchema = enums(['supported', 'unsupported']);
+const projectCompatibilitySchema = enums(['supported', 'unsupported']);
 
-export const templateSchema = type({
+export const projectSchema = type({
     name: string(),
     description: string(),
     features: nullable(array(string())),
     url: string(),
     ref: string(),
-    compatibility: optional(templateCompatibilitySchema),
+    compatibility: optional(projectCompatibilitySchema),
 });
 
-export type TemplateDescription = Infer<typeof templateSchema>;
+export type ProjectDescription = Infer<typeof projectSchema>;
 
 const healthCheckStatusSchema = enums(['ok', 'warning', 'error', 'info']);
 

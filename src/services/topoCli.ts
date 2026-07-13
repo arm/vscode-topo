@@ -6,9 +6,9 @@ import {
     HostHealthReport,
     healthReportSchema,
     hostHealthReportSchema,
-    TemplateDescription,
+    ProjectDescription,
     targetDescriptionSchema,
-    templateSchema,
+    projectSchema,
     topoLogEntrySchema,
     psSchema,
     PsOutput,
@@ -152,17 +152,17 @@ export class TopoCli {
         return versionInfo;
     }
 
-    public async listTemplates(
+    public async listProjects(
         sshTarget?: string,
-    ): Promise<TemplateDescription[]> {
+    ): Promise<ProjectDescription[]> {
         const cmd = ['templates', '-o', 'json'];
         if (sshTarget) {
             cmd.push('--target', sshTarget);
         }
         const out = await this.exec(cmd);
-        const templates = JSON.parse(out);
-        assert(templates, array(templateSchema));
-        return templates;
+        const projects = JSON.parse(out);
+        assert(projects, array(projectSchema));
+        return projects;
     }
 
     public async describe(sshTarget: string): Promise<TargetDescription> {

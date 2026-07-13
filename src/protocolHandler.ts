@@ -55,7 +55,7 @@ const handleCloneRequest = async (
         logger.error(`Failed to open URI: ${uri.toString()}`);
         return;
     }
-    const { source, ...cloneBuildArgs } = data;
+    const { source, ...cloneParameters } = data;
     const cloneSource = parseCloneSourceString(source);
     if (cloneSource.type === 'dir') {
         const errMessage = `Clone source type 'dir' is not supported for URI-based cloning. Please use the command palette to clone from a local directory. URI: ${uri.toString()}`;
@@ -67,7 +67,7 @@ const handleCloneRequest = async (
     const cloneStarted = await cloneProjectFromSource(
         taskExecutor,
         cloneSource,
-        cloneBuildArgs,
+        cloneParameters,
     );
     if (!cloneStarted) {
         logger.info(`Clone cancelled for URI ${uri.toString()}`);
