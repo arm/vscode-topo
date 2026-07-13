@@ -190,7 +190,7 @@ describe('commands', () => {
                 {
                     name: 'demo',
                     uri: vscode.Uri.file('/fake/workspace/demo'),
-                    composeFileUri,
+                    composeFileUris: [composeFileUri],
                     workspaceIndex: 0,
                     workspaceName: 'workspace',
                 },
@@ -214,7 +214,7 @@ describe('commands', () => {
                 {
                     name: 'demo',
                     uri: vscode.Uri.file('/fake/workspace/demo'),
-                    composeFileUri,
+                    composeFileUris: [composeFileUri],
                     workspaceIndex: 0,
                     workspaceName: 'workspace',
                 },

@@ -193,9 +193,23 @@ export class TopoCli {
         await this.exec(['init'], { cwd: projectPath });
     }
 
-    public async ps(sshTarget: string, projectPath: string): Promise<PsOutput> {
-        const cmd = ['ps', '-a', '--target', sshTarget, '-o', 'json'];
-        const output = await this.exec(cmd, { cwd: projectPath });
+    public async ps(
+        sshTarget: string,
+        composeFilePath: string,
+    ): Promise<PsOutput> {
+        const cmd = [
+            'ps',
+            '-a',
+            '--target',
+            sshTarget,
+            '-f',
+            path.basename(composeFilePath),
+            '-o',
+            'json',
+        ];
+        const output = await this.exec(cmd, {
+            cwd: path.dirname(composeFilePath),
+        });
         const containers = JSON.parse(output);
         assert(containers, psSchema);
         return containers;

@@ -36,12 +36,14 @@ describe('Stop', () => {
     let targetModel: TargetModel;
     let projectController: MockProxy<ProjectController>;
 
-    function projectTreeItem(): ProjectTreeItem {
+    function projectTreeItem(
+        composeFileUris: vscode.Uri[] = [composeFileUri],
+    ): ProjectTreeItem {
         return new ProjectTreeItem(
             {
                 name: 'demo',
                 uri: vscode.Uri.file(path.dirname(composeFilePath)),
-                composeFileUri,
+                composeFileUris,
                 workspaceIndex: 0,
                 workspaceName: 'workspace',
             },
@@ -50,11 +52,21 @@ describe('Stop', () => {
         );
     }
 
-    function expectStopTask(task: vscode.Task, cwd: string): void {
+    function expectStopTask(
+        task: vscode.Task,
+        cwd: string,
+        selectedComposeFilePath = composeFilePath,
+    ): void {
         expect(task.name).toBe('Stop services on topo.local');
         expect(task.execution).toMatchObject({
             process: 'topo',
-            args: ['stop', '--target', target],
+            args: [
+                'stop',
+                '--target',
+                target,
+                '-f',
+                path.basename(selectedComposeFilePath),
+            ],
             options: { cwd },
         });
     }
@@ -164,6 +176,7 @@ describe('Stop', () => {
     it('stops the project tree item compose file', async () => {
         await stopAction.stopProjectCommandHandler(projectTreeItem());
 
+        expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
         expect(taskExecutor.run).toHaveBeenCalledTimes(1);
         expectStopTask(
             taskExecutor.run.mock.calls[0][0],
@@ -174,10 +187,38 @@ describe('Stop', () => {
         ).toHaveBeenCalledOnce();
     });
 
+    it('prompts before stopping a project with multiple Compose files', async () => {
+        const developmentFile = vscode.Uri.file(
+            path.join(
+                path.dirname(composeFilePath),
+                'compose-development.yaml',
+            ),
+        );
+        const selectedComposeFile = {
+            label: path.basename(developmentFile.fsPath),
+            uri: developmentFile,
+        };
+        vi.mocked(vscode.window.showQuickPick).mockResolvedValueOnce(
+            selectedComposeFile,
+        );
+
+        await stopAction.stopProjectCommandHandler(
+            projectTreeItem([composeFileUri, developmentFile]),
+        );
+
+        expect(vscode.window.showQuickPick).toHaveBeenCalledOnce();
+        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+        expectStopTask(
+            taskExecutor.run.mock.calls[0][0],
+            path.dirname(developmentFile.fsPath),
+            developmentFile.fsPath,
+        );
+    });
+
     it('throws when project command is called without a project tree item', async () => {
         await expect(
             stopAction.stopProjectCommandHandler(undefined),
-        ).rejects.toThrow('No compose.yaml or compose.yml selected for stop');
+        ).rejects.toThrow('No Compose file selected for stop');
 
         expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(

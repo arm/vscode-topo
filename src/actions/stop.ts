@@ -8,6 +8,7 @@ import { TargetModel } from '../models/targetModel';
 import { ProjectController } from '../controllers/projectController';
 import { ProjectTreeItem } from '../views/treeItems/projectTreeItem';
 import { isWrappedError } from '../errors/wrappedError';
+import { selectComposeFile } from '../util/composeFile';
 import {
     assertTargetConnected,
     assertTargetSelected,
@@ -26,7 +27,7 @@ export class Stop {
 
     public async stopCommandHandler(resource?: vscode.Uri): Promise<void> {
         if (!resource) {
-            throw new Error('No compose.yaml or compose.yml selected for stop');
+            throw new Error('No Compose file selected for stop');
         }
 
         const target = this.targetModel.selected;
@@ -48,10 +49,18 @@ export class Stop {
 
     public async stopProjectCommandHandler(treeNode: unknown): Promise<void> {
         if (!(treeNode instanceof ProjectTreeItem)) {
-            throw new Error('No compose.yaml or compose.yml selected for stop');
+            throw new Error('No Compose file selected for stop');
         }
 
-        await this.stopCommandHandler(treeNode.composeFileUri);
+        const resource = await selectComposeFile(
+            treeNode.project.composeFileUris,
+            'Select a Compose file to stop',
+        );
+        if (!resource) {
+            return;
+        }
+
+        await this.stopCommandHandler(resource);
     }
 }
 
@@ -62,7 +71,14 @@ export async function stop(
 ): Promise<void> {
     const task = createProcessTask(
         `Stop services on ${target}`,
-        ['topo', 'stop', '--target', target],
+        [
+            'topo',
+            'stop',
+            '--target',
+            target,
+            '-f',
+            path.basename(composeFilePath),
+        ],
         {
             cwd: path.dirname(composeFilePath),
         },

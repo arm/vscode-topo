@@ -15,7 +15,7 @@ import * as manifest from '../manifest';
 const project: ProjectMetadata = {
     name: 'demo',
     uri: vscode.Uri.file('/fake/workspace/demo'),
-    composeFileUri: vscode.Uri.file('/fake/workspace/demo/compose.yaml'),
+    composeFileUris: [vscode.Uri.file('/fake/workspace/demo/compose.yaml')],
     workspaceIndex: 0,
     workspaceName: 'workspace',
 };

@@ -9,7 +9,7 @@ const projects: ProjectMetadata[] = [
     {
         name: 'demo',
         uri: vscode.Uri.file('/fake/workspace/demo'),
-        composeFileUri: vscode.Uri.file('/fake/workspace/demo/compose.yaml'),
+        composeFileUris: [vscode.Uri.file('/fake/workspace/demo/compose.yaml')],
         workspaceIndex: 0,
         workspaceName: 'workspace',
     },
@@ -18,7 +18,7 @@ const projects: ProjectMetadata[] = [
 const otherProject: ProjectMetadata = {
     name: 'other',
     uri: vscode.Uri.file('/fake/workspace/other'),
-    composeFileUri: vscode.Uri.file('/fake/workspace/other/compose.yaml'),
+    composeFileUris: [vscode.Uri.file('/fake/workspace/other/compose.yaml')],
     workspaceIndex: 0,
     workspaceName: 'workspace',
 };

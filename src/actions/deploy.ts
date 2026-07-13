@@ -11,7 +11,7 @@ import {
     COMPOSE_FILE_GLOB,
     compareComposeFiles,
     getComposeFileMetadata,
-    getPreferredComposeFiles,
+    selectComposeFile,
     type ComposeFileMetadata,
 } from '../util/composeFile';
 import { ProjectTreeItem } from '../views/treeItems/projectTreeItem';
@@ -50,23 +50,22 @@ export class Deploy {
             return;
         }
 
-        const files = await vscode.workspace.findFiles(COMPOSE_FILE_GLOB);
-        if (files.length === 0) {
+        const composeFileUris =
+            await vscode.workspace.findFiles(COMPOSE_FILE_GLOB);
+        const composeFiles = composeFileUris
+            .map((uri) =>
+                getComposeFileMetadata(
+                    uri,
+                    vscode.workspace.getWorkspaceFolder(uri),
+                ),
+            )
+            .sort(compareComposeFiles);
+        if (composeFiles.length === 0) {
             vscode.window.showErrorMessage(
-                'No compose.yaml or compose.yml files found in the workspace.',
+                'No Compose files found in the workspace.',
             );
             return;
         }
-
-        const composeFileMetadata = files.map((file) =>
-            getComposeFileMetadata(
-                file,
-                vscode.workspace.getWorkspaceFolder(file),
-            ),
-        );
-        const preferredComposeFiles =
-            getPreferredComposeFiles(composeFileMetadata);
-        const composeFiles = preferredComposeFiles.sort(compareComposeFiles);
 
         const resource = await promptForComposeFile(composeFiles);
         if (!resource) {
@@ -79,9 +78,7 @@ export class Deploy {
         resource?: vscode.Uri,
     ): Promise<void> {
         if (!resource) {
-            throw new Error(
-                'No compose.yaml or compose.yml selected for deployment',
-            );
+            throw new Error('No Compose file selected for deployment');
         }
 
         const deployTarget = this.getSelectedDeployTarget();
@@ -94,12 +91,18 @@ export class Deploy {
 
     public async deployProjectCommandHandler(treeNode: unknown): Promise<void> {
         if (!(treeNode instanceof ProjectTreeItem)) {
-            throw new Error(
-                'No compose.yaml or compose.yml selected for deployment',
-            );
+            throw new Error('No Compose file selected for deployment');
         }
 
-        await this.deployContextCommandHandler(treeNode.composeFileUri);
+        const resource = await selectComposeFile(
+            treeNode.project.composeFileUris,
+            'Select a Compose file to deploy',
+        );
+        if (!resource) {
+            return;
+        }
+
+        await this.deployContextCommandHandler(resource);
     }
 
     private getSelectedDeployTarget(): DeployTarget | undefined {
@@ -144,6 +147,10 @@ export class Deploy {
 async function promptForComposeFile(
     composeFiles: ComposeFileMetadata[],
 ): Promise<vscode.Uri | undefined> {
+    if (composeFiles.length <= 1) {
+        return composeFiles[0]?.uri;
+    }
+
     const showWorkspaceName =
         (vscode.workspace.workspaceFolders?.length ?? 0) > 1;
     const items: ComposeFileQuickPickItem[] = composeFiles.map(
@@ -154,7 +161,7 @@ async function promptForComposeFile(
         }),
     );
     const selected = await vscode.window.showQuickPick(items, {
-        placeHolder: 'Select a compose file to deploy',
+        placeHolder: 'Select a Compose file to deploy',
     });
 
     return selected?.uri;
@@ -168,7 +175,7 @@ export async function deploy(
 ): Promise<void> {
     const task = createProcessTask(
         `Deploy to ${target}`,
-        ['topo', ...buildDeployArgs(target, settings)],
+        ['topo', ...buildDeployArgs(target, composeFilePath, settings)],
         {
             cwd: path.dirname(composeFilePath),
         },
@@ -201,6 +208,7 @@ export async function deploy(
 
 export function buildDeployArgs(
     target: string,
+    composeFilePath: string,
     settings: TargetSettings = {},
 ): string[] {
     const args = ['deploy', '--target', target];
@@ -213,5 +221,6 @@ export function buildDeployArgs(
     if (settings.noRecreate) {
         args.push('--no-recreate');
     }
+    args.push('-f', path.basename(composeFilePath));
     return args;
 }

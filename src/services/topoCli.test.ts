@@ -262,7 +262,7 @@ describe('TopoCli', () => {
         await expect(topoCli.init('t')).rejects.toThrow('fail');
     });
 
-    it('ps parses JSON output and runs topo ps in the project directory', async () => {
+    it('ps parses JSON output and selects the project Compose file', async () => {
         const output: PsOutput = {
             containers: [
                 {
@@ -291,13 +291,24 @@ describe('TopoCli', () => {
         });
 
         const target = 'user@topo.local';
-        const projectPath = '/fake/workspace/demo';
+        const composeFilePath = '/fake/workspace/demo/production-compose.yaml';
 
-        await expect(topoCli.ps(target, projectPath)).resolves.toEqual(output);
+        await expect(topoCli.ps(target, composeFilePath)).resolves.toEqual(
+            output,
+        );
         expect(execFileMock).toHaveBeenCalledWith(
             topoCli.getBinaryPath(),
-            ['ps', '-a', '--target', target, '-o', 'json'],
-            { ...defaultExecOptions, cwd: projectPath },
+            [
+                'ps',
+                '-a',
+                '--target',
+                target,
+                '-f',
+                'production-compose.yaml',
+                '-o',
+                'json',
+            ],
+            { ...defaultExecOptions, cwd: '/fake/workspace/demo' },
         );
     });
 

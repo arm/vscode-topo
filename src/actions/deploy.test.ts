@@ -45,12 +45,14 @@ describe('Deploy', () => {
     let targetModel: TargetModel;
     let projectController: MockProxy<ProjectController>;
 
-    function projectTreeItem(): ProjectTreeItem {
+    function projectTreeItem(
+        composeFileUris: vscode.Uri[] = [composeFileUri],
+    ): ProjectTreeItem {
         return new ProjectTreeItem(
             {
                 name: 'demo',
                 uri: vscode.Uri.file(path.dirname(composeFilePath)),
-                composeFileUri,
+                composeFileUris,
                 workspaceIndex: 0,
                 workspaceName: 'workspace',
             },
@@ -62,7 +64,13 @@ describe('Deploy', () => {
     function expectDeployTask(
         task: vscode.Task,
         cwd: string,
-        args = ['deploy', '--target', target],
+        args = [
+            'deploy',
+            '--target',
+            target,
+            '-f',
+            path.basename(composeFilePath),
+        ],
     ): void {
         expect(task.name).toBe('Deploy to topo.local');
         expect(task.execution).toMatchObject({
@@ -201,10 +209,10 @@ describe('Deploy', () => {
         await deployAction.deployCommandHandler();
 
         expect(vscode.workspace.findFiles).toHaveBeenCalledWith(
-            '**/compose.{yaml,yml}',
+            '**/*compose*.{yaml,yml}',
         );
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-            'No compose.yaml or compose.yml files found in the workspace.',
+            'No Compose files found in the workspace.',
         );
         expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
         expect(taskExecutor.run).not.toHaveBeenCalled();
@@ -232,32 +240,60 @@ describe('Deploy', () => {
         expectDeployTask(
             taskExecutor.run.mock.calls[0][0],
             path.dirname(composeFilePath),
-            ['deploy', '--target', target, '-p', '5000'],
+            [
+                'deploy',
+                '--target',
+                target,
+                '-p',
+                '5000',
+                '-f',
+                path.basename(composeFilePath),
+            ],
         );
     });
 
     it('builds deploy arguments without unset options', () => {
-        const args = buildDeployArgs(target);
+        const args = buildDeployArgs(target, composeFilePath);
 
-        expect(args).toEqual(['deploy', '--target', target]);
+        expect(args).toEqual([
+            'deploy',
+            '--target',
+            target,
+            '-f',
+            path.basename(composeFilePath),
+        ]);
     });
 
     it('builds deploy arguments with default settings', () => {
-        const args = buildDeployArgs(target, {});
+        const args = buildDeployArgs(target, composeFilePath, {});
 
-        expect(args).toEqual(['deploy', '--target', target]);
+        expect(args).toEqual([
+            'deploy',
+            '--target',
+            target,
+            '-f',
+            path.basename(composeFilePath),
+        ]);
     });
 
     it('builds deploy arguments with configured options', () => {
-        const args = buildDeployArgs(target, {
+        const args = buildDeployArgs(target, composeFilePath, {
             port: 5000,
         });
 
-        expect(args).toEqual(['deploy', '--target', target, '-p', '5000']);
+        expect(args).toEqual([
+            'deploy',
+            '--target',
+            target,
+            '-p',
+            '5000',
+            '-f',
+            path.basename(composeFilePath),
+        ]);
     });
 
     it('builds deploy arguments with force recreate enabled', () => {
-        const args = buildDeployArgs(target, {
+        const args = buildDeployArgs(target, composeFilePath, {
             forceRecreate: true,
         });
 
@@ -266,15 +302,24 @@ describe('Deploy', () => {
             '--target',
             target,
             '--force-recreate',
+            '-f',
+            path.basename(composeFilePath),
         ]);
     });
 
     it('builds deploy arguments with no recreate enabled', () => {
-        const args = buildDeployArgs(target, {
+        const args = buildDeployArgs(target, composeFilePath, {
             noRecreate: true,
         });
 
-        expect(args).toEqual(['deploy', '--target', target, '--no-recreate']);
+        expect(args).toEqual([
+            'deploy',
+            '--target',
+            target,
+            '--no-recreate',
+            '-f',
+            path.basename(composeFilePath),
+        ]);
     });
 
     it('handles task failure', async () => {
@@ -315,7 +360,16 @@ describe('Deploy', () => {
         expectDeployTask(
             taskExecutor.run.mock.calls[0][0],
             path.dirname(composeFilePath),
-            ['deploy', '--target', target, '-p', '5000', '--force-recreate'],
+            [
+                'deploy',
+                '--target',
+                target,
+                '-p',
+                '5000',
+                '--force-recreate',
+                '-f',
+                path.basename(composeFilePath),
+            ],
         );
     });
 
@@ -339,6 +393,7 @@ describe('Deploy', () => {
     it('deploys the project tree item compose file', async () => {
         await deployAction.deployProjectCommandHandler(projectTreeItem());
 
+        expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
         expect(taskExecutor.run).toHaveBeenCalledTimes(1);
         expectDeployTask(
             taskExecutor.run.mock.calls[0][0],
@@ -349,12 +404,44 @@ describe('Deploy', () => {
         ).toHaveBeenCalledOnce();
     });
 
+    it('prompts before deploying a project with multiple Compose files', async () => {
+        const developmentFile = vscode.Uri.file(
+            path.join(
+                path.dirname(composeFilePath),
+                'compose-development.yaml',
+            ),
+        );
+        const selectedComposeFile = {
+            label: path.basename(developmentFile.fsPath),
+            uri: developmentFile,
+        };
+        vi.mocked(vscode.window.showQuickPick).mockResolvedValueOnce(
+            selectedComposeFile,
+        );
+
+        await deployAction.deployProjectCommandHandler(
+            projectTreeItem([composeFileUri, developmentFile]),
+        );
+
+        expect(vscode.window.showQuickPick).toHaveBeenCalledOnce();
+        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+        expectDeployTask(
+            taskExecutor.run.mock.calls[0][0],
+            path.dirname(developmentFile.fsPath),
+            [
+                'deploy',
+                '--target',
+                target,
+                '-f',
+                path.basename(developmentFile.fsPath),
+            ],
+        );
+    });
+
     it('throws when context command is called without a resource', async () => {
         await expect(
             deployAction.deployContextCommandHandler(),
-        ).rejects.toThrow(
-            'No compose.yaml or compose.yml selected for deployment',
-        );
+        ).rejects.toThrow('No Compose file selected for deployment');
 
         expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
         expect(vscode.workspace.findFiles).not.toHaveBeenCalled();
@@ -368,9 +455,7 @@ describe('Deploy', () => {
     it('throws when project command is called without a project tree item', async () => {
         await expect(
             deployAction.deployProjectCommandHandler(undefined),
-        ).rejects.toThrow(
-            'No compose.yaml or compose.yml selected for deployment',
-        );
+        ).rejects.toThrow('No Compose file selected for deployment');
 
         expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(
@@ -378,29 +463,16 @@ describe('Deploy', () => {
         ).not.toHaveBeenCalled();
     });
 
-    it('prompts for and deploys the selected compose file when running the deploy command', async () => {
+    it('deploys the only Compose file without prompting', async () => {
         mockWorkspaceFolders(workspaceFolders);
         const composeFile = vscode.Uri.file('/fake/workspace/compose.yaml');
-        const selectedComposeFile = {
-            label: 'compose.yaml',
-            description: undefined,
-            uri: composeFile,
-        };
         vi.mocked(vscode.workspace.findFiles).mockResolvedValueOnce([
             composeFile,
         ]);
-        vi.mocked(vscode.window.showQuickPick).mockResolvedValueOnce(
-            selectedComposeFile,
-        );
 
         await deployAction.deployCommandHandler();
 
-        expect(vscode.window.showQuickPick).toHaveBeenCalledWith(
-            [selectedComposeFile],
-            {
-                placeHolder: 'Select a compose file to deploy',
-            },
-        );
+        expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
         expect(taskExecutor.run).toHaveBeenCalledTimes(1);
         expectDeployTask(
             taskExecutor.run.mock.calls[0][0],
@@ -411,10 +483,41 @@ describe('Deploy', () => {
         ).toHaveBeenCalledOnce();
     });
 
+    it('prompts when the deploy command finds multiple Compose files', async () => {
+        mockWorkspaceFolders(workspaceFolders);
+        const composeFile = vscode.Uri.file('/fake/workspace/compose.yaml');
+        const developmentFile = vscode.Uri.file(
+            '/fake/workspace/compose-development.yaml',
+        );
+        const selectedComposeFile = {
+            label: 'compose-development.yaml',
+            description: undefined,
+            uri: developmentFile,
+        };
+        vi.mocked(vscode.workspace.findFiles).mockResolvedValueOnce([
+            composeFile,
+            developmentFile,
+        ]);
+        vi.mocked(vscode.window.showQuickPick).mockResolvedValueOnce(
+            selectedComposeFile,
+        );
+
+        await deployAction.deployCommandHandler();
+
+        expect(vscode.window.showQuickPick).toHaveBeenCalledOnce();
+        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+        expectDeployTask(
+            taskExecutor.run.mock.calls[0][0],
+            workspaceUri.fsPath,
+            ['deploy', '--target', target, '-f', 'compose-development.yaml'],
+        );
+    });
+
     it('returns without deploying when compose selection is cancelled', async () => {
         mockWorkspaceFolders(workspaceFolders);
         vi.mocked(vscode.workspace.findFiles).mockResolvedValueOnce([
             vscode.Uri.file('/fake/workspace/compose.yaml'),
+            vscode.Uri.file('/fake/workspace/compose-development.yaml'),
         ]);
         vi.mocked(vscode.window.showQuickPick).mockResolvedValueOnce(undefined);
 

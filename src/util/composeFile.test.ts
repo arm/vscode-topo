@@ -4,7 +4,7 @@ import {
     compareComposeFiles,
     findComposeFiles,
     getComposeFileMetadata,
-    getPreferredComposeFiles,
+    selectComposeFile,
 } from './composeFile';
 
 describe('getComposeFileMetadata', () => {
@@ -39,44 +39,12 @@ describe('getComposeFileMetadata', () => {
     });
 });
 
-describe('getPreferredComposeFiles', () => {
-    it('keeps compose.yaml and compose.yml files from different directories', () => {
-        const yamlFile = getComposeFileMetadata(
-            vscode.Uri.file('/fake/workspace/compose.yaml'),
-            undefined,
-        );
-        const ymlFile = getComposeFileMetadata(
-            vscode.Uri.file('/fake/workspace/service/compose.yml'),
-            undefined,
-        );
-
-        const composeFiles = getPreferredComposeFiles([yamlFile, ymlFile]);
-
-        expect(composeFiles).toEqual([yamlFile, ymlFile]);
-    });
-
-    it('ignores compose.yml when compose.yaml is present in the same directory', () => {
-        const yamlFile = getComposeFileMetadata(
-            vscode.Uri.file('/fake/workspace/compose.yaml'),
-            undefined,
-        );
-        const ymlFile = getComposeFileMetadata(
-            vscode.Uri.file('/fake/workspace/compose.yml'),
-            undefined,
-        );
-
-        const composeFiles = getPreferredComposeFiles([ymlFile, yamlFile]);
-
-        expect(composeFiles).toEqual([yamlFile]);
-    });
-});
-
 describe('findComposeFiles', () => {
     afterEach(() => {
         vi.resetAllMocks();
     });
 
-    it('finds preferred compose files in a workspace folder sorted by metadata', async () => {
+    it('finds Compose files in a workspace folder sorted by metadata', async () => {
         const workspaceFolder: vscode.WorkspaceFolder = {
             uri: vscode.Uri.file('/fake/workspace'),
             name: 'workspace',
@@ -97,18 +65,113 @@ describe('findComposeFiles', () => {
 
         const composeFiles = await findComposeFiles(
             workspaceFolder,
-            '**/compose.{yaml,yml}',
+            '**/*compose*.{yaml,yml}',
         );
 
         expect(vscode.workspace.findFiles).toHaveBeenCalledWith(
             new vscode.RelativePattern(
                 workspaceFolder,
-                '**/compose.{yaml,yml}',
+                '**/*compose*.{yaml,yml}',
             ),
         );
         expect(
             composeFiles.map((composeFile) => composeFile.relativePath),
-        ).toEqual(['compose.yaml', path.join('service', 'compose.yaml')]);
+        ).toEqual([
+            'compose.yaml',
+            path.join('service', 'compose.yaml'),
+            path.join('service', 'compose.yml'),
+        ]);
+    });
+
+    it('includes all filenames returned by the Compose filename glob', async () => {
+        const workspaceFolder: vscode.WorkspaceFolder = {
+            uri: vscode.Uri.file('/fake/workspace'),
+            name: 'workspace',
+            index: 0,
+        };
+        const composeFile = vscode.Uri.file(
+            '/fake/workspace/production-compose.yaml',
+        );
+        const workflowFile = vscode.Uri.file(
+            '/fake/workspace/workflow-compose.yaml',
+        );
+        vi.mocked(vscode.workspace.findFiles).mockResolvedValueOnce([
+            workflowFile,
+            composeFile,
+        ]);
+        const composeFiles = await findComposeFiles(
+            workspaceFolder,
+            '**/*compose*.{yaml,yml}',
+        );
+
+        expect(composeFiles.map(({ uri }) => uri)).toEqual([
+            composeFile,
+            workflowFile,
+        ]);
+    });
+});
+
+describe('selectComposeFile', () => {
+    afterEach(() => {
+        vi.resetAllMocks();
+    });
+
+    it('returns the only Compose file without prompting', async () => {
+        const composeFile = vscode.Uri.file('/fake/workspace/compose.yaml');
+
+        const selected = await selectComposeFile(
+            [composeFile],
+            'Select a Compose file',
+        );
+
+        expect(selected).toBe(composeFile);
+        expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
+    });
+
+    it('prompts when multiple Compose files are available', async () => {
+        const composeFile = vscode.Uri.file('/fake/workspace/compose.yaml');
+        const developmentFile = vscode.Uri.file(
+            '/fake/workspace/compose-development.yaml',
+        );
+        const selectedComposeFile = {
+            label: 'compose-development.yaml',
+            uri: developmentFile,
+        };
+        vi.mocked(vscode.window.showQuickPick).mockResolvedValueOnce(
+            selectedComposeFile,
+        );
+
+        const selected = await selectComposeFile(
+            [composeFile, developmentFile],
+            'Select a Compose file',
+        );
+
+        expect(vscode.window.showQuickPick).toHaveBeenCalledWith(
+            [
+                { label: 'compose.yaml', uri: composeFile },
+                {
+                    label: 'compose-development.yaml',
+                    uri: developmentFile,
+                },
+            ],
+            { placeHolder: 'Select a Compose file' },
+        );
+        expect(selected).toBe(developmentFile);
+    });
+
+    it('returns undefined when Compose file selection is cancelled', async () => {
+        const composeFiles = [
+            vscode.Uri.file('/fake/workspace/compose.yaml'),
+            vscode.Uri.file('/fake/workspace/compose-development.yaml'),
+        ];
+        vi.mocked(vscode.window.showQuickPick).mockResolvedValueOnce(undefined);
+
+        const selected = await selectComposeFile(
+            composeFiles,
+            'Select a Compose file',
+        );
+
+        expect(selected).toBeUndefined();
     });
 });
 

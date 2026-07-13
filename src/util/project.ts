@@ -2,13 +2,13 @@ import path from 'node:path';
 import * as vscode from 'vscode';
 import { ComposeFileMetadata, findComposeFiles } from './composeFile';
 
-const ROOT_COMPOSE_FILE_GLOB = 'compose.{yaml,yml}';
-const CHILD_COMPOSE_FILE_GLOB = '*/compose.{yaml,yml}';
+const ROOT_COMPOSE_FILE_GLOB = '*compose*.{yaml,yml}';
+const CHILD_COMPOSE_FILE_GLOB = '*/*compose*.{yaml,yml}';
 
 export interface ProjectMetadata {
     name: string;
     uri: vscode.Uri;
-    composeFileUri: vscode.Uri;
+    composeFileUris: vscode.Uri[];
     workspaceIndex: number;
     workspaceName: string;
 }
@@ -22,8 +22,12 @@ export async function findTopLevelComposeProjects(
         const composeFiles = await findProjectComposeFiles(workspaceFolder);
 
         projects.push(
-            ...composeFiles.map((composeFile) =>
-                createProjectMetadata(composeFile, workspaceFolder),
+            ...groupComposeFilesByDirectory(composeFiles).map(
+                (directoryComposeFiles) =>
+                    createProjectMetadata(
+                        directoryComposeFiles,
+                        workspaceFolder,
+                    ),
             ),
         );
     }
@@ -45,16 +49,31 @@ async function findProjectComposeFiles(
     return findComposeFiles(workspaceFolder, CHILD_COMPOSE_FILE_GLOB);
 }
 
+function groupComposeFilesByDirectory(
+    composeFiles: ComposeFileMetadata[],
+): ComposeFileMetadata[][] {
+    const composeFilesByDirectory = new Map<string, ComposeFileMetadata[]>();
+    for (const composeFile of composeFiles) {
+        const directory = path.dirname(composeFile.uri.fsPath);
+        const directoryComposeFiles =
+            composeFilesByDirectory.get(directory) ?? [];
+        directoryComposeFiles.push(composeFile);
+        composeFilesByDirectory.set(directory, directoryComposeFiles);
+    }
+    return [...composeFilesByDirectory.values()];
+}
+
 function createProjectMetadata(
-    composeFile: ComposeFileMetadata,
+    composeFiles: ComposeFileMetadata[],
     workspaceFolder: vscode.WorkspaceFolder,
 ): ProjectMetadata {
+    const composeFile = composeFiles[0];
     const projectPath = path.dirname(composeFile.uri.fsPath);
 
     return {
         name: getProjectName(composeFile, workspaceFolder),
         uri: vscode.Uri.file(projectPath),
-        composeFileUri: composeFile.uri,
+        composeFileUris: composeFiles.map(({ uri }) => uri),
         workspaceIndex: workspaceFolder.index,
         workspaceName: workspaceFolder.name,
     };
@@ -65,11 +84,9 @@ function getProjectName(
     workspaceFolder: vscode.WorkspaceFolder,
 ): string {
     const relativeDirectory = path.dirname(composeFile.relativePath);
-    if (relativeDirectory === '.') {
-        return workspaceFolder.name;
-    }
-
-    return path.basename(relativeDirectory);
+    return relativeDirectory === '.'
+        ? workspaceFolder.name
+        : path.basename(relativeDirectory);
 }
 
 function compareProjects(a: ProjectMetadata, b: ProjectMetadata): number {

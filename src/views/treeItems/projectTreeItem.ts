@@ -20,15 +20,12 @@ function getCollapsibleState(
 }
 
 export class ProjectTreeItem extends vscode.TreeItem {
-    public readonly composeFileUri: vscode.Uri;
-
     constructor(
         public readonly project: ProjectMetadata,
         showWorkspaceName: boolean,
         public readonly containers: Loadable<ContainerItem[]>,
     ) {
         super(project.name, getCollapsibleState(containers));
-        this.composeFileUri = project.composeFileUri;
         this.tooltip = project.uri.fsPath;
         this.description = showWorkspaceName
             ? project.workspaceName

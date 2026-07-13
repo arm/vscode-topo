@@ -104,17 +104,17 @@ Use the inline buttons on a service in the Projects tree to manage individual co
 
 Deploy or stop a project on the selected target. A deploy operation builds container images, transfers them to the target, and starts services. You can trigger either operation from:
 
-- Running **Topo: Deploy** from the Command Palette, then selecting a `compose.yaml` file from the workspace.
-- Right-clicking `compose.yaml` in the Explorer or editor tab and selecting **Topo Deploy** or **Topo Stop**.
+- Running **Topo: Deploy** from the Command Palette. If the workspace has multiple Compose files, select one when prompted.
+- Right-clicking a Compose file in the Explorer or editor tab and selecting **Topo Deploy** or **Topo Stop**.
 - Using the inline **Deploy** or **Stop** buttons on a project in the **Projects** view.
 
 ## Project Management
 
-The **Projects** view appears in the **Topo** activity bar container and lists workspace projects discovered from top-level `compose.yaml` or `compose.yml` files.
+The **Projects** view appears in the **Topo** activity bar container and lists workspace projects discovered from top-level Compose files.
 
 When a target is selected, each project can expand to show deployed containers for that project, grouped by processing domain.
 
-Use the inline buttons on a project row to deploy or stop that project's compose file on the selected target. These actions behave the same as running **Topo Deploy** or **Topo Stop** from the context menu of the project's compose file.
+Use the inline buttons on a project row to deploy or stop it on the selected target. A project is represented once per directory; if that directory has multiple Compose files, select which one to use when prompted. With one Compose file, the action starts immediately.
 
 ### Initialize a Project
 

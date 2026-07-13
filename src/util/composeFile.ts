@@ -8,7 +8,11 @@ export interface ComposeFileMetadata {
     workspaceName?: string;
 }
 
-export const COMPOSE_FILE_GLOB = '**/compose.{yaml,yml}';
+type ComposeFileQuickPickItem = vscode.QuickPickItem & {
+    uri: vscode.Uri;
+};
+
+export const COMPOSE_FILE_GLOB = '**/*compose*.{yaml,yml}';
 
 export function getComposeFileMetadata(
     uri: vscode.Uri,
@@ -55,47 +59,31 @@ export async function findComposeFiles(
         new vscode.RelativePattern(workspaceFolder, glob),
     );
 
-    return getPreferredComposeFiles(
-        composeFileUris.map((uri) =>
-            getComposeFileMetadata(uri, workspaceFolder),
-        ),
-    ).sort(compareComposeFiles);
+    return composeFileUris
+        .map((uri) => getComposeFileMetadata(uri, workspaceFolder))
+        .sort(compareComposeFiles);
 }
 
-/**
- * Returns the compose files to show to users, preferring compose.yaml over
- * compose.yml when both exist in the same directory.
- *
- * Files in different directories or workspace folders are kept independently.
- */
-export function getPreferredComposeFiles(
-    composeFiles: ComposeFileMetadata[],
-): ComposeFileMetadata[] {
-    const yamlDirectories = new Set(
-        composeFiles
-            .filter((composeFile) => isYamlFile(composeFile))
-            .map((composeFile) => getDirectoryKey(composeFile)),
-    );
-
-    return composeFiles.filter(
-        (composeFile) =>
-            isYamlFile(composeFile) ||
-            !yamlDirectories.has(getDirectoryKey(composeFile)),
-    );
-}
-
-function getDirectoryKey(composeFile: ComposeFileMetadata): string {
-    if (composeFile.workspaceName === undefined) {
-        return `file:${path.dirname(composeFile.uri.fsPath)}`;
+export async function selectComposeFile(
+    composeFileUris: readonly vscode.Uri[],
+    placeHolder: string,
+): Promise<vscode.Uri | undefined> {
+    if (composeFileUris.length <= 1) {
+        return composeFileUris[0];
     }
-    return `${composeFile.workspaceIndex}:${path.dirname(composeFile.relativePath)}`;
+
+    const items: ComposeFileQuickPickItem[] = composeFileUris.map((uri) => ({
+        label: path.basename(uri.fsPath),
+        uri,
+    }));
+    const selected = await vscode.window.showQuickPick(items, {
+        placeHolder,
+    });
+
+    return selected?.uri;
 }
 
 function getRootPriority(composeFile: ComposeFileMetadata): number {
     const isWorkspaceRootFile = path.dirname(composeFile.relativePath) === '.';
     return isWorkspaceRootFile ? 0 : 1;
-}
-
-function isYamlFile(composeFile: ComposeFileMetadata): boolean {
-    return path.extname(composeFile.uri.fsPath) === '.yaml';
 }

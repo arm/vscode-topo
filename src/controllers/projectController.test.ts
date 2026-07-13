@@ -17,7 +17,7 @@ const projects: ProjectMetadata[] = [
     {
         name: 'demo',
         uri: vscode.Uri.file('/fake/workspace/demo'),
-        composeFileUri: vscode.Uri.file('/fake/workspace/demo/compose.yaml'),
+        composeFileUris: [vscode.Uri.file('/fake/workspace/demo/compose.yaml')],
         workspaceIndex: 0,
         workspaceName: 'workspace',
     },
@@ -25,7 +25,7 @@ const projects: ProjectMetadata[] = [
 const otherProject: ProjectMetadata = {
     name: 'other',
     uri: vscode.Uri.file('/fake/workspace/other'),
-    composeFileUri: vscode.Uri.file('/fake/workspace/other/compose.yaml'),
+    composeFileUris: [vscode.Uri.file('/fake/workspace/other/compose.yaml')],
     workspaceIndex: 0,
     workspaceName: 'workspace',
 };
@@ -109,9 +109,9 @@ describe('ProjectController', () => {
             {
                 name: 'stale',
                 uri: vscode.Uri.file('/fake/workspace/stale'),
-                composeFileUri: vscode.Uri.file(
-                    '/fake/workspace/stale/compose.yaml',
-                ),
+                composeFileUris: [
+                    vscode.Uri.file('/fake/workspace/stale/compose.yaml'),
+                ],
                 workspaceIndex: 0,
                 workspaceName: 'workspace',
             },
@@ -153,15 +153,53 @@ describe('ProjectController', () => {
 
         await controller.refreshProjectContainersCommandHandler();
 
-        expect(topoCli.ps).toHaveBeenCalledWith(target, projects[0].uri.fsPath);
         expect(topoCli.ps).toHaveBeenCalledWith(
             target,
-            otherProject.uri.fsPath,
+            projects[0].composeFileUris[0].fsPath,
+        );
+        expect(topoCli.ps).toHaveBeenCalledWith(
+            target,
+            otherProject.composeFileUris[0].fsPath,
         );
         expect(model.getProjectContainers(projects[0])).toEqual(
             loaded([{ ...psOutput.containers[0], target }]),
         );
         expect(model.getProjectContainers(otherProject)).toEqual(
+            loaded([{ ...psOutput.containers[0], target }]),
+        );
+    });
+
+    it('loads and deduplicates containers from every project Compose file', async () => {
+        const targetModel = new TargetModel();
+        targetModel.setSelected(target);
+        targetModel.setSelectedTargetHealth(loaded(healthyTarget));
+        const project = {
+            ...projects[0],
+            composeFileUris: [
+                ...projects[0].composeFileUris,
+                vscode.Uri.file(
+                    '/fake/workspace/demo/compose-development.yaml',
+                ),
+            ],
+        };
+        const model = new ProjectModel();
+        model.setProjects(loaded([project]));
+        const topoCli = mock<TopoCli>();
+        topoCli.ps.mockResolvedValue(psOutput);
+        const controller = new ProjectController(model, topoCli, targetModel);
+
+        await controller.refreshProjectContainersCommandHandler();
+
+        expect(topoCli.ps).toHaveBeenCalledTimes(2);
+        expect(topoCli.ps).toHaveBeenCalledWith(
+            target,
+            project.composeFileUris[0].fsPath,
+        );
+        expect(topoCli.ps).toHaveBeenCalledWith(
+            target,
+            project.composeFileUris[1].fsPath,
+        );
+        expect(model.getProjectContainers(project)).toEqual(
             loaded([{ ...psOutput.containers[0], target }]),
         );
     });
@@ -173,8 +211,8 @@ describe('ProjectController', () => {
         const model = new ProjectModel();
         model.setProjects(loaded([projects[0], otherProject]));
         const topoCli = mock<TopoCli>();
-        topoCli.ps.mockImplementation(async (_target, projectPath) => {
-            if (projectPath === projects[0].uri.fsPath) {
+        topoCli.ps.mockImplementation(async (_target, composeFilePath) => {
+            if (composeFilePath === projects[0].composeFileUris[0].fsPath) {
                 return psOutput;
             }
             throw new Error('ps failed');

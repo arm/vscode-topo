@@ -4,7 +4,7 @@ import { Loadable, unloaded } from '../util/loadable';
 import { ContainerItem } from '../util/types';
 
 function getProjectKey(project: ProjectMetadata): string {
-    return project.composeFileUri.fsPath;
+    return project.uri.fsPath;
 }
 
 export class ProjectModel implements vscode.Disposable {
