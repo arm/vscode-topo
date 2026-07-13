@@ -25,22 +25,18 @@ jobs:
               run: |
                   set -euo pipefail
 
-                  managed_labels=(
-                      breaking
-                      feat
-                      fix
-                      docs
-                      chore
-                      refactor
-                      ci
+                  declare -A managed_labels=(
+                      [breaking]=1
+                      [feat]=1
+                      [fix]=1
+                      [docs]=1
+                      [chore]=1
+                      [refactor]=1
+                      [ci]=1
                   )
 
                   pr_title=$(gh pr view "$PR_NUMBER" --repo "$REPOSITORY" --json title --jq .title)
-                  current_labels=$(
-                      gh pr view "$PR_NUMBER" --repo "$REPOSITORY" --json labels --jq '.labels[].name'
-                  )
-
-                  labels_to_add=()
+                  declare -A labels_to_add=()
                   shopt -s nocasematch
                   breaking_regex='.*[[:alnum:]_]+(\(.*\))?!:.*'
                   feature_regex='.*feat(\(.*\))?:.*'
@@ -51,21 +47,21 @@ jobs:
                   ci_regex='^ci(\([^)]+\))?:'
 
                   if [[ "$pr_title" =~ $breaking_regex ]]; then
-                      labels_to_add+=(breaking)
+                      labels_to_add[breaking]=1
                   fi
 
                   if [[ "$pr_title" =~ $feature_regex ]]; then
-                      labels_to_add+=(feat)
+                      labels_to_add[feat]=1
                   elif [[ "$pr_title" =~ $fix_regex ]]; then
-                      labels_to_add+=(fix)
+                      labels_to_add[fix]=1
                   elif [[ "$pr_title" =~ $docs_regex ]]; then
-                      labels_to_add+=(docs)
+                      labels_to_add[docs]=1
                   elif [[ "$pr_title" =~ $chore_regex ]]; then
-                      labels_to_add+=(chore)
+                      labels_to_add[chore]=1
                   elif [[ "$pr_title" =~ $refactor_regex ]]; then
-                      labels_to_add+=(refactor)
+                      labels_to_add[refactor]=1
                   elif [[ "$pr_title" =~ $ci_regex ]]; then
-                      labels_to_add+=(ci)
+                      labels_to_add[ci]=1
                   fi
 
                   ensure_label() {
@@ -84,33 +80,13 @@ jobs:
                   ensure_label refactor cfd3d7 'Refactor change excluded from release notes'
                   ensure_label ci cfd3d7 'CI change excluded from release notes'
 
-                  has_label() {
-                      local expected_label=$1
-                      shift
-
-                      local label
-                      for label in "$@"; do
-                          if [[ "$label" == "$expected_label" ]]; then
-                              return 0
-                          fi
-                      done
-
-                      return 1
-                  }
-
-                  has_current_label() {
-                      printf '%s\n' "$current_labels" | grep -Fqx -- "$1"
-                  }
-
-                  for label in "${managed_labels[@]}"; do
-                      if has_current_label "$label" &&
-                          ! has_label "$label" "${labels_to_add[@]}"; then
-                          gh issue edit "$PR_NUMBER" --repo "$REPOSITORY" --remove-label "$label"
+                  label_edit_arguments=()
+                  for label in "${!managed_labels[@]}"; do
+                      if [[ -v "labels_to_add[$label]" ]]; then
+                          label_edit_arguments+=(--add-label "$label")
+                      else
+                          label_edit_arguments+=(--remove-label "$label")
                       fi
                   done
 
-                  for label in "${labels_to_add[@]}"; do
-                      if ! has_current_label "$label"; then
-                          gh issue edit "$PR_NUMBER" --repo "$REPOSITORY" --add-label "$label"
-                      fi
-                  done
+                  gh issue edit "$PR_NUMBER" --repo "$REPOSITORY" "${label_edit_arguments[@]}"
