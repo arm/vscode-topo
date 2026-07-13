@@ -26,13 +26,13 @@ describe('getVersion', () => {
     });
 });
 
-describe('listTemplates', () => {
-    it('parses templates correctly', async () => {
-        const templates = await topoCli.listTemplates();
+describe('listProjects', () => {
+    it('parses projects correctly', async () => {
+        const projects = await topoCli.listProjects();
 
-        expect(templates.length).toBeGreaterThan(0);
-        for (const template of templates) {
-            expect(template).toEqual(
+        expect(projects.length).toBeGreaterThan(0);
+        for (const project of projects) {
+            expect(project).toEqual(
                 expect.objectContaining({
                     name: expect.any(String),
                     description: expect.any(String),
@@ -42,7 +42,7 @@ describe('listTemplates', () => {
             );
 
             expect(
-                template.features === null || Array.isArray(template.features),
+                project.features === null || Array.isArray(project.features),
             ).toBe(true);
         }
     });

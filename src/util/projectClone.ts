@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { TopoCli } from '../services/topoCli';
 import * as path from 'node:path';
-import { TemplateDescription } from '../services/topoCliSchema';
+import { ProjectDescription } from '../services/topoCliSchema';
 import { isWrappedError, WrappedError } from '../errors/wrappedError';
 import { getCloneDestinationPath } from './getCloneDestinationPath';
 import { getErrorMessage } from './getErrorMessage';
@@ -35,7 +35,7 @@ type CloneResult =
           success: false;
       };
 
-type CloneBuildArgs = Record<string, string>;
+type CloneParameters = Record<string, string>;
 
 type RemoteProjectQuickPickItem = vscode.QuickPickItem & {
     url: string;
@@ -146,9 +146,9 @@ export function createCloneTask(
     projectName: string,
     cloneSource: CloneSource,
     repositoryPath: string,
-    cloneBuildArgs: CloneBuildArgs = {},
+    cloneParameters: CloneParameters = {},
 ): vscode.Task {
-    const buildArgs = Object.entries(cloneBuildArgs).map(
+    const parameters = Object.entries(cloneParameters).map(
         ([key, value]) => `${key}=${value}`,
     );
     return createProcessTask(`Clone ${projectName}`, [
@@ -156,7 +156,7 @@ export function createCloneTask(
         'clone',
         getCloneSourceString(cloneSource),
         repositoryPath,
-        ...buildArgs,
+        ...parameters,
     ]);
 }
 
@@ -175,7 +175,7 @@ const cloneWithSource = async (
     taskExecutor: TaskExecutor,
     cloneSource: CloneSource,
     defaultProjectName: string,
-    cloneBuildArgs: CloneBuildArgs = {},
+    cloneParameters: CloneParameters = {},
 ): Promise<CloneResult> => {
     const projectName = await vscode.window.showInputBox({
         prompt: 'Enter the project name',
@@ -193,7 +193,7 @@ const cloneWithSource = async (
         projectName,
         cloneSource,
         repositoryPath,
-        cloneBuildArgs,
+        cloneParameters,
     );
     try {
         await taskExecutor.run(cloneTask);
@@ -205,25 +205,25 @@ const cloneWithSource = async (
     }
 };
 
-const listTemplates = async (
+const listProjects = async (
     topoCli: TopoCli,
     sshTarget?: string,
-): Promise<TemplateDescription[]> => {
+): Promise<ProjectDescription[]> => {
     if (!sshTarget) {
-        return topoCli.listTemplates();
+        return topoCli.listProjects();
     }
     try {
-        return await topoCli.listTemplates(sshTarget);
+        return await topoCli.listProjects(sshTarget);
     } catch (error) {
         if (!isWrappedError(error, ['CLI'])) {
             throw error;
         }
-        return topoCli.listTemplates();
+        return topoCli.listProjects();
     }
 };
 
 const buildRemoteQuickPickItems = (
-    templateItems: RemoteProjectQuickPickItem[],
+    projectItems: RemoteProjectQuickPickItem[],
     filter: string,
 ): RemoteProjectQuickPickItem[] => {
     const entry = filter.trim();
@@ -234,10 +234,10 @@ const buildRemoteQuickPickItems = (
                 description: entry,
                 url: entry,
             },
-            ...templateItems,
+            ...projectItems,
         ];
     }
-    return templateItems;
+    return projectItems;
 };
 
 export const promptForRemoteCloneSource = async (
@@ -248,29 +248,29 @@ export const promptForRemoteCloneSource = async (
         vscode.window.createQuickPick<RemoteProjectQuickPickItem>();
     quickPick.matchOnDescription = true;
     quickPick.busy = true;
-    quickPick.title = 'Select a Project to clone';
+    quickPick.title = 'Select a project to clone';
     quickPick.placeholder =
-        'Enter a git repository URL or search for a project from the catalog below';
+        'Enter a Git repository URL or search the Topo Project catalog';
 
     return new Promise<CloneSource | undefined>((resolve) => {
         let open = true;
-        let templateItems: RemoteProjectQuickPickItem[] = [];
+        let projectItems: RemoteProjectQuickPickItem[] = [];
 
         void (async () => {
-            let templates: TemplateDescription[] = [];
+            let projects: ProjectDescription[] = [];
             try {
-                templates = await listTemplates(topoCli, sshTarget);
+                projects = await listProjects(topoCli, sshTarget);
             } catch (e) {
-                showAndLogError('Failed to list templates', e);
+                showAndLogError('Failed to list projects', e);
             }
-            templateItems = templates.map((template) => ({
-                label: `$(repo) ${template.name}`,
-                detail: getFirstSentence(template.description),
-                url: template.url,
+            projectItems = projects.map((project) => ({
+                label: `$(repo) ${project.name}`,
+                detail: getFirstSentence(project.description),
+                url: project.url,
             }));
             if (open) {
                 quickPick.items = buildRemoteQuickPickItems(
-                    templateItems,
+                    projectItems,
                     quickPick.value,
                 );
                 quickPick.busy = false;
@@ -278,7 +278,7 @@ export const promptForRemoteCloneSource = async (
         })();
 
         quickPick.onDidChangeValue((value) => {
-            quickPick.items = buildRemoteQuickPickItems(templateItems, value);
+            quickPick.items = buildRemoteQuickPickItems(projectItems, value);
         });
 
         quickPick.onDidAccept(() => {
@@ -303,7 +303,7 @@ export const promptForRemoteCloneSource = async (
 export async function cloneProjectFromSource(
     taskExecutor: TaskExecutor,
     cloneSource: CloneSource,
-    cloneBuildArgs: CloneBuildArgs = {},
+    cloneParameters: CloneParameters = {},
 ): Promise<boolean> {
     const defaultProjectName =
         getDefaultProjectNameFromSourceString(cloneSource);
@@ -311,7 +311,7 @@ export async function cloneProjectFromSource(
         taskExecutor,
         cloneSource,
         defaultProjectName,
-        cloneBuildArgs,
+        cloneParameters,
     );
     if (cloneResult.success) {
         await postCloneAction(cloneResult.repositoryPath);

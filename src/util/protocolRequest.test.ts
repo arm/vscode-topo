@@ -73,7 +73,7 @@ describe('parseRequestData', () => {
         });
     });
 
-    it('parses URL-encoded request args', () => {
+    it('parses URL-encoded request parameters', () => {
         const source =
             'https://github.com/Arm-Examples/topo-welcome.git#8303e66db59a7a11e64877121f3db1b688d2011f';
         const greetingName = 'F#ed';

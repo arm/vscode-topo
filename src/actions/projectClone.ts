@@ -29,7 +29,7 @@ const cloneMethodItems = [
     {
         label: 'Remote Project',
         description:
-            'Clone from a custom git repo or curated catalog of Templates',
+            'Clone from a custom git repo or curated catalog of projects',
         cloneMethod: 'remote',
     },
     {

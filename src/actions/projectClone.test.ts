@@ -176,7 +176,7 @@ describe('ProjectClone action', () => {
             );
         });
 
-        it('shows CLI errors from template lookup instead of throwing them, preserving log entries', async () => {
+        it('shows CLI errors from project lookup instead of throwing them, preserving log entries', async () => {
             const logs = [{ level: 'Error' as const, msg: 'lscpu not found' }];
             const error = new WrappedError('CLI', 'boom', logs);
             promptForRemoteCloneSourceMock.mockRejectedValueOnce(error);

@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import { TopoCli, parseWrappedError, parseTopoLogEntries } from './topoCli';
 import * as manifest from '../manifest';
 import { WrappedError } from '../errors/wrappedError';
-import { HealthReport, PsOutput, TemplateDescription } from './topoCliSchema';
+import { HealthReport, PsOutput, ProjectDescription } from './topoCliSchema';
 import { TargetDescription } from '../util/types';
 import { execFile } from '../util/exec';
 import type { Mock } from 'vitest';
@@ -71,13 +71,13 @@ describe('TopoCli', () => {
         });
     });
 
-    it('listTemplates parses JSON output', async () => {
-        const list: TemplateDescription[] = [
+    it('listProjects parses JSON output', async () => {
+        const list: ProjectDescription[] = [
             {
-                name: 't',
+                name: 'p',
                 url: 'u',
                 features: [],
-                description: 'catty template description',
+                description: 'project description',
                 ref: 'r',
             },
         ];
@@ -86,7 +86,7 @@ describe('TopoCli', () => {
             stderr: '',
         });
 
-        await expect(topoCli.listTemplates('me@example.com')).resolves.toEqual(
+        await expect(topoCli.listProjects('me@example.com')).resolves.toEqual(
             list,
         );
         expect(execFileMock).toHaveBeenCalledWith(
@@ -96,13 +96,13 @@ describe('TopoCli', () => {
         );
     });
 
-    it('listTemplates omits --target when no ssh target is provided', async () => {
-        const list: TemplateDescription[] = [
+    it('listProjects omits --target when no ssh target is provided', async () => {
+        const list: ProjectDescription[] = [
             {
-                name: 't',
+                name: 'p',
                 url: 'u',
                 features: [],
-                description: 'catty template description',
+                description: 'project description',
                 ref: 'r',
             },
         ];
@@ -111,7 +111,7 @@ describe('TopoCli', () => {
             stderr: '',
         });
 
-        await expect(topoCli.listTemplates()).resolves.toEqual(list);
+        await expect(topoCli.listProjects()).resolves.toEqual(list);
         expect(execFileMock).toHaveBeenCalledWith(
             path.join(ext, 'resources', manifest.TOPO_CLI),
             ['templates', '-o', 'json'],
@@ -119,13 +119,13 @@ describe('TopoCli', () => {
         );
     });
 
-    it('listTemplates throws error on invalid JSON output', async () => {
+    it('listProjects throws error on invalid JSON output', async () => {
         execFileMock.mockResolvedValue({ stdout: 'invalid json', stderr: '' });
 
-        await expect(topoCli.listTemplates('me@example.com')).rejects.toThrow();
+        await expect(topoCli.listProjects('me@example.com')).rejects.toThrow();
     });
 
-    it('listTemplates throws WrappedError when stderr contains structured log entries', async () => {
+    it('listProjects throws WrappedError when stderr contains structured log entries', async () => {
         const stderrOutput = [
             '{"time":"2026-04-16T15:14:48Z","level":"ERROR","msg":"collecting CPU info: \\"lscpu\\" not found"}',
             '{"time":"2026-04-16T15:14:49Z","level":"ERROR","msg":"connection lost"}',
@@ -145,28 +145,28 @@ describe('TopoCli', () => {
             { cause: execError },
         );
 
-        await expect(topoCli.listTemplates('me@example.com')).rejects.toThrow(
+        await expect(topoCli.listProjects('me@example.com')).rejects.toThrow(
             expectedError,
         );
     });
 
-    it('listTemplates rethrows original error when stderr has no structured log entries', async () => {
+    it('listProjects rethrows original error when stderr has no structured log entries', async () => {
         const execError = errorWithStderr('plain error text');
         execFileMock.mockRejectedValue(execError);
 
-        await expect(topoCli.listTemplates()).rejects.toBe(execError);
+        await expect(topoCli.listProjects()).rejects.toBe(execError);
     });
 
-    it('listTemplates rethrows original error when stderr contains only non-ERROR log entries', async () => {
+    it('listProjects rethrows original error when stderr contains only non-ERROR log entries', async () => {
         const stderrOutput =
             '{"time":"2026-04-16T15:00:00Z","level":"INFO","msg":"starting up"}';
         const execError = errorWithStderr(stderrOutput);
         execFileMock.mockRejectedValue(execError);
 
-        await expect(topoCli.listTemplates()).rejects.toBe(execError);
+        await expect(topoCli.listProjects()).rejects.toBe(execError);
     });
 
-    it('listTemplates throws WrappedError with only ERROR messages when stderr has mixed log levels', async () => {
+    it('listProjects throws WrappedError with only ERROR messages when stderr has mixed log levels', async () => {
         const stderrOutput = [
             '{"time":"2026-04-16T15:00:00Z","level":"INFO","msg":"starting up"}',
             '{"time":"2026-04-16T15:00:01Z","level":"ERROR","msg":"disk full"}',
@@ -180,7 +180,7 @@ describe('TopoCli', () => {
             { level: 'Warning', msg: 'retrying' },
         ]);
 
-        await expect(topoCli.listTemplates()).rejects.toThrow(expectedError);
+        await expect(topoCli.listProjects()).rejects.toThrow(expectedError);
     });
 
     it('describe resolves parsed JSON and runs topo describe with JSON output', async () => {
