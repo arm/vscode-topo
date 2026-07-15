@@ -25,10 +25,10 @@ jobs:
             version: ${{ steps.calculate-version.outputs.version }}
         steps:
             - id: get-app-token
-              uses: getsentry/action-github-app-token@d4b5da6c5e37703f8c3b3e43abb5705b46e159cc
+              uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
               with:
-                  app_id: ${{ secrets.TOPO_ACCESS_APP_ID }}
-                  private_key: ${{ secrets.TOPO_ACCESS_APP_PRIVATE_KEY }}
+                  app-id: ${{ secrets.TOPO_ACCESS_APP_ID }}
+                  private-key: ${{ secrets.TOPO_ACCESS_APP_PRIVATE_KEY }}
             - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
               with:
                   fetch-depth: 0
@@ -152,10 +152,10 @@ jobs:
                     - darwin-arm64
         steps:
             - id: get-app-token
-              uses: getsentry/action-github-app-token@d4b5da6c5e37703f8c3b3e43abb5705b46e159cc
+              uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
               with:
-                  app_id: ${{ secrets.TOPO_ACCESS_APP_ID }}
-                  private_key: ${{ secrets.TOPO_ACCESS_APP_PRIVATE_KEY }}
+                  app-id: ${{ secrets.TOPO_ACCESS_APP_ID }}
+                  private-key: ${{ secrets.TOPO_ACCESS_APP_PRIVATE_KEY }}
             - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
             - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
               with:
@@ -197,10 +197,10 @@ jobs:
             release_commit: ${{ steps.commit-version.outputs.release_commit }}
         steps:
             - id: get-app-token
-              uses: getsentry/action-github-app-token@d4b5da6c5e37703f8c3b3e43abb5705b46e159cc
+              uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
               with:
-                  app_id: ${{ secrets.TOPO_ACCESS_APP_ID }}
-                  private_key: ${{ secrets.TOPO_ACCESS_APP_PRIVATE_KEY }}
+                  app-id: ${{ secrets.TOPO_ACCESS_APP_ID }}
+                  private-key: ${{ secrets.TOPO_ACCESS_APP_PRIVATE_KEY }}
             - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
               with:
                   token: ${{ steps.get-app-token.outputs.token }}
