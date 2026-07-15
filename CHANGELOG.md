@@ -3,6 +3,34 @@
 All notable changes to the "vscode-topo" extension will be documented in this file.
 
 
+
+## 0.8.0
+
+<!-- Release notes generated using configuration in .github/release.yml at 3e886b7b541a937a6d7a85ab9a1d2769d0fba7b1 -->
+
+## What's Changed
+### Breaking Changes
+* feat!: merge template and remote clone commands into single command (#329)
+### Features and Enhancements
+* feat: use clearer stopped container icon (#309)
+* feat: when health check passes, a green tick shows (#308)
+* feat: surface consistent error messages from the Topo CLI  (#311)
+* feat: use native log levels for logging (#318)
+* feat: render full error in tree view item tooltip and prevent on-click behaviour (#324)
+* feat: cancel deployment when target is not ready (#317)
+* feat: enable cli flags (#312)
+* feat: add UI button to open containers in browser (#326)
+* feat: add UI button connect to selected target via SSH (#327)
+* feat: cancel stop operation when target is not ready (#328)
+* feat: rename templates to projects (#336)
+### Fixes
+* fix: ensure all resources are disposed on extension deactivation (#314)
+* fix: skip topo version check in terminal (#338)
+
+
+**Full Changelog**: https://github.com/arm/vscode-topo/compare/v0.6.0...v0.8.0
+
+
 ## 0.6.0
 
 <!-- Release notes generated using configuration in .github/release.yml at ca09aa3a22290edbd544ab0aa16bedf300d13425 -->
