@@ -44,6 +44,7 @@ export async function activate(
         context.environmentVariableCollection,
     );
     context.subscriptions.push(topoCli);
+    topoCli.activate();
 
     try {
         await topoCli.assertVersion(topo.version);
@@ -147,6 +148,5 @@ export async function activate(
 
     targetController.updateTargetsFromStore();
     void projectController.refreshProjects();
-    topoCli.activate();
     selectedTargetRefreshLoop.start();
 }

@@ -95,6 +95,7 @@ export class TopoCli {
     public activate(): void {
         const sep = process.platform === 'win32' ? ';' : ':';
         this.env.prepend('PATH', this.getBinaryFolder() + sep);
+        this.env.replace('TOPO_SKIP_VERSION_CHECKS', '1');
     }
 
     public dispose(): void {
@@ -205,7 +206,7 @@ export class TopoCli {
         schema: Struct<T>,
         sshTarget?: string,
     ): Promise<T> {
-        const cmd = ['health', '--skip-version-checks', '-o', 'json'];
+        const cmd = ['health', '-o', 'json'];
         if (sshTarget) {
             cmd.push('--target', sshTarget);
         }
