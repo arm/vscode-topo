@@ -25,7 +25,11 @@ function errorWithStderr(stderr: string): Error & { stderr: string } {
 
 describe('TopoCli', () => {
     const ext = '/fake/ext';
-    const env = {} as vscode.EnvironmentVariableCollection;
+    const env = {
+        prepend: vi.fn(),
+        replace: vi.fn(),
+        clear: vi.fn(),
+    } as unknown as vscode.EnvironmentVariableCollection;
     let topoCli: TopoCli;
     let origPlatform: string;
     let origEnv: NodeJS.ProcessEnv;
@@ -49,6 +53,19 @@ describe('TopoCli', () => {
     it('getBinaryPath builds correct path', () => {
         expect(topoCli.getBinaryPath()).toBe(
             path.join(ext, 'resources', manifest.TOPO_CLI),
+        );
+    });
+
+    it('configures the terminal environment on activation', () => {
+        topoCli.activate();
+
+        expect(env.prepend).toHaveBeenCalledWith(
+            'PATH',
+            path.join(ext, 'resources') + ':',
+        );
+        expect(env.replace).toHaveBeenCalledWith(
+            'TOPO_SKIP_VERSION_CHECKS',
+            '1',
         );
     });
 
@@ -395,14 +412,7 @@ describe('TopoCli', () => {
         expect(execFileMock).toHaveBeenCalledTimes(1);
         expect(execFileMock).toHaveBeenCalledWith(
             topoCli.getBinaryPath(),
-            [
-                'health',
-                '--skip-version-checks',
-                '-o',
-                'json',
-                '--target',
-                'hostname',
-            ],
+            ['health', '-o', 'json', '--target', 'hostname'],
             defaultExecOptions,
         );
     });
@@ -418,7 +428,7 @@ describe('TopoCli', () => {
         expect(execFileMock).toHaveBeenCalledTimes(1);
         expect(execFileMock).toHaveBeenCalledWith(
             topoCli.getBinaryPath(),
-            ['health', '--skip-version-checks', '-o', 'json'],
+            ['health', '-o', 'json'],
             defaultExecOptions,
         );
     });

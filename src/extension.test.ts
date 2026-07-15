@@ -35,12 +35,13 @@ describe('extension activation', () => {
     });
 
     it('shows an error and skips command registration when the topo CLI version check fails', async () => {
+        const topoCli = mock<TopoCli>({
+            assertVersion: vi
+                .fn()
+                .mockRejectedValue(new Error('version mismatch')),
+        });
         vi.mocked(TopoCli).mockImplementation(function () {
-            return mock<TopoCli>({
-                assertVersion: vi.fn().mockImplementation(() => {
-                    throw new Error('version mismatch');
-                }),
-            });
+            return topoCli;
         });
         const context = mock<vscode.ExtensionContext>({
             subscriptions: [],
@@ -53,5 +54,6 @@ describe('extension activation', () => {
         );
         expect(vscode.commands.registerCommand).not.toHaveBeenCalled();
         expect(context.subscriptions).toContain(logger);
+        expect(topoCli.activate).toHaveBeenCalledOnce();
     });
 });
