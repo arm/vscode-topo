@@ -27,7 +27,7 @@ jobs:
             - id: get-app-token
               uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
               with:
-                  app-id: ${{ secrets.TOPO_ACCESS_APP_ID }}
+                  client-id: ${{ secrets.TOPO_ACCESS_APP_ID }}
                   private-key: ${{ secrets.TOPO_ACCESS_APP_PRIVATE_KEY }}
             - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
               with:
@@ -154,7 +154,7 @@ jobs:
             - id: get-app-token
               uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
               with:
-                  app-id: ${{ secrets.TOPO_ACCESS_APP_ID }}
+                  client-id: ${{ secrets.TOPO_ACCESS_APP_ID }}
                   private-key: ${{ secrets.TOPO_ACCESS_APP_PRIVATE_KEY }}
             - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
             - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
@@ -199,7 +199,7 @@ jobs:
             - id: get-app-token
               uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
               with:
-                  app-id: ${{ secrets.TOPO_ACCESS_APP_ID }}
+                  client-id: ${{ secrets.TOPO_ACCESS_APP_ID }}
                   private-key: ${{ secrets.TOPO_ACCESS_APP_PRIVATE_KEY }}
             - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
               with:
