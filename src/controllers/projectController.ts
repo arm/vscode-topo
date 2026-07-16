@@ -1,3 +1,4 @@
+import path from 'node:path';
 import * as vscode from 'vscode';
 import { ProjectModel } from '../models/projectModel';
 import { errored, Loadable, loaded, loading } from '../util/loadable';
@@ -16,6 +17,19 @@ function createContainerItem(item: PsEntry, target: string): ContainerItem {
         ...item,
         target,
     };
+}
+
+function isStrictAncestorPath(
+    ancestorPath: string,
+    descendantPath: string,
+): boolean {
+    const relativePath = path.relative(ancestorPath, descendantPath);
+    return (
+        relativePath !== '' &&
+        relativePath !== '..' &&
+        !relativePath.startsWith(`..${path.sep}`) &&
+        !path.isAbsolute(relativePath)
+    );
 }
 
 async function loadContainers(
@@ -48,17 +62,41 @@ export class ProjectController implements vscode.Disposable {
     ) {
         const composeFileWatcher =
             vscode.workspace.createFileSystemWatcher(COMPOSE_FILE_GLOB);
+        const projectAncestorDeleteWatcher =
+            vscode.workspace.createFileSystemWatcher('**', true, true, false);
         const refresh = async (): Promise<void> => {
             await this.refreshProjects();
+        };
+        const refreshWhenProjectAncestorDeleted = async (
+            deletedUri: vscode.Uri,
+        ): Promise<void> => {
+            const projects = this.model.projects;
+            if (projects.status !== 'loaded') {
+                return;
+            }
+
+            const projectAncestorDeleted = projects.data.some((project) =>
+                isStrictAncestorPath(
+                    deletedUri.fsPath,
+                    project.composeFileUri.fsPath,
+                ),
+            );
+            if (projectAncestorDeleted) {
+                await this.refreshProjects();
+            }
         };
 
         this.disposables.collect(
             this.projectRefresh,
             this.projectContainersRefresh,
             composeFileWatcher,
+            projectAncestorDeleteWatcher,
             composeFileWatcher.onDidCreate(refresh),
             composeFileWatcher.onDidChange(refresh),
             composeFileWatcher.onDidDelete(refresh),
+            projectAncestorDeleteWatcher.onDidDelete(
+                refreshWhenProjectAncestorDeleted,
+            ),
             vscode.workspace.onDidChangeWorkspaceFolders(refresh),
             this.targetModel.onSelectedChanged(() => {
                 this.clearProjectContainers();
