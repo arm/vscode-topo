@@ -26,7 +26,6 @@ function errorWithStderr(stderr: string): Error & { stderr: string } {
 describe('TopoCli', () => {
     const ext = '/fake/ext';
     const env = {
-        append: vi.fn(),
         prepend: vi.fn(),
         replace: vi.fn(),
         clear: vi.fn(),
@@ -64,7 +63,7 @@ describe('TopoCli', () => {
             'PATH',
             path.join(ext, 'resources') + ':',
         );
-        expect(env.append).toHaveBeenCalledWith(
+        expect(env.replace).toHaveBeenCalledWith(
             'TOPO_DISABLE_SELF_UPGRADE',
             '1',
         );
