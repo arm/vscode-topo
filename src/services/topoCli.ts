@@ -95,7 +95,7 @@ export class TopoCli {
     public activate(): void {
         const sep = process.platform === 'win32' ? ';' : ':';
         this.env.prepend('PATH', this.getBinaryFolder() + sep);
-        this.env.replace('TOPO_SKIP_VERSION_CHECKS', '1');
+        this.env.append('TOPO_DISABLE_SELF_UPGRADE', '1');
     }
 
     public dispose(): void {
