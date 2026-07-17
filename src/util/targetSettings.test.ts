@@ -1,38 +1,4 @@
-import * as vscode from 'vscode';
-import { CONFIG_TARGET_SETTINGS } from '../manifest';
-import {
-    getSettingsForTarget,
-    resolveSettingsForTarget,
-    TargetSettings,
-} from './targetSettings';
-import { mock } from 'vitest-mock-extended';
-
-describe('getSettingsForTarget', () => {
-    const target = 'topo.local';
-
-    it('reads target settings from workspace configuration', () => {
-        const targetSettings: TargetSettings = {
-            deploy: {
-                port: 5003,
-            },
-        };
-        const config = mock<vscode.WorkspaceConfiguration>({
-            get: vi.fn().mockImplementation((key: string) => {
-                if (key === CONFIG_TARGET_SETTINGS) {
-                    return {
-                        [target]: targetSettings,
-                    };
-                }
-                return undefined;
-            }),
-        });
-        vi.mocked(vscode.workspace.getConfiguration).mockReturnValue(config);
-
-        const settings = getSettingsForTarget(target);
-
-        expect(settings).toEqual(targetSettings);
-    });
-});
+import { resolveSettingsForTarget, TargetSettings } from './targetSettings';
 
 describe('resolveSettingsForTarget', () => {
     const target = 'topo.local';

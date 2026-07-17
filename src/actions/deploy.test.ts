@@ -8,12 +8,9 @@ import { mutable } from '../util/test/mutable';
 import { TaskExecutor } from '../util/taskExecutor';
 import { ProjectController } from '../controllers/projectController';
 import { ProjectTreeItem } from '../views/treeItems/projectTreeItem';
-import {
-    CONFIG_TARGET_SETTINGS,
-    CONFIG_TARGET_SETTINGS_DEPLOY,
-} from '../manifest';
 import { loaded, unloaded } from '../util/loadable';
 import type { TargetHealthReport } from '../services/topoCliSchema';
+import { Config } from '../services/config';
 
 describe('Deploy', () => {
     let deployAction: Deploy;
@@ -44,6 +41,7 @@ describe('Deploy', () => {
     let taskExecutor: MockProxy<TaskExecutor>;
     let targetModel: TargetModel;
     let projectController: MockProxy<ProjectController>;
+    let config: MockProxy<Config>;
 
     function projectTreeItem(): ProjectTreeItem {
         return new ProjectTreeItem(
@@ -84,56 +82,25 @@ describe('Deploy', () => {
         );
     }
 
-    function mockDeployConfiguration(settings: Record<string, unknown>): void {
-        vi.mocked(vscode.workspace.getConfiguration).mockReturnValue({
-            get: vi.fn((key: string) => settings[key]),
-        } as unknown as vscode.WorkspaceConfiguration);
-    }
-
-    function mockTargetSettings(
-        settingsByTarget: Record<string, unknown>,
-    ): void {
-        const targetSettings = Object.fromEntries(
-            Object.entries(settingsByTarget).map(
-                ([targetName, deploySettings]) => [
-                    targetName,
-                    {
-                        [CONFIG_TARGET_SETTINGS_DEPLOY]: deploySettings,
-                    },
-                ],
-            ),
-        );
-
-        mockDeployConfiguration({
-            [CONFIG_TARGET_SETTINGS]: targetSettings,
-        });
-    }
-
-    function expectInvalidTargetSettings(
-        validationMessage: string,
-        errorPrefix = 'Error executing deploy command',
-    ): void {
-        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-            `${errorPrefix}. Invalid topo.targetSettings.deploy entry for "topo.local": ${validationMessage}`,
-        );
-        expect(taskExecutor.run).not.toHaveBeenCalled();
-        expect(
-            projectController.refreshProjectContainersCommandHandler,
-        ).not.toHaveBeenCalled();
-    }
-
     beforeEach(() => {
         taskExecutor = mock<TaskExecutor>();
         targetModel = new TargetModel();
         targetModel.setSelected(target);
         targetModel.setSelectedTargetHealth(loaded(targetHealth));
         projectController = mock<ProjectController>();
+        config = mock<Config>();
+        config.getTargetSettings.mockReturnValue({});
         vi.mocked(vscode.workspace.findFiles).mockResolvedValue([]);
         vi.mocked(vscode.workspace.getWorkspaceFolder).mockReturnValue(
             undefined,
         );
         mutable(vscode.workspace).workspaceFolders = undefined;
-        deployAction = new Deploy(taskExecutor, targetModel, projectController);
+        deployAction = new Deploy(
+            taskExecutor,
+            targetModel,
+            projectController,
+            config,
+        );
     });
 
     afterEach(() => {
@@ -301,11 +268,10 @@ describe('Deploy', () => {
     });
 
     it('passes configured deploy arguments from the command handler', async () => {
-        mockTargetSettings({
-            [target]: {
+        config.getTargetSettings.mockReturnValueOnce({
+            deploy: {
                 port: 5000,
                 forceRecreate: true,
-                noRecreate: false,
             },
         });
 
@@ -319,19 +285,20 @@ describe('Deploy', () => {
         );
     });
 
-    it('shows an error before prompting when deploy command uses invalid selected target settings', async () => {
-        mockTargetSettings({
-            [target]: {
-                port: 'not-a-port',
-            },
+    it('shows an error before prompting when selected target settings are invalid', async () => {
+        config.getTargetSettings.mockImplementationOnce(() => {
+            throw new Error('boom');
         });
 
         await deployAction.deployCommandHandler();
 
-        expectInvalidTargetSettings(
-            'Expected an integer, but received: "not-a-port"',
-            'Error retrieving target settings',
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
+            'Error retrieving target settings. boom',
         );
+        expect(taskExecutor.run).not.toHaveBeenCalled();
+        expect(
+            projectController.refreshProjectContainersCommandHandler,
+        ).not.toHaveBeenCalled();
         expect(vscode.workspace.findFiles).not.toHaveBeenCalled();
         expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
     });

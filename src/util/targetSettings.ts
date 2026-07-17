@@ -1,4 +1,3 @@
-import * as vscode from 'vscode';
 import {
     boolean,
     create,
@@ -62,12 +61,4 @@ export function resolveSettingsForTarget(
     }
 
     return validSettingsByTarget?.[target] ?? create({}, targetSettingsSchema);
-}
-
-export function getSettingsForTarget(target: string): TargetSettings {
-    const config = vscode.workspace.getConfiguration(PACKAGE_NAME);
-    return resolveSettingsForTarget(
-        target,
-        config.get<unknown>(CONFIG_TARGET_SETTINGS),
-    );
 }
