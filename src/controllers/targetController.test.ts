@@ -386,9 +386,7 @@ describe('target addition', () => {
                 }
             }),
         });
-        vi.mocked(vscode.window.createQuickPick).mockReturnValueOnce(
-            quickPick as unknown as vscode.QuickPick<vscode.QuickPickItem>,
-        );
+        vi.mocked(vscode.window.createQuickPick).mockReturnValueOnce(quickPick);
         return quickPick;
     }
 
