@@ -490,9 +490,9 @@
         "prettier": "^3.9.4",
         "tar": "^7.5.19",
         "typescript": "^6.0.2",
-        "vite": "^8.1.4",
+        "vite": "^8.1.5",
         "vitest": "^4.1.9",
-        "vitest-mock-extended": "^4.0.0",
+        "vitest-mock-extended": "^5.0.0",
         "yargs": "^18.0.0"
     },
     "dependencies": {
