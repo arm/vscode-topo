@@ -77,6 +77,24 @@ function createFileSystemWatcher(
     };
 }
 
+function createProjectDeleteTestHarness() {
+    const composeDeleteEmitter = new vscode.EventEmitter<vscode.Uri>();
+    const ancestorDeleteEmitter = new vscode.EventEmitter<vscode.Uri>();
+    vi.mocked(vscode.workspace.createFileSystemWatcher)
+        .mockReturnValueOnce(createFileSystemWatcher(composeDeleteEmitter))
+        .mockReturnValueOnce(createFileSystemWatcher(ancestorDeleteEmitter));
+    const model = new ProjectModel();
+    model.setProjects(loaded(projects));
+    const controller = new ProjectController(
+        model,
+        mock<TopoCli>(),
+        new TargetModel(),
+    );
+    const refresh = vi.spyOn(controller, 'refreshProjects').mockResolvedValue();
+
+    return { ancestorDeleteEmitter, refresh };
+}
+
 describe('ProjectController', () => {
     beforeEach(() => {
         mutable(vscode.workspace).workspaceFolders = [workspaceFolder];
@@ -104,23 +122,8 @@ describe('ProjectController', () => {
     });
 
     it('refreshes projects when a project ancestor is deleted', () => {
-        const composeDeleteEmitter = new vscode.EventEmitter<vscode.Uri>();
-        const ancestorDeleteEmitter = new vscode.EventEmitter<vscode.Uri>();
-        vi.mocked(vscode.workspace.createFileSystemWatcher)
-            .mockReturnValueOnce(createFileSystemWatcher(composeDeleteEmitter))
-            .mockReturnValueOnce(
-                createFileSystemWatcher(ancestorDeleteEmitter),
-            );
-        const model = new ProjectModel();
-        model.setProjects(loaded(projects));
-        const controller = new ProjectController(
-            model,
-            mock<TopoCli>(),
-            new TargetModel(),
-        );
-        const refresh = vi
-            .spyOn(controller, 'refreshProjects')
-            .mockResolvedValue();
+        const { ancestorDeleteEmitter, refresh } =
+            createProjectDeleteTestHarness();
 
         expect(vscode.workspace.createFileSystemWatcher).toHaveBeenCalledWith(
             '**',
@@ -135,23 +138,8 @@ describe('ProjectController', () => {
     });
 
     it('does not refresh projects when an unrelated path is deleted', () => {
-        const composeDeleteEmitter = new vscode.EventEmitter<vscode.Uri>();
-        const ancestorDeleteEmitter = new vscode.EventEmitter<vscode.Uri>();
-        vi.mocked(vscode.workspace.createFileSystemWatcher)
-            .mockReturnValueOnce(createFileSystemWatcher(composeDeleteEmitter))
-            .mockReturnValueOnce(
-                createFileSystemWatcher(ancestorDeleteEmitter),
-            );
-        const model = new ProjectModel();
-        model.setProjects(loaded(projects));
-        const controller = new ProjectController(
-            model,
-            mock<TopoCli>(),
-            new TargetModel(),
-        );
-        const refresh = vi
-            .spyOn(controller, 'refreshProjects')
-            .mockResolvedValue();
+        const { ancestorDeleteEmitter, refresh } =
+            createProjectDeleteTestHarness();
 
         ancestorDeleteEmitter.fire(vscode.Uri.file('/fake/workspace/other'));
 
