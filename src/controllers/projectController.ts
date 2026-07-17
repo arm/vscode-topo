@@ -10,6 +10,7 @@ import { PsEntry, PsOutput } from '../services/topoCliSchema';
 import { ContainerItem } from '../util/types';
 import { TargetModel } from '../models/targetModel';
 import { showAndLogError } from '../util/showAndLog';
+import { isProjectComposePathDeleted } from '../util/isProjectComposePathDeleted';
 
 function createContainerItem(item: PsEntry, target: string): ContainerItem {
     return {
@@ -48,17 +49,34 @@ export class ProjectController implements vscode.Disposable {
     ) {
         const composeFileWatcher =
             vscode.workspace.createFileSystemWatcher(COMPOSE_FILE_GLOB);
+        const projectComposePathDeleteWatcher =
+            vscode.workspace.createFileSystemWatcher('**', true, true, false);
         const refresh = async (): Promise<void> => {
             await this.refreshProjects();
+        };
+        const refreshWhenProjectComposePathDeleted = async (
+            deletedUri: vscode.Uri,
+        ): Promise<void> => {
+            const projects = this.model.projects;
+            if (projects.status !== 'loaded') {
+                return;
+            }
+
+            if (isProjectComposePathDeleted(projects.data, deletedUri.fsPath)) {
+                await this.refreshProjects();
+            }
         };
 
         this.disposables.collect(
             this.projectRefresh,
             this.projectContainersRefresh,
             composeFileWatcher,
+            projectComposePathDeleteWatcher,
             composeFileWatcher.onDidCreate(refresh),
             composeFileWatcher.onDidChange(refresh),
-            composeFileWatcher.onDidDelete(refresh),
+            projectComposePathDeleteWatcher.onDidDelete(
+                refreshWhenProjectComposePathDeleted,
+            ),
             vscode.workspace.onDidChangeWorkspaceFolders(refresh),
             this.targetModel.onSelectedChanged(() => {
                 this.clearProjectContainers();
