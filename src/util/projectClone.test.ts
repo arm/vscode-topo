@@ -56,11 +56,11 @@ function mockRemoteQuickPick<T extends vscode.QuickPickItem>() {
     };
 }
 
-const workspacePath = path.resolve('home', 'workspace');
-const workspaceUri = vscode.Uri.file(workspacePath);
+const workspaceUri = vscode.Uri.file(path.resolve('home', 'workspace'));
+const workspacePath = workspaceUri.fsPath;
 const workspaceFolders = [{ uri: workspaceUri, name: 'workspace', index: 0 }];
-const destinationPath = path.resolve('home', 'destination');
-const destinationUri = vscode.Uri.file(destinationPath);
+const destinationUri = vscode.Uri.file(path.resolve('home', 'destination'));
+const destinationPath = destinationUri.fsPath;
 const localProjectUri = vscode.Uri.file(path.resolve('path', 'to', 'source'));
 
 describe('project clone utilities', () => {
