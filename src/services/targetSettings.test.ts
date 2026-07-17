@@ -3,6 +3,7 @@ import { CONFIG_TARGET_SETTINGS } from '../manifest';
 import {
     getSettingsForTarget,
     resolveSettingsForTarget,
+    TargetSettings,
 } from './targetSettings';
 import { mock } from 'vitest-mock-extended';
 
@@ -10,15 +11,16 @@ describe('getSettingsForTarget', () => {
     const target = 'topo.local';
 
     it('reads target settings from workspace configuration', () => {
+        const targetSettings: TargetSettings = {
+            deploy: {
+                port: 5003,
+            },
+        };
         const config = mock<vscode.WorkspaceConfiguration>({
             get: vi.fn().mockImplementation((key: string) => {
                 if (key === CONFIG_TARGET_SETTINGS) {
                     return {
-                        [target]: {
-                            deploy: {
-                                port: 5003,
-                            },
-                        },
+                        [target]: targetSettings,
                     };
                 }
                 return undefined;
@@ -28,52 +30,43 @@ describe('getSettingsForTarget', () => {
 
         const settings = getSettingsForTarget(target);
 
-        expect(settings).toEqual({
-            port: 5003,
-            forceRecreate: false,
-            noRecreate: false,
-        });
+        expect(settings).toEqual(targetSettings);
     });
 });
 
 describe('resolveSettingsForTarget', () => {
     const target = 'topo.local';
 
-    it('returns defaults when target settings are not configured', () => {
+    it('accepts undefined target settings', () => {
         const settings = resolveSettingsForTarget(target, undefined);
 
-        expect(settings).toEqual({
-            forceRecreate: false,
-            noRecreate: false,
-        });
+        expect(settings).toEqual({});
     });
 
-    it('throws when target settings are malformed', () => {
-        expect(() => resolveSettingsForTarget(target, 'not-an-object')).toThrow(
-            'Invalid topo.targetSettings.deploy entry for "topo.local": Expected an object, but received: "not-an-object"',
-        );
-    });
-
-    it('returns defaults when the target has no deploy settings', () => {
+    it('accepts empty target settings', () => {
         const settings = resolveSettingsForTarget(target, {
             [target]: {},
         });
 
-        expect(settings).toEqual({
-            forceRecreate: false,
-            noRecreate: false,
-        });
+        expect(settings).toEqual({});
+    });
+
+    it('throws when target settings are malformed', () => {
+        expect(() => resolveSettingsForTarget(target, 'not-an-object')).toThrow(
+            'Invalid topo.targetSettings entry for "topo.local": Expected an object, but received: "not-an-object"',
+        );
     });
 
     it('returns validated deploy settings for the selected target', () => {
-        const settings = resolveSettingsForTarget(target, {
-            [target]: {
-                deploy: {
-                    port: 5003,
-                    forceRecreate: true,
-                    noRecreate: false,
-                },
+        const targetSettings: TargetSettings = {
+            deploy: {
+                port: 5003,
+                forceRecreate: true,
+                noRecreate: false,
             },
+        };
+        const settings = resolveSettingsForTarget(target, {
+            [target]: targetSettings,
             ['other.local']: {
                 deploy: {
                     port: '5004',
@@ -82,27 +75,7 @@ describe('resolveSettingsForTarget', () => {
             },
         });
 
-        expect(settings).toEqual({
-            port: 5003,
-            forceRecreate: true,
-            noRecreate: false,
-        });
-    });
-
-    it('defaults missing deploy fields', () => {
-        const settings = resolveSettingsForTarget(target, {
-            [target]: {
-                deploy: {
-                    port: 5003,
-                },
-            },
-        });
-
-        expect(settings).toEqual({
-            port: 5003,
-            forceRecreate: false,
-            noRecreate: false,
-        });
+        expect(settings).toEqual(targetSettings);
     });
 
     it('throws when the target entry is malformed', () => {
@@ -111,7 +84,7 @@ describe('resolveSettingsForTarget', () => {
                 [target]: 'not-an-object',
             }),
         ).toThrow(
-            'Invalid topo.targetSettings.deploy entry for "topo.local": Expected an object, but received: "not-an-object"',
+            'Invalid topo.targetSettings entry for "topo.local": At path: topo.local -- Expected an object, but received: "not-an-object"',
         );
     });
 
@@ -123,7 +96,7 @@ describe('resolveSettingsForTarget', () => {
                 },
             }),
         ).toThrow(
-            'Invalid topo.targetSettings.deploy entry for "topo.local": Expected an object, but received: "not-an-object"',
+            'Invalid topo.targetSettings entry for "topo.local": At path: topo.local.deploy -- Expected an object, but received: "not-an-object"',
         );
     });
 
@@ -137,7 +110,7 @@ describe('resolveSettingsForTarget', () => {
                 },
             }),
         ).toThrow(
-            'Invalid topo.targetSettings.deploy entry for "topo.local": Expected a integer less than or equal to 65535 but received `65536`',
+            'Invalid topo.targetSettings entry for "topo.local": At path: topo.local.deploy.port -- Expected a integer less than or equal to 65535 but received `65536`',
         );
     });
 
@@ -152,7 +125,7 @@ describe('resolveSettingsForTarget', () => {
                 },
             }),
         ).toThrow(
-            'Invalid topo.targetSettings.deploy entry for "topo.local": `forceRecreate` and `noRecreate` cannot both be true.',
+            'Invalid topo.targetSettings entry for "topo.local": At path: topo.local.deploy -- `forceRecreate` and `noRecreate` cannot both be true.',
         );
     });
 
@@ -166,7 +139,7 @@ describe('resolveSettingsForTarget', () => {
                 },
             }),
         ).toThrow(
-            'Invalid topo.targetSettings.deploy entry for "topo.local": Expected a value of type `never`, but received: `true`',
+            'Invalid topo.targetSettings entry for "topo.local": At path: topo.local.deploy.unknownField -- Expected a value of type `never`, but received: `true`',
         );
     });
 });

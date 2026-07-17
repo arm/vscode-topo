@@ -2,7 +2,6 @@ import * as vscode from 'vscode';
 import {
     boolean,
     create,
-    defaulted,
     type,
     integer,
     max,
@@ -11,46 +10,37 @@ import {
     optional,
     refine,
     validate,
+    Infer,
 } from 'superstruct';
-import {
-    CONFIG_TARGET_SETTINGS,
-    CONFIG_TARGET_SETTINGS_DEPLOY,
-    PACKAGE_NAME,
-} from '../manifest';
+import { CONFIG_TARGET_SETTINGS, PACKAGE_NAME } from '../manifest';
 
-export type TargetSettings = {
-    port?: number;
-    forceRecreate?: boolean;
-    noRecreate?: boolean;
-};
+const targetDeploySettingsSchema = refine(
+    object({
+        port: optional(max(min(integer(), 1), 65_535)),
+        forceRecreate: optional(boolean()),
+        noRecreate: optional(boolean()),
+    }),
+    'recreateOptions',
+    (settings) => {
+        if (settings.forceRecreate && settings.noRecreate) {
+            return '`forceRecreate` and `noRecreate` cannot both be true.';
+        }
+        return true;
+    },
+);
 
-function getTargetDeploySchema() {
-    return refine(
-        object({
-            port: optional(max(min(integer(), 1), 65_535)),
-            forceRecreate: defaulted(optional(boolean()), false),
-            noRecreate: defaulted(optional(boolean()), false),
-        }),
-        'recreateOptions',
-        (settings) => {
-            if (settings.forceRecreate && settings.noRecreate) {
-                return '`forceRecreate` and `noRecreate` cannot both be true.';
-            }
-            return true;
-        },
-    );
-}
+export type TargetDeploySettings = Infer<typeof targetDeploySettingsSchema>;
+
+const targetSettingsSchema = object({
+    deploy: optional(targetDeploySettingsSchema),
+});
+
+export type TargetSettings = Infer<typeof targetSettingsSchema>;
 
 function getTargetSchema(target: string) {
     return optional(
         type({
-            [target]: optional(
-                object({
-                    [CONFIG_TARGET_SETTINGS_DEPLOY]: optional(
-                        getTargetDeploySchema(),
-                    ),
-                }),
-            ),
+            [target]: optional(targetSettingsSchema),
         }),
     );
 }
@@ -65,17 +55,13 @@ export function resolveSettingsForTarget(
         { coerce: true },
     );
     if (validationError) {
-        const failure = validationError.failures()[0];
         throw new Error(
-            `Invalid ${PACKAGE_NAME}.${CONFIG_TARGET_SETTINGS}.${CONFIG_TARGET_SETTINGS_DEPLOY} entry for "${target}": ${failure.message}`,
+            `Invalid ${PACKAGE_NAME}.${CONFIG_TARGET_SETTINGS} entry for "${target}": ${validationError.message}`,
             { cause: validationError },
         );
     }
 
-    return (
-        validSettingsByTarget?.[target]?.[CONFIG_TARGET_SETTINGS_DEPLOY] ??
-        create({}, getTargetDeploySchema())
-    );
+    return validSettingsByTarget?.[target] ?? create({}, targetSettingsSchema);
 }
 
 export function getSettingsForTarget(target: string): TargetSettings {
