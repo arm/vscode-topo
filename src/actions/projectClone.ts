@@ -5,10 +5,12 @@ import {
     cloneProjectFromSource,
     getLocalSourcePath,
     promptForRemoteCloneSource,
+    type CloneSource,
 } from '../util/projectClone';
 import { isWrappedError } from '../errors/wrappedError';
 import { showAndLogError } from '../util/showAndLog';
 import { TaskExecutor } from '../util/taskExecutor';
+import { getCloneDestinationPath } from '../util/cloneDestinationPath';
 
 function wrapCloneCommandWithCloneErrorHandling(
     commandHandler: () => Promise<void>,
@@ -65,6 +67,19 @@ export class ProjectClone {
         }
     };
 
+    private cloneFromSource = async (source: CloneSource): Promise<void> => {
+        const destinationPath = await getCloneDestinationPath();
+        if (!destinationPath) {
+            return;
+        }
+
+        await cloneProjectFromSource(
+            this.taskExecutor,
+            source,
+            destinationPath,
+        );
+    };
+
     public remoteCloneCommandHandler = wrapCloneCommandWithCloneErrorHandling(
         async () => {
             const selectedTarget = this.targetModel.selected;
@@ -75,7 +90,7 @@ export class ProjectClone {
             if (!source) {
                 return;
             }
-            await cloneProjectFromSource(this.taskExecutor, source);
+            await this.cloneFromSource(source);
         },
     );
 
@@ -85,7 +100,7 @@ export class ProjectClone {
             if (!cloneSourcePath) {
                 return;
             }
-            await cloneProjectFromSource(this.taskExecutor, {
+            await this.cloneFromSource({
                 type: 'dir',
                 path: cloneSourcePath,
             });

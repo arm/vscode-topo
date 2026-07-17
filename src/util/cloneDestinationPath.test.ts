@@ -1,6 +1,9 @@
 import * as vscode from 'vscode';
 import { mutable } from './test/mutable';
-import { getCloneDestinationPath } from './getCloneDestinationPath';
+import {
+    getCloneDestinationPath,
+    promptForCloneDestinationPath,
+} from './cloneDestinationPath';
 
 const workspaceUri = vscode.Uri.file('/home/workspace');
 const secondWorkspaceUri = vscode.Uri.file('/home/workspace-2');
@@ -35,6 +38,24 @@ describe('getCloneDestinationPath', () => {
         await expect(getCloneDestinationPath()).resolves.toBe(workspacePath);
         expect(vscode.window.showWorkspaceFolderPick).not.toHaveBeenCalled();
         expect(vscode.window.showOpenDialog).not.toHaveBeenCalled();
+    });
+
+    it('can prompt for a filesystem destination when a workspace is open', async () => {
+        mutable(vscode.workspace).workspaceFolders = [workspaceFolders[0]];
+        vi.mocked(vscode.window.showOpenDialog).mockResolvedValueOnce([
+            destinationUri,
+        ]);
+
+        await expect(promptForCloneDestinationPath()).resolves.toBe(
+            destinationPath,
+        );
+        expect(vscode.window.showOpenDialog).toHaveBeenCalledWith({
+            canSelectFiles: false,
+            canSelectFolders: true,
+            canSelectMany: false,
+            openLabel: 'Select Destination Folder',
+        });
+        expect(vscode.window.showWorkspaceFolderPick).not.toHaveBeenCalled();
     });
 
     it('prompts for a workspace when multiple workspaces are open', async () => {

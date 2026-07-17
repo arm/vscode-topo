@@ -300,10 +300,14 @@ describe('project clone utilities', () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
 
             await expect(
-                cloneProjectFromSource(taskExecutor, {
-                    type: 'git',
-                    url: 'not-a-valid-url',
-                }),
+                cloneProjectFromSource(
+                    taskExecutor,
+                    {
+                        type: 'git',
+                        url: 'not-a-valid-url',
+                    },
+                    workspacePath,
+                ),
             ).rejects.toEqual(
                 expect.objectContaining({
                     code: 'CLONE',
@@ -320,28 +324,18 @@ describe('project clone utilities', () => {
             );
 
             await expect(
-                cloneProjectFromSource(taskExecutor, {
-                    type: 'git',
-                    url: 'https://example.com/repo.git',
-                }),
+                cloneProjectFromSource(
+                    taskExecutor,
+                    {
+                        type: 'git',
+                        url: 'https://example.com/repo.git',
+                    },
+                    workspacePath,
+                ),
             ).resolves.toBe(false);
 
             expect(vscode.window.showOpenDialog).not.toHaveBeenCalled();
             expect(taskExecutor.run).not.toHaveBeenCalled();
-        });
-
-        it('returns false when destination folder selection is cancelled', async () => {
-            vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
-
-            await expect(
-                cloneProjectFromSource(taskExecutor, {
-                    type: 'git',
-                    url: 'https://example.com/repo.git',
-                }),
-            ).resolves.toBe(false);
-
-            expect(taskExecutor.run).not.toHaveBeenCalled();
-            expect(vscode.window.showInformationMessage).not.toHaveBeenCalled();
         });
 
         it('creates a clone task for a valid https git URL', async () => {
@@ -349,10 +343,14 @@ describe('project clone utilities', () => {
             vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
 
             await expect(
-                cloneProjectFromSource(taskExecutor, {
-                    type: 'git',
-                    url: 'https://example.com/repo.git',
-                }),
+                cloneProjectFromSource(
+                    taskExecutor,
+                    {
+                        type: 'git',
+                        url: 'https://example.com/repo.git',
+                    },
+                    workspacePath,
+                ),
             ).resolves.toBe(true);
 
             expect(vscode.window.showInputBox).toHaveBeenCalledWith({
@@ -371,10 +369,14 @@ describe('project clone utilities', () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
             vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
 
-            await cloneProjectFromSource(taskExecutor, {
-                type: 'git',
-                url: 'git@example.com:repo.git',
-            });
+            await cloneProjectFromSource(
+                taskExecutor,
+                {
+                    type: 'git',
+                    url: 'git@example.com:repo.git',
+                },
+                workspacePath,
+            );
 
             expect(vscode.window.showInputBox).toHaveBeenCalledWith({
                 prompt: 'Enter the project name',
@@ -397,6 +399,7 @@ describe('project clone utilities', () => {
                 {
                     value: 'https://example.com/repo.git',
                 },
+                workspacePath,
                 {
                     model: 'some-huggingface-id',
                 },
@@ -417,10 +420,14 @@ describe('project clone utilities', () => {
                 'myproj',
             );
 
-            await cloneProjectFromSource(taskExecutor, {
-                type: 'dir',
-                path: localProjectUri.fsPath,
-            });
+            await cloneProjectFromSource(
+                taskExecutor,
+                {
+                    type: 'dir',
+                    path: localProjectUri.fsPath,
+                },
+                workspacePath,
+            );
 
             expect(vscode.window.showInputBox).toHaveBeenCalledWith({
                 prompt: 'Enter the project name',
@@ -434,23 +441,19 @@ describe('project clone utilities', () => {
             ]);
         });
 
-        it('uses the selected destination folder when no workspace is open', async () => {
-            vi.mocked(vscode.window.showOpenDialog).mockResolvedValueOnce([
-                destinationUri,
-            ]);
+        it('uses the provided destination folder when no workspace is open', async () => {
             vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
 
-            await cloneProjectFromSource(taskExecutor, {
-                type: 'git',
-                url: 'https://example.com/repo.git',
-            });
+            await cloneProjectFromSource(
+                taskExecutor,
+                {
+                    type: 'git',
+                    url: 'https://example.com/repo.git',
+                },
+                destinationPath,
+            );
 
-            expect(vscode.window.showOpenDialog).toHaveBeenCalledWith({
-                canSelectFiles: false,
-                canSelectFolders: true,
-                canSelectMany: false,
-                openLabel: 'Select Destination Folder',
-            });
+            expect(vscode.window.showOpenDialog).not.toHaveBeenCalled();
             expect(taskExecutor.run).toHaveBeenCalledTimes(1);
             expectCloneTask(
                 taskExecutor.run.mock.calls[0][0],
@@ -471,10 +474,14 @@ describe('project clone utilities', () => {
             taskExecutor.run.mockRejectedValueOnce(err);
 
             await expect(
-                cloneProjectFromSource(taskExecutor, {
-                    type: 'git',
-                    url: 'https://example.com/repo.git',
-                }),
+                cloneProjectFromSource(
+                    taskExecutor,
+                    {
+                        type: 'git',
+                        url: 'https://example.com/repo.git',
+                    },
+                    workspacePath,
+                ),
             ).rejects.toEqual(
                 expect.objectContaining({
                     code: 'CLONE',
@@ -487,10 +494,14 @@ describe('project clone utilities', () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
             vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
 
-            await cloneProjectFromSource(taskExecutor, {
-                type: 'git',
-                url: 'https://example.com/repo.git',
-            });
+            await cloneProjectFromSource(
+                taskExecutor,
+                {
+                    type: 'git',
+                    url: 'https://example.com/repo.git',
+                },
+                workspacePath,
+            );
 
             expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
                 'Would you like to open the cloned repository, or add it to the current workspace?',
@@ -506,10 +517,14 @@ describe('project clone utilities', () => {
             vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
             showInformationMessageMock.mockResolvedValueOnce('Open');
 
-            await cloneProjectFromSource(taskExecutor, {
-                type: 'git',
-                url: 'https://example.com/repo.git',
-            });
+            await cloneProjectFromSource(
+                taskExecutor,
+                {
+                    type: 'git',
+                    url: 'https://example.com/repo.git',
+                },
+                workspacePath,
+            );
 
             expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
                 'vscode.openFolder',
@@ -525,10 +540,14 @@ describe('project clone utilities', () => {
                 'Open in New Window',
             );
 
-            await cloneProjectFromSource(taskExecutor, {
-                type: 'git',
-                url: 'https://example.com/repo.git',
-            });
+            await cloneProjectFromSource(
+                taskExecutor,
+                {
+                    type: 'git',
+                    url: 'https://example.com/repo.git',
+                },
+                workspacePath,
+            );
 
             expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
                 'vscode.openFolder',
@@ -544,10 +563,14 @@ describe('project clone utilities', () => {
                 'Add to Workspace',
             );
 
-            await cloneProjectFromSource(taskExecutor, {
-                type: 'git',
-                url: 'https://example.com/repo.git',
-            });
+            await cloneProjectFromSource(
+                taskExecutor,
+                {
+                    type: 'git',
+                    url: 'https://example.com/repo.git',
+                },
+                workspacePath,
+            );
 
             expect(
                 vscode.workspace.updateWorkspaceFolders,
@@ -563,10 +586,14 @@ describe('project clone utilities', () => {
             taskExecutor.run.mockRejectedValueOnce(err);
 
             await expect(
-                cloneProjectFromSource(taskExecutor, {
-                    type: 'git',
-                    url: 'https://example.com/repo.git',
-                }),
+                cloneProjectFromSource(
+                    taskExecutor,
+                    {
+                        type: 'git',
+                        url: 'https://example.com/repo.git',
+                    },
+                    workspacePath,
+                ),
             ).rejects.toThrow(WrappedError);
 
             expect(vscode.window.showInformationMessage).not.toHaveBeenCalled();

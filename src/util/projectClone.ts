@@ -3,7 +3,6 @@ import { TopoCli } from '../services/topoCli';
 import * as path from 'node:path';
 import { ProjectDescription } from '../services/topoCliSchema';
 import { isWrappedError, WrappedError } from '../errors/wrappedError';
-import { getCloneDestinationPath } from './getCloneDestinationPath';
 import { getErrorMessage } from './getErrorMessage';
 import { TaskExecutor } from './taskExecutor';
 import { createProcessTask } from './task';
@@ -41,13 +40,42 @@ type RemoteProjectQuickPickItem = vscode.QuickPickItem & {
     url: string;
 };
 
-const postCloneAction = async (repositoryPath: string) => {
+const open = 'Open';
+const openNewWindow = 'Open in New Window';
+const addToWorkspace = 'Add to Workspace';
+
+export const postCloneActionWithoutWorkspace = async (
+    repositoryPath: string,
+): Promise<void> => {
+    const selection = await vscode.window.showInformationMessage(
+        'Would you like to open the cloned repository?',
+        { modal: true },
+        open,
+        openNewWindow,
+    );
+    const uri = vscode.Uri.file(repositoryPath);
+
+    switch (selection) {
+        case open:
+            vscode.commands.executeCommand('vscode.openFolder', uri, {
+                forceReuseWindow: true,
+            });
+            return;
+        case openNewWindow:
+            vscode.commands.executeCommand('vscode.openFolder', uri, {
+                forceNewWindow: true,
+            });
+            return;
+        case undefined:
+        default:
+            return;
+    }
+};
+
+const postCloneAction = async (repositoryPath: string): Promise<void> => {
     let message = 'Would you like to open the cloned repository?';
-    const open = 'Open';
-    const openNewWindow = 'Open in New Window';
     const choices = [open, openNewWindow];
 
-    const addToWorkspace = 'Add to Workspace';
     if (vscode.workspace.workspaceFolders?.length) {
         message =
             'Would you like to open the cloned repository, or add it to the current workspace?';
@@ -175,6 +203,7 @@ const cloneWithSource = async (
     taskExecutor: TaskExecutor,
     cloneSource: CloneSource,
     defaultProjectName: string,
+    destinationPath: string,
     cloneParameters: CloneParameters = {},
 ): Promise<CloneResult> => {
     const projectName = await vscode.window.showInputBox({
@@ -184,11 +213,7 @@ const cloneWithSource = async (
     if (!projectName) {
         return { success: false };
     }
-    const workspacePath = await getCloneDestinationPath();
-    if (!workspacePath) {
-        return { success: false };
-    }
-    const repositoryPath = path.join(workspacePath, projectName);
+    const repositoryPath = path.join(destinationPath, projectName);
     const cloneTask = createCloneTask(
         projectName,
         cloneSource,
@@ -300,21 +325,40 @@ export const promptForRemoteCloneSource = async (
     }).finally(() => quickPick.dispose());
 };
 
-export async function cloneProjectFromSource(
+export const cloneProject = async (
     taskExecutor: TaskExecutor,
     cloneSource: CloneSource,
+    destinationPath: string,
     cloneParameters: CloneParameters = {},
-): Promise<boolean> {
+): Promise<string | undefined> => {
     const defaultProjectName =
         getDefaultProjectNameFromSourceString(cloneSource);
     const cloneResult = await cloneWithSource(
         taskExecutor,
         cloneSource,
         defaultProjectName,
+        destinationPath,
         cloneParameters,
     );
-    if (cloneResult.success) {
-        await postCloneAction(cloneResult.repositoryPath);
+    return cloneResult.success ? cloneResult.repositoryPath : undefined;
+};
+
+export async function cloneProjectFromSource(
+    taskExecutor: TaskExecutor,
+    cloneSource: CloneSource,
+    destinationPath: string,
+    cloneParameters: CloneParameters = {},
+): Promise<boolean> {
+    const repositoryPath = await cloneProject(
+        taskExecutor,
+        cloneSource,
+        destinationPath,
+        cloneParameters,
+    );
+    if (!repositoryPath) {
+        return false;
     }
-    return cloneResult.success;
+
+    await postCloneAction(repositoryPath);
+    return true;
 }

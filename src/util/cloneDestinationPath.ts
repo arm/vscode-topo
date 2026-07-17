@@ -17,14 +17,9 @@ const getWorkspaceDestinationPath = async (): Promise<string | undefined> => {
     return selectedWorkspace?.uri.fsPath;
 };
 
-export const getCloneDestinationPath = async (): Promise<
+export const promptForCloneDestinationPath = async (): Promise<
     string | undefined
 > => {
-    const workspaceFolders = vscode.workspace.workspaceFolders;
-    if (workspaceFolders && workspaceFolders.length > 0) {
-        return await getWorkspaceDestinationPath();
-    }
-
     const selectedFolder = await vscode.window.showOpenDialog({
         canSelectFiles: false,
         canSelectFolders: true,
@@ -33,4 +28,15 @@ export const getCloneDestinationPath = async (): Promise<
     });
 
     return selectedFolder?.[0]?.fsPath;
+};
+
+export const getCloneDestinationPath = async (): Promise<
+    string | undefined
+> => {
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (workspaceFolders && workspaceFolders.length > 0) {
+        return getWorkspaceDestinationPath();
+    }
+
+    return promptForCloneDestinationPath();
 };

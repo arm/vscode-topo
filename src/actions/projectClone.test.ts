@@ -11,15 +11,19 @@ import {
     promptForRemoteCloneSource,
 } from '../util/projectClone';
 import { TaskExecutor } from '../util/taskExecutor';
+import { getCloneDestinationPath } from '../util/cloneDestinationPath';
 
 vi.mock('../util/showAndLog');
 vi.mock('../util/projectClone');
+vi.mock('../util/cloneDestinationPath');
 
 const cloneProjectFromSourceMock = vi.mocked(cloneProjectFromSource);
 const getLocalSourcePathMock = vi.mocked(getLocalSourcePath);
 const promptForRemoteCloneSourceMock = vi.mocked(promptForRemoteCloneSource);
+const getCloneDestinationPathMock = vi.mocked(getCloneDestinationPath);
 
 const localSourcePath = '/path/to/source';
+const destinationPath = '/path/to/destination';
 
 function selectQuickPickItem(label: string): void {
     vi.mocked(vscode.window.showQuickPick).mockImplementationOnce(
@@ -45,6 +49,7 @@ describe('ProjectClone action', () => {
     beforeEach(() => {
         vi.resetAllMocks();
         cloneProjectFromSourceMock.mockResolvedValue(true);
+        getCloneDestinationPathMock.mockResolvedValue(destinationPath);
         targetModel = new TargetModel();
         projectClone = new ProjectClone(topoCli, targetModel, taskExecutor);
     });
@@ -86,6 +91,7 @@ describe('ProjectClone action', () => {
                     type: 'git',
                     url: 'https://example.com/repo.git',
                 },
+                destinationPath,
             );
         });
 
@@ -101,6 +107,7 @@ describe('ProjectClone action', () => {
                     type: 'dir',
                     path: localSourcePath,
                 },
+                destinationPath,
             );
         });
     });
@@ -131,7 +138,20 @@ describe('ProjectClone action', () => {
             expect(cloneProjectFromSourceMock).toHaveBeenCalledWith(
                 taskExecutor,
                 source,
+                destinationPath,
             );
+        });
+
+        it('returns early when no destination is selected', async () => {
+            promptForRemoteCloneSourceMock.mockResolvedValueOnce({
+                type: 'git',
+                url: 'https://example.com/repo.git',
+            });
+            getCloneDestinationPathMock.mockResolvedValueOnce(undefined);
+
+            await projectClone.remoteCloneCommandHandler();
+
+            expect(cloneProjectFromSourceMock).not.toHaveBeenCalled();
         });
     });
 
@@ -155,6 +175,7 @@ describe('ProjectClone action', () => {
                     type: 'dir',
                     path: localSourcePath,
                 },
+                destinationPath,
             );
         });
     });
