@@ -62,9 +62,7 @@ export class ProjectController implements vscode.Disposable {
                 return;
             }
 
-            if (
-                isProjectComposePathDeleted(projects.data, deletedUri.fsPath)
-            ) {
+            if (isProjectComposePathDeleted(projects.data, deletedUri.fsPath)) {
                 await this.refreshProjects();
             }
         };
