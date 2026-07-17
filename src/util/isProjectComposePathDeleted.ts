@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { ProjectMetadata } from './project';
 
-export function isProjectAncestorDeleted(
+export function isProjectComposePathDeleted(
     projects: ProjectMetadata[],
     deletedPath: string,
 ): boolean {
@@ -11,7 +11,6 @@ export function isProjectAncestorDeleted(
             project.composeFileUri.fsPath,
         );
         return (
-            relativePath !== '' &&
             relativePath !== '..' &&
             !relativePath.startsWith(`..${path.sep}`) &&
             !path.isAbsolute(relativePath)
