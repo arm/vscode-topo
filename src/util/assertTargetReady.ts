@@ -6,7 +6,7 @@ export type ConnectedTargetHealth = Loaded<
     TargetHealthReport & {
         connectivity: TargetHealthReport['connectivity'] & { status: 'ok' };
     }
-> & { loading: false };
+>;
 
 export function assertTargetSelected(
     selected: string | undefined,
@@ -23,6 +23,13 @@ export function assertTargetConnected(
     target: string,
     health: Loadable<TargetHealthReport>,
 ): asserts health is ConnectedTargetHealth {
+    if (
+        health.status === 'loaded' &&
+        health.data.connectivity.status === 'ok'
+    ) {
+        return;
+    }
+
     if (health.loading) {
         throw new WrappedError(
             'TARGET',
@@ -37,12 +44,10 @@ export function assertTargetConnected(
         );
     }
 
-    if (health.data.connectivity.status !== 'ok') {
-        throw new WrappedError(
-            'TARGET',
-            getTargetConnectivityFailureMessage(target, health.data),
-        );
-    }
+    throw new WrappedError(
+        'TARGET',
+        getTargetConnectivityFailureMessage(target, health.data),
+    );
 }
 
 function getTargetConnectivityFailureMessage(

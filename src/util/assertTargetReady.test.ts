@@ -3,7 +3,7 @@ import {
     assertTargetConnected,
     assertTargetSelected,
 } from './assertTargetReady';
-import { errored, loaded, unloaded } from './loadable';
+import { errored, loaded, loading, unloaded } from './loadable';
 
 describe('assertTargetSelected', () => {
     it('accepts a selected target', () => {
@@ -41,6 +41,12 @@ describe('assertTargetConnected', () => {
         ).not.toThrow();
     });
 
+    it('accepts previously healthy target health while it is refreshing', () => {
+        expect(() =>
+            assertTargetConnected(target, loading(loaded(targetHealth))),
+        ).not.toThrow();
+    });
+
     it('throws a target error when target health is loading', () => {
         expect(() => assertTargetConnected(target, unloaded(true))).toThrow(
             'Target topo.local health is still being checked. Wait for target health checks to finish.',
@@ -68,6 +74,23 @@ describe('assertTargetConnected', () => {
 
         expect(() => assertTargetConnected(target, health)).toThrow(
             "Target topo.local connectivity is 'error': unreachable.",
+        );
+    });
+
+    it('waits for refreshing target health when the previous value was unhealthy', () => {
+        const health = loading(
+            loaded({
+                ...targetHealth,
+                connectivity: {
+                    ...targetHealth.connectivity,
+                    status: 'error' as const,
+                    value: 'unreachable',
+                },
+            }),
+        );
+
+        expect(() => assertTargetConnected(target, health)).toThrow(
+            'Target topo.local health is still being checked. Wait for target health checks to finish.',
         );
     });
 
