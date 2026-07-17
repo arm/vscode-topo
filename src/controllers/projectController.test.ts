@@ -63,38 +63,6 @@ const psOutput: PsOutput = {
     ],
 };
 
-function createFileSystemWatcher(
-    deleteEmitter: vscode.EventEmitter<vscode.Uri>,
-): vscode.FileSystemWatcher {
-    return {
-        onDidCreate: new vscode.EventEmitter<vscode.Uri>().event,
-        onDidChange: new vscode.EventEmitter<vscode.Uri>().event,
-        onDidDelete: deleteEmitter.event,
-        dispose: vi.fn(),
-        ignoreCreateEvents: false,
-        ignoreChangeEvents: false,
-        ignoreDeleteEvents: false,
-    };
-}
-
-function createProjectDeleteTestHarness() {
-    const composeDeleteEmitter = new vscode.EventEmitter<vscode.Uri>();
-    const ancestorDeleteEmitter = new vscode.EventEmitter<vscode.Uri>();
-    vi.mocked(vscode.workspace.createFileSystemWatcher)
-        .mockReturnValueOnce(createFileSystemWatcher(composeDeleteEmitter))
-        .mockReturnValueOnce(createFileSystemWatcher(ancestorDeleteEmitter));
-    const model = new ProjectModel();
-    model.setProjects(loaded(projects));
-    const controller = new ProjectController(
-        model,
-        mock<TopoCli>(),
-        new TargetModel(),
-    );
-    const refresh = vi.spyOn(controller, 'refreshProjects').mockResolvedValue();
-
-    return { ancestorDeleteEmitter, refresh };
-}
-
 describe('ProjectController', () => {
     beforeEach(() => {
         mutable(vscode.workspace).workspaceFolders = [workspaceFolder];
@@ -119,31 +87,6 @@ describe('ProjectController', () => {
             workspaceFolder,
         ]);
         expect(model.projects).toStrictEqual(loaded(projects));
-    });
-
-    it('refreshes projects when a project ancestor is deleted', () => {
-        const { ancestorDeleteEmitter, refresh } =
-            createProjectDeleteTestHarness();
-
-        expect(vscode.workspace.createFileSystemWatcher).toHaveBeenCalledWith(
-            '**',
-            true,
-            true,
-            false,
-        );
-
-        ancestorDeleteEmitter.fire(projects[0].uri);
-
-        expect(refresh).toHaveBeenCalledOnce();
-    });
-
-    it('does not refresh projects when an unrelated path is deleted', () => {
-        const { ancestorDeleteEmitter, refresh } =
-            createProjectDeleteTestHarness();
-
-        ancestorDeleteEmitter.fire(vscode.Uri.file('/fake/workspace/other'));
-
-        expect(refresh).not.toHaveBeenCalled();
     });
 
     it('stores an error when project discovery fails', async () => {

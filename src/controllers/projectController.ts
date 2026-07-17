@@ -1,4 +1,3 @@
-import path from 'node:path';
 import * as vscode from 'vscode';
 import { ProjectModel } from '../models/projectModel';
 import { errored, Loadable, loaded, loading } from '../util/loadable';
@@ -11,25 +10,13 @@ import { PsEntry, PsOutput } from '../services/topoCliSchema';
 import { ContainerItem } from '../util/types';
 import { TargetModel } from '../models/targetModel';
 import { showAndLogError } from '../util/showAndLog';
+import { isProjectAncestorDeleted } from '../util/isProjectAncestorDeleted';
 
 function createContainerItem(item: PsEntry, target: string): ContainerItem {
     return {
         ...item,
         target,
     };
-}
-
-function isStrictAncestorPath(
-    ancestorPath: string,
-    descendantPath: string,
-): boolean {
-    const relativePath = path.relative(ancestorPath, descendantPath);
-    return (
-        relativePath !== '' &&
-        relativePath !== '..' &&
-        !relativePath.startsWith(`..${path.sep}`) &&
-        !path.isAbsolute(relativePath)
-    );
 }
 
 async function loadContainers(
@@ -75,13 +62,7 @@ export class ProjectController implements vscode.Disposable {
                 return;
             }
 
-            const projectAncestorDeleted = projects.data.some((project) =>
-                isStrictAncestorPath(
-                    deletedUri.fsPath,
-                    project.composeFileUri.fsPath,
-                ),
-            );
-            if (projectAncestorDeleted) {
+            if (isProjectAncestorDeleted(projects.data, deletedUri.fsPath)) {
                 await this.refreshProjects();
             }
         };
