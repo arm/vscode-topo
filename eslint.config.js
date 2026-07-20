@@ -17,6 +17,11 @@ module.exports = [
         ],
     },
     {
+        linterOptions: {
+            reportUnusedDisableDirectives: 'error',
+        },
+    },
+    {
         languageOptions: {
             ecmaVersion: 2022,
             globals: {
@@ -70,11 +75,12 @@ module.exports = [
             ],
             '@typescript-eslint/no-floating-promises': 'error',
             '@typescript-eslint/no-misused-promises': 'error',
+            '@typescript-eslint/no-unnecessary-type-assertion': 'error',
             '@typescript-eslint/no-unused-private-class-members': 'error',
             '@typescript-eslint/switch-exhaustiveness-check': 'error',
-            curly: 'warn',
-            eqeqeq: 'warn',
-            'no-throw-literal': 'warn',
+            curly: 'error',
+            eqeqeq: 'error',
+            'no-throw-literal': 'error',
             semi: 'warn',
             'eol-last': ['error', 'always'],
             'no-restricted-imports': [

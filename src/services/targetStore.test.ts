@@ -117,7 +117,7 @@ describe('TargetStore', () => {
         await expect(addTargetOperation).resolves.toBeUndefined();
         const targets = store.getTargets();
         expect(targets).toContain(t);
-        const raw = context.globalState.get('targets') as string | undefined;
+        const raw = context.globalState.get<string>('targets');
         expect(raw).toBeTypeOf('string');
         const parsed = JSON.parse(raw || '{}');
         expect(parsed[t]).toEqual({});
@@ -132,7 +132,7 @@ describe('TargetStore', () => {
         const addTargetOperation = store.addTarget(t);
 
         await expect(addTargetOperation).rejects.toThrow('persist-fail');
-        const raw = context.globalState.get('targets') as string | undefined;
+        const raw = context.globalState.get<string>('targets');
         expect(raw).toBeUndefined();
     });
 
@@ -162,7 +162,7 @@ describe('TargetStore', () => {
         const targets = store.getTargets();
         expect(targets).toContain(t);
 
-        const raw = context.globalState.get('targets') as string | undefined;
+        const raw = context.globalState.get<string>('targets');
         expect(raw).toBeTypeOf('string');
         const parsed = JSON.parse(raw || '{}');
         expect(parsed[t]).toEqual({});
