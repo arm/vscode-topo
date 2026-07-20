@@ -100,7 +100,7 @@
             },
             {
                 "command": "topo.openSettings",
-                "title": "Target Deploy Settings",
+                "title": "Open Settings",
                 "icon": "$(gear)",
                 "category": "Topo"
             },
