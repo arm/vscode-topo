@@ -11,16 +11,15 @@ export class RefreshLoop {
     public start(): void {
         this.stop();
         this.timeoutId = setTimeout(() => {
-            void this.callback().then(
-                () => {
+            void this.callback()
+                .catch((error: unknown) => {
+                    logger.error('Refresh callback failed', error);
+                })
+                .finally(() => {
                     if (this.timeoutId !== undefined) {
                         this.start();
                     }
-                },
-                (error: unknown) => {
-                    logger.error('Refresh callback failed', error);
-                },
-            );
+                });
         }, this.refreshInterval);
     }
 

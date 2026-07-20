@@ -44,16 +44,19 @@ describe('RefreshLoop', () => {
         expect(callback).toHaveBeenCalledTimes(2);
     });
 
-    it('logs callback failures without scheduling another run', async () => {
+    it('logs callback failures and schedules another run', async () => {
         const error = new Error('refresh failed');
-        const callback = vi.fn().mockRejectedValue(error);
+        const callback = vi
+            .fn()
+            .mockRejectedValueOnce(error)
+            .mockResolvedValue(undefined);
         const refreshLoop = new RefreshLoop(callback, 1000);
 
         refreshLoop.start();
 
         await vi.advanceTimersByTimeAsync(2000);
 
-        expect(callback).toHaveBeenCalledTimes(1);
+        expect(callback).toHaveBeenCalledTimes(2);
         expect(logger.error).toHaveBeenCalledWith(
             'Refresh callback failed',
             error,
