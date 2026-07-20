@@ -1,6 +1,5 @@
 import {
     boolean,
-    create,
     type,
     integer,
     max,
@@ -60,5 +59,5 @@ export function resolveSettingsForTarget(
         );
     }
 
-    return validSettingsByTarget?.[target] ?? create({}, targetSettingsSchema);
+    return validSettingsByTarget?.[target] ?? {};
 }
