@@ -163,7 +163,7 @@ jobs:
                   cache: npm
             - name: Download version bump patch
               if: needs.prepare-version.outputs.version
-              uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+              uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
               with:
                   name: new-version-patch
                   path: ~/patches
@@ -205,7 +205,7 @@ jobs:
               with:
                   token: ${{ steps.get-app-token.outputs.token }}
             - name: Download version bump patch
-              uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+              uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
               with:
                   name: new-version-patch
                   path: ~/patches
@@ -235,11 +235,11 @@ jobs:
         permissions:
             contents: write
         steps:
-            - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+            - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
               with:
                   path: artifacts
             - name: Download release notes
-              uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+              uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
               with:
                   name: release-notes
                   path: release-notes
@@ -261,7 +261,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
-            - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+            - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
               with:
                   pattern: vsix-package-*
                   merge-multiple: true
