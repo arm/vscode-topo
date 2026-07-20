@@ -6,6 +6,22 @@ updates:
       directory: '/'
       schedule:
           interval: 'weekly'
+      groups:
+          eslint:
+              patterns:
+                  - 'eslint'
+                  - 'eslint-*'
+                  - '@eslint/*'
+                  - '@eslint-community/*'
+                  - '@typescript-eslint/*'
+          vitest:
+              patterns:
+                  - 'vitest'
+                  - '@vitest/coverage-v8'
+          lodash-debounce:
+              patterns:
+                  - 'lodash.debounce'
+                  - '@types/lodash.debounce'
       ignore:
           - dependency-name: '@types/vscode'
 
@@ -14,3 +30,8 @@ updates:
       directory: '/'
       schedule:
           interval: 'weekly'
+      groups:
+          artifact-actions:
+              patterns:
+                  - 'actions/upload-artifact'
+                  - 'actions/download-artifact'
