@@ -19,13 +19,12 @@ import { showAndLogError } from './showAndLog';
 
 vi.mock('./showAndLog');
 
-const showInformationMessageMock = vi.mocked(
-    vscode.window.showInformationMessage as (
-        message: string,
-        options: vscode.MessageOptions,
-        ...items: string[]
-    ) => Thenable<string | undefined>,
-);
+const showInformationMessageForStrings: (
+    message: string,
+    options: vscode.MessageOptions,
+    ...items: string[]
+) => Thenable<string | undefined> = vscode.window.showInformationMessage;
+const showInformationMessageMock = vi.mocked(showInformationMessageForStrings);
 
 function mockRemoteQuickPick<T extends vscode.QuickPickItem>() {
     const onDidAcceptEmitter = new vscode.EventEmitter<void>();
