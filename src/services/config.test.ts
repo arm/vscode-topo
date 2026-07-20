@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { mock } from 'vitest-mock-extended';
 import { Config } from './config';
+import { TargetSettings } from '../util/targetSettings';
 
 const getConfigurationMock = vi.fn();
 
@@ -18,17 +19,18 @@ describe('Config', () => {
     });
 
     it('returns settings for the requested target', () => {
+        const targetSettings: TargetSettings = {
+            deploy: { port: 5000 },
+        };
         getConfigurationMock.mockReturnValue({
-            'topo.local': {
-                deploy: { port: 5000 },
-            },
+            'topo.local': targetSettings,
         });
 
         const settings = new Config().getTargetSettings('topo.local');
 
         expect(vscode.workspace.getConfiguration).toHaveBeenCalledWith('topo');
         expect(getConfigurationMock).toHaveBeenCalledWith('targetSettings');
-        expect(settings).toEqual({ deploy: { port: 5000 } });
+        expect(settings).toEqual(targetSettings);
     });
 
     it('returns empty settings when target settings are absent', () => {
