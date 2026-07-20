@@ -64,7 +64,7 @@ describe('TopoCli', () => {
             path.join(ext, 'resources') + ':',
         );
         expect(env.replace).toHaveBeenCalledWith(
-            'TOPO_SKIP_VERSION_CHECKS',
+            'TOPO_DISABLE_SELF_UPGRADE',
             '1',
         );
     });
