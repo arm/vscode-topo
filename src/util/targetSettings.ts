@@ -26,13 +26,11 @@ const targetDeploySettingsSchema = refine(
         return true;
     },
 );
-
 export type TargetDeploySettings = Infer<typeof targetDeploySettingsSchema>;
 
 const targetSettingsSchema = object({
     deploy: optional(targetDeploySettingsSchema),
 });
-
 export type TargetSettings = Infer<typeof targetSettingsSchema>;
 
 function getTargetSchema(target: string) {
@@ -50,7 +48,6 @@ export function resolveSettingsForTarget(
     const [validationError, validSettingsByTarget] = validate(
         settingsByTarget ?? {},
         getTargetSchema(target),
-        { coerce: true },
     );
     if (validationError) {
         throw new Error(
