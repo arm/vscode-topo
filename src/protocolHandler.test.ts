@@ -75,10 +75,11 @@ describe('ProtocolHandler', () => {
             path.join(destinationUri.fsPath, 'repo'),
         ]);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
-            'Would you like to open the cloned repository?',
+            'Would you like to open the cloned repository, or add it to the current workspace?',
             { modal: true },
             'Open',
             'Open in New Window',
+            'Add to Workspace',
         );
         expect(vscode.commands.executeCommand).not.toHaveBeenCalled();
     });

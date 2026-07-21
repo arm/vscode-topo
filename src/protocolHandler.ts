@@ -1,8 +1,5 @@
 import * as vscode from 'vscode';
-import {
-    executeProjectClone,
-    postCloneActionWithoutWorkspace,
-} from './util/projectClone';
+import { executeProjectClone, postCloneAction } from './util/projectClone';
 import { logger } from './util/logger';
 import { parseCloneSourceString } from './util/parseSourceCloneString';
 import { isWrappedError } from './errors/wrappedError';
@@ -77,5 +74,5 @@ const handleCloneRequest = async (
         return;
     }
 
-    await postCloneActionWithoutWorkspace(repositoryPath);
+    await postCloneAction(repositoryPath);
 };

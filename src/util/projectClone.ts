@@ -44,35 +44,9 @@ const open = 'Open';
 const openNewWindow = 'Open in New Window';
 const addToWorkspace = 'Add to Workspace';
 
-export const postCloneActionWithoutWorkspace = async (
+export const postCloneAction = async (
     repositoryPath: string,
 ): Promise<void> => {
-    const selection = await vscode.window.showInformationMessage(
-        'Would you like to open the cloned repository?',
-        { modal: true },
-        open,
-        openNewWindow,
-    );
-    const uri = vscode.Uri.file(repositoryPath);
-
-    switch (selection) {
-        case open:
-            vscode.commands.executeCommand('vscode.openFolder', uri, {
-                forceReuseWindow: true,
-            });
-            return;
-        case openNewWindow:
-            vscode.commands.executeCommand('vscode.openFolder', uri, {
-                forceNewWindow: true,
-            });
-            return;
-        case undefined:
-        default:
-            return;
-    }
-};
-
-const postCloneAction = async (repositoryPath: string): Promise<void> => {
     let message = 'Would you like to open the cloned repository?';
     const choices = [open, openNewWindow];
 
