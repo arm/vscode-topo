@@ -19,10 +19,9 @@ import {
     assertTargetConnected,
     assertTargetSelected,
 } from '../util/assertTargetReady';
-import {
-    TargetSettings,
-    getSettingsForTarget,
-} from '../services/targetSettings';
+
+import { TargetDeploySettings } from '../util/targetSettings';
+import { Config } from '../services/config';
 
 const viewLogsItem: vscode.MessageItem = {
     title: 'View Logs',
@@ -34,7 +33,7 @@ type ComposeFileQuickPickItem = vscode.QuickPickItem & {
 
 type DeployTarget = {
     target: string;
-    settings: TargetSettings;
+    settings?: TargetDeploySettings;
 };
 
 export class Deploy {
@@ -42,6 +41,7 @@ export class Deploy {
         private readonly taskExecutor: TaskExecutor,
         private readonly targetModel: TargetModel,
         private readonly projectController: ProjectController,
+        private readonly config: Config,
     ) {}
 
     public async deployCommandHandler(): Promise<void> {
@@ -117,9 +117,10 @@ export class Deploy {
         }
 
         try {
+            const targetSettings = this.config.getTargetSettings(target);
             return {
                 target,
-                settings: getSettingsForTarget(target),
+                settings: targetSettings.deploy,
             };
         } catch (err: unknown) {
             showAndLogError('Error retrieving target settings', err);
@@ -164,7 +165,7 @@ export async function deploy(
     taskExecutor: TaskExecutor,
     composeFilePath: string,
     target: string,
-    settings: TargetSettings = {},
+    settings: TargetDeploySettings = {},
 ): Promise<void> {
     const task = createProcessTask(
         `Deploy to ${target}`,
@@ -201,7 +202,7 @@ export async function deploy(
 
 export function buildDeployArgs(
     target: string,
-    settings: TargetSettings = {},
+    settings: TargetDeploySettings = {},
 ): string[] {
     const args = ['deploy', '--target', target];
     if (settings.port !== undefined) {

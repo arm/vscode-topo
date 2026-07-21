@@ -40,7 +40,7 @@ describe('getCloneDestinationPath', () => {
     it('prompts for a workspace when multiple workspaces are open', async () => {
         mutable(vscode.workspace).workspaceFolders = workspaceFolders;
         vi.mocked(vscode.window.showWorkspaceFolderPick).mockResolvedValueOnce(
-            workspaceFolders[1] as never,
+            workspaceFolders[1],
         );
 
         await expect(getCloneDestinationPath()).resolves.toBe(

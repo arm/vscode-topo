@@ -31,6 +31,7 @@ import { TaskExecutor } from './util/taskExecutor';
 import { ConnectViaSSH } from './actions/connectViaSSH';
 import { OpenContainerInBrowser } from './actions/openContainerInBrowser';
 import { OpenSettings } from './actions/openSettings';
+import { Config } from './services/config';
 
 const SELECTED_TARGET_REFRESH_INTERVAL_MS = 60_000;
 
@@ -104,10 +105,16 @@ export async function activate(
         }),
     );
 
+    const config = new Config();
     const projectInit = new ProjectInit(topoCli);
     const taskExecutor = new TaskExecutor(topoCli);
     const projectClone = new ProjectClone(topoCli, targetModel, taskExecutor);
-    const deploy = new Deploy(taskExecutor, targetModel, projectController);
+    const deploy = new Deploy(
+        taskExecutor,
+        targetModel,
+        projectController,
+        config,
+    );
     const stop = new Stop(taskExecutor, targetModel, projectController);
     const openContainerShell = new OpenContainerShell(dockerCommands);
     const connectViaSSH = new ConnectViaSSH(targetModel);

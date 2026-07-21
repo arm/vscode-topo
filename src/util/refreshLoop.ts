@@ -1,3 +1,5 @@
+import { logger } from './logger';
+
 export class RefreshLoop {
     private timeoutId: NodeJS.Timeout | undefined;
 
@@ -8,11 +10,16 @@ export class RefreshLoop {
 
     public start(): void {
         this.stop();
-        this.timeoutId = setTimeout(async () => {
-            await this.callback();
-            if (this.timeoutId !== undefined) {
-                this.start();
-            }
+        this.timeoutId = setTimeout(() => {
+            void this.callback()
+                .catch((error: unknown) => {
+                    logger.error('Refresh callback failed', error);
+                })
+                .finally(() => {
+                    if (this.timeoutId !== undefined) {
+                        this.start();
+                    }
+                });
         }, this.refreshInterval);
     }
 

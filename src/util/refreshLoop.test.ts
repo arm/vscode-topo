@@ -1,4 +1,7 @@
 import { RefreshLoop } from './refreshLoop';
+import { logger } from './logger';
+
+vi.mock('./logger');
 
 describe('RefreshLoop', () => {
     beforeEach(() => {
@@ -39,6 +42,25 @@ describe('RefreshLoop', () => {
 
         await vi.advanceTimersByTimeAsync(1);
         expect(callback).toHaveBeenCalledTimes(2);
+    });
+
+    it('logs callback failures and schedules another run', async () => {
+        const error = new Error('refresh failed');
+        const callback = vi
+            .fn()
+            .mockRejectedValueOnce(error)
+            .mockResolvedValue(undefined);
+        const refreshLoop = new RefreshLoop(callback, 1000);
+
+        refreshLoop.start();
+
+        await vi.advanceTimersByTimeAsync(2000);
+
+        expect(callback).toHaveBeenCalledTimes(2);
+        expect(logger.error).toHaveBeenCalledWith(
+            'Refresh callback failed',
+            error,
+        );
     });
 
     it('does not run the callback after stop is called', async () => {

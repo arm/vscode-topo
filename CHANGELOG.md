@@ -4,6 +4,23 @@ All notable changes to the "vscode-topo" extension will be documented in this fi
 
 
 
+
+## 0.10.0
+
+<!-- Release notes generated using configuration in .github/release.yml at 0eda69759f36ab480ff82a5b52521ebd04dae692 -->
+
+## What's Changed
+### Features and Enhancements
+* feat: disable Topo self-upgrades in extension (#341)
+### Fixes
+* fix: allow project deploy and stop while refreshing healthy targets (#342)
+* fix: refresh projects when ancestor folders are deleted (#343)
+* fix: make topo.openSettings command name more accurate (#356)
+
+
+**Full Changelog**: https://github.com/arm/vscode-topo/compare/v0.8.0...v0.10.0
+
+
 ## 0.8.0
 
 <!-- Release notes generated using configuration in .github/release.yml at 3e886b7b541a937a6d7a85ab9a1d2769d0fba7b1 -->
