@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import {
-    cloneProject,
+    executeProjectClone,
     postCloneActionWithoutWorkspace,
 } from './util/projectClone';
 import { logger } from './util/logger';
@@ -9,7 +9,6 @@ import { isWrappedError } from './errors/wrappedError';
 import { showAndLogError } from './util/showAndLog';
 import { TaskExecutor } from './util/taskExecutor';
 import { parseRequestData } from './util/protocolRequest';
-import { promptForCloneDestinationPath } from './util/cloneDestinationPath';
 
 /**
  * VS Code URI handler for Topo deep links.
@@ -68,16 +67,9 @@ const handleCloneRequest = async (
         return;
     }
 
-    const destinationPath = await promptForCloneDestinationPath();
-    if (!destinationPath) {
-        logger.info(`Clone cancelled for URI ${uri.toString()}`);
-        return;
-    }
-
-    const repositoryPath = await cloneProject(
+    const repositoryPath = await executeProjectClone(
         taskExecutor,
         cloneSource,
-        destinationPath,
         cloneParameters,
     );
     if (!repositoryPath) {

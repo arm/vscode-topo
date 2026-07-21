@@ -325,12 +325,22 @@ export const promptForRemoteCloneSource = async (
     }).finally(() => quickPick.dispose());
 };
 
-export const cloneProject = async (
+export const executeProjectClone = async (
     taskExecutor: TaskExecutor,
     cloneSource: CloneSource,
-    destinationPath: string,
     cloneParameters: CloneParameters = {},
 ): Promise<string | undefined> => {
+    const selectedFolder = await vscode.window.showOpenDialog({
+        canSelectFiles: false,
+        canSelectFolders: true,
+        canSelectMany: false,
+        openLabel: 'Select Destination Folder',
+    });
+    const destinationPath = selectedFolder?.[0]?.fsPath;
+    if (!destinationPath) {
+        return undefined;
+    }
+
     const defaultProjectName =
         getDefaultProjectNameFromSourceString(cloneSource);
     const cloneResult = await cloneWithSource(
@@ -343,16 +353,14 @@ export const cloneProject = async (
     return cloneResult.success ? cloneResult.repositoryPath : undefined;
 };
 
-export async function cloneProjectFromSource(
+export async function cloneProject(
     taskExecutor: TaskExecutor,
     cloneSource: CloneSource,
-    destinationPath: string,
     cloneParameters: CloneParameters = {},
 ): Promise<boolean> {
-    const repositoryPath = await cloneProject(
+    const repositoryPath = await executeProjectClone(
         taskExecutor,
         cloneSource,
-        destinationPath,
         cloneParameters,
     );
     if (!repositoryPath) {

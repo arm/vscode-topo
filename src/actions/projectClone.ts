@@ -2,15 +2,13 @@ import * as vscode from 'vscode';
 import { TopoCli } from '../services/topoCli';
 import { TargetModel } from '../models/targetModel';
 import {
-    cloneProjectFromSource,
+    cloneProject,
     getLocalSourcePath,
     promptForRemoteCloneSource,
-    type CloneSource,
 } from '../util/projectClone';
 import { isWrappedError } from '../errors/wrappedError';
 import { showAndLogError } from '../util/showAndLog';
 import { TaskExecutor } from '../util/taskExecutor';
-import { getCloneDestinationPath } from '../util/cloneDestinationPath';
 
 function wrapCloneCommandWithCloneErrorHandling(
     commandHandler: () => Promise<void>,
@@ -67,19 +65,6 @@ export class ProjectClone {
         }
     };
 
-    private cloneFromSource = async (source: CloneSource): Promise<void> => {
-        const destinationPath = await getCloneDestinationPath();
-        if (!destinationPath) {
-            return;
-        }
-
-        await cloneProjectFromSource(
-            this.taskExecutor,
-            source,
-            destinationPath,
-        );
-    };
-
     public remoteCloneCommandHandler = wrapCloneCommandWithCloneErrorHandling(
         async () => {
             const selectedTarget = this.targetModel.selected;
@@ -90,7 +75,7 @@ export class ProjectClone {
             if (!source) {
                 return;
             }
-            await this.cloneFromSource(source);
+            await cloneProject(this.taskExecutor, source);
         },
     );
 
@@ -100,7 +85,7 @@ export class ProjectClone {
             if (!cloneSourcePath) {
                 return;
             }
-            await this.cloneFromSource({
+            await cloneProject(this.taskExecutor, {
                 type: 'dir',
                 path: cloneSourcePath,
             });
