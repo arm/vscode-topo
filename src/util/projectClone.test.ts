@@ -317,32 +317,28 @@ describe('project clone utilities', () => {
             expect(taskExecutor.run).not.toHaveBeenCalled();
         });
 
-        it('returns false when no project name is provided', async () => {
+        it('stops when no project name is provided', async () => {
             vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
                 undefined,
             );
 
-            await expect(
-                cloneProject(taskExecutor, {
-                    type: 'git',
-                    url: 'https://example.com/repo.git',
-                }),
-            ).resolves.toBe(false);
+            await cloneProject(taskExecutor, {
+                type: 'git',
+                url: 'https://example.com/repo.git',
+            });
 
             expect(taskExecutor.run).not.toHaveBeenCalled();
         });
 
-        it('returns false when no destination folder is selected', async () => {
+        it('stops when no destination folder is selected', async () => {
             vi.mocked(vscode.window.showOpenDialog).mockResolvedValueOnce(
                 undefined,
             );
 
-            await expect(
-                cloneProject(taskExecutor, {
-                    type: 'git',
-                    url: 'https://example.com/repo.git',
-                }),
-            ).resolves.toBe(false);
+            await cloneProject(taskExecutor, {
+                type: 'git',
+                url: 'https://example.com/repo.git',
+            });
 
             expect(vscode.window.showInputBox).not.toHaveBeenCalled();
             expect(taskExecutor.run).not.toHaveBeenCalled();
@@ -352,12 +348,10 @@ describe('project clone utilities', () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
             vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
 
-            await expect(
-                cloneProject(taskExecutor, {
-                    type: 'git',
-                    url: 'https://example.com/repo.git',
-                }),
-            ).resolves.toBe(true);
+            await cloneProject(taskExecutor, {
+                type: 'git',
+                url: 'https://example.com/repo.git',
+            });
 
             expect(vscode.window.showOpenDialog).toHaveBeenCalledWith({
                 canSelectFiles: false,

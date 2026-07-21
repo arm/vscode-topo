@@ -44,7 +44,6 @@ describe('ProjectClone action', () => {
 
     beforeEach(() => {
         vi.resetAllMocks();
-        cloneProjectMock.mockResolvedValue(true);
         targetModel = new TargetModel();
         projectClone = new ProjectClone(topoCli, targetModel, taskExecutor);
     });

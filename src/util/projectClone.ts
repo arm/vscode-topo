@@ -331,16 +331,15 @@ export async function cloneProject(
     taskExecutor: TaskExecutor,
     cloneSource: CloneSource,
     cloneParameters: CloneParameters = {},
-): Promise<boolean> {
+): Promise<void> {
     const repositoryPath = await executeProjectClone(
         taskExecutor,
         cloneSource,
         cloneParameters,
     );
     if (!repositoryPath) {
-        return false;
+        return;
     }
 
     await postCloneAction(repositoryPath);
-    return true;
 }
