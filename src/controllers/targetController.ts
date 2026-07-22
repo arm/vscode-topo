@@ -275,6 +275,13 @@ export class TargetController {
         }
     }
 
+    public async refreshSelectedTargetDataCommandHandler(): Promise<void> {
+        await Promise.all([
+            this.refreshSelectedTargetHealthCommandHandler(),
+            this.loadSelectedTargetDescriptionCommandHandler(),
+        ]);
+    }
+
     public async loadSelectedTargetDescriptionCommandHandler(): Promise<void> {
         const target = this.model.selected;
         if (!target) {
