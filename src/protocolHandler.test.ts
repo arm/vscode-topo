@@ -46,6 +46,9 @@ describe('ProtocolHandler', () => {
 
     it('runs a topo clone task for explicit git sources', async () => {
         mutable(vscode.workspace).workspaceFolders = workspaceFolders;
+        vi.mocked(vscode.window.showOpenDialog).mockResolvedValueOnce([
+            destinationUri,
+        ]);
         vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
 
         await protocolHandler.handleUri(
@@ -54,13 +57,30 @@ describe('ProtocolHandler', () => {
             ),
         );
 
-        expect(vscode.window.showOpenDialog).not.toHaveBeenCalled();
+        expect(vscode.window.showOpenDialog).toHaveBeenCalledWith({
+            canSelectFiles: false,
+            canSelectFolders: true,
+            canSelectMany: false,
+            openLabel: 'Select Destination Folder',
+        });
+        expect(
+            vi.mocked(vscode.window.showOpenDialog).mock.invocationCallOrder[0],
+        ).toBeLessThan(
+            vi.mocked(vscode.window.showInputBox).mock.invocationCallOrder[0],
+        );
         expect(taskExecutor.run).toHaveBeenCalledTimes(1);
         expectCloneTask(taskExecutor.run.mock.calls[0][0], 'repo', [
             'clone',
             'git:https://example.com/repo.git',
-            path.join(workspaceUri.fsPath, 'repo'),
+            path.join(destinationUri.fsPath, 'repo'),
         ]);
+        expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
+            'Would you like to open the cloned repository, or add it to the current workspace?',
+            { modal: true },
+            'Open',
+            'Open in New Window',
+            'Add to Workspace',
+        );
         expect(vscode.commands.executeCommand).not.toHaveBeenCalled();
     });
 
@@ -102,6 +122,9 @@ describe('ProtocolHandler', () => {
         mutable(vscode.workspace).workspaceFolders = workspaceFolders;
         const err = new Error('task fail');
         taskExecutor.run.mockRejectedValueOnce(err);
+        vi.mocked(vscode.window.showOpenDialog).mockResolvedValueOnce([
+            destinationUri,
+        ]);
         vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
 
         await protocolHandler.handleUri(
@@ -121,6 +144,9 @@ describe('ProtocolHandler', () => {
 
     it('forwards arbitrary query params as clone options', async () => {
         mutable(vscode.workspace).workspaceFolders = workspaceFolders;
+        vi.mocked(vscode.window.showOpenDialog).mockResolvedValueOnce([
+            destinationUri,
+        ]);
         vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
 
         await protocolHandler.handleUri(
@@ -133,13 +159,16 @@ describe('ProtocolHandler', () => {
         expectCloneTask(taskExecutor.run.mock.calls[0][0], 'repo', [
             'clone',
             'https://example.com/repo.git',
-            path.join(workspaceUri.fsPath, 'repo'),
+            path.join(destinationUri.fsPath, 'repo'),
             'model=some-huggingface-id',
         ]);
     });
 
     it('runs a topo clone task for bare github urls', async () => {
         mutable(vscode.workspace).workspaceFolders = workspaceFolders;
+        vi.mocked(vscode.window.showOpenDialog).mockResolvedValueOnce([
+            destinationUri,
+        ]);
         vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
             'topo-lightbulb-moment',
         );
@@ -157,9 +186,25 @@ describe('ProtocolHandler', () => {
             [
                 'clone',
                 'https://github.com/Arm-Examples/topo-lightbulb-moment',
-                path.join(workspaceUri.fsPath, 'topo-lightbulb-moment'),
+                path.join(destinationUri.fsPath, 'topo-lightbulb-moment'),
             ],
         );
+    });
+
+    it('stops when destination folder selection is cancelled', async () => {
+        mutable(vscode.workspace).workspaceFolders = workspaceFolders;
+        vi.mocked(vscode.window.showOpenDialog).mockResolvedValueOnce(
+            undefined,
+        );
+
+        await protocolHandler.handleUri(
+            vscode.Uri.parse(
+                'vscode://arm.topo/clone?source=git:https://example.com/repo.git',
+            ),
+        );
+
+        expect(vscode.window.showInputBox).not.toHaveBeenCalled();
+        expect(taskExecutor.run).not.toHaveBeenCalled();
     });
 
     it('does not attempt clone when source is missing', async () => {

@@ -6,7 +6,7 @@ import { TargetModel } from '../models/targetModel';
 import { WrappedError } from '../errors/wrappedError';
 import { showAndLogError } from '../util/showAndLog';
 import {
-    cloneProjectFromSource,
+    cloneProject,
     getLocalSourcePath,
     promptForRemoteCloneSource,
 } from '../util/projectClone';
@@ -15,7 +15,7 @@ import { TaskExecutor } from '../util/taskExecutor';
 vi.mock('../util/showAndLog');
 vi.mock('../util/projectClone');
 
-const cloneProjectFromSourceMock = vi.mocked(cloneProjectFromSource);
+const cloneProjectMock = vi.mocked(cloneProject);
 const getLocalSourcePathMock = vi.mocked(getLocalSourcePath);
 const promptForRemoteCloneSourceMock = vi.mocked(promptForRemoteCloneSource);
 
@@ -44,7 +44,6 @@ describe('ProjectClone action', () => {
 
     beforeEach(() => {
         vi.resetAllMocks();
-        cloneProjectFromSourceMock.mockResolvedValue(true);
         targetModel = new TargetModel();
         projectClone = new ProjectClone(topoCli, targetModel, taskExecutor);
     });
@@ -68,7 +67,7 @@ describe('ProjectClone action', () => {
                 ],
                 { placeHolder: 'Select a clone method' },
             );
-            expect(cloneProjectFromSourceMock).not.toHaveBeenCalled();
+            expect(cloneProjectMock).not.toHaveBeenCalled();
         });
 
         it('clones from a remote project when selected', async () => {
@@ -80,13 +79,10 @@ describe('ProjectClone action', () => {
 
             await projectClone.cloneCommandHandler();
 
-            expect(cloneProjectFromSourceMock).toHaveBeenCalledWith(
-                taskExecutor,
-                {
-                    type: 'git',
-                    url: 'https://example.com/repo.git',
-                },
-            );
+            expect(cloneProjectMock).toHaveBeenCalledWith(taskExecutor, {
+                type: 'git',
+                url: 'https://example.com/repo.git',
+            });
         });
 
         it('clones from a local project when selected', async () => {
@@ -95,13 +91,10 @@ describe('ProjectClone action', () => {
 
             await projectClone.cloneCommandHandler();
 
-            expect(cloneProjectFromSourceMock).toHaveBeenCalledWith(
-                taskExecutor,
-                {
-                    type: 'dir',
-                    path: localSourcePath,
-                },
-            );
+            expect(cloneProjectMock).toHaveBeenCalledWith(taskExecutor, {
+                type: 'dir',
+                path: localSourcePath,
+            });
         });
     });
 
@@ -111,7 +104,7 @@ describe('ProjectClone action', () => {
 
             await projectClone.remoteCloneCommandHandler();
 
-            expect(cloneProjectFromSourceMock).not.toHaveBeenCalled();
+            expect(cloneProjectMock).not.toHaveBeenCalled();
         });
 
         it('clones the selected remote source for the selected target', async () => {
@@ -128,10 +121,7 @@ describe('ProjectClone action', () => {
                 topoCli,
                 'me@example.com',
             );
-            expect(cloneProjectFromSourceMock).toHaveBeenCalledWith(
-                taskExecutor,
-                source,
-            );
+            expect(cloneProjectMock).toHaveBeenCalledWith(taskExecutor, source);
         });
     });
 
@@ -141,7 +131,7 @@ describe('ProjectClone action', () => {
 
             await projectClone.localCloneCommandHandler();
 
-            expect(cloneProjectFromSourceMock).not.toHaveBeenCalled();
+            expect(cloneProjectMock).not.toHaveBeenCalled();
         });
 
         it('clones from the selected local folder', async () => {
@@ -149,13 +139,10 @@ describe('ProjectClone action', () => {
 
             await projectClone.localCloneCommandHandler();
 
-            expect(cloneProjectFromSourceMock).toHaveBeenCalledWith(
-                taskExecutor,
-                {
-                    type: 'dir',
-                    path: localSourcePath,
-                },
-            );
+            expect(cloneProjectMock).toHaveBeenCalledWith(taskExecutor, {
+                type: 'dir',
+                path: localSourcePath,
+            });
         });
     });
 
@@ -166,7 +153,7 @@ describe('ProjectClone action', () => {
                 type: 'git',
                 url: 'https://example.com/repo.git',
             });
-            cloneProjectFromSourceMock.mockRejectedValueOnce(error);
+            cloneProjectMock.mockRejectedValueOnce(error);
 
             await projectClone.remoteCloneCommandHandler();
 

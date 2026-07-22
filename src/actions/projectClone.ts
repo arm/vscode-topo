@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { TopoCli } from '../services/topoCli';
 import { TargetModel } from '../models/targetModel';
 import {
-    cloneProjectFromSource,
+    cloneProject,
     getLocalSourcePath,
     promptForRemoteCloneSource,
 } from '../util/projectClone';
@@ -75,7 +75,7 @@ export class ProjectClone {
             if (!source) {
                 return;
             }
-            await cloneProjectFromSource(this.taskExecutor, source);
+            await cloneProject(this.taskExecutor, source);
         },
     );
 
@@ -85,7 +85,7 @@ export class ProjectClone {
             if (!cloneSourcePath) {
                 return;
             }
-            await cloneProjectFromSource(this.taskExecutor, {
+            await cloneProject(this.taskExecutor, {
                 type: 'dir',
                 path: cloneSourcePath,
             });
