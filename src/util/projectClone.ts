@@ -44,9 +44,7 @@ const open = 'Open';
 const openNewWindow = 'Open in New Window';
 const addToWorkspace = 'Add to Workspace';
 
-export const postCloneAction = async (
-    repositoryPath: string,
-): Promise<void> => {
+const postCloneAction = async (repositoryPath: string): Promise<void> => {
     let message = 'Would you like to open the cloned repository?';
     const choices = [open, openNewWindow];
 
@@ -299,11 +297,11 @@ export const promptForRemoteCloneSource = async (
     }).finally(() => quickPick.dispose());
 };
 
-export const executeProjectClone = async (
+export async function cloneProject(
     taskExecutor: TaskExecutor,
     cloneSource: CloneSource,
     cloneParameters: CloneParameters = {},
-): Promise<string | undefined> => {
+): Promise<void> {
     const selectedFolder = await vscode.window.showOpenDialog({
         canSelectFiles: false,
         canSelectFolders: true,
@@ -312,7 +310,7 @@ export const executeProjectClone = async (
     });
     const destinationPath = selectedFolder?.[0]?.fsPath;
     if (!destinationPath) {
-        return undefined;
+        return;
     }
 
     const defaultProjectName =
@@ -324,22 +322,9 @@ export const executeProjectClone = async (
         destinationPath,
         cloneParameters,
     );
-    return cloneResult.success ? cloneResult.repositoryPath : undefined;
-};
-
-export async function cloneProject(
-    taskExecutor: TaskExecutor,
-    cloneSource: CloneSource,
-    cloneParameters: CloneParameters = {},
-): Promise<void> {
-    const repositoryPath = await executeProjectClone(
-        taskExecutor,
-        cloneSource,
-        cloneParameters,
-    );
-    if (!repositoryPath) {
+    if (!cloneResult.success) {
         return;
     }
 
-    await postCloneAction(repositoryPath);
+    await postCloneAction(cloneResult.repositoryPath);
 }

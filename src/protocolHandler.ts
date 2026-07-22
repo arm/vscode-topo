@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { executeProjectClone, postCloneAction } from './util/projectClone';
+import { cloneProject } from './util/projectClone';
 import { logger } from './util/logger';
 import { parseCloneSourceString } from './util/parseSourceCloneString';
 import { isWrappedError } from './errors/wrappedError';
@@ -64,15 +64,5 @@ const handleCloneRequest = async (
         return;
     }
 
-    const repositoryPath = await executeProjectClone(
-        taskExecutor,
-        cloneSource,
-        cloneParameters,
-    );
-    if (!repositoryPath) {
-        logger.info(`Clone cancelled for URI ${uri.toString()}`);
-        return;
-    }
-
-    await postCloneAction(repositoryPath);
+    await cloneProject(taskExecutor, cloneSource, cloneParameters);
 };
