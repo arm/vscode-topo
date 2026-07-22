@@ -43,6 +43,22 @@ type RemoteProjectQuickPickItem = vscode.QuickPickItem & {
 const open = 'Open';
 const openNewWindow = 'Open in New Window';
 const addToWorkspace = 'Add to Workspace';
+const invalidProjectNameMessage =
+    'Project name must be a single folder name, not a path.';
+
+export const validateProjectName = (
+    projectName: string,
+): string | undefined => {
+    if (
+        projectName === '.' ||
+        projectName === '..' ||
+        projectName.includes('/') ||
+        projectName.includes('\\')
+    ) {
+        return invalidProjectNameMessage;
+    }
+    return undefined;
+};
 
 const postCloneAction = async (repositoryPath: string): Promise<void> => {
     let message = 'Would you like to open the cloned repository?';
@@ -181,9 +197,14 @@ const cloneWithSource = async (
     const projectName = await vscode.window.showInputBox({
         prompt: 'Enter the project name',
         value: defaultProjectName,
+        validateInput: validateProjectName,
     });
     if (!projectName) {
         return { success: false };
+    }
+    const projectNameValidationError = validateProjectName(projectName);
+    if (projectNameValidationError) {
+        throw new WrappedError('CLONE', projectNameValidationError);
     }
     const repositoryPath = path.join(destinationPath, projectName);
     const cloneTask = createCloneTask(
