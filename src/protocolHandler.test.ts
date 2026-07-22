@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import path from 'node:path';
 import os from 'node:os';
+import fs from 'node:fs';
 import { ProtocolHandler } from './protocolHandler';
 import { mutable } from './util/test/mutable';
 import { showAndLogError } from './util/showAndLog';
@@ -42,14 +43,16 @@ describe('ProtocolHandler', () => {
         taskExecutor = mock<TaskExecutor>();
         protocolHandler = new ProtocolHandler(taskExecutor);
         mutable(vscode.workspace).workspaceFolders = undefined;
+        vi.spyOn(fs, 'existsSync').mockReturnValue(false);
     });
+
+    afterEach(() => vi.restoreAllMocks());
 
     it('runs a topo clone task for explicit git sources', async () => {
         mutable(vscode.workspace).workspaceFolders = workspaceFolders;
         vi.mocked(vscode.window.showOpenDialog).mockResolvedValueOnce([
             destinationUri,
         ]);
-        vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
 
         await protocolHandler.handleUri(
             vscode.Uri.parse(
@@ -63,10 +66,8 @@ describe('ProtocolHandler', () => {
             canSelectMany: false,
             openLabel: 'Select Destination Folder',
         });
-        expect(
-            vi.mocked(vscode.window.showOpenDialog).mock.invocationCallOrder[0],
-        ).toBeLessThan(
-            vi.mocked(vscode.window.showInputBox).mock.invocationCallOrder[0],
+        expect(fs.existsSync).toHaveBeenCalledWith(
+            path.join(destinationUri.fsPath, 'repo'),
         );
         expect(taskExecutor.run).toHaveBeenCalledTimes(1);
         expectCloneTask(taskExecutor.run.mock.calls[0][0], 'repo', [
@@ -91,7 +92,6 @@ describe('ProtocolHandler', () => {
         vi.mocked(vscode.window.showOpenDialog).mockResolvedValueOnce([
             destinationUri,
         ]);
-        vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
 
         await protocolHandler.handleUri(
             vscode.Uri.parse(
@@ -125,7 +125,6 @@ describe('ProtocolHandler', () => {
         vi.mocked(vscode.window.showOpenDialog).mockResolvedValueOnce([
             destinationUri,
         ]);
-        vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
 
         await protocolHandler.handleUri(
             vscode.Uri.parse(
@@ -147,7 +146,6 @@ describe('ProtocolHandler', () => {
         vi.mocked(vscode.window.showOpenDialog).mockResolvedValueOnce([
             destinationUri,
         ]);
-        vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('repo');
 
         await protocolHandler.handleUri(
             vscode.Uri.parse(
@@ -169,9 +167,6 @@ describe('ProtocolHandler', () => {
         vi.mocked(vscode.window.showOpenDialog).mockResolvedValueOnce([
             destinationUri,
         ]);
-        vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
-            'topo-lightbulb-moment',
-        );
 
         await protocolHandler.handleUri(
             vscode.Uri.parse(

@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { TopoCli } from '../services/topoCli';
+import fs from 'node:fs';
 import * as path from 'node:path';
 import { ProjectDescription } from '../services/topoCliSchema';
 import { isWrappedError, WrappedError } from '../errors/wrappedError';
@@ -142,6 +143,20 @@ const getDefaultProjectNameFromSourceString = (
     }
 };
 
+const getProjectName = async (
+    destinationPath: string,
+    defaultProjectName: string,
+): Promise<string | undefined> => {
+    if (!fs.existsSync(path.join(destinationPath, defaultProjectName))) {
+        return defaultProjectName;
+    }
+
+    return vscode.window.showInputBox({
+        prompt: 'Enter the project name',
+        value: defaultProjectName,
+    });
+};
+
 export function createCloneTask(
     projectName: string,
     cloneSource: CloneSource,
@@ -178,10 +193,10 @@ const cloneWithSource = async (
     destinationPath: string,
     cloneParameters: CloneParameters = {},
 ): Promise<CloneResult> => {
-    const projectName = await vscode.window.showInputBox({
-        prompt: 'Enter the project name',
-        value: defaultProjectName,
-    });
+    const projectName = await getProjectName(
+        destinationPath,
+        defaultProjectName,
+    );
     if (!projectName) {
         return { success: false };
     }
