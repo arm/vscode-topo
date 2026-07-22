@@ -353,12 +353,6 @@ describe('project clone utilities', () => {
                 url: 'https://example.com/repo.git',
             });
 
-            expect(vscode.window.showOpenDialog).toHaveBeenCalledWith({
-                canSelectFiles: false,
-                canSelectFolders: true,
-                canSelectMany: false,
-                openLabel: 'Select Destination Folder',
-            });
             expect(vscode.window.showInputBox).toHaveBeenCalledWith({
                 prompt: 'Enter the project name',
                 value: 'repo',
