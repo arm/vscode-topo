@@ -24,7 +24,7 @@ Not sure what these terms mean? The [glossary](https://github.com/arm/topo/blob/
 
 **Host machine** (where this extension will run):
 
-- Visual Studio Code v1.101.0 or newer
+- Visual Studio Code v1.109.0 or newer
 - [Docker](https://docs.docker.com/get-docker/)
 - OpenSSH Client
 - curl
@@ -155,6 +155,7 @@ Commands available from the Command Palette:
 | `Topo: Clone Remote Project` | Clone from a custom Git repository or a curated list of projects. |
 | `Topo: Clone Local Project`  | Clone a project from a local directory.                           |
 | `Topo: Deploy`               | Select and deploy a compose file to the target.                   |
+| `Topo: Install Skill`        | Install the bundled Topo skill for the current user.              |
 
 Additional commands are available through inline buttons in the Target, Host, and Projects tree views.
 
