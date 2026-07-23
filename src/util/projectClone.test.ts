@@ -8,6 +8,7 @@ import {
     getFirstSentence,
     getLocalSourcePath,
     promptForRemoteCloneSource,
+    validateProjectName,
 } from './projectClone';
 import { mutable } from './test/mutable';
 import { TopoCli } from '../services/topoCli';
@@ -118,6 +119,28 @@ describe('project clone utilities', () => {
                 localProjectUri.fsPath,
             );
         });
+    });
+
+    describe('validateProjectName', () => {
+        it.each([
+            '../something',
+            '..\\something',
+            '/absolute/path',
+            'C:\\absolute\\path',
+            '.',
+            '..',
+        ])('rejects a project path (%s)', (projectName) => {
+            expect(validateProjectName(projectName)).toBe(
+                'Project name must be a single folder name, not a path.',
+            );
+        });
+
+        it.each(['project', 'project.v2', 'project name'])(
+            'accepts a single folder name (%s)',
+            (projectName) => {
+                expect(validateProjectName(projectName)).toBeUndefined();
+            },
+        );
     });
 
     describe('getDefaultProjectNameFromUrl', () => {
@@ -330,6 +353,30 @@ describe('project clone utilities', () => {
             expect(taskExecutor.run).not.toHaveBeenCalled();
         });
 
+        it.each(['../outside', '..\\outside'])(
+            'does not clone when the project name escapes the destination (%s)',
+            async (projectName) => {
+                vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
+                    projectName,
+                );
+
+                await expect(
+                    cloneProject(taskExecutor, {
+                        type: 'git',
+                        url: 'https://example.com/repo.git',
+                    }),
+                ).rejects.toEqual(
+                    expect.objectContaining({
+                        code: 'CLONE',
+                        message:
+                            'Project name must be a single folder name, not a path.',
+                    }),
+                );
+
+                expect(taskExecutor.run).not.toHaveBeenCalled();
+            },
+        );
+
         it('stops when no destination folder is selected', async () => {
             vi.mocked(vscode.window.showOpenDialog).mockResolvedValueOnce(
                 undefined,
@@ -356,6 +403,7 @@ describe('project clone utilities', () => {
             expect(vscode.window.showInputBox).toHaveBeenCalledWith({
                 prompt: 'Enter the project name',
                 value: 'repo',
+                validateInput: validateProjectName,
             });
             expect(taskExecutor.run).toHaveBeenCalledTimes(1);
             expectCloneTask(taskExecutor.run.mock.calls[0][0], 'repo', [
@@ -377,6 +425,7 @@ describe('project clone utilities', () => {
             expect(vscode.window.showInputBox).toHaveBeenCalledWith({
                 prompt: 'Enter the project name',
                 value: 'repo',
+                validateInput: validateProjectName,
             });
             expect(taskExecutor.run).toHaveBeenCalledTimes(1);
             expectCloneTask(taskExecutor.run.mock.calls[0][0], 'repo', [
@@ -423,6 +472,7 @@ describe('project clone utilities', () => {
             expect(vscode.window.showInputBox).toHaveBeenCalledWith({
                 prompt: 'Enter the project name',
                 value: 'source',
+                validateInput: validateProjectName,
             });
             expect(taskExecutor.run).toHaveBeenCalledTimes(1);
             expectCloneTask(taskExecutor.run.mock.calls[0][0], 'myproj', [
