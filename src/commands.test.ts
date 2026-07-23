@@ -75,7 +75,7 @@ describe('commands', () => {
             [
                 commands.refreshTargetData,
                 handlers.targetController
-                    .refreshSelectedTargetHealthCommandHandler,
+                    .refreshSelectedTargetDataCommandHandler,
             ],
             [commands.showOutput, vi.mocked(logger.show)],
             [

@@ -683,3 +683,26 @@ describe('selected target health refresh', () => {
         expect(topoCli.health).toHaveBeenCalledWith(target);
     });
 });
+
+describe('selected target data refresh', () => {
+    it('loads health and description for the selected target', async () => {
+        const targetStore = mockTargetStore([target], target);
+        const targetModel = new TargetModel();
+        targetModel.setSelected(target);
+        const { controller, topoCli } = createController(
+            targetModel,
+            targetStore,
+        );
+
+        await controller.refreshSelectedTargetDataCommandHandler();
+
+        expect(targetModel.selectedTargetHealth).toStrictEqual(
+            loaded(health.target),
+        );
+        expect(targetModel.selectedTargetDescription).toStrictEqual(
+            loaded(targetDescription),
+        );
+        expect(topoCli.health).toHaveBeenCalledWith(target);
+        expect(topoCli.describe).toHaveBeenCalledWith(target);
+    });
+});
