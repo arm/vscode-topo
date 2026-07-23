@@ -3,10 +3,12 @@ import { parseCloneSourceString } from './parseSourceCloneString';
 describe('parseCloneSourceString', () => {
     it('parses git clone sources', () => {
         expect(
-            parseCloneSourceString('git:https://example.com/repo.git'),
+            parseCloneSourceString(
+                'git:https://example.com/virtual-bittermelon-peeler.git',
+            ),
         ).toEqual({
             type: 'git',
-            url: 'https://example.com/repo.git',
+            url: 'https://example.com/virtual-bittermelon-peeler.git',
         });
     });
 
@@ -18,20 +20,34 @@ describe('parseCloneSourceString', () => {
     });
 
     it('returns raw clone sources when no explicit type is provided', () => {
-        expect(parseCloneSourceString('https://example.com/repo.git')).toEqual({
-            value: 'https://example.com/repo.git',
+        expect(
+            parseCloneSourceString(
+                'https://example.com/virtual-bittermelon-peeler.git',
+            ),
+        ).toEqual({
+            value: 'https://example.com/virtual-bittermelon-peeler.git',
         });
-        expect(parseCloneSourceString('ssh://example.com/repo.git')).toEqual({
-            value: 'ssh://example.com/repo.git',
+        expect(
+            parseCloneSourceString(
+                'ssh://example.com/virtual-bittermelon-peeler.git',
+            ),
+        ).toEqual({
+            value: 'ssh://example.com/virtual-bittermelon-peeler.git',
         });
-        expect(parseCloneSourceString('git@example.com:repo.git')).toEqual({
-            value: 'git@example.com:repo.git',
+        expect(
+            parseCloneSourceString(
+                'git@example.com:virtual-bittermelon-peeler.git',
+            ),
+        ).toEqual({
+            value: 'git@example.com:virtual-bittermelon-peeler.git',
         });
     });
 
     it('throws a clone error for invalid explicit types wrapping a URL', () => {
         expect(() =>
-            parseCloneSourceString('invalid:https://example.com/repo.git'),
+            parseCloneSourceString(
+                'invalid:https://example.com/virtual-bittermelon-peeler.git',
+            ),
         ).toThrow(
             expect.objectContaining({
                 code: 'CLONE',
@@ -39,7 +55,9 @@ describe('parseCloneSourceString', () => {
             }),
         );
         expect(() =>
-            parseCloneSourceString('invalid:ssh://example.com/repo.git'),
+            parseCloneSourceString(
+                'invalid:ssh://example.com/virtual-bittermelon-peeler.git',
+            ),
         ).toThrow(
             expect.objectContaining({
                 code: 'CLONE',

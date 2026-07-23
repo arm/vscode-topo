@@ -31,22 +31,22 @@ describe('parseQuery', () => {
 describe('parseRequestData', () => {
     it('keeps a non-protocol url query param', () => {
         const uri = vscode.Uri.parse(
-            'vscode://arm.topo/clone?source=https://example.com/repo.git%238303e66db59a7a11e64877121f3db1b688d2011f&url=https%3A%2F%2Fexample.com%2Fmodel',
+            'vscode://arm.topo/clone?source=https://example.com/virtual-bittermelon-peeler.git%238303e66db59a7a11e64877121f3db1b688d2011f&url=https%3A%2F%2Fexample.com%2Fmodel',
         );
 
         expect(parseRequestData(uri)).toEqual({
-            source: 'https://example.com/repo.git#8303e66db59a7a11e64877121f3db1b688d2011f',
+            source: 'https://example.com/virtual-bittermelon-peeler.git#8303e66db59a7a11e64877121f3db1b688d2011f',
             url: 'https://example.com/model',
         });
     });
 
     it('keeps a non-protocol url query param with later request data', () => {
         const uri = vscode.Uri.parse(
-            'vscode://arm.topo/clone?source=https://example.com/repo.git%238303e66db59a7a11e64877121f3db1b688d2011f&url=https%3A%2F%2Fexample.com%2Fmodel&GREETING_NAME=F%23ed',
+            'vscode://arm.topo/clone?source=https://example.com/virtual-bittermelon-peeler.git%238303e66db59a7a11e64877121f3db1b688d2011f&url=https%3A%2F%2Fexample.com%2Fmodel&GREETING_NAME=F%23ed',
         );
 
         expect(parseRequestData(uri)).toEqual({
-            source: 'https://example.com/repo.git#8303e66db59a7a11e64877121f3db1b688d2011f',
+            source: 'https://example.com/virtual-bittermelon-peeler.git#8303e66db59a7a11e64877121f3db1b688d2011f',
             url: 'https://example.com/model',
             GREETING_NAME: 'F#ed',
         });
@@ -54,22 +54,22 @@ describe('parseRequestData', () => {
 
     it('keeps an invalid url query param', () => {
         const uri = vscode.Uri.parse(
-            'vscode://arm.topo/clone?source=https://example.com/repo.git&url=not%20a%20valid%20url',
+            'vscode://arm.topo/clone?source=https://example.com/virtual-bittermelon-peeler.git&url=not%20a%20valid%20url',
         );
 
         expect(parseRequestData(uri)).toEqual({
-            source: 'https://example.com/repo.git',
+            source: 'https://example.com/virtual-bittermelon-peeler.git',
             url: 'not a valid url',
         });
     });
 
     it('removes a protocol url query param', () => {
         const uri = vscode.Uri.parse(
-            'vscode://arm.topo/clone?source=https://example.com/repo.git&url=vscode%3A%2F%2Farm.topo%2Fclone%3Fsource%3Dhttps%253A%252F%252Fexample.com%252Frepo.git',
+            'vscode://arm.topo/clone?source=https://example.com/virtual-bittermelon-peeler.git&url=vscode%3A%2F%2Farm.topo%2Fclone%3Fsource%3Dhttps%253A%252F%252Fexample.com%252Fvirtual-bittermelon-peeler.git',
         );
 
         expect(parseRequestData(uri)).toEqual({
-            source: 'https://example.com/repo.git',
+            source: 'https://example.com/virtual-bittermelon-peeler.git',
         });
     });
 
@@ -95,11 +95,11 @@ describe('parseRequestData', () => {
 
     it('does not treat the URI fragment as a query when source already has one', () => {
         const uri = vscode.Uri.parse(
-            'vscode://arm.topo/clone?source=https%3A%2F%2Fexample.com%2Frepo.git%23main#ignored&param=v1',
+            'vscode://arm.topo/clone?source=https%3A%2F%2Fexample.com%2Fvirtual-bittermelon-peeler.git%23main#ignored&param=v1',
         );
 
         expect(parseRequestData(uri)).toEqual({
-            source: 'https://example.com/repo.git#main',
+            source: 'https://example.com/virtual-bittermelon-peeler.git#main',
         });
     });
 
@@ -108,11 +108,11 @@ describe('parseRequestData', () => {
             scheme: 'vscode',
             authority: 'arm.topo',
             path: '/clone',
-            query: 'source=https://example.com/repo.git&amp;model=some-huggingface-id&#38;param=v1&#x26;another=val',
+            query: 'source=https://example.com/virtual-bittermelon-peeler.git&amp;model=some-huggingface-id&#38;param=v1&#x26;another=val',
         });
 
         expect(parseRequestData(uri)).toEqual({
-            source: 'https://example.com/repo.git',
+            source: 'https://example.com/virtual-bittermelon-peeler.git',
             model: 'some-huggingface-id',
             param: 'v1',
             another: 'val',
