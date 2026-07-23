@@ -74,14 +74,14 @@ describe('ProjectClone action', () => {
             selectQuickPickItem('Remote Project');
             promptForRemoteCloneSourceMock.mockResolvedValueOnce({
                 type: 'git',
-                url: 'https://example.com/repo.git',
+                url: 'https://example.com/virtual-bittermelon-peeler.git',
             });
 
             await projectClone.cloneCommandHandler();
 
             expect(cloneProjectMock).toHaveBeenCalledWith(taskExecutor, {
                 type: 'git',
-                url: 'https://example.com/repo.git',
+                url: 'https://example.com/virtual-bittermelon-peeler.git',
             });
         });
 
@@ -111,7 +111,7 @@ describe('ProjectClone action', () => {
             targetModel.setSelected('me@example.com');
             const source = {
                 type: 'git' as const,
-                url: 'https://example.com/repo.git',
+                url: 'https://example.com/virtual-bittermelon-peeler.git',
             };
             promptForRemoteCloneSourceMock.mockResolvedValueOnce(source);
 
@@ -151,7 +151,7 @@ describe('ProjectClone action', () => {
             const error = new WrappedError('CLONE', 'task fail');
             promptForRemoteCloneSourceMock.mockResolvedValueOnce({
                 type: 'git',
-                url: 'https://example.com/repo.git',
+                url: 'https://example.com/virtual-bittermelon-peeler.git',
             });
             cloneProjectMock.mockRejectedValueOnce(error);
 

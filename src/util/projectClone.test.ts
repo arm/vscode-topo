@@ -128,17 +128,17 @@ describe('project clone utilities', () => {
         it('returns the repository name for git URLs with commit refs', () => {
             expect(
                 getDefaultProjectNameFromUrl(
-                    'https://example.com/repo.git#8303e66db59a7a11e64877121f3db1b688d2011f',
+                    'https://example.com/virtual-bittermelon-peeler.git#8303e66db59a7a11e64877121f3db1b688d2011f',
                 ),
-            ).toBe('repo');
+            ).toBe('virtual-bittermelon-peeler');
         });
 
         it('returns the repository name for scp-like SSH URLs with refs', () => {
             expect(
                 getDefaultProjectNameFromUrl(
-                    'git@example.com:owner/repo.git#main',
+                    'git@example.com:owner/virtual-bittermelon-peeler.git#main',
                 ),
-            ).toBe('repo');
+            ).toBe('virtual-bittermelon-peeler');
         });
     });
 
@@ -169,7 +169,7 @@ describe('project clone utilities', () => {
 
         it('allows a custom URL when listing projects fails', async () => {
             const error = new Error('command failed');
-            const url = 'https://example.com/repo.git';
+            const url = 'https://example.com/virtual-bittermelon-peeler.git';
             topoCli.listProjects.mockRejectedValueOnce(error);
             const { enterValue, acceptItem } = mockRemoteQuickPick();
 
@@ -231,7 +231,7 @@ describe('project clone utilities', () => {
         });
 
         it('offers a typed git URL before the catalog projects', async () => {
-            const url = 'https://example.com/repo.git';
+            const url = 'https://example.com/virtual-bittermelon-peeler.git';
             topoCli.listProjects.mockResolvedValue(projectList);
             const { quickPick, enterValue, acceptItem } = mockRemoteQuickPick();
 
@@ -274,7 +274,7 @@ describe('project clone utilities', () => {
                 'repo',
                 {
                     type: 'git',
-                    url: 'https://example.com/repo.git',
+                    url: 'https://example.com/virtual-bittermelon-peeler.git',
                 },
                 repositoryPath,
                 {
@@ -287,7 +287,7 @@ describe('project clone utilities', () => {
                 'repo',
                 [
                     'clone',
-                    'git:https://example.com/repo.git',
+                    'git:https://example.com/virtual-bittermelon-peeler.git',
                     repositoryPath,
                     'model=some-huggingface-id',
                 ],
@@ -329,12 +329,12 @@ describe('project clone utilities', () => {
 
             await cloneProject(taskExecutor, {
                 type: 'git',
-                url: 'https://example.com/repo.git',
+                url: 'https://example.com/virtual-bittermelon-peeler.git',
             });
 
             expect(vscode.window.showInputBox).toHaveBeenCalledWith({
                 prompt: 'Enter the project name',
-                value: 'repo',
+                value: 'virtual-bittermelon-peeler',
             });
             expect(taskExecutor.run).not.toHaveBeenCalled();
         });
@@ -346,7 +346,7 @@ describe('project clone utilities', () => {
 
             await cloneProject(taskExecutor, {
                 type: 'git',
-                url: 'https://example.com/repo.git',
+                url: 'https://example.com/virtual-bittermelon-peeler.git',
             });
 
             expect(vscode.window.showInputBox).not.toHaveBeenCalled();
@@ -358,18 +358,25 @@ describe('project clone utilities', () => {
 
             await cloneProject(taskExecutor, {
                 type: 'git',
-                url: 'https://example.com/repo.git',
+                url: 'https://example.com/virtual-bittermelon-peeler.git',
             });
 
             expect(fs.existsSync).toHaveBeenCalledWith(
-                path.join(workspaceUri.fsPath, 'repo'),
+                path.join(workspaceUri.fsPath, 'virtual-bittermelon-peeler'),
             );
             expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-            expectCloneTask(taskExecutor.run.mock.calls[0][0], 'repo', [
-                'clone',
-                'git:https://example.com/repo.git',
-                path.join(workspaceUri.fsPath, 'repo'),
-            ]);
+            expectCloneTask(
+                taskExecutor.run.mock.calls[0][0],
+                'virtual-bittermelon-peeler',
+                [
+                    'clone',
+                    'git:https://example.com/virtual-bittermelon-peeler.git',
+                    path.join(
+                        workspaceUri.fsPath,
+                        'virtual-bittermelon-peeler',
+                    ),
+                ],
+            );
         });
 
         it('creates a clone task for a valid SSH git URL', async () => {
@@ -377,15 +384,22 @@ describe('project clone utilities', () => {
 
             await cloneProject(taskExecutor, {
                 type: 'git',
-                url: 'git@example.com:repo.git',
+                url: 'git@example.com:virtual-bittermelon-peeler.git',
             });
 
             expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-            expectCloneTask(taskExecutor.run.mock.calls[0][0], 'repo', [
-                'clone',
-                'git:git@example.com:repo.git',
-                path.join(workspaceUri.fsPath, 'repo'),
-            ]);
+            expectCloneTask(
+                taskExecutor.run.mock.calls[0][0],
+                'virtual-bittermelon-peeler',
+                [
+                    'clone',
+                    'git:git@example.com:virtual-bittermelon-peeler.git',
+                    path.join(
+                        workspaceUri.fsPath,
+                        'virtual-bittermelon-peeler',
+                    ),
+                ],
+            );
         });
 
         it('passes raw clone sources and arbitrary clone options through to topo clone', async () => {
@@ -394,7 +408,7 @@ describe('project clone utilities', () => {
             await cloneProject(
                 taskExecutor,
                 {
-                    value: 'https://example.com/repo.git',
+                    value: 'https://example.com/virtual-bittermelon-peeler.git',
                 },
                 {
                     model: 'some-huggingface-id',
@@ -402,12 +416,19 @@ describe('project clone utilities', () => {
             );
 
             expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-            expectCloneTask(taskExecutor.run.mock.calls[0][0], 'repo', [
-                'clone',
-                'https://example.com/repo.git',
-                path.join(workspaceUri.fsPath, 'repo'),
-                'model=some-huggingface-id',
-            ]);
+            expectCloneTask(
+                taskExecutor.run.mock.calls[0][0],
+                'virtual-bittermelon-peeler',
+                [
+                    'clone',
+                    'https://example.com/virtual-bittermelon-peeler.git',
+                    path.join(
+                        workspaceUri.fsPath,
+                        'virtual-bittermelon-peeler',
+                    ),
+                    'model=some-huggingface-id',
+                ],
+            );
         });
 
         it('asks for a project name when the default path is already used', async () => {
@@ -444,17 +465,20 @@ describe('project clone utilities', () => {
 
             await cloneProject(taskExecutor, {
                 type: 'git',
-                url: 'https://example.com/repo.git',
+                url: 'https://example.com/virtual-bittermelon-peeler.git',
             });
 
             expect(taskExecutor.run).toHaveBeenCalledTimes(1);
             expectCloneTask(
                 taskExecutor.run.mock.calls[0][0],
-                'repo',
+                'virtual-bittermelon-peeler',
                 [
                     'clone',
-                    'git:https://example.com/repo.git',
-                    path.join(destinationUri.fsPath, 'repo'),
+                    'git:https://example.com/virtual-bittermelon-peeler.git',
+                    path.join(
+                        destinationUri.fsPath,
+                        'virtual-bittermelon-peeler',
+                    ),
                 ],
                 os.homedir(),
             );
@@ -468,7 +492,7 @@ describe('project clone utilities', () => {
             await expect(
                 cloneProject(taskExecutor, {
                     type: 'git',
-                    url: 'https://example.com/repo.git',
+                    url: 'https://example.com/virtual-bittermelon-peeler.git',
                 }),
             ).rejects.toEqual(
                 expect.objectContaining({
@@ -483,7 +507,7 @@ describe('project clone utilities', () => {
 
             await cloneProject(taskExecutor, {
                 type: 'git',
-                url: 'https://example.com/repo.git',
+                url: 'https://example.com/virtual-bittermelon-peeler.git',
             });
 
             expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
@@ -501,12 +525,17 @@ describe('project clone utilities', () => {
 
             await cloneProject(taskExecutor, {
                 type: 'git',
-                url: 'https://example.com/repo.git',
+                url: 'https://example.com/virtual-bittermelon-peeler.git',
             });
 
             expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
                 'vscode.openFolder',
-                vscode.Uri.file(path.join(workspaceUri.fsPath, 'repo')),
+                vscode.Uri.file(
+                    path.join(
+                        workspaceUri.fsPath,
+                        'virtual-bittermelon-peeler',
+                    ),
+                ),
                 { forceReuseWindow: true },
             );
         });
@@ -519,12 +548,17 @@ describe('project clone utilities', () => {
 
             await cloneProject(taskExecutor, {
                 type: 'git',
-                url: 'https://example.com/repo.git',
+                url: 'https://example.com/virtual-bittermelon-peeler.git',
             });
 
             expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
                 'vscode.openFolder',
-                vscode.Uri.file(path.join(workspaceUri.fsPath, 'repo')),
+                vscode.Uri.file(
+                    path.join(
+                        workspaceUri.fsPath,
+                        'virtual-bittermelon-peeler',
+                    ),
+                ),
                 { forceNewWindow: true },
             );
         });
@@ -537,13 +571,18 @@ describe('project clone utilities', () => {
 
             await cloneProject(taskExecutor, {
                 type: 'git',
-                url: 'https://example.com/repo.git',
+                url: 'https://example.com/virtual-bittermelon-peeler.git',
             });
 
             expect(
                 vscode.workspace.updateWorkspaceFolders,
             ).toHaveBeenCalledWith(workspaceFolders.length, 0, {
-                uri: vscode.Uri.file(path.join(workspaceUri.fsPath, 'repo')),
+                uri: vscode.Uri.file(
+                    path.join(
+                        workspaceUri.fsPath,
+                        'virtual-bittermelon-peeler',
+                    ),
+                ),
             });
         });
 
@@ -555,7 +594,7 @@ describe('project clone utilities', () => {
             await expect(
                 cloneProject(taskExecutor, {
                     type: 'git',
-                    url: 'https://example.com/repo.git',
+                    url: 'https://example.com/virtual-bittermelon-peeler.git',
                 }),
             ).rejects.toThrow(WrappedError);
 

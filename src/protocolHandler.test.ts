@@ -56,7 +56,7 @@ describe('ProtocolHandler', () => {
 
         await protocolHandler.handleUri(
             vscode.Uri.parse(
-                'vscode://arm.topo/clone?source=git:https://example.com/repo.git',
+                'vscode://arm.topo/clone?source=git:https://example.com/virtual-bittermelon-peeler.git',
             ),
         );
 
@@ -67,14 +67,18 @@ describe('ProtocolHandler', () => {
             openLabel: 'Select Destination Folder',
         });
         expect(fs.existsSync).toHaveBeenCalledWith(
-            path.join(destinationUri.fsPath, 'repo'),
+            path.join(destinationUri.fsPath, 'virtual-bittermelon-peeler'),
         );
         expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-        expectCloneTask(taskExecutor.run.mock.calls[0][0], 'repo', [
-            'clone',
-            'git:https://example.com/repo.git',
-            path.join(destinationUri.fsPath, 'repo'),
-        ]);
+        expectCloneTask(
+            taskExecutor.run.mock.calls[0][0],
+            'virtual-bittermelon-peeler',
+            [
+                'clone',
+                'git:https://example.com/virtual-bittermelon-peeler.git',
+                path.join(destinationUri.fsPath, 'virtual-bittermelon-peeler'),
+            ],
+        );
         expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
             'Would you like to open the cloned repository, or add it to the current workspace?',
             { modal: true },
@@ -95,7 +99,7 @@ describe('ProtocolHandler', () => {
 
         await protocolHandler.handleUri(
             vscode.Uri.parse(
-                'vscode://arm.topo/clone?source=git:https://example.com/repo.git',
+                'vscode://arm.topo/clone?source=git:https://example.com/virtual-bittermelon-peeler.git',
             ),
         );
 
@@ -108,11 +112,11 @@ describe('ProtocolHandler', () => {
         expect(taskExecutor.run).toHaveBeenCalledTimes(1);
         expectCloneTask(
             taskExecutor.run.mock.calls[0][0],
-            'repo',
+            'virtual-bittermelon-peeler',
             [
                 'clone',
-                'git:https://example.com/repo.git',
-                path.join(destinationUri.fsPath, 'repo'),
+                'git:https://example.com/virtual-bittermelon-peeler.git',
+                path.join(destinationUri.fsPath, 'virtual-bittermelon-peeler'),
             ],
             os.homedir(),
         );
@@ -128,7 +132,7 @@ describe('ProtocolHandler', () => {
 
         await protocolHandler.handleUri(
             vscode.Uri.parse(
-                'vscode://arm.topo/clone?source=git:https://example.com/repo.git',
+                'vscode://arm.topo/clone?source=git:https://example.com/virtual-bittermelon-peeler.git',
             ),
         );
 
@@ -149,17 +153,21 @@ describe('ProtocolHandler', () => {
 
         await protocolHandler.handleUri(
             vscode.Uri.parse(
-                'vscode://arm.topo/clone?source=https://example.com/repo.git&model=some-huggingface-id',
+                'vscode://arm.topo/clone?source=https://example.com/virtual-bittermelon-peeler.git&model=some-huggingface-id',
             ),
         );
 
         expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-        expectCloneTask(taskExecutor.run.mock.calls[0][0], 'repo', [
-            'clone',
-            'https://example.com/repo.git',
-            path.join(destinationUri.fsPath, 'repo'),
-            'model=some-huggingface-id',
-        ]);
+        expectCloneTask(
+            taskExecutor.run.mock.calls[0][0],
+            'virtual-bittermelon-peeler',
+            [
+                'clone',
+                'https://example.com/virtual-bittermelon-peeler.git',
+                path.join(destinationUri.fsPath, 'virtual-bittermelon-peeler'),
+                'model=some-huggingface-id',
+            ],
+        );
     });
 
     it('runs a topo clone task for bare github urls', async () => {
@@ -194,7 +202,7 @@ describe('ProtocolHandler', () => {
 
         await protocolHandler.handleUri(
             vscode.Uri.parse(
-                'vscode://arm.topo/clone?source=git:https://example.com/repo.git',
+                'vscode://arm.topo/clone?source=git:https://example.com/virtual-bittermelon-peeler.git',
             ),
         );
 
