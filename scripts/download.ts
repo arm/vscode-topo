@@ -22,11 +22,8 @@ const SHA256_PATTERN = /^[a-f0-9]{64}$/i;
 const isSha256 = (value: unknown): value is string =>
     typeof value === 'string' && SHA256_PATTERN.test(value);
 
-const readFromUrl = async (
-    url: string,
-    init?: RequestInit,
-): Promise<Response> => {
-    const response = await fetch(url, init);
+const readFromUrl = async (url: string): Promise<Response> => {
+    const response = await fetch(url);
     if (response.ok) {
         return response;
     }
@@ -114,27 +111,12 @@ const downloadFile = async (
             `Invalid source path: ${sourcePath}. Must be a http URL.`,
         );
     }
-    const checksumResponse = await readFromUrl(sourcePath, { method: 'HEAD' });
-    const remoteSha256 = checksumResponse.headers.get('x-checksum-sha256');
-    if (!isSha256(remoteSha256)) {
-        throw new Error(
-            `Artifactory returned an invalid SHA-256 for "${sourcePath}".\nReturned SHA-256: ${remoteSha256 ?? '<missing>'}`,
-        );
-    }
-
-    const normalizedExpectedSha256 = expectedSha256.toLowerCase();
-    if (remoteSha256.toLowerCase() !== normalizedExpectedSha256) {
-        throw new Error(
-            `Remote SHA-256 mismatch for "${sourcePath}".\nExpected SHA-256: ${expectedSha256}\nReturned SHA-256: ${remoteSha256}`,
-        );
-    }
-
     const response = await readFromUrl(sourcePath);
     const arrayBuffer = await response.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
     const actualSha256 = createHash('sha256').update(buffer).digest('hex');
-    if (actualSha256 !== normalizedExpectedSha256) {
+    if (actualSha256 !== expectedSha256.toLowerCase()) {
         throw new Error(
             `Downloaded archive SHA-256 mismatch for "${sourcePath}".\nExpected SHA-256: ${expectedSha256}\nCalculated SHA-256: ${actualSha256}`,
         );
