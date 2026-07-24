@@ -273,4 +273,4 @@ jobs:
             - name: Publish to VS Code Marketplace
               run: npx vsce publish -i artifacts/*.vsix -p ${{secrets.VS_MARKETPLACE_TOKEN}} $PRE_RELEASE_FLAG
             - name: Publish to Open VSX
-              run: npx ovsx@0.8.0 publish -i artifacts/*.vsix -p ${{secrets.OPEN_VSX_TOKEN}} $PRE_RELEASE_FLAG
+              run: npx --yes ovsx@1.0.2 publish --skip-duplicate -i artifacts/*.vsix -p ${{secrets.OPEN_VSX_TOKEN}} $PRE_RELEASE_FLAG
