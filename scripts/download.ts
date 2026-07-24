@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import nodeOs from 'node:os';
+import { createHash } from 'node:crypto';
 import yargs from 'yargs';
 import extract from 'extract-zip';
 import * as tar from 'tar';
@@ -16,8 +17,16 @@ const DOWNLOAD_TARGETS = [
 ] as const;
 type DownloadTarget = (typeof DOWNLOAD_TARGETS)[number];
 
-const readFromUrl = async (url: string): Promise<Response> => {
-    const response = await fetch(url);
+const SHA256_PATTERN = /^[a-f0-9]{64}$/i;
+
+const isSha256 = (value: unknown): value is string =>
+    typeof value === 'string' && SHA256_PATTERN.test(value);
+
+const readFromUrl = async (
+    url: string,
+    init?: RequestInit,
+): Promise<Response> => {
+    const response = await fetch(url, init);
     if (response.ok) {
         return response;
     }
@@ -92,20 +101,44 @@ const extractFileFromArchive = async (
  * @param sourcePath - HTTPS URL of the archive to download
  * @param destPath - Path to the file to be saved
  * @param filename - Filename inside the archive to extract
+ * @param expectedSha256 - Expected SHA-256 digest of the downloaded archive
  */
 const downloadFile = async (
     sourcePath: string,
     destPath: string,
     filename: string,
+    expectedSha256: string,
 ): Promise<void> => {
     if (!sourcePath.startsWith('http')) {
         throw new Error(
             `Invalid source path: ${sourcePath}. Must be a http URL.`,
         );
     }
+    const checksumResponse = await readFromUrl(sourcePath, { method: 'HEAD' });
+    const remoteSha256 = checksumResponse.headers.get('x-checksum-sha256');
+    if (!isSha256(remoteSha256)) {
+        throw new Error(
+            `Artifactory returned an invalid SHA-256 for "${sourcePath}".\nReturned SHA-256: ${remoteSha256 ?? '<missing>'}`,
+        );
+    }
+
+    const normalizedExpectedSha256 = expectedSha256.toLowerCase();
+    if (remoteSha256.toLowerCase() !== normalizedExpectedSha256) {
+        throw new Error(
+            `Remote SHA-256 mismatch for "${sourcePath}".\nExpected SHA-256: ${expectedSha256}\nReturned SHA-256: ${remoteSha256}`,
+        );
+    }
+
     const response = await readFromUrl(sourcePath);
     const arrayBuffer = await response.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
+
+    const actualSha256 = createHash('sha256').update(buffer).digest('hex');
+    if (actualSha256 !== normalizedExpectedSha256) {
+        throw new Error(
+            `Downloaded archive SHA-256 mismatch for "${sourcePath}".\nExpected SHA-256: ${expectedSha256}\nCalculated SHA-256: ${actualSha256}`,
+        );
+    }
 
     fs.mkdirSync(path.dirname(destPath), { recursive: true });
 
@@ -155,6 +188,13 @@ if (!section || typeof section.version !== 'string') {
     process.exit(1);
 }
 const version = section.version;
+const expectedSha256 = section.sha256?.[target];
+if (!isSha256(expectedSha256)) {
+    console.error(
+        `✖ package.json must have a valid SHA-256 digest at "${manifest.TOPO_CLI}.sha256.${target}".\nConfigured SHA-256: ${expectedSha256 ?? '<missing>'}`,
+    );
+    process.exit(1);
+}
 
 // --- Determine asset name ---------------------------------------------------
 const assetMapping: Record<DownloadTarget, string> = {
@@ -178,7 +218,12 @@ console.log(`→ Downloading ${downloadUrl}`);
 // --- Perform download --------------------------------------------------------
 void (async () => {
     try {
-        await downloadFile(downloadUrl, destFilename, topoFilename);
+        await downloadFile(
+            downloadUrl,
+            destFilename,
+            topoFilename,
+            expectedSha256,
+        );
         fs.chmodSync(destFilename, '755');
     } catch (err: unknown) {
         const errorMsg = err instanceof Error ? err.message : err;

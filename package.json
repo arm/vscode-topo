@@ -19,7 +19,15 @@
     ],
     "main": "./dist/extension.js",
     "topo": {
-        "version": "9.0.0"
+        "version": "9.0.0",
+        "sha256": {
+            "win32-x64": "43d006f1aa1bbb4b4d59cbd6a474ce56df758637d8147592579adcdac3d3b29e",
+            "win32-arm64": "d0cb5a520324a0b3d11f35b594d6bcf95249eb1fdd11b49e277ed9452c5a6105",
+            "linux-x64": "7daf848175207e309d6088f89177243611ebd98ed94beebd79b267fff8aca9cb",
+            "linux-arm64": "ae24ab78cdeb3ae1bad0bc5f2b6700644ed80ce82220079e7b565712b62809b1",
+            "darwin-x64": "d76beb48ea0a7c525552c01ed0e70edebffe39c7aaf990ae5df77b19ea86e042",
+            "darwin-arm64": "827e29b7cc681195239664d1087b4cd86c0ad0a6559a436a5d0c2eb32a362b0e"
+        }
     },
     "contributes": {
         "commands": [
