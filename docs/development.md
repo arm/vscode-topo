@@ -6,7 +6,6 @@ This document covers how to build, test, and package the Topo VS Code extension 
 
 - Node.js (^22.0.0)
 - npm (^10.0.0)
-- VS Code Extension Manager (vsce) for packaging (`npm install -g vsce`)
 
 ## Setup
 
@@ -66,8 +65,6 @@ Generate a `.vsix` package for distribution:
 ```bash
 npm run package
 ```
-
-This requires `vsce` to be installed globally.
 
 ## Access the `topo` Binary
 
