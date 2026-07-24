@@ -13,7 +13,7 @@ import {
     psSchema,
     PsOutput,
 } from './topoCliSchema';
-import { array, create, is, Struct } from 'superstruct';
+import { array, create, Struct } from 'superstruct';
 import {
     WrappedError,
     WrappedErrorLog,
@@ -56,14 +56,13 @@ export function parseTopoLogEntries(output: string): WrappedErrorLog[] {
         }
         try {
             const parsed: unknown = JSON.parse(trimmed);
-            if (is(parsed, topoLogEntrySchema)) {
-                entries.push({
-                    level: normalizeLogLevel(parsed.level),
-                    msg: parsed.msg,
-                });
-            }
+            const entry = create(parsed, topoLogEntrySchema);
+            entries.push({
+                level: normalizeLogLevel(entry.level),
+                msg: entry.msg,
+            });
         } catch {
-            // Line is not valid JSON, skip it
+            // Line is not valid structured log JSON, skip it
         }
     }
     return entries;

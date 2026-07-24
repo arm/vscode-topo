@@ -93,13 +93,23 @@ describe('TopoCli', () => {
             {
                 name: 'p',
                 url: 'u',
-                features: [],
+                features: ['feature'],
                 description: 'project description',
                 ref: 'r',
+                compatibility: 'supported',
             },
         ];
         execFileMock.mockResolvedValue({
-            stdout: JSON.stringify(list),
+            stdout: JSON.stringify([
+                {
+                    name: ' p ',
+                    url: ' u ',
+                    features: [' feature '],
+                    description: ' project description ',
+                    ref: ' r ',
+                    compatibility: ' supported ',
+                },
+            ]),
             stderr: '',
         });
 
@@ -304,8 +314,19 @@ describe('TopoCli', () => {
                 },
             ],
         };
+        const cliResponse = {
+            containers: output.containers.map((container) => ({
+                id: ` ${container.id} `,
+                names: ` ${container.names} `,
+                image: ` ${container.image} `,
+                status: ` ${container.status} `,
+                state: ` ${container.state} `,
+                processingDomain: ` ${container.processingDomain} `,
+                address: ` ${container.address} `,
+            })),
+        };
         execFileMock.mockResolvedValue({
-            stdout: JSON.stringify(output),
+            stdout: JSON.stringify(cliResponse),
             stderr: '',
         });
 
@@ -557,7 +578,7 @@ describe('parseWrappedError', () => {
 describe('parseTopoLogEntries', () => {
     it('parses a single structured log line', () => {
         const input =
-            '{"time":"2026-04-16T15:14:48.476234895+01:00","level":"ERROR","msg":"collecting CPU info: \\"lscpu\\" not found on remote target\'s $PATH"}';
+            '{"time":" 2026-04-16T15:14:48.476234895+01:00 ","level":" ERROR ","msg":" collecting CPU info: \\"lscpu\\" not found on remote target\'s $PATH "}';
 
         const entries = parseTopoLogEntries(input);
 
