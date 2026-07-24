@@ -14,7 +14,9 @@ import {
     ProcessingDomainTreeItem,
 } from './treeItems/processingDomainTreeItem';
 
-function syncProjectCountContext(projects: Loadable<ProjectMetadata[]>): void {
+function syncProjectCountContext(
+    projects: Loadable<readonly ProjectMetadata[]>,
+): void {
     const count =
         projects.status === 'loaded' ? projects.data.length : undefined;
     void vscode.commands.executeCommand(
@@ -35,7 +37,7 @@ function compareContainers(a: ContainerItem, b: ContainerItem): number {
 }
 
 function groupContainersByProcessingDomain(
-    containers: ContainerItem[],
+    containers: readonly ContainerItem[],
 ): ProcessingDomainTreeItem[] {
     const containersByDomain = new Map<string, ContainerItem[]>();
     for (const container of containers) {
@@ -48,7 +50,7 @@ function groupContainersByProcessingDomain(
 
     return [...containersByDomain.entries()]
         .map(([domain, containers]) => {
-            const sortedContainers = [...containers].sort(compareContainers);
+            const sortedContainers = containers.toSorted(compareContainers);
             return new ProcessingDomainTreeItem(domain, sortedContainers);
         })
         .sort(compareProcessingDomains);

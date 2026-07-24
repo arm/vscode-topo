@@ -8,8 +8,10 @@ import { HostModel } from '../models/hostModel';
 import { DisposableCollector } from '../util/disposableCollector';
 import { loaded } from '../util/loadable';
 
-function sortHealthChecksByName(healthChecks: HealthCheck[]): HealthCheck[] {
-    return healthChecks.sort((a, b) =>
+function sortHealthChecksByName(
+    healthChecks: readonly HealthCheck[],
+): HealthCheck[] {
+    return healthChecks.toSorted((a, b) =>
         a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
     );
 }

@@ -34,7 +34,7 @@ describe('HostTreeView', () => {
         expect(children[0].contextValue).toBe('Health');
     });
 
-    it('returns host health checks sorted by name below the Health group', async () => {
+    it('returns sorted host health checks without mutating the model', async () => {
         const model = new HostModel();
         model.setHealth(
             loaded({
@@ -79,6 +79,13 @@ describe('HostTreeView', () => {
                 description: 'missing',
             }),
         ]);
+        expect(model.health).toMatchObject({
+            data: {
+                host: {
+                    dependencies: [{ name: 'Zed' }, { name: 'Alpha' }],
+                },
+            },
+        });
     });
 
     it('returns an error item when host health cannot be loaded', async () => {

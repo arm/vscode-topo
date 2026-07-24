@@ -1,7 +1,7 @@
 import { HealthCheck, HealthCheckStatus } from '../services/topoCliSchema';
 
 export const getWorstHealthCheckStatus = (
-    healthChecks: HealthCheck[],
+    healthChecks: readonly HealthCheck[],
 ): HealthCheckStatus => {
     return healthChecks.reduce((acc: HealthCheckStatus, healthCheck) => {
         if (healthCheck.status === 'error') {
