@@ -8,9 +8,7 @@ import { ProjectInit } from './actions/projectInit';
 import { Deploy } from './actions/deploy';
 import { Stop } from './actions/stop';
 import { OpenContainerShell } from './actions/openContainerShell';
-import { ContainerStart } from './actions/containerStart';
-import { ContainerStop } from './actions/containerStop';
-import { ContainerDelete } from './actions/containerDelete';
+import { ContainerLifecycle } from './actions/containerLifecycle';
 import { FixIssue } from './actions/fixIssue';
 import { ProjectClone } from './actions/projectClone';
 import { ProjectController } from './controllers/projectController';
@@ -59,9 +57,7 @@ export interface CommandHandlers {
     openContainerShell: OpenContainerShell;
     connectViaSSH: ConnectViaSSH;
     openContainerInBrowser: OpenContainerInBrowser;
-    containerStart: ContainerStart;
-    containerStop: ContainerStop;
-    containerDelete: ContainerDelete;
+    containerLifecycle: ContainerLifecycle;
     fixIssue: FixIssue;
     openSettings: OpenSettings;
 }
@@ -128,13 +124,13 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
             ),
         ),
         vscode.commands.registerCommand(startContainer, (treeNode) =>
-            handlers.containerStart.startContainerCommandHandler(treeNode),
+            handlers.containerLifecycle.startContainerCommandHandler(treeNode),
         ),
         vscode.commands.registerCommand(stopContainer, (treeNode) =>
-            handlers.containerStop.stopContainerCommandHandler(treeNode),
+            handlers.containerLifecycle.stopContainerCommandHandler(treeNode),
         ),
         vscode.commands.registerCommand(deleteContainer, (treeNode) =>
-            handlers.containerDelete.deleteContainerCommandHandler(treeNode),
+            handlers.containerLifecycle.deleteContainerCommandHandler(treeNode),
         ),
         vscode.commands.registerCommand(fixIssue, (treeNode) =>
             handlers.fixIssue.fixIssueCommandHandler(treeNode),
