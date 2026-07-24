@@ -139,7 +139,9 @@ describe('TopoCli', () => {
     it('listProjects throws error on invalid JSON output', async () => {
         execFileMock.mockResolvedValue({ stdout: 'invalid json', stderr: '' });
 
-        await expect(topoCli.listProjects('me@example.com')).rejects.toThrow();
+        await expect(topoCli.listProjects('me@example.com')).rejects.toThrow(
+            'Failed to parse project catalog JSON:',
+        );
     });
 
     it('listProjects throws WrappedError when stderr contains structured log entries', async () => {
@@ -329,7 +331,9 @@ describe('TopoCli', () => {
     it('ps rejects when JSON output is invalid', async () => {
         execFileMock.mockResolvedValue({ stdout: 'invalid json', stderr: '' });
 
-        await expect(topoCli.ps('hostname', '/fake/project')).rejects.toThrow();
+        await expect(topoCli.ps('hostname', '/fake/project')).rejects.toThrow(
+            'Failed to parse container status JSON:',
+        );
     });
 
     it('ps rejects when JSON output fails schema validation', async () => {
@@ -351,10 +355,12 @@ describe('TopoCli', () => {
             stderr: '',
         });
 
-        await expect(topoCli.ps('hostname', '/fake/project')).rejects.toThrow();
+        await expect(topoCli.ps('hostname', '/fake/project')).rejects.toThrow(
+            'Invalid container status JSON:',
+        );
     });
 
-    it('health parses JSON output', async () => {
+    it('health parses and normalizes JSON output', async () => {
         const want: HealthReport = {
             host: { dependencies: [] },
             target: {
@@ -382,24 +388,24 @@ describe('TopoCli', () => {
         const cliResponse: HealthReport = {
             host: { dependencies: [] },
             target: {
-                destination: 'ssh://hostname',
+                destination: ' ssh://hostname ',
                 isLocalhost: false,
                 dependencies: [
                     {
-                        name: 'Container Engine',
+                        name: ' Container Engine ',
                         status: 'ok',
-                        value: 'docker',
+                        value: ' docker ',
                     },
                 ],
                 connectivity: {
-                    name: 'Connected',
+                    name: ' Connected ',
                     status: 'ok',
                     value: '',
                 },
                 processingDomainDriver: {
-                    name: 'Processing Domain Driver (remoteproc)',
+                    name: ' Processing Domain Driver (remoteproc) ',
                     status: 'ok',
-                    value: 'driver-x',
+                    value: ' driver-x ',
                 },
             },
         };
@@ -456,7 +462,9 @@ describe('TopoCli', () => {
     it('health throws error when JSON output is invalid', async () => {
         execFileMock.mockResolvedValue({ stdout: 'invalid json', stderr: '' });
 
-        await expect(topoCli.health('hostname')).rejects.toThrow();
+        await expect(topoCli.health('hostname')).rejects.toThrow(
+            'Failed to parse target health report JSON:',
+        );
     });
 
     describe('getBinaryPath on Windows', () => {
