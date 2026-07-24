@@ -94,7 +94,9 @@ function getSelectedTargetChildren(
     }
 }
 
-function syncTargetDataIssueContext(targets: Loadable<string[]>): void {
+function syncTargetDataIssueContext(
+    targets: Loadable<readonly string[]>,
+): void {
     void vscode.commands.executeCommand(
         'setContext',
         manifest.CONTEXT_TARGET_DATA_ISSUE,
@@ -199,7 +201,7 @@ export class TargetTreeView
         }
 
         if (element instanceof HealthCheckGroupTreeItem) {
-            const healthChecks = [...element.healthChecks].sort(compareByName);
+            const healthChecks = element.healthChecks.toSorted(compareByName);
             return healthChecks.map(
                 (healthCheck) => new HealthCheckTreeItem(loaded(healthCheck)),
             );

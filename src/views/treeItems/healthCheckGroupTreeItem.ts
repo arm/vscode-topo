@@ -6,9 +6,9 @@ import { Loaded } from '../../util/loadable';
 import { hasFixCommand } from '../../util/issueFixes';
 
 export class HealthCheckGroupTreeItem extends vscode.TreeItem {
-    public readonly healthChecks: HealthCheck[];
+    public readonly healthChecks: readonly HealthCheck[];
 
-    constructor(healthChecks: Loaded<HealthCheck[]>) {
+    constructor(healthChecks: Loaded<readonly HealthCheck[]>) {
         super('Health', vscode.TreeItemCollapsibleState.Collapsed);
         this.contextValue = 'Health';
         if (healthChecks.data.some(hasFixCommand)) {
