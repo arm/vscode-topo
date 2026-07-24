@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import nodeOs from 'node:os';
+import { createHash } from 'node:crypto';
 import yargs from 'yargs';
 import extract from 'extract-zip';
 import * as tar from 'tar';
@@ -15,6 +16,11 @@ const DOWNLOAD_TARGETS = [
     'darwin-arm64',
 ] as const;
 type DownloadTarget = (typeof DOWNLOAD_TARGETS)[number];
+
+const SHA256_PATTERN = /^[a-f0-9]{64}$/i;
+
+const isSha256 = (value: unknown): value is string =>
+    typeof value === 'string' && SHA256_PATTERN.test(value);
 
 const readFromUrl = async (url: string): Promise<Response> => {
     const response = await fetch(url);
@@ -86,39 +92,47 @@ const extractFileFromArchive = async (
 };
 
 /**
- * Download a file and get its contents.
- * A URL must be used as a path
+ * Download a file from Artifactory and get its contents.
  *
- * @param sourcePath - HTTPS URL of the archive to download
+ * @param artifactUrl - HTTPS URL of the archive to download
  * @param destPath - Path to the file to be saved
  * @param filename - Filename inside the archive to extract
+ * @param expectedSha256 - Expected SHA-256 digest of the downloaded archive
  */
-const downloadFile = async (
-    sourcePath: string,
+const downloadFileFromArtifactory = async (
+    artifactUrl: string,
     destPath: string,
     filename: string,
+    expectedSha256: string,
 ): Promise<void> => {
-    if (!sourcePath.startsWith('http')) {
+    if (!artifactUrl.startsWith('http')) {
         throw new Error(
-            `Invalid source path: ${sourcePath}. Must be a http URL.`,
+            `Invalid artifact URL: ${artifactUrl}. Must be an HTTP URL.`,
         );
     }
-    const response = await readFromUrl(sourcePath);
+    const response = await readFromUrl(artifactUrl);
     const arrayBuffer = await response.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
+
+    const actualSha256 = createHash('sha256').update(buffer).digest('hex');
+    if (actualSha256 !== expectedSha256.toLowerCase()) {
+        throw new Error(
+            `Downloaded archive SHA-256 mismatch for "${artifactUrl}".\nExpected SHA-256: ${expectedSha256}\nCalculated SHA-256: ${actualSha256}`,
+        );
+    }
 
     fs.mkdirSync(path.dirname(destPath), { recursive: true });
 
     // Detect archive type by magic bytes
-    const isGzip = sourcePath.endsWith('.tar.gz');
-    const isZip = sourcePath.endsWith('.zip');
+    const isGzip = artifactUrl.endsWith('.tar.gz');
+    const isZip = artifactUrl.endsWith('.zip');
     if (isGzip) {
         await extractFileFromArchive(buffer, destPath, filename, 'tar');
     } else if (isZip) {
         await extractFileFromArchive(buffer, destPath, filename, 'zip');
     } else {
         throw new Error(
-            `Unsupported archive format for "${sourcePath}"; expected .tar.gz or .zip`,
+            `Unsupported archive format for "${artifactUrl}"; expected .tar.gz or .zip`,
         );
     }
 };
@@ -155,6 +169,13 @@ if (!section || typeof section.version !== 'string') {
     process.exit(1);
 }
 const version = section.version;
+const expectedSha256 = section.sha256?.[target];
+if (!isSha256(expectedSha256)) {
+    console.error(
+        `✖ package.json must have a valid SHA-256 digest at "${manifest.TOPO_CLI}.sha256.${target}".\nConfigured SHA-256: ${expectedSha256 ?? '<missing>'}`,
+    );
+    process.exit(1);
+}
 
 // --- Determine asset name ---------------------------------------------------
 const assetMapping: Record<DownloadTarget, string> = {
@@ -178,7 +199,12 @@ console.log(`→ Downloading ${downloadUrl}`);
 // --- Perform download --------------------------------------------------------
 void (async () => {
     try {
-        await downloadFile(downloadUrl, destFilename, topoFilename);
+        await downloadFileFromArtifactory(
+            downloadUrl,
+            destFilename,
+            topoFilename,
+            expectedSha256,
+        );
         fs.chmodSync(destFilename, '755');
     } catch (err: unknown) {
         const errorMsg = err instanceof Error ? err.message : err;
