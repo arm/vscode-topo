@@ -21,6 +21,7 @@ import { ProjectController } from './controllers/projectController';
 import { ConnectViaSSH } from './actions/connectViaSSH';
 import { OpenContainerInBrowser } from './actions/openContainerInBrowser';
 import { OpenSettings } from './actions/openSettings';
+import { InstallSkill } from './actions/installSkill';
 
 vi.mock('./util/logger');
 
@@ -41,6 +42,7 @@ describe('commands', () => {
         containerDelete: mock<ContainerDelete>(),
         fixIssue: mock<FixIssue>(),
         openSettings: mock<OpenSettings>(),
+        installSkill: mock<InstallSkill>(),
     } satisfies commands.CommandHandlers;
 
     afterEach(() => {
@@ -148,6 +150,10 @@ describe('commands', () => {
             [
                 commands.localClone,
                 handlers.projectClone.localCloneCommandHandler,
+            ],
+            [
+                commands.installSkill,
+                handlers.installSkill.installSkillCommandHandler,
             ],
         ];
 
