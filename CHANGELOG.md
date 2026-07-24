@@ -5,6 +5,22 @@ All notable changes to the "vscode-topo" extension will be documented in this fi
 
 
 
+
+## 0.12.0
+
+<!-- Release notes generated using configuration in .github/release.yml at 0aa3b23bbf16ea379b430009c149d607e0f57815 -->
+
+## What's Changed
+### Features and Enhancements
+* feat: refresh target includes describe command (#366)
+* feat: validate clone project names (#365)
+* feat: when cloning only ask for project name if default is already present in target destination (#364)
+* feat: improve SSH reliability and health check for docker-compose (#367)
+
+
+**Full Changelog**: https://github.com/arm/vscode-topo/compare/v0.10.0...v0.12.0
+
+
 ## 0.10.0
 
 <!-- Release notes generated using configuration in .github/release.yml at 0eda69759f36ab480ff82a5b52521ebd04dae692 -->
