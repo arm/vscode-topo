@@ -271,6 +271,6 @@ jobs:
                   node-version: ${{ env.NODE_VERSION }}
                   cache: npm
             - name: Publish to VS Code Marketplace
-              run: npx @vscode/vsce@3.9.2 publish -i artifacts/*.vsix -p ${{secrets.VS_MARKETPLACE_TOKEN}} $PRE_RELEASE_FLAG
+              run: npx @vscode/vsce@3.9.2 publish --skip-duplicate -i artifacts/*.vsix -p ${{secrets.VS_MARKETPLACE_TOKEN}} $PRE_RELEASE_FLAG
             - name: Publish to Open VSX
               run: npx ovsx@0.8.0 publish -i artifacts/*.vsix -p ${{secrets.OPEN_VSX_TOKEN}} $PRE_RELEASE_FLAG
