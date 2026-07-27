@@ -2,7 +2,7 @@
 
 As a VS Code extension, interaction is mostly done via [commands](https://code.visualstudio.com/api/extension-guides/command). Our responsibility is to handle commands from the user, their agent(s) or other parts of the extension and do something useful.
 
-There are two primary types of command - ones that need to directly update the UI by querying the outside world, and those that are side-effect only that are mostly designed to surface useful operations the user may want to perform in VS Code. The former type of commands are handled by **controllers**, while the latter are handled by **actions**. Both **controllers** and **actions** can call **services** to talk to external systems.
+There are two primary types of command - ones that need to directly update the UI by querying the outside world, and those that are side-effect only that are mostly designed to surface useful operations the user may want to perform in VS Code. The former type of commands are handled by **controllers**, while the latter are handled by **actions**. Shared, multi-step application use cases can be delegated to **workflows**. Controllers, actions and workflows can call **services** to talk to external systems.
 
 At the top-level of the extension we create a command registry which is responsible for routing VS Code command strings to action/controller command handlers. At this same level, the extension has the option to register any method of invoking command handlers that it needs. For example, we run a periodic refresh event of certain target state every few seconds. We register such systems alongside the command router than making use of it for type safety guarantees and to skip the VS Code plumbing where it is unneeded.
 
@@ -14,8 +14,10 @@ flowchart LR
     router --> controller["Controller"]
     router --> action["Action"]
 
-    controller <--> service["Service<br/>(e.g. TopoCli)"]
-    action <--> service
+    controller --> service["Service<br/>(e.g. TopoCli)"]
+    action --> service
+    action --> workflow
+    workflow --> service
     service <--> outsideWorld["External systems<br/>(e.g. CLI)"]
 
     controller -->|Mutates| model["Model"]
@@ -31,9 +33,15 @@ Actions are standalone operations that users may want to perform that we surface
 
 The important distinction for us is that actions are command handlers that do not need to directly update the state of UI. This means they're usually side-effect-like operations like launching terminals or displaying the output of a given topo command in an editor tab. However, they can invoke other commands which may mutate the UI if required.
 
+## Workflows
+
+Workflows coordinate application use cases that are shared by multiple entry points or have enough sequencing to benefit from a dedicated abstraction. They own the order of operations, cancellation points, validation and error translation while delegating user interaction and external-system access through injected dependencies.
+
+Workflows do not register commands, directly render VS Code UI, directly mutate models or wrap external systems. User interaction belongs in the action layer, model changes remain the responsibility of controllers, and external systems are wrapped by services. Simple operations used by only one command should remain actions rather than being converted into workflows by default.
+
 ## Services
 
-Services wrap external systems and persistence, such as the Topo CLI. Controllers and actions call services; services must not mutate models, render views, or register commands.
+Services wrap external systems and persistence, such as the Topo CLI. Controllers, actions and workflows call services; services must not mutate models, render views, or register commands.
 
 ## MVC
 
