@@ -100,16 +100,7 @@ describe('TopoCli', () => {
             },
         ];
         execFileMock.mockResolvedValue({
-            stdout: JSON.stringify([
-                {
-                    name: ' p ',
-                    url: ' u ',
-                    features: [' feature '],
-                    description: ' project description ',
-                    ref: ' r ',
-                    compatibility: ' supported ',
-                },
-            ]),
+            stdout: JSON.stringify(list),
             stderr: '',
         });
 
@@ -121,6 +112,30 @@ describe('TopoCli', () => {
             ['templates', '-o', 'json', '--target', 'me@example.com'],
             defaultExecOptions,
         );
+    });
+
+    it('listProjects trims surrounding whitespace from project fields', async () => {
+        execFileMock.mockResolvedValue({
+            stdout: JSON.stringify([
+                {
+                    name: ' project ',
+                    url: 'https://example.com/project',
+                    features: [' feature '],
+                    description: 'Project description',
+                    ref: 'main',
+                    compatibility: ' supported ',
+                },
+            ]),
+            stderr: '',
+        });
+
+        const [project] = await topoCli.listProjects();
+
+        expect(project).toMatchObject({
+            name: 'project',
+            features: ['feature'],
+            compatibility: 'supported',
+        });
     });
 
     it('listProjects omits --target when no ssh target is provided', async () => {
@@ -221,13 +236,7 @@ describe('TopoCli', () => {
             totalMemoryKb: 123456,
         };
         execFileMock.mockResolvedValue({
-            stdout: JSON.stringify({
-                hostProcessors: [
-                    { model: ' Cortex-A55 ', cores: 2, features: [' fp '] },
-                ],
-                remoteProcessors: [{ name: ' imx-rproc ' }],
-                totalMemoryKb: 123456,
-            }),
+            stdout: JSON.stringify(description),
             stderr: '',
         });
 
@@ -314,19 +323,8 @@ describe('TopoCli', () => {
                 },
             ],
         };
-        const cliResponse = {
-            containers: output.containers.map((container) => ({
-                id: ` ${container.id} `,
-                names: ` ${container.names} `,
-                image: ` ${container.image} `,
-                status: ` ${container.status} `,
-                state: ` ${container.state} `,
-                processingDomain: ` ${container.processingDomain} `,
-                address: ` ${container.address} `,
-            })),
-        };
         execFileMock.mockResolvedValue({
-            stdout: JSON.stringify(cliResponse),
+            stdout: JSON.stringify(output),
             stderr: '',
         });
 
@@ -381,7 +379,7 @@ describe('TopoCli', () => {
         );
     });
 
-    it('health parses and normalizes JSON output', async () => {
+    it('health parses JSON output', async () => {
         const want: HealthReport = {
             host: { dependencies: [] },
             target: {
@@ -406,32 +404,8 @@ describe('TopoCli', () => {
                 },
             },
         };
-        const cliResponse: HealthReport = {
-            host: { dependencies: [] },
-            target: {
-                destination: ' ssh://hostname ',
-                isLocalhost: false,
-                dependencies: [
-                    {
-                        name: ' Container Engine ',
-                        status: 'ok',
-                        value: ' docker ',
-                    },
-                ],
-                connectivity: {
-                    name: ' Connected ',
-                    status: 'ok',
-                    value: '',
-                },
-                processingDomainDriver: {
-                    name: ' Processing Domain Driver (remoteproc) ',
-                    status: 'ok',
-                    value: ' driver-x ',
-                },
-            },
-        };
         execFileMock.mockResolvedValue({
-            stdout: JSON.stringify(cliResponse),
+            stdout: JSON.stringify(want),
             stderr: '',
         });
 
@@ -578,7 +552,7 @@ describe('parseWrappedError', () => {
 describe('parseTopoLogEntries', () => {
     it('parses a single structured log line', () => {
         const input =
-            '{"time":" 2026-04-16T15:14:48.476234895+01:00 ","level":" ERROR ","msg":" collecting CPU info: \\"lscpu\\" not found on remote target\'s $PATH "}';
+            '{"time":"2026-04-16T15:14:48.476234895+01:00","level":"ERROR","msg":"collecting CPU info: \\"lscpu\\" not found on remote target\'s $PATH"}';
 
         const entries = parseTopoLogEntries(input);
 
@@ -588,6 +562,15 @@ describe('parseTopoLogEntries', () => {
                 msg: 'collecting CPU info: "lscpu" not found on remote target\'s $PATH',
             },
         ]);
+    });
+
+    it('trims surrounding whitespace from structured log fields', () => {
+        const input =
+            '{"time":" 2026-04-16T15:14:48Z ","level":" ERROR ","msg":" disk full "}';
+
+        const entries = parseTopoLogEntries(input);
+
+        expect(entries).toEqual([{ level: 'Error', msg: 'disk full' }]);
     });
 
     it('parses multiple structured log lines', () => {
