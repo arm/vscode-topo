@@ -1,6 +1,17 @@
 import fs from 'node:fs';
+import { createRequire } from 'node:module';
 import * as vscode from 'vscode';
 import { InstallSkill, installSkill } from './installSkill';
+
+type Remove = (
+    path: string,
+    options: { recursive: boolean; force: boolean },
+) => void;
+
+const loadModule = createRequire(__filename);
+const { uninstallSkill } = loadModule('../../scripts/uninstall.cjs') as {
+    uninstallSkill(userHome: string, remove: Remove): void;
+};
 
 vi.mock('node:fs', () => ({
     default: {
@@ -63,7 +74,26 @@ describe('InstallSkill', () => {
         await action.installSkillCommandHandler();
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-            'Failed to install the Topo skill. permission denied',
+            'Failed to install the Topo CLI location skill. permission denied',
+        );
+    });
+
+    it('removes the installed skill on uninstall', () => {
+        const remove = vi.fn<Remove>();
+
+        uninstallSkill(userHomeUri.fsPath, remove);
+
+        expect(remove).toHaveBeenCalledExactlyOnceWith(
+            vscode.Uri.joinPath(
+                userHomeUri,
+                '.agents',
+                'skills',
+                'topo-cli-location',
+            ).fsPath,
+            {
+                recursive: true,
+                force: true,
+            },
         );
     });
 });

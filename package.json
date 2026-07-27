@@ -481,6 +481,7 @@
         ]
     },
     "scripts": {
+        "vscode:uninstall": "node ./scripts/uninstall.cjs",
         "package": "npm run build && vsce package",
         "clean": "git clean -f -x ./node_modules ./dist ./resources ./coverage",
         "lint": "npm run prettier-check && npm run eslint-check && npm run tsc-check",
