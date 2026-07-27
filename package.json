@@ -154,6 +154,11 @@
                 "category": "Topo"
             },
             {
+                "command": "topo.configure.context",
+                "title": "Topo Configure",
+                "icon": "$(gear)"
+            },
+            {
                 "command": "topo.deploy.context",
                 "title": "Topo Deploy",
                 "icon": "$(rocket)"
@@ -162,6 +167,12 @@
                 "command": "topo.stop.context",
                 "title": "Topo Stop",
                 "icon": "$(stop)"
+            },
+            {
+                "command": "topo.configureProject",
+                "title": "Configure",
+                "icon": "$(gear)",
+                "category": "Topo"
             },
             {
                 "command": "topo.deployProject",
@@ -222,25 +233,35 @@
         "menus": {
             "editor/title/context": [
                 {
-                    "command": "topo.deploy.context",
+                    "command": "topo.configure.context",
                     "group": "topo@1",
                     "when": "resourceFilename =~ /^compose\\.ya?ml$/"
                 },
                 {
-                    "command": "topo.stop.context",
+                    "command": "topo.deploy.context",
                     "group": "topo@2",
+                    "when": "resourceFilename =~ /^compose\\.ya?ml$/"
+                },
+                {
+                    "command": "topo.stop.context",
+                    "group": "topo@3",
                     "when": "resourceFilename =~ /^compose\\.ya?ml$/"
                 }
             ],
             "explorer/context": [
                 {
-                    "command": "topo.deploy.context",
+                    "command": "topo.configure.context",
                     "group": "topo@1",
                     "when": "resourceFilename =~ /^compose\\.ya?ml$/"
                 },
                 {
-                    "command": "topo.stop.context",
+                    "command": "topo.deploy.context",
                     "group": "topo@2",
+                    "when": "resourceFilename =~ /^compose\\.ya?ml$/"
+                },
+                {
+                    "command": "topo.stop.context",
+                    "group": "topo@3",
                     "when": "resourceFilename =~ /^compose\\.ya?ml$/"
                 }
             ],
@@ -294,11 +315,19 @@
                     "when": "false"
                 },
                 {
+                    "command": "topo.configure.context",
+                    "when": "false"
+                },
+                {
                     "command": "topo.deploy.context",
                     "when": "false"
                 },
                 {
                     "command": "topo.stop.context",
+                    "when": "false"
+                },
+                {
+                    "command": "topo.configureProject",
                     "when": "false"
                 },
                 {
@@ -373,14 +402,19 @@
                     "group": "inline@5"
                 },
                 {
-                    "command": "topo.deployProject",
+                    "command": "topo.configureProject",
                     "when": "view === topo.projects && viewItem =~ /Project/",
                     "group": "inline@1"
                 },
                 {
-                    "command": "topo.stopProject",
+                    "command": "topo.deployProject",
                     "when": "view === topo.projects && viewItem =~ /Project/",
                     "group": "inline@2"
+                },
+                {
+                    "command": "topo.stopProject",
+                    "when": "view === topo.projects && viewItem =~ /Project/",
+                    "group": "inline@3"
                 }
             ],
             "view/title": [

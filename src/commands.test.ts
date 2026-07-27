@@ -19,6 +19,7 @@ import { ProjectController } from './controllers/projectController';
 import { ConnectViaSSH } from './actions/connectViaSSH';
 import { OpenContainerInBrowser } from './actions/openContainerInBrowser';
 import { OpenSettings } from './actions/openSettings';
+import { Configure } from './actions/configure';
 
 vi.mock('./util/logger');
 
@@ -29,6 +30,7 @@ describe('commands', () => {
         targetController: mock<TargetController>(),
         projectInit: mock<ProjectInit>(),
         projectClone: mock<ProjectClone>(),
+        configure: mock<Configure>(),
         deploy: mock<Deploy>(),
         stop: mock<Stop>(),
         openContainerShell: mock<OpenContainerShell>(),
@@ -95,6 +97,14 @@ describe('commands', () => {
                 handlers.projectInit.initProjectCommandHandler,
             ],
             [commands.cloneProject, handlers.projectClone.cloneCommandHandler],
+            [
+                commands.configure,
+                handlers.configure.configureContextCommandHandler,
+            ],
+            [
+                commands.configureProject,
+                handlers.configure.configureProjectCommandHandler,
+            ],
             [commands.deploy, handlers.deploy.deployCommandHandler],
             [
                 commands.deployContext,
@@ -176,6 +186,30 @@ describe('commands', () => {
             expect(
                 handlers.connectViaSSH.connectViaSSHCommandHandler,
             ).toHaveBeenCalledWith();
+        });
+
+        it('configure project calls the project configure handler with the tree node', async () => {
+            const composeFileUri = vscode.Uri.file(
+                '/fake/workspace/demo/compose.yaml',
+            );
+            const projectItem = new ProjectTreeItem(
+                {
+                    name: 'demo',
+                    uri: vscode.Uri.file('/fake/workspace/demo'),
+                    composeFileUri,
+                    workspaceIndex: 0,
+                    workspaceName: 'workspace',
+                },
+                false,
+                unloaded(),
+            );
+            commands.register(handlers);
+
+            await executeCommand(commands.configureProject, projectItem);
+
+            expect(
+                handlers.configure.configureProjectCommandHandler,
+            ).toHaveBeenCalledWith(projectItem);
         });
 
         it('deploy project calls the project deploy handler with the tree node', async () => {

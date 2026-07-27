@@ -15,6 +15,7 @@ import { ProjectController } from './controllers/projectController';
 import { ConnectViaSSH } from './actions/connectViaSSH';
 import { OpenContainerInBrowser } from './actions/openContainerInBrowser';
 import { OpenSettings } from './actions/openSettings';
+import { Configure } from './actions/configure';
 
 function command(id: string): string {
     return `${PACKAGE_NAME}.${id}`;
@@ -33,6 +34,8 @@ export const cloneProject = command('cloneProject');
 export const deploy = command('deploy');
 export const deployContext = command('deploy.context');
 export const deployProject = command('deployProject');
+export const configure = command('configure.context');
+export const configureProject = command('configureProject');
 export const stop = command('stop.context');
 export const stopProject = command('stopProject');
 export const openContainerShell = command('openContainerShell');
@@ -52,6 +55,7 @@ export interface CommandHandlers {
     targetController: TargetController;
     projectInit: ProjectInit;
     projectClone: ProjectClone;
+    configure: Configure;
     deploy: Deploy;
     stop: Stop;
     openContainerShell: OpenContainerShell;
@@ -92,6 +96,12 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
         ),
         vscode.commands.registerCommand(cloneProject, () =>
             handlers.projectClone.cloneCommandHandler(),
+        ),
+        vscode.commands.registerCommand(configure, (resource?: vscode.Uri) =>
+            handlers.configure.configureContextCommandHandler(resource),
+        ),
+        vscode.commands.registerCommand(configureProject, (treeNode) =>
+            handlers.configure.configureProjectCommandHandler(treeNode),
         ),
         vscode.commands.registerCommand(deploy, () =>
             handlers.deploy.deployCommandHandler(),

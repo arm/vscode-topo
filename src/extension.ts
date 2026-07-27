@@ -30,6 +30,7 @@ import { ConnectViaSSH } from './actions/connectViaSSH';
 import { OpenContainerInBrowser } from './actions/openContainerInBrowser';
 import { OpenSettings } from './actions/openSettings';
 import { Config } from './services/config';
+import { Configure } from './actions/configure';
 
 const SELECTED_TARGET_REFRESH_INTERVAL_MS = 60_000;
 
@@ -107,6 +108,7 @@ export async function activate(
     const projectInit = new ProjectInit(topoCli);
     const taskExecutor = new TaskExecutor(topoCli);
     const projectClone = new ProjectClone(topoCli, targetModel, taskExecutor);
+    const configure = new Configure(taskExecutor);
     const deploy = new Deploy(
         taskExecutor,
         targetModel,
@@ -131,6 +133,7 @@ export async function activate(
             projectController,
             targetController,
             projectInit,
+            configure,
             deploy,
             stop,
             openContainerShell,

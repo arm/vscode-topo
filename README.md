@@ -100,13 +100,13 @@ Use the inline buttons on a service in the Projects tree to manage individual co
 | **Open Container Shell** | Open a VS Code terminal connected to a running Linux Host container. |
 | **Open in Browser**      | Open a running container's web endpoint in your browser.             |
 
-## Deploy and Stop
+## Configure, Deploy, and Stop
 
-Deploy or stop a project on the selected target. A deploy operation builds container images, transfers them to the target, and starts services. You can trigger either operation from:
+Configure a project's parameters, or deploy or stop it on the selected target. A deploy operation builds container images, transfers them to the target, and starts services. You can trigger these operations from:
 
 - Running **Topo: Deploy** from the Command Palette, then selecting a `compose.yaml` file from the workspace.
-- Right-clicking `compose.yaml` in the Explorer or editor tab and selecting **Topo Deploy** or **Topo Stop**.
-- Using the inline **Deploy** or **Stop** buttons on a project in the **Projects** view.
+- Right-clicking `compose.yaml` in the Explorer or editor tab and selecting **Topo Configure**, **Topo Deploy**, or **Topo Stop**.
+- Using the inline **Configure**, **Deploy**, or **Stop** buttons on a project in the **Projects** view.
 
 ## Project Management
 
@@ -114,7 +114,7 @@ The **Projects** view appears in the **Topo** activity bar container and lists w
 
 When a target is selected, each project can expand to show deployed containers for that project, grouped by processing domain.
 
-Use the inline buttons on a project row to deploy or stop that project's compose file on the selected target. These actions behave the same as running **Topo Deploy** or **Topo Stop** from the context menu of the project's compose file.
+Use the inline buttons on a project row to configure, deploy, or stop that project's compose file. These actions behave the same as running **Topo Configure**, **Topo Deploy**, or **Topo Stop** from the context menu of the project's compose file.
 
 ### Initialize a Project
 
