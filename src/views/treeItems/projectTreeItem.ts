@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
 import { ProjectMetadata } from '../../util/project';
 import { Loadable } from '../../util/loadable';
-import { ContainerItem } from '../../util/types';
+import { ContainerItem, DeepReadonly } from '../../util/types';
 
 function getCollapsibleState(
-    containers: Loadable<readonly ContainerItem[]>,
+    containers: Loadable<ContainerItem[]>,
 ): vscode.TreeItemCollapsibleState {
     if (containers.status === 'loaded') {
         return containers.data.length > 0
@@ -23,9 +23,9 @@ export class ProjectTreeItem extends vscode.TreeItem {
     public readonly composeFileUri: vscode.Uri;
 
     constructor(
-        public readonly project: ProjectMetadata,
+        public readonly project: DeepReadonly<ProjectMetadata>,
         showWorkspaceName: boolean,
-        public readonly containers: Loadable<readonly ContainerItem[]>,
+        public readonly containers: Loadable<ContainerItem[]>,
     ) {
         super(project.name, getCollapsibleState(containers));
         this.composeFileUri = project.composeFileUri;

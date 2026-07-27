@@ -1,7 +1,8 @@
 import { HealthCheck, HealthCheckStatus } from '../services/topoCliSchema';
+import { DeepReadonly } from './types';
 
 export const getWorstHealthCheckStatus = (
-    healthChecks: readonly HealthCheck[],
+    healthChecks: DeepReadonly<HealthCheck[]>,
 ): HealthCheckStatus => {
     return healthChecks.reduce((acc: HealthCheckStatus, healthCheck) => {
         if (healthCheck.status === 'error') {

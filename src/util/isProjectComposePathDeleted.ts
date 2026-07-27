@@ -1,8 +1,9 @@
 import path from 'node:path';
 import { ProjectMetadata } from './project';
+import { DeepReadonly } from './types';
 
 export function isProjectComposePathDeleted(
-    projects: ProjectMetadata[],
+    projects: DeepReadonly<ProjectMetadata[]>,
     deletedPath: string,
 ): boolean {
     return projects.some((project) => {

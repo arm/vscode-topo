@@ -3,24 +3,27 @@ import {
     type HealthCheckFix,
     type TargetHealthReport,
 } from '../services/topoCliSchema';
+import { DeepReadonly } from './types';
 
 export type IssueFixCommandGroup = {
     issueNames: string[];
     command: string;
 };
 
-export type FixableIssue = HealthCheck & {
-    fix: HealthCheckFix & { command: string };
-};
+export type FixableIssue = DeepReadonly<
+    HealthCheck & {
+        fix: HealthCheckFix & { command: string };
+    }
+>;
 
 export function hasFixCommand(
-    healthCheck: HealthCheck | undefined,
+    healthCheck: DeepReadonly<HealthCheck> | undefined,
 ): healthCheck is FixableIssue {
     return !!healthCheck?.fix?.command;
 }
 
 export function getTargetIssueFixCommandGroups(
-    health: TargetHealthReport | undefined,
+    health: DeepReadonly<TargetHealthReport> | undefined,
 ): IssueFixCommandGroup[] {
     if (!health) {
         return [];
@@ -30,7 +33,7 @@ export function getTargetIssueFixCommandGroups(
 }
 
 export function getIssueFixCommandGroups(
-    healthChecks: HealthCheck[],
+    healthChecks: DeepReadonly<HealthCheck[]>,
 ): IssueFixCommandGroup[] {
     const groups = new Map<string, IssueFixCommandGroup>();
 
@@ -55,7 +58,9 @@ export function getIssueFixCommandGroups(
     return [...groups.values()];
 }
 
-function getTargetHealthChecks(health: TargetHealthReport): HealthCheck[] {
+function getTargetHealthChecks(
+    health: DeepReadonly<TargetHealthReport>,
+): DeepReadonly<HealthCheck>[] {
     return [
         health.connectivity,
         health.processingDomainDriver,

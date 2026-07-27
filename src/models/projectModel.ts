@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
 import { ProjectMetadata } from '../util/project';
 import { Loadable, unloaded } from '../util/loadable';
-import { ContainerItem } from '../util/types';
+import { ContainerItem, DeepReadonly } from '../util/types';
 
-function getProjectKey(project: ProjectMetadata): string {
+function getProjectKey(project: DeepReadonly<ProjectMetadata>): string {
     return project.composeFileUri.fsPath;
 }
 
@@ -31,7 +31,7 @@ export class ProjectModel implements vscode.Disposable {
     }
 
     public setProjectContainers(
-        project: ProjectMetadata,
+        project: DeepReadonly<ProjectMetadata>,
         containers: Loadable<ContainerItem[]>,
     ): void {
         this._projectContainers.set(getProjectKey(project), containers);
@@ -39,7 +39,7 @@ export class ProjectModel implements vscode.Disposable {
     }
 
     public getProjectContainers(
-        project: ProjectMetadata,
+        project: DeepReadonly<ProjectMetadata>,
     ): Loadable<ContainerItem[]> {
         return (
             this._projectContainers.get(getProjectKey(project)) ?? unloaded()

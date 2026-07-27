@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { ContainerItem } from '../../util/types';
+import { ContainerItem, DeepReadonly } from '../../util/types';
 import { PRIMARY_PROCESSING_DOMAIN } from '../../manifest';
 
 export function compareProcessingDomains(
@@ -21,7 +21,7 @@ export function compareProcessingDomains(
 export class ProcessingDomainTreeItem extends vscode.TreeItem {
     constructor(
         public readonly processingDomain: string,
-        public readonly containers?: readonly ContainerItem[],
+        public readonly containers?: DeepReadonly<ContainerItem[]>,
     ) {
         super(
             processingDomain,

@@ -8,15 +8,13 @@ import { LoadingTreeItem } from './treeItems/loadingTreeItem';
 import { Loadable } from '../util/loadable';
 import { ProjectMetadata } from '../util/project';
 import { ContainerTreeItem } from './treeItems/containerTreeItem';
-import { ContainerItem } from '../util/types';
+import { ContainerItem, DeepReadonly } from '../util/types';
 import {
     compareProcessingDomains,
     ProcessingDomainTreeItem,
 } from './treeItems/processingDomainTreeItem';
 
-function syncProjectCountContext(
-    projects: Loadable<readonly ProjectMetadata[]>,
-): void {
+function syncProjectCountContext(projects: Loadable<ProjectMetadata[]>): void {
     const count =
         projects.status === 'loaded' ? projects.data.length : undefined;
     void vscode.commands.executeCommand(
@@ -26,7 +24,10 @@ function syncProjectCountContext(
     );
 }
 
-function compareContainers(a: ContainerItem, b: ContainerItem): number {
+function compareContainers(
+    a: DeepReadonly<ContainerItem>,
+    b: DeepReadonly<ContainerItem>,
+): number {
     if (a.state === 'running' && b.state !== 'running') {
         return -1;
     }
@@ -37,9 +38,9 @@ function compareContainers(a: ContainerItem, b: ContainerItem): number {
 }
 
 function groupContainersByProcessingDomain(
-    containers: readonly ContainerItem[],
+    containers: DeepReadonly<ContainerItem[]>,
 ): ProcessingDomainTreeItem[] {
-    const containersByDomain = new Map<string, ContainerItem[]>();
+    const containersByDomain = new Map<string, DeepReadonly<ContainerItem>[]>();
     for (const container of containers) {
         const domain = container.processingDomain || 'Unknown';
         containersByDomain.set(domain, [

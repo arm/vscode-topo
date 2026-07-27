@@ -1,3 +1,5 @@
+import type { DeepReadonly } from '../util/types';
+
 export type WrappedErrorCode =
     | 'DOCKER'
     | 'CLONE'
@@ -17,7 +19,7 @@ export class WrappedError extends Error {
     constructor(
         public readonly code: WrappedErrorCode,
         message: string,
-        public readonly logs: WrappedErrorLog[] = [],
+        public readonly logs: DeepReadonly<WrappedErrorLog[]> = [],
         options?: ErrorOptions,
     ) {
         super(message, options);

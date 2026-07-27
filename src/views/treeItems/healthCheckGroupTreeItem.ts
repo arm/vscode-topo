@@ -4,11 +4,12 @@ import { getWorstHealthCheckStatus } from '../../util/getWorstHealthCheckStatus'
 import { getHealthCheckIcon } from '../util/healthIcons';
 import { Loaded } from '../../util/loadable';
 import { hasFixCommand } from '../../util/issueFixes';
+import { DeepReadonly } from '../../util/types';
 
 export class HealthCheckGroupTreeItem extends vscode.TreeItem {
-    public readonly healthChecks: readonly HealthCheck[];
+    public readonly healthChecks: DeepReadonly<HealthCheck[]>;
 
-    constructor(healthChecks: Loaded<readonly HealthCheck[]>) {
+    constructor(healthChecks: Loaded<HealthCheck[]>) {
         super('Health', vscode.TreeItemCollapsibleState.Collapsed);
         this.contextValue = 'Health';
         if (healthChecks.data.some(hasFixCommand)) {

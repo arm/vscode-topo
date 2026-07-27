@@ -2,8 +2,9 @@ import { isWrappedError, type WrappedErrorLog } from '../errors/wrappedError';
 import { getErrorMessage } from './getErrorMessage';
 import { logger } from './logger';
 import * as vscode from 'vscode';
+import type { DeepReadonly } from './types';
 
-const logEntries = (entries: WrappedErrorLog[]) => {
+const logEntries = (entries: DeepReadonly<WrappedErrorLog[]>) => {
     for (const entry of entries) {
         switch (entry.level) {
             case 'Error':

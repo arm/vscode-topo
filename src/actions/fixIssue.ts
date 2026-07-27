@@ -17,7 +17,7 @@ type IssueFixQuickPickItem = vscode.QuickPickItem & {
 };
 
 function getIssueFixQuickPickItems(
-    issues: FixableIssue[],
+    issues: readonly FixableIssue[],
 ): IssueFixQuickPickItem[] {
     return issues.map((issue) => ({
         label: issue.name,
@@ -89,7 +89,7 @@ export class FixIssue {
 
     private async selectAndFixTargetIssues(
         target: string,
-        issues: FixableIssue[],
+        issues: readonly FixableIssue[],
     ): Promise<void> {
         const selectedFixes = await vscode.window.showQuickPick(
             getIssueFixQuickPickItems(issues),

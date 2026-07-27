@@ -94,9 +94,7 @@ function getSelectedTargetChildren(
     }
 }
 
-function syncTargetDataIssueContext(
-    targets: Loadable<readonly string[]>,
-): void {
+function syncTargetDataIssueContext(targets: Loadable<string[]>): void {
     void vscode.commands.executeCommand(
         'setContext',
         manifest.CONTEXT_TARGET_DATA_ISSUE,
