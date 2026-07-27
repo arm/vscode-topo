@@ -1,11 +1,10 @@
 import * as vscode from 'vscode';
-import { cloneProject } from './util/projectClone';
 import { logger } from './util/logger';
-import { parseCloneSourceString } from './util/parseSourceCloneString';
+import { parseCloneSource } from './util/cloneSource';
 import { isWrappedError } from './errors/wrappedError';
 import { showAndLogError } from './util/showAndLog';
-import { TaskExecutor } from './util/taskExecutor';
 import { parseRequestData } from './util/protocolRequest';
+import { ProjectCloneWorkflow } from './workflows/projectCloneWorkflow';
 
 /**
  * VS Code URI handler for Topo deep links.
@@ -17,7 +16,7 @@ import { parseRequestData } from './util/protocolRequest';
  * Additional query parameters are forwarded to `topo clone` as `key=value` arguments.
  */
 export class ProtocolHandler implements vscode.UriHandler {
-    constructor(private readonly taskExecutor: TaskExecutor) {}
+    constructor(private readonly cloneWorkflow: ProjectCloneWorkflow) {}
 
     public async handleUri(uri: vscode.Uri): Promise<void> {
         logger.info(`ProtocolHandler.handleUri(${uri.toString()})`);
@@ -26,7 +25,7 @@ export class ProtocolHandler implements vscode.UriHandler {
         switch (uri.path) {
             case '/clone':
                 try {
-                    await handleCloneRequest(this.taskExecutor, uri, data);
+                    await handleCloneRequest(this.cloneWorkflow, uri, data);
                 } catch (error: unknown) {
                     if (isWrappedError(error, ['CLONE', 'CLI'])) {
                         return showAndLogError(
@@ -47,7 +46,7 @@ export class ProtocolHandler implements vscode.UriHandler {
 }
 
 const handleCloneRequest = async (
-    taskExecutor: TaskExecutor,
+    cloneWorkflow: ProjectCloneWorkflow,
     uri: vscode.Uri,
     data: Record<string, string>,
 ): Promise<void> => {
@@ -56,7 +55,7 @@ const handleCloneRequest = async (
         return;
     }
     const { source, ...cloneParameters } = data;
-    const cloneSource = parseCloneSourceString(source);
+    const cloneSource = parseCloneSource(source);
     if (cloneSource.type === 'dir') {
         const errMessage = `Clone source type 'dir' is not supported for URI-based cloning. Please use the command palette to clone from a local directory. URI: ${uri.toString()}`;
         vscode.window.showErrorMessage(errMessage);
@@ -64,5 +63,5 @@ const handleCloneRequest = async (
         return;
     }
 
-    await cloneProject(taskExecutor, cloneSource, cloneParameters);
+    await cloneWorkflow.clone(cloneSource, cloneParameters);
 };

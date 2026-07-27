@@ -32,6 +32,8 @@ import { ConnectViaSSH } from './actions/connectViaSSH';
 import { OpenContainerInBrowser } from './actions/openContainerInBrowser';
 import { OpenSettings } from './actions/openSettings';
 import { Config } from './services/config';
+import { ProjectCloneWorkflow } from './workflows/projectCloneWorkflow';
+import { projectCloneInteraction } from './actions/projectCloneInteraction';
 
 const SELECTED_TARGET_REFRESH_INTERVAL_MS = 60_000;
 
@@ -108,7 +110,15 @@ export async function activate(
     const config = new Config();
     const projectInit = new ProjectInit(topoCli);
     const taskExecutor = new TaskExecutor(topoCli);
-    const projectClone = new ProjectClone(topoCli, targetModel, taskExecutor);
+    const projectCloneWorkflow = new ProjectCloneWorkflow(
+        taskExecutor,
+        projectCloneInteraction,
+    );
+    const projectClone = new ProjectClone(
+        topoCli,
+        targetModel,
+        projectCloneWorkflow,
+    );
     const deploy = new Deploy(
         taskExecutor,
         targetModel,
@@ -130,7 +140,7 @@ export async function activate(
     );
     const fixIssue = new FixIssue(taskExecutor, targetModel, targetController);
     const openSettings = new OpenSettings();
-    const protocolHandler = new ProtocolHandler(taskExecutor);
+    const protocolHandler = new ProtocolHandler(projectCloneWorkflow);
 
     context.subscriptions.push(
         commands.register({

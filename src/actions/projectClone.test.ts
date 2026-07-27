@@ -6,17 +6,15 @@ import { TargetModel } from '../models/targetModel';
 import { WrappedError } from '../errors/wrappedError';
 import { showAndLogError } from '../util/showAndLog';
 import {
-    cloneProject,
-    getLocalSourcePath,
+    promptForLocalCloneSource,
     promptForRemoteCloneSource,
-} from '../util/projectClone';
-import { TaskExecutor } from '../util/taskExecutor';
+} from './projectCloneInteraction';
+import { ProjectCloneWorkflow } from '../workflows/projectCloneWorkflow';
 
 vi.mock('../util/showAndLog');
-vi.mock('../util/projectClone');
+vi.mock('./projectCloneInteraction');
 
-const cloneProjectMock = vi.mocked(cloneProject);
-const getLocalSourcePathMock = vi.mocked(getLocalSourcePath);
+const promptForLocalCloneSourceMock = vi.mocked(promptForLocalCloneSource);
 const promptForRemoteCloneSourceMock = vi.mocked(promptForRemoteCloneSource);
 
 const localSourcePath = '/path/to/source';
@@ -40,12 +38,12 @@ describe('ProjectClone action', () => {
     let projectClone: ProjectClone;
     let targetModel: TargetModel;
     const topoCli = mock<TopoCli>();
-    const taskExecutor = mock<TaskExecutor>();
+    const cloneWorkflow = mock<ProjectCloneWorkflow>();
 
     beforeEach(() => {
         vi.resetAllMocks();
         targetModel = new TargetModel();
-        projectClone = new ProjectClone(topoCli, targetModel, taskExecutor);
+        projectClone = new ProjectClone(topoCli, targetModel, cloneWorkflow);
     });
 
     describe('cloneCommandHandler', () => {
@@ -67,7 +65,7 @@ describe('ProjectClone action', () => {
                 ],
                 { placeHolder: 'Select a clone method' },
             );
-            expect(cloneProjectMock).not.toHaveBeenCalled();
+            expect(cloneWorkflow.clone).not.toHaveBeenCalled();
         });
 
         it('clones from a remote project when selected', async () => {
@@ -79,19 +77,22 @@ describe('ProjectClone action', () => {
 
             await projectClone.cloneCommandHandler();
 
-            expect(cloneProjectMock).toHaveBeenCalledWith(taskExecutor, {
+            expect(cloneWorkflow.clone).toHaveBeenCalledWith({
                 type: 'git',
                 url: 'https://example.com/virtual-bittermelon-peeler.git',
             });
         });
 
         it('clones from a local project when selected', async () => {
-            getLocalSourcePathMock.mockResolvedValueOnce(localSourcePath);
+            promptForLocalCloneSourceMock.mockResolvedValueOnce({
+                type: 'dir',
+                path: localSourcePath,
+            });
             selectQuickPickItem('Local Project');
 
             await projectClone.cloneCommandHandler();
 
-            expect(cloneProjectMock).toHaveBeenCalledWith(taskExecutor, {
+            expect(cloneWorkflow.clone).toHaveBeenCalledWith({
                 type: 'dir',
                 path: localSourcePath,
             });
@@ -104,7 +105,7 @@ describe('ProjectClone action', () => {
 
             await projectClone.remoteCloneCommandHandler();
 
-            expect(cloneProjectMock).not.toHaveBeenCalled();
+            expect(cloneWorkflow.clone).not.toHaveBeenCalled();
         });
 
         it('clones the selected remote source for the selected target', async () => {
@@ -121,25 +122,28 @@ describe('ProjectClone action', () => {
                 topoCli,
                 'me@example.com',
             );
-            expect(cloneProjectMock).toHaveBeenCalledWith(taskExecutor, source);
+            expect(cloneWorkflow.clone).toHaveBeenCalledWith(source);
         });
     });
 
     describe('localCloneCommandHandler', () => {
         it('returns early when no folder is selected', async () => {
-            getLocalSourcePathMock.mockResolvedValueOnce(undefined);
+            promptForLocalCloneSourceMock.mockResolvedValueOnce(undefined);
 
             await projectClone.localCloneCommandHandler();
 
-            expect(cloneProjectMock).not.toHaveBeenCalled();
+            expect(cloneWorkflow.clone).not.toHaveBeenCalled();
         });
 
         it('clones from the selected local folder', async () => {
-            getLocalSourcePathMock.mockResolvedValueOnce(localSourcePath);
+            promptForLocalCloneSourceMock.mockResolvedValueOnce({
+                type: 'dir',
+                path: localSourcePath,
+            });
 
             await projectClone.localCloneCommandHandler();
 
-            expect(cloneProjectMock).toHaveBeenCalledWith(taskExecutor, {
+            expect(cloneWorkflow.clone).toHaveBeenCalledWith({
                 type: 'dir',
                 path: localSourcePath,
             });
@@ -153,7 +157,7 @@ describe('ProjectClone action', () => {
                 type: 'git',
                 url: 'https://example.com/virtual-bittermelon-peeler.git',
             });
-            cloneProjectMock.mockRejectedValueOnce(error);
+            cloneWorkflow.clone.mockRejectedValueOnce(error);
 
             await projectClone.remoteCloneCommandHandler();
 
@@ -178,7 +182,7 @@ describe('ProjectClone action', () => {
 
         it('propagates unrelated errors', async () => {
             const error = new Error('unexpected fail');
-            getLocalSourcePathMock.mockRejectedValueOnce(error);
+            promptForLocalCloneSourceMock.mockRejectedValueOnce(error);
 
             await expect(
                 projectClone.localCloneCommandHandler(),
