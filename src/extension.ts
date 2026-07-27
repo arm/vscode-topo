@@ -4,10 +4,8 @@ import { TopoCli } from './services/topoCli';
 import { ProjectInit } from './actions/projectInit';
 import { TargetStatusBarItemView } from './views/targetStatusBarItemView';
 import { TargetTreeView } from './views/targetTreeView';
-import { ContainerStart } from './actions/containerStart';
-import { ContainerStop } from './actions/containerStop';
+import { ContainerLifecycle } from './actions/containerLifecycle';
 import { OpenContainerShell } from './actions/openContainerShell';
-import { ContainerDelete } from './actions/containerDelete';
 import { DockerCommands } from './services/dockerCommands';
 import { TargetStore } from './services/targetStore';
 import { Deploy } from './actions/deploy';
@@ -119,12 +117,7 @@ export async function activate(
     const openContainerShell = new OpenContainerShell(dockerCommands);
     const connectViaSSH = new ConnectViaSSH(targetModel);
     const openContainerInBrowser = new OpenContainerInBrowser();
-    const containerStart = new ContainerStart(
-        dockerCommands,
-        projectController,
-    );
-    const containerStop = new ContainerStop(dockerCommands, projectController);
-    const containerDelete = new ContainerDelete(
+    const containerLifecycle = new ContainerLifecycle(
         dockerCommands,
         projectController,
     );
@@ -143,9 +136,7 @@ export async function activate(
             openContainerShell,
             connectViaSSH,
             openContainerInBrowser,
-            containerStart,
-            containerStop,
-            containerDelete,
+            containerLifecycle,
             fixIssue,
             projectClone,
             openSettings,
