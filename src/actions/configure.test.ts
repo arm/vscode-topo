@@ -8,10 +8,10 @@ import { ProjectTreeItem } from '../views/treeItems/projectTreeItem';
 import { Configure, configure } from './configure';
 
 describe('Configure', () => {
-    const projectPath = path.join(os.tmpdir(), 'demo');
     const composeFileUri = vscode.Uri.file(
-        path.join(projectPath, 'compose.yml'),
+        path.join(os.tmpdir(), 'demo', 'compose.yml'),
     );
+    const projectPath = path.dirname(composeFileUri.fsPath);
     let taskExecutor: MockProxy<TaskExecutor>;
     let configureAction: Configure;
 
