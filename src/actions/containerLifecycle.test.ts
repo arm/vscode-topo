@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { mock } from 'vitest-mock-extended';
-import type { MockInstance } from 'vitest';
 import { ProjectController } from '../controllers/projectController';
 import { WrappedError } from '../errors/wrappedError';
 import { ContainerCommands } from '../services/containerCommands';
@@ -39,7 +38,6 @@ const lifecycleCases = [
 ] satisfies LifecycleCase[];
 
 describe('ContainerLifecycle', () => {
-    let showErrorMessageSpy: MockInstance;
     const target = 'user@topo.local';
     const container: ContainerItem = {
         id: 'abc123',
@@ -52,16 +50,6 @@ describe('ContainerLifecycle', () => {
         target,
     };
     const treeItem = new ContainerTreeItem(container);
-
-    beforeEach(() => {
-        showErrorMessageSpy = vi
-            .spyOn(vscode.window, 'showErrorMessage')
-            .mockImplementation(vi.fn());
-    });
-
-    afterEach(() => {
-        vi.clearAllMocks();
-    });
 
     it.each(lifecycleCases)(
         '$operation invokes the matching command and refreshes containers',
@@ -100,7 +88,9 @@ describe('ContainerLifecycle', () => {
 
             await invoke(lifecycle, treeItem);
 
-            expect(showErrorMessageSpy).toHaveBeenCalledWith(
+            expect(
+                vi.mocked(vscode.window.showErrorMessage),
+            ).toHaveBeenCalledWith(
                 expect.stringContaining(
                     `Failed to ${operation} the container ${container.id}. fail`,
                 ),
