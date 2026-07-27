@@ -23,7 +23,7 @@ describe('InstallSkill', () => {
 
         expect(vscode.workspace.fs.copy).toHaveBeenCalledOnce();
         expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
-            'Topo skill installed. Start a new agent session if it is not available immediately.',
+            'Topo CLI location skill installed. Start a new agent session if it is not available immediately.',
         );
     });
 
@@ -36,7 +36,7 @@ describe('InstallSkill', () => {
         await installSkill(extensionUri, userHomeUri);
 
         expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
-            'The Topo skill is already installed. Replace it with the bundled version?',
+            'The Topo CLI location skill is already installed. Replace it with the bundled version?',
             { modal: true },
             'Replace',
         );

@@ -1,9 +1,9 @@
 ---
-name: topo
-description: Use the Topo CLI, preferring the executable available on PATH and falling back to the one bundled with the Arm Topo VS Code extension. Use for any request to create, clone, configure, deploy, inspect, or stop Topo projects and services.
+name: topo-cli-location
+description: Locate and invoke the Topo CLI, preferring the executable available on PATH and falling back to the one bundled with the Arm Topo VS Code extension. Use when a task needs the path to the Topo executable.
 ---
 
-# Topo CLI
+# Topo CLI Location
 
 Use the `topo` executable available on `PATH` by default. Check with
 `command -v topo` on Linux and macOS or `where topo` on Windows.

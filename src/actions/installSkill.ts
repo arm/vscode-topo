@@ -3,7 +3,7 @@ import os from 'node:os';
 import * as vscode from 'vscode';
 import { showAndLogError } from '../util/showAndLog';
 
-const SKILL_NAME = 'topo';
+const SKILL_NAME = 'topo-cli-location';
 const REPLACE_ACTION = 'Replace';
 
 export class InstallSkill {
@@ -16,7 +16,10 @@ export class InstallSkill {
         try {
             await installSkill(this.extensionUri, this.userHomeUri);
         } catch (error) {
-            showAndLogError('Failed to install the Topo skill', error);
+            showAndLogError(
+                'Failed to install the Topo CLI location skill',
+                error,
+            );
         }
     }
 }
@@ -31,7 +34,7 @@ export async function installSkill(
 
     if (fs.existsSync(destinationUri.fsPath)) {
         const response = await vscode.window.showWarningMessage(
-            'The Topo skill is already installed. Replace it with the bundled version?',
+            'The Topo CLI location skill is already installed. Replace it with the bundled version?',
             { modal: true },
             REPLACE_ACTION,
         );
@@ -45,6 +48,6 @@ export async function installSkill(
         overwrite: true,
     });
     vscode.window.showInformationMessage(
-        'Topo skill installed. Start a new agent session if it is not available immediately.',
+        'Topo CLI location skill installed. Start a new agent session if it is not available immediately.',
     );
 }

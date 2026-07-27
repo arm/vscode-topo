@@ -149,13 +149,13 @@ Use the refresh button in the Host view title bar to reload host health.
 
 Commands available from the Command Palette:
 
-| Command                      | Description                                                       |
-| ---------------------------- | ----------------------------------------------------------------- |
-| `Topo: Initialize Project`   | Initialize a new Topo project in the workspace.                   |
-| `Topo: Clone Remote Project` | Clone from a custom Git repository or a curated list of projects. |
-| `Topo: Clone Local Project`  | Clone a project from a local directory.                           |
-| `Topo: Deploy`               | Select and deploy a compose file to the target.                   |
-| `Topo: Install Skill`        | Install the bundled Topo skill for the current user.              |
+| Command                      | Description                                                         |
+| ---------------------------- | ------------------------------------------------------------------- |
+| `Topo: Initialize Project`   | Initialize a new Topo project in the workspace.                     |
+| `Topo: Clone Remote Project` | Clone from a custom Git repository or a curated list of projects.   |
+| `Topo: Clone Local Project`  | Clone a project from a local directory.                             |
+| `Topo: Deploy`               | Select and deploy a compose file to the target.                     |
+| `Topo: Install Skill`        | Install the bundled `topo-cli-location` skill for the current user. |
 
 Additional commands are available through inline buttons in the Target, Host, and Projects tree views.
 

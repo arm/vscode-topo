@@ -32,7 +32,7 @@
     "contributes": {
         "chatSkills": [
             {
-                "path": "./skills/topo/SKILL.md"
+                "path": "./skills/topo-cli-location/SKILL.md"
             }
         ],
         "commands": [
