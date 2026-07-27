@@ -5,7 +5,7 @@
     "publisher": "Arm",
     "description": "Compose, configure, and deploy containerized examples for Arm hardware",
     "license": "Apache-2.0",
-    "version": "0.10.0",
+    "version": "0.12.0",
     "engines": {
         "vscode": "^1.101.0",
         "node": "22",
@@ -19,7 +19,15 @@
     ],
     "main": "./dist/extension.js",
     "topo": {
-        "version": "9.0.0"
+        "version": "9.0.0",
+        "sha256": {
+            "win32-x64": "43d006f1aa1bbb4b4d59cbd6a474ce56df758637d8147592579adcdac3d3b29e",
+            "win32-arm64": "d0cb5a520324a0b3d11f35b594d6bcf95249eb1fdd11b49e277ed9452c5a6105",
+            "linux-x64": "7daf848175207e309d6088f89177243611ebd98ed94beebd79b267fff8aca9cb",
+            "linux-arm64": "ae24ab78cdeb3ae1bad0bc5f2b6700644ed80ce82220079e7b565712b62809b1",
+            "darwin-x64": "d76beb48ea0a7c525552c01ed0e70edebffe39c7aaf990ae5df77b19ea86e042",
+            "darwin-arm64": "827e29b7cc681195239664d1087b4cd86c0ad0a6559a436a5d0c2eb32a362b0e"
+        }
     },
     "contributes": {
         "commands": [
@@ -31,7 +39,7 @@
             {
                 "command": "topo.cloneProject",
                 "title": "Clone Project",
-                "icon": "$(desktop-download)",
+                "icon": "$(repo-clone)",
                 "category": "Topo"
             },
             {
@@ -481,14 +489,14 @@
         "@types/lodash.debounce": "^4.0.9",
         "@types/node": "^22.20.1",
         "@types/vscode": "^1.101.0",
-        "@typescript-eslint/eslint-plugin": "^8.64.0",
+        "@typescript-eslint/eslint-plugin": "^8.65.0",
         "@typescript-eslint/parser": "^8.64.0",
         "@vscode/vsce": "^3.6.2",
         "eslint": "^10.7.0",
         "extract-zip": "^2.0.1",
         "globals": "^17.7.0",
-        "prettier": "^3.9.5",
-        "tar": "^7.5.20",
+        "prettier": "^3.9.6",
+        "tar": "^7.5.21",
         "typescript": "^6.0.2",
         "vite": "^8.1.5",
         "vitest": "^4.1.9",
