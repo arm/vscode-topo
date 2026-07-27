@@ -15,7 +15,7 @@ export default defineConfig((config: ConfigEnv) => {
     const build: BuildEnvironmentOptions = {
         minify: isDev ? false : 'oxc',
         emptyOutDir: false,
-        target: 'node16',
+        target: 'node22',
         outDir: 'dist',
         sourcemap: isDev ? 'inline' : false,
         lib: {
