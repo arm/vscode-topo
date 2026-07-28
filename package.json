@@ -39,7 +39,7 @@
             {
                 "command": "topo.cloneProject",
                 "title": "Clone Project",
-                "icon": "$(desktop-download)",
+                "icon": "$(repo-clone)",
                 "category": "Topo"
             },
             {
