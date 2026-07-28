@@ -8,10 +8,7 @@ const logMethods = {
     WARN: logger.warn,
     INFO: logger.info,
     DEBUG: logger.debug,
-} satisfies Record<
-    WrappedErrorLog['level'],
-    (message: string, ...args: unknown[]) => void
->;
+} as const;
 
 const logEntries = (entries: WrappedErrorLog[]) => {
     for (const entry of entries) {
