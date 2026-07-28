@@ -1,19 +1,19 @@
 import type { DeepReadonly } from './types';
 
-export type Loaded<T> = DeepReadonly<{
-    status: 'loaded';
-    data: T;
-    loading: boolean;
-}>;
-export type Errored = DeepReadonly<{
-    status: 'errored';
-    error: Error;
-    loading: boolean;
-}>;
-export type Unloaded = DeepReadonly<{
-    status: 'unloaded';
-    loading: boolean;
-}>;
+export type Loaded<T> = {
+    readonly status: 'loaded';
+    readonly data: DeepReadonly<T>;
+    readonly loading: boolean;
+};
+export type Errored = {
+    readonly status: 'errored';
+    readonly error: Error;
+    readonly loading: boolean;
+};
+export type Unloaded = {
+    readonly status: 'unloaded';
+    readonly loading: boolean;
+};
 export type Loadable<T> = Loaded<T> | Errored | Unloaded;
 
 export function loading<T extends Loadable<unknown>>(current: T): T {

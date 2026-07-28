@@ -7,11 +7,10 @@ import { ErrorTreeItem } from './treeItems/errorTreeItem';
 import { HostModel } from '../models/hostModel';
 import { DisposableCollector } from '../util/disposableCollector';
 import { loaded } from '../util/loadable';
-import { DeepReadonly } from '../util/types';
 
 function sortHealthChecksByName(
-    healthChecks: DeepReadonly<HealthCheck[]>,
-): DeepReadonly<HealthCheck>[] {
+    healthChecks: readonly HealthCheck[],
+): HealthCheck[] {
     return healthChecks.toSorted((a, b) =>
         a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
     );

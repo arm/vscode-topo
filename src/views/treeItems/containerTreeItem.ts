@@ -1,10 +1,8 @@
 import * as vscode from 'vscode';
-import { ContainerItem, DeepReadonly } from '../../util/types';
+import { ContainerItem } from '../../util/types';
 import { getContainerWebEndpoints } from '../../util/getContainerWebEndpoints';
 
-function getContainerItemTooltip(
-    containerItem: DeepReadonly<ContainerItem>,
-): string {
+function getContainerItemTooltip(containerItem: ContainerItem): string {
     return `ID: ${containerItem.id}
 Image: ${containerItem.image}
 Names: ${containerItem.names}
@@ -15,7 +13,7 @@ Address: ${containerItem.address}`;
 }
 
 export class ContainerTreeItem extends vscode.TreeItem {
-    constructor(public readonly containerItem: DeepReadonly<ContainerItem>) {
+    constructor(public readonly containerItem: ContainerItem) {
         super(containerItem.image, vscode.TreeItemCollapsibleState.None);
         this.description = `${containerItem.names} - ${containerItem.status}`;
         this.tooltip = getContainerItemTooltip(containerItem);

@@ -11,6 +11,7 @@ import {
     type,
     defaulted,
 } from 'superstruct';
+import type { DeepReadonly } from '../util/types';
 
 const trimmedStringSchema = trimmed(string());
 
@@ -25,7 +26,7 @@ export const projectSchema = type({
     compatibility: optional(projectCompatibilitySchema),
 });
 
-export type ProjectDescription = Infer<typeof projectSchema>;
+export type ProjectDescription = DeepReadonly<Infer<typeof projectSchema>>;
 
 const healthCheckStatusSchema = trimmed(
     enums(['ok', 'warning', 'error', 'info']),
@@ -38,7 +39,7 @@ export const healthCheckFixSchema = type({
     command: optional(trimmedStringSchema),
 });
 
-export type HealthCheckFix = Infer<typeof healthCheckFixSchema>;
+export type HealthCheckFix = DeepReadonly<Infer<typeof healthCheckFixSchema>>;
 
 export const healthCheckSchema = type({
     name: trimmedStringSchema,
@@ -47,7 +48,7 @@ export const healthCheckSchema = type({
     fix: optional(healthCheckFixSchema),
 });
 
-export type HealthCheck = Infer<typeof healthCheckSchema>;
+export type HealthCheck = DeepReadonly<Infer<typeof healthCheckSchema>>;
 
 const targetHealthReportSchema = type({
     destination: trimmedStringSchema,
@@ -65,16 +66,20 @@ export const hostHealthReportSchema = type({
     host: hostHealthSchema,
 });
 
-export type HostHealthReport = Infer<typeof hostHealthReportSchema>;
+export type HostHealthReport = DeepReadonly<
+    Infer<typeof hostHealthReportSchema>
+>;
 
-export type TargetHealthReport = Infer<typeof targetHealthReportSchema>;
+export type TargetHealthReport = DeepReadonly<
+    Infer<typeof targetHealthReportSchema>
+>;
 
 export const healthReportSchema = type({
     host: hostHealthSchema,
     target: targetHealthReportSchema,
 });
 
-export type HealthReport = Infer<typeof healthReportSchema>;
+export type HealthReport = DeepReadonly<Infer<typeof healthReportSchema>>;
 
 const describeHostProcessorSchema = type({
     model: trimmedStringSchema,
@@ -126,10 +131,10 @@ const psEntrySchema = type({
     address: trimmedStringSchema,
 });
 
-export type PsEntry = Infer<typeof psEntrySchema>;
+export type PsEntry = DeepReadonly<Infer<typeof psEntrySchema>>;
 
 export const psSchema = type({
     containers: array(psEntrySchema),
 });
 
-export type PsOutput = Infer<typeof psSchema>;
+export type PsOutput = DeepReadonly<Infer<typeof psSchema>>;

@@ -3,28 +3,30 @@ import {
     type HealthCheckFix,
     type TargetHealthReport,
 } from '../services/topoCliSchema';
-import { DeepReadonly } from './types';
 
 export type IssueFixCommandGroup = {
+    readonly issueNames: readonly string[];
+    readonly command: string;
+};
+
+type MutableIssueFixCommandGroup = {
     issueNames: string[];
     command: string;
 };
 
-export type FixableIssue = DeepReadonly<
-    HealthCheck & {
-        fix: HealthCheckFix & { command: string };
-    }
->;
+export type FixableIssue = HealthCheck & {
+    readonly fix: HealthCheckFix & { readonly command: string };
+};
 
 export function hasFixCommand(
-    healthCheck: DeepReadonly<HealthCheck> | undefined,
+    healthCheck: HealthCheck | undefined,
 ): healthCheck is FixableIssue {
     return !!healthCheck?.fix?.command;
 }
 
 export function getTargetIssueFixCommandGroups(
-    health: DeepReadonly<TargetHealthReport> | undefined,
-): IssueFixCommandGroup[] {
+    health: TargetHealthReport | undefined,
+): readonly IssueFixCommandGroup[] {
     if (!health) {
         return [];
     }
@@ -33,9 +35,9 @@ export function getTargetIssueFixCommandGroups(
 }
 
 export function getIssueFixCommandGroups(
-    healthChecks: DeepReadonly<HealthCheck[]>,
-): IssueFixCommandGroup[] {
-    const groups = new Map<string, IssueFixCommandGroup>();
+    healthChecks: readonly HealthCheck[],
+): readonly IssueFixCommandGroup[] {
+    const groups = new Map<string, MutableIssueFixCommandGroup>();
 
     for (const healthCheck of healthChecks) {
         const command = healthCheck.fix?.command;
@@ -59,8 +61,8 @@ export function getIssueFixCommandGroups(
 }
 
 function getTargetHealthChecks(
-    health: DeepReadonly<TargetHealthReport>,
-): DeepReadonly<HealthCheck>[] {
+    health: TargetHealthReport,
+): readonly HealthCheck[] {
     return [
         health.connectivity,
         health.processingDomainDriver,

@@ -2,7 +2,6 @@ import { isWrappedError, type WrappedErrorLog } from '../errors/wrappedError';
 import { getErrorMessage } from './getErrorMessage';
 import { logger } from './logger';
 import * as vscode from 'vscode';
-import type { DeepReadonly } from './types';
 
 const logMethods = {
     ERROR: logger.error,
@@ -11,7 +10,7 @@ const logMethods = {
     DEBUG: logger.debug,
 } as const;
 
-const logEntries = (entries: DeepReadonly<WrappedErrorLog[]>) => {
+const logEntries = (entries: readonly WrappedErrorLog[]) => {
     for (const entry of entries) {
         logMethods[entry.level](entry.msg);
     }

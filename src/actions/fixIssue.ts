@@ -119,7 +119,7 @@ export class FixIssue {
 
     private async executeFix(
         target: string,
-        issueNames: string[],
+        issueNames: readonly string[],
         command: string,
     ): Promise<void> {
         const issueName = issueNames.join(', ');
@@ -141,7 +141,7 @@ export class FixIssue {
 
 export function createFixIssueTask(
     target: string,
-    issueNames: string[],
+    issueNames: readonly string[],
     command: string,
 ): vscode.Task {
     const issueName = issueNames.join(', ');

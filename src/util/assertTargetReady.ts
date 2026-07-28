@@ -1,7 +1,6 @@
 import { WrappedError } from '../errors/wrappedError';
 import type { TargetHealthReport } from '../services/topoCliSchema';
 import type { Loadable, Loaded } from './loadable';
-import type { DeepReadonly } from './types';
 
 export type ConnectedTargetHealth = Loaded<
     TargetHealthReport & {
@@ -53,7 +52,7 @@ export function assertTargetConnected(
 
 function getTargetConnectivityFailureMessage(
     target: string,
-    health: DeepReadonly<TargetHealthReport>,
+    health: TargetHealthReport,
 ): string {
     const details = health.connectivity.value
         ? `: ${health.connectivity.value}`

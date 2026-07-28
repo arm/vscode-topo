@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { ContainerItem, DeepReadonly } from '../util/types';
+import { ContainerItem } from '../util/types';
 import { ContainerCommands } from '../services/containerCommands';
 import { assertContainerTreeItem } from '../views/treeItems/assertContainerTreeItem';
 
@@ -15,7 +15,7 @@ export class OpenContainerShell {
 }
 
 export function openContainerShell(
-    item: DeepReadonly<ContainerItem>,
+    item: ContainerItem,
     containerCommands: ContainerCommands,
 ): void {
     const fullCommand = containerCommands.getAttachShellCommand(

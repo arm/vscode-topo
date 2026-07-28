@@ -1,4 +1,3 @@
-import type { DeepReadonly } from '../util/types';
 import type { TopoLogLevel } from '../services/topoCliSchema';
 
 export type WrappedErrorCode =
@@ -10,15 +9,15 @@ export type WrappedErrorCode =
     | 'INVALID_SSH_DESTINATION';
 
 export interface WrappedErrorLog {
-    level: TopoLogLevel;
-    msg: string;
+    readonly level: TopoLogLevel;
+    readonly msg: string;
 }
 
 export class WrappedError extends Error {
     constructor(
         public readonly code: WrappedErrorCode,
         message: string,
-        public readonly logs: DeepReadonly<WrappedErrorLog[]> = [],
+        public readonly logs: readonly WrappedErrorLog[] = [],
         options?: ErrorOptions,
     ) {
         super(message, options);
@@ -28,7 +27,7 @@ export class WrappedError extends Error {
 
 export function isWrappedError(
     error: unknown,
-    codes: WrappedErrorCode[] = [],
+    codes: readonly WrappedErrorCode[] = [],
 ): error is WrappedError {
     return (
         error instanceof WrappedError &&

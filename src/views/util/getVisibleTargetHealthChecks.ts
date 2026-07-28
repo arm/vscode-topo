@@ -1,10 +1,10 @@
 import { HealthCheck, TargetHealthReport } from '../../services/topoCliSchema';
-import { DeepReadonly, TargetDescription } from '../../util/types';
+import { TargetDescription } from '../../util/types';
 
 export function getVisibleTargetHealthChecks(
-    health: DeepReadonly<TargetHealthReport>,
-    targetDescription: DeepReadonly<TargetDescription> | undefined,
-): DeepReadonly<HealthCheck>[] {
+    health: TargetHealthReport,
+    targetDescription: TargetDescription | undefined,
+): readonly HealthCheck[] {
     const healthChecks = [...health.dependencies];
     if (targetDescription?.remoteProcessors.length) {
         healthChecks.push(health.processingDomainDriver);

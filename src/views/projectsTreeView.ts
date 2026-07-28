@@ -8,7 +8,7 @@ import { LoadingTreeItem } from './treeItems/loadingTreeItem';
 import { Loadable } from '../util/loadable';
 import { ProjectMetadata } from '../util/project';
 import { ContainerTreeItem } from './treeItems/containerTreeItem';
-import { ContainerItem, DeepReadonly } from '../util/types';
+import { ContainerItem } from '../util/types';
 import {
     compareProcessingDomains,
     ProcessingDomainTreeItem,
@@ -24,10 +24,7 @@ function syncProjectCountContext(projects: Loadable<ProjectMetadata[]>): void {
     );
 }
 
-function compareContainers(
-    a: DeepReadonly<ContainerItem>,
-    b: DeepReadonly<ContainerItem>,
-): number {
+function compareContainers(a: ContainerItem, b: ContainerItem): number {
     if (a.state === 'running' && b.state !== 'running') {
         return -1;
     }
@@ -38,9 +35,9 @@ function compareContainers(
 }
 
 function groupContainersByProcessingDomain(
-    containers: DeepReadonly<ContainerItem[]>,
+    containers: readonly ContainerItem[],
 ): ProcessingDomainTreeItem[] {
-    const containersByDomain = new Map<string, DeepReadonly<ContainerItem>[]>();
+    const containersByDomain = new Map<string, ContainerItem[]>();
     for (const container of containers) {
         const domain = container.processingDomain || 'Unknown';
         containersByDomain.set(domain, [

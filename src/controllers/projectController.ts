@@ -7,7 +7,7 @@ import { COMPOSE_FILE_GLOB } from '../util/composeFile';
 import { LatestAbortableWork } from '../util/latestAbortableWork';
 import { TopoCli } from '../services/topoCli';
 import { PsEntry, PsOutput } from '../services/topoCliSchema';
-import { ContainerItem, DeepReadonly } from '../util/types';
+import { ContainerItem } from '../util/types';
 import { TargetModel } from '../models/targetModel';
 import { showAndLogError } from '../util/showAndLog';
 import { isProjectComposePathDeleted } from '../util/isProjectComposePathDeleted';
@@ -22,7 +22,7 @@ function createContainerItem(item: PsEntry, target: string): ContainerItem {
 async function loadContainers(
     topoCli: TopoCli,
     target: string,
-    project: DeepReadonly<ProjectMetadata>,
+    project: ProjectMetadata,
 ): Promise<Loadable<ContainerItem[]>> {
     let psResult: PsOutput;
     try {
@@ -143,7 +143,7 @@ export class ProjectController implements vscode.Disposable {
     }
 
     private async loadProjectContainers(
-        project: DeepReadonly<ProjectMetadata>,
+        project: ProjectMetadata,
         target: string,
         signal: AbortSignal,
     ): Promise<void> {

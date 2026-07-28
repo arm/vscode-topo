@@ -1,33 +1,29 @@
-import { PsEntry } from '../services/topoCliSchema';
+import type { PsEntry } from '../services/topoCliSchema';
 
 export interface HostProcessor {
-    model: string;
-    cores: number;
-    features: string[];
+    readonly model: string;
+    readonly cores: number;
+    readonly features: readonly string[];
 }
 
 export interface RemoteProcessor {
-    name: string;
+    readonly name: string;
 }
 
 export interface TargetDescription {
-    hostProcessors: HostProcessor[];
-    remoteProcessors: RemoteProcessor[];
-    totalMemoryKb: number;
-}
-
-export interface ContainerItem extends PsEntry {
-    target: string;
+    readonly hostProcessors: readonly HostProcessor[];
+    readonly remoteProcessors: readonly RemoteProcessor[];
+    readonly totalMemoryKb: number;
 }
 
 export type DeepReadonly<T> = T extends (...args: never[]) => unknown
     ? T
-    : T extends ReadonlyMap<infer K, infer V>
-      ? ReadonlyMap<DeepReadonly<K>, DeepReadonly<V>>
-      : T extends ReadonlySet<infer V>
-        ? ReadonlySet<DeepReadonly<V>>
-        : T extends object
-          ? { readonly [P in keyof T]: DeepReadonly<T[P]> }
-          : T;
+    : T extends object
+      ? { readonly [P in keyof T]: DeepReadonly<T[P]> }
+      : T;
+
+export type ContainerItem = PsEntry & {
+    readonly target: string;
+};
 
 export type Mutable<T> = { -readonly [P in keyof T]: T[P] };
