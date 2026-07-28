@@ -4,7 +4,7 @@ import { parseCloneSource } from './util/cloneSource';
 import { isWrappedError } from './errors/wrappedError';
 import { showAndLogError } from './util/showAndLog';
 import { parseRequestData } from './util/protocolRequest';
-import { ProjectCloneWorkflow } from './workflows/projectCloneWorkflow';
+import { ProjectCloner } from './operations/projectCloner';
 
 /**
  * VS Code URI handler for Topo deep links.
@@ -16,7 +16,7 @@ import { ProjectCloneWorkflow } from './workflows/projectCloneWorkflow';
  * Additional query parameters are forwarded to `topo clone` as `key=value` arguments.
  */
 export class ProtocolHandler implements vscode.UriHandler {
-    constructor(private readonly cloneWorkflow: ProjectCloneWorkflow) {}
+    constructor(private readonly projectCloner: ProjectCloner) {}
 
     public async handleUri(uri: vscode.Uri): Promise<void> {
         logger.info(`ProtocolHandler.handleUri(${uri.toString()})`);
@@ -25,7 +25,7 @@ export class ProtocolHandler implements vscode.UriHandler {
         switch (uri.path) {
             case '/clone':
                 try {
-                    await handleCloneRequest(this.cloneWorkflow, uri, data);
+                    await handleCloneRequest(this.projectCloner, uri, data);
                 } catch (error: unknown) {
                     if (isWrappedError(error, ['CLONE', 'CLI'])) {
                         return showAndLogError(
@@ -46,7 +46,7 @@ export class ProtocolHandler implements vscode.UriHandler {
 }
 
 const handleCloneRequest = async (
-    cloneWorkflow: ProjectCloneWorkflow,
+    projectCloner: ProjectCloner,
     uri: vscode.Uri,
     data: Record<string, string>,
 ): Promise<void> => {
@@ -63,5 +63,5 @@ const handleCloneRequest = async (
         return;
     }
 
-    await cloneWorkflow.clone(cloneSource, cloneParameters);
+    await projectCloner.clone(cloneSource, cloneParameters);
 };

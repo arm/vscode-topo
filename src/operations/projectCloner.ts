@@ -8,34 +8,27 @@ import {
     validateProjectName,
 } from '../util/cloneSource';
 import { getErrorMessage } from '../util/getErrorMessage';
+import {
+    handleCompletedClone,
+    resolveProjectName,
+    selectDestinationPath,
+} from '../util/projectClone';
 import { createProcessTask } from '../util/task';
 import { TaskExecutor } from '../util/taskExecutor';
 
-export interface ProjectCloneInteraction {
-    selectDestinationPath(): Promise<string | undefined>;
-    resolveProjectName(
-        destinationPath: string,
-        defaultProjectName: string,
-    ): Promise<string | undefined>;
-    handleCompletedClone(repositoryPath: string): Promise<void>;
-}
-
-export class ProjectCloneWorkflow {
-    constructor(
-        private readonly taskExecutor: TaskExecutor,
-        private readonly interaction: ProjectCloneInteraction,
-    ) {}
+export class ProjectCloner {
+    constructor(private readonly taskExecutor: TaskExecutor) {}
 
     public async clone(
         source: CloneSource,
         parameters: CloneParameters = {},
     ): Promise<void> {
-        const destinationPath = await this.interaction.selectDestinationPath();
+        const destinationPath = await selectDestinationPath();
         if (!destinationPath) {
             return;
         }
 
-        const projectName = await this.interaction.resolveProjectName(
+        const projectName = await resolveProjectName(
             destinationPath,
             getDefaultProjectName(source),
         );
@@ -61,6 +54,6 @@ export class ProjectCloneWorkflow {
             });
         }
 
-        await this.interaction.handleCompletedClone(repositoryPath);
+        await handleCompletedClone(repositoryPath);
     }
 }

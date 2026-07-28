@@ -1,30 +1,30 @@
 import * as vscode from 'vscode';
 import { mock, MockProxy } from 'vitest-mock-extended';
 import { WrappedError } from './errors/wrappedError';
+import { ProjectCloner } from './operations/projectCloner';
 import { ProtocolHandler } from './protocolHandler';
-import { ProjectCloneWorkflow } from './workflows/projectCloneWorkflow';
 import { showAndLogError } from './util/showAndLog';
 
 vi.mock('./util/showAndLog');
 
 describe('ProtocolHandler', () => {
-    let cloneWorkflow: MockProxy<ProjectCloneWorkflow>;
+    let projectCloner: MockProxy<ProjectCloner>;
     let protocolHandler: ProtocolHandler;
 
     beforeEach(() => {
         vi.resetAllMocks();
-        cloneWorkflow = mock<ProjectCloneWorkflow>();
-        protocolHandler = new ProtocolHandler(cloneWorkflow);
+        projectCloner = mock<ProjectCloner>();
+        protocolHandler = new ProtocolHandler(projectCloner);
     });
 
-    it('uses the shared clone workflow for an explicit git source', async () => {
+    it('uses the shared clone operation for an explicit git source', async () => {
         await protocolHandler.handleUri(
             vscode.Uri.parse(
                 'vscode://arm.topo/clone?source=git:https://example.com/project.git',
             ),
         );
 
-        expect(cloneWorkflow.clone).toHaveBeenCalledWith(
+        expect(projectCloner.clone).toHaveBeenCalledWith(
             {
                 type: 'git',
                 url: 'https://example.com/project.git',
@@ -33,14 +33,14 @@ describe('ProtocolHandler', () => {
         );
     });
 
-    it('passes a raw source and arbitrary parameters to the workflow', async () => {
+    it('passes a raw source and arbitrary parameters to the operation', async () => {
         await protocolHandler.handleUri(
             vscode.Uri.parse(
                 'vscode://arm.topo/clone?source=https://example.com/project.git&model=some-huggingface-id',
             ),
         );
 
-        expect(cloneWorkflow.clone).toHaveBeenCalledWith(
+        expect(projectCloner.clone).toHaveBeenCalledWith(
             { value: 'https://example.com/project.git' },
             { model: 'some-huggingface-id' },
         );
@@ -51,7 +51,7 @@ describe('ProtocolHandler', () => {
             vscode.Uri.parse('vscode://arm.topo/clone?model=test-model'),
         );
 
-        expect(cloneWorkflow.clone).not.toHaveBeenCalled();
+        expect(projectCloner.clone).not.toHaveBeenCalled();
         expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
     });
 
@@ -65,12 +65,12 @@ describe('ProtocolHandler', () => {
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
             `Clone source type 'dir' is not supported for URI-based cloning. Please use the command palette to clone from a local directory. URI: ${uri.toString()}`,
         );
-        expect(cloneWorkflow.clone).not.toHaveBeenCalled();
+        expect(projectCloner.clone).not.toHaveBeenCalled();
     });
 
-    it('shows clone workflow errors', async () => {
+    it('shows clone operation errors', async () => {
         const error = new WrappedError('CLONE', 'task failed');
-        cloneWorkflow.clone.mockRejectedValueOnce(error);
+        projectCloner.clone.mockRejectedValueOnce(error);
 
         await protocolHandler.handleUri(
             vscode.Uri.parse(
@@ -91,7 +91,7 @@ describe('ProtocolHandler', () => {
 
         await protocolHandler.handleUri(uri);
 
-        expect(cloneWorkflow.clone).not.toHaveBeenCalled();
+        expect(projectCloner.clone).not.toHaveBeenCalled();
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
             `Invalid URI: ${uri.toString()}`,
         );

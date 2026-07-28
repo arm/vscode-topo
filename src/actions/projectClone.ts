@@ -4,10 +4,10 @@ import { TargetModel } from '../models/targetModel';
 import {
     promptForLocalCloneSource,
     promptForRemoteCloneSource,
-} from './projectCloneInteraction';
+} from '../util/projectClone';
 import { isWrappedError } from '../errors/wrappedError';
 import { showAndLogError } from '../util/showAndLog';
-import { ProjectCloneWorkflow } from '../workflows/projectCloneWorkflow';
+import { ProjectCloner } from '../operations/projectCloner';
 
 function wrapCloneCommandWithCloneErrorHandling(
     commandHandler: () => Promise<void>,
@@ -42,7 +42,7 @@ export class ProjectClone {
     constructor(
         private readonly topoCli: TopoCli,
         private readonly targetModel: TargetModel,
-        private readonly cloneWorkflow: ProjectCloneWorkflow,
+        private readonly projectCloner: ProjectCloner,
     ) {}
 
     public cloneCommandHandler = async (): Promise<void> => {
@@ -74,7 +74,7 @@ export class ProjectClone {
             if (!source) {
                 return;
             }
-            await this.cloneWorkflow.clone(source);
+            await this.projectCloner.clone(source);
         },
     );
 
@@ -84,7 +84,7 @@ export class ProjectClone {
             if (!source) {
                 return;
             }
-            await this.cloneWorkflow.clone(source);
+            await this.projectCloner.clone(source);
         },
     );
 }

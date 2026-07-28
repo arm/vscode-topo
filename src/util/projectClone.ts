@@ -3,10 +3,9 @@ import path from 'node:path';
 import * as vscode from 'vscode';
 import { isWrappedError } from '../errors/wrappedError';
 import { TopoCli } from '../services/topoCli';
-import { ProjectCloneInteraction } from '../workflows/projectCloneWorkflow';
 import { ProjectDescription } from '../services/topoCliSchema';
-import { CloneSource, validateProjectName } from '../util/cloneSource';
-import { showAndLogError } from '../util/showAndLog';
+import { CloneSource, validateProjectName } from './cloneSource';
+import { showAndLogError } from './showAndLog';
 
 type RemoteProjectQuickPickItem = vscode.QuickPickItem & {
     url: string;
@@ -130,7 +129,7 @@ export const promptForLocalCloneSource = async (): Promise<
     return sourcePath ? { type: 'dir', path: sourcePath } : undefined;
 };
 
-const selectDestinationPath = async (): Promise<string | undefined> => {
+export const selectDestinationPath = async (): Promise<string | undefined> => {
     const selection = await vscode.window.showOpenDialog({
         canSelectFiles: false,
         canSelectFolders: true,
@@ -140,7 +139,7 @@ const selectDestinationPath = async (): Promise<string | undefined> => {
     return selection?.[0]?.fsPath;
 };
 
-const resolveProjectName = async (
+export const resolveProjectName = async (
     destinationPath: string,
     defaultProjectName: string,
 ): Promise<string | undefined> => {
@@ -155,7 +154,9 @@ const resolveProjectName = async (
     });
 };
 
-const handleCompletedClone = async (repositoryPath: string): Promise<void> => {
+export const handleCompletedClone = async (
+    repositoryPath: string,
+): Promise<void> => {
     let message = 'Would you like to open the cloned repository?';
     const choices = [open, openNewWindow];
 
@@ -194,10 +195,4 @@ const handleCompletedClone = async (repositoryPath: string): Promise<void> => {
         default:
             return;
     }
-};
-
-export const projectCloneInteraction: ProjectCloneInteraction = {
-    selectDestinationPath,
-    resolveProjectName,
-    handleCompletedClone,
 };

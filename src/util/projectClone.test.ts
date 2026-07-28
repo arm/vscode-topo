@@ -5,16 +5,18 @@ import { mock } from 'vitest-mock-extended';
 import { WrappedError } from '../errors/wrappedError';
 import { TopoCli } from '../services/topoCli';
 import { ProjectDescription } from '../services/topoCliSchema';
-import { showAndLogError } from '../util/showAndLog';
-import { mutable } from '../util/test/mutable';
+import { showAndLogError } from './showAndLog';
+import { mutable } from './test/mutable';
 import {
     getFirstSentence,
-    projectCloneInteraction,
+    handleCompletedClone,
     promptForLocalCloneSource,
     promptForRemoteCloneSource,
-} from './projectCloneInteraction';
+    resolveProjectName,
+    selectDestinationPath,
+} from './projectClone';
 
-vi.mock('../util/showAndLog');
+vi.mock('./showAndLog');
 
 const showInformationMessageForStrings: (
     message: string,
@@ -57,7 +59,7 @@ const localProjectUri = vscode.Uri.file(path.resolve('path', 'to', 'source'));
 const workspaceUri = vscode.Uri.file(path.resolve('home', 'workspace'));
 const workspaceFolders = [{ uri: workspaceUri, name: 'workspace', index: 0 }];
 
-describe('project clone interaction', () => {
+describe('project clone utilities', () => {
     const topoCli = mock<TopoCli>();
 
     beforeEach(() => {
@@ -84,26 +86,21 @@ describe('project clone interaction', () => {
             type: 'dir',
             path: localProjectUri.fsPath,
         });
-        await expect(
-            projectCloneInteraction.selectDestinationPath(),
-        ).resolves.toBe(destinationUri.fsPath);
+        await expect(selectDestinationPath()).resolves.toBe(
+            destinationUri.fsPath,
+        );
     });
 
     it('returns undefined when folder prompts are cancelled', async () => {
         vi.mocked(vscode.window.showOpenDialog).mockResolvedValue(undefined);
 
         await expect(promptForLocalCloneSource()).resolves.toBeUndefined();
-        await expect(
-            projectCloneInteraction.selectDestinationPath(),
-        ).resolves.toBeUndefined();
+        await expect(selectDestinationPath()).resolves.toBeUndefined();
     });
 
     it('uses an available default project name without prompting', async () => {
         await expect(
-            projectCloneInteraction.resolveProjectName(
-                destinationUri.fsPath,
-                'project',
-            ),
+            resolveProjectName(destinationUri.fsPath, 'project'),
         ).resolves.toBe('project');
 
         expect(fs.existsSync).toHaveBeenCalledWith(
@@ -119,10 +116,7 @@ describe('project clone interaction', () => {
         );
 
         await expect(
-            projectCloneInteraction.resolveProjectName(
-                destinationUri.fsPath,
-                'project',
-            ),
+            resolveProjectName(destinationUri.fsPath, 'project'),
         ).resolves.toBe('other-project');
 
         expect(vscode.window.showInputBox).toHaveBeenCalledWith({
@@ -241,7 +235,7 @@ describe('project clone interaction', () => {
         it('opens the project in the current window', async () => {
             showInformationMessageMock.mockResolvedValueOnce('Open');
 
-            await projectCloneInteraction.handleCompletedClone(repositoryPath);
+            await handleCompletedClone(repositoryPath);
 
             expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
                 'vscode.openFolder',
@@ -255,7 +249,7 @@ describe('project clone interaction', () => {
                 'Open in New Window',
             );
 
-            await projectCloneInteraction.handleCompletedClone(repositoryPath);
+            await handleCompletedClone(repositoryPath);
 
             expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
                 'vscode.openFolder',
@@ -270,7 +264,7 @@ describe('project clone interaction', () => {
                 'Add to Workspace',
             );
 
-            await projectCloneInteraction.handleCompletedClone(repositoryPath);
+            await handleCompletedClone(repositoryPath);
 
             expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
                 'Would you like to open the cloned repository, or add it to the current workspace?',

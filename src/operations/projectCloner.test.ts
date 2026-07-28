@@ -3,17 +3,24 @@ import path from 'node:path';
 import * as vscode from 'vscode';
 import { MockProxy, mock } from 'vitest-mock-extended';
 import { WrappedError } from '../errors/wrappedError';
-import { TaskExecutor } from '../util/taskExecutor';
 import {
-    ProjectCloneInteraction,
-    ProjectCloneWorkflow,
-} from './projectCloneWorkflow';
+    handleCompletedClone,
+    resolveProjectName,
+    selectDestinationPath,
+} from '../util/projectClone';
+import { TaskExecutor } from '../util/taskExecutor';
+import { ProjectCloner } from './projectCloner';
 
-describe('ProjectCloneWorkflow', () => {
+vi.mock('../util/projectClone');
+
+const handleCompletedCloneMock = vi.mocked(handleCompletedClone);
+const resolveProjectNameMock = vi.mocked(resolveProjectName);
+const selectDestinationPathMock = vi.mocked(selectDestinationPath);
+
+describe('ProjectCloner', () => {
     const destinationPath = path.resolve('home', 'destination');
     let taskExecutor: MockProxy<TaskExecutor>;
-    let interaction: MockProxy<ProjectCloneInteraction>;
-    let workflow: ProjectCloneWorkflow;
+    let projectCloner: ProjectCloner;
 
     const expectCloneTask = (
         task: vscode.Task,
@@ -29,36 +36,34 @@ describe('ProjectCloneWorkflow', () => {
     };
 
     beforeEach(() => {
+        vi.resetAllMocks();
         taskExecutor = mock<TaskExecutor>();
-        interaction = mock<ProjectCloneInteraction>();
-        interaction.selectDestinationPath.mockResolvedValue(destinationPath);
-        interaction.resolveProjectName.mockResolvedValue(
-            'virtual-bittermelon-peeler',
-        );
-        workflow = new ProjectCloneWorkflow(taskExecutor, interaction);
+        selectDestinationPathMock.mockResolvedValue(destinationPath);
+        resolveProjectNameMock.mockResolvedValue('virtual-bittermelon-peeler');
+        projectCloner = new ProjectCloner(taskExecutor);
     });
 
     it('stops when destination selection is cancelled', async () => {
-        interaction.selectDestinationPath.mockResolvedValueOnce(undefined);
+        selectDestinationPathMock.mockResolvedValueOnce(undefined);
 
-        await workflow.clone({
+        await projectCloner.clone({
             type: 'git',
             url: 'https://example.com/virtual-bittermelon-peeler.git',
         });
 
-        expect(interaction.resolveProjectName).not.toHaveBeenCalled();
+        expect(resolveProjectNameMock).not.toHaveBeenCalled();
         expect(taskExecutor.run).not.toHaveBeenCalled();
     });
 
     it('stops when project name selection is cancelled', async () => {
-        interaction.resolveProjectName.mockResolvedValueOnce(undefined);
+        resolveProjectNameMock.mockResolvedValueOnce(undefined);
 
-        await workflow.clone({
+        await projectCloner.clone({
             type: 'git',
             url: 'https://example.com/virtual-bittermelon-peeler.git',
         });
 
-        expect(interaction.resolveProjectName).toHaveBeenCalledWith(
+        expect(resolveProjectNameMock).toHaveBeenCalledWith(
             destinationPath,
             'virtual-bittermelon-peeler',
         );
@@ -68,10 +73,10 @@ describe('ProjectCloneWorkflow', () => {
     it.each(['../outside', '..\\outside'])(
         'rejects a project name that escapes the destination (%s)',
         async (projectName) => {
-            interaction.resolveProjectName.mockResolvedValueOnce(projectName);
+            resolveProjectNameMock.mockResolvedValueOnce(projectName);
 
             await expect(
-                workflow.clone({
+                projectCloner.clone({
                     type: 'git',
                     url: 'https://example.com/virtual-bittermelon-peeler.git',
                 }),
@@ -87,7 +92,7 @@ describe('ProjectCloneWorkflow', () => {
     );
 
     it('runs a clone task and then offers the post-clone action', async () => {
-        await workflow.clone({
+        await projectCloner.clone({
             type: 'git',
             url: 'https://example.com/virtual-bittermelon-peeler.git',
         });
@@ -105,13 +110,11 @@ describe('ProjectCloneWorkflow', () => {
                 repositoryPath,
             ],
         );
-        expect(interaction.handleCompletedClone).toHaveBeenCalledWith(
-            repositoryPath,
-        );
+        expect(handleCompletedCloneMock).toHaveBeenCalledWith(repositoryPath);
     });
 
     it('passes raw sources and clone parameters to the task', async () => {
-        await workflow.clone(
+        await projectCloner.clone(
             {
                 value: 'https://example.com/virtual-bittermelon-peeler.git',
             },
@@ -135,7 +138,7 @@ describe('ProjectCloneWorkflow', () => {
         taskExecutor.run.mockRejectedValueOnce(error);
 
         await expect(
-            workflow.clone({
+            projectCloner.clone({
                 type: 'git',
                 url: 'https://example.com/virtual-bittermelon-peeler.git',
             }),
@@ -146,12 +149,12 @@ describe('ProjectCloneWorkflow', () => {
                 cause: error,
             }),
         );
-        expect(interaction.handleCompletedClone).not.toHaveBeenCalled();
+        expect(handleCompletedCloneMock).not.toHaveBeenCalled();
     });
 
     it('rejects invalid source URLs before executing a task', async () => {
         await expect(
-            workflow.clone({
+            projectCloner.clone({
                 type: 'git',
                 url: 'not-a-valid-url',
             }),
