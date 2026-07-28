@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { ContainerItem } from '../util/types';
 import { ContainerCommands } from '../services/containerCommands';
-import { assertContainerTreeItem } from '../views/treeItems/assertContainerTreeItem';
+import { assertContainerTreeItem } from './util/assertContainerTreeItem';
 
 export class OpenContainerShell {
     constructor(private readonly containerCommands: ContainerCommands) {}

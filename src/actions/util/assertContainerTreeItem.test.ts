@@ -1,5 +1,5 @@
 import { assertContainerTreeItem } from './assertContainerTreeItem';
-import { ContainerTreeItem } from './containerTreeItem';
+import { ContainerTreeItem } from '../../views/treeItems/containerTreeItem';
 import { logger } from '../../util/logger';
 import { ContainerItem } from '../../util/types';
 

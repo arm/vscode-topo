@@ -6,7 +6,7 @@ import { TaskExecutor } from '../util/taskExecutor';
 import { showAndLogWarning } from '../util/showAndLog';
 import { TargetModel } from '../models/targetModel';
 import { ProjectController } from '../controllers/projectController';
-import { ProjectTreeItem } from '../views/treeItems/projectTreeItem';
+import { assertProjectTreeItem } from './util/assertProjectTreeItem';
 import { isWrappedError } from '../errors/wrappedError';
 import {
     assertTargetConnected,
@@ -47,10 +47,7 @@ export class Stop {
     }
 
     public async stopProjectCommandHandler(treeNode: unknown): Promise<void> {
-        if (!(treeNode instanceof ProjectTreeItem)) {
-            throw new Error('No compose.yaml or compose.yml selected for stop');
-        }
-
+        assertProjectTreeItem(treeNode);
         await this.stopCommandHandler(treeNode.composeFileUri);
     }
 }

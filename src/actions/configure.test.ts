@@ -74,9 +74,7 @@ describe('Configure', () => {
     it('throws when the project command has no project tree item', async () => {
         await expect(
             configureAction.configureProjectCommandHandler(undefined),
-        ).rejects.toThrow(
-            'No compose.yaml or compose.yml selected for configuration',
-        );
+        ).rejects.toThrow('This operation cannot be performed on this item');
 
         expect(taskExecutor.run).not.toHaveBeenCalled();
     });

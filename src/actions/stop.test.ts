@@ -177,7 +177,7 @@ describe('Stop', () => {
     it('throws when project command is called without a project tree item', async () => {
         await expect(
             stopAction.stopProjectCommandHandler(undefined),
-        ).rejects.toThrow('No compose.yaml or compose.yml selected for stop');
+        ).rejects.toThrow('This operation cannot be performed on this item');
 
         expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(

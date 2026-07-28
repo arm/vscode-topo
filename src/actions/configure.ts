@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import { getErrorMessage } from '../util/getErrorMessage';
 import { createProcessTask } from '../util/task';
 import { TaskExecutor } from '../util/taskExecutor';
-import { ProjectTreeItem } from '../views/treeItems/projectTreeItem';
+import { assertProjectTreeItem } from './util/assertProjectTreeItem';
 
 const viewLogsItem: vscode.MessageItem = {
     title: 'View Logs',
@@ -27,12 +27,7 @@ export class Configure {
     public async configureProjectCommandHandler(
         treeNode: unknown,
     ): Promise<void> {
-        if (!(treeNode instanceof ProjectTreeItem)) {
-            throw new Error(
-                'No compose.yaml or compose.yml selected for configuration',
-            );
-        }
-
+        assertProjectTreeItem(treeNode);
         await this.configureContextCommandHandler(treeNode.composeFileUri);
     }
 }
