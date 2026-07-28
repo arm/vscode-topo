@@ -32,16 +32,16 @@ describe('showAndLogError', () => {
     it('logs each WrappedError entry at its matching log level', () => {
         const logEntries = [
             {
-                level: 'Info',
+                level: 'INFO',
                 msg: 'Pulling image docker.io/library/nginx:latest',
             },
-            { level: 'Error', msg: 'Error: No such container: abc123' },
+            { level: 'ERROR', msg: 'Error: No such container: abc123' },
             {
-                level: 'Warning',
+                level: 'WARN',
                 msg: 'Warning: bridge-nf-call-iptables is disabled',
             },
             {
-                level: 'Debug',
+                level: 'DEBUG',
                 msg: 'loading plugin "io.containerd.grpc.v1.cri"',
             },
         ] as const;

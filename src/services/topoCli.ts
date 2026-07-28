@@ -14,11 +14,7 @@ import {
     PsOutput,
 } from './topoCliSchema';
 import { array, create, Struct } from 'superstruct';
-import {
-    WrappedError,
-    WrappedErrorLog,
-    WrappedErrorLogLevel,
-} from '../errors/wrappedError';
+import { WrappedError, WrappedErrorLog } from '../errors/wrappedError';
 import { getErrorMessage } from '../util/getErrorMessage';
 import { TargetDescription } from '../util/types';
 import { execFile } from '../util/exec';
@@ -32,21 +28,6 @@ interface ExecOptions {
     cwd?: string;
 }
 
-const normalizeLogLevel = (level: string): WrappedErrorLogLevel => {
-    switch (level.toUpperCase()) {
-        case 'ERROR':
-            return 'Error';
-        case 'WARN':
-            return 'Warning';
-        case 'DEBUG':
-            return 'Debug';
-        case 'INFO':
-            return 'Info';
-        default:
-            return 'Error';
-    }
-};
-
 export function parseTopoLogEntries(output: string): WrappedErrorLog[] {
     const entries: WrappedErrorLog[] = [];
     for (const line of output.split('\n')) {
@@ -58,7 +39,7 @@ export function parseTopoLogEntries(output: string): WrappedErrorLog[] {
             const parsed: unknown = JSON.parse(trimmed);
             const entry = create(parsed, topoLogEntrySchema);
             entries.push({
-                level: normalizeLogLevel(entry.level),
+                level: entry.level,
                 msg: entry.msg,
             });
         } catch {
@@ -80,7 +61,7 @@ export function parseWrappedError(error: unknown): WrappedError | undefined {
     const stderr = hasStderr(error) ? error.stderr : getErrorMessage(error);
     const logEntries = parseTopoLogEntries(stderr);
     const errorMessages = logEntries
-        .filter((entry) => entry.level === 'Error')
+        .filter((entry) => entry.level === 'ERROR')
         .map((entry) => entry.msg);
     if (errorMessages.length === 0) {
         return undefined;
