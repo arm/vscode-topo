@@ -66,6 +66,20 @@ Generate a `.vsix` package for distribution:
 npm run package
 ```
 
+## Update the Topo CLI Version
+
+To update the Topo CLI version bundled with the extension, pass the new version
+as a positional argument:
+
+```bash
+npm run bump-topo -- 9.1.0
+```
+
+The `--` forwards the version argument from npm to the script. The command
+checks that the version has artifacts for every supported platform, then updates
+the Topo version and platform checksums in `package.json`. If any artifact is
+missing, `package.json` is left unchanged.
+
 ## Access the `topo` Binary
 
 When the extension is loaded, the `topo` binary path is added to `PATH` and can be accessed directly from the VS Code terminal:

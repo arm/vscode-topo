@@ -1,4 +1,5 @@
 import type { DeepReadonly } from '../util/types';
+import type { TopoLogLevel } from '../services/topoCliSchema';
 
 export type WrappedErrorCode =
     | 'DOCKER'
@@ -8,10 +9,8 @@ export type WrappedErrorCode =
     | 'TARGET'
     | 'INVALID_SSH_DESTINATION';
 
-export type WrappedErrorLogLevel = 'Error' | 'Warning' | 'Info' | 'Debug';
-
 export interface WrappedErrorLog {
-    level: WrappedErrorLogLevel;
+    level: TopoLogLevel;
     msg: string;
 }
 

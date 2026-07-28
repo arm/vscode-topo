@@ -94,6 +94,8 @@ export const targetDescriptionSchema = type({
 
 const topoLogLevelSchema = trimmed(enums(['DEBUG', 'INFO', 'WARN', 'ERROR']));
 
+export type TopoLogLevel = Infer<typeof topoLogLevelSchema>;
+
 export const topoLogEntrySchema = type({
     time: trimmedStringSchema,
     level: topoLogLevelSchema,

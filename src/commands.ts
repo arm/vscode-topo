@@ -15,6 +15,7 @@ import { ProjectController } from './controllers/projectController';
 import { ConnectViaSSH } from './actions/connectViaSSH';
 import { OpenContainerInBrowser } from './actions/openContainerInBrowser';
 import { OpenSettings } from './actions/openSettings';
+import { InstallSkill } from './actions/installSkill';
 
 function command(id: string): string {
     return `${PACKAGE_NAME}.${id}`;
@@ -45,6 +46,7 @@ export const fixIssue = command('fixIssue');
 export const fixTargetIssues = command('fixTargetIssues');
 export const remoteClone = command('remoteClone');
 export const localClone = command('localClone');
+export const installSkill = command('installSkill');
 
 export interface CommandHandlers {
     hostController: HostController;
@@ -60,6 +62,7 @@ export interface CommandHandlers {
     containerLifecycle: ContainerLifecycle;
     fixIssue: FixIssue;
     openSettings: OpenSettings;
+    installSkill: InstallSkill;
 }
 
 export function register(handlers: CommandHandlers): vscode.Disposable {
@@ -143,6 +146,9 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
         ),
         vscode.commands.registerCommand(localClone, () =>
             handlers.projectClone.localCloneCommandHandler(),
+        ),
+        vscode.commands.registerCommand(installSkill, () =>
+            handlers.installSkill.installSkillCommandHandler(),
         ),
     );
 

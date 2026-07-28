@@ -9,7 +9,7 @@ export function assertValidSshDestination(destination: string): void {
     ) {
         const message = `Invalid SSH destination: ${destination}`;
         throw new WrappedError('INVALID_SSH_DESTINATION', message, [
-            { level: 'Error', msg: message },
+            { level: 'ERROR', msg: message },
         ]);
     }
 }

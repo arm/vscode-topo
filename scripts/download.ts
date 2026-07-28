@@ -6,21 +6,12 @@ import yargs from 'yargs';
 import extract from 'extract-zip';
 import * as tar from 'tar';
 import * as manifest from '../src/manifest.ts';
-
-const DOWNLOAD_TARGETS = [
-    'win32-x64',
-    'win32-arm64',
-    'linux-x64',
-    'linux-arm64',
-    'darwin-x64',
-    'darwin-arm64',
-] as const;
-type DownloadTarget = (typeof DOWNLOAD_TARGETS)[number];
-
-const SHA256_PATTERN = /^[a-f0-9]{64}$/i;
-
-const isSha256 = (value: unknown): value is string =>
-    typeof value === 'string' && SHA256_PATTERN.test(value);
+import {
+    DOWNLOAD_TARGETS,
+    type DownloadTarget,
+    getArtifactUrl,
+    isSha256,
+} from './topoArtifacts.ts';
 
 const readFromUrl = async (url: string): Promise<Response> => {
     const response = await fetch(url);
@@ -178,22 +169,12 @@ if (!isSha256(expectedSha256)) {
 }
 
 // --- Determine asset name ---------------------------------------------------
-const assetMapping: Record<DownloadTarget, string> = {
-    'linux-x64': 'linux/topo_linux_amd64.tar.gz',
-    'linux-arm64': 'linux/topo_linux_arm64.tar.gz',
-    'darwin-x64': 'macos/topo_darwin_amd64.tar.gz',
-    'darwin-arm64': 'macos/topo_darwin_arm64.tar.gz',
-    'win32-x64': 'windows/topo_windows_amd64.zip',
-    'win32-arm64': 'windows/topo_windows_arm64.zip',
-};
 const isWin = target.startsWith('win32');
 const topoFilename = isWin ? `${manifest.TOPO_CLI_WINDOWS}` : manifest.TOPO_CLI;
 const destFilename = `resources/${topoFilename}`;
-const assetPath = assetMapping[target];
 
 // --- Compose download URL ---------------------------------------------------
-const tag = `v${version}`;
-const downloadUrl = `https://artifacts.tools.arm.com/topo/${tag}/${assetPath}`;
+const downloadUrl = getArtifactUrl(version, target);
 console.log(`→ Downloading ${downloadUrl}`);
 
 // --- Perform download --------------------------------------------------------

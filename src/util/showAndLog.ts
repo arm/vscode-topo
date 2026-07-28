@@ -4,22 +4,16 @@ import { logger } from './logger';
 import * as vscode from 'vscode';
 import type { DeepReadonly } from './types';
 
+const logMethods = {
+    ERROR: logger.error,
+    WARN: logger.warn,
+    INFO: logger.info,
+    DEBUG: logger.debug,
+} as const;
+
 const logEntries = (entries: DeepReadonly<WrappedErrorLog[]>) => {
     for (const entry of entries) {
-        switch (entry.level) {
-            case 'Error':
-                logger.error(entry.msg);
-                break;
-            case 'Warning':
-                logger.warn(entry.msg);
-                break;
-            case 'Info':
-                logger.info(entry.msg);
-                break;
-            case 'Debug':
-                logger.debug(entry.msg);
-                break;
-        }
+        logMethods[entry.level](entry.msg);
     }
 };
 

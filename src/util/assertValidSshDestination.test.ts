@@ -30,7 +30,7 @@ describe('assertValidSshDestination', () => {
             const expectedError = new WrappedError(
                 'INVALID_SSH_DESTINATION',
                 expectedMsg,
-                [{ level: 'Error', msg: expectedMsg }],
+                [{ level: 'ERROR', msg: expectedMsg }],
             );
 
             expect(() => assertValidSshDestination(sshDestination)).toThrow(
