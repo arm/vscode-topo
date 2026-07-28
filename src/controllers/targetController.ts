@@ -29,7 +29,7 @@ const removeTargetQuickPickButton: vscode.QuickInputButton = {
 };
 
 async function promptForSshTarget(
-    currentTargets: string[],
+    currentTargets: readonly string[],
     selectedTarget: string | undefined,
 ): Promise<TargetPromptResult | undefined> {
     const sshHosts = await getHosts(defaultSshConfigPath);
@@ -81,9 +81,9 @@ async function promptForSshTarget(
 }
 
 export function buildQuickPickItems(
-    discoveredTargets: string[],
+    discoveredTargets: readonly string[],
     filter: string,
-    savedTargets: string[] = [],
+    savedTargets: readonly string[] = [],
     selectedTarget?: string,
 ): TargetQuickPickItem[] {
     const discoveredTargetsSet = new Set(discoveredTargets);

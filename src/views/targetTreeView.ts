@@ -199,7 +199,7 @@ export class TargetTreeView
         }
 
         if (element instanceof HealthCheckGroupTreeItem) {
-            const healthChecks = [...element.healthChecks].sort(compareByName);
+            const healthChecks = element.healthChecks.toSorted(compareByName);
             return healthChecks.map(
                 (healthCheck) => new HealthCheckTreeItem(loaded(healthCheck)),
             );

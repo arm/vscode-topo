@@ -24,7 +24,7 @@ export const getFirstSentence = (text: string): string => {
 const listProjects = async (
     topoCli: TopoCli,
     sshTarget?: string,
-): Promise<ProjectDescription[]> => {
+): Promise<readonly ProjectDescription[]> => {
     if (!sshTarget) {
         return topoCli.listProjects();
     }
@@ -73,7 +73,7 @@ export const promptForRemoteCloneSource = async (
         let projectItems: RemoteProjectQuickPickItem[] = [];
 
         void (async () => {
-            let projects: ProjectDescription[] = [];
+            let projects: readonly ProjectDescription[] = [];
             try {
                 projects = await listProjects(topoCli, sshTarget);
             } catch (error) {

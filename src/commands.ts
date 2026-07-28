@@ -8,15 +8,14 @@ import { ProjectInit } from './actions/projectInit';
 import { Deploy } from './actions/deploy';
 import { Stop } from './actions/stop';
 import { OpenContainerShell } from './actions/openContainerShell';
-import { ContainerStart } from './actions/containerStart';
-import { ContainerStop } from './actions/containerStop';
-import { ContainerDelete } from './actions/containerDelete';
+import { ContainerLifecycle } from './actions/containerLifecycle';
 import { FixIssue } from './actions/fixIssue';
 import { ProjectClone } from './actions/projectClone';
 import { ProjectController } from './controllers/projectController';
 import { ConnectViaSSH } from './actions/connectViaSSH';
 import { OpenContainerInBrowser } from './actions/openContainerInBrowser';
 import { OpenSettings } from './actions/openSettings';
+import { InstallSkill } from './actions/installSkill';
 
 function command(id: string): string {
     return `${PACKAGE_NAME}.${id}`;
@@ -47,6 +46,7 @@ export const fixIssue = command('fixIssue');
 export const fixTargetIssues = command('fixTargetIssues');
 export const remoteClone = command('remoteClone');
 export const localClone = command('localClone');
+export const installSkill = command('installSkill');
 
 export interface CommandHandlers {
     hostController: HostController;
@@ -59,11 +59,10 @@ export interface CommandHandlers {
     openContainerShell: OpenContainerShell;
     connectViaSSH: ConnectViaSSH;
     openContainerInBrowser: OpenContainerInBrowser;
-    containerStart: ContainerStart;
-    containerStop: ContainerStop;
-    containerDelete: ContainerDelete;
+    containerLifecycle: ContainerLifecycle;
     fixIssue: FixIssue;
     openSettings: OpenSettings;
+    installSkill: InstallSkill;
 }
 
 export function register(handlers: CommandHandlers): vscode.Disposable {
@@ -128,13 +127,13 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
             ),
         ),
         vscode.commands.registerCommand(startContainer, (treeNode) =>
-            handlers.containerStart.startContainerCommandHandler(treeNode),
+            handlers.containerLifecycle.startContainerCommandHandler(treeNode),
         ),
         vscode.commands.registerCommand(stopContainer, (treeNode) =>
-            handlers.containerStop.stopContainerCommandHandler(treeNode),
+            handlers.containerLifecycle.stopContainerCommandHandler(treeNode),
         ),
         vscode.commands.registerCommand(deleteContainer, (treeNode) =>
-            handlers.containerDelete.deleteContainerCommandHandler(treeNode),
+            handlers.containerLifecycle.deleteContainerCommandHandler(treeNode),
         ),
         vscode.commands.registerCommand(fixIssue, (treeNode) =>
             handlers.fixIssue.fixIssueCommandHandler(treeNode),
@@ -147,6 +146,9 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
         ),
         vscode.commands.registerCommand(localClone, () =>
             handlers.projectClone.localCloneCommandHandler(),
+        ),
+        vscode.commands.registerCommand(installSkill, () =>
+            handlers.installSkill.installSkillCommandHandler(),
         ),
     );
 

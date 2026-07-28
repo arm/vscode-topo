@@ -2,7 +2,7 @@ import path from 'node:path';
 import { ProjectMetadata } from './project';
 
 export function isProjectComposePathDeleted(
-    projects: ProjectMetadata[],
+    projects: readonly ProjectMetadata[],
     deletedPath: string,
 ): boolean {
     return projects.some((project) => {

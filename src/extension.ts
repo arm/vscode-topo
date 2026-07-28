@@ -4,10 +4,8 @@ import { TopoCli } from './services/topoCli';
 import { ProjectInit } from './actions/projectInit';
 import { TargetStatusBarItemView } from './views/targetStatusBarItemView';
 import { TargetTreeView } from './views/targetTreeView';
-import { ContainerStart } from './actions/containerStart';
-import { ContainerStop } from './actions/containerStop';
+import { ContainerLifecycle } from './actions/containerLifecycle';
 import { OpenContainerShell } from './actions/openContainerShell';
-import { ContainerDelete } from './actions/containerDelete';
 import { DockerCommands } from './services/dockerCommands';
 import { TargetStore } from './services/targetStore';
 import { Deploy } from './actions/deploy';
@@ -33,6 +31,7 @@ import { OpenContainerInBrowser } from './actions/openContainerInBrowser';
 import { OpenSettings } from './actions/openSettings';
 import { Config } from './services/config';
 import { ProjectCloner } from './operations/projectCloner';
+import { InstallSkill } from './actions/installSkill';
 
 const SELECTED_TARGET_REFRESH_INTERVAL_MS = 60_000;
 
@@ -121,17 +120,13 @@ export async function activate(
     const openContainerShell = new OpenContainerShell(dockerCommands);
     const connectViaSSH = new ConnectViaSSH(targetModel);
     const openContainerInBrowser = new OpenContainerInBrowser();
-    const containerStart = new ContainerStart(
-        dockerCommands,
-        projectController,
-    );
-    const containerStop = new ContainerStop(dockerCommands, projectController);
-    const containerDelete = new ContainerDelete(
+    const containerLifecycle = new ContainerLifecycle(
         dockerCommands,
         projectController,
     );
     const fixIssue = new FixIssue(taskExecutor, targetModel, targetController);
     const openSettings = new OpenSettings();
+    const installSkill = new InstallSkill(context.extensionUri);
     const protocolHandler = new ProtocolHandler(projectCloner);
 
     context.subscriptions.push(
@@ -145,12 +140,11 @@ export async function activate(
             openContainerShell,
             connectViaSSH,
             openContainerInBrowser,
-            containerStart,
-            containerStop,
-            containerDelete,
+            containerLifecycle,
             fixIssue,
             projectClone,
             openSettings,
+            installSkill,
         }),
         vscode.window.registerUriHandler(protocolHandler),
     );

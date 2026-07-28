@@ -21,7 +21,7 @@ export function compareProcessingDomains(
 export class ProcessingDomainTreeItem extends vscode.TreeItem {
     constructor(
         public readonly processingDomain: string,
-        public readonly containers?: ContainerItem[],
+        public readonly containers?: readonly ContainerItem[],
     ) {
         super(
             processingDomain,

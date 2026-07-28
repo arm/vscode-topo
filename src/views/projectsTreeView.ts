@@ -35,7 +35,7 @@ function compareContainers(a: ContainerItem, b: ContainerItem): number {
 }
 
 function groupContainersByProcessingDomain(
-    containers: ContainerItem[],
+    containers: readonly ContainerItem[],
 ): ProcessingDomainTreeItem[] {
     const containersByDomain = new Map<string, ContainerItem[]>();
     for (const container of containers) {
@@ -48,7 +48,7 @@ function groupContainersByProcessingDomain(
 
     return [...containersByDomain.entries()]
         .map(([domain, containers]) => {
-            const sortedContainers = [...containers].sort(compareContainers);
+            const sortedContainers = containers.toSorted(compareContainers);
             return new ProcessingDomainTreeItem(domain, sortedContainers);
         })
         .sort(compareProcessingDomains);

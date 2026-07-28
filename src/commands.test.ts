@@ -10,9 +10,7 @@ import { ProjectInit } from './actions/projectInit';
 import { Deploy } from './actions/deploy';
 import { Stop } from './actions/stop';
 import { OpenContainerShell } from './actions/openContainerShell';
-import { ContainerStart } from './actions/containerStart';
-import { ContainerStop } from './actions/containerStop';
-import { ContainerDelete } from './actions/containerDelete';
+import { ContainerLifecycle } from './actions/containerLifecycle';
 import { FixIssue } from './actions/fixIssue';
 import { ProjectClone } from './actions/projectClone';
 import { ProjectTreeItem } from './views/treeItems/projectTreeItem';
@@ -21,6 +19,7 @@ import { ProjectController } from './controllers/projectController';
 import { ConnectViaSSH } from './actions/connectViaSSH';
 import { OpenContainerInBrowser } from './actions/openContainerInBrowser';
 import { OpenSettings } from './actions/openSettings';
+import { InstallSkill } from './actions/installSkill';
 
 vi.mock('./util/logger');
 
@@ -36,11 +35,10 @@ describe('commands', () => {
         openContainerShell: mock<OpenContainerShell>(),
         connectViaSSH: mock<ConnectViaSSH>(),
         openContainerInBrowser: mock<OpenContainerInBrowser>(),
-        containerStart: mock<ContainerStart>(),
-        containerStop: mock<ContainerStop>(),
-        containerDelete: mock<ContainerDelete>(),
+        containerLifecycle: mock<ContainerLifecycle>(),
         fixIssue: mock<FixIssue>(),
         openSettings: mock<OpenSettings>(),
+        installSkill: mock<InstallSkill>(),
     } satisfies commands.CommandHandlers;
 
     afterEach(() => {
@@ -125,15 +123,15 @@ describe('commands', () => {
             ],
             [
                 commands.startContainer,
-                handlers.containerStart.startContainerCommandHandler,
+                handlers.containerLifecycle.startContainerCommandHandler,
             ],
             [
                 commands.stopContainer,
-                handlers.containerStop.stopContainerCommandHandler,
+                handlers.containerLifecycle.stopContainerCommandHandler,
             ],
             [
                 commands.deleteContainer,
-                handlers.containerDelete.deleteContainerCommandHandler,
+                handlers.containerLifecycle.deleteContainerCommandHandler,
             ],
 
             [commands.fixIssue, handlers.fixIssue.fixIssueCommandHandler],
@@ -148,6 +146,10 @@ describe('commands', () => {
             [
                 commands.localClone,
                 handlers.projectClone.localCloneCommandHandler,
+            ],
+            [
+                commands.installSkill,
+                handlers.installSkill.installSkillCommandHandler,
             ],
         ];
 
