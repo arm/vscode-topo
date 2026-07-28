@@ -9,11 +9,6 @@ export type IssueFixCommandGroup = {
     readonly command: string;
 };
 
-type MutableIssueFixCommandGroup = {
-    issueNames: string[];
-    command: string;
-};
-
 export type FixableIssue = HealthCheck & {
     readonly fix: HealthCheckFix & { readonly command: string };
 };
@@ -37,7 +32,7 @@ export function getTargetIssueFixCommandGroups(
 export function getIssueFixCommandGroups(
     healthChecks: readonly HealthCheck[],
 ): readonly IssueFixCommandGroup[] {
-    const groups = new Map<string, MutableIssueFixCommandGroup>();
+    const issueNamesByCommand = new Map<string, string[]>();
 
     for (const healthCheck of healthChecks) {
         const command = healthCheck.fix?.command;
@@ -45,19 +40,19 @@ export function getIssueFixCommandGroups(
             continue;
         }
 
-        const group = groups.get(command);
-        if (group) {
-            group.issueNames.push(healthCheck.name);
+        const issueNames = issueNamesByCommand.get(command);
+        if (issueNames) {
+            issueNames.push(healthCheck.name);
             continue;
         }
 
-        groups.set(command, {
-            issueNames: [healthCheck.name],
-            command,
-        });
+        issueNamesByCommand.set(command, [healthCheck.name]);
     }
 
-    return [...groups.values()];
+    return [...issueNamesByCommand].map(([command, issueNames]) => ({
+        issueNames,
+        command,
+    }));
 }
 
 function getTargetHealthChecks(
