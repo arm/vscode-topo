@@ -187,6 +187,7 @@ const window = {
     })),
 };
 const fs = {
+    copy: vi.fn(),
     readFile: vi.fn(),
     stat: vi.fn(),
     writeFile: vi.fn(),

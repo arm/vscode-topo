@@ -30,6 +30,7 @@ import { ConnectViaSSH } from './actions/connectViaSSH';
 import { OpenContainerInBrowser } from './actions/openContainerInBrowser';
 import { OpenSettings } from './actions/openSettings';
 import { Config } from './services/config';
+import { InstallSkill } from './actions/installSkill';
 
 const SELECTED_TARGET_REFRESH_INTERVAL_MS = 60_000;
 
@@ -123,6 +124,7 @@ export async function activate(
     );
     const fixIssue = new FixIssue(taskExecutor, targetModel, targetController);
     const openSettings = new OpenSettings();
+    const installSkill = new InstallSkill(context.extensionUri);
     const protocolHandler = new ProtocolHandler(taskExecutor);
 
     context.subscriptions.push(
@@ -140,6 +142,7 @@ export async function activate(
             fixIssue,
             projectClone,
             openSettings,
+            installSkill,
         }),
         vscode.window.registerUriHandler(protocolHandler),
     );
