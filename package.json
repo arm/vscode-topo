@@ -489,6 +489,7 @@
         "build": "vite build --mode extension",
         "watch": "vite build --mode extension --watch --minify=false",
         "download": "node --no-warnings --experimental-strip-types scripts/download.ts",
+        "bump-topo": "node --no-warnings --experimental-strip-types scripts/bump-topo.ts",
         "calculate-new-version": "node --no-warnings --experimental-strip-types scripts/calculate-new-version.ts",
         "prettier-check": "prettier -c .",
         "eslint-check": "eslint .",

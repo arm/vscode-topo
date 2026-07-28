@@ -93,9 +93,10 @@ describe('TopoCli', () => {
             {
                 name: 'p',
                 url: 'u',
-                features: [],
+                features: ['feature'],
                 description: 'project description',
                 ref: 'r',
+                compatibility: 'supported',
             },
         ];
         execFileMock.mockResolvedValue({
@@ -111,6 +112,30 @@ describe('TopoCli', () => {
             ['templates', '-o', 'json', '--target', 'me@example.com'],
             defaultExecOptions,
         );
+    });
+
+    it('listProjects trims surrounding whitespace from project fields', async () => {
+        execFileMock.mockResolvedValue({
+            stdout: JSON.stringify([
+                {
+                    name: ' project ',
+                    url: 'https://example.com/project',
+                    features: [' feature '],
+                    description: 'Project description',
+                    ref: 'main',
+                    compatibility: ' supported ',
+                },
+            ]),
+            stderr: '',
+        });
+
+        const [project] = await topoCli.listProjects();
+
+        expect(project).toMatchObject({
+            name: 'project',
+            features: ['feature'],
+            compatibility: 'supported',
+        });
     });
 
     it('listProjects omits --target when no ssh target is provided', async () => {
@@ -139,7 +164,9 @@ describe('TopoCli', () => {
     it('listProjects throws error on invalid JSON output', async () => {
         execFileMock.mockResolvedValue({ stdout: 'invalid json', stderr: '' });
 
-        await expect(topoCli.listProjects('me@example.com')).rejects.toThrow();
+        await expect(topoCli.listProjects('me@example.com')).rejects.toThrow(
+            'Failed to parse project catalog JSON:',
+        );
     });
 
     it('listProjects throws WrappedError when stderr contains structured log entries', async () => {
@@ -154,10 +181,10 @@ describe('TopoCli', () => {
             'collecting CPU info: "lscpu" not found; connection lost',
             [
                 {
-                    level: 'Error',
+                    level: 'ERROR',
                     msg: 'collecting CPU info: "lscpu" not found',
                 },
-                { level: 'Error', msg: 'connection lost' },
+                { level: 'ERROR', msg: 'connection lost' },
             ],
             { cause: execError },
         );
@@ -192,9 +219,9 @@ describe('TopoCli', () => {
         const execError = errorWithStderr(stderrOutput);
         execFileMock.mockRejectedValue(execError);
         const expectedError = new WrappedError('CLI', 'disk full', [
-            { level: 'Info', msg: 'starting up' },
-            { level: 'Error', msg: 'disk full' },
-            { level: 'Warning', msg: 'retrying' },
+            { level: 'INFO', msg: 'starting up' },
+            { level: 'ERROR', msg: 'disk full' },
+            { level: 'WARN', msg: 'retrying' },
         ]);
 
         await expect(topoCli.listProjects()).rejects.toThrow(expectedError);
@@ -209,13 +236,7 @@ describe('TopoCli', () => {
             totalMemoryKb: 123456,
         };
         execFileMock.mockResolvedValue({
-            stdout: JSON.stringify({
-                hostProcessors: [
-                    { model: ' Cortex-A55 ', cores: 2, features: [' fp '] },
-                ],
-                remoteProcessors: [{ name: ' imx-rproc ' }],
-                totalMemoryKb: 123456,
-            }),
+            stdout: JSON.stringify(description),
             stderr: '',
         });
 
@@ -329,7 +350,9 @@ describe('TopoCli', () => {
     it('ps rejects when JSON output is invalid', async () => {
         execFileMock.mockResolvedValue({ stdout: 'invalid json', stderr: '' });
 
-        await expect(topoCli.ps('hostname', '/fake/project')).rejects.toThrow();
+        await expect(topoCli.ps('hostname', '/fake/project')).rejects.toThrow(
+            'Failed to parse container status JSON:',
+        );
     });
 
     it('ps rejects when JSON output fails schema validation', async () => {
@@ -351,7 +374,9 @@ describe('TopoCli', () => {
             stderr: '',
         });
 
-        await expect(topoCli.ps('hostname', '/fake/project')).rejects.toThrow();
+        await expect(topoCli.ps('hostname', '/fake/project')).rejects.toThrow(
+            'Invalid container status JSON:',
+        );
     });
 
     it('health parses JSON output', async () => {
@@ -379,32 +404,8 @@ describe('TopoCli', () => {
                 },
             },
         };
-        const cliResponse: HealthReport = {
-            host: { dependencies: [] },
-            target: {
-                destination: 'ssh://hostname',
-                isLocalhost: false,
-                dependencies: [
-                    {
-                        name: 'Container Engine',
-                        status: 'ok',
-                        value: 'docker',
-                    },
-                ],
-                connectivity: {
-                    name: 'Connected',
-                    status: 'ok',
-                    value: '',
-                },
-                processingDomainDriver: {
-                    name: 'Processing Domain Driver (remoteproc)',
-                    status: 'ok',
-                    value: 'driver-x',
-                },
-            },
-        };
         execFileMock.mockResolvedValue({
-            stdout: JSON.stringify(cliResponse),
+            stdout: JSON.stringify(want),
             stderr: '',
         });
 
@@ -456,7 +457,9 @@ describe('TopoCli', () => {
     it('health throws error when JSON output is invalid', async () => {
         execFileMock.mockResolvedValue({ stdout: 'invalid json', stderr: '' });
 
-        await expect(topoCli.health('hostname')).rejects.toThrow();
+        await expect(topoCli.health('hostname')).rejects.toThrow(
+            'Failed to parse target health report JSON:',
+        );
     });
 
     describe('getBinaryPath on Windows', () => {
@@ -496,8 +499,8 @@ describe('parseWrappedError', () => {
         expect(result).toBeInstanceOf(WrappedError);
         expect(result).toStrictEqual(
             new WrappedError('CLI', 'lscpu not found; connection lost', [
-                { level: 'Error', msg: 'lscpu not found' },
-                { level: 'Error', msg: 'connection lost' },
+                { level: 'ERROR', msg: 'lscpu not found' },
+                { level: 'ERROR', msg: 'connection lost' },
             ]),
         );
         expect(result!.cause).toBe(original);
@@ -516,9 +519,9 @@ describe('parseWrappedError', () => {
         expect(result).toBeInstanceOf(WrappedError);
         expect(result).toStrictEqual(
             new WrappedError('CLI', 'disk full', [
-                { level: 'Info', msg: 'starting up' },
-                { level: 'Error', msg: 'disk full' },
-                { level: 'Warning', msg: 'retrying' },
+                { level: 'INFO', msg: 'starting up' },
+                { level: 'ERROR', msg: 'disk full' },
+                { level: 'WARN', msg: 'retrying' },
             ]),
         );
     });
@@ -555,10 +558,19 @@ describe('parseTopoLogEntries', () => {
 
         expect(entries).toEqual([
             {
-                level: 'Error',
+                level: 'ERROR',
                 msg: 'collecting CPU info: "lscpu" not found on remote target\'s $PATH',
             },
         ]);
+    });
+
+    it('trims surrounding whitespace from structured log fields', () => {
+        const input =
+            '{"time":" 2026-04-16T15:14:48Z ","level":" ERROR ","msg":" disk full "}';
+
+        const entries = parseTopoLogEntries(input);
+
+        expect(entries).toEqual([{ level: 'ERROR', msg: 'disk full' }]);
     });
 
     it('parses multiple structured log lines', () => {
@@ -571,9 +583,9 @@ describe('parseTopoLogEntries', () => {
         const entries = parseTopoLogEntries(input);
 
         expect(entries).toEqual([
-            { level: 'Info', msg: 'starting' },
-            { level: 'Error', msg: 'disk full' },
-            { level: 'Error', msg: 'aborting' },
+            { level: 'INFO', msg: 'starting' },
+            { level: 'ERROR', msg: 'disk full' },
+            { level: 'ERROR', msg: 'aborting' },
         ]);
     });
 
@@ -588,7 +600,7 @@ describe('parseTopoLogEntries', () => {
 
         expect(entries).toEqual([
             {
-                level: 'Error',
+                level: 'ERROR',
                 msg: 'real error',
             },
         ]);
@@ -629,6 +641,6 @@ describe('parseTopoLogEntries', () => {
 
         const entries = parseTopoLogEntries(input);
 
-        expect(entries).toEqual([{ level: 'Error', msg: 'fail' }]);
+        expect(entries).toEqual([{ level: 'ERROR', msg: 'fail' }]);
     });
 });
