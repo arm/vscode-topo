@@ -28,7 +28,9 @@ interface ExecOptions {
     cwd?: string;
 }
 
-export function parseTopoLogEntries(output: string): WrappedErrorLog[] {
+export function parseTopoLogEntries(
+    output: string,
+): readonly WrappedErrorLog[] {
     const entries: WrappedErrorLog[] = [];
     for (const line of output.split('\n')) {
         const trimmed = line.trim();
@@ -164,7 +166,7 @@ export class TopoCli {
 
     public async listProjects(
         sshTarget?: string,
-    ): Promise<ProjectDescription[]> {
+    ): Promise<readonly ProjectDescription[]> {
         const cmd = ['templates', '-o', 'json'];
         if (sshTarget) {
             cmd.push('--target', sshTarget);

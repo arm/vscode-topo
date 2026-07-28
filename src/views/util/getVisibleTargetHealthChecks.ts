@@ -4,7 +4,7 @@ import { TargetDescription } from '../../util/types';
 export function getVisibleTargetHealthChecks(
     health: TargetHealthReport,
     targetDescription: TargetDescription | undefined,
-): HealthCheck[] {
+): readonly HealthCheck[] {
     const healthChecks = [...health.dependencies];
     if (targetDescription?.remoteProcessors.length) {
         healthChecks.push(health.processingDomainDriver);

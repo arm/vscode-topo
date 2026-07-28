@@ -10,7 +10,7 @@ const logMethods = {
     DEBUG: logger.debug,
 } as const;
 
-const logEntries = (entries: WrappedErrorLog[]) => {
+const logEntries = (entries: readonly WrappedErrorLog[]) => {
     for (const entry of entries) {
         logMethods[entry.level](entry.msg);
     }

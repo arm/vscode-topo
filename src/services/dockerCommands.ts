@@ -31,7 +31,9 @@ const isDockerError = (err: unknown): err is DockerError => {
  * @param shouldTreatErrorAsWarning - Optional function to determine if an error should be treated as a warning.
  * @returns The stdout of the command.
  */
-export const parseDockerStderr = (stderr: string): WrappedErrorLog[] => {
+export const parseDockerStderr = (
+    stderr: string,
+): readonly WrappedErrorLog[] => {
     return splitLines(stderr).map((line): WrappedErrorLog => {
         const trimmed = line.trim();
         if (trimmed.startsWith('Warning:')) {

@@ -6,16 +6,16 @@ const ROOT_COMPOSE_FILE_GLOB = 'compose.{yaml,yml}';
 const CHILD_COMPOSE_FILE_GLOB = '*/compose.{yaml,yml}';
 
 export interface ProjectMetadata {
-    name: string;
-    uri: vscode.Uri;
-    composeFileUri: vscode.Uri;
-    workspaceIndex: number;
-    workspaceName: string;
+    readonly name: string;
+    readonly uri: vscode.Uri;
+    readonly composeFileUri: vscode.Uri;
+    readonly workspaceIndex: number;
+    readonly workspaceName: string;
 }
 
 export async function findTopLevelComposeProjects(
     workspaceFolders: readonly vscode.WorkspaceFolder[],
-): Promise<ProjectMetadata[]> {
+): Promise<readonly ProjectMetadata[]> {
     const projects: ProjectMetadata[] = [];
 
     for (const workspaceFolder of workspaceFolders) {
