@@ -181,10 +181,10 @@ describe('TopoCli', () => {
             'collecting CPU info: "lscpu" not found; connection lost',
             [
                 {
-                    level: 'Error',
+                    level: 'ERROR',
                     msg: 'collecting CPU info: "lscpu" not found',
                 },
-                { level: 'Error', msg: 'connection lost' },
+                { level: 'ERROR', msg: 'connection lost' },
             ],
             { cause: execError },
         );
@@ -219,9 +219,9 @@ describe('TopoCli', () => {
         const execError = errorWithStderr(stderrOutput);
         execFileMock.mockRejectedValue(execError);
         const expectedError = new WrappedError('CLI', 'disk full', [
-            { level: 'Info', msg: 'starting up' },
-            { level: 'Error', msg: 'disk full' },
-            { level: 'Warning', msg: 'retrying' },
+            { level: 'INFO', msg: 'starting up' },
+            { level: 'ERROR', msg: 'disk full' },
+            { level: 'WARN', msg: 'retrying' },
         ]);
 
         await expect(topoCli.listProjects()).rejects.toThrow(expectedError);
@@ -499,8 +499,8 @@ describe('parseWrappedError', () => {
         expect(result).toBeInstanceOf(WrappedError);
         expect(result).toStrictEqual(
             new WrappedError('CLI', 'lscpu not found; connection lost', [
-                { level: 'Error', msg: 'lscpu not found' },
-                { level: 'Error', msg: 'connection lost' },
+                { level: 'ERROR', msg: 'lscpu not found' },
+                { level: 'ERROR', msg: 'connection lost' },
             ]),
         );
         expect(result!.cause).toBe(original);
@@ -519,9 +519,9 @@ describe('parseWrappedError', () => {
         expect(result).toBeInstanceOf(WrappedError);
         expect(result).toStrictEqual(
             new WrappedError('CLI', 'disk full', [
-                { level: 'Info', msg: 'starting up' },
-                { level: 'Error', msg: 'disk full' },
-                { level: 'Warning', msg: 'retrying' },
+                { level: 'INFO', msg: 'starting up' },
+                { level: 'ERROR', msg: 'disk full' },
+                { level: 'WARN', msg: 'retrying' },
             ]),
         );
     });
@@ -558,7 +558,7 @@ describe('parseTopoLogEntries', () => {
 
         expect(entries).toEqual([
             {
-                level: 'Error',
+                level: 'ERROR',
                 msg: 'collecting CPU info: "lscpu" not found on remote target\'s $PATH',
             },
         ]);
@@ -570,7 +570,7 @@ describe('parseTopoLogEntries', () => {
 
         const entries = parseTopoLogEntries(input);
 
-        expect(entries).toEqual([{ level: 'Error', msg: 'disk full' }]);
+        expect(entries).toEqual([{ level: 'ERROR', msg: 'disk full' }]);
     });
 
     it('parses multiple structured log lines', () => {
@@ -583,9 +583,9 @@ describe('parseTopoLogEntries', () => {
         const entries = parseTopoLogEntries(input);
 
         expect(entries).toEqual([
-            { level: 'Info', msg: 'starting' },
-            { level: 'Error', msg: 'disk full' },
-            { level: 'Error', msg: 'aborting' },
+            { level: 'INFO', msg: 'starting' },
+            { level: 'ERROR', msg: 'disk full' },
+            { level: 'ERROR', msg: 'aborting' },
         ]);
     });
 
@@ -600,7 +600,7 @@ describe('parseTopoLogEntries', () => {
 
         expect(entries).toEqual([
             {
-                level: 'Error',
+                level: 'ERROR',
                 msg: 'real error',
             },
         ]);
@@ -641,6 +641,6 @@ describe('parseTopoLogEntries', () => {
 
         const entries = parseTopoLogEntries(input);
 
-        expect(entries).toEqual([{ level: 'Error', msg: 'fail' }]);
+        expect(entries).toEqual([{ level: 'ERROR', msg: 'fail' }]);
     });
 });

@@ -157,7 +157,7 @@ describe('parseDockerStderr', () => {
         const logs = parseDockerStderr('Error: something went wrong');
 
         expect(logs).toEqual([
-            { level: 'Error', msg: 'Error: something went wrong' },
+            { level: 'ERROR', msg: 'Error: something went wrong' },
         ]);
     });
 
@@ -165,14 +165,14 @@ describe('parseDockerStderr', () => {
         const logs = parseDockerStderr('Warning: deprecated flag');
 
         expect(logs).toEqual([
-            { level: 'Warning', msg: 'Warning: deprecated flag' },
+            { level: 'WARN', msg: 'Warning: deprecated flag' },
         ]);
     });
 
     it('classifies unrecognised lines as errors', () => {
         const logs = parseDockerStderr('unexpected output');
 
-        expect(logs).toEqual([{ level: 'Error', msg: 'unexpected output' }]);
+        expect(logs).toEqual([{ level: 'ERROR', msg: 'unexpected output' }]);
     });
 
     it('handles mixed lines', () => {
@@ -182,9 +182,9 @@ describe('parseDockerStderr', () => {
         const logs = parseDockerStderr(stderr);
 
         expect(logs).toEqual([
-            { level: 'Error', msg: 'Error: container not found' },
-            { level: 'Warning', msg: 'Warning: low disk space' },
-            { level: 'Error', msg: 'some other message' },
+            { level: 'ERROR', msg: 'Error: container not found' },
+            { level: 'WARN', msg: 'Warning: low disk space' },
+            { level: 'ERROR', msg: 'some other message' },
         ]);
     });
 
@@ -192,8 +192,8 @@ describe('parseDockerStderr', () => {
         const logs = parseDockerStderr('Error: fail\n\n\nWarning: warn');
 
         expect(logs).toEqual([
-            { level: 'Error', msg: 'Error: fail' },
-            { level: 'Warning', msg: 'Warning: warn' },
+            { level: 'ERROR', msg: 'Error: fail' },
+            { level: 'WARN', msg: 'Warning: warn' },
         ]);
     });
 
