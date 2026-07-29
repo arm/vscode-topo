@@ -7,10 +7,10 @@ import { MockProxy, mock } from 'vitest-mock-extended';
 import { mutable } from '../util/test/mutable';
 import { TaskExecutor } from '../util/taskExecutor';
 import { ProjectController } from '../controllers/projectController';
-import { ProjectTreeItem } from '../views/treeItems/projectTreeItem';
 import { loaded, unloaded } from '../util/loadable';
 import type { TargetHealthReport } from '../services/topoCliSchema';
 import { Config } from '../services/config';
+import { createProjectTreeItem } from '../util/test/projectTreeItem';
 
 describe('Deploy', () => {
     let deployAction: Deploy;
@@ -42,20 +42,6 @@ describe('Deploy', () => {
     let targetModel: TargetModel;
     let projectController: MockProxy<ProjectController>;
     let config: MockProxy<Config>;
-
-    function projectTreeItem(): ProjectTreeItem {
-        return new ProjectTreeItem(
-            {
-                name: 'demo',
-                uri: vscode.Uri.file(path.dirname(composeFilePath)),
-                composeFileUri,
-                workspaceIndex: 0,
-                workspaceName: 'workspace',
-            },
-            false,
-            unloaded(),
-        );
-    }
 
     function expectDeployTask(
         task: vscode.Task,
@@ -304,7 +290,9 @@ describe('Deploy', () => {
     });
 
     it('deploys the project tree item compose file', async () => {
-        await deployAction.deployProjectCommandHandler(projectTreeItem());
+        await deployAction.deployProjectCommandHandler(
+            createProjectTreeItem(composeFileUri),
+        );
 
         expect(taskExecutor.run).toHaveBeenCalledTimes(1);
         expectDeployTask(
@@ -335,9 +323,7 @@ describe('Deploy', () => {
     it('throws when project command is called without a project tree item', async () => {
         await expect(
             deployAction.deployProjectCommandHandler(undefined),
-        ).rejects.toThrow(
-            'No compose.yaml or compose.yml selected for deployment',
-        );
+        ).rejects.toThrow('This operation cannot be performed on this item');
 
         expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(
