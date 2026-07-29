@@ -4,13 +4,7 @@ import { unloaded } from '../../util/loadable';
 import { assertProjectTreeItem } from './assertProjectTreeItem';
 import { ProjectTreeItem } from './projectTreeItem';
 
-vi.mock('../../util/logger', () => ({
-    logger: {
-        error: vi.fn(),
-        info: vi.fn(),
-        warn: vi.fn(),
-    },
-}));
+vi.mock('../../util/logger');
 
 describe('assertProjectTreeItem', () => {
     const errMsg = 'This operation cannot be performed on this item';
