@@ -204,7 +204,7 @@ describe('TargetStore', () => {
             'Failed to parse stored targets',
             [
                 {
-                    level: 'Error',
+                    level: 'ERROR',
                     msg: expect.stringContaining('Unexpected token'),
                 },
             ],
@@ -226,7 +226,7 @@ describe('TargetStore', () => {
             'Failed to parse stored targets',
             [
                 {
-                    level: 'Error',
+                    level: 'ERROR',
                     msg: expect.stringContaining('Expected an object'),
                 },
             ],

@@ -1,3 +1,5 @@
+import type { TopoLogLevel } from '../services/topoCliSchema';
+
 export type WrappedErrorCode =
     | 'DOCKER'
     | 'CLONE'
@@ -6,18 +8,16 @@ export type WrappedErrorCode =
     | 'TARGET'
     | 'INVALID_SSH_DESTINATION';
 
-export type WrappedErrorLogLevel = 'Error' | 'Warning' | 'Info' | 'Debug';
-
 export interface WrappedErrorLog {
-    level: WrappedErrorLogLevel;
-    msg: string;
+    readonly level: TopoLogLevel;
+    readonly msg: string;
 }
 
 export class WrappedError extends Error {
     constructor(
         public readonly code: WrappedErrorCode,
         message: string,
-        public readonly logs: WrappedErrorLog[] = [],
+        public readonly logs: readonly WrappedErrorLog[] = [],
         options?: ErrorOptions,
     ) {
         super(message, options);
@@ -27,7 +27,7 @@ export class WrappedError extends Error {
 
 export function isWrappedError(
     error: unknown,
-    codes: WrappedErrorCode[] = [],
+    codes: readonly WrappedErrorCode[] = [],
 ): error is WrappedError {
     return (
         error instanceof WrappedError &&

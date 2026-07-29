@@ -132,7 +132,7 @@ export class TargetStore {
             throw new WrappedError(
                 'STORAGE',
                 errorMsg,
-                [{ level: 'Error', msg: getErrorMessage(err) }],
+                [{ level: 'ERROR', msg: getErrorMessage(err) }],
                 { cause: err },
             );
         }

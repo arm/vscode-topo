@@ -5,12 +5,12 @@ import {
 } from '../services/topoCliSchema';
 
 export type IssueFixCommandGroup = {
-    issueNames: string[];
-    command: string;
+    readonly issueNames: readonly string[];
+    readonly command: string;
 };
 
 export type FixableIssue = HealthCheck & {
-    fix: HealthCheckFix & { command: string };
+    readonly fix: HealthCheckFix & { readonly command: string };
 };
 
 export function hasFixCommand(
@@ -21,7 +21,7 @@ export function hasFixCommand(
 
 export function getTargetIssueFixCommandGroups(
     health: TargetHealthReport | undefined,
-): IssueFixCommandGroup[] {
+): readonly IssueFixCommandGroup[] {
     if (!health) {
         return [];
     }
@@ -30,9 +30,9 @@ export function getTargetIssueFixCommandGroups(
 }
 
 export function getIssueFixCommandGroups(
-    healthChecks: HealthCheck[],
-): IssueFixCommandGroup[] {
-    const groups = new Map<string, IssueFixCommandGroup>();
+    healthChecks: readonly HealthCheck[],
+): readonly IssueFixCommandGroup[] {
+    const issueNamesByCommand = new Map<string, string[]>();
 
     for (const healthCheck of healthChecks) {
         const command = healthCheck.fix?.command;
@@ -40,22 +40,24 @@ export function getIssueFixCommandGroups(
             continue;
         }
 
-        const group = groups.get(command);
-        if (group) {
-            group.issueNames.push(healthCheck.name);
+        const issueNames = issueNamesByCommand.get(command);
+        if (issueNames) {
+            issueNames.push(healthCheck.name);
             continue;
         }
 
-        groups.set(command, {
-            issueNames: [healthCheck.name],
-            command,
-        });
+        issueNamesByCommand.set(command, [healthCheck.name]);
     }
 
-    return [...groups.values()];
+    return [...issueNamesByCommand].map(([command, issueNames]) => ({
+        issueNames,
+        command,
+    }));
 }
 
-function getTargetHealthChecks(health: TargetHealthReport): HealthCheck[] {
+function getTargetHealthChecks(
+    health: TargetHealthReport,
+): readonly HealthCheck[] {
     return [
         health.connectivity,
         health.processingDomainDriver,
