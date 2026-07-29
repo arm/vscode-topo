@@ -102,7 +102,7 @@ export const getDefaultProjectName = (source: CloneSource): string => {
     }
 };
 
-export const getCloneSourceArgument = (source: CloneSource): string => {
+const getCloneSourceArgument = (source: CloneSource): string => {
     switch (source.type) {
         case 'dir':
             return `dir:${source.path}`;

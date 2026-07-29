@@ -1,7 +1,6 @@
 import path from 'node:path';
 import {
     buildCloneArguments,
-    getCloneSourceArgument,
     getDefaultProjectName,
     getDefaultProjectNameFromUrl,
     parseCloneSource,
@@ -117,24 +116,33 @@ describe('clone source', () => {
     });
 
     describe('argument building', () => {
-        it('serializes typed and raw clone sources', () => {
-            expect(
-                getCloneSourceArgument({
-                    type: 'git',
+        it.each([
+            [
+                {
+                    type: 'git' as const,
                     url: 'https://example.com/project.git',
-                }),
-            ).toBe('git:https://example.com/project.git');
-            expect(
-                getCloneSourceArgument({
-                    type: 'dir',
-                    path: '/tmp/project',
-                }),
-            ).toBe('dir:/tmp/project');
-            expect(
-                getCloneSourceArgument({
+                },
+                'git:https://example.com/project.git',
+            ],
+            [
+                {
+                    type: 'dir' as const,
+                    path: '/tmp/source-project',
+                },
+                'dir:/tmp/source-project',
+            ],
+            [
+                {
                     value: 'https://example.com/project.git',
-                }),
-            ).toBe('https://example.com/project.git');
+                },
+                'https://example.com/project.git',
+            ],
+        ])('builds topo clone arguments for source %#', (source, argument) => {
+            expect(buildCloneArguments(source, '/tmp/project')).toEqual([
+                'clone',
+                argument,
+                '/tmp/project',
+            ]);
         });
 
         it('builds topo clone arguments with arbitrary parameters', () => {
