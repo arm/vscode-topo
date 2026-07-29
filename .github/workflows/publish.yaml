@@ -12,10 +12,12 @@ env:
     NODE_VERSION: 22.x
     PRE_RELEASE_FLAG: ${{ inputs.pre-release && '--pre-release' || '' }}
 
+permissions:
+    contents: read
+
 jobs:
     ci:
         uses: ./.github/workflows/ci.yaml
-        secrets: inherit
 
     prepare-version:
         name: Prepare Version
@@ -24,22 +26,16 @@ jobs:
         outputs:
             version: ${{ steps.calculate-version.outputs.version }}
         steps:
-            - id: get-app-token
-              uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
-              with:
-                  client-id: ${{ secrets.TOPO_ACCESS_APP_ID }}
-                  private-key: ${{ secrets.TOPO_ACCESS_APP_PRIVATE_KEY }}
             - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
               with:
                   fetch-depth: 0
+                  persist-credentials: false
             - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
               with:
                   node-version: ${{ env.NODE_VERSION }}
                   cache: npm
             - name: Install NPM dependencies
-              run: npm ci
-              env:
-                  GITHUB_TOKEN: ${{ steps.get-app-token.outputs.token }}
+              run: npm ci --ignore-scripts --prefer-offline --no-audit --fund=false
             - name: Detect changes since last release to decide major, minor, patch or pre-release
               id: detect-changes
               run: |
@@ -83,6 +79,13 @@ jobs:
             - name: Update extension version
               if: steps.calculate-version.outputs.version
               run: npm version --no-git-tag-version ${{ steps.calculate-version.outputs.version }}
+            - id: get-app-token
+              if: steps.calculate-version.outputs.version
+              uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+              with:
+                  client-id: ${{ secrets.TOPO_ACCESS_APP_ID }}
+                  private-key: ${{ secrets.TOPO_ACCESS_APP_PRIVATE_KEY }}
+                  permission-contents: write
             - name: Generate release notes and changelog
               if: steps.calculate-version.outputs.version
               run: |
@@ -151,12 +154,9 @@ jobs:
                     - linux-arm64
                     - darwin-arm64
         steps:
-            - id: get-app-token
-              uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
-              with:
-                  client-id: ${{ secrets.TOPO_ACCESS_APP_ID }}
-                  private-key: ${{ secrets.TOPO_ACCESS_APP_PRIVATE_KEY }}
             - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  persist-credentials: false
             - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
               with:
                   node-version: ${{ env.NODE_VERSION }}
@@ -171,9 +171,7 @@ jobs:
               if: needs.prepare-version.outputs.version
               run: git apply ~/patches/new-version.patch
             - name: Install NPM dependencies
-              env:
-                  GITHUB_TOKEN: ${{ steps.get-app-token.outputs.token }}
-              run: npm ci
+              run: npm ci --ignore-scripts --prefer-offline --no-audit --fund=false
             - name: Download other dependencies
               run: npm run download -- --target ${{ matrix.platform }}
             - name: Package VSIX
@@ -201,6 +199,7 @@ jobs:
               with:
                   client-id: ${{ secrets.TOPO_ACCESS_APP_ID }}
                   private-key: ${{ secrets.TOPO_ACCESS_APP_PRIVATE_KEY }}
+                  permission-contents: write
             - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
               with:
                   token: ${{ steps.get-app-token.outputs.token }}
@@ -261,6 +260,8 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  persist-credentials: false
             - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
               with:
                   pattern: vsix-package-*

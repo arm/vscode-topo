@@ -31,6 +31,7 @@ import { OpenContainerInBrowser } from './actions/openContainerInBrowser';
 import { OpenSettings } from './actions/openSettings';
 import { Config } from './services/config';
 import { Configure } from './actions/configure';
+import { ProjectCloner } from './operations/projectCloner';
 import { InstallSkill } from './actions/installSkill';
 
 const SELECTED_TARGET_REFRESH_INTERVAL_MS = 60_000;
@@ -108,8 +109,9 @@ export async function activate(
     const config = new Config();
     const projectInit = new ProjectInit(topoCli);
     const taskExecutor = new TaskExecutor(topoCli);
-    const projectClone = new ProjectClone(topoCli, targetModel, taskExecutor);
     const configure = new Configure(taskExecutor);
+    const projectCloner = new ProjectCloner(taskExecutor);
+    const projectClone = new ProjectClone(topoCli, targetModel, projectCloner);
     const deploy = new Deploy(
         taskExecutor,
         targetModel,
@@ -127,7 +129,7 @@ export async function activate(
     const fixIssue = new FixIssue(taskExecutor, targetModel, targetController);
     const openSettings = new OpenSettings();
     const installSkill = new InstallSkill(context.extensionUri);
-    const protocolHandler = new ProtocolHandler(taskExecutor);
+    const protocolHandler = new ProtocolHandler(projectCloner);
 
     context.subscriptions.push(
         commands.register({
