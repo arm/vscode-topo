@@ -6,9 +6,9 @@ import { TargetModel } from '../models/targetModel';
 import { mock, MockProxy } from 'vitest-mock-extended';
 import { TaskExecutor } from '../util/taskExecutor';
 import { ProjectController } from '../controllers/projectController';
-import { ProjectTreeItem } from '../views/treeItems/projectTreeItem';
 import { loaded, unloaded } from '../util/loadable';
 import type { TargetHealthReport } from '../services/topoCliSchema';
+import { createProjectTreeItem } from '../util/test/projectTreeItem';
 
 describe('Stop', () => {
     let stopAction: Stop;
@@ -35,20 +35,6 @@ describe('Stop', () => {
     let taskExecutor: MockProxy<TaskExecutor>;
     let targetModel: TargetModel;
     let projectController: MockProxy<ProjectController>;
-
-    function projectTreeItem(): ProjectTreeItem {
-        return new ProjectTreeItem(
-            {
-                name: 'demo',
-                uri: vscode.Uri.file(path.dirname(composeFilePath)),
-                composeFileUri,
-                workspaceIndex: 0,
-                workspaceName: 'workspace',
-            },
-            false,
-            unloaded(),
-        );
-    }
 
     function expectStopTask(task: vscode.Task, cwd: string): void {
         expect(task.name).toBe('Stop services on topo.local');
@@ -162,7 +148,9 @@ describe('Stop', () => {
     });
 
     it('stops the project tree item compose file', async () => {
-        await stopAction.stopProjectCommandHandler(projectTreeItem());
+        await stopAction.stopProjectCommandHandler(
+            createProjectTreeItem(composeFileUri),
+        );
 
         expect(taskExecutor.run).toHaveBeenCalledTimes(1);
         expectStopTask(

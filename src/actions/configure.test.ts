@@ -2,9 +2,8 @@ import os from 'node:os';
 import path from 'node:path';
 import * as vscode from 'vscode';
 import { mock, MockProxy } from 'vitest-mock-extended';
-import { unloaded } from '../util/loadable';
 import { TaskExecutor } from '../util/taskExecutor';
-import { ProjectTreeItem } from '../views/treeItems/projectTreeItem';
+import { createProjectTreeItem } from '../util/test/projectTreeItem';
 import { Configure, configure } from './configure';
 
 describe('Configure', () => {
@@ -14,20 +13,6 @@ describe('Configure', () => {
     const projectPath = path.dirname(composeFileUri.fsPath);
     let taskExecutor: MockProxy<TaskExecutor>;
     let configureAction: Configure;
-
-    function projectTreeItem(): ProjectTreeItem {
-        return new ProjectTreeItem(
-            {
-                name: 'demo',
-                uri: vscode.Uri.file(projectPath),
-                composeFileUri,
-                workspaceIndex: 0,
-                workspaceName: 'workspace',
-            },
-            false,
-            unloaded(),
-        );
-    }
 
     function expectConfigureTask(task: vscode.Task): void {
         expect(task.name).toBe('Configure demo');
@@ -55,7 +40,9 @@ describe('Configure', () => {
     });
 
     it('configures the project tree item compose file', async () => {
-        await configureAction.configureProjectCommandHandler(projectTreeItem());
+        await configureAction.configureProjectCommandHandler(
+            createProjectTreeItem(composeFileUri),
+        );
 
         expect(taskExecutor.run).toHaveBeenCalledOnce();
         expectConfigureTask(taskExecutor.run.mock.calls[0][0]);
