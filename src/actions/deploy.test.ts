@@ -60,7 +60,7 @@ describe('Deploy', () => {
     function expectDeployTask(
         task: vscode.Task,
         cwd: string,
-        args = ['deploy', '--target', target],
+        args = ['deploy', '--file', 'compose.yaml', '--target', target],
     ): void {
         expect(task.name).toBe('Deploy to topo.local');
         expect(task.execution).toMatchObject({
@@ -168,10 +168,10 @@ describe('Deploy', () => {
         await deployAction.deployCommandHandler();
 
         expect(vscode.workspace.findFiles).toHaveBeenCalledWith(
-            '**/compose.{yaml,yml}',
+            '**/compose.yaml',
         );
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-            'No compose.yaml or compose.yml files found in the workspace.',
+            'No compose.yaml files found in the workspace.',
         );
         expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
         expect(taskExecutor.run).not.toHaveBeenCalled();
@@ -199,37 +199,67 @@ describe('Deploy', () => {
         expectDeployTask(
             taskExecutor.run.mock.calls[0][0],
             path.dirname(composeFilePath),
-            ['deploy', '--target', target, '-p', '5000'],
+            [
+                'deploy',
+                '--file',
+                'compose.yaml',
+                '--target',
+                target,
+                '-p',
+                '5000',
+            ],
         );
     });
 
     it('builds deploy arguments without unset options', () => {
-        const args = buildDeployArgs(target);
+        const args = buildDeployArgs(composeFilePath, target);
 
-        expect(args).toEqual(['deploy', '--target', target]);
+        expect(args).toEqual([
+            'deploy',
+            '--file',
+            'compose.yaml',
+            '--target',
+            target,
+        ]);
     });
 
     it('builds deploy arguments with default settings', () => {
-        const args = buildDeployArgs(target, {});
+        const args = buildDeployArgs(composeFilePath, target, {});
 
-        expect(args).toEqual(['deploy', '--target', target]);
+        expect(args).toEqual([
+            'deploy',
+            '--file',
+            'compose.yaml',
+            '--target',
+            target,
+        ]);
     });
 
     it('builds deploy arguments with configured options', () => {
-        const args = buildDeployArgs(target, {
+        const args = buildDeployArgs(composeFilePath, target, {
             port: 5000,
         });
 
-        expect(args).toEqual(['deploy', '--target', target, '-p', '5000']);
+        expect(args).toEqual([
+            'deploy',
+            '--file',
+            'compose.yaml',
+            '--target',
+            target,
+            '-p',
+            '5000',
+        ]);
     });
 
     it('builds deploy arguments with force recreate enabled', () => {
-        const args = buildDeployArgs(target, {
+        const args = buildDeployArgs(composeFilePath, target, {
             forceRecreate: true,
         });
 
         expect(args).toEqual([
             'deploy',
+            '--file',
+            'compose.yaml',
             '--target',
             target,
             '--force-recreate',
@@ -237,11 +267,29 @@ describe('Deploy', () => {
     });
 
     it('builds deploy arguments with no recreate enabled', () => {
-        const args = buildDeployArgs(target, {
+        const args = buildDeployArgs(composeFilePath, target, {
             noRecreate: true,
         });
 
-        expect(args).toEqual(['deploy', '--target', target, '--no-recreate']);
+        expect(args).toEqual([
+            'deploy',
+            '--file',
+            'compose.yaml',
+            '--target',
+            target,
+            '--no-recreate',
+        ]);
+    });
+
+    it('rejects compose.yml', () => {
+        expect(() =>
+            buildDeployArgs(
+                path.join(path.dirname(composeFilePath), 'compose.yml'),
+                target,
+            ),
+        ).toThrow(
+            'Unsupported compose file "compose.yml". Only compose.yaml is supported.',
+        );
     });
 
     it('handles task failure', async () => {
@@ -281,7 +329,16 @@ describe('Deploy', () => {
         expectDeployTask(
             taskExecutor.run.mock.calls[0][0],
             path.dirname(composeFilePath),
-            ['deploy', '--target', target, '-p', '5000', '--force-recreate'],
+            [
+                'deploy',
+                '--file',
+                'compose.yaml',
+                '--target',
+                target,
+                '-p',
+                '5000',
+                '--force-recreate',
+            ],
         );
     });
 
@@ -319,9 +376,7 @@ describe('Deploy', () => {
     it('throws when context command is called without a resource', async () => {
         await expect(
             deployAction.deployContextCommandHandler(),
-        ).rejects.toThrow(
-            'No compose.yaml or compose.yml selected for deployment',
-        );
+        ).rejects.toThrow('No compose.yaml selected for deployment');
 
         expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
         expect(vscode.workspace.findFiles).not.toHaveBeenCalled();
@@ -335,9 +390,7 @@ describe('Deploy', () => {
     it('throws when project command is called without a project tree item', async () => {
         await expect(
             deployAction.deployProjectCommandHandler(undefined),
-        ).rejects.toThrow(
-            'No compose.yaml or compose.yml selected for deployment',
-        );
+        ).rejects.toThrow('No compose.yaml selected for deployment');
 
         expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(
