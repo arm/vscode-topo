@@ -133,7 +133,7 @@ describe('ProjectCloner', () => {
         );
     });
 
-    it('wraps task errors and skips the post-clone action', async () => {
+    it('wraps task errors and skips prompting to open clone result folder', async () => {
         const error = new Error('task fail');
         taskExecutor.run.mockRejectedValueOnce(error);
 
