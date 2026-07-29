@@ -36,12 +36,14 @@ export async function configure(
     taskExecutor: TaskExecutor,
     composeFilePath: string,
 ): Promise<void> {
-    const projectName = path.basename(path.dirname(composeFilePath));
+    const composeFileDir = path.dirname(composeFilePath);
+    const composeFileName = path.basename(composeFilePath);
+    const projectName = path.basename(composeFileDir);
     const task = createProcessTask(
         `Configure ${projectName}`,
-        ['topo', 'configure', '--file', path.basename(composeFilePath)],
+        ['topo', 'configure', '--file', composeFileName],
         {
-            cwd: path.dirname(composeFilePath),
+            cwd: composeFileDir,
         },
     );
     const taskName = task.name;
