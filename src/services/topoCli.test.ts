@@ -329,7 +329,7 @@ describe('TopoCli', () => {
         });
 
         const target = 'user@topo.local';
-        const projectPath = '/fake/workspace/demo';
+        const projectPath = path.normalize('/fake/workspace/demo');
         const composeFilePath = path.join(projectPath, 'compose.yaml');
 
         await expect(topoCli.ps(target, composeFilePath)).resolves.toEqual(
