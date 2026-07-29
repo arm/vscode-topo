@@ -4,8 +4,8 @@ import * as vscode from 'vscode';
 import { MockProxy, mock } from 'vitest-mock-extended';
 import { WrappedError } from '../errors/wrappedError';
 import {
-    handleCompletedClone,
     promptForDestinationPath,
+    promptToOpenFolder,
     resolveProjectName,
 } from '../util/projectClone';
 import { TaskExecutor } from '../util/taskExecutor';
@@ -13,8 +13,8 @@ import { ProjectCloner } from './projectCloner';
 
 vi.mock('../util/projectClone');
 
-const handleCompletedCloneMock = vi.mocked(handleCompletedClone);
 const promptForDestinationPathMock = vi.mocked(promptForDestinationPath);
+const promptToOpenFolderMock = vi.mocked(promptToOpenFolder);
 const resolveProjectNameMock = vi.mocked(resolveProjectName);
 
 describe('ProjectCloner', () => {
@@ -110,7 +110,7 @@ describe('ProjectCloner', () => {
                 repositoryPath,
             ],
         );
-        expect(handleCompletedCloneMock).toHaveBeenCalledWith(repositoryPath);
+        expect(promptToOpenFolderMock).toHaveBeenCalledWith(repositoryPath);
     });
 
     it('passes raw sources and clone parameters to the task', async () => {
@@ -149,7 +149,7 @@ describe('ProjectCloner', () => {
                 cause: error,
             }),
         );
-        expect(handleCompletedCloneMock).not.toHaveBeenCalled();
+        expect(promptToOpenFolderMock).not.toHaveBeenCalled();
     });
 
     it('rejects invalid source URLs before executing a task', async () => {

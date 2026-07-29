@@ -9,10 +9,10 @@ import { showAndLogError } from './showAndLog';
 import { mutable } from './test/mutable';
 import {
     getFirstSentence,
-    handleCompletedClone,
     promptForDestinationPath,
     promptForLocalCloneSource,
     promptForRemoteCloneSource,
+    promptToOpenFolder,
     resolveProjectName,
 } from './projectClone';
 
@@ -235,7 +235,7 @@ describe('project clone utilities', () => {
         it('opens the project in the current window', async () => {
             showInformationMessageMock.mockResolvedValueOnce('Open');
 
-            await handleCompletedClone(repositoryPath);
+            await promptToOpenFolder(repositoryPath);
 
             expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
                 'vscode.openFolder',
@@ -249,7 +249,7 @@ describe('project clone utilities', () => {
                 'Open in New Window',
             );
 
-            await handleCompletedClone(repositoryPath);
+            await promptToOpenFolder(repositoryPath);
 
             expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
                 'vscode.openFolder',
@@ -264,7 +264,7 @@ describe('project clone utilities', () => {
                 'Add to Workspace',
             );
 
-            await handleCompletedClone(repositoryPath);
+            await promptToOpenFolder(repositoryPath);
 
             expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
                 'Would you like to open the cloned repository, or add it to the current workspace?',

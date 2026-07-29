@@ -9,8 +9,8 @@ import {
 } from '../util/cloneSource';
 import { getErrorMessage } from '../util/getErrorMessage';
 import {
-    handleCompletedClone,
     promptForDestinationPath,
+    promptToOpenFolder,
     resolveProjectName,
 } from '../util/projectClone';
 import { createProcessTask } from '../util/task';
@@ -54,6 +54,6 @@ export class ProjectCloner {
             });
         }
 
-        await handleCompletedClone(repositoryPath);
+        await promptToOpenFolder(repositoryPath);
     }
 }

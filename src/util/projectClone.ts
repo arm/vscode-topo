@@ -156,7 +156,7 @@ export const resolveProjectName = async (
     });
 };
 
-export const handleCompletedClone = async (
+export const promptToOpenFolder = async (
     repositoryPath: string,
 ): Promise<void> => {
     let message = 'Would you like to open the cloned repository?';
