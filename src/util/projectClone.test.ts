@@ -10,10 +10,10 @@ import { mutable } from './test/mutable';
 import {
     getFirstSentence,
     handleCompletedClone,
+    promptForDestinationPath,
     promptForLocalCloneSource,
     promptForRemoteCloneSource,
     resolveProjectName,
-    selectDestinationPath,
 } from './projectClone';
 
 vi.mock('./showAndLog');
@@ -86,7 +86,7 @@ describe('project clone utilities', () => {
             type: 'dir',
             path: localProjectUri.fsPath,
         });
-        await expect(selectDestinationPath()).resolves.toBe(
+        await expect(promptForDestinationPath()).resolves.toBe(
             destinationUri.fsPath,
         );
     });
@@ -95,7 +95,7 @@ describe('project clone utilities', () => {
         vi.mocked(vscode.window.showOpenDialog).mockResolvedValue(undefined);
 
         await expect(promptForLocalCloneSource()).resolves.toBeUndefined();
-        await expect(selectDestinationPath()).resolves.toBeUndefined();
+        await expect(promptForDestinationPath()).resolves.toBeUndefined();
     });
 
     it('uses an available default project name without prompting', async () => {

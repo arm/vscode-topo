@@ -129,7 +129,9 @@ export const promptForLocalCloneSource = async (): Promise<
     return sourcePath ? { type: 'dir', path: sourcePath } : undefined;
 };
 
-export const selectDestinationPath = async (): Promise<string | undefined> => {
+export const promptForDestinationPath = async (): Promise<
+    string | undefined
+> => {
     const selection = await vscode.window.showOpenDialog({
         canSelectFiles: false,
         canSelectFolders: true,

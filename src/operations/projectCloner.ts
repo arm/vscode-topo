@@ -10,8 +10,8 @@ import {
 import { getErrorMessage } from '../util/getErrorMessage';
 import {
     handleCompletedClone,
+    promptForDestinationPath,
     resolveProjectName,
-    selectDestinationPath,
 } from '../util/projectClone';
 import { createProcessTask } from '../util/task';
 import { TaskExecutor } from '../util/taskExecutor';
@@ -23,7 +23,7 @@ export class ProjectCloner {
         source: CloneSource,
         parameters: CloneParameters = {},
     ): Promise<void> {
-        const destinationPath = await selectDestinationPath();
+        const destinationPath = await promptForDestinationPath();
         if (!destinationPath) {
             return;
         }

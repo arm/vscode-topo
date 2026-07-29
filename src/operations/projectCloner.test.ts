@@ -5,8 +5,8 @@ import { MockProxy, mock } from 'vitest-mock-extended';
 import { WrappedError } from '../errors/wrappedError';
 import {
     handleCompletedClone,
+    promptForDestinationPath,
     resolveProjectName,
-    selectDestinationPath,
 } from '../util/projectClone';
 import { TaskExecutor } from '../util/taskExecutor';
 import { ProjectCloner } from './projectCloner';
@@ -14,8 +14,8 @@ import { ProjectCloner } from './projectCloner';
 vi.mock('../util/projectClone');
 
 const handleCompletedCloneMock = vi.mocked(handleCompletedClone);
+const promptForDestinationPathMock = vi.mocked(promptForDestinationPath);
 const resolveProjectNameMock = vi.mocked(resolveProjectName);
-const selectDestinationPathMock = vi.mocked(selectDestinationPath);
 
 describe('ProjectCloner', () => {
     const destinationPath = path.resolve('home', 'destination');
@@ -38,13 +38,13 @@ describe('ProjectCloner', () => {
     beforeEach(() => {
         vi.resetAllMocks();
         taskExecutor = mock<TaskExecutor>();
-        selectDestinationPathMock.mockResolvedValue(destinationPath);
+        promptForDestinationPathMock.mockResolvedValue(destinationPath);
         resolveProjectNameMock.mockResolvedValue('virtual-bittermelon-peeler');
         projectCloner = new ProjectCloner(taskExecutor);
     });
 
     it('stops when destination selection is cancelled', async () => {
-        selectDestinationPathMock.mockResolvedValueOnce(undefined);
+        promptForDestinationPathMock.mockResolvedValueOnce(undefined);
 
         await projectCloner.clone({
             type: 'git',
