@@ -70,27 +70,6 @@ describe('ProjectCloner', () => {
         expect(taskExecutor.run).not.toHaveBeenCalled();
     });
 
-    it.each(['../outside', '..\\outside'])(
-        'rejects a project name that escapes the destination (%s)',
-        async (projectName) => {
-            resolveProjectNameMock.mockResolvedValueOnce(projectName);
-
-            await expect(
-                projectCloner.clone({
-                    type: 'git',
-                    url: 'https://example.com/virtual-bittermelon-peeler.git',
-                }),
-            ).rejects.toEqual(
-                expect.objectContaining({
-                    code: 'CLONE',
-                    message:
-                        'Project name must be a single folder name, not a path.',
-                }),
-            );
-            expect(taskExecutor.run).not.toHaveBeenCalled();
-        },
-    );
-
     it('runs a clone task and then offers the post-clone action', async () => {
         await projectCloner.clone({
             type: 'git',

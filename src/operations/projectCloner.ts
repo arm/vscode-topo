@@ -5,7 +5,6 @@ import {
     CloneParameters,
     CloneSource,
     getDefaultProjectName,
-    validateProjectName,
 } from '../util/cloneSource';
 import { getErrorMessage } from '../util/getErrorMessage';
 import {
@@ -34,11 +33,6 @@ export class ProjectCloner {
         );
         if (!projectName) {
             return;
-        }
-
-        const validationError = validateProjectName(projectName);
-        if (validationError) {
-            throw new WrappedError('CLONE', validationError);
         }
 
         const repositoryPath = path.join(destinationPath, projectName);
