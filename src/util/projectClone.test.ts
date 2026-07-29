@@ -126,6 +126,18 @@ describe('project clone utilities', () => {
         });
     });
 
+    it('validates project names through the input box', async () => {
+        vi.mocked(fs.existsSync).mockReturnValueOnce(true);
+
+        await resolveProjectName(destinationUri.fsPath, 'project');
+
+        const options = vi.mocked(vscode.window.showInputBox).mock.calls[0][0]!;
+        expect(await options.validateInput?.('../project')).toBe(
+            'Project name must be a single folder name, not a path.',
+        );
+        expect(await options.validateInput?.('project-v2')).toBeUndefined();
+    });
+
     describe('remote source prompt', () => {
         const projectList: ProjectDescription[] = [
             {

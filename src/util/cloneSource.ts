@@ -20,9 +20,6 @@ export type CloneSource = CloneRemoteSource | CloneLocalSource | CloneRawSource;
 
 export type CloneParameters = Record<string, string>;
 
-const invalidProjectNameMessage =
-    'Project name must be a single folder name, not a path.';
-
 const isGitUrl = (source: string): boolean =>
     source.startsWith('git@') ||
     source.startsWith('ssh://') ||
@@ -49,20 +46,6 @@ export const parseCloneSource = (source: string): CloneSource => {
         default:
             throw new WrappedError('CLONE', `Invalid type: ${sourceType}`);
     }
-};
-
-export const validateProjectName = (
-    projectName: string,
-): string | undefined => {
-    if (
-        projectName === '.' ||
-        projectName === '..' ||
-        projectName.includes('/') ||
-        projectName.includes('\\')
-    ) {
-        return invalidProjectNameMessage;
-    }
-    return undefined;
 };
 
 export const getDefaultProjectNameFromUrl = (url: string): string => {

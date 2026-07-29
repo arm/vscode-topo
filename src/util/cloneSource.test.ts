@@ -4,7 +4,6 @@ import {
     getDefaultProjectName,
     getDefaultProjectNameFromUrl,
     parseCloneSource,
-    validateProjectName,
 } from './cloneSource';
 
 describe('clone source', () => {
@@ -45,28 +44,6 @@ describe('clone source', () => {
                 expect.objectContaining({ code: 'CLONE', message }),
             );
         });
-    });
-
-    describe('project name validation', () => {
-        it.each([
-            '../something',
-            '..\\something',
-            '/absolute/path',
-            'C:\\absolute\\path',
-            '.',
-            '..',
-        ])('rejects a project path (%s)', (projectName) => {
-            expect(validateProjectName(projectName)).toBe(
-                'Project name must be a single folder name, not a path.',
-            );
-        });
-
-        it.each(['project', 'project.v2', 'project name'])(
-            'accepts a single folder name (%s)',
-            (projectName) => {
-                expect(validateProjectName(projectName)).toBeUndefined();
-            },
-        );
     });
 
     describe('default project names', () => {

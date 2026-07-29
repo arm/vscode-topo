@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
 import { isWrappedError } from '../errors/wrappedError';
 import { TopoCli } from '../services/topoCli';
 import { ProjectDescription } from '../services/topoCliSchema';
-import { CloneSource, validateProjectName } from './cloneSource';
+import { CloneSource } from './cloneSource';
 import { showAndLogError } from './showAndLog';
 
 type RemoteProjectQuickPickItem = vscode.QuickPickItem & {
@@ -14,6 +14,18 @@ type RemoteProjectQuickPickItem = vscode.QuickPickItem & {
 const open = 'Open';
 const openNewWindow = 'Open in New Window';
 const addToWorkspace = 'Add to Workspace';
+
+const validateProjectName = (projectName: string): string | undefined => {
+    if (
+        projectName === '.' ||
+        projectName === '..' ||
+        projectName.includes('/') ||
+        projectName.includes('\\')
+    ) {
+        return 'Project name must be a single folder name, not a path.';
+    }
+    return undefined;
+};
 
 export const getFirstSentence = (text: string): string => {
     const trimmed = text.trim();
