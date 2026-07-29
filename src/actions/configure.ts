@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import { getErrorMessage } from '../util/getErrorMessage';
 import { createProcessTask } from '../util/task';
 import { TaskExecutor } from '../util/taskExecutor';
-import { assertProjectTreeItem } from './util/assertProjectTreeItem';
+import { assertProjectTreeItem } from '../views/treeItems/assertProjectTreeItem';
 
 const viewLogsItem: vscode.MessageItem = {
     title: 'View Logs',

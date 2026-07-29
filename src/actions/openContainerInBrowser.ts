@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { getContainerWebEndpoints } from '../util/getContainerWebEndpoints';
 import type { ContainerWebEndpoint } from '../util/getContainerWebEndpoints';
-import { assertContainerTreeItem } from './util/assertContainerTreeItem';
+import { assertContainerTreeItem } from '../views/treeItems/assertContainerTreeItem';
 
 type EndpointQuickPickItem = vscode.QuickPickItem & {
     endpoint: ContainerWebEndpoint;

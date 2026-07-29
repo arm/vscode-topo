@@ -1,5 +1,5 @@
 import { logger } from '../../util/logger';
-import { ProjectTreeItem } from '../../views/treeItems/projectTreeItem';
+import { ProjectTreeItem } from './projectTreeItem';
 
 /**
  * Asserts that the provided treeNode is an instance of ProjectTreeItem.

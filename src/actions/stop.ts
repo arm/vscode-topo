@@ -6,7 +6,7 @@ import { TaskExecutor } from '../util/taskExecutor';
 import { showAndLogWarning } from '../util/showAndLog';
 import { TargetModel } from '../models/targetModel';
 import { ProjectController } from '../controllers/projectController';
-import { assertProjectTreeItem } from './util/assertProjectTreeItem';
+import { assertProjectTreeItem } from '../views/treeItems/assertProjectTreeItem';
 import { isWrappedError } from '../errors/wrappedError';
 import {
     assertTargetConnected,

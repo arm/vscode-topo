@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { logger } from '../../util/logger';
 import { unloaded } from '../../util/loadable';
 import { assertProjectTreeItem } from './assertProjectTreeItem';
-import { ProjectTreeItem } from '../../views/treeItems/projectTreeItem';
+import { ProjectTreeItem } from './projectTreeItem';
 
 vi.mock('../../util/logger', () => ({
     logger: {

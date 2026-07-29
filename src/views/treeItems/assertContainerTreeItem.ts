@@ -1,5 +1,5 @@
 import { logger } from '../../util/logger';
-import { ContainerTreeItem } from '../../views/treeItems/containerTreeItem';
+import { ContainerTreeItem } from './containerTreeItem';
 
 /**
  * Asserts that the provided treeNode is an instance of ContainerTreeItem.

@@ -2,7 +2,7 @@ import { ProjectController } from '../controllers/projectController';
 import { isWrappedError } from '../errors/wrappedError';
 import { ContainerCommands } from '../services/containerCommands';
 import { showAndLogError } from '../util/showAndLog';
-import { assertContainerTreeItem } from './util/assertContainerTreeItem';
+import { assertContainerTreeItem } from '../views/treeItems/assertContainerTreeItem';
 
 const containerOperationMethods = {
     start: 'startContainer',

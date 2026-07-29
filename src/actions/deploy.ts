@@ -14,7 +14,7 @@ import {
     getPreferredComposeFiles,
     type ComposeFileMetadata,
 } from '../util/composeFile';
-import { assertProjectTreeItem } from './util/assertProjectTreeItem';
+import { assertProjectTreeItem } from '../views/treeItems/assertProjectTreeItem';
 import {
     assertTargetConnected,
     assertTargetSelected,
