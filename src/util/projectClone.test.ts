@@ -1,23 +1,20 @@
-import path from 'node:path';
-import os from 'node:os';
 import fs from 'node:fs';
+import path from 'node:path';
 import * as vscode from 'vscode';
-import {
-    cloneProject,
-    createCloneTask,
-    getDefaultProjectNameFromUrl,
-    getFirstSentence,
-    getLocalSourcePath,
-    promptForRemoteCloneSource,
-    validateProjectName,
-} from './projectClone';
-import { mutable } from './test/mutable';
-import { TopoCli } from '../services/topoCli';
-import { MockProxy, mock } from 'vitest-mock-extended';
-import { ProjectDescription } from '../services/topoCliSchema';
+import { mock } from 'vitest-mock-extended';
 import { WrappedError } from '../errors/wrappedError';
-import { TaskExecutor } from './taskExecutor';
+import { TopoCli } from '../services/topoCli';
+import { ProjectDescription } from '../services/topoCliSchema';
 import { showAndLogError } from './showAndLog';
+import { mutable } from './test/mutable';
+import {
+    getFirstSentence,
+    promptForDestinationPath,
+    promptForLocalCloneSource,
+    promptForRemoteCloneSource,
+    promptToOpenFolder,
+    resolveProjectName,
+} from './projectClone';
 
 vi.mock('./showAndLog');
 
@@ -57,183 +54,109 @@ function mockRemoteQuickPick<T extends vscode.QuickPickItem>() {
     };
 }
 
-const workspaceUri = vscode.Uri.file(path.resolve('home', 'workspace'));
-const workspaceFolders = [{ uri: workspaceUri, name: 'workspace', index: 0 }];
 const destinationUri = vscode.Uri.file(path.resolve('home', 'destination'));
 const localProjectUri = vscode.Uri.file(path.resolve('path', 'to', 'source'));
+const workspaceUri = vscode.Uri.file(path.resolve('home', 'workspace'));
+const workspaceFolders = [{ uri: workspaceUri, name: 'workspace', index: 0 }];
 
 describe('project clone utilities', () => {
     const topoCli = mock<TopoCli>();
-    let taskExecutor: MockProxy<TaskExecutor>;
-
-    function expectCloneTask(
-        task: vscode.Task,
-        projectName: string,
-        args: string[],
-        cwd?: string,
-    ): void {
-        expect(task.name).toBe(`Clone ${projectName}`);
-        expect(task.execution).toMatchObject({
-            process: 'topo',
-            args,
-            options: { cwd },
-        });
-    }
 
     beforeEach(() => {
         vi.resetAllMocks();
-        taskExecutor = mock<TaskExecutor>();
         mutable(vscode.workspace).workspaceFolders = undefined;
         vi.spyOn(fs, 'existsSync').mockReturnValue(false);
     });
 
     afterEach(() => vi.restoreAllMocks());
 
-    describe('getFirstSentence', () => {
-        it('returns the first sentence from text containing multiple sentences', () => {
-            const got = getFirstSentence(
-                'Project Apple description. Apple is a fruit.',
-            );
-
-            expect(got).toBe('Project Apple description.');
-        });
-
-        it('returns trimmed text when no sentence terminator exists', () => {
-            const got = getFirstSentence('  Project Apple description  ');
-
-            expect(got).toBe('Project Apple description');
-        });
+    it('gets the first sentence of a catalog description', () => {
+        expect(
+            getFirstSentence('Project Apple description. Apple is a fruit.'),
+        ).toBe('Project Apple description.');
+        expect(getFirstSentence('  No terminator  ')).toBe('No terminator');
     });
 
-    describe('getLocalSourcePath', () => {
-        it('returns undefined when no folder is selected', async () => {
-            vi.mocked(vscode.window.showOpenDialog).mockResolvedValueOnce(
-                undefined,
-            );
+    it('prompts for local source and destination folders', async () => {
+        vi.mocked(vscode.window.showOpenDialog)
+            .mockResolvedValueOnce([localProjectUri])
+            .mockResolvedValueOnce([destinationUri]);
 
-            await expect(getLocalSourcePath()).resolves.toBeUndefined();
+        await expect(promptForLocalCloneSource()).resolves.toEqual({
+            type: 'dir',
+            path: localProjectUri.fsPath,
         });
-
-        it('returns the selected folder path', async () => {
-            vi.mocked(vscode.window.showOpenDialog).mockResolvedValueOnce([
-                localProjectUri,
-            ]);
-
-            await expect(getLocalSourcePath()).resolves.toBe(
-                localProjectUri.fsPath,
-            );
-        });
-    });
-
-    describe('validateProjectName', () => {
-        it.each([
-            '../something',
-            '..\\something',
-            '/absolute/path',
-            'C:\\absolute\\path',
-            '.',
-            '..',
-        ])('rejects a project path (%s)', (projectName) => {
-            expect(validateProjectName(projectName)).toBe(
-                'Project name must be a single folder name, not a path.',
-            );
-        });
-
-        it.each(['project', 'project.v2', 'project name'])(
-            'accepts a single folder name (%s)',
-            (projectName) => {
-                expect(validateProjectName(projectName)).toBeUndefined();
-            },
+        await expect(promptForDestinationPath()).resolves.toBe(
+            destinationUri.fsPath,
         );
     });
 
-    describe('getDefaultProjectNameFromUrl', () => {
-        it('returns the repository name for git URLs with commit refs', () => {
-            expect(
-                getDefaultProjectNameFromUrl(
-                    'https://example.com/virtual-bittermelon-peeler.git#8303e66db59a7a11e64877121f3db1b688d2011f',
-                ),
-            ).toBe('virtual-bittermelon-peeler');
-        });
+    it('returns undefined when folder prompts are cancelled', async () => {
+        vi.mocked(vscode.window.showOpenDialog).mockResolvedValue(undefined);
 
-        it('returns the repository name for scp-like SSH URLs with refs', () => {
-            expect(
-                getDefaultProjectNameFromUrl(
-                    'git@example.com:owner/virtual-bittermelon-peeler.git#main',
-                ),
-            ).toBe('virtual-bittermelon-peeler');
+        await expect(promptForLocalCloneSource()).resolves.toBeUndefined();
+        await expect(promptForDestinationPath()).resolves.toBeUndefined();
+    });
+
+    it('uses an available default project name without prompting', async () => {
+        await expect(
+            resolveProjectName(destinationUri.fsPath, 'project'),
+        ).resolves.toBe('project');
+
+        expect(fs.existsSync).toHaveBeenCalledWith(
+            path.join(destinationUri.fsPath, 'project'),
+        );
+        expect(vscode.window.showInputBox).not.toHaveBeenCalled();
+    });
+
+    it('prompts for a project name when the default path exists', async () => {
+        vi.mocked(fs.existsSync).mockReturnValueOnce(true);
+        vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
+            'other-project',
+        );
+
+        await expect(
+            resolveProjectName(destinationUri.fsPath, 'project'),
+        ).resolves.toBe('other-project');
+
+        expect(vscode.window.showInputBox).toHaveBeenCalledWith({
+            prompt: 'Enter the project name',
+            value: 'project',
+            validateInput: expect.any(Function),
         });
     });
 
-    describe('promptForRemoteCloneSource', () => {
+    it('validates project names through the input box', async () => {
+        vi.mocked(fs.existsSync).mockReturnValueOnce(true);
+
+        await resolveProjectName(destinationUri.fsPath, 'project');
+
+        const options = vi.mocked(vscode.window.showInputBox).mock.calls[0][0]!;
+        expect(await options.validateInput?.('../project')).toBe(
+            'Project name must be a single folder name, not a path.',
+        );
+        expect(await options.validateInput?.('project-v2')).toBeUndefined();
+    });
+
+    describe('remote source prompt', () => {
         const projectList: ProjectDescription[] = [
             {
                 name: 'project-alpha',
                 url: 'https://example.com/projects/project-alpha.git',
-                description: 'Project Apple description. Apple is a fruit.',
+                description: 'Project Alpha description. More detail.',
                 ref: 'r',
                 features: [],
             },
             {
-                name: 'project-banana',
-                url: 'https://example.com/projects/project-banana.git',
-                description:
-                    'Project Cabbage description. Cabbage is a vegetable.',
+                name: 'project-beta',
+                url: 'https://example.com/projects/project-beta.git',
+                description: 'Project Beta description. More detail.',
                 ref: 'r',
                 features: [],
             },
         ];
 
-        const projectQuickPickItems = projectList.map((project) => ({
-            label: `$(repo) ${project.name}`,
-            detail: getFirstSentence(project.description),
-            url: project.url,
-        }));
-
-        it('allows a custom URL when listing projects fails', async () => {
-            const error = new Error('command failed');
-            const url = 'https://example.com/virtual-bittermelon-peeler.git';
-            topoCli.listProjects.mockRejectedValueOnce(error);
-            const { enterValue, acceptItem } = mockRemoteQuickPick();
-
-            const sourcePromise = promptForRemoteCloneSource(topoCli);
-            enterValue(`  ${url}  `);
-            acceptItem(0);
-
-            await expect(sourcePromise).resolves.toEqual({
-                type: 'git',
-                url,
-            });
-            expect(showAndLogError).toHaveBeenCalledWith(
-                'Failed to list projects',
-                error,
-            );
-        });
-
-        it('falls back to unfiltered projects when target-specific lookup fails', async () => {
-            topoCli.listProjects.mockImplementation(async (sshTarget) => {
-                if (sshTarget) {
-                    throw new WrappedError('CLI', 'target unhealthy');
-                }
-                return projectList;
-            });
-            const { quickPick } = mockRemoteQuickPick();
-
-            const sourcePromise = promptForRemoteCloneSource(
-                topoCli,
-                'unhealthy-target',
-            );
-            quickPick.hide();
-
-            await expect(sourcePromise).resolves.toBeUndefined();
-            expect(topoCli.listProjects).toHaveBeenNthCalledWith(
-                1,
-                'unhealthy-target',
-            );
-            expect(topoCli.listProjects).toHaveBeenNthCalledWith(2);
-        });
-
-        it('returns the selected catalog project as a git source', async () => {
+        it('returns a selected catalog project', async () => {
             topoCli.listProjects.mockResolvedValue(projectList);
             const { quickPick, acceptItem } = mockRemoteQuickPick();
 
@@ -241,9 +164,7 @@ describe('project clone utilities', () => {
                 topoCli,
                 'me@example.com',
             );
-            await vi.waitFor(() =>
-                expect(quickPick.items).toEqual(projectQuickPickItems),
-            );
+            await vi.waitFor(() => expect(quickPick.busy).toBe(false));
             acceptItem(1);
 
             await expect(sourcePromise).resolves.toEqual({
@@ -251,10 +172,11 @@ describe('project clone utilities', () => {
                 url: projectList[1].url,
             });
             expect(topoCli.listProjects).toHaveBeenCalledWith('me@example.com');
+            expect(quickPick.dispose).toHaveBeenCalledOnce();
         });
 
-        it('offers a typed git URL before the catalog projects', async () => {
-            const url = 'https://example.com/virtual-bittermelon-peeler.git';
+        it('offers a trimmed custom URL before catalog projects', async () => {
+            const url = 'https://example.com/custom.git';
             topoCli.listProjects.mockResolvedValue(projectList);
             const { quickPick, enterValue, acceptItem } = mockRemoteQuickPick();
 
@@ -267,298 +189,94 @@ describe('project clone utilities', () => {
                 type: 'git',
                 url,
             });
-            expect(quickPick.items).toEqual([
-                {
-                    label: `$(cloud-download) Custom URL`,
-                    description: url,
-                    url,
-                },
-                ...projectQuickPickItems,
-            ]);
+            expect(quickPick.items[0]).toEqual({
+                label: '$(cloud-download) Custom URL',
+                description: url,
+                url,
+            });
         });
 
-        it('returns undefined and disposes the quick pick when dismissed', async () => {
-            topoCli.listProjects.mockResolvedValue(projectList);
+        it('falls back to the local catalog after a target CLI error', async () => {
+            topoCli.listProjects.mockImplementation(async (sshTarget) => {
+                if (sshTarget) {
+                    throw new WrappedError('CLI', 'target unhealthy');
+                }
+                return projectList;
+            });
             const { quickPick } = mockRemoteQuickPick();
 
-            const sourcePromise = promptForRemoteCloneSource(topoCli);
+            const sourcePromise = promptForRemoteCloneSource(
+                topoCli,
+                'unhealthy-target',
+            );
+            await vi.waitFor(() => expect(quickPick.busy).toBe(false));
             quickPick.hide();
 
             await expect(sourcePromise).resolves.toBeUndefined();
-            expect(topoCli.listProjects).toHaveBeenCalledWith();
-            expect(quickPick.dispose).toHaveBeenCalledOnce();
-        });
-    });
-
-    describe('createCloneTask', () => {
-        it('builds a clone task with the topo command name', () => {
-            const repositoryPath = path.resolve('workspace', 'repo');
-            const task = createCloneTask(
-                'repo',
-                {
-                    type: 'git',
-                    url: 'https://example.com/virtual-bittermelon-peeler.git',
-                },
-                repositoryPath,
-                {
-                    model: 'some-huggingface-id',
-                },
+            expect(topoCli.listProjects).toHaveBeenNthCalledWith(
+                1,
+                'unhealthy-target',
             );
+            expect(topoCli.listProjects).toHaveBeenNthCalledWith(2);
+        });
 
-            expectCloneTask(
-                task,
-                'repo',
-                [
-                    'clone',
-                    'git:https://example.com/virtual-bittermelon-peeler.git',
-                    repositoryPath,
-                    'model=some-huggingface-id',
-                ],
-                os.homedir(),
+        it('keeps custom URL entry available when catalog loading fails', async () => {
+            const error = new Error('command failed');
+            const url = 'https://example.com/custom.git';
+            topoCli.listProjects.mockRejectedValueOnce(error);
+            const { enterValue, acceptItem } = mockRemoteQuickPick();
+
+            const sourcePromise = promptForRemoteCloneSource(topoCli);
+            enterValue(url);
+            acceptItem(0);
+
+            await expect(sourcePromise).resolves.toEqual({
+                type: 'git',
+                url,
+            });
+            expect(showAndLogError).toHaveBeenCalledWith(
+                'Failed to list projects',
+                error,
             );
         });
     });
 
-    describe('cloneProject', () => {
-        beforeEach(() => {
-            vi.mocked(vscode.window.showOpenDialog).mockResolvedValue([
-                workspaceUri,
-            ]);
+    describe('post-clone action', () => {
+        const repositoryPath = path.resolve('home', 'destination', 'project');
+
+        it('opens the project in the current window', async () => {
+            showInformationMessageMock.mockResolvedValueOnce('Open');
+
+            await promptToOpenFolder(repositoryPath);
+
+            expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+                'vscode.openFolder',
+                vscode.Uri.file(repositoryPath),
+                { forceReuseWindow: true },
+            );
         });
 
-        it('throws a clone error when an invalid clone URL is provided', async () => {
+        it('opens the project in a new window', async () => {
+            showInformationMessageMock.mockResolvedValueOnce(
+                'Open in New Window',
+            );
+
+            await promptToOpenFolder(repositoryPath);
+
+            expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+                'vscode.openFolder',
+                vscode.Uri.file(repositoryPath),
+                { forceNewWindow: true },
+            );
+        });
+
+        it('offers to add the project to the current workspace', async () => {
             mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-
-            await expect(
-                cloneProject(taskExecutor, {
-                    type: 'git',
-                    url: 'not-a-valid-url',
-                }),
-            ).rejects.toEqual(
-                expect.objectContaining({
-                    code: 'CLONE',
-                    message: 'Invalid URL: not-a-valid-url',
-                }),
+            showInformationMessageMock.mockResolvedValueOnce(
+                'Add to Workspace',
             );
 
-            expect(taskExecutor.run).not.toHaveBeenCalled();
-        });
-
-        it('stops when no project name is provided for an existing default project path', async () => {
-            vi.mocked(fs.existsSync).mockReturnValueOnce(true);
-            vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
-                undefined,
-            );
-
-            await cloneProject(taskExecutor, {
-                type: 'git',
-                url: 'https://example.com/virtual-bittermelon-peeler.git',
-            });
-
-            expect(vscode.window.showInputBox).toHaveBeenCalledWith({
-                prompt: 'Enter the project name',
-                value: 'virtual-bittermelon-peeler',
-                validateInput: validateProjectName,
-            });
-            expect(taskExecutor.run).not.toHaveBeenCalled();
-        });
-
-        it.each(['../outside', '..\\outside'])(
-            'does not clone when the project name escapes the destination (%s)',
-            async (projectName) => {
-                vi.mocked(fs.existsSync).mockReturnValueOnce(true);
-                vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
-                    projectName,
-                );
-
-                await expect(
-                    cloneProject(taskExecutor, {
-                        type: 'git',
-                        url: 'https://example.com/virtual-bittermelon-peeler.git',
-                    }),
-                ).rejects.toEqual(
-                    expect.objectContaining({
-                        code: 'CLONE',
-                        message:
-                            'Project name must be a single folder name, not a path.',
-                    }),
-                );
-
-                expect(taskExecutor.run).not.toHaveBeenCalled();
-            },
-        );
-
-        it('stops when no destination folder is selected', async () => {
-            vi.mocked(vscode.window.showOpenDialog).mockResolvedValueOnce(
-                undefined,
-            );
-
-            await cloneProject(taskExecutor, {
-                type: 'git',
-                url: 'https://example.com/virtual-bittermelon-peeler.git',
-            });
-
-            expect(vscode.window.showInputBox).not.toHaveBeenCalled();
-            expect(taskExecutor.run).not.toHaveBeenCalled();
-        });
-
-        it('creates a clone task for a valid https git URL', async () => {
-            mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-
-            await cloneProject(taskExecutor, {
-                type: 'git',
-                url: 'https://example.com/virtual-bittermelon-peeler.git',
-            });
-
-            expect(fs.existsSync).toHaveBeenCalledWith(
-                path.join(workspaceUri.fsPath, 'virtual-bittermelon-peeler'),
-            );
-            expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-            expectCloneTask(
-                taskExecutor.run.mock.calls[0][0],
-                'virtual-bittermelon-peeler',
-                [
-                    'clone',
-                    'git:https://example.com/virtual-bittermelon-peeler.git',
-                    path.join(
-                        workspaceUri.fsPath,
-                        'virtual-bittermelon-peeler',
-                    ),
-                ],
-            );
-        });
-
-        it('creates a clone task for a valid SSH git URL', async () => {
-            mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-
-            await cloneProject(taskExecutor, {
-                type: 'git',
-                url: 'git@example.com:virtual-bittermelon-peeler.git',
-            });
-
-            expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-            expectCloneTask(
-                taskExecutor.run.mock.calls[0][0],
-                'virtual-bittermelon-peeler',
-                [
-                    'clone',
-                    'git:git@example.com:virtual-bittermelon-peeler.git',
-                    path.join(
-                        workspaceUri.fsPath,
-                        'virtual-bittermelon-peeler',
-                    ),
-                ],
-            );
-        });
-
-        it('passes raw clone sources and arbitrary clone options through to topo clone', async () => {
-            mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-
-            await cloneProject(
-                taskExecutor,
-                {
-                    value: 'https://example.com/virtual-bittermelon-peeler.git',
-                },
-                {
-                    model: 'some-huggingface-id',
-                },
-            );
-
-            expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-            expectCloneTask(
-                taskExecutor.run.mock.calls[0][0],
-                'virtual-bittermelon-peeler',
-                [
-                    'clone',
-                    'https://example.com/virtual-bittermelon-peeler.git',
-                    path.join(
-                        workspaceUri.fsPath,
-                        'virtual-bittermelon-peeler',
-                    ),
-                    'model=some-huggingface-id',
-                ],
-            );
-        });
-
-        it('asks for a project name when the default path is already used', async () => {
-            mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-            vi.mocked(fs.existsSync).mockReturnValueOnce(true);
-            vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
-                'myproj',
-            );
-
-            await cloneProject(taskExecutor, {
-                type: 'dir',
-                path: localProjectUri.fsPath,
-            });
-
-            expect(fs.existsSync).toHaveBeenCalledWith(
-                path.join(workspaceUri.fsPath, 'source'),
-            );
-            expect(vscode.window.showInputBox).toHaveBeenCalledWith({
-                prompt: 'Enter the project name',
-                value: 'source',
-                validateInput: validateProjectName,
-            });
-            expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-            expectCloneTask(taskExecutor.run.mock.calls[0][0], 'myproj', [
-                'clone',
-                `dir:${localProjectUri.fsPath}`,
-                path.join(workspaceUri.fsPath, 'myproj'),
-            ]);
-        });
-
-        it('uses the selected destination folder when no workspace is open', async () => {
-            vi.mocked(vscode.window.showOpenDialog).mockResolvedValueOnce([
-                destinationUri,
-            ]);
-
-            await cloneProject(taskExecutor, {
-                type: 'git',
-                url: 'https://example.com/virtual-bittermelon-peeler.git',
-            });
-
-            expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-            expectCloneTask(
-                taskExecutor.run.mock.calls[0][0],
-                'virtual-bittermelon-peeler',
-                [
-                    'clone',
-                    'git:https://example.com/virtual-bittermelon-peeler.git',
-                    path.join(
-                        destinationUri.fsPath,
-                        'virtual-bittermelon-peeler',
-                    ),
-                ],
-                os.homedir(),
-            );
-        });
-
-        it('wraps errors thrown by the task executor', async () => {
-            mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-            const err = new Error('task fail');
-            taskExecutor.run.mockRejectedValueOnce(err);
-
-            await expect(
-                cloneProject(taskExecutor, {
-                    type: 'git',
-                    url: 'https://example.com/virtual-bittermelon-peeler.git',
-                }),
-            ).rejects.toEqual(
-                expect.objectContaining({
-                    code: 'CLONE',
-                    message: err.message,
-                }),
-            );
-        });
-
-        it('prompts for a post-clone action after starting the clone task', async () => {
-            mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-
-            await cloneProject(taskExecutor, {
-                type: 'git',
-                url: 'https://example.com/virtual-bittermelon-peeler.git',
-            });
+            await promptToOpenFolder(repositoryPath);
 
             expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
                 'Would you like to open the cloned repository, or add it to the current workspace?',
@@ -567,88 +285,11 @@ describe('project clone utilities', () => {
                 'Open in New Window',
                 'Add to Workspace',
             );
-        });
-
-        it('opens the cloned repository in the current window when user selects Open', async () => {
-            mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-            showInformationMessageMock.mockResolvedValueOnce('Open');
-
-            await cloneProject(taskExecutor, {
-                type: 'git',
-                url: 'https://example.com/virtual-bittermelon-peeler.git',
-            });
-
-            expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
-                'vscode.openFolder',
-                vscode.Uri.file(
-                    path.join(
-                        workspaceUri.fsPath,
-                        'virtual-bittermelon-peeler',
-                    ),
-                ),
-                { forceReuseWindow: true },
-            );
-        });
-
-        it('opens the cloned repository in a new window when user selects Open in New Window', async () => {
-            mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-            showInformationMessageMock.mockResolvedValueOnce(
-                'Open in New Window',
-            );
-
-            await cloneProject(taskExecutor, {
-                type: 'git',
-                url: 'https://example.com/virtual-bittermelon-peeler.git',
-            });
-
-            expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
-                'vscode.openFolder',
-                vscode.Uri.file(
-                    path.join(
-                        workspaceUri.fsPath,
-                        'virtual-bittermelon-peeler',
-                    ),
-                ),
-                { forceNewWindow: true },
-            );
-        });
-
-        it('adds the cloned repository to the current workspace when user selects Add to Workspace', async () => {
-            mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-            showInformationMessageMock.mockResolvedValueOnce(
-                'Add to Workspace',
-            );
-
-            await cloneProject(taskExecutor, {
-                type: 'git',
-                url: 'https://example.com/virtual-bittermelon-peeler.git',
-            });
-
             expect(
                 vscode.workspace.updateWorkspaceFolders,
             ).toHaveBeenCalledWith(workspaceFolders.length, 0, {
-                uri: vscode.Uri.file(
-                    path.join(
-                        workspaceUri.fsPath,
-                        'virtual-bittermelon-peeler',
-                    ),
-                ),
+                uri: vscode.Uri.file(repositoryPath),
             });
-        });
-
-        it('does not prompt for a post-clone action when the clone task throws', async () => {
-            mutable(vscode.workspace).workspaceFolders = workspaceFolders;
-            const err = new Error('task fail');
-            taskExecutor.run.mockRejectedValueOnce(err);
-
-            await expect(
-                cloneProject(taskExecutor, {
-                    type: 'git',
-                    url: 'https://example.com/virtual-bittermelon-peeler.git',
-                }),
-            ).rejects.toThrow(WrappedError);
-
-            expect(vscode.window.showInformationMessage).not.toHaveBeenCalled();
         });
     });
 });
