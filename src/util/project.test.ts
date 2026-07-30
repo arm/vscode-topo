@@ -47,18 +47,21 @@ describe('findTopLevelComposeProjects', () => {
         workspacePath: string,
         pattern: string,
     ): boolean {
-        const relativePath = path
-            .relative(workspacePath, filePath)
-            .split(path.sep)
-            .join('/');
+        const relativePath = path.relative(workspacePath, filePath);
+
+        if (path.basename(relativePath) !== 'compose.yaml') {
+            return false;
+        }
+
+        const directory = path.dirname(relativePath);
 
         switch (pattern) {
             case 'compose.yaml':
-                return relativePath === 'compose.yaml';
+                return directory === '.';
             case '*/compose.yaml':
-                return /^[^/]+\/compose\.yaml$/.test(relativePath);
+                return directory !== '.' && path.dirname(directory) === '.';
             case '**/compose.yaml':
-                return /(^|\/)compose\.yaml$/.test(relativePath);
+                return true;
             default:
                 return false;
         }
