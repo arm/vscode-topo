@@ -7,6 +7,7 @@ import { getHealthCheckIcon } from './util/healthIcons';
 import { Loadable } from '../util/loadable';
 import { TargetHealthReport } from '../services/topoCliSchema';
 import { selectTarget } from '../commands';
+import { getErrorMessage } from '../util/getErrorMessage';
 
 function getStatusIconId(state: Loadable<TargetHealthReport>): string {
     if (state.loading) {
@@ -32,6 +33,35 @@ function getStatusIconId(state: Loadable<TargetHealthReport>): string {
     return getHealthCheckIcon(status).id;
 }
 
+function getStatusTooltip(
+    target: string,
+    selectedHealth: Loadable<TargetHealthReport>,
+): string {
+    const lines = [`SSH destination: ${target}`];
+
+    if (selectedHealth.status === 'errored') {
+        lines.push(`Target health: ${getErrorMessage(selectedHealth.error)}`);
+        return lines.join('\n');
+    }
+
+    if (selectedHealth.status !== 'loaded') {
+        return lines.join('\n');
+    }
+
+    if (selectedHealth.data.connectivity.status !== 'ok') {
+        const { name, value } = selectedHealth.data.connectivity;
+        lines.push(`${name}: ${value}`);
+    }
+
+    const dependencyIssues = selectedHealth.data.dependencies.filter(
+        ({ status }) => status === 'warning' || status === 'error',
+    );
+    lines.push(
+        ...dependencyIssues.map(({ name, value }) => `${name}: ${value}`),
+    );
+    return lines.join('\n');
+}
+
 function renderStatusBarItem(
     statusBarItem: vscode.StatusBarItem,
     target: string | undefined,
@@ -40,7 +70,7 @@ function renderStatusBarItem(
     if (target) {
         const iconId = getStatusIconId(selectedHealth);
         statusBarItem.text = `$(${iconId}) ${target}`;
-        statusBarItem.tooltip = `SSH destination: ${target}`;
+        statusBarItem.tooltip = getStatusTooltip(target, selectedHealth);
         statusBarItem.command = TargetTreeView.focusViewCommand;
         statusBarItem.show();
     } else {

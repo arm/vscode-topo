@@ -86,6 +86,9 @@ describe('TargetStatusBarItemView', () => {
         const statusBarItem = vi.mocked(vscode.window.createStatusBarItem).mock
             .results[0].value;
         expect(statusBarItem.text).toBe(`$(error) ${target}`);
+        expect(statusBarItem.tooltip).toBe(
+            'SSH destination: root@localhost\nTarget health: ssh connection failed',
+        );
     });
 
     it('shows an error icon when selected target connectivity is unhealthy', async () => {
@@ -108,6 +111,9 @@ describe('TargetStatusBarItemView', () => {
         const statusBarItem = vi.mocked(vscode.window.createStatusBarItem).mock
             .results[0].value;
         expect(statusBarItem.text).toBe(`$(error) ${target}`);
+        expect(statusBarItem.tooltip).toBe(
+            'SSH destination: root@localhost\nConnectivity: ssh connection failed',
+        );
     });
 
     it('shows a select target item in the status bar when no target is selected', async () => {
@@ -143,7 +149,7 @@ describe('TargetStatusBarItemView', () => {
         expect(statusBarItem.hide).not.toHaveBeenCalled();
     });
 
-    it('shows unhealthy target health with an icon only', async () => {
+    it('lists unhealthy dependencies in the status bar tooltip', async () => {
         const statusBarItem = mock<vscode.StatusBarItem>();
         vi.mocked(vscode.window).createStatusBarItem.mockReturnValue(
             statusBarItem,
@@ -160,13 +166,20 @@ describe('TargetStatusBarItemView', () => {
                         name: 'Container Engine',
                         value: 'missing',
                     },
+                    {
+                        status: 'error',
+                        name: 'Container Runtime',
+                        value: 'not running',
+                    },
                 ],
             }),
         );
 
         new TargetStatusBarItemView(targetModel);
 
-        expect(statusBarItem.text).toBe(`$(warning) ${target}`);
-        expect(statusBarItem.tooltip).toBe('SSH destination: root@localhost');
+        expect(statusBarItem.text).toBe(`$(close) ${target}`);
+        expect(statusBarItem.tooltip).toBe(
+            'SSH destination: root@localhost\nContainer Engine: missing\nContainer Runtime: not running',
+        );
     });
 });
