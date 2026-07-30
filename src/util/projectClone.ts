@@ -1,41 +1,11 @@
-import * as vscode from 'vscode';
-import { TopoCli } from '../services/topoCli';
 import fs from 'node:fs';
-import * as path from 'node:path';
+import path from 'node:path';
+import * as vscode from 'vscode';
+import { isWrappedError } from '../errors/wrappedError';
+import { TopoCli } from '../services/topoCli';
 import { ProjectDescription } from '../services/topoCliSchema';
-import { isWrappedError, WrappedError } from '../errors/wrappedError';
-import { getErrorMessage } from './getErrorMessage';
-import { TaskExecutor } from './taskExecutor';
-import { createProcessTask } from './task';
+import { CloneSource } from './cloneSource';
 import { showAndLogError } from './showAndLog';
-
-interface CloneRemoteSource {
-    url: string;
-    type: 'git';
-}
-
-interface CloneLocalSource {
-    path: string;
-    type: 'dir';
-}
-
-interface CloneRawSource {
-    value: string;
-    type?: never;
-}
-
-export type CloneSource = CloneRemoteSource | CloneLocalSource | CloneRawSource;
-
-type CloneResult =
-    | {
-          success: true;
-          repositoryPath: string;
-      }
-    | {
-          success: false;
-      };
-
-type CloneParameters = Record<string, string>;
 
 type RemoteProjectQuickPickItem = vscode.QuickPickItem & {
     url: string;
@@ -44,198 +14,23 @@ type RemoteProjectQuickPickItem = vscode.QuickPickItem & {
 const open = 'Open';
 const openNewWindow = 'Open in New Window';
 const addToWorkspace = 'Add to Workspace';
-const invalidProjectNameMessage =
-    'Project name must be a single folder name, not a path.';
 
-export const validateProjectName = (
-    projectName: string,
-): string | undefined => {
+const validateProjectName = (projectName: string): string | undefined => {
     if (
         projectName === '.' ||
         projectName === '..' ||
         projectName.includes('/') ||
         projectName.includes('\\')
     ) {
-        return invalidProjectNameMessage;
+        return 'Project name must be a single folder name, not a path.';
     }
     return undefined;
-};
-
-const postCloneAction = async (repositoryPath: string): Promise<void> => {
-    let message = 'Would you like to open the cloned repository?';
-    const choices = [open, openNewWindow];
-
-    if (vscode.workspace.workspaceFolders?.length) {
-        message =
-            'Would you like to open the cloned repository, or add it to the current workspace?';
-        choices.push(addToWorkspace);
-    }
-
-    const selection = await vscode.window.showInformationMessage(
-        message,
-        { modal: true },
-        ...choices,
-    );
-    const uri = vscode.Uri.file(repositoryPath);
-
-    switch (selection) {
-        case open:
-            vscode.commands.executeCommand('vscode.openFolder', uri, {
-                forceReuseWindow: true,
-            });
-            return;
-        case addToWorkspace:
-            vscode.workspace.updateWorkspaceFolders(
-                vscode.workspace.workspaceFolders!.length,
-                0,
-                { uri },
-            );
-            return;
-        case openNewWindow:
-            vscode.commands.executeCommand('vscode.openFolder', uri, {
-                forceNewWindow: true,
-            });
-            return;
-        case undefined:
-        default:
-            return;
-    }
 };
 
 export const getFirstSentence = (text: string): string => {
     const trimmed = text.trim();
     const match = trimmed.match(/^.*?[.!?](?=\s|$)/);
     return (match ? match[0] : trimmed).trim();
-};
-
-export const getLocalSourcePath = async (): Promise<string | undefined> => {
-    const cloneSourceUri = await vscode.window.showOpenDialog({
-        canSelectFiles: false,
-        canSelectFolders: true,
-        canSelectMany: false,
-        openLabel: 'Select Project to Clone',
-    });
-    if (!cloneSourceUri || cloneSourceUri.length === 0) {
-        return undefined;
-    }
-    return cloneSourceUri[0].fsPath;
-};
-
-export const getDefaultProjectNameFromUrl = (url: string): string => {
-    let pathname: string;
-    const [urlWithoutFragment] = url.split('#');
-    // Support scp-like SSH URLs (e.g. git@host:owner/repo.git)
-    const scpMatch = urlWithoutFragment.match(/^(?:[^@]+@)?[^:]+:(.+)$/);
-    if (scpMatch) {
-        pathname = scpMatch[1];
-    } else {
-        try {
-            pathname = new URL(urlWithoutFragment).pathname;
-        } catch {
-            throw new WrappedError('CLONE', `Invalid URL: ${url}`);
-        }
-    }
-    const defaultProjectName = pathname
-        .split('/')
-        .filter(Boolean)
-        .pop()
-        ?.replace(/\.git$/, '');
-    if (!defaultProjectName) {
-        throw new WrappedError('CLONE', `Invalid URL: ${url}`);
-    }
-    return defaultProjectName;
-};
-
-const getDefaultProjectNameFromSourceString = (
-    cloneSource: CloneSource,
-): string => {
-    switch (cloneSource.type) {
-        case 'dir':
-            return path.basename(cloneSource.path);
-        case 'git':
-            return getDefaultProjectNameFromUrl(cloneSource.url);
-        case undefined:
-            return getDefaultProjectNameFromUrl(cloneSource.value);
-    }
-};
-
-const getProjectName = async (
-    destinationPath: string,
-    defaultProjectName: string,
-): Promise<string | undefined> => {
-    if (!fs.existsSync(path.join(destinationPath, defaultProjectName))) {
-        return defaultProjectName;
-    }
-
-    return vscode.window.showInputBox({
-        prompt: 'Enter the project name',
-        value: defaultProjectName,
-        validateInput: validateProjectName,
-    });
-};
-
-export function createCloneTask(
-    projectName: string,
-    cloneSource: CloneSource,
-    repositoryPath: string,
-    cloneParameters: CloneParameters = {},
-): vscode.Task {
-    const parameters = Object.entries(cloneParameters).map(
-        ([key, value]) => `${key}=${value}`,
-    );
-    return createProcessTask(`Clone ${projectName}`, [
-        'topo',
-        'clone',
-        getCloneSourceString(cloneSource),
-        repositoryPath,
-        ...parameters,
-    ]);
-}
-
-const getCloneSourceString = (cloneSource: CloneSource): string => {
-    switch (cloneSource.type) {
-        case 'dir':
-            return `dir:${cloneSource.path}`;
-        case 'git':
-            return `git:${cloneSource.url}`;
-        case undefined:
-            return cloneSource.value;
-    }
-};
-
-const cloneWithSource = async (
-    taskExecutor: TaskExecutor,
-    cloneSource: CloneSource,
-    defaultProjectName: string,
-    destinationPath: string,
-    cloneParameters: CloneParameters = {},
-): Promise<CloneResult> => {
-    const projectName = await getProjectName(
-        destinationPath,
-        defaultProjectName,
-    );
-    if (!projectName) {
-        return { success: false };
-    }
-    const projectNameValidationError = validateProjectName(projectName);
-    if (projectNameValidationError) {
-        throw new WrappedError('CLONE', projectNameValidationError);
-    }
-    const repositoryPath = path.join(destinationPath, projectName);
-    const cloneTask = createCloneTask(
-        projectName,
-        cloneSource,
-        repositoryPath,
-        cloneParameters,
-    );
-    try {
-        await taskExecutor.run(cloneTask);
-        return { success: true, repositoryPath };
-    } catch (err) {
-        throw new WrappedError('CLONE', getErrorMessage(err), [], {
-            cause: err,
-        });
-    }
 };
 
 const listProjects = async (
@@ -293,8 +88,8 @@ export const promptForRemoteCloneSource = async (
             let projects: readonly ProjectDescription[] = [];
             try {
                 projects = await listProjects(topoCli, sshTarget);
-            } catch (e) {
-                showAndLogError('Failed to list projects', e);
+            } catch (error) {
+                showAndLogError('Failed to list projects', error);
             }
             projectItems = projects.map((project) => ({
                 label: `$(repo) ${project.name}`,
@@ -333,34 +128,85 @@ export const promptForRemoteCloneSource = async (
     }).finally(() => quickPick.dispose());
 };
 
-export async function cloneProject(
-    taskExecutor: TaskExecutor,
-    cloneSource: CloneSource,
-    cloneParameters: CloneParameters = {},
-): Promise<void> {
-    const selectedFolder = await vscode.window.showOpenDialog({
+export const promptForLocalCloneSource = async (): Promise<
+    CloneSource | undefined
+> => {
+    const selection = await vscode.window.showOpenDialog({
+        canSelectFiles: false,
+        canSelectFolders: true,
+        canSelectMany: false,
+        openLabel: 'Select Project to Clone',
+    });
+    const sourcePath = selection?.[0]?.fsPath;
+    return sourcePath ? { type: 'dir', path: sourcePath } : undefined;
+};
+
+export const promptForDestinationPath = async (): Promise<
+    string | undefined
+> => {
+    const selection = await vscode.window.showOpenDialog({
         canSelectFiles: false,
         canSelectFolders: true,
         canSelectMany: false,
         openLabel: 'Select Destination Folder',
     });
-    const destinationPath = selectedFolder?.[0]?.fsPath;
-    if (!destinationPath) {
-        return;
+    return selection?.[0]?.fsPath;
+};
+
+export const resolveProjectName = async (
+    destinationPath: string,
+    defaultProjectName: string,
+): Promise<string | undefined> => {
+    if (!fs.existsSync(path.join(destinationPath, defaultProjectName))) {
+        return defaultProjectName;
     }
 
-    const defaultProjectName =
-        getDefaultProjectNameFromSourceString(cloneSource);
-    const cloneResult = await cloneWithSource(
-        taskExecutor,
-        cloneSource,
-        defaultProjectName,
-        destinationPath,
-        cloneParameters,
+    return vscode.window.showInputBox({
+        prompt: 'Enter the project name',
+        value: defaultProjectName,
+        validateInput: validateProjectName,
+    });
+};
+
+export const promptToOpenFolder = async (
+    repositoryPath: string,
+): Promise<void> => {
+    let message = 'Would you like to open the cloned repository?';
+    const choices = [open, openNewWindow];
+
+    if (vscode.workspace.workspaceFolders?.length) {
+        message =
+            'Would you like to open the cloned repository, or add it to the current workspace?';
+        choices.push(addToWorkspace);
+    }
+
+    const selection = await vscode.window.showInformationMessage(
+        message,
+        { modal: true },
+        ...choices,
     );
-    if (!cloneResult.success) {
-        return;
-    }
+    const uri = vscode.Uri.file(repositoryPath);
 
-    await postCloneAction(cloneResult.repositoryPath);
-}
+    switch (selection) {
+        case open:
+            await vscode.commands.executeCommand('vscode.openFolder', uri, {
+                forceReuseWindow: true,
+            });
+            return;
+        case addToWorkspace:
+            vscode.workspace.updateWorkspaceFolders(
+                vscode.workspace.workspaceFolders!.length,
+                0,
+                { uri },
+            );
+            return;
+        case openNewWindow:
+            await vscode.commands.executeCommand('vscode.openFolder', uri, {
+                forceNewWindow: true,
+            });
+            return;
+        case undefined:
+        default:
+            return;
+    }
+};

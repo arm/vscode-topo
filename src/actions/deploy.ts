@@ -15,7 +15,7 @@ import {
     getComposeFileMetadata,
     type ComposeFileMetadata,
 } from '../util/composeFile';
-import { ProjectTreeItem } from '../views/treeItems/projectTreeItem';
+import { assertProjectTreeItem } from '../views/treeItems/assertProjectTreeItem';
 import {
     assertTargetConnected,
     assertTargetSelected,
@@ -90,10 +90,7 @@ export class Deploy {
     }
 
     public async deployProjectCommandHandler(treeNode: unknown): Promise<void> {
-        if (!(treeNode instanceof ProjectTreeItem)) {
-            throw new Error('No compose.yaml selected for deployment');
-        }
-
+        assertProjectTreeItem(treeNode);
         await this.deployContextCommandHandler(treeNode.composeFileUri);
     }
 
