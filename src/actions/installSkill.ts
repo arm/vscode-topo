@@ -1,10 +1,8 @@
-import fs from 'node:fs';
 import os from 'node:os';
 import * as vscode from 'vscode';
 import { showAndLogError } from '../util/showAndLog';
 
 const SKILL_NAME = 'topo-cli-location';
-const REPLACE_ACTION = 'Replace';
 
 export class InstallSkill {
     constructor(
@@ -31,17 +29,6 @@ export async function installSkill(
     const sourceUri = vscode.Uri.joinPath(extensionUri, 'skills', SKILL_NAME);
     const skillsUri = vscode.Uri.joinPath(userHomeUri, '.agents', 'skills');
     const destinationUri = vscode.Uri.joinPath(skillsUri, SKILL_NAME);
-
-    if (fs.existsSync(destinationUri.fsPath)) {
-        const response = await vscode.window.showWarningMessage(
-            'The Topo CLI location skill is already installed. Replace it with the bundled version?',
-            { modal: true },
-            REPLACE_ACTION,
-        );
-        if (response !== REPLACE_ACTION) {
-            return;
-        }
-    }
 
     await vscode.workspace.fs.createDirectory(skillsUri);
     await vscode.workspace.fs.copy(sourceUri, destinationUri, {
