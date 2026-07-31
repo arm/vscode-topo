@@ -538,16 +538,16 @@
         "@typescript-eslint/eslint-plugin": "^8.65.0",
         "@typescript-eslint/parser": "^8.64.0",
         "@vscode/vsce": "^3.6.2",
-        "eslint": "^10.7.0",
+        "eslint": "^10.8.0",
         "extract-zip": "^2.0.1",
-        "globals": "^17.7.0",
+        "globals": "^17.8.0",
         "prettier": "^3.9.6",
-        "tar": "^7.5.21",
+        "tar": "^7.5.22",
         "typescript": "^6.0.2",
         "vite": "^8.1.5",
         "vitest": "^4.1.9",
         "vitest-mock-extended": "^5.1.0",
-        "yargs": "^18.0.0"
+        "yargs": "^18.1.0"
     },
     "dependencies": {
         "lodash.debounce": "^4.0.8",
