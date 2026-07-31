@@ -547,7 +547,7 @@
         "vite": "^8.1.5",
         "vitest": "^4.1.9",
         "vitest-mock-extended": "^5.1.0",
-        "yargs": "^18.0.0"
+        "yargs": "^18.1.0"
     },
     "dependencies": {
         "lodash.debounce": "^4.0.8",
