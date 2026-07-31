@@ -153,10 +153,13 @@ describe('ProjectController', () => {
 
         await controller.refreshProjectContainersCommandHandler();
 
-        expect(topoCli.ps).toHaveBeenCalledWith(target, projects[0].uri.fsPath);
         expect(topoCli.ps).toHaveBeenCalledWith(
             target,
-            otherProject.uri.fsPath,
+            projects[0].composeFileUri.fsPath,
+        );
+        expect(topoCli.ps).toHaveBeenCalledWith(
+            target,
+            otherProject.composeFileUri.fsPath,
         );
         expect(model.getProjectContainers(projects[0])).toEqual(
             loaded([{ ...psOutput.containers[0], target }]),
@@ -173,8 +176,8 @@ describe('ProjectController', () => {
         const model = new ProjectModel();
         model.setProjects(loaded([projects[0], otherProject]));
         const topoCli = mock<TopoCli>();
-        topoCli.ps.mockImplementation(async (_target, projectPath) => {
-            if (projectPath === projects[0].uri.fsPath) {
+        topoCli.ps.mockImplementation(async (_target, composeFilePath) => {
+            if (composeFilePath === projects[0].composeFileUri.fsPath) {
                 return psOutput;
             }
             throw new Error('ps failed');
