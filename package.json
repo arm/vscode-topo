@@ -245,34 +245,34 @@
                 {
                     "command": "topo.configure.context",
                     "group": "topo@1",
-                    "when": "resourceFilename =~ /^compose\\.ya?ml$/"
+                    "when": "resourceFilename =~ /^compose\\.yaml$/"
                 },
                 {
                     "command": "topo.deploy.context",
                     "group": "topo@2",
-                    "when": "resourceFilename =~ /^compose\\.ya?ml$/"
+                    "when": "resourceFilename =~ /^compose\\.yaml$/"
                 },
                 {
                     "command": "topo.stop.context",
                     "group": "topo@3",
-                    "when": "resourceFilename =~ /^compose\\.ya?ml$/"
+                    "when": "resourceFilename =~ /^compose\\.yaml$/"
                 }
             ],
             "explorer/context": [
                 {
                     "command": "topo.configure.context",
                     "group": "topo@1",
-                    "when": "resourceFilename =~ /^compose\\.ya?ml$/"
+                    "when": "resourceFilename =~ /^compose\\.yaml$/"
                 },
                 {
                     "command": "topo.deploy.context",
                     "group": "topo@2",
-                    "when": "resourceFilename =~ /^compose\\.ya?ml$/"
+                    "when": "resourceFilename =~ /^compose\\.yaml$/"
                 },
                 {
                     "command": "topo.stop.context",
                     "group": "topo@3",
-                    "when": "resourceFilename =~ /^compose\\.ya?ml$/"
+                    "when": "resourceFilename =~ /^compose\\.yaml$/"
                 }
             ],
             "commandPalette": [

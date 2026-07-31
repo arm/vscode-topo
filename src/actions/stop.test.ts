@@ -40,7 +40,7 @@ describe('Stop', () => {
         expect(task.name).toBe('Stop services on topo.local');
         expect(task.execution).toMatchObject({
             process: 'topo',
-            args: ['stop', '--target', target],
+            args: ['stop', '--file', 'compose.yaml', '--target', target],
             options: { cwd },
         });
     }
@@ -122,6 +122,20 @@ describe('Stop', () => {
             taskExecutor.run.mock.calls[0][0],
             path.dirname(composeFilePath),
         );
+    });
+
+    it('rejects compose.yml', async () => {
+        const unsupportedComposeFilePath = path.join(
+            path.dirname(composeFilePath),
+            'compose.yml',
+        );
+
+        await expect(
+            stopServices(taskExecutor, unsupportedComposeFilePath, target),
+        ).rejects.toThrow(
+            'Unsupported compose file "compose.yml". Only compose.yaml is supported.',
+        );
+        expect(taskExecutor.run).not.toHaveBeenCalled();
     });
 
     it('handles task failure', async () => {

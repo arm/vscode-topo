@@ -1,9 +1,13 @@
 import path from 'node:path';
 import * as vscode from 'vscode';
-import { ComposeFileMetadata, findComposeFiles } from './composeFile';
+import {
+    COMPOSE_FILE_NAME,
+    ComposeFileMetadata,
+    findComposeFiles,
+} from './composeFile';
 
-const ROOT_COMPOSE_FILE_GLOB = 'compose.{yaml,yml}';
-const CHILD_COMPOSE_FILE_GLOB = '*/compose.{yaml,yml}';
+const ROOT_COMPOSE_FILE_GLOB = COMPOSE_FILE_NAME;
+const CHILD_COMPOSE_FILE_GLOB = `*/${COMPOSE_FILE_NAME}`;
 
 export interface ProjectMetadata {
     readonly name: string;

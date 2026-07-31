@@ -26,7 +26,7 @@ async function loadContainers(
 ): Promise<Loadable<ContainerItem[]>> {
     let psResult: PsOutput;
     try {
-        psResult = await topoCli.ps(target, project.uri.fsPath);
+        psResult = await topoCli.ps(target, project.composeFileUri.fsPath);
     } catch (error) {
         return errored(error);
     }
