@@ -1,11 +1,27 @@
 import path from 'node:path';
 import * as vscode from 'vscode';
 import {
+    assertComposeFilePath,
     compareComposeFiles,
     findComposeFiles,
     getComposeFileMetadata,
-    getPreferredComposeFiles,
 } from './composeFile';
+
+describe('assertComposeFilePath', () => {
+    it('accepts compose.yaml', () => {
+        expect(() =>
+            assertComposeFilePath('/fake/workspace/compose.yaml'),
+        ).not.toThrow();
+    });
+
+    it('rejects compose.yml', () => {
+        expect(() =>
+            assertComposeFilePath('/fake/workspace/compose.yml'),
+        ).toThrow(
+            'Unsupported compose file "compose.yml". Only compose.yaml is supported.',
+        );
+    });
+});
 
 describe('getComposeFileMetadata', () => {
     it('creates compose file metadata outside a workspace', () => {
@@ -39,44 +55,12 @@ describe('getComposeFileMetadata', () => {
     });
 });
 
-describe('getPreferredComposeFiles', () => {
-    it('keeps compose.yaml and compose.yml files from different directories', () => {
-        const yamlFile = getComposeFileMetadata(
-            vscode.Uri.file('/fake/workspace/compose.yaml'),
-            undefined,
-        );
-        const ymlFile = getComposeFileMetadata(
-            vscode.Uri.file('/fake/workspace/service/compose.yml'),
-            undefined,
-        );
-
-        const composeFiles = getPreferredComposeFiles([yamlFile, ymlFile]);
-
-        expect(composeFiles).toEqual([yamlFile, ymlFile]);
-    });
-
-    it('ignores compose.yml when compose.yaml is present in the same directory', () => {
-        const yamlFile = getComposeFileMetadata(
-            vscode.Uri.file('/fake/workspace/compose.yaml'),
-            undefined,
-        );
-        const ymlFile = getComposeFileMetadata(
-            vscode.Uri.file('/fake/workspace/compose.yml'),
-            undefined,
-        );
-
-        const composeFiles = getPreferredComposeFiles([ymlFile, yamlFile]);
-
-        expect(composeFiles).toEqual([yamlFile]);
-    });
-});
-
 describe('findComposeFiles', () => {
     afterEach(() => {
         vi.resetAllMocks();
     });
 
-    it('finds preferred compose files in a workspace folder sorted by metadata', async () => {
+    it('finds compose.yaml files in a workspace folder sorted by metadata', async () => {
         const workspaceFolder: vscode.WorkspaceFolder = {
             uri: vscode.Uri.file('/fake/workspace'),
             name: 'workspace',
@@ -86,25 +70,18 @@ describe('findComposeFiles', () => {
         const childYamlFile = vscode.Uri.file(
             '/fake/workspace/service/compose.yaml',
         );
-        const childYmlFile = vscode.Uri.file(
-            '/fake/workspace/service/compose.yml',
-        );
         vi.mocked(vscode.workspace.findFiles).mockResolvedValueOnce([
-            childYmlFile,
             childYamlFile,
             rootComposeFile,
         ]);
 
         const composeFiles = await findComposeFiles(
             workspaceFolder,
-            '**/compose.{yaml,yml}',
+            '**/compose.yaml',
         );
 
         expect(vscode.workspace.findFiles).toHaveBeenCalledWith(
-            new vscode.RelativePattern(
-                workspaceFolder,
-                '**/compose.{yaml,yml}',
-            ),
+            new vscode.RelativePattern(workspaceFolder, '**/compose.yaml'),
         );
         expect(
             composeFiles.map((composeFile) => composeFile.relativePath),
@@ -128,12 +105,12 @@ describe('compareComposeFiles', () => {
             vscode.Uri.file('/fake/workspace/compose.yaml'),
             workspaceFolder,
         );
-        const nestedYml = getComposeFileMetadata(
-            vscode.Uri.file('/fake/workspace/a/compose.yml'),
+        const otherNestedYaml = getComposeFileMetadata(
+            vscode.Uri.file('/fake/workspace/a/compose.yaml'),
             workspaceFolder,
         );
 
-        const composeFiles = [nestedYaml, rootYaml, nestedYml].sort(
+        const composeFiles = [nestedYaml, rootYaml, otherNestedYaml].sort(
             compareComposeFiles,
         );
 
@@ -141,7 +118,7 @@ describe('compareComposeFiles', () => {
             composeFiles.map((composeFile) => composeFile.relativePath),
         ).toEqual([
             'compose.yaml',
-            path.join('a', 'compose.yml'),
+            path.join('a', 'compose.yaml'),
             path.join('services', 'compose.yaml'),
         ]);
     });

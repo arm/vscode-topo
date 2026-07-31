@@ -6,6 +6,21 @@ All notable changes to the "vscode-topo" extension will be documented in this fi
 
 
 
+
+## 0.14.0
+
+<!-- Release notes generated using configuration in .github/release.yml at eeb81e838b66cdbeb5e20b17a4a4663465d261d3 -->
+
+## What's Changed
+### Features and Enhancements
+* feat: change icon for project cloning (#378)
+* feat: add topo skill and its installation command (#377)
+* feat: support `topo configure` operation (#386)
+
+
+**Full Changelog**: https://github.com/arm/vscode-topo/compare/v0.12.0...v0.14.0
+
+
 ## 0.12.0
 
 <!-- Release notes generated using configuration in .github/release.yml at 0aa3b23bbf16ea379b430009c149d607e0f57815 -->

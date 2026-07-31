@@ -47,18 +47,21 @@ describe('findTopLevelComposeProjects', () => {
         workspacePath: string,
         pattern: string,
     ): boolean {
-        const relativePath = path
-            .relative(workspacePath, filePath)
-            .split(path.sep)
-            .join('/');
+        const relativePath = path.relative(workspacePath, filePath);
+
+        if (path.basename(relativePath) !== 'compose.yaml') {
+            return false;
+        }
+
+        const directory = path.dirname(relativePath);
 
         switch (pattern) {
-            case 'compose.{yaml,yml}':
-                return /^compose\.ya?ml$/.test(relativePath);
-            case '*/compose.{yaml,yml}':
-                return /^[^/]+\/compose\.ya?ml$/.test(relativePath);
-            case '**/compose.{yaml,yml}':
-                return /(^|\/)compose\.ya?ml$/.test(relativePath);
+            case 'compose.yaml':
+                return directory === '.';
+            case '*/compose.yaml':
+                return directory !== '.' && path.dirname(directory) === '.';
+            case '**/compose.yaml':
+                return true;
             default:
                 return false;
         }
@@ -115,7 +118,7 @@ describe('findTopLevelComposeProjects', () => {
             },
         ]);
         expect(vi.mocked(vscode.workspace.findFiles)).toHaveBeenCalledWith(
-            new vscode.RelativePattern(workspaceFolder, 'compose.{yaml,yml}'),
+            new vscode.RelativePattern(workspaceFolder, 'compose.yaml'),
         );
         expect(vi.mocked(vscode.workspace.findFiles)).toHaveBeenCalledTimes(1);
     });
@@ -141,18 +144,16 @@ describe('findTopLevelComposeProjects', () => {
             },
         ]);
         expect(vi.mocked(vscode.workspace.findFiles)).toHaveBeenCalledWith(
-            new vscode.RelativePattern(workspaceFolder, '*/compose.{yaml,yml}'),
+            new vscode.RelativePattern(workspaceFolder, '*/compose.yaml'),
         );
     });
 
-    it('prefers compose.yaml over compose.yml in the workspace root', async () => {
-        const composeYamlPath = workspaceFilePath('compose.yaml');
-        mockComposeFiles(workspaceFilePath('compose.yml'), composeYamlPath);
+    it('ignores compose.yml files', async () => {
+        mockComposeFiles(workspaceFilePath('compose.yml'));
 
         const projects = await findTopLevelComposeProjects([workspaceFolder]);
 
-        expect(projects).toHaveLength(1);
-        expect(projects[0].composeFileUri.fsPath).toBe(composeYamlPath);
+        expect(projects).toEqual([]);
     });
 
     it('ignores compose files below immediate child folders', async () => {

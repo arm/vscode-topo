@@ -8,7 +8,17 @@ export interface ComposeFileMetadata {
     workspaceName?: string;
 }
 
-export const COMPOSE_FILE_GLOB = '**/compose.{yaml,yml}';
+export const COMPOSE_FILE_NAME = 'compose.yaml';
+export const COMPOSE_FILE_GLOB = `**/${COMPOSE_FILE_NAME}`;
+
+export function assertComposeFilePath(composeFilePath: string): void {
+    const composeFileName = path.basename(composeFilePath);
+    if (composeFileName !== COMPOSE_FILE_NAME) {
+        throw new Error(
+            `Unsupported compose file "${composeFileName}". Only ${COMPOSE_FILE_NAME} is supported.`,
+        );
+    }
+}
 
 export function getComposeFileMetadata(
     uri: vscode.Uri,
@@ -55,47 +65,12 @@ export async function findComposeFiles(
         new vscode.RelativePattern(workspaceFolder, glob),
     );
 
-    return getPreferredComposeFiles(
-        composeFileUris.map((uri) =>
-            getComposeFileMetadata(uri, workspaceFolder),
-        ),
-    ).sort(compareComposeFiles);
-}
-
-/**
- * Returns the compose files to show to users, preferring compose.yaml over
- * compose.yml when both exist in the same directory.
- *
- * Files in different directories or workspace folders are kept independently.
- */
-export function getPreferredComposeFiles(
-    composeFiles: ComposeFileMetadata[],
-): ComposeFileMetadata[] {
-    const yamlDirectories = new Set(
-        composeFiles
-            .filter((composeFile) => isYamlFile(composeFile))
-            .map((composeFile) => getDirectoryKey(composeFile)),
-    );
-
-    return composeFiles.filter(
-        (composeFile) =>
-            isYamlFile(composeFile) ||
-            !yamlDirectories.has(getDirectoryKey(composeFile)),
-    );
-}
-
-function getDirectoryKey(composeFile: ComposeFileMetadata): string {
-    if (composeFile.workspaceName === undefined) {
-        return `file:${path.dirname(composeFile.uri.fsPath)}`;
-    }
-    return `${composeFile.workspaceIndex}:${path.dirname(composeFile.relativePath)}`;
+    return composeFileUris
+        .map((uri) => getComposeFileMetadata(uri, workspaceFolder))
+        .sort(compareComposeFiles);
 }
 
 function getRootPriority(composeFile: ComposeFileMetadata): number {
     const isWorkspaceRootFile = path.dirname(composeFile.relativePath) === '.';
     return isWorkspaceRootFile ? 0 : 1;
-}
-
-function isYamlFile(composeFile: ComposeFileMetadata): boolean {
-    return path.extname(composeFile.uri.fsPath) === '.yaml';
 }

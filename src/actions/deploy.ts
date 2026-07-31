@@ -8,10 +8,11 @@ import { TargetModel } from '../models/targetModel';
 import { ProjectController } from '../controllers/projectController';
 import { isWrappedError } from '../errors/wrappedError';
 import {
+    assertComposeFilePath,
     COMPOSE_FILE_GLOB,
+    COMPOSE_FILE_NAME,
     compareComposeFiles,
     getComposeFileMetadata,
-    getPreferredComposeFiles,
     type ComposeFileMetadata,
 } from '../util/composeFile';
 import { assertProjectTreeItem } from '../views/treeItems/assertProjectTreeItem';
@@ -53,7 +54,7 @@ export class Deploy {
         const files = await vscode.workspace.findFiles(COMPOSE_FILE_GLOB);
         if (files.length === 0) {
             vscode.window.showErrorMessage(
-                'No compose.yaml or compose.yml files found in the workspace.',
+                'No compose.yaml files found in the workspace.',
             );
             return;
         }
@@ -64,9 +65,7 @@ export class Deploy {
                 vscode.workspace.getWorkspaceFolder(file),
             ),
         );
-        const preferredComposeFiles =
-            getPreferredComposeFiles(composeFileMetadata);
-        const composeFiles = preferredComposeFiles.sort(compareComposeFiles);
+        const composeFiles = composeFileMetadata.sort(compareComposeFiles);
 
         const resource = await promptForComposeFile(composeFiles);
         if (!resource) {
@@ -79,9 +78,7 @@ export class Deploy {
         resource?: vscode.Uri,
     ): Promise<void> {
         if (!resource) {
-            throw new Error(
-                'No compose.yaml or compose.yml selected for deployment',
-            );
+            throw new Error('No compose.yaml selected for deployment');
         }
 
         const deployTarget = this.getSelectedDeployTarget();
@@ -164,7 +161,7 @@ export async function deploy(
 ): Promise<void> {
     const task = createProcessTask(
         `Deploy to ${target}`,
-        ['topo', ...buildDeployArgs(target, settings)],
+        ['topo', ...buildDeployArgs(composeFilePath, target, settings)],
         {
             cwd: path.dirname(composeFilePath),
         },
@@ -196,10 +193,12 @@ export async function deploy(
 }
 
 export function buildDeployArgs(
+    composeFilePath: string,
     target: string,
     settings: TargetDeploySettings = {},
 ): string[] {
-    const args = ['deploy', '--target', target];
+    assertComposeFilePath(composeFilePath);
+    const args = ['deploy', '--file', COMPOSE_FILE_NAME, '--target', target];
     if (settings.port !== undefined) {
         args.push('-p', String(settings.port));
     }

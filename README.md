@@ -110,7 +110,7 @@ Configure a project's parameters, or deploy or stop it on the selected target. A
 
 ## Project Management
 
-The **Projects** view appears in the **Topo** activity bar container and lists workspace projects discovered from top-level `compose.yaml` or `compose.yml` files.
+The **Projects** view appears in the **Topo** activity bar container and lists workspace projects discovered from top-level `compose.yaml` files.
 
 When a target is selected, each project can expand to show deployed containers for that project, grouped by processing domain.
 

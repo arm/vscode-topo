@@ -18,6 +18,7 @@ import { WrappedError, WrappedErrorLog } from '../errors/wrappedError';
 import { getErrorMessage } from '../util/getErrorMessage';
 import { TargetDescription } from '../util/types';
 import { execFile } from '../util/exec';
+import { assertComposeFilePath, COMPOSE_FILE_NAME } from '../util/composeFile';
 
 export interface TopoCliVersion {
     version: string;
@@ -187,10 +188,23 @@ export class TopoCli {
         await this.exec(['init'], { cwd: projectPath });
     }
 
-    public async ps(sshTarget: string, projectPath: string): Promise<PsOutput> {
-        const cmd = ['ps', '-a', '--target', sshTarget, '-o', 'json'];
+    public async ps(
+        sshTarget: string,
+        composeFilePath: string,
+    ): Promise<PsOutput> {
+        assertComposeFilePath(composeFilePath);
+        const cmd = [
+            'ps',
+            '-a',
+            '--file',
+            COMPOSE_FILE_NAME,
+            '--target',
+            sshTarget,
+            '-o',
+            'json',
+        ];
         return this.execJson(cmd, psSchema, 'container status', {
-            cwd: projectPath,
+            cwd: path.dirname(composeFilePath),
         });
     }
 

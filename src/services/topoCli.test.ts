@@ -329,12 +329,24 @@ describe('TopoCli', () => {
         });
 
         const target = 'user@topo.local';
-        const projectPath = '/fake/workspace/demo';
+        const projectPath = path.normalize('/fake/workspace/demo');
+        const composeFilePath = path.join(projectPath, 'compose.yaml');
 
-        await expect(topoCli.ps(target, projectPath)).resolves.toEqual(output);
+        await expect(topoCli.ps(target, composeFilePath)).resolves.toEqual(
+            output,
+        );
         expect(execFileMock).toHaveBeenCalledWith(
             topoCli.getBinaryPath(),
-            ['ps', '-a', '--target', target, '-o', 'json'],
+            [
+                'ps',
+                '-a',
+                '--file',
+                'compose.yaml',
+                '--target',
+                target,
+                '-o',
+                'json',
+            ],
             { ...defaultExecOptions, cwd: projectPath },
         );
     });
@@ -342,17 +354,26 @@ describe('TopoCli', () => {
     it('ps rejects when topo ps fails', async () => {
         execFileMock.mockRejectedValue(new Error('fail'));
 
-        await expect(topoCli.ps('hostname', '/fake/project')).rejects.toThrow(
-            'fail',
+        await expect(
+            topoCli.ps('hostname', '/fake/project/compose.yaml'),
+        ).rejects.toThrow('fail');
+    });
+
+    it('ps rejects compose.yml without invoking topo', async () => {
+        await expect(
+            topoCli.ps('hostname', '/fake/project/compose.yml'),
+        ).rejects.toThrow(
+            'Unsupported compose file "compose.yml". Only compose.yaml is supported.',
         );
+        expect(execFileMock).not.toHaveBeenCalled();
     });
 
     it('ps rejects when JSON output is invalid', async () => {
         execFileMock.mockResolvedValue({ stdout: 'invalid json', stderr: '' });
 
-        await expect(topoCli.ps('hostname', '/fake/project')).rejects.toThrow(
-            'Failed to parse container status JSON:',
-        );
+        await expect(
+            topoCli.ps('hostname', '/fake/project/compose.yaml'),
+        ).rejects.toThrow('Failed to parse container status JSON:');
     });
 
     it('ps rejects when JSON output fails schema validation', async () => {
@@ -374,9 +395,9 @@ describe('TopoCli', () => {
             stderr: '',
         });
 
-        await expect(topoCli.ps('hostname', '/fake/project')).rejects.toThrow(
-            'Invalid container status JSON:',
-        );
+        await expect(
+            topoCli.ps('hostname', '/fake/project/compose.yaml'),
+        ).rejects.toThrow('Invalid container status JSON:');
     });
 
     it('health parses JSON output', async () => {

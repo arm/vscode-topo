@@ -12,6 +12,7 @@ import {
     assertTargetConnected,
     assertTargetSelected,
 } from '../util/assertTargetReady';
+import { assertComposeFilePath, COMPOSE_FILE_NAME } from '../util/composeFile';
 
 const viewLogsItem: vscode.MessageItem = {
     title: 'View Logs',
@@ -26,7 +27,7 @@ export class Stop {
 
     public async stopCommandHandler(resource?: vscode.Uri): Promise<void> {
         if (!resource) {
-            throw new Error('No compose.yaml or compose.yml selected for stop');
+            throw new Error('No compose.yaml selected for stop');
         }
 
         const target = this.targetModel.selected;
@@ -57,9 +58,10 @@ export async function stop(
     composeFilePath: string,
     target: string,
 ): Promise<void> {
+    assertComposeFilePath(composeFilePath);
     const task = createProcessTask(
         `Stop services on ${target}`,
-        ['topo', 'stop', '--target', target],
+        ['topo', 'stop', '--file', COMPOSE_FILE_NAME, '--target', target],
         {
             cwd: path.dirname(composeFilePath),
         },
