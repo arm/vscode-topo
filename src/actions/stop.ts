@@ -1,7 +1,5 @@
 import * as vscode from 'vscode';
 import { getErrorMessage } from '../util/getErrorMessage';
-import path from 'node:path';
-import { createProcessTask } from '../util/task';
 import { TaskExecutor } from '../util/taskExecutor';
 import { showAndLogWarning } from '../util/showAndLog';
 import { TargetModel } from '../models/targetModel';
@@ -12,7 +10,8 @@ import {
     assertTargetConnected,
     assertTargetSelected,
 } from '../util/assertTargetReady';
-import { assertComposeFilePath, COMPOSE_FILE_NAME } from '../util/composeFile';
+import { TopoStopTaskFactory } from '../tasks/topoStopTaskFactory';
+import type { TopoComposeTaskInvocation } from '../tasks/topoComposeTask';
 
 const viewLogsItem: vscode.MessageItem = {
     title: 'View Logs',
@@ -23,6 +22,7 @@ export class Stop {
         private readonly taskExecutor: TaskExecutor,
         private readonly targetModel: TargetModel,
         private readonly projectController: ProjectController,
+        private readonly stopTaskFactory: TopoStopTaskFactory,
     ) {}
 
     public async stopCommandHandler(resource?: vscode.Uri): Promise<void> {
@@ -43,7 +43,10 @@ export class Stop {
             throw err;
         }
 
-        await stop(this.taskExecutor, resource.fsPath, target);
+        await stop(this.taskExecutor, this.stopTaskFactory, {
+            target,
+            composeFilePath: resource.fsPath,
+        });
         await this.projectController.refreshProjectContainersCommandHandler();
     }
 
@@ -55,17 +58,11 @@ export class Stop {
 
 export async function stop(
     taskExecutor: TaskExecutor,
-    composeFilePath: string,
-    target: string,
+    stopTaskFactory: TopoStopTaskFactory,
+    invocation: TopoComposeTaskInvocation,
 ): Promise<void> {
-    assertComposeFilePath(composeFilePath);
-    const task = createProcessTask(
-        `Stop services on ${target}`,
-        ['topo', 'stop', '--file', COMPOSE_FILE_NAME, '--target', target],
-        {
-            cwd: path.dirname(composeFilePath),
-        },
-    );
+    const { target } = invocation;
+    const task = stopTaskFactory.createTask(invocation);
     const taskName = task.name;
 
     try {

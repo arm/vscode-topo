@@ -1,7 +1,7 @@
 import path from 'node:path';
 import os from 'node:os';
 import * as vscode from 'vscode';
-import { Stop, stop as stopServices } from './stop';
+import { Stop, stop } from './stop';
 import { TargetModel } from '../models/targetModel';
 import { mock, MockProxy } from 'vitest-mock-extended';
 import { TaskExecutor } from '../util/taskExecutor';
@@ -9,6 +9,7 @@ import { ProjectController } from '../controllers/projectController';
 import { loaded, unloaded } from '../util/loadable';
 import type { TargetHealthReport } from '../services/topoCliSchema';
 import { createProjectTreeItem } from '../util/test/projectTreeItem';
+import { TopoStopTaskFactory } from '../tasks/topoStopTaskFactory';
 
 describe('Stop', () => {
     let stopAction: Stop;
@@ -35,9 +36,15 @@ describe('Stop', () => {
     let taskExecutor: MockProxy<TaskExecutor>;
     let targetModel: TargetModel;
     let projectController: MockProxy<ProjectController>;
+    let stopTaskFactory: TopoStopTaskFactory;
 
     function expectStopTask(task: vscode.Task, cwd: string): void {
-        expect(task.name).toBe('Stop services on topo.local');
+        expect(task.name).toBe(`Stop ${composeFilePath} on topo.local`);
+        expect(task.definition).toEqual({
+            type: stopTaskFactory.type,
+            composeFile: composeFilePath,
+            target,
+        });
         expect(task.execution).toMatchObject({
             process: 'topo',
             args: ['stop', '--file', 'compose.yaml', '--target', target],
@@ -51,9 +58,15 @@ describe('Stop', () => {
         targetModel.setSelected(target);
         targetModel.setSelectedTargetHealth(loaded(targetHealth));
         projectController = mock<ProjectController>();
+        stopTaskFactory = new TopoStopTaskFactory();
         vi.mocked(vscode.window.showErrorMessage).mockClear();
         vi.mocked(vscode.window.showWarningMessage).mockClear();
-        stopAction = new Stop(taskExecutor, targetModel, projectController);
+        stopAction = new Stop(
+            taskExecutor,
+            targetModel,
+            projectController,
+            stopTaskFactory,
+        );
     });
 
     afterEach(() => {
@@ -115,7 +128,10 @@ describe('Stop', () => {
     });
 
     it('handles successful stop operation', async () => {
-        await stopServices(taskExecutor, composeFilePath, target);
+        await stop(taskExecutor, stopTaskFactory, {
+            composeFilePath,
+            target,
+        });
 
         expect(taskExecutor.run).toHaveBeenCalledTimes(1);
         expectStopTask(
@@ -124,23 +140,12 @@ describe('Stop', () => {
         );
     });
 
-    it('rejects compose.yml', async () => {
-        const unsupportedComposeFilePath = path.join(
-            path.dirname(composeFilePath),
-            'compose.yml',
-        );
-
-        await expect(
-            stopServices(taskExecutor, unsupportedComposeFilePath, target),
-        ).rejects.toThrow(
-            'Unsupported compose file "compose.yml". Only compose.yaml is supported.',
-        );
-        expect(taskExecutor.run).not.toHaveBeenCalled();
-    });
-
     it('handles task failure', async () => {
         taskExecutor.run.mockRejectedValueOnce(new Error('stop failed'));
-        await stopServices(taskExecutor, composeFilePath, target);
+        await stop(taskExecutor, stopTaskFactory, {
+            composeFilePath,
+            target,
+        });
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
             'Stopping services on topo.local failed: stop failed',

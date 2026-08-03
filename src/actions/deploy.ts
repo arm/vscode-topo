@@ -1,16 +1,12 @@
 import * as vscode from 'vscode';
 import { getErrorMessage } from '../util/getErrorMessage';
-import path from 'node:path';
-import { createProcessTask } from '../util/task';
 import { TaskExecutor } from '../util/taskExecutor';
-import { showAndLogError, showAndLogWarning } from '../util/showAndLog';
+import { showAndLogWarning } from '../util/showAndLog';
 import { TargetModel } from '../models/targetModel';
 import { ProjectController } from '../controllers/projectController';
 import { isWrappedError } from '../errors/wrappedError';
 import {
-    assertComposeFilePath,
     COMPOSE_FILE_GLOB,
-    COMPOSE_FILE_NAME,
     compareComposeFiles,
     getComposeFileMetadata,
     type ComposeFileMetadata,
@@ -20,9 +16,8 @@ import {
     assertTargetConnected,
     assertTargetSelected,
 } from '../util/assertTargetReady';
-
-import { TargetDeploySettings } from '../util/targetSettings';
-import { Config } from '../services/config';
+import { TopoDeployTaskFactory } from '../tasks/topoDeployTaskFactory';
+import type { TopoComposeTaskInvocation } from '../tasks/topoComposeTask';
 
 const viewLogsItem: vscode.MessageItem = {
     title: 'View Logs',
@@ -32,17 +27,12 @@ type ComposeFileQuickPickItem = vscode.QuickPickItem & {
     uri: vscode.Uri;
 };
 
-type DeployTarget = {
-    target: string;
-    settings?: TargetDeploySettings;
-};
-
 export class Deploy {
     constructor(
         private readonly taskExecutor: TaskExecutor,
         private readonly targetModel: TargetModel,
         private readonly projectController: ProjectController,
-        private readonly config: Config,
+        private readonly deployTaskFactory: TopoDeployTaskFactory,
     ) {}
 
     public async deployCommandHandler(): Promise<void> {
@@ -94,7 +84,7 @@ export class Deploy {
         await this.deployContextCommandHandler(treeNode.composeFileUri);
     }
 
-    private getSelectedDeployTarget(): DeployTarget | undefined {
+    private getSelectedDeployTarget(): string | undefined {
         const target = this.targetModel.selected;
         const health = this.targetModel.selectedTargetHealth;
         try {
@@ -108,28 +98,17 @@ export class Deploy {
             throw err;
         }
 
-        try {
-            const targetSettings = this.config.getTargetSettings(target);
-            return {
-                target,
-                settings: targetSettings.deploy,
-            };
-        } catch (err: unknown) {
-            showAndLogError('Error retrieving target settings', err);
-            return undefined;
-        }
+        return target;
     }
 
     private async deployComposeFile(
         resource: vscode.Uri,
-        deployTarget: DeployTarget,
+        target: string,
     ): Promise<void> {
-        await deploy(
-            this.taskExecutor,
-            resource.fsPath,
-            deployTarget.target,
-            deployTarget.settings,
-        );
+        await deploy(this.taskExecutor, this.deployTaskFactory, {
+            target,
+            composeFilePath: resource.fsPath,
+        });
         await this.projectController.refreshProjectContainersCommandHandler();
     }
 }
@@ -155,20 +134,15 @@ async function promptForComposeFile(
 
 export async function deploy(
     taskExecutor: TaskExecutor,
-    composeFilePath: string,
-    target: string,
-    settings: TargetDeploySettings = {},
+    deployTaskFactory: TopoDeployTaskFactory,
+    invocation: TopoComposeTaskInvocation,
 ): Promise<void> {
-    const task = createProcessTask(
-        `Deploy to ${target}`,
-        ['topo', ...buildDeployArgs(composeFilePath, target, settings)],
-        {
-            cwd: path.dirname(composeFilePath),
-        },
-    );
-    const taskName = task.name;
+    const { target } = invocation;
+    let taskName: string | undefined;
 
     try {
+        const task = deployTaskFactory.createTask(invocation);
+        taskName = task.name;
         await taskExecutor.run(task);
     } catch (e) {
         const terminal = vscode.window.terminals.find(
@@ -190,23 +164,4 @@ export async function deploy(
     vscode.window.showInformationMessage(
         `Deployment to ${target} completed successfully.`,
     );
-}
-
-export function buildDeployArgs(
-    composeFilePath: string,
-    target: string,
-    settings: TargetDeploySettings = {},
-): string[] {
-    assertComposeFilePath(composeFilePath);
-    const args = ['deploy', '--file', COMPOSE_FILE_NAME, '--target', target];
-    if (settings.port !== undefined) {
-        args.push('-p', String(settings.port));
-    }
-    if (settings.forceRecreate) {
-        args.push('--force-recreate');
-    }
-    if (settings.noRecreate) {
-        args.push('--no-recreate');
-    }
-    return args;
 }
