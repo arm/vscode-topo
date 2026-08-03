@@ -4,6 +4,7 @@ import { PACKAGE_NAME } from '../manifest';
 
 export interface TaskOptions {
     cwd?: string;
+    definition?: vscode.TaskDefinition;
 }
 
 function getTaskScope(
@@ -36,7 +37,7 @@ export function createProcessTask(
         throw new Error('No command passed to task');
     }
 
-    const taskDefinition: vscode.TaskDefinition = {
+    const taskDefinition: vscode.TaskDefinition = opts?.definition ?? {
         type: 'process',
     };
 
