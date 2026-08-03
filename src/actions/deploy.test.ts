@@ -11,6 +11,10 @@ import { loaded, unloaded } from '../util/loadable';
 import type { TargetHealthReport } from '../services/topoCliSchema';
 import { Config } from '../services/config';
 import { createProjectTreeItem } from '../util/test/projectTreeItem';
+import { WrappedError } from '../errors/wrappedError';
+import { showAndLogError, showAndLogWarning } from '../util/showAndLog';
+
+vi.mock('../util/showAndLog');
 
 describe('Deploy', () => {
     let deployAction: Deploy;
@@ -100,8 +104,12 @@ describe('Deploy', () => {
             deployAction.deployContextCommandHandler(composeFileUri);
 
         await expect(deployOperation).resolves.toBeUndefined();
-        expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
-            'Cannot deploy. No target selected. Please select a target.',
+        expect(showAndLogWarning).toHaveBeenCalledWith(
+            'Cannot deploy',
+            expect.objectContaining({
+                code: 'TARGET',
+                message: 'No target selected. Please select a target.',
+            }),
         );
         expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(
@@ -125,8 +133,13 @@ describe('Deploy', () => {
             deployAction.deployContextCommandHandler(composeFileUri);
 
         await expect(deployOperation).resolves.toBeUndefined();
-        expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
-            "Cannot deploy. Target topo.local connectivity is 'error': unreachable.",
+        expect(showAndLogWarning).toHaveBeenCalledWith(
+            'Cannot deploy',
+            expect.objectContaining({
+                code: 'TARGET',
+                message:
+                    "Target topo.local connectivity is 'error': unreachable.",
+            }),
         );
         expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(
@@ -141,8 +154,13 @@ describe('Deploy', () => {
             deployAction.deployContextCommandHandler(composeFileUri);
 
         await expect(deployOperation).resolves.toBeUndefined();
-        expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
-            'Cannot deploy. Target topo.local health is still being checked. Wait for target health checks to finish.',
+        expect(showAndLogWarning).toHaveBeenCalledWith(
+            'Cannot deploy',
+            expect.objectContaining({
+                code: 'TARGET',
+                message:
+                    'Target topo.local health is still being checked. Wait for target health checks to finish.',
+            }),
         );
         expect(taskExecutor.run).not.toHaveBeenCalled();
         expect(
@@ -328,22 +346,47 @@ describe('Deploy', () => {
         );
     });
 
-    it('shows an error before prompting when selected target settings are invalid', async () => {
+    it.each([
+        ['deploy', () => deployAction.deployCommandHandler()],
+        [
+            'deploy context',
+            () => deployAction.deployContextCommandHandler(composeFileUri),
+        ],
+        [
+            'deploy project',
+            () =>
+                deployAction.deployProjectCommandHandler(
+                    createProjectTreeItem(composeFileUri),
+                ),
+        ],
+    ])(
+        'catches CONFIG WrappedErrors in the %s command handler',
+        async (_command, commandHandler) => {
+            const error = new WrappedError('CONFIG', 'boom');
+            config.getTargetSettings.mockImplementationOnce(() => {
+                throw error;
+            });
+
+            await commandHandler();
+
+            expect(showAndLogError).toHaveBeenCalledWith(
+                'Error retrieving target settings',
+                error,
+            );
+            expect(taskExecutor.run).not.toHaveBeenCalled();
+        },
+    );
+
+    it('rethrows unexpected errors when retrieving target settings', async () => {
         config.getTargetSettings.mockImplementationOnce(() => {
             throw new Error('boom');
         });
 
-        await deployAction.deployCommandHandler();
-
-        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-            'Error retrieving target settings. boom',
+        await expect(deployAction.deployCommandHandler()).rejects.toThrow(
+            'boom',
         );
-        expect(taskExecutor.run).not.toHaveBeenCalled();
-        expect(
-            projectController.refreshProjectContainersCommandHandler,
-        ).not.toHaveBeenCalled();
-        expect(vscode.workspace.findFiles).not.toHaveBeenCalled();
-        expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
+
+        expect(showAndLogError).not.toHaveBeenCalled();
     });
 
     it('deploys the project tree item compose file', async () => {
