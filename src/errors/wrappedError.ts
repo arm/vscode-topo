@@ -4,6 +4,7 @@ export type WrappedErrorCode =
     | 'DOCKER'
     | 'CLONE'
     | 'CLI'
+    | 'CONFIG'
     | 'STORAGE'
     | 'TARGET'
     | 'INVALID_SSH_DESTINATION';

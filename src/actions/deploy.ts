@@ -46,8 +46,11 @@ export class Deploy {
     ) {}
 
     public async deployCommandHandler(): Promise<void> {
-        const deployTarget = this.getSelectedDeployTarget();
-        if (!deployTarget) {
+        let deployTarget: DeployTarget;
+        try {
+            deployTarget = this.getSelectedDeployTarget();
+        } catch (error: unknown) {
+            this.handleDeployTargetError(error);
             return;
         }
 
@@ -81,8 +84,11 @@ export class Deploy {
             throw new Error('No compose.yaml selected for deployment');
         }
 
-        const deployTarget = this.getSelectedDeployTarget();
-        if (!deployTarget) {
+        let deployTarget: DeployTarget;
+        try {
+            deployTarget = this.getSelectedDeployTarget();
+        } catch (error: unknown) {
+            this.handleDeployTargetError(error);
             return;
         }
 
@@ -94,30 +100,29 @@ export class Deploy {
         await this.deployContextCommandHandler(treeNode.composeFileUri);
     }
 
-    private getSelectedDeployTarget(): DeployTarget | undefined {
+    private handleDeployTargetError(error: unknown): void {
+        if (isWrappedError(error, ['TARGET'])) {
+            showAndLogWarning('Cannot deploy', error);
+            return;
+        }
+        if (isWrappedError(error, ['CONFIG'])) {
+            showAndLogError('Error retrieving target settings', error);
+            return;
+        }
+        throw error;
+    }
+
+    private getSelectedDeployTarget(): DeployTarget {
         const target = this.targetModel.selected;
         const health = this.targetModel.selectedTargetHealth;
-        try {
-            assertTargetSelected(target);
-            assertTargetConnected(target, health);
-        } catch (err: unknown) {
-            if (isWrappedError(err, ['TARGET'])) {
-                showAndLogWarning('Cannot deploy', err);
-                return undefined;
-            }
-            throw err;
-        }
+        assertTargetSelected(target);
+        assertTargetConnected(target, health);
 
-        try {
-            const targetSettings = this.config.getTargetSettings(target);
-            return {
-                target,
-                settings: targetSettings.deploy,
-            };
-        } catch (err: unknown) {
-            showAndLogError('Error retrieving target settings', err);
-            return undefined;
-        }
+        const targetSettings = this.config.getTargetSettings(target);
+        return {
+            target,
+            settings: targetSettings.deploy,
+        };
     }
 
     private async deployComposeFile(
