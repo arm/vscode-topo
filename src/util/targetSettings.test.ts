@@ -8,18 +8,14 @@ describe('resolveSettingsForTarget', () => {
         settingsByTarget: unknown,
         detail: string,
     ): void {
-        let thrownError: unknown;
-        try {
-            resolveSettingsForTarget(target, settingsByTarget);
-        } catch (error) {
-            thrownError = error;
-        }
-
-        expect(thrownError).toBeInstanceOf(WrappedError);
-        expect(thrownError).toMatchObject({
-            code: 'CONFIG',
-            message: `Invalid topo.targetSettings entry for "topo.local": ${detail}`,
-        });
+        expect(() =>
+            resolveSettingsForTarget(target, settingsByTarget),
+        ).toThrow(
+            new WrappedError(
+                'CONFIG',
+                `Invalid topo.targetSettings entry for "topo.local": ${detail}`,
+            ),
+        );
     }
 
     it('accepts undefined target settings', () => {
