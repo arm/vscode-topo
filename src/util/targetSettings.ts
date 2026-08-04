@@ -7,6 +7,7 @@ import {
     object,
     optional,
     refine,
+    Struct,
     StructError,
     validate,
     Infer,
@@ -35,10 +36,35 @@ const targetSettingsSchema = object({
 });
 export type TargetSettings = Infer<typeof targetSettingsSchema>;
 
-const supportedSettingsByPath: Readonly<Record<string, readonly string[]>> = {
-    '': ['deploy'],
-    deploy: ['port', 'forceRecreate', 'noRecreate'],
-};
+type StructObjectSchema = Record<string, Struct>;
+
+function isObjectSchema(value: unknown): value is StructObjectSchema {
+    return (
+        typeof value === 'object' &&
+        value !== null &&
+        !Array.isArray(value) &&
+        Object.values(value).every((child) => child instanceof Struct)
+    );
+}
+
+function getSupportedSettings(parentPath: readonly string[]): string[] {
+    let schema: unknown = targetSettingsSchema.schema;
+
+    for (const key of parentPath) {
+        if (!isObjectSchema(schema)) {
+            return [];
+        }
+
+        const child = schema[key];
+        if (!child) {
+            return [];
+        }
+
+        schema = child.schema;
+    }
+
+    return isObjectSchema(schema) ? Object.keys(schema) : [];
+}
 
 function formatTargetSettingsError(target: string, error: StructError): string {
     const settingPath = (
@@ -47,8 +73,8 @@ function formatTargetSettingsError(target: string, error: StructError): string {
     const setting = settingPath.join('.');
 
     if (error.type === 'never') {
-        const parent = settingPath.slice(0, -1).join('.');
-        const supported = supportedSettingsByPath[parent] ?? [];
+        const parentPath = settingPath.slice(0, -1);
+        const supported = getSupportedSettings(parentPath);
         const supportedMessage = supported.length
             ? ` Supported settings: ${supported.map((key) => `"${key}"`).join(', ')}.`
             : '';
