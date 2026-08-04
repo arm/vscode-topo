@@ -81,20 +81,6 @@ function formatTargetSettingsError(target: string, error: StructError): string {
         return `Unknown setting "${setting}".${supportedMessage}`;
     }
 
-    if (error.refinement === 'recreateOptions') {
-        return error.failures()[0].message;
-    }
-
-    if (error.type === 'type' && error.path.length === 0) {
-        return 'Target settings must be an object.';
-    }
-
-    if (error.type === 'object') {
-        return setting
-            ? `"${setting}" must be an object.`
-            : `Settings for target "${target}" must be an object.`;
-    }
-
     return error.message;
 }
 

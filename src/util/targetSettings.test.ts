@@ -35,7 +35,7 @@ describe('resolveSettingsForTarget', () => {
     it('throws a WrappedError with CONFIG tag when target settings are malformed', () => {
         expectInvalidTargetSettings(
             'not-an-object',
-            'Target settings must be an object.',
+            'Expected an object, but received: "not-an-object"',
         );
     });
 
@@ -65,7 +65,7 @@ describe('resolveSettingsForTarget', () => {
             {
                 [target]: 'not-an-object',
             },
-            'Settings for target "topo.local" must be an object.',
+            'At path: topo.local -- Expected an object, but received: "not-an-object"',
         );
     });
 
@@ -76,7 +76,7 @@ describe('resolveSettingsForTarget', () => {
                     deploy: 'not-an-object',
                 },
             },
-            '"deploy" must be an object.',
+            'At path: topo.local.deploy -- Expected an object, but received: "not-an-object"',
         );
     });
 
@@ -116,7 +116,7 @@ describe('resolveSettingsForTarget', () => {
                     },
                 },
             },
-            '`forceRecreate` and `noRecreate` cannot both be true.',
+            'At path: topo.local.deploy -- `forceRecreate` and `noRecreate` cannot both be true.',
         );
     });
 
