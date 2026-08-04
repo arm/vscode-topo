@@ -67,21 +67,21 @@ function getSupportedSettings(parentPath: readonly string[]): string[] {
 }
 
 function formatTargetSettingsError(target: string, error: StructError): string {
+    if (error.type !== 'never') {
+        return error.message;
+    }
+
     const settingPath = (
         error.path[0] === target ? error.path.slice(1) : error.path
     ).map(String);
     const setting = settingPath.join('.');
+    const parentPath = settingPath.slice(0, -1);
+    const supported = getSupportedSettings(parentPath);
+    const supportedMessage = supported.length
+        ? ` Supported settings: ${supported.map((key) => `"${key}"`).join(', ')}.`
+        : '';
 
-    if (error.type === 'never') {
-        const parentPath = settingPath.slice(0, -1);
-        const supported = getSupportedSettings(parentPath);
-        const supportedMessage = supported.length
-            ? ` Supported settings: ${supported.map((key) => `"${key}"`).join(', ')}.`
-            : '';
-        return `Unknown setting "${setting}".${supportedMessage}`;
-    }
-
-    return error.message;
+    return `Unknown setting "${setting}".${supportedMessage}`;
 }
 
 function getTargetSchema(target: string) {
