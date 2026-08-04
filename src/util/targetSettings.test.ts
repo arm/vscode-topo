@@ -36,7 +36,7 @@ describe('resolveSettingsForTarget', () => {
         expect(settings).toEqual({});
     });
 
-    it('throws a CONFIG WrappedError when target settings are malformed', () => {
+    it('throws a WrappedError with CONFIG tag when target settings are malformed', () => {
         expectInvalidTargetSettings(
             'not-an-object',
             'Target settings must be an object.',

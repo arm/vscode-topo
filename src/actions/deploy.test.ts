@@ -360,7 +360,7 @@ describe('Deploy', () => {
                 ),
         ],
     ])(
-        'catches CONFIG WrappedErrors in the %s command handler',
+        'catches the errors wrapped with CONFIG tag in the %s command handler',
         async (_command, commandHandler) => {
             const error = new WrappedError('CONFIG', 'boom');
             config.getTargetSettings.mockImplementationOnce(() => {
