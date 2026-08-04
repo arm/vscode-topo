@@ -93,7 +93,7 @@ describe('resolveSettingsForTarget', () => {
                     },
                 },
             },
-            '"deploy.port" must be an integer between 1 and 65535.',
+            'At path: topo.local.deploy.port -- Expected a integer less than or equal to 65535 but received `65536`',
         );
     });
 
@@ -106,7 +106,7 @@ describe('resolveSettingsForTarget', () => {
                     },
                 },
             },
-            '"deploy.forceRecreate" must be a boolean.',
+            'At path: topo.local.deploy.forceRecreate -- Expected a value of type `boolean`, but received: `"yes"`',
         );
     });
 

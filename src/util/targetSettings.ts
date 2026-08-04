@@ -55,16 +55,8 @@ function formatTargetSettingsError(target: string, error: StructError): string {
         return `Unknown setting "${setting}".${supportedMessage}`;
     }
 
-    if (setting === 'deploy.port') {
-        return '"deploy.port" must be an integer between 1 and 65535.';
-    }
-
-    if (setting === 'deploy.forceRecreate' || setting === 'deploy.noRecreate') {
-        return `"${setting}" must be a boolean.`;
-    }
-
     if (error.refinement === 'recreateOptions') {
-        return '`forceRecreate` and `noRecreate` cannot both be true.';
+        return error.failures()[0].message;
     }
 
     if (error.type === 'type' && error.path.length === 0) {
@@ -77,9 +69,7 @@ function formatTargetSettingsError(target: string, error: StructError): string {
             : `Settings for target "${target}" must be an object.`;
     }
 
-    return setting
-        ? `Invalid value for "${setting}".`
-        : 'Invalid target settings.';
+    return error.message;
 }
 
 function getTargetSchema(target: string) {
