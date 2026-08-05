@@ -18,7 +18,7 @@ describe('TopoDeployTaskProvider', () => {
 
         expect(task).toMatchObject({
             definition: {
-                type: deployTaskProvider.type,
+                type: 'topo.deploy',
                 composeFile: composeFilePath,
                 target,
             },

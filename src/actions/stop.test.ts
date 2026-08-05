@@ -41,7 +41,7 @@ describe('Stop', () => {
     function expectStopTask(task: vscode.Task, cwd: string): void {
         expect(task.name).toBe(`Stop ${composeFilePath} on topo.local`);
         expect(task.definition).toEqual({
-            type: stopTaskProvider.type,
+            type: 'topo.stop',
             composeFile: composeFilePath,
             target,
         });

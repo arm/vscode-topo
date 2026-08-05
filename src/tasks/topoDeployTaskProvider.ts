@@ -11,35 +11,35 @@ export interface TopoDeployTaskInvocation extends TopoComposeTaskInvocation {
     settings: TargetDeploySettings;
 }
 
-export class TopoDeployTaskProvider {
-    public readonly type = `${PACKAGE_NAME}.deploy`;
-    private readonly taskSpec = {
-        type: this.type,
-        createTaskName: (composeFile: string, target: string): string =>
-            `Deploy ${composeFile} to ${target}`,
-        createArgs: (invocation: TopoDeployTaskInvocation): string[] => {
-            const { target, settings } = invocation;
-            const args = [
-                'deploy',
-                '--file',
-                COMPOSE_FILE_NAME,
-                '--target',
-                target,
-            ];
-            if (settings.port !== undefined) {
-                args.push('-p', String(settings.port));
-            }
-            if (settings.forceRecreate) {
-                args.push('--force-recreate');
-            }
-            if (settings.noRecreate) {
-                args.push('--no-recreate');
-            }
-            return args;
-        },
-    };
+const taskType = `${PACKAGE_NAME}.deploy`;
+const taskSpec = {
+    type: taskType,
+    createTaskName: (composeFile: string, target: string): string =>
+        `Deploy ${composeFile} to ${target}`,
+    createArgs: (invocation: TopoDeployTaskInvocation): string[] => {
+        const { target, settings } = invocation;
+        const args = [
+            'deploy',
+            '--file',
+            COMPOSE_FILE_NAME,
+            '--target',
+            target,
+        ];
+        if (settings.port !== undefined) {
+            args.push('-p', String(settings.port));
+        }
+        if (settings.forceRecreate) {
+            args.push('--force-recreate');
+        }
+        if (settings.noRecreate) {
+            args.push('--no-recreate');
+        }
+        return args;
+    },
+};
 
+export class TopoDeployTaskProvider {
     public createTask(invocation: TopoDeployTaskInvocation): vscode.Task {
-        return createTopoComposeTask(this.taskSpec, invocation);
+        return createTopoComposeTask(taskSpec, invocation);
     }
 }

@@ -56,7 +56,7 @@ describe('Deploy', () => {
     ): void {
         expect(task.name).toBe(`Deploy ${composeFile} to topo.local`);
         expect(task.definition).toEqual({
-            type: deployTaskProvider.type,
+            type: 'topo.deploy',
             composeFile,
             target,
         });

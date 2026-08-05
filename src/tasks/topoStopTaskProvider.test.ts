@@ -17,7 +17,7 @@ describe('TopoStopTaskProvider', () => {
 
         expect(task).toMatchObject({
             definition: {
-                type: stopTaskProvider.type,
+                type: 'topo.stop',
                 composeFile: composeFilePath,
                 target,
             },
