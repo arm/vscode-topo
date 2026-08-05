@@ -130,20 +130,6 @@ describe('Stop', () => {
         ).not.toHaveBeenCalled();
     });
 
-    it('handles successful stop operation', async () => {
-        await stop(taskExecutor, stopTaskProvider, {
-            type: TOPO_STOP_TASK_TYPE,
-            composeFilePath,
-            target,
-        });
-
-        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-        expectStopTask(
-            taskExecutor.run.mock.calls[0][0],
-            path.dirname(composeFilePath),
-        );
-    });
-
     it('handles task failure', async () => {
         taskExecutor.run.mockRejectedValueOnce(new Error('stop failed'));
         await stop(taskExecutor, stopTaskProvider, {

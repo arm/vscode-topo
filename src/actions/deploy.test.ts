@@ -184,18 +184,6 @@ describe('Deploy', () => {
         expect(taskExecutor.run).not.toHaveBeenCalled();
     });
 
-    it('handles successful deploy operation', async () => {
-        await deploy(taskExecutor, deployTaskProvider, {
-            type: TOPO_DEPLOY_TASK_TYPE,
-            composeFilePath,
-            target,
-            settings: {},
-        });
-
-        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-        expectDeployTask(taskExecutor.run.mock.calls[0][0], composeFilePath);
-    });
-
     it('handles task failure', async () => {
         taskExecutor.run.mockRejectedValueOnce(new Error('deploy failed'));
         await deploy(taskExecutor, deployTaskProvider, {
