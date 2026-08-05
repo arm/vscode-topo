@@ -27,3 +27,5 @@ export type ContainerItem = PsEntry & {
 };
 
 export type Mutable<T> = { -readonly [P in keyof T]: T[P] };
+
+export type TopoSkillStatus = 'installed' | 'missing' | 'outdated';

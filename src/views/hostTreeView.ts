@@ -6,7 +6,10 @@ import { HealthCheckTreeItem } from './treeItems/healthCheckTreeItem';
 import { ErrorTreeItem } from './treeItems/errorTreeItem';
 import { HostModel } from '../models/hostModel';
 import { DisposableCollector } from '../util/disposableCollector';
-import { loaded } from '../util/loadable';
+import { Loadable, loaded } from '../util/loadable';
+import { TopoSkillStatus } from '../util/types';
+import { SkillStatusTreeItem } from './treeItems/skillStatusTreeItem';
+import { LoadingTreeItem } from './treeItems/loadingTreeItem';
 
 function sortHealthChecksByName(
     healthChecks: readonly HealthCheck[],
@@ -14,6 +17,22 @@ function sortHealthChecksByName(
     return healthChecks.toSorted((a, b) =>
         a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
     );
+}
+
+function getSkillStatusItem(
+    skillStatus: Loadable<TopoSkillStatus>,
+): vscode.TreeItem {
+    switch (skillStatus.status) {
+        case 'loaded':
+            return new SkillStatusTreeItem(skillStatus.data);
+        case 'errored':
+            return new ErrorTreeItem(
+                'Failed to check Topo CLI skills',
+                skillStatus,
+            );
+        case 'unloaded':
+            return new LoadingTreeItem('Topo CLI skills');
+    }
 }
 
 export class HostTreeView
@@ -38,14 +57,22 @@ export class HostTreeView
             this.model.onHealthChanged(() => {
                 this._onDidChangeTreeData.fire(undefined);
             }),
+            this.model.onSkillStatusChanged(() => {
+                this._onDidChangeTreeData.fire(undefined);
+            }),
         );
     }
 
     public getChildren(element?: vscode.TreeItem): vscode.TreeItem[] {
         if (!element) {
+            const skillStatusItem = getSkillStatusItem(this.model.skillStatus);
+
             const health = this.model.health;
             if (health.status === 'errored') {
-                return [new ErrorTreeItem('Failed to load health', health)];
+                return [
+                    new ErrorTreeItem('Failed to load health', health),
+                    skillStatusItem,
+                ];
             }
 
             const healthChecks =
@@ -56,6 +83,7 @@ export class HostTreeView
                 new HealthCheckGroupTreeItem(
                     loaded(healthChecks, health.loading),
                 ),
+                skillStatusItem,
             ];
         }
 

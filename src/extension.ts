@@ -33,6 +33,7 @@ import { Config } from './services/config';
 import { Configure } from './actions/configure';
 import { ProjectCloner } from './operations/projectCloner';
 import { InstallSkill } from './actions/installSkill';
+import { TopoSkill } from './services/topoSkill';
 
 const SELECTED_TARGET_REFRESH_INTERVAL_MS = 60_000;
 
@@ -62,6 +63,7 @@ export async function activate(
     const targetModel = new TargetModel();
     const hostModel = new HostModel();
     const projectModel = new ProjectModel();
+    const topoSkill = new TopoSkill(context.extensionUri);
     context.subscriptions.push(targetModel, hostModel, projectModel);
 
     const hostTreeView = new HostTreeView(hostModel);
@@ -75,7 +77,7 @@ export async function activate(
         targetStatusBarItemView,
     );
 
-    const hostController = new HostController(hostModel, topoCli);
+    const hostController = new HostController(hostModel, topoCli, topoSkill);
     const projectController = new ProjectController(
         projectModel,
         topoCli,
@@ -128,7 +130,7 @@ export async function activate(
     );
     const fixIssue = new FixIssue(taskExecutor, targetModel, targetController);
     const openSettings = new OpenSettings();
-    const installSkill = new InstallSkill(context.extensionUri);
+    const installSkill = new InstallSkill(topoSkill, hostController);
     const protocolHandler = new ProtocolHandler(projectCloner);
 
     context.subscriptions.push(
