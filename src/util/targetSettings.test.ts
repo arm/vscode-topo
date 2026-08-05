@@ -127,7 +127,7 @@ describe('resolveSettingsForTarget', () => {
                     test: {},
                 },
             },
-            'Unknown setting "test". Supported settings: "deploy".',
+            'At path: topo.local.test -- Expected one of `"deploy"`, but received: "test"',
         );
     });
 
@@ -140,7 +140,7 @@ describe('resolveSettingsForTarget', () => {
                     },
                 },
             },
-            'Unknown setting "deploy.unknownField". Supported settings: "port", "forceRecreate", "noRecreate".',
+            'At path: topo.local.deploy.unknownField -- Expected one of `"port","forceRecreate","noRecreate"`, but received: "unknownField"',
         );
     });
 });
