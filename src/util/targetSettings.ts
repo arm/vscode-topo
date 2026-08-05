@@ -1,25 +1,37 @@
 import {
     boolean,
+    enums,
     type,
     integer,
+    intersection,
     max,
     min,
-    object,
     optional,
+    record,
     refine,
-    StructError,
+    Struct,
+    unknown,
     validate,
     Infer,
 } from 'superstruct';
 import { WrappedError } from '../errors/wrappedError';
 import { CONFIG_TARGET_SETTINGS, PACKAGE_NAME } from '../manifest';
 
+function withEnumeratedKeys<T, S extends object>(
+    schema: Struct<T, S>,
+): Struct<T, null> {
+    const knownKeys = record(enums(Object.keys(schema.schema)), unknown());
+    return intersection([schema, knownKeys]) as Struct<T, null>;
+}
+
 const targetDeploySettingsSchema = refine(
-    object({
-        port: optional(max(min(integer(), 1), 65_535)),
-        forceRecreate: optional(boolean()),
-        noRecreate: optional(boolean()),
-    }),
+    withEnumeratedKeys(
+        type({
+            port: optional(max(min(integer(), 1), 65_535)),
+            forceRecreate: optional(boolean()),
+            noRecreate: optional(boolean()),
+        }),
+    ),
     'recreateOptions',
     (settings) => {
         if (settings.forceRecreate && settings.noRecreate) {
@@ -30,57 +42,12 @@ const targetDeploySettingsSchema = refine(
 );
 export type TargetDeploySettings = Infer<typeof targetDeploySettingsSchema>;
 
-const targetSettingsSchema = object({
-    deploy: optional(targetDeploySettingsSchema),
-});
+const targetSettingsSchema = withEnumeratedKeys(
+    type({
+        deploy: optional(targetDeploySettingsSchema),
+    }),
+);
 export type TargetSettings = Infer<typeof targetSettingsSchema>;
-
-const supportedSettingsByPath: Readonly<Record<string, readonly string[]>> = {
-    '': ['deploy'],
-    deploy: ['port', 'forceRecreate', 'noRecreate'],
-};
-
-function formatTargetSettingsError(target: string, error: StructError): string {
-    const settingPath = (
-        error.path[0] === target ? error.path.slice(1) : error.path
-    ).map(String);
-    const setting = settingPath.join('.');
-
-    if (error.type === 'never') {
-        const parent = settingPath.slice(0, -1).join('.');
-        const supported = supportedSettingsByPath[parent] ?? [];
-        const supportedMessage = supported.length
-            ? ` Supported settings: ${supported.map((key) => `"${key}"`).join(', ')}.`
-            : '';
-        return `Unknown setting "${setting}".${supportedMessage}`;
-    }
-
-    if (setting === 'deploy.port') {
-        return '"deploy.port" must be an integer between 1 and 65535.';
-    }
-
-    if (setting === 'deploy.forceRecreate' || setting === 'deploy.noRecreate') {
-        return `"${setting}" must be a boolean.`;
-    }
-
-    if (error.refinement === 'recreateOptions') {
-        return '`forceRecreate` and `noRecreate` cannot both be true.';
-    }
-
-    if (error.type === 'type' && error.path.length === 0) {
-        return 'Target settings must be an object.';
-    }
-
-    if (error.type === 'object') {
-        return setting
-            ? `"${setting}" must be an object.`
-            : `Settings for target "${target}" must be an object.`;
-    }
-
-    return setting
-        ? `Invalid value for "${setting}".`
-        : 'Invalid target settings.';
-}
 
 function getTargetSchema(target: string) {
     return optional(
@@ -99,10 +66,9 @@ export function resolveSettingsForTarget(
         getTargetSchema(target),
     );
     if (validationError) {
-        const detail = formatTargetSettingsError(target, validationError);
         throw new WrappedError(
             'CONFIG',
-            `Invalid ${PACKAGE_NAME}.${CONFIG_TARGET_SETTINGS} entry for "${target}": ${detail}`,
+            `Invalid ${PACKAGE_NAME}.${CONFIG_TARGET_SETTINGS} entry for "${target}": ${validationError.message}`,
             [],
             { cause: validationError },
         );
