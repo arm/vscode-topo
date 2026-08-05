@@ -8,7 +8,7 @@ import { Configure, configure } from './configure';
 
 describe('Configure', () => {
     const composeFileUri = vscode.Uri.file(
-        path.join(os.tmpdir(), 'demo', 'compose.yaml'),
+        path.join(os.tmpdir(), 'demo', 'compose.yml'),
     );
     const projectPath = path.dirname(composeFileUri.fsPath);
     let taskExecutor: MockProxy<TaskExecutor>;
@@ -18,7 +18,7 @@ describe('Configure', () => {
         expect(task.name).toBe('Configure demo');
         expect(task.execution).toMatchObject({
             process: 'topo',
-            args: ['configure', '--file', 'compose.yaml'],
+            args: ['configure', '--file', 'compose.yml'],
             options: { cwd: projectPath },
         });
     }
@@ -51,7 +51,9 @@ describe('Configure', () => {
     it('throws when the context command has no compose file', async () => {
         await expect(
             configureAction.configureContextCommandHandler(),
-        ).rejects.toThrow('No compose.yaml selected for configuration');
+        ).rejects.toThrow(
+            'No compose.yaml or compose.yml selected for configuration',
+        );
 
         expect(taskExecutor.run).not.toHaveBeenCalled();
     });
@@ -70,18 +72,6 @@ describe('Configure', () => {
         expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
             'demo configured successfully.',
         );
-    });
-
-    it('rejects compose.yml without invoking topo', async () => {
-        const unsupportedComposeFile = path.join(projectPath, 'compose.yml');
-
-        await expect(
-            configure(taskExecutor, unsupportedComposeFile),
-        ).rejects.toThrow(
-            'Unsupported compose file "compose.yml". Only compose.yaml is supported.',
-        );
-
-        expect(taskExecutor.run).not.toHaveBeenCalled();
     });
 
     it('reports task failure', async () => {

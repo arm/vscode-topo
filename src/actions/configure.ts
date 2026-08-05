@@ -1,7 +1,6 @@
 import path from 'node:path';
 import * as vscode from 'vscode';
 import { getErrorMessage } from '../util/getErrorMessage';
-import { assertComposeFilePath, COMPOSE_FILE_NAME } from '../util/composeFile';
 import { createProcessTask } from '../util/task';
 import { TaskExecutor } from '../util/taskExecutor';
 import { assertProjectTreeItem } from '../views/treeItems/assertProjectTreeItem';
@@ -17,7 +16,9 @@ export class Configure {
         resource?: vscode.Uri,
     ): Promise<void> {
         if (!resource) {
-            throw new Error('No compose.yaml selected for configuration');
+            throw new Error(
+                'No compose.yaml or compose.yml selected for configuration',
+            );
         }
 
         await configure(this.taskExecutor, resource.fsPath);
@@ -35,12 +36,12 @@ export async function configure(
     taskExecutor: TaskExecutor,
     composeFilePath: string,
 ): Promise<void> {
-    assertComposeFilePath(composeFilePath);
     const composeFileDir = path.dirname(composeFilePath);
+    const composeFileName = path.basename(composeFilePath);
     const projectName = path.basename(composeFileDir);
     const task = createProcessTask(
         `Configure ${projectName}`,
-        ['topo', 'configure', '--file', COMPOSE_FILE_NAME],
+        ['topo', 'configure', '--file', composeFileName],
         {
             cwd: composeFileDir,
         },
