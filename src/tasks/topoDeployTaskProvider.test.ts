@@ -1,4 +1,7 @@
-import { TopoDeployTaskProvider } from './topoDeployTaskProvider';
+import {
+    TOPO_DEPLOY_TASK_TYPE,
+    TopoDeployTaskProvider,
+} from './topoDeployTaskProvider';
 
 describe('TopoDeployTaskProvider', () => {
     const target = 'topo.local';
@@ -11,6 +14,7 @@ describe('TopoDeployTaskProvider', () => {
 
     it('creates a deploy task with empty deploy settings', () => {
         const task = deployTaskProvider.createTask({
+            type: TOPO_DEPLOY_TASK_TYPE,
             target,
             composeFilePath,
             settings: {},
@@ -19,8 +23,9 @@ describe('TopoDeployTaskProvider', () => {
         expect(task).toMatchObject({
             definition: {
                 type: 'topo.deploy',
-                composeFile: composeFilePath,
+                composeFilePath,
                 target,
+                settings: {},
             },
             name: `Deploy ${composeFilePath} to ${target}`,
             execution: {
@@ -49,6 +54,7 @@ describe('TopoDeployTaskProvider', () => {
         },
     ])('adds arguments for $option', ({ settings, expectedArgs }) => {
         const task = deployTaskProvider.createTask({
+            type: TOPO_DEPLOY_TASK_TYPE,
             target,
             composeFilePath,
             settings,

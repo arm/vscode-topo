@@ -1,4 +1,7 @@
-import { TopoStopTaskProvider } from './topoStopTaskProvider';
+import {
+    TOPO_STOP_TASK_TYPE,
+    TopoStopTaskProvider,
+} from './topoStopTaskProvider';
 
 describe('TopoStopTaskProvider', () => {
     const target = 'topo.local';
@@ -11,6 +14,7 @@ describe('TopoStopTaskProvider', () => {
 
     it('creates a stop task', () => {
         const task = stopTaskProvider.createTask({
+            type: TOPO_STOP_TASK_TYPE,
             target,
             composeFilePath,
         });
@@ -18,7 +22,7 @@ describe('TopoStopTaskProvider', () => {
         expect(task).toMatchObject({
             definition: {
                 type: 'topo.stop',
-                composeFile: composeFilePath,
+                composeFilePath,
                 target,
             },
             name: `Stop ${composeFilePath} on ${target}`,

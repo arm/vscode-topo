@@ -10,8 +10,11 @@ import {
     assertTargetConnected,
     assertTargetSelected,
 } from '../util/assertTargetReady';
-import { TopoStopTaskProvider } from '../tasks/topoStopTaskProvider';
-import type { TopoComposeTaskInvocation } from '../tasks/topoComposeTask';
+import {
+    TOPO_STOP_TASK_TYPE,
+    TopoStopTaskProvider,
+    type TopoStopTaskDefinition,
+} from '../tasks/topoStopTaskProvider';
 
 const viewLogsItem: vscode.MessageItem = {
     title: 'View Logs',
@@ -44,6 +47,7 @@ export class Stop {
         }
 
         await stop(this.taskExecutor, this.stopTaskProvider, {
+            type: TOPO_STOP_TASK_TYPE,
             target,
             composeFilePath: resource.fsPath,
         });
@@ -59,10 +63,10 @@ export class Stop {
 export async function stop(
     taskExecutor: TaskExecutor,
     stopTaskProvider: TopoStopTaskProvider,
-    invocation: TopoComposeTaskInvocation,
+    definition: TopoStopTaskDefinition,
 ): Promise<void> {
-    const { target } = invocation;
-    const task = stopTaskProvider.createTask(invocation);
+    const { target } = definition;
+    const task = stopTaskProvider.createTask(definition);
     const taskName = task.name;
 
     try {

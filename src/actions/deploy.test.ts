@@ -13,7 +13,10 @@ import { ProjectController } from '../controllers/projectController';
 import { createProjectTreeItem } from '../util/test/projectTreeItem';
 import { WrappedError } from '../errors/wrappedError';
 import { showAndLogError, showAndLogWarning } from '../util/showAndLog';
-import { TopoDeployTaskProvider } from '../tasks/topoDeployTaskProvider';
+import {
+    TOPO_DEPLOY_TASK_TYPE,
+    TopoDeployTaskProvider,
+} from '../tasks/topoDeployTaskProvider';
 
 vi.mock('../util/showAndLog');
 
@@ -51,19 +54,19 @@ describe('Deploy', () => {
 
     function expectDeployTask(
         task: vscode.Task,
-        composeFile: string,
+        composeFilePath: string,
         args = ['deploy', '--file', 'compose.yaml', '--target', target],
     ): void {
-        expect(task.name).toBe(`Deploy ${composeFile} to topo.local`);
-        expect(task.definition).toEqual({
+        expect(task.name).toBe(`Deploy ${composeFilePath} to topo.local`);
+        expect(task.definition).toMatchObject({
             type: 'topo.deploy',
-            composeFile,
+            composeFilePath,
             target,
         });
         expect(task.execution).toMatchObject({
             process: 'topo',
             args,
-            options: { cwd: path.dirname(composeFile) },
+            options: { cwd: path.dirname(composeFilePath) },
         });
     }
 
@@ -183,6 +186,7 @@ describe('Deploy', () => {
 
     it('handles successful deploy operation', async () => {
         await deploy(taskExecutor, deployTaskProvider, {
+            type: TOPO_DEPLOY_TASK_TYPE,
             composeFilePath,
             target,
             settings: {},
@@ -195,6 +199,7 @@ describe('Deploy', () => {
     it('handles task failure', async () => {
         taskExecutor.run.mockRejectedValueOnce(new Error('deploy failed'));
         await deploy(taskExecutor, deployTaskProvider, {
+            type: TOPO_DEPLOY_TASK_TYPE,
             composeFilePath,
             target,
             settings: {},

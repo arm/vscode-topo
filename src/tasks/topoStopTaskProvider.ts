@@ -3,25 +3,29 @@ import { PACKAGE_NAME } from '../manifest';
 import { COMPOSE_FILE_NAME } from '../util/composeFile';
 import {
     createTopoComposeTask,
-    type TopoComposeTaskInvocation,
+    type TopoComposeTaskDefinition,
 } from './topoComposeTask';
 
-const taskType = `${PACKAGE_NAME}.stop`;
+export const TOPO_STOP_TASK_TYPE = `${PACKAGE_NAME}.stop`;
+
+export interface TopoStopTaskDefinition extends TopoComposeTaskDefinition {
+    readonly type: typeof TOPO_STOP_TASK_TYPE;
+}
+
 const taskSpec = {
-    type: taskType,
-    createTaskName: (composeFile: string, target: string): string =>
-        `Stop ${composeFile} on ${target}`,
-    createArgs: (invocation: TopoComposeTaskInvocation): string[] => [
+    createTaskName: (composeFilePath: string, target: string): string =>
+        `Stop ${composeFilePath} on ${target}`,
+    createArgs: (definition: TopoStopTaskDefinition): string[] => [
         'stop',
         '--file',
         COMPOSE_FILE_NAME,
         '--target',
-        invocation.target,
+        definition.target,
     ],
 };
 
 export class TopoStopTaskProvider {
-    public createTask(invocation: TopoComposeTaskInvocation): vscode.Task {
-        return createTopoComposeTask(taskSpec, invocation);
+    public createTask(definition: TopoStopTaskDefinition): vscode.Task {
+        return createTopoComposeTask(taskSpec, definition);
     }
 }

@@ -3,33 +3,27 @@ import * as vscode from 'vscode';
 import { assertComposeFilePath } from '../util/composeFile';
 import { createProcessTask } from '../util/task';
 
-export interface TopoComposeTaskInvocation {
-    target: string;
-    composeFilePath: string;
+export interface TopoComposeTaskDefinition extends vscode.TaskDefinition {
+    readonly composeFilePath: string;
+    readonly target: string;
 }
 
-interface TopoComposeTaskSpec<TInvocation extends TopoComposeTaskInvocation> {
-    readonly type: string;
-    createArgs(invocation: TInvocation): string[];
-    createTaskName(composeFile: string, target: string): string;
+interface TopoComposeTaskSpec<TDefinition extends TopoComposeTaskDefinition> {
+    createArgs(definition: TDefinition): string[];
+    createTaskName(composeFilePath: string, target: string): string;
 }
 
 export const createTopoComposeTask = <
-    TInvocation extends TopoComposeTaskInvocation,
+    TDefinition extends TopoComposeTaskDefinition,
 >(
-    taskSpec: TopoComposeTaskSpec<TInvocation>,
-    invocation: TInvocation,
+    taskSpec: TopoComposeTaskSpec<TDefinition>,
+    definition: TDefinition,
 ): vscode.Task => {
-    const { target, composeFilePath } = invocation;
+    const { target, composeFilePath } = definition;
     assertComposeFilePath(composeFilePath);
     const taskName = taskSpec.createTaskName(composeFilePath, target);
-    const command = ['topo', ...taskSpec.createArgs(invocation)];
+    const command = ['topo', ...taskSpec.createArgs(definition)];
     const cwd = path.dirname(composeFilePath);
-    const definition = {
-        type: taskSpec.type,
-        composeFile: composeFilePath,
-        target,
-    };
 
     return createProcessTask(taskName, command, { cwd, definition });
 };

@@ -9,7 +9,10 @@ import { ProjectController } from '../controllers/projectController';
 import { loaded, unloaded } from '../util/loadable';
 import type { TargetHealthReport } from '../services/topoCliSchema';
 import { createProjectTreeItem } from '../util/test/projectTreeItem';
-import { TopoStopTaskProvider } from '../tasks/topoStopTaskProvider';
+import {
+    TOPO_STOP_TASK_TYPE,
+    TopoStopTaskProvider,
+} from '../tasks/topoStopTaskProvider';
 
 describe('Stop', () => {
     let stopAction: Stop;
@@ -42,7 +45,7 @@ describe('Stop', () => {
         expect(task.name).toBe(`Stop ${composeFilePath} on topo.local`);
         expect(task.definition).toEqual({
             type: 'topo.stop',
-            composeFile: composeFilePath,
+            composeFilePath,
             target,
         });
         expect(task.execution).toMatchObject({
@@ -129,6 +132,7 @@ describe('Stop', () => {
 
     it('handles successful stop operation', async () => {
         await stop(taskExecutor, stopTaskProvider, {
+            type: TOPO_STOP_TASK_TYPE,
             composeFilePath,
             target,
         });
@@ -143,6 +147,7 @@ describe('Stop', () => {
     it('handles task failure', async () => {
         taskExecutor.run.mockRejectedValueOnce(new Error('stop failed'));
         await stop(taskExecutor, stopTaskProvider, {
+            type: TOPO_STOP_TASK_TYPE,
             composeFilePath,
             target,
         });
