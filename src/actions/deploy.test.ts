@@ -13,10 +13,8 @@ import { ProjectController } from '../controllers/projectController';
 import { createProjectTreeItem } from '../util/test/projectTreeItem';
 import { WrappedError } from '../errors/wrappedError';
 import { showAndLogError, showAndLogWarning } from '../util/showAndLog';
-import {
-    TOPO_DEPLOY_TASK_TYPE,
-    TopoDeployTaskProvider,
-} from '../tasks/topoDeployTaskProvider';
+import { TOPO_DEPLOY_TASK_TYPE } from '../tasks/topoDeployTask';
+import { TopoTaskFactory } from '../tasks/topoTaskFactory';
 
 vi.mock('../util/showAndLog');
 
@@ -50,7 +48,7 @@ describe('Deploy', () => {
     let targetModel: TargetModel;
     let projectController: MockProxy<ProjectController>;
     let config: MockProxy<Config>;
-    let deployTaskProvider: TopoDeployTaskProvider;
+    let taskFactory: TopoTaskFactory;
 
     function expectDeployTask(
         task: vscode.Task,
@@ -90,7 +88,7 @@ describe('Deploy', () => {
         projectController = mock<ProjectController>();
         config = mock<Config>();
         config.getTargetSettings.mockReturnValue({});
-        deployTaskProvider = new TopoDeployTaskProvider();
+        taskFactory = new TopoTaskFactory();
         vi.mocked(vscode.workspace.findFiles).mockResolvedValue([]);
         vi.mocked(vscode.workspace.getWorkspaceFolder).mockReturnValue(
             undefined,
@@ -101,7 +99,7 @@ describe('Deploy', () => {
             targetModel,
             projectController,
             config,
-            deployTaskProvider,
+            taskFactory,
         );
     });
 
@@ -186,7 +184,7 @@ describe('Deploy', () => {
 
     it('handles task failure', async () => {
         taskExecutor.run.mockRejectedValueOnce(new Error('deploy failed'));
-        await deploy(taskExecutor, deployTaskProvider, {
+        await deploy(taskExecutor, taskFactory, {
             type: TOPO_DEPLOY_TASK_TYPE,
             composeFilePath,
             target,

@@ -1,19 +1,40 @@
-import {
-    TOPO_DEPLOY_TASK_TYPE,
-    TopoDeployTaskProvider,
-} from './topoDeployTaskProvider';
+import { TOPO_DEPLOY_TASK_TYPE } from './topoDeployTask';
+import { TOPO_STOP_TASK_TYPE } from './topoStopTask';
+import { TopoTaskFactory } from './topoTaskFactory';
 
-describe('TopoDeployTaskProvider', () => {
+describe('TopoTaskFactory', () => {
     const target = 'topo.local';
     const composeFilePath = '/projects/camera/compose.yaml';
-    let deployTaskProvider: TopoDeployTaskProvider;
+    let taskFactory: TopoTaskFactory;
 
     beforeEach(() => {
-        deployTaskProvider = new TopoDeployTaskProvider();
+        taskFactory = new TopoTaskFactory();
+    });
+
+    it('creates a stop task', () => {
+        const task = taskFactory.createTask({
+            type: TOPO_STOP_TASK_TYPE,
+            target,
+            composeFilePath,
+        });
+
+        expect(task).toMatchObject({
+            definition: {
+                type: 'topo.stop',
+                composeFilePath,
+                target,
+            },
+            name: `Stop ${composeFilePath} on ${target}`,
+            execution: {
+                process: 'topo',
+                args: ['stop', '--file', 'compose.yaml', '--target', target],
+                options: { cwd: '/projects/camera' },
+            },
+        });
     });
 
     it('creates a deploy task with empty deploy settings', () => {
-        const task = deployTaskProvider.createTask({
+        const task = taskFactory.createTask({
             type: TOPO_DEPLOY_TASK_TYPE,
             target,
             composeFilePath,
@@ -53,7 +74,7 @@ describe('TopoDeployTaskProvider', () => {
             expectedArgs: ['--no-recreate'],
         },
     ])('adds arguments for $option', ({ settings, expectedArgs }) => {
-        const task = deployTaskProvider.createTask({
+        const task = taskFactory.createTask({
             type: TOPO_DEPLOY_TASK_TYPE,
             target,
             composeFilePath,

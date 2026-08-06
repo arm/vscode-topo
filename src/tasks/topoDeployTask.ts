@@ -1,11 +1,7 @@
-import * as vscode from 'vscode';
 import { PACKAGE_NAME } from '../manifest';
 import { COMPOSE_FILE_NAME } from '../util/composeFile';
 import type { TargetDeploySettings } from '../util/targetSettings';
-import {
-    createTopoComposeTask,
-    type TopoComposeTaskDefinition,
-} from './topoComposeTask';
+import type { TopoComposeTaskDefinition } from './topoComposeTask';
 
 export const TOPO_DEPLOY_TASK_TYPE = `${PACKAGE_NAME}.deploy`;
 
@@ -14,7 +10,7 @@ export interface TopoDeployTaskDefinition extends TopoComposeTaskDefinition {
     readonly settings: TargetDeploySettings;
 }
 
-const taskSpec = {
+export const topoDeployTaskSpec = {
     createTaskName: (composeFilePath: string, target: string): string =>
         `Deploy ${composeFilePath} to ${target}`,
     createArgs: (definition: TopoDeployTaskDefinition): string[] => {
@@ -38,9 +34,3 @@ const taskSpec = {
         return args;
     },
 };
-
-export class TopoDeployTaskProvider {
-    public createTask(definition: TopoDeployTaskDefinition): vscode.Task {
-        return createTopoComposeTask(taskSpec, definition);
-    }
-}
