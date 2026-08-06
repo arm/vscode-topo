@@ -33,7 +33,6 @@ import { Config } from './services/config';
 import { Configure } from './actions/configure';
 import { ProjectCloner } from './operations/projectCloner';
 import { InstallSkill } from './actions/installSkill';
-import { TopoTaskFactory } from './tasks/topoTaskFactory';
 
 const SELECTED_TARGET_REFRESH_INTERVAL_MS = 60_000;
 
@@ -109,7 +108,6 @@ export async function activate(
 
     const config = new Config();
     const taskExecutor = new TaskExecutor(topoCli);
-    const taskFactory = new TopoTaskFactory();
     const projectInit = new ProjectInit(topoCli);
     const configure = new Configure(taskExecutor);
     const projectCloner = new ProjectCloner(taskExecutor);
@@ -119,14 +117,8 @@ export async function activate(
         targetModel,
         projectController,
         config,
-        taskFactory,
     );
-    const stop = new Stop(
-        taskExecutor,
-        targetModel,
-        projectController,
-        taskFactory,
-    );
+    const stop = new Stop(taskExecutor, targetModel, projectController);
     const openContainerShell = new OpenContainerShell(dockerCommands);
     const connectViaSSH = new ConnectViaSSH(targetModel);
     const openContainerInBrowser = new OpenContainerInBrowser();

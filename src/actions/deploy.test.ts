@@ -14,7 +14,6 @@ import { createProjectTreeItem } from '../util/test/projectTreeItem';
 import { WrappedError } from '../errors/wrappedError';
 import { showAndLogError, showAndLogWarning } from '../util/showAndLog';
 import { TOPO_DEPLOY_TASK_TYPE } from '../tasks/topoDeployTask';
-import { TopoTaskFactory } from '../tasks/topoTaskFactory';
 
 vi.mock('../util/showAndLog');
 
@@ -48,7 +47,6 @@ describe('Deploy', () => {
     let targetModel: TargetModel;
     let projectController: MockProxy<ProjectController>;
     let config: MockProxy<Config>;
-    let taskFactory: TopoTaskFactory;
 
     function expectDeployTask(
         task: vscode.Task,
@@ -88,7 +86,6 @@ describe('Deploy', () => {
         projectController = mock<ProjectController>();
         config = mock<Config>();
         config.getTargetSettings.mockReturnValue({});
-        taskFactory = new TopoTaskFactory();
         vi.mocked(vscode.workspace.findFiles).mockResolvedValue([]);
         vi.mocked(vscode.workspace.getWorkspaceFolder).mockReturnValue(
             undefined,
@@ -99,7 +96,6 @@ describe('Deploy', () => {
             targetModel,
             projectController,
             config,
-            taskFactory,
         );
     });
 
@@ -184,7 +180,7 @@ describe('Deploy', () => {
 
     it('handles task failure', async () => {
         taskExecutor.run.mockRejectedValueOnce(new Error('deploy failed'));
-        await deploy(taskExecutor, taskFactory, {
+        await deploy(taskExecutor, {
             type: TOPO_DEPLOY_TASK_TYPE,
             composeFilePath,
             target,
@@ -207,28 +203,46 @@ describe('Deploy', () => {
         ).toHaveBeenCalledOnce();
     });
 
-    it('passes configured deploy arguments from the command handler', async () => {
-        config.getTargetSettings.mockReturnValueOnce({
-            deploy: {
+    it.each([
+        {
+            setting: 'port and force-recreate',
+            deploySettings: {
                 port: 5000,
                 forceRecreate: true,
             },
-        });
+            expectedArgs: ['-p', '5000', '--force-recreate'],
+        },
+        {
+            setting: 'no-recreate',
+            deploySettings: {
+                noRecreate: true,
+            },
+            expectedArgs: ['--no-recreate'],
+        },
+    ])(
+        'passes configured $setting arguments from the command handler',
+        async ({ deploySettings, expectedArgs }) => {
+            config.getTargetSettings.mockReturnValueOnce({
+                deploy: deploySettings,
+            });
 
-        await deployAction.deployContextCommandHandler(composeFileUri);
+            await deployAction.deployContextCommandHandler(composeFileUri);
 
-        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-        expectDeployTask(taskExecutor.run.mock.calls[0][0], composeFilePath, [
-            'deploy',
-            '--file',
-            'compose.yaml',
-            '--target',
-            target,
-            '-p',
-            '5000',
-            '--force-recreate',
-        ]);
-    });
+            expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+            expectDeployTask(
+                taskExecutor.run.mock.calls[0][0],
+                composeFilePath,
+                [
+                    'deploy',
+                    '--file',
+                    'compose.yaml',
+                    '--target',
+                    target,
+                    ...expectedArgs,
+                ],
+            );
+        },
+    );
 
     it.each([
         ['deploy', () => deployAction.deployCommandHandler()],

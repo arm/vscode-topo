@@ -18,9 +18,10 @@ import {
 } from '../util/assertTargetReady';
 import {
     TOPO_DEPLOY_TASK_TYPE,
+    topoDeployTaskSpec,
     type TopoDeployTaskDefinition,
 } from '../tasks/topoDeployTask';
-import { TopoTaskFactory } from '../tasks/topoTaskFactory';
+import { createTopoComposeTask } from '../tasks/topoComposeTask';
 import { Config } from '../services/config';
 import type { TargetDeploySettings } from '../util/targetSettings';
 
@@ -43,7 +44,6 @@ export class Deploy {
         private readonly targetModel: TargetModel,
         private readonly projectController: ProjectController,
         private readonly config: Config,
-        private readonly taskFactory: TopoTaskFactory,
     ) {}
 
     public async deployCommandHandler(): Promise<void> {
@@ -130,7 +130,7 @@ export class Deploy {
         resource: vscode.Uri,
         deployTarget: DeployTarget,
     ): Promise<void> {
-        await deploy(this.taskExecutor, this.taskFactory, {
+        await deploy(this.taskExecutor, {
             type: TOPO_DEPLOY_TASK_TYPE,
             target: deployTarget.target,
             composeFilePath: resource.fsPath,
@@ -161,11 +161,10 @@ async function promptForComposeFile(
 
 export async function deploy(
     taskExecutor: TaskExecutor,
-    taskFactory: TopoTaskFactory,
     definition: TopoDeployTaskDefinition,
 ): Promise<void> {
     const { target } = definition;
-    const task = taskFactory.createTask(definition);
+    const task = createTopoComposeTask(topoDeployTaskSpec, definition);
     const taskName = task.name;
 
     try {

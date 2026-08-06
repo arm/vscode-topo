@@ -10,7 +10,6 @@ import { loaded, unloaded } from '../util/loadable';
 import type { TargetHealthReport } from '../services/topoCliSchema';
 import { createProjectTreeItem } from '../util/test/projectTreeItem';
 import { TOPO_STOP_TASK_TYPE } from '../tasks/topoStopTask';
-import { TopoTaskFactory } from '../tasks/topoTaskFactory';
 
 describe('Stop', () => {
     let stopAction: Stop;
@@ -37,7 +36,6 @@ describe('Stop', () => {
     let taskExecutor: MockProxy<TaskExecutor>;
     let targetModel: TargetModel;
     let projectController: MockProxy<ProjectController>;
-    let taskFactory: TopoTaskFactory;
 
     function expectStopTask(task: vscode.Task, cwd: string): void {
         expect(task.name).toBe(`Stop ${composeFilePath} on topo.local`);
@@ -59,15 +57,9 @@ describe('Stop', () => {
         targetModel.setSelected(target);
         targetModel.setSelectedTargetHealth(loaded(targetHealth));
         projectController = mock<ProjectController>();
-        taskFactory = new TopoTaskFactory();
         vi.mocked(vscode.window.showErrorMessage).mockClear();
         vi.mocked(vscode.window.showWarningMessage).mockClear();
-        stopAction = new Stop(
-            taskExecutor,
-            targetModel,
-            projectController,
-            taskFactory,
-        );
+        stopAction = new Stop(taskExecutor, targetModel, projectController);
     });
 
     afterEach(() => {
@@ -130,7 +122,7 @@ describe('Stop', () => {
 
     it('handles task failure', async () => {
         taskExecutor.run.mockRejectedValueOnce(new Error('stop failed'));
-        await stop(taskExecutor, taskFactory, {
+        await stop(taskExecutor, {
             type: TOPO_STOP_TASK_TYPE,
             composeFilePath,
             target,
