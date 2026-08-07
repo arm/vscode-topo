@@ -9,7 +9,7 @@ describe('TopoSkill', () => {
         vi.resetAllMocks();
     });
 
-    it('reports an installed skill when the files match', async () => {
+    it('reports an installed skill when the skill files match', async () => {
         vi.mocked(vscode.workspace.fs.readFile).mockResolvedValue(
             Uint8Array.from([1, 2, 3]),
         );
@@ -18,7 +18,7 @@ describe('TopoSkill', () => {
         await expect(topoSkill.getStatus()).resolves.toBe('installed');
     });
 
-    it('reports a missing skill when the installed file does not exist', async () => {
+    it('reports a missing skill when the installed skill file does not exist', async () => {
         vi.mocked(vscode.workspace.fs.readFile)
             .mockResolvedValueOnce(Uint8Array.from([1, 2, 3]))
             .mockRejectedValueOnce(
@@ -29,7 +29,7 @@ describe('TopoSkill', () => {
         await expect(topoSkill.getStatus()).resolves.toBe('missing');
     });
 
-    it('reports an outdated skill when the installed file differs', async () => {
+    it('reports an outdated skill when the installed skill file differs', async () => {
         vi.mocked(vscode.workspace.fs.readFile)
             .mockResolvedValueOnce(Uint8Array.from([1, 2, 3]))
             .mockResolvedValueOnce(Uint8Array.from([1, 2, 4]));
