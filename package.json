@@ -37,11 +37,6 @@
         ],
         "commands": [
             {
-                "command": "topo.initProject",
-                "title": "Initialize Project",
-                "category": "Topo"
-            },
-            {
                 "command": "topo.cloneProject",
                 "title": "Clone Project",
                 "icon": "$(repo-clone)",
