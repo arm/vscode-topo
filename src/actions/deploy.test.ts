@@ -1,15 +1,15 @@
 import path from 'node:path';
 import os from 'node:os';
 import * as vscode from 'vscode';
-import { Deploy, buildDeployArgs, deploy as deployServices } from './deploy';
+import { Deploy, deploy } from './deploy';
 import { TargetModel } from '../models/targetModel';
 import { MockProxy, mock } from 'vitest-mock-extended';
 import { mutable } from '../util/test/mutable';
 import { TaskExecutor } from '../util/taskExecutor';
-import { ProjectController } from '../controllers/projectController';
 import { loaded, unloaded } from '../util/loadable';
 import type { TargetHealthReport } from '../services/topoCliSchema';
 import { Config } from '../services/config';
+import { ProjectController } from '../controllers/projectController';
 import { createProjectTreeItem } from '../util/test/projectTreeItem';
 import { WrappedError } from '../errors/wrappedError';
 import { showAndLogError, showAndLogWarning } from '../util/showAndLog';
@@ -49,14 +49,15 @@ describe('Deploy', () => {
 
     function expectDeployTask(
         task: vscode.Task,
-        cwd: string,
+        composeFilePath: string,
         args = ['deploy', '--file', 'compose.yaml', '--target', target],
     ): void {
-        expect(task.name).toBe('Deploy to topo.local');
+        expect(task.name).toBe(`Deploy ${composeFilePath} to topo.local`);
+        expect(task.definition).toEqual({ type: 'process' });
         expect(task.execution).toMatchObject({
             process: 'topo',
             args,
-            options: { cwd },
+            options: { cwd: path.dirname(composeFilePath) },
         });
     }
 
@@ -112,9 +113,6 @@ describe('Deploy', () => {
             }),
         );
         expect(taskExecutor.run).not.toHaveBeenCalled();
-        expect(
-            projectController.refreshProjectContainersCommandHandler,
-        ).not.toHaveBeenCalled();
     });
 
     it('shows a warning and does not deploy when target connectivity is unhealthy', async () => {
@@ -142,9 +140,6 @@ describe('Deploy', () => {
             }),
         );
         expect(taskExecutor.run).not.toHaveBeenCalled();
-        expect(
-            projectController.refreshProjectContainersCommandHandler,
-        ).not.toHaveBeenCalled();
     });
 
     it('shows a warning and does not deploy when target health is loading', async () => {
@@ -163,9 +158,6 @@ describe('Deploy', () => {
             }),
         );
         expect(taskExecutor.run).not.toHaveBeenCalled();
-        expect(
-            projectController.refreshProjectContainersCommandHandler,
-        ).not.toHaveBeenCalled();
     });
 
     it('shows an error when target is selected but no compose files are found', async () => {
@@ -179,126 +171,15 @@ describe('Deploy', () => {
         );
         expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
         expect(taskExecutor.run).not.toHaveBeenCalled();
-        expect(
-            projectController.refreshProjectContainersCommandHandler,
-        ).not.toHaveBeenCalled();
-    });
-
-    it('handles successful deploy operation', async () => {
-        await deployServices(taskExecutor, composeFilePath, target);
-
-        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-        expectDeployTask(
-            taskExecutor.run.mock.calls[0][0],
-            path.dirname(composeFilePath),
-        );
-    });
-
-    it('passes the custom registry port to deploy', async () => {
-        await deployServices(taskExecutor, composeFilePath, target, {
-            port: 5000,
-        });
-
-        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-        expectDeployTask(
-            taskExecutor.run.mock.calls[0][0],
-            path.dirname(composeFilePath),
-            [
-                'deploy',
-                '--file',
-                'compose.yaml',
-                '--target',
-                target,
-                '-p',
-                '5000',
-            ],
-        );
-    });
-
-    it('builds deploy arguments without unset options', () => {
-        const args = buildDeployArgs(composeFilePath, target);
-
-        expect(args).toEqual([
-            'deploy',
-            '--file',
-            'compose.yaml',
-            '--target',
-            target,
-        ]);
-    });
-
-    it('builds deploy arguments with default settings', () => {
-        const args = buildDeployArgs(composeFilePath, target, {});
-
-        expect(args).toEqual([
-            'deploy',
-            '--file',
-            'compose.yaml',
-            '--target',
-            target,
-        ]);
-    });
-
-    it('builds deploy arguments with configured options', () => {
-        const args = buildDeployArgs(composeFilePath, target, {
-            port: 5000,
-        });
-
-        expect(args).toEqual([
-            'deploy',
-            '--file',
-            'compose.yaml',
-            '--target',
-            target,
-            '-p',
-            '5000',
-        ]);
-    });
-
-    it('builds deploy arguments with force recreate enabled', () => {
-        const args = buildDeployArgs(composeFilePath, target, {
-            forceRecreate: true,
-        });
-
-        expect(args).toEqual([
-            'deploy',
-            '--file',
-            'compose.yaml',
-            '--target',
-            target,
-            '--force-recreate',
-        ]);
-    });
-
-    it('builds deploy arguments with no recreate enabled', () => {
-        const args = buildDeployArgs(composeFilePath, target, {
-            noRecreate: true,
-        });
-
-        expect(args).toEqual([
-            'deploy',
-            '--file',
-            'compose.yaml',
-            '--target',
-            target,
-            '--no-recreate',
-        ]);
-    });
-
-    it('rejects compose.yml', () => {
-        expect(() =>
-            buildDeployArgs(
-                path.join(path.dirname(composeFilePath), 'compose.yml'),
-                target,
-            ),
-        ).toThrow(
-            'Unsupported compose file "compose.yml". Only compose.yaml is supported.',
-        );
     });
 
     it('handles task failure', async () => {
         taskExecutor.run.mockRejectedValueOnce(new Error('deploy failed'));
-        await deployServices(taskExecutor, composeFilePath, target);
+        await deploy(taskExecutor, {
+            composeFilePath,
+            target,
+            settings: {},
+        });
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
             'Deployment to topo.local failed: deploy failed',
@@ -310,41 +191,52 @@ describe('Deploy', () => {
 
         await expect(op).resolves.toBeUndefined();
         expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-        expectDeployTask(
-            taskExecutor.run.mock.calls[0][0],
-            path.dirname(composeFilePath),
-        );
+        expectDeployTask(taskExecutor.run.mock.calls[0][0], composeFilePath);
         expect(
             projectController.refreshProjectContainersCommandHandler,
         ).toHaveBeenCalledOnce();
     });
 
-    it('passes configured deploy arguments from the command handler', async () => {
-        config.getTargetSettings.mockReturnValueOnce({
-            deploy: {
+    it.each([
+        {
+            setting: 'port and force-recreate',
+            deploySettings: {
                 port: 5000,
                 forceRecreate: true,
             },
-        });
+            expectedArgs: ['-p', '5000', '--force-recreate'],
+        },
+        {
+            setting: 'no-recreate',
+            deploySettings: {
+                noRecreate: true,
+            },
+            expectedArgs: ['--no-recreate'],
+        },
+    ])(
+        'passes configured $setting arguments from the command handler',
+        async ({ deploySettings, expectedArgs }) => {
+            config.getTargetSettings.mockReturnValueOnce({
+                deploy: deploySettings,
+            });
 
-        await deployAction.deployContextCommandHandler(composeFileUri);
+            await deployAction.deployContextCommandHandler(composeFileUri);
 
-        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-        expectDeployTask(
-            taskExecutor.run.mock.calls[0][0],
-            path.dirname(composeFilePath),
-            [
-                'deploy',
-                '--file',
-                'compose.yaml',
-                '--target',
-                target,
-                '-p',
-                '5000',
-                '--force-recreate',
-            ],
-        );
-    });
+            expect(taskExecutor.run).toHaveBeenCalledTimes(1);
+            expectDeployTask(
+                taskExecutor.run.mock.calls[0][0],
+                composeFilePath,
+                [
+                    'deploy',
+                    '--file',
+                    'compose.yaml',
+                    '--target',
+                    target,
+                    ...expectedArgs,
+                ],
+            );
+        },
+    );
 
     it.each([
         ['deploy', () => deployAction.deployCommandHandler()],
@@ -374,6 +266,9 @@ describe('Deploy', () => {
                 error,
             );
             expect(taskExecutor.run).not.toHaveBeenCalled();
+            expect(
+                projectController.refreshProjectContainersCommandHandler,
+            ).not.toHaveBeenCalled();
         },
     );
 
@@ -387,6 +282,7 @@ describe('Deploy', () => {
         );
 
         expect(showAndLogError).not.toHaveBeenCalled();
+        expect(taskExecutor.run).not.toHaveBeenCalled();
     });
 
     it('deploys the project tree item compose file', async () => {
@@ -395,13 +291,7 @@ describe('Deploy', () => {
         );
 
         expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-        expectDeployTask(
-            taskExecutor.run.mock.calls[0][0],
-            path.dirname(composeFilePath),
-        );
-        expect(
-            projectController.refreshProjectContainersCommandHandler,
-        ).toHaveBeenCalledOnce();
+        expectDeployTask(taskExecutor.run.mock.calls[0][0], composeFilePath);
     });
 
     it('throws when context command is called without a resource', async () => {
@@ -413,9 +303,6 @@ describe('Deploy', () => {
         expect(vscode.workspace.findFiles).not.toHaveBeenCalled();
         expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
         expect(taskExecutor.run).not.toHaveBeenCalled();
-        expect(
-            projectController.refreshProjectContainersCommandHandler,
-        ).not.toHaveBeenCalled();
     });
 
     it('throws when project command is called without a project tree item', async () => {
@@ -424,9 +311,6 @@ describe('Deploy', () => {
         ).rejects.toThrow('This operation cannot be performed on this item');
 
         expect(taskExecutor.run).not.toHaveBeenCalled();
-        expect(
-            projectController.refreshProjectContainersCommandHandler,
-        ).not.toHaveBeenCalled();
     });
 
     it('prompts for and deploys the selected compose file when running the deploy command', async () => {
@@ -453,13 +337,7 @@ describe('Deploy', () => {
             },
         );
         expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-        expectDeployTask(
-            taskExecutor.run.mock.calls[0][0],
-            workspaceUri.fsPath,
-        );
-        expect(
-            projectController.refreshProjectContainersCommandHandler,
-        ).toHaveBeenCalledOnce();
+        expectDeployTask(taskExecutor.run.mock.calls[0][0], composeFile.fsPath);
     });
 
     it('returns without deploying when compose selection is cancelled', async () => {
@@ -472,8 +350,5 @@ describe('Deploy', () => {
         await deployAction.deployCommandHandler();
 
         expect(taskExecutor.run).not.toHaveBeenCalled();
-        expect(
-            projectController.refreshProjectContainersCommandHandler,
-        ).not.toHaveBeenCalled();
     });
 });

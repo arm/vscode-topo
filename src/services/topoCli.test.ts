@@ -281,25 +281,6 @@ describe('TopoCli', () => {
         );
     });
 
-    it('init resolves promise on success', async () => {
-        execFileMock.mockResolvedValue({ stdout: '', stderr: '' });
-        const workspacePath = '/fake/workspace';
-
-        await expect(topoCli.init(workspacePath)).resolves.toBeUndefined();
-
-        expect(execFileMock).toHaveBeenCalledWith(
-            topoCli.getBinaryPath(),
-            ['init'],
-            { ...defaultExecOptions, cwd: workspacePath },
-        );
-    });
-
-    it('init rejects promise on error', async () => {
-        execFileMock.mockRejectedValue(new Error('fail'));
-
-        await expect(topoCli.init('t')).rejects.toThrow('fail');
-    });
-
     it('ps parses JSON output and runs topo ps in the project directory', async () => {
         const output: PsOutput = {
             containers: [

@@ -6,7 +6,6 @@ import { executeCommand } from './util/test/executeCommand';
 import type { Mock } from 'vitest';
 import { logger } from './util/logger';
 import { TargetController } from './controllers/targetController';
-import { ProjectInit } from './actions/projectInit';
 import { Deploy } from './actions/deploy';
 import { Stop } from './actions/stop';
 import { OpenContainerShell } from './actions/openContainerShell';
@@ -29,7 +28,6 @@ describe('commands', () => {
         hostController: mock<HostController>(),
         projectController: mock<ProjectController>(),
         targetController: mock<TargetController>(),
-        projectInit: mock<ProjectInit>(),
         projectClone: mock<ProjectClone>(),
         configure: mock<Configure>(),
         deploy: mock<Deploy>(),
@@ -93,10 +91,6 @@ describe('commands', () => {
             [
                 commands.openSettings,
                 handlers.openSettings.openSettingsCommandHandler,
-            ],
-            [
-                commands.initProject,
-                handlers.projectInit.initProjectCommandHandler,
             ],
             [commands.cloneProject, handlers.projectClone.cloneCommandHandler],
             [

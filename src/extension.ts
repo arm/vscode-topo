@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import * as commands from './commands';
 import { TopoCli } from './services/topoCli';
-import { ProjectInit } from './actions/projectInit';
 import { TargetStatusBarItemView } from './views/targetStatusBarItemView';
 import { TargetTreeView } from './views/targetTreeView';
 import { ContainerLifecycle } from './actions/containerLifecycle';
@@ -109,7 +108,6 @@ export async function activate(
     );
 
     const config = new Config();
-    const projectInit = new ProjectInit(topoCli);
     const taskExecutor = new TaskExecutor(topoCli);
     const configure = new Configure(taskExecutor);
     const projectCloner = new ProjectCloner(taskExecutor);
@@ -138,7 +136,6 @@ export async function activate(
             hostController,
             projectController,
             targetController,
-            projectInit,
             configure,
             deploy,
             stop,
