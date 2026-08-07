@@ -3,7 +3,6 @@ import { getErrorMessage } from '../util/getErrorMessage';
 import { TaskExecutor } from '../util/taskExecutor';
 import { showAndLogError, showAndLogWarning } from '../util/showAndLog';
 import { TargetModel } from '../models/targetModel';
-import { ProjectController } from '../controllers/projectController';
 import { isWrappedError } from '../errors/wrappedError';
 import {
     COMPOSE_FILE_GLOB,
@@ -17,12 +16,13 @@ import {
     assertTargetSelected,
 } from '../util/assertTargetReady';
 import {
-    topoDeployTaskSpec,
-    type TopoDeployTaskInvocation,
-} from '../tasks/topoDeployTask';
+    type TopoDeployTaskDefinition,
+    type DeployTaskSpec,
+} from '../tasks/deployTaskSpec';
 import { createTopoComposeTask } from '../tasks/topoComposeTask';
 import { Config } from '../services/config';
 import type { TargetDeploySettings } from '../util/targetSettings';
+import { TOPO_DEPLOY_TASK_TYPE } from '../manifest';
 
 const viewLogsItem: vscode.MessageItem = {
     title: 'View Logs',
@@ -41,8 +41,8 @@ export class Deploy {
     constructor(
         private readonly taskExecutor: TaskExecutor,
         private readonly targetModel: TargetModel,
-        private readonly projectController: ProjectController,
         private readonly config: Config,
+        private readonly taskSpec: DeployTaskSpec,
     ) {}
 
     public async deployCommandHandler(): Promise<void> {
@@ -129,12 +129,12 @@ export class Deploy {
         resource: vscode.Uri,
         deployTarget: DeployTarget,
     ): Promise<void> {
-        await deploy(this.taskExecutor, {
+        await deploy(this.taskExecutor, this.taskSpec, {
+            type: TOPO_DEPLOY_TASK_TYPE,
             target: deployTarget.target,
-            composeFilePath: resource.fsPath,
+            composeFile: resource.fsPath,
             settings: deployTarget.settings,
         });
-        await this.projectController.refreshProjectContainersCommandHandler();
     }
 }
 
@@ -159,10 +159,11 @@ async function promptForComposeFile(
 
 export async function deploy(
     taskExecutor: TaskExecutor,
-    invocation: TopoDeployTaskInvocation,
+    taskSpec: DeployTaskSpec,
+    definition: TopoDeployTaskDefinition,
 ): Promise<void> {
-    const { target } = invocation;
-    const task = createTopoComposeTask(topoDeployTaskSpec, invocation);
+    const { target } = definition;
+    const task = createTopoComposeTask(taskSpec, definition);
     const taskName = task.name;
 
     try {

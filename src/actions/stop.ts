@@ -3,18 +3,18 @@ import { getErrorMessage } from '../util/getErrorMessage';
 import { TaskExecutor } from '../util/taskExecutor';
 import { showAndLogWarning } from '../util/showAndLog';
 import { TargetModel } from '../models/targetModel';
-import { ProjectController } from '../controllers/projectController';
 import { assertProjectTreeItem } from '../views/treeItems/assertProjectTreeItem';
 import { isWrappedError } from '../errors/wrappedError';
 import {
     assertTargetConnected,
     assertTargetSelected,
 } from '../util/assertTargetReady';
-import {
-    topoStopTaskSpec,
-    type TopoStopTaskInvocation,
-} from '../tasks/topoStopTask';
+import type {
+    TopoStopTaskDefinition,
+    StopTaskSpec,
+} from '../tasks/stopTaskSpec';
 import { createTopoComposeTask } from '../tasks/topoComposeTask';
+import { TOPO_STOP_TASK_TYPE } from '../manifest';
 
 const viewLogsItem: vscode.MessageItem = {
     title: 'View Logs',
@@ -24,7 +24,7 @@ export class Stop {
     constructor(
         private readonly taskExecutor: TaskExecutor,
         private readonly targetModel: TargetModel,
-        private readonly projectController: ProjectController,
+        private readonly taskSpec: StopTaskSpec,
     ) {}
 
     public async stopCommandHandler(resource?: vscode.Uri): Promise<void> {
@@ -45,11 +45,11 @@ export class Stop {
             throw err;
         }
 
-        await stop(this.taskExecutor, {
+        await stop(this.taskExecutor, this.taskSpec, {
+            type: TOPO_STOP_TASK_TYPE,
             target,
-            composeFilePath: resource.fsPath,
+            composeFile: resource.fsPath,
         });
-        await this.projectController.refreshProjectContainersCommandHandler();
     }
 
     public async stopProjectCommandHandler(treeNode: unknown): Promise<void> {
@@ -60,10 +60,11 @@ export class Stop {
 
 export async function stop(
     taskExecutor: TaskExecutor,
-    invocation: TopoStopTaskInvocation,
+    taskSpec: StopTaskSpec,
+    definition: TopoStopTaskDefinition,
 ): Promise<void> {
-    const { target } = invocation;
-    const task = createTopoComposeTask(topoStopTaskSpec, invocation);
+    const { target } = definition;
+    const task = createTopoComposeTask(taskSpec, definition);
     const taskName = task.name;
 
     try {

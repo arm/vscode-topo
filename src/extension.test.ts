@@ -15,7 +15,7 @@ describe('extension activation', () => {
         vi.resetAllMocks();
     });
 
-    it('registers commands and prepares disposables', async () => {
+    it('registers commands, tasks, and prepares disposables', async () => {
         vi.useFakeTimers();
         const setTimeoutSpy = vi.spyOn(global, 'setTimeout');
         const context = mock<vscode.ExtensionContext>({
@@ -27,6 +27,7 @@ describe('extension activation', () => {
         await activate(context);
 
         expect(vscode.commands.registerCommand).toHaveBeenCalled();
+        expect(vscode.tasks.registerTaskProvider).toHaveBeenCalled();
         expect(context.subscriptions.length).toBeGreaterThan(0);
         expect(setTimeoutSpy).toHaveBeenCalledWith(
             expect.any(Function),

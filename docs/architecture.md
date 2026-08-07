@@ -1,14 +1,15 @@
 # Codebase Architecture
 
-As a VS Code extension, interaction is mostly done via [commands](https://code.visualstudio.com/api/extension-guides/command). Our responsibility is to handle commands from the user, their agent(s) or other parts of the extension and do something useful.
+As a VS Code extension, interaction enters through [commands](https://code.visualstudio.com/api/extension-guides/command), [tasks](https://code.visualstudio.com/docs/debugtest/tasks), and scheduled jobs. Our responsibility is to handle those entry points from the user, their agent(s), other parts of the extension or VS Code itself and do something useful.
 
 There are two primary types of command - ones that need to directly update the UI by querying the outside world, and those that are side-effect only that are mostly designed to surface useful operations the user may want to perform in VS Code. The former type of commands are handled by **controllers**, while the latter are handled by **actions**. Shared, multi-step application use cases can be delegated to **operations**. Controllers, actions and operations can call **services** to talk to external systems.
 
-At the top-level of the extension we create a command registry which is responsible for routing VS Code command strings to action/controller command handlers. At this same level, the extension has the option to register any method of invoking command handlers that it needs. For example, we run a periodic refresh event of certain target state every few seconds. We register such systems alongside the command router than making use of it for type safety guarantees and to skip the VS Code plumbing where it is unneeded.
+At the top-level of the extension we register these entry points. The command registry routes VS Code command strings to action/controller command handlers. The extension can also invoke command handlers directly when VS Code plumbing is unneeded. For example, we run a periodic refresh of certain target state every few seconds.
 
 ```mermaid
 flowchart LR
     vscode["VS Code Commands<br/>(user/app/agent)"] --> router["Command Router<br/>(commands.ts)"]
+    task["VS Code Tasks<br/>(user/app/agent)"] --> service
     scheduled["Scheduled jobs<br/>(automatic refreshes)"] --> controller
 
     router --> controller["Controller"]
@@ -33,6 +34,10 @@ Actions are standalone operations that users may want to perform that we surface
 
 The important distinction for us is that actions are command handlers that do not need to directly update the state of UI. This means they're usually side-effect-like operations like launching terminals or displaying the output of a given topo command in an editor tab. However, they can invoke other commands which may mutate the UI if required.
 
+## Tasks
+
+Tasks are declarative entry points for repeatable operations. They run independently of the command router and must contain the inputs they need rather than relying on transient UI state.
+
 ## Operations
 
 Operations coordinate application use cases that are shared by multiple entry points or have enough sequencing to benefit from a dedicated abstraction. They own sequencing, cancellation points, validation and error translation, using utilities for common behaviour and services for external-system access.
@@ -41,7 +46,7 @@ Operations do not register commands, directly mutate models or wrap external sys
 
 ## Services
 
-Services wrap external systems and persistence, such as the Topo CLI. Controllers, actions and operations call services; services must not mutate models, render views, or register commands.
+Services wrap external systems and persistence, such as the Topo CLI. Controllers, actions, operations, and tasks call services; services must not mutate models, render views, or register commands.
 
 ## MVC
 

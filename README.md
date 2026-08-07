@@ -107,6 +107,33 @@ Configure a project's parameters, or deploy or stop it on the selected target. A
 - Running **Topo: Deploy** from the Command Palette, then selecting a `compose.yaml` file from the workspace.
 - Right-clicking `compose.yaml` in the Explorer or editor tab and selecting **Topo Configure**, **Topo Deploy**, or **Topo Stop**.
 - Using the inline **Configure**, **Deploy**, or **Stop** buttons on a project in the **Projects** view.
+- Running a configured **Topo** deploy or stop task with **Tasks: Run Task**.
+
+### Customize a Topo Task
+
+Add a Topo task to `.vscode/tasks.json` using a compose file path relative to its workspace folder:
+
+```json
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "topo.deploy",
+            "composeFile": "examples/camera/compose.yaml",
+            "target": "topo.local",
+            "label": "Deploy camera"
+        },
+        {
+            "type": "topo.stop",
+            "composeFile": "examples/camera/compose.yaml",
+            "target": "topo.local",
+            "label": "Stop camera"
+        }
+    ]
+}
+```
+
+Configured tasks require an explicit `target`.
 
 ## Project Management
 

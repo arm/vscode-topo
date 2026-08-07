@@ -9,10 +9,11 @@ import { TaskExecutor } from '../util/taskExecutor';
 import { loaded, unloaded } from '../util/loadable';
 import type { TargetHealthReport } from '../services/topoCliSchema';
 import { Config } from '../services/config';
-import { ProjectController } from '../controllers/projectController';
 import { createProjectTreeItem } from '../util/test/projectTreeItem';
 import { WrappedError } from '../errors/wrappedError';
 import { showAndLogError, showAndLogWarning } from '../util/showAndLog';
+import { TOPO_DEPLOY_TASK_TYPE } from '../manifest';
+import { DeployTaskSpec } from '../tasks/deployTaskSpec';
 
 vi.mock('../util/showAndLog');
 
@@ -25,7 +26,7 @@ describe('Deploy', () => {
     const composeFileUri = vscode.Uri.file(
         path.join(os.tmpdir(), 'compose.yaml'),
     );
-    const composeFilePath = composeFileUri.fsPath;
+    const composeFile = composeFileUri.fsPath;
     const target = 'topo.local';
     const targetHealth: TargetHealthReport = {
         destination: `ssh://${target}`,
@@ -44,20 +45,23 @@ describe('Deploy', () => {
     };
     let taskExecutor: MockProxy<TaskExecutor>;
     let targetModel: TargetModel;
-    let projectController: MockProxy<ProjectController>;
     let config: MockProxy<Config>;
 
     function expectDeployTask(
         task: vscode.Task,
-        composeFilePath: string,
+        composeFile: string,
         args = ['deploy', '--file', 'compose.yaml', '--target', target],
     ): void {
-        expect(task.name).toBe(`Deploy ${composeFilePath} to topo.local`);
-        expect(task.definition).toEqual({ type: 'process' });
+        expect(task.name).toBe(`Deploy ${composeFile} to topo.local`);
+        expect(task.definition).toMatchObject({
+            type: TOPO_DEPLOY_TASK_TYPE,
+            composeFile,
+            target,
+        });
         expect(task.execution).toMatchObject({
             process: 'topo',
             args,
-            options: { cwd: path.dirname(composeFilePath) },
+            options: { cwd: path.dirname(composeFile) },
         });
     }
 
@@ -78,7 +82,6 @@ describe('Deploy', () => {
         targetModel = new TargetModel();
         targetModel.setSelected(target);
         targetModel.setSelectedTargetHealth(loaded(targetHealth));
-        projectController = mock<ProjectController>();
         config = mock<Config>();
         config.getTargetSettings.mockReturnValue({});
         vi.mocked(vscode.workspace.findFiles).mockResolvedValue([]);
@@ -89,8 +92,8 @@ describe('Deploy', () => {
         deployAction = new Deploy(
             taskExecutor,
             targetModel,
-            projectController,
             config,
+            new DeployTaskSpec(config),
         );
     });
 
@@ -175,8 +178,9 @@ describe('Deploy', () => {
 
     it('handles task failure', async () => {
         taskExecutor.run.mockRejectedValueOnce(new Error('deploy failed'));
-        await deploy(taskExecutor, {
-            composeFilePath,
+        await deploy(taskExecutor, new DeployTaskSpec(config), {
+            type: TOPO_DEPLOY_TASK_TYPE,
+            composeFile,
             target,
             settings: {},
         });
@@ -191,10 +195,7 @@ describe('Deploy', () => {
 
         await expect(op).resolves.toBeUndefined();
         expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-        expectDeployTask(taskExecutor.run.mock.calls[0][0], composeFilePath);
-        expect(
-            projectController.refreshProjectContainersCommandHandler,
-        ).toHaveBeenCalledOnce();
+        expectDeployTask(taskExecutor.run.mock.calls[0][0], composeFile);
     });
 
     it.each([
@@ -223,18 +224,14 @@ describe('Deploy', () => {
             await deployAction.deployContextCommandHandler(composeFileUri);
 
             expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-            expectDeployTask(
-                taskExecutor.run.mock.calls[0][0],
-                composeFilePath,
-                [
-                    'deploy',
-                    '--file',
-                    'compose.yaml',
-                    '--target',
-                    target,
-                    ...expectedArgs,
-                ],
-            );
+            expectDeployTask(taskExecutor.run.mock.calls[0][0], composeFile, [
+                'deploy',
+                '--file',
+                'compose.yaml',
+                '--target',
+                target,
+                ...expectedArgs,
+            ]);
         },
     );
 
@@ -266,9 +263,6 @@ describe('Deploy', () => {
                 error,
             );
             expect(taskExecutor.run).not.toHaveBeenCalled();
-            expect(
-                projectController.refreshProjectContainersCommandHandler,
-            ).not.toHaveBeenCalled();
         },
     );
 
@@ -291,7 +285,7 @@ describe('Deploy', () => {
         );
 
         expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-        expectDeployTask(taskExecutor.run.mock.calls[0][0], composeFilePath);
+        expectDeployTask(taskExecutor.run.mock.calls[0][0], composeFile);
     });
 
     it('throws when context command is called without a resource', async () => {

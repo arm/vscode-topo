@@ -22,6 +22,7 @@ import { ProjectModel } from './models/projectModel';
 import { ProjectClone } from './actions/projectClone';
 import { showAndLogError } from './util/showAndLog';
 import { topo } from '../package.json';
+import { TOPO_DEPLOY_TASK_TYPE, TOPO_STOP_TASK_TYPE } from './manifest';
 import { RefreshLoop } from './util/refreshLoop';
 import { ProjectController } from './controllers/projectController';
 import { TaskExecutor } from './util/taskExecutor';
@@ -32,6 +33,9 @@ import { Config } from './services/config';
 import { Configure } from './actions/configure';
 import { ProjectCloner } from './operations/projectCloner';
 import { InstallSkill } from './actions/installSkill';
+import { DeployTaskSpec } from './tasks/deployTaskSpec';
+import { StopTaskSpec } from './tasks/stopTaskSpec';
+import { TopoTaskProvider } from './tasks/topoTaskProvider';
 
 const SELECTED_TARGET_REFRESH_INTERVAL_MS = 60_000;
 
@@ -107,16 +111,23 @@ export async function activate(
 
     const config = new Config();
     const taskExecutor = new TaskExecutor(topoCli);
+    const deployTaskSpec = new DeployTaskSpec(config);
+    const stopTaskSpec = new StopTaskSpec();
+    const deployTaskProvider = new TopoTaskProvider(
+        taskExecutor,
+        deployTaskSpec,
+    );
+    const stopTaskProvider = new TopoTaskProvider(taskExecutor, stopTaskSpec);
     const configure = new Configure(taskExecutor);
     const projectCloner = new ProjectCloner(taskExecutor);
     const projectClone = new ProjectClone(topoCli, targetModel, projectCloner);
     const deploy = new Deploy(
         taskExecutor,
         targetModel,
-        projectController,
         config,
+        deployTaskSpec,
     );
-    const stop = new Stop(taskExecutor, targetModel, projectController);
+    const stop = new Stop(taskExecutor, targetModel, stopTaskSpec);
     const openContainerShell = new OpenContainerShell(dockerCommands);
     const connectViaSSH = new ConnectViaSSH(targetModel);
     const openContainerInBrowser = new OpenContainerInBrowser();
@@ -130,6 +141,14 @@ export async function activate(
     const protocolHandler = new ProtocolHandler(projectCloner);
 
     context.subscriptions.push(
+        vscode.tasks.registerTaskProvider(
+            TOPO_DEPLOY_TASK_TYPE,
+            deployTaskProvider,
+        ),
+        vscode.tasks.registerTaskProvider(
+            TOPO_STOP_TASK_TYPE,
+            stopTaskProvider,
+        ),
         commands.register({
             hostController,
             projectController,

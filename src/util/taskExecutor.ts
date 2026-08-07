@@ -11,7 +11,7 @@ export class TaskExecutor {
         await waitForTaskProcess(taskExecution, task.name);
     }
 
-    private resolveProcessTaskBinary(task: vscode.Task): vscode.Task {
+    public resolveProcessTaskBinary(task: vscode.Task): vscode.Task {
         const execution = task.execution;
         if (!(execution instanceof vscode.ProcessExecution)) {
             return task;
@@ -26,17 +26,7 @@ export class TaskExecutor {
             execution.args,
             execution.options,
         );
-        const resolvedTask = new vscode.Task(
-            task.definition,
-            task.scope ?? vscode.TaskScope.Workspace,
-            task.name,
-            task.source,
-            resolvedExecution,
-            task.problemMatchers,
-        );
-        resolvedTask.presentationOptions = task.presentationOptions;
-        resolvedTask.group = task.group;
-        resolvedTask.isBackground = task.isBackground;
-        return resolvedTask;
+        task.execution = resolvedExecution;
+        return task;
     }
 }

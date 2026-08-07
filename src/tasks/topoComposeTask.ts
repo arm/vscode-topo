@@ -2,28 +2,88 @@ import path from 'node:path';
 import * as vscode from 'vscode';
 import { assertComposeFilePath } from '../util/composeFile';
 import { createProcessTask } from '../util/task';
+import type { TopoTaskSpec } from './topoTaskProvider';
 
-export interface TopoComposeTaskInvocation {
-    readonly composeFilePath: string;
+export interface TopoComposeTaskDefinition extends vscode.TaskDefinition {
+    readonly composeFile: string;
     readonly target: string;
 }
 
-interface TopoComposeTaskSpec<TInvocation extends TopoComposeTaskInvocation> {
-    createArgs(invocation: TInvocation): string[];
-    createTaskName(composeFilePath: string, target: string): string;
-}
-
 export const createTopoComposeTask = <
-    TInvocation extends TopoComposeTaskInvocation,
+    TDefinition extends TopoComposeTaskDefinition,
 >(
-    taskSpec: TopoComposeTaskSpec<TInvocation>,
-    invocation: TInvocation,
+    taskSpec: TopoTaskSpec<TDefinition>,
+    definition: TDefinition,
 ): vscode.Task => {
-    const { target, composeFilePath } = invocation;
-    assertComposeFilePath(composeFilePath);
-    const taskName = taskSpec.createTaskName(composeFilePath, target);
-    const command = ['topo', ...taskSpec.createArgs(invocation)];
-    const cwd = path.dirname(composeFilePath);
+    const taskName = taskSpec.createTaskName(definition);
+    const command = ['topo', ...taskSpec.createArgs(definition)];
+    const cwd = taskSpec.createCwd(definition);
 
-    return createProcessTask(taskName, command, { cwd });
+    return createProcessTask(taskName, command, {
+        cwd,
+        definition,
+    });
+};
+
+export const createTopoComposeTaskCwd = (
+    definition: TopoComposeTaskDefinition,
+): string => {
+    assertComposeFilePath(definition.composeFile);
+    return path.dirname(definition.composeFile);
+};
+
+export const resolveTopoComposeTaskDefinition = (
+    task: vscode.Task,
+): TopoComposeTaskDefinition | undefined => {
+    const { composeFile, target, type } = task.definition;
+    if (!isNonEmptyString(composeFile) || !isNonEmptyString(target)) {
+        return undefined;
+    }
+
+    const workspaceFolder = getTaskWorkspaceFolder(task);
+    const resolvedComposeFile = resolveComposeFilePath(
+        composeFile,
+        workspaceFolder,
+    );
+    if (!resolvedComposeFile) {
+        return undefined;
+    }
+
+    assertComposeFilePath(resolvedComposeFile);
+
+    return {
+        ...task.definition,
+        composeFile: resolvedComposeFile,
+        target,
+        type,
+    };
+};
+
+const getTaskWorkspaceFolder = (
+    task: vscode.Task,
+): vscode.WorkspaceFolder | undefined => {
+    if (typeof task.scope === 'object') {
+        return task.scope;
+    }
+
+    const workspaceFolders = vscode.workspace.workspaceFolders ?? [];
+    return workspaceFolders.length === 1 ? workspaceFolders[0] : undefined;
+};
+
+const resolveComposeFilePath = (
+    composeFile: string,
+    workspaceFolder: vscode.WorkspaceFolder | undefined,
+): string | undefined => {
+    if (path.isAbsolute(composeFile)) {
+        return composeFile;
+    }
+    if (!workspaceFolder) {
+        return undefined;
+    }
+
+    return path.resolve(workspaceFolder.uri.fsPath, composeFile);
+};
+
+const isNonEmptyString = (value: unknown): value is string => {
+    return typeof value === 'string' && value.trim().length > 0;
 };

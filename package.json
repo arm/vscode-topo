@@ -35,6 +35,44 @@
                 "path": "./skills/topo-cli-location/SKILL.md"
             }
         ],
+        "taskDefinitions": [
+            {
+                "type": "topo.deploy",
+                "when": "processExecutionSupported",
+                "required": [
+                    "composeFile",
+                    "target"
+                ],
+                "properties": {
+                    "composeFile": {
+                        "type": "string",
+                        "description": "Path to compose.yaml to deploy, relative to the task's workspace folder or absolute."
+                    },
+                    "target": {
+                        "type": "string",
+                        "description": "Topo target to deploy to."
+                    }
+                }
+            },
+            {
+                "type": "topo.stop",
+                "when": "processExecutionSupported",
+                "required": [
+                    "composeFile",
+                    "target"
+                ],
+                "properties": {
+                    "composeFile": {
+                        "type": "string",
+                        "description": "Path to compose.yaml to stop, relative to the task's workspace folder or absolute."
+                    },
+                    "target": {
+                        "type": "string",
+                        "description": "Topo target to stop."
+                    }
+                }
+            }
+        ],
         "commands": [
             {
                 "command": "topo.cloneProject",
