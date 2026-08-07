@@ -4,7 +4,6 @@ import { PACKAGE_NAME } from './manifest';
 import * as vscode from 'vscode';
 import { logger } from './util/logger';
 import { DisposableCollector } from './util/disposableCollector';
-import { ProjectInit } from './actions/projectInit';
 import { Deploy } from './actions/deploy';
 import { Stop } from './actions/stop';
 import { OpenContainerShell } from './actions/openContainerShell';
@@ -30,7 +29,6 @@ export const selectTarget = command('selectTarget');
 export const resetExtensionData = command('resetExtensionData');
 export const clearTargetSelection = command('clearTargetSelection');
 export const openSettings = command('openSettings');
-export const initProject = command('initProject');
 export const cloneProject = command('cloneProject');
 export const deploy = command('deploy');
 export const deployContext = command('deploy.context');
@@ -55,7 +53,6 @@ export interface CommandHandlers {
     hostController: HostController;
     projectController: ProjectController;
     targetController: TargetController;
-    projectInit: ProjectInit;
     projectClone: ProjectClone;
     configure: Configure;
     deploy: Deploy;
@@ -93,9 +90,6 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
         ),
         vscode.commands.registerCommand(openSettings, () =>
             handlers.openSettings.openSettingsCommandHandler(),
-        ),
-        vscode.commands.registerCommand(initProject, () =>
-            handlers.projectInit.initProjectCommandHandler(),
         ),
         vscode.commands.registerCommand(cloneProject, () =>
             handlers.projectClone.cloneCommandHandler(),

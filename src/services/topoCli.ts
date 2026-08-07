@@ -184,10 +184,6 @@ export class TopoCli {
         );
     }
 
-    public async init(projectPath: string): Promise<void> {
-        await this.exec(['init'], { cwd: projectPath });
-    }
-
     public async ps(
         sshTarget: string,
         composeFilePath: string,

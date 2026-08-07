@@ -116,10 +116,6 @@ When a target is selected, each project can expand to show deployed containers f
 
 Use the inline buttons on a project row to configure, deploy, or stop that project's compose file. These actions behave the same as running **Topo Configure**, **Topo Deploy**, or **Topo Stop** from the context menu of the project's compose file.
 
-### Initialize a Project
-
-Use the **Topo: Initialize Project** command from the Command Palette to create a new Topo project in the current workspace.
-
 ### Clone a Project
 
 Two clone commands are available from the Command Palette:
@@ -151,7 +147,6 @@ Commands available from the Command Palette:
 
 | Command                      | Description                                                         |
 | ---------------------------- | ------------------------------------------------------------------- |
-| `Topo: Initialize Project`   | Initialize a new Topo project in the workspace.                     |
 | `Topo: Clone Remote Project` | Clone from a custom Git repository or a curated list of projects.   |
 | `Topo: Clone Local Project`  | Clone a project from a local directory.                             |
 | `Topo: Deploy`               | Select and deploy a compose file to the target.                     |
