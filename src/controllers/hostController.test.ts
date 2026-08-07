@@ -42,7 +42,7 @@ describe('HostController', () => {
         expect(topoSkill.getStatus).toHaveBeenCalled();
     });
 
-    it('refreshes host health and rechecks the skill status on command', async () => {
+    it('refreshes host health and skill status on command', async () => {
         const topoCli = mock<TopoCli>({
             hostHealth: vi.fn().mockResolvedValue(hostHealth),
         });
