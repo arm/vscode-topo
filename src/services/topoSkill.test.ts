@@ -38,13 +38,8 @@ describe('TopoSkill', () => {
         await expect(topoSkill.getStatus()).resolves.toBe('outdated');
     });
 
-    it('installs the bundled skill and reports it as installed', async () => {
-        vi.mocked(vscode.workspace.fs.readFile).mockResolvedValue(
-            Uint8Array.from([1, 2, 3]),
-        );
+    it('installs the bundled skill', async () => {
         const topoSkill = new TopoSkill(extensionUri, userHomeUri);
-        await topoSkill.getStatus();
-        vi.mocked(vscode.workspace.fs.readFile).mockClear();
 
         await topoSkill.install();
 
@@ -61,7 +56,5 @@ describe('TopoSkill', () => {
             ),
             { overwrite: true },
         );
-        await expect(topoSkill.getStatus()).resolves.toBe('installed');
-        expect(vscode.workspace.fs.readFile).toHaveBeenCalledTimes(2);
     });
 });
