@@ -11,9 +11,8 @@ import {
 } from '../util/assertTargetReady';
 import type {
     TopoStopTaskDefinition,
-    StopTaskSpec,
-} from '../tasks/stopTaskSpec';
-import { createTopoComposeTask } from '../tasks/topoComposeTask';
+    StopTaskFactory,
+} from '../tasks/stopTaskFactory';
 import { TOPO_STOP_TASK_TYPE } from '../manifest';
 
 const viewLogsItem: vscode.MessageItem = {
@@ -24,7 +23,7 @@ export class Stop {
     constructor(
         private readonly taskExecutor: TaskExecutor,
         private readonly targetModel: TargetModel,
-        private readonly taskSpec: StopTaskSpec,
+        private readonly taskFactory: StopTaskFactory,
     ) {}
 
     public async stopCommandHandler(resource?: vscode.Uri): Promise<void> {
@@ -45,11 +44,12 @@ export class Stop {
             throw err;
         }
 
-        await stop(this.taskExecutor, this.taskSpec, {
+        const definition: TopoStopTaskDefinition = {
             type: TOPO_STOP_TASK_TYPE,
             target,
             composeFile: resource.fsPath,
-        });
+        };
+        await stop(this.taskExecutor, this.taskFactory, definition);
     }
 
     public async stopProjectCommandHandler(treeNode: unknown): Promise<void> {
@@ -60,11 +60,11 @@ export class Stop {
 
 export async function stop(
     taskExecutor: TaskExecutor,
-    taskSpec: StopTaskSpec,
+    taskFactory: StopTaskFactory,
     definition: TopoStopTaskDefinition,
 ): Promise<void> {
     const { target } = definition;
-    const task = createTopoComposeTask(taskSpec, definition);
+    const task = taskFactory.createTask(definition);
     const taskName = task.name;
 
     try {

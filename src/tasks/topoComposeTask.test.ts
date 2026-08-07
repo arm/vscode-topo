@@ -1,16 +1,13 @@
 import path from 'node:path';
 import * as vscode from 'vscode';
-import { mock, type MockProxy } from 'vitest-mock-extended';
-import { TopoCli } from '../services/topoCli';
+import { createTask } from '../util/task';
 import { mutable } from '../util/test/mutable';
-import { TaskExecutor } from '../util/taskExecutor';
 import {
-    createTopoComposeTask,
     createTopoComposeTaskCwd,
     resolveTopoComposeTaskDefinition,
     type TopoComposeTaskDefinition,
 } from './topoComposeTask';
-import { TopoTaskProvider } from './topoTaskProvider';
+import { TopoTaskProvider, type TopoTaskFactory } from './topoTaskProvider';
 
 describe('Topo compose tasks', () => {
     const workspaceFolder: vscode.WorkspaceFolder = {
@@ -24,19 +21,33 @@ describe('Topo compose tasks', () => {
     const createTestTaskArgs = (
         definition: TopoComposeTaskDefinition,
     ): string[] => ['test', '--target', definition.target];
-    const taskSpec = {
+    const createTestExecution = (
+        definition: TopoComposeTaskDefinition,
+    ): vscode.ProcessExecution =>
+        new vscode.ProcessExecution(
+            topoBinaryPath,
+            createTestTaskArgs(definition),
+            { cwd: createTopoComposeTaskCwd(definition) },
+        );
+    const createTestTask = (
+        definition: TopoComposeTaskDefinition,
+    ): vscode.Task => {
+        const execution = createTestExecution(definition);
+        return createTask(
+            `Test ${definition.composeFile} on ${definition.target}`,
+            execution,
+            { cwd: execution.options?.cwd, definition },
+        );
+    };
+    const taskFactory: TopoTaskFactory<TopoComposeTaskDefinition> = {
         type: taskType,
         resolveDefinition: (
             task: vscode.Task,
         ): TopoComposeTaskDefinition | undefined =>
             resolveTopoComposeTaskDefinition(task),
-        createCwd: createTopoComposeTaskCwd,
-        createTaskName: (definition: TopoComposeTaskDefinition): string =>
-            `Test ${definition.composeFile} on ${definition.target}`,
-        createArgs: createTestTaskArgs,
+        createExecution: createTestExecution,
+        createTask: createTestTask,
     };
-    let topoCli: MockProxy<TopoCli>;
-    let taskExecutor: TaskExecutor;
     let taskProvider: TopoTaskProvider<TopoComposeTaskDefinition>;
 
     const createConfiguredTask = (
@@ -50,10 +61,7 @@ describe('Topo compose tasks', () => {
         );
 
     beforeEach(() => {
-        topoCli = mock<TopoCli>();
-        topoCli.getBinaryPath.mockReturnValue(topoBinaryPath);
-        taskExecutor = new TaskExecutor(topoCli);
-        taskProvider = new TopoTaskProvider(taskExecutor, taskSpec);
+        taskProvider = new TopoTaskProvider(taskFactory);
         mutable(vscode.workspace).workspaceFolders = [workspaceFolder];
     });
 
@@ -64,7 +72,7 @@ describe('Topo compose tasks', () => {
 
     it('rejects unsupported compose file names', () => {
         expect(() =>
-            createTopoComposeTask(taskSpec, {
+            taskFactory.createTask({
                 type: taskType,
                 target,
                 composeFile: '/projects/camera/compose.yml',
@@ -82,7 +90,7 @@ describe('Topo compose tasks', () => {
             additionalProperty: 'preserved',
         };
 
-        const task = createTopoComposeTask(taskSpec, definition);
+        const task = taskFactory.createTask(definition);
 
         expect(task.definition).toEqual(definition);
     });

@@ -3,12 +3,12 @@ import { mock, type MockProxy } from 'vitest-mock-extended';
 import { WrappedError } from '../errors/wrappedError';
 import { TOPO_DEPLOY_TASK_TYPE } from '../manifest';
 import { Config } from '../services/config';
+import { TopoCli } from '../services/topoCli';
 import { logger } from '../util/logger';
-import { TaskExecutor } from '../util/taskExecutor';
 import {
-    DeployTaskSpec,
+    DeployTaskFactory,
     type TopoDeployTaskDefinition,
-} from './deployTaskSpec';
+} from './deployTaskFactory';
 import { TopoTaskProvider } from './topoTaskProvider';
 
 vi.mock('../util/logger');
@@ -16,8 +16,9 @@ vi.mock('../util/logger');
 describe('Topo deploy task', () => {
     const target = 'topo.local';
     const composeFile = '/projects/camera/compose.yaml';
+    const topoBinaryPath = '/extension/resources/topo';
     let config: MockProxy<Config>;
-    let taskExecutor: MockProxy<TaskExecutor>;
+    let topoCli: MockProxy<TopoCli>;
     let taskProvider: TopoTaskProvider<TopoDeployTaskDefinition>;
 
     const createConfiguredTask = (configuredTarget = target): vscode.Task =>
@@ -35,13 +36,10 @@ describe('Topo deploy task', () => {
     beforeEach(() => {
         config = mock<Config>();
         config.getTargetSettings.mockReturnValue({});
-        taskExecutor = mock<TaskExecutor>();
-        taskExecutor.resolveProcessTaskBinary.mockImplementation(
-            (task) => task,
-        );
+        topoCli = mock<TopoCli>();
+        topoCli.getBinaryPath.mockReturnValue(topoBinaryPath);
         taskProvider = new TopoTaskProvider(
-            taskExecutor,
-            new DeployTaskSpec(config),
+            new DeployTaskFactory(config, topoCli),
         );
         vi.mocked(logger.error).mockClear();
     });
@@ -58,6 +56,7 @@ describe('Topo deploy task', () => {
 
         expect(config.getTargetSettings).toHaveBeenCalledWith(configuredTarget);
         expect(resolvedTask?.execution).toMatchObject({
+            process: topoBinaryPath,
             args: [
                 'deploy',
                 '--file',

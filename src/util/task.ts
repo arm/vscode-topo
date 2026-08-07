@@ -7,6 +7,9 @@ export interface TaskOptions {
     definition?: vscode.TaskDefinition;
 }
 
+export type TaskExecution =
+    vscode.ProcessExecution | vscode.ShellExecution | vscode.CustomExecution;
+
 function getTaskScope(
     cwd: string | undefined,
 ): vscode.TaskScope | vscode.WorkspaceFolder {
@@ -37,13 +40,21 @@ export function createProcessTask(
         throw new Error('No command passed to task');
     }
 
-    const taskDefinition: vscode.TaskDefinition = opts?.definition ?? {
-        type: 'process',
-    };
-
     const processExecution = new vscode.ProcessExecution(cmd, args, {
         cwd: getProcessExecutionCwd(opts?.cwd),
     });
+
+    return createTask(taskName, processExecution, opts);
+}
+
+export function createTask(
+    taskName: string,
+    execution: TaskExecution,
+    opts?: TaskOptions,
+): vscode.Task {
+    const taskDefinition: vscode.TaskDefinition = opts?.definition ?? {
+        type: 'process',
+    };
 
     const taskScope = getTaskScope(opts?.cwd);
     const task = new vscode.Task(
@@ -51,7 +62,7 @@ export function createProcessTask(
         taskScope,
         taskName,
         PACKAGE_NAME,
-        processExecution,
+        execution,
     );
     task.presentationOptions = {
         reveal: vscode.TaskRevealKind.Always,
@@ -61,6 +72,26 @@ export function createProcessTask(
         clear: true,
     };
     return task;
+}
+
+export function replaceTaskExecution(
+    task: vscode.Task,
+    execution: TaskExecution,
+): vscode.Task {
+    const resolvedTask = new vscode.Task(
+        task.definition,
+        task.scope ?? vscode.TaskScope.Workspace,
+        task.name,
+        task.source,
+        execution,
+        task.problemMatchers,
+    );
+    resolvedTask.presentationOptions = task.presentationOptions;
+    resolvedTask.group = task.group;
+    resolvedTask.isBackground = task.isBackground;
+    resolvedTask.runOptions = task.runOptions;
+    resolvedTask.detail = task.detail;
+    return resolvedTask;
 }
 
 export function waitForTaskProcess(

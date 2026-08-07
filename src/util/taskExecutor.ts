@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { waitForTaskProcess } from './task';
+import { replaceTaskExecution, waitForTaskProcess } from './task';
 import { TopoCli } from '../services/topoCli';
 
 export class TaskExecutor {
@@ -11,7 +11,7 @@ export class TaskExecutor {
         await waitForTaskProcess(taskExecution, task.name);
     }
 
-    public resolveProcessTaskBinary(task: vscode.Task): vscode.Task {
+    private resolveProcessTaskBinary(task: vscode.Task): vscode.Task {
         const execution = task.execution;
         if (!(execution instanceof vscode.ProcessExecution)) {
             return task;
@@ -26,7 +26,6 @@ export class TaskExecutor {
             execution.args,
             execution.options,
         );
-        task.execution = resolvedExecution;
-        return task;
+        return replaceTaskExecution(task, resolvedExecution);
     }
 }

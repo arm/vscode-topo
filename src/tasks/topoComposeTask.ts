@@ -1,29 +1,11 @@
 import path from 'node:path';
 import * as vscode from 'vscode';
 import { assertComposeFilePath } from '../util/composeFile';
-import { createProcessTask } from '../util/task';
-import type { TopoTaskSpec } from './topoTaskProvider';
 
 export interface TopoComposeTaskDefinition extends vscode.TaskDefinition {
     readonly composeFile: string;
     readonly target: string;
 }
-
-export const createTopoComposeTask = <
-    TDefinition extends TopoComposeTaskDefinition,
->(
-    taskSpec: TopoTaskSpec<TDefinition>,
-    definition: TDefinition,
-): vscode.Task => {
-    const taskName = taskSpec.createTaskName(definition);
-    const command = ['topo', ...taskSpec.createArgs(definition)];
-    const cwd = taskSpec.createCwd(definition);
-
-    return createProcessTask(taskName, command, {
-        cwd,
-        definition,
-    });
-};
 
 export const createTopoComposeTaskCwd = (
     definition: TopoComposeTaskDefinition,

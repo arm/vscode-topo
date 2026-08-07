@@ -1,20 +1,22 @@
 import * as vscode from 'vscode';
 import { mock, type MockProxy } from 'vitest-mock-extended';
 import { TOPO_STOP_TASK_TYPE } from '../manifest';
-import { TaskExecutor } from '../util/taskExecutor';
-import { StopTaskSpec, type TopoStopTaskDefinition } from './stopTaskSpec';
+import { TopoCli } from '../services/topoCli';
+import {
+    StopTaskFactory,
+    type TopoStopTaskDefinition,
+} from './stopTaskFactory';
 import { TopoTaskProvider } from './topoTaskProvider';
 
 describe('Topo stop task', () => {
-    let taskExecutor: MockProxy<TaskExecutor>;
+    const topoBinaryPath = '/extension/resources/topo';
+    let topoCli: MockProxy<TopoCli>;
     let taskProvider: TopoTaskProvider<TopoStopTaskDefinition>;
 
     beforeEach(() => {
-        taskExecutor = mock<TaskExecutor>();
-        taskExecutor.resolveProcessTaskBinary.mockImplementation(
-            (task) => task,
-        );
-        taskProvider = new TopoTaskProvider(taskExecutor, new StopTaskSpec());
+        topoCli = mock<TopoCli>();
+        topoCli.getBinaryPath.mockReturnValue(topoBinaryPath);
+        taskProvider = new TopoTaskProvider(new StopTaskFactory(topoCli));
     });
 
     it('resolves a configured stop task', () => {
@@ -32,6 +34,7 @@ describe('Topo stop task', () => {
         const resolvedTask = taskProvider.resolveTask(configuredTask);
 
         expect(resolvedTask?.execution).toMatchObject({
+            process: topoBinaryPath,
             args: ['stop', '--file', 'compose.yaml', '--target', 'topo.local'],
             options: { cwd: '/projects/camera' },
         });

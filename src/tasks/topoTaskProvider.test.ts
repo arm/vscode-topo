@@ -1,14 +1,12 @@
 import * as vscode from 'vscode';
-import { mock, type MockProxy } from 'vitest-mock-extended';
-import { TaskExecutor } from '../util/taskExecutor';
-import { TopoTaskProvider, type TopoTaskSpec } from './topoTaskProvider';
+import { TopoTaskProvider, type TopoTaskFactory } from './topoTaskProvider';
 
 interface TestTaskDefinition extends vscode.TaskDefinition {
     readonly type: 'topo.test';
     readonly message: string;
 }
 
-const taskSpec: TopoTaskSpec<TestTaskDefinition> = {
+const taskFactory: TopoTaskFactory<TestTaskDefinition> = {
     type: 'topo.test',
     resolveDefinition: (task) => {
         const { message } = task.definition;
@@ -16,13 +14,23 @@ const taskSpec: TopoTaskSpec<TestTaskDefinition> = {
             ? { type: 'topo.test', message }
             : undefined;
     },
-    createArgs: (definition) => [definition.message],
-    createCwd: () => '/projects/test',
-    createTaskName: (definition) => `Test ${definition.message}`,
+    createExecution: (definition) =>
+        new vscode.ProcessExecution('topo', [definition.message], {
+            cwd: '/projects/test',
+        }),
+    createTask: (definition) =>
+        new vscode.Task(
+            definition,
+            vscode.TaskScope.Workspace,
+            `Test ${definition.message}`,
+            'topo',
+            new vscode.ProcessExecution('topo', [definition.message], {
+                cwd: '/projects/test',
+            }),
+        ),
 };
 
 describe('TopoTaskProvider', () => {
-    let taskExecutor: MockProxy<TaskExecutor>;
     let taskProvider: TopoTaskProvider<TestTaskDefinition>;
 
     const createConfiguredTask = (
@@ -34,11 +42,7 @@ describe('TopoTaskProvider', () => {
         new vscode.Task(definition, vscode.TaskScope.Workspace, 'Test', 'topo');
 
     beforeEach(() => {
-        taskExecutor = mock<TaskExecutor>();
-        taskExecutor.resolveProcessTaskBinary.mockImplementation(
-            (task) => task,
-        );
-        taskProvider = new TopoTaskProvider(taskExecutor, taskSpec);
+        taskProvider = new TopoTaskProvider(taskFactory);
     });
 
     it('does not provide detected tasks', () => {
@@ -57,9 +61,9 @@ describe('TopoTaskProvider', () => {
             args: ['hello'],
             options: { cwd: '/projects/test' },
         });
-        expect(taskExecutor.resolveProcessTaskBinary).toHaveBeenCalledWith(
-            configuredTask,
-        );
+        expect(resolvedTask).not.toBe(configuredTask);
+        expect(resolvedTask?.definition).toBe(configuredTask.definition);
+        expect(configuredTask.execution).toBeUndefined();
     });
 
     it('does not resolve unsupported task types', () => {
@@ -71,7 +75,6 @@ describe('TopoTaskProvider', () => {
         const resolvedTask = taskProvider.resolveTask(configuredTask);
 
         expect(resolvedTask).toBeUndefined();
-        expect(taskExecutor.resolveProcessTaskBinary).not.toHaveBeenCalled();
     });
 
     it('does not resolve invalid task definitions', () => {
@@ -80,6 +83,5 @@ describe('TopoTaskProvider', () => {
         const resolvedTask = taskProvider.resolveTask(configuredTask);
 
         expect(resolvedTask).toBeUndefined();
-        expect(taskExecutor.resolveProcessTaskBinary).not.toHaveBeenCalled();
     });
 });

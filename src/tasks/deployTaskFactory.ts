@@ -2,25 +2,30 @@ import * as vscode from 'vscode';
 import { isWrappedError } from '../errors/wrappedError';
 import { TOPO_DEPLOY_TASK_TYPE } from '../manifest';
 import type { Config } from '../services/config';
+import type { TopoCli } from '../services/topoCli';
 import { COMPOSE_FILE_NAME } from '../util/composeFile';
 import { logger } from '../util/logger';
+import { createTask } from '../util/task';
 import type { TargetDeploySettings } from '../util/targetSettings';
 import {
     createTopoComposeTaskCwd,
     resolveTopoComposeTaskDefinition,
     type TopoComposeTaskDefinition,
 } from './topoComposeTask';
-import type { TopoTaskSpec } from './topoTaskProvider';
+import type { TopoTaskFactory } from './topoTaskProvider';
 
 export interface TopoDeployTaskDefinition extends TopoComposeTaskDefinition {
     readonly type: typeof TOPO_DEPLOY_TASK_TYPE;
     readonly settings: TargetDeploySettings;
 }
 
-export class DeployTaskSpec implements TopoTaskSpec<TopoDeployTaskDefinition> {
+export class DeployTaskFactory implements TopoTaskFactory<TopoDeployTaskDefinition> {
     public readonly type = TOPO_DEPLOY_TASK_TYPE;
 
-    constructor(private readonly config: Config) {}
+    constructor(
+        private readonly config: Config,
+        private readonly topoCli: TopoCli,
+    ) {}
 
     public resolveDefinition(
         task: vscode.Task,
@@ -49,7 +54,26 @@ export class DeployTaskSpec implements TopoTaskSpec<TopoDeployTaskDefinition> {
         };
     }
 
-    public createArgs(definition: TopoDeployTaskDefinition): string[] {
+    public createExecution(
+        definition: TopoDeployTaskDefinition,
+    ): vscode.ProcessExecution {
+        return new vscode.ProcessExecution(
+            this.topoCli.getBinaryPath(),
+            this.createArgs(definition),
+            { cwd: createTopoComposeTaskCwd(definition) },
+        );
+    }
+
+    public createTask(definition: TopoDeployTaskDefinition): vscode.Task {
+        const execution = this.createExecution(definition);
+        return createTask(
+            `Deploy ${definition.composeFile} to ${definition.target}`,
+            execution,
+            { cwd: execution.options?.cwd, definition },
+        );
+    }
+
+    private createArgs(definition: TopoDeployTaskDefinition): string[] {
         const { target, settings } = definition;
         const args = [
             'deploy',
@@ -68,13 +92,5 @@ export class DeployTaskSpec implements TopoTaskSpec<TopoDeployTaskDefinition> {
             args.push('--no-recreate');
         }
         return args;
-    }
-
-    public createCwd(definition: TopoDeployTaskDefinition): string {
-        return createTopoComposeTaskCwd(definition);
-    }
-
-    public createTaskName(definition: TopoDeployTaskDefinition): string {
-        return `Deploy ${definition.composeFile} to ${definition.target}`;
     }
 }
