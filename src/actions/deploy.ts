@@ -17,9 +17,8 @@ import {
     assertTargetSelected,
 } from '../util/assertTargetReady';
 import {
-    TOPO_DEPLOY_TASK_TYPE,
     topoDeployTaskSpec,
-    type TopoDeployTaskDefinition,
+    type TopoDeployTaskInvocation,
 } from '../tasks/topoDeployTask';
 import { createTopoComposeTask } from '../tasks/topoComposeTask';
 import { Config } from '../services/config';
@@ -131,7 +130,6 @@ export class Deploy {
         deployTarget: DeployTarget,
     ): Promise<void> {
         await deploy(this.taskExecutor, {
-            type: TOPO_DEPLOY_TASK_TYPE,
             target: deployTarget.target,
             composeFilePath: resource.fsPath,
             settings: deployTarget.settings,
@@ -161,10 +159,10 @@ async function promptForComposeFile(
 
 export async function deploy(
     taskExecutor: TaskExecutor,
-    definition: TopoDeployTaskDefinition,
+    invocation: TopoDeployTaskInvocation,
 ): Promise<void> {
-    const { target } = definition;
-    const task = createTopoComposeTask(topoDeployTaskSpec, definition);
+    const { target } = invocation;
+    const task = createTopoComposeTask(topoDeployTaskSpec, invocation);
     const taskName = task.name;
 
     try {

@@ -11,9 +11,8 @@ import {
     assertTargetSelected,
 } from '../util/assertTargetReady';
 import {
-    TOPO_STOP_TASK_TYPE,
     topoStopTaskSpec,
-    type TopoStopTaskDefinition,
+    type TopoStopTaskInvocation,
 } from '../tasks/topoStopTask';
 import { createTopoComposeTask } from '../tasks/topoComposeTask';
 
@@ -47,7 +46,6 @@ export class Stop {
         }
 
         await stop(this.taskExecutor, {
-            type: TOPO_STOP_TASK_TYPE,
             target,
             composeFilePath: resource.fsPath,
         });
@@ -62,10 +60,10 @@ export class Stop {
 
 export async function stop(
     taskExecutor: TaskExecutor,
-    definition: TopoStopTaskDefinition,
+    invocation: TopoStopTaskInvocation,
 ): Promise<void> {
-    const { target } = definition;
-    const task = createTopoComposeTask(topoStopTaskSpec, definition);
+    const { target } = invocation;
+    const task = createTopoComposeTask(topoStopTaskSpec, invocation);
     const taskName = task.name;
 
     try {

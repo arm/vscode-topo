@@ -13,7 +13,6 @@ import { ProjectController } from '../controllers/projectController';
 import { createProjectTreeItem } from '../util/test/projectTreeItem';
 import { WrappedError } from '../errors/wrappedError';
 import { showAndLogError, showAndLogWarning } from '../util/showAndLog';
-import { TOPO_DEPLOY_TASK_TYPE } from '../tasks/topoDeployTask';
 
 vi.mock('../util/showAndLog');
 
@@ -54,11 +53,7 @@ describe('Deploy', () => {
         args = ['deploy', '--file', 'compose.yaml', '--target', target],
     ): void {
         expect(task.name).toBe(`Deploy ${composeFilePath} to topo.local`);
-        expect(task.definition).toMatchObject({
-            type: 'topo.deploy',
-            composeFilePath,
-            target,
-        });
+        expect(task.definition).toEqual({ type: 'process' });
         expect(task.execution).toMatchObject({
             process: 'topo',
             args,
@@ -181,7 +176,6 @@ describe('Deploy', () => {
     it('handles task failure', async () => {
         taskExecutor.run.mockRejectedValueOnce(new Error('deploy failed'));
         await deploy(taskExecutor, {
-            type: TOPO_DEPLOY_TASK_TYPE,
             composeFilePath,
             target,
             settings: {},

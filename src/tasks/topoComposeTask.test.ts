@@ -10,7 +10,6 @@ describe('createTopoComposeTask', () => {
     it('rejects unsupported compose file names', () => {
         expect(() =>
             createTopoComposeTask(taskSpec, {
-                type: 'topo.test',
                 target: 'topo.local',
                 composeFilePath: '/projects/camera/compose.yml',
             }),

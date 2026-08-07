@@ -9,7 +9,6 @@ import { ProjectController } from '../controllers/projectController';
 import { loaded, unloaded } from '../util/loadable';
 import type { TargetHealthReport } from '../services/topoCliSchema';
 import { createProjectTreeItem } from '../util/test/projectTreeItem';
-import { TOPO_STOP_TASK_TYPE } from '../tasks/topoStopTask';
 
 describe('Stop', () => {
     let stopAction: Stop;
@@ -39,11 +38,7 @@ describe('Stop', () => {
 
     function expectStopTask(task: vscode.Task, cwd: string): void {
         expect(task.name).toBe(`Stop ${composeFilePath} on topo.local`);
-        expect(task.definition).toEqual({
-            type: 'topo.stop',
-            composeFilePath,
-            target,
-        });
+        expect(task.definition).toEqual({ type: 'process' });
         expect(task.execution).toMatchObject({
             process: 'topo',
             args: ['stop', '--file', 'compose.yaml', '--target', target],
@@ -123,7 +118,6 @@ describe('Stop', () => {
     it('handles task failure', async () => {
         taskExecutor.run.mockRejectedValueOnce(new Error('stop failed'));
         await stop(taskExecutor, {
-            type: TOPO_STOP_TASK_TYPE,
             composeFilePath,
             target,
         });
