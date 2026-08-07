@@ -107,8 +107,8 @@ export async function activate(
     );
 
     const config = new Config();
-    const projectInit = new ProjectInit(topoCli);
     const taskExecutor = new TaskExecutor(topoCli);
+    const projectInit = new ProjectInit(topoCli);
     const configure = new Configure(taskExecutor);
     const projectCloner = new ProjectCloner(taskExecutor);
     const projectClone = new ProjectClone(topoCli, targetModel, projectCloner);
