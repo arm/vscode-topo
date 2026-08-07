@@ -1,7 +1,7 @@
 import path from 'node:path';
 import os from 'node:os';
 import * as vscode from 'vscode';
-import { Stop, stop as stopServices } from './stop';
+import { Stop, stop } from './stop';
 import { TargetModel } from '../models/targetModel';
 import { mock, MockProxy } from 'vitest-mock-extended';
 import { TaskExecutor } from '../util/taskExecutor';
@@ -37,7 +37,8 @@ describe('Stop', () => {
     let projectController: MockProxy<ProjectController>;
 
     function expectStopTask(task: vscode.Task, cwd: string): void {
-        expect(task.name).toBe('Stop services on topo.local');
+        expect(task.name).toBe(`Stop ${composeFilePath} on topo.local`);
+        expect(task.definition).toEqual({ type: 'process' });
         expect(task.execution).toMatchObject({
             process: 'topo',
             args: ['stop', '--file', 'compose.yaml', '--target', target],
@@ -114,33 +115,12 @@ describe('Stop', () => {
         ).not.toHaveBeenCalled();
     });
 
-    it('handles successful stop operation', async () => {
-        await stopServices(taskExecutor, composeFilePath, target);
-
-        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-        expectStopTask(
-            taskExecutor.run.mock.calls[0][0],
-            path.dirname(composeFilePath),
-        );
-    });
-
-    it('rejects compose.yml', async () => {
-        const unsupportedComposeFilePath = path.join(
-            path.dirname(composeFilePath),
-            'compose.yml',
-        );
-
-        await expect(
-            stopServices(taskExecutor, unsupportedComposeFilePath, target),
-        ).rejects.toThrow(
-            'Unsupported compose file "compose.yml". Only compose.yaml is supported.',
-        );
-        expect(taskExecutor.run).not.toHaveBeenCalled();
-    });
-
     it('handles task failure', async () => {
         taskExecutor.run.mockRejectedValueOnce(new Error('stop failed'));
-        await stopServices(taskExecutor, composeFilePath, target);
+        await stop(taskExecutor, {
+            composeFilePath,
+            target,
+        });
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
             'Stopping services on topo.local failed: stop failed',
