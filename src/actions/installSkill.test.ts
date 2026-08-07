@@ -32,7 +32,7 @@ describe('InstallSkill', () => {
         expect(topoSkill.install).toHaveBeenCalledOnce();
         expect(hostController.refreshSkillStatus).toHaveBeenCalledOnce();
         expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
-            'Topo CLI location skill installed. Start a new agent session if it is not available immediately.',
+            'Topo CLI location skill installed. Start a new agent session to check it out',
         );
     });
 
