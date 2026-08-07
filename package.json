@@ -539,7 +539,7 @@
         "prettier": "^3.9.6",
         "tar": "^7.5.22",
         "typescript": "^6.0.2",
-        "vite": "^8.1.5",
+        "vite": "^8.2.0",
         "vitest": "^4.1.9",
         "vitest-mock-extended": "^5.1.1",
         "yargs": "^18.1.0"
