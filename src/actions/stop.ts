@@ -13,7 +13,7 @@ import type {
     TopoStopTaskDefinition,
     StopTaskFactory,
 } from '../tasks/stopTaskFactory';
-import { TOPO_STOP_TASK_TYPE } from '../manifest';
+import { TOPO_STOP_TASK_COMMAND, TOPO_TASK_TYPE } from '../manifest';
 
 const viewLogsItem: vscode.MessageItem = {
     title: 'View Logs',
@@ -45,7 +45,8 @@ export class Stop {
         }
 
         const definition: TopoStopTaskDefinition = {
-            type: TOPO_STOP_TASK_TYPE,
+            type: TOPO_TASK_TYPE,
+            command: TOPO_STOP_TASK_COMMAND,
             target,
             composeFile: resource.fsPath,
         };

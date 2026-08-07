@@ -22,7 +22,7 @@ import { ProjectModel } from './models/projectModel';
 import { ProjectClone } from './actions/projectClone';
 import { showAndLogError } from './util/showAndLog';
 import { topo } from '../package.json';
-import { TOPO_DEPLOY_TASK_TYPE, TOPO_STOP_TASK_TYPE } from './manifest';
+import { TOPO_TASK_TYPE } from './manifest';
 import { RefreshLoop } from './util/refreshLoop';
 import { ProjectController } from './controllers/projectController';
 import { TaskExecutor } from './util/taskExecutor';
@@ -113,8 +113,10 @@ export async function activate(
     const taskExecutor = new TaskExecutor(topoCli);
     const deployTaskFactory = new DeployTaskFactory(config, topoCli);
     const stopTaskFactory = new StopTaskFactory(topoCli);
-    const deployTaskProvider = new TopoTaskProvider(deployTaskFactory);
-    const stopTaskProvider = new TopoTaskProvider(stopTaskFactory);
+    const taskProvider = new TopoTaskProvider([
+        deployTaskFactory,
+        stopTaskFactory,
+    ]);
     const configure = new Configure(taskExecutor);
     const projectCloner = new ProjectCloner(taskExecutor);
     const projectClone = new ProjectClone(topoCli, targetModel, projectCloner);
@@ -138,14 +140,7 @@ export async function activate(
     const protocolHandler = new ProtocolHandler(projectCloner);
 
     context.subscriptions.push(
-        vscode.tasks.registerTaskProvider(
-            TOPO_DEPLOY_TASK_TYPE,
-            deployTaskProvider,
-        ),
-        vscode.tasks.registerTaskProvider(
-            TOPO_STOP_TASK_TYPE,
-            stopTaskProvider,
-        ),
+        vscode.tasks.registerTaskProvider(TOPO_TASK_TYPE, taskProvider),
         commands.register({
             hostController,
             projectController,

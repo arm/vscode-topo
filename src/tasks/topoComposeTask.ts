@@ -17,7 +17,7 @@ export const createTopoComposeTaskCwd = (
 export const resolveTopoComposeTaskDefinition = (
     task: vscode.Task,
 ): TopoComposeTaskDefinition | undefined => {
-    const { composeFile, target, type } = task.definition;
+    const { composeFile, target } = task.definition;
     if (!isNonEmptyString(composeFile) || !isNonEmptyString(target)) {
         return undefined;
     }
@@ -37,7 +37,6 @@ export const resolveTopoComposeTaskDefinition = (
         ...task.definition,
         composeFile: resolvedComposeFile,
         target,
-        type,
     };
 };
 

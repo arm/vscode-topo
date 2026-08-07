@@ -118,13 +118,15 @@ Add a Topo task to `.vscode/tasks.json` using a compose file path relative to it
     "version": "2.0.0",
     "tasks": [
         {
-            "type": "topo.deploy",
+            "type": "topo",
+            "command": "deploy",
             "composeFile": "examples/camera/compose.yaml",
             "target": "topo.local",
             "label": "Deploy camera"
         },
         {
-            "type": "topo.stop",
+            "type": "topo",
+            "command": "stop",
             "composeFile": "examples/camera/compose.yaml",
             "target": "topo.local",
             "label": "Stop camera"

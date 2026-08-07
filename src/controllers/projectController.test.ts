@@ -10,8 +10,9 @@ import { PsOutput, TargetHealthReport } from '../services/topoCliSchema';
 import { TargetModel } from '../models/targetModel';
 import {
     PRIMARY_PROCESSING_DOMAIN,
-    TOPO_DEPLOY_TASK_TYPE,
-    TOPO_STOP_TASK_TYPE,
+    TOPO_DEPLOY_TASK_COMMAND,
+    TOPO_STOP_TASK_COMMAND,
+    TOPO_TASK_TYPE,
 } from '../manifest';
 
 vi.mock('../util/project');
@@ -200,11 +201,11 @@ describe('ProjectController', () => {
     });
 
     it.each([
-        { type: TOPO_DEPLOY_TASK_TYPE, exitCode: 0 },
-        { type: TOPO_STOP_TASK_TYPE, exitCode: 1 },
+        { command: TOPO_DEPLOY_TASK_COMMAND, exitCode: 0 },
+        { command: TOPO_STOP_TASK_COMMAND, exitCode: 1 },
     ])(
-        'refreshes containers when a $type task for the selected target ends',
-        ({ type, exitCode }) => {
+        'refreshes containers when a Topo $command task for the selected target ends',
+        ({ command, exitCode }) => {
             const targetModel = new TargetModel();
             targetModel.setSelected(target);
             const controller = new ProjectController(
@@ -216,18 +217,27 @@ describe('ProjectController', () => {
                 .spyOn(controller, 'refreshProjectContainersCommandHandler')
                 .mockResolvedValue();
 
-            endTask({ type, target }, exitCode);
+            endTask({ type: TOPO_TASK_TYPE, command, target }, exitCode);
 
             expect(refresh).toHaveBeenCalledOnce();
         },
     );
 
     it.each([
-        { type: 'process', taskTarget: target },
-        { type: TOPO_DEPLOY_TASK_TYPE, taskTarget: 'other.local' },
+        {
+            type: 'process',
+            command: TOPO_DEPLOY_TASK_COMMAND,
+            taskTarget: target,
+        },
+        { type: TOPO_TASK_TYPE, command: 'other', taskTarget: target },
+        {
+            type: TOPO_TASK_TYPE,
+            command: TOPO_DEPLOY_TASK_COMMAND,
+            taskTarget: 'other.local',
+        },
     ])(
-        'does not refresh containers for task type $type targeting $taskTarget',
-        ({ type, taskTarget }) => {
+        'does not refresh containers for $type $command task targeting $taskTarget',
+        ({ type, command, taskTarget }) => {
             const targetModel = new TargetModel();
             targetModel.setSelected(target);
             const controller = new ProjectController(
@@ -239,7 +249,7 @@ describe('ProjectController', () => {
                 .spyOn(controller, 'refreshProjectContainersCommandHandler')
                 .mockResolvedValue();
 
-            endTask({ type, target: taskTarget });
+            endTask({ type, command, target: taskTarget });
 
             expect(refresh).not.toHaveBeenCalled();
         },

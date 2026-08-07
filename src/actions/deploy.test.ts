@@ -12,7 +12,7 @@ import { Config } from '../services/config';
 import { createProjectTreeItem } from '../util/test/projectTreeItem';
 import { WrappedError } from '../errors/wrappedError';
 import { showAndLogError, showAndLogWarning } from '../util/showAndLog';
-import { TOPO_DEPLOY_TASK_TYPE } from '../manifest';
+import { TOPO_DEPLOY_TASK_COMMAND, TOPO_TASK_TYPE } from '../manifest';
 import { DeployTaskFactory } from '../tasks/deployTaskFactory';
 import type { TopoCli } from '../services/topoCli';
 
@@ -56,7 +56,8 @@ describe('Deploy', () => {
     ): void {
         expect(task.name).toBe(`Deploy ${composeFile} to topo.local`);
         expect(task.definition).toMatchObject({
-            type: TOPO_DEPLOY_TASK_TYPE,
+            type: TOPO_TASK_TYPE,
+            command: TOPO_DEPLOY_TASK_COMMAND,
             composeFile,
             target,
         });
@@ -183,7 +184,8 @@ describe('Deploy', () => {
     it('handles task failure', async () => {
         taskExecutor.run.mockRejectedValueOnce(new Error('deploy failed'));
         await deploy(taskExecutor, new DeployTaskFactory(config, topoCli), {
-            type: TOPO_DEPLOY_TASK_TYPE,
+            type: TOPO_TASK_TYPE,
+            command: TOPO_DEPLOY_TASK_COMMAND,
             composeFile,
             target,
             settings: {},

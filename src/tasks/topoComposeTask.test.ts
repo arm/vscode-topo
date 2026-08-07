@@ -1,5 +1,6 @@
 import path from 'node:path';
 import * as vscode from 'vscode';
+import { TOPO_TASK_TYPE } from '../manifest';
 import { createTask } from '../util/task';
 import { mutable } from '../util/test/mutable';
 import {
@@ -7,7 +8,16 @@ import {
     resolveTopoComposeTaskDefinition,
     type TopoComposeTaskDefinition,
 } from './topoComposeTask';
-import { TopoTaskProvider, type TopoTaskFactory } from './topoTaskProvider';
+import {
+    TopoTaskProvider,
+    type TopoTaskDefinition,
+    type TopoTaskFactory,
+} from './topoTaskProvider';
+
+type TestTopoComposeTaskDefinition = TopoComposeTaskDefinition &
+    TopoTaskDefinition & {
+        readonly command: 'test';
+    };
 
 describe('Topo compose tasks', () => {
     const workspaceFolder: vscode.WorkspaceFolder = {
@@ -16,13 +26,13 @@ describe('Topo compose tasks', () => {
         index: 0,
     };
     const target = 'topo.local';
-    const taskType = 'topo.test';
+    const taskCommand = 'test';
     const topoBinaryPath = '/extension/resources/topo';
     const createTestTaskArgs = (
-        definition: TopoComposeTaskDefinition,
+        definition: TestTopoComposeTaskDefinition,
     ): string[] => ['test', '--target', definition.target];
     const createTestExecution = (
-        definition: TopoComposeTaskDefinition,
+        definition: TestTopoComposeTaskDefinition,
     ): vscode.ProcessExecution =>
         new vscode.ProcessExecution(
             topoBinaryPath,
@@ -30,7 +40,7 @@ describe('Topo compose tasks', () => {
             { cwd: createTopoComposeTaskCwd(definition) },
         );
     const createTestTask = (
-        definition: TopoComposeTaskDefinition,
+        definition: TestTopoComposeTaskDefinition,
     ): vscode.Task => {
         const execution = createTestExecution(definition);
         return createTask(
@@ -39,29 +49,42 @@ describe('Topo compose tasks', () => {
             { cwd: execution.options?.cwd, definition },
         );
     };
-    const taskFactory: TopoTaskFactory<TopoComposeTaskDefinition> = {
-        type: taskType,
+    const taskFactory: TopoTaskFactory<TestTopoComposeTaskDefinition> = {
+        command: taskCommand,
         resolveDefinition: (
             task: vscode.Task,
-        ): TopoComposeTaskDefinition | undefined =>
-            resolveTopoComposeTaskDefinition(task),
+        ): TestTopoComposeTaskDefinition | undefined => {
+            const definition = resolveTopoComposeTaskDefinition(task);
+            return definition
+                ? {
+                      ...definition,
+                      type: TOPO_TASK_TYPE,
+                      command: taskCommand,
+                  }
+                : undefined;
+        },
         createExecution: createTestExecution,
         createTask: createTestTask,
     };
-    let taskProvider: TopoTaskProvider<TopoComposeTaskDefinition>;
+    let taskProvider: TopoTaskProvider;
 
     const createConfiguredTask = (
         composeFile = '/projects/camera/compose.yaml',
     ): vscode.Task =>
         new vscode.Task(
-            { type: taskType, composeFile, target },
+            {
+                type: TOPO_TASK_TYPE,
+                command: taskCommand,
+                composeFile,
+                target,
+            },
             vscode.TaskScope.Workspace,
             'Test camera',
             'topo',
         );
 
     beforeEach(() => {
-        taskProvider = new TopoTaskProvider(taskFactory);
+        taskProvider = new TopoTaskProvider([taskFactory]);
         mutable(vscode.workspace).workspaceFolders = [workspaceFolder];
     });
 
@@ -73,7 +96,8 @@ describe('Topo compose tasks', () => {
     it('rejects unsupported compose file names', () => {
         expect(() =>
             taskFactory.createTask({
-                type: taskType,
+                type: TOPO_TASK_TYPE,
+                command: taskCommand,
                 target,
                 composeFile: '/projects/camera/compose.yml',
             }),
@@ -83,8 +107,11 @@ describe('Topo compose tasks', () => {
     });
 
     it('preserves resolved definition properties when creating a task', () => {
-        const definition = {
-            type: taskType,
+        const definition: TestTopoComposeTaskDefinition & {
+            additionalProperty: string;
+        } = {
+            type: TOPO_TASK_TYPE,
+            command: taskCommand,
             target,
             composeFile: '/projects/camera/compose.yaml',
             additionalProperty: 'preserved',
@@ -97,7 +124,8 @@ describe('Topo compose tasks', () => {
 
     it('resolves a configured nested task', () => {
         const definition: vscode.TaskDefinition = {
-            type: taskType,
+            type: TOPO_TASK_TYPE,
+            command: taskCommand,
             composeFile: 'services/camera/compose.yaml',
             target,
             additionalProperty: 'preserved',
@@ -169,7 +197,8 @@ describe('Topo compose tasks', () => {
         ];
         const configuredTask = new vscode.Task(
             {
-                type: taskType,
+                type: TOPO_TASK_TYPE,
+                command: taskCommand,
                 composeFile: 'compose.yaml',
                 target,
             },
@@ -186,11 +215,28 @@ describe('Topo compose tasks', () => {
     it.each([
         {
             property: 'compose file',
-            definition: { type: taskType, composeFile: '', target },
+            definition: {
+                type: TOPO_TASK_TYPE,
+                command: taskCommand,
+                composeFile: '',
+                target,
+            },
         },
         {
             property: 'target',
-            definition: { type: taskType, composeFile: 'compose.yaml' },
+            definition: {
+                type: TOPO_TASK_TYPE,
+                command: taskCommand,
+                composeFile: 'compose.yaml',
+            },
+        },
+        {
+            property: 'command',
+            definition: {
+                type: TOPO_TASK_TYPE,
+                composeFile: 'compose.yaml',
+                target,
+            },
         },
     ])(
         'does not resolve a task without a valid $property',

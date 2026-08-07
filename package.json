@@ -37,38 +37,29 @@
         ],
         "taskDefinitions": [
             {
-                "type": "topo.deploy",
+                "type": "topo",
                 "when": "processExecutionSupported",
                 "required": [
+                    "command",
                     "composeFile",
                     "target"
                 ],
                 "properties": {
+                    "command": {
+                        "type": "string",
+                        "enum": [
+                            "deploy",
+                            "stop"
+                        ],
+                        "description": "Topo operation to run."
+                    },
                     "composeFile": {
                         "type": "string",
-                        "description": "Path to compose.yaml to deploy, relative to the task's workspace folder or absolute."
+                        "description": "Path to compose.yaml, relative to the task's workspace folder or absolute."
                     },
                     "target": {
                         "type": "string",
-                        "description": "Topo target to deploy to."
-                    }
-                }
-            },
-            {
-                "type": "topo.stop",
-                "when": "processExecutionSupported",
-                "required": [
-                    "composeFile",
-                    "target"
-                ],
-                "properties": {
-                    "composeFile": {
-                        "type": "string",
-                        "description": "Path to compose.yaml to stop, relative to the task's workspace folder or absolute."
-                    },
-                    "target": {
-                        "type": "string",
-                        "description": "Topo target to stop."
+                        "description": "Topo target on which to run the operation."
                     }
                 }
             }

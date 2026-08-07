@@ -11,7 +11,11 @@ import { ContainerItem } from '../util/types';
 import { TargetModel } from '../models/targetModel';
 import { showAndLogError } from '../util/showAndLog';
 import { isProjectComposePathDeleted } from '../util/isProjectComposePathDeleted';
-import { TOPO_DEPLOY_TASK_TYPE, TOPO_STOP_TASK_TYPE } from '../manifest';
+import {
+    TOPO_DEPLOY_TASK_COMMAND,
+    TOPO_STOP_TASK_COMMAND,
+    TOPO_TASK_TYPE,
+} from '../manifest';
 
 function createContainerItem(item: PsEntry, target: string): ContainerItem {
     return {
@@ -149,9 +153,11 @@ export class ProjectController implements vscode.Disposable {
     private refreshProjectContainersWhenTaskEnds(
         event: vscode.TaskProcessEndEvent,
     ): void {
-        const { type, target } = event.execution.task.definition;
+        const { command, type, target } = event.execution.task.definition;
         const changesProjectRuntime =
-            type === TOPO_DEPLOY_TASK_TYPE || type === TOPO_STOP_TASK_TYPE;
+            type === TOPO_TASK_TYPE &&
+            (command === TOPO_DEPLOY_TASK_COMMAND ||
+                command === TOPO_STOP_TASK_COMMAND);
 
         if (changesProjectRuntime && target === this.targetModel.selected) {
             void this.refreshProjectContainersCommandHandler();

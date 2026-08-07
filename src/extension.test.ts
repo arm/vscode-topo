@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { mock } from 'vitest-mock-extended';
 import { activate } from './extension';
+import { TOPO_TASK_TYPE } from './manifest';
 import { TopoCli } from './services/topoCli';
 import { logger } from './util/logger';
 
@@ -27,7 +28,11 @@ describe('extension activation', () => {
         await activate(context);
 
         expect(vscode.commands.registerCommand).toHaveBeenCalled();
-        expect(vscode.tasks.registerTaskProvider).toHaveBeenCalled();
+        expect(vscode.tasks.registerTaskProvider).toHaveBeenCalledOnce();
+        expect(vscode.tasks.registerTaskProvider).toHaveBeenCalledWith(
+            TOPO_TASK_TYPE,
+            expect.any(Object),
+        );
         expect(context.subscriptions.length).toBeGreaterThan(0);
         expect(setTimeoutSpy).toHaveBeenCalledWith(
             expect.any(Function),

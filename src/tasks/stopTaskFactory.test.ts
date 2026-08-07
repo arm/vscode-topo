@@ -1,28 +1,26 @@
 import * as vscode from 'vscode';
 import { mock, type MockProxy } from 'vitest-mock-extended';
-import { TOPO_STOP_TASK_TYPE } from '../manifest';
+import { TOPO_STOP_TASK_COMMAND, TOPO_TASK_TYPE } from '../manifest';
 import { TopoCli } from '../services/topoCli';
-import {
-    StopTaskFactory,
-    type TopoStopTaskDefinition,
-} from './stopTaskFactory';
+import { StopTaskFactory } from './stopTaskFactory';
 import { TopoTaskProvider } from './topoTaskProvider';
 
 describe('Topo stop task', () => {
     const topoBinaryPath = '/extension/resources/topo';
     let topoCli: MockProxy<TopoCli>;
-    let taskProvider: TopoTaskProvider<TopoStopTaskDefinition>;
+    let taskProvider: TopoTaskProvider;
 
     beforeEach(() => {
         topoCli = mock<TopoCli>();
         topoCli.getBinaryPath.mockReturnValue(topoBinaryPath);
-        taskProvider = new TopoTaskProvider(new StopTaskFactory(topoCli));
+        taskProvider = new TopoTaskProvider([new StopTaskFactory(topoCli)]);
     });
 
     it('resolves a configured stop task', () => {
         const configuredTask = new vscode.Task(
             {
-                type: TOPO_STOP_TASK_TYPE,
+                type: TOPO_TASK_TYPE,
+                command: TOPO_STOP_TASK_COMMAND,
                 composeFile: '/projects/camera/compose.yaml',
                 target: 'topo.local',
             },

@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { TOPO_STOP_TASK_TYPE } from '../manifest';
+import { TOPO_STOP_TASK_COMMAND, TOPO_TASK_TYPE } from '../manifest';
 import type { TopoCli } from '../services/topoCli';
 import { COMPOSE_FILE_NAME } from '../util/composeFile';
 import { createTask } from '../util/task';
@@ -8,14 +8,15 @@ import {
     resolveTopoComposeTaskDefinition,
     type TopoComposeTaskDefinition,
 } from './topoComposeTask';
-import type { TopoTaskFactory } from './topoTaskProvider';
+import type { TopoTaskDefinition, TopoTaskFactory } from './topoTaskProvider';
 
-export interface TopoStopTaskDefinition extends TopoComposeTaskDefinition {
-    readonly type: typeof TOPO_STOP_TASK_TYPE;
-}
+export type TopoStopTaskDefinition = TopoComposeTaskDefinition &
+    TopoTaskDefinition & {
+        readonly command: typeof TOPO_STOP_TASK_COMMAND;
+    };
 
 export class StopTaskFactory implements TopoTaskFactory<TopoStopTaskDefinition> {
-    public readonly type = TOPO_STOP_TASK_TYPE;
+    public readonly command = TOPO_STOP_TASK_COMMAND;
 
     constructor(private readonly topoCli: TopoCli) {}
 
@@ -24,7 +25,11 @@ export class StopTaskFactory implements TopoTaskFactory<TopoStopTaskDefinition> 
     ): TopoStopTaskDefinition | undefined {
         const definition = resolveTopoComposeTaskDefinition(task);
         return definition
-            ? { ...definition, type: TOPO_STOP_TASK_TYPE }
+            ? {
+                  ...definition,
+                  type: TOPO_TASK_TYPE,
+                  command: TOPO_STOP_TASK_COMMAND,
+              }
             : undefined;
     }
 

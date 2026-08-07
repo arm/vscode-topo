@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { isWrappedError } from '../errors/wrappedError';
-import { TOPO_DEPLOY_TASK_TYPE } from '../manifest';
+import { TOPO_DEPLOY_TASK_COMMAND, TOPO_TASK_TYPE } from '../manifest';
 import type { Config } from '../services/config';
 import type { TopoCli } from '../services/topoCli';
 import { COMPOSE_FILE_NAME } from '../util/composeFile';
@@ -12,15 +12,16 @@ import {
     resolveTopoComposeTaskDefinition,
     type TopoComposeTaskDefinition,
 } from './topoComposeTask';
-import type { TopoTaskFactory } from './topoTaskProvider';
+import type { TopoTaskDefinition, TopoTaskFactory } from './topoTaskProvider';
 
-export interface TopoDeployTaskDefinition extends TopoComposeTaskDefinition {
-    readonly type: typeof TOPO_DEPLOY_TASK_TYPE;
-    readonly settings: TargetDeploySettings;
-}
+export type TopoDeployTaskDefinition = TopoComposeTaskDefinition &
+    TopoTaskDefinition & {
+        readonly command: typeof TOPO_DEPLOY_TASK_COMMAND;
+        readonly settings: TargetDeploySettings;
+    };
 
 export class DeployTaskFactory implements TopoTaskFactory<TopoDeployTaskDefinition> {
-    public readonly type = TOPO_DEPLOY_TASK_TYPE;
+    public readonly command = TOPO_DEPLOY_TASK_COMMAND;
 
     constructor(
         private readonly config: Config,
@@ -43,13 +44,17 @@ export class DeployTaskFactory implements TopoTaskFactory<TopoDeployTaskDefiniti
             if (!isWrappedError(error, ['CONFIG'])) {
                 throw error;
             }
-            logger.error(`Failed to resolve ${definition.type} task`, error);
+            logger.error(
+                `Failed to resolve ${definition.type} ${definition.command} task`,
+                error,
+            );
             return undefined;
         }
 
         return {
             ...definition,
-            type: TOPO_DEPLOY_TASK_TYPE,
+            type: TOPO_TASK_TYPE,
+            command: TOPO_DEPLOY_TASK_COMMAND,
             settings,
         };
     }

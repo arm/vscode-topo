@@ -21,7 +21,7 @@ import {
 } from '../tasks/deployTaskFactory';
 import { Config } from '../services/config';
 import type { TargetDeploySettings } from '../util/targetSettings';
-import { TOPO_DEPLOY_TASK_TYPE } from '../manifest';
+import { TOPO_DEPLOY_TASK_COMMAND, TOPO_TASK_TYPE } from '../manifest';
 
 const viewLogsItem: vscode.MessageItem = {
     title: 'View Logs',
@@ -129,7 +129,8 @@ export class Deploy {
         deployTarget: DeployTarget,
     ): Promise<void> {
         const definition: TopoDeployTaskDefinition = {
-            type: TOPO_DEPLOY_TASK_TYPE,
+            type: TOPO_TASK_TYPE,
+            command: TOPO_DEPLOY_TASK_COMMAND,
             target: deployTarget.target,
             composeFile: resource.fsPath,
             settings: deployTarget.settings,

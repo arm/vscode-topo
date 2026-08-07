@@ -1,17 +1,27 @@
 import * as vscode from 'vscode';
-import { TopoTaskProvider, type TopoTaskFactory } from './topoTaskProvider';
+import { TOPO_TASK_TYPE } from '../manifest';
+import {
+    TopoTaskProvider,
+    type TopoTaskDefinition,
+    type TopoTaskFactory,
+} from './topoTaskProvider';
 
-interface TestTaskDefinition extends vscode.TaskDefinition {
-    readonly type: 'topo.test';
+interface TestTaskDefinition extends TopoTaskDefinition {
+    readonly command: 'test';
+    readonly message: string;
+}
+
+interface OtherTaskDefinition extends TopoTaskDefinition {
+    readonly command: 'other';
     readonly message: string;
 }
 
 const taskFactory: TopoTaskFactory<TestTaskDefinition> = {
-    type: 'topo.test',
+    command: 'test',
     resolveDefinition: (task) => {
         const { message } = task.definition;
         return typeof message === 'string'
-            ? { type: 'topo.test', message }
+            ? { type: TOPO_TASK_TYPE, command: 'test', message }
             : undefined;
     },
     createExecution: (definition) =>
@@ -30,19 +40,39 @@ const taskFactory: TopoTaskFactory<TestTaskDefinition> = {
         ),
 };
 
+const otherTaskFactory: TopoTaskFactory<OtherTaskDefinition> = {
+    command: 'other',
+    resolveDefinition: (task) => {
+        const { message } = task.definition;
+        return typeof message === 'string'
+            ? { type: TOPO_TASK_TYPE, command: 'other', message }
+            : undefined;
+    },
+    createExecution: (definition) =>
+        new vscode.ProcessExecution('topo', [definition.command]),
+    createTask: (definition) =>
+        new vscode.Task(
+            definition,
+            vscode.TaskScope.Workspace,
+            `Other ${definition.message}`,
+            'topo',
+        ),
+};
+
 describe('TopoTaskProvider', () => {
-    let taskProvider: TopoTaskProvider<TestTaskDefinition>;
+    let taskProvider: TopoTaskProvider;
 
     const createConfiguredTask = (
         definition: vscode.TaskDefinition = {
-            type: 'topo.test',
+            type: TOPO_TASK_TYPE,
+            command: 'test',
             message: 'hello',
         },
     ): vscode.Task =>
         new vscode.Task(definition, vscode.TaskScope.Workspace, 'Test', 'topo');
 
     beforeEach(() => {
-        taskProvider = new TopoTaskProvider(taskFactory);
+        taskProvider = new TopoTaskProvider([taskFactory, otherTaskFactory]);
     });
 
     it('does not provide detected tasks', () => {
@@ -69,6 +99,7 @@ describe('TopoTaskProvider', () => {
     it('does not resolve unsupported task types', () => {
         const configuredTask = createConfiguredTask({
             type: 'other',
+            command: 'test',
             message: 'hello',
         });
 
@@ -77,8 +108,38 @@ describe('TopoTaskProvider', () => {
         expect(resolvedTask).toBeUndefined();
     });
 
+    it('does not resolve unsupported commands', () => {
+        const configuredTask = createConfiguredTask({
+            type: TOPO_TASK_TYPE,
+            command: 'unsupported',
+            message: 'hello',
+        });
+
+        const resolvedTask = taskProvider.resolveTask(configuredTask);
+
+        expect(resolvedTask).toBeUndefined();
+    });
+
+    it('dispatches configured tasks by command', () => {
+        const configuredTask = createConfiguredTask({
+            type: TOPO_TASK_TYPE,
+            command: 'other',
+            message: 'hello',
+        });
+
+        const resolvedTask = taskProvider.resolveTask(configuredTask);
+
+        expect(resolvedTask?.execution).toMatchObject({
+            process: 'topo',
+            args: ['other'],
+        });
+    });
+
     it('does not resolve invalid task definitions', () => {
-        const configuredTask = createConfiguredTask({ type: 'topo.test' });
+        const configuredTask = createConfiguredTask({
+            type: TOPO_TASK_TYPE,
+            command: 'test',
+        });
 
         const resolvedTask = taskProvider.resolveTask(configuredTask);
 

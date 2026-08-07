@@ -1,8 +1,9 @@
 export const REGISTRY_NAME = 'arm';
 export const PACKAGE_NAME = 'topo';
 export const DISPLAY_NAME = 'Topo';
-export const TOPO_DEPLOY_TASK_TYPE = `${PACKAGE_NAME}.deploy`;
-export const TOPO_STOP_TASK_TYPE = `${PACKAGE_NAME}.stop`;
+export const TOPO_TASK_TYPE = PACKAGE_NAME;
+export const TOPO_DEPLOY_TASK_COMMAND = 'deploy';
+export const TOPO_STOP_TASK_COMMAND = 'stop';
 export const CONFIG_TARGET_SETTINGS = 'targetSettings';
 export const CONTEXT_SELECTED_TARGET_STATE = `${PACKAGE_NAME}.selectedTargetState`;
 export const CONTEXT_SELECTED_TARGET_CONNECTED = `${PACKAGE_NAME}.selectedTargetConnected`;
