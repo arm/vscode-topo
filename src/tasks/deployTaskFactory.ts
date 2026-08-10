@@ -20,6 +20,21 @@ export type TopoDeployTaskDefinition = TopoComposeTaskDefinition &
         readonly settings: TargetDeploySettings;
     };
 
+const createArgs = (definition: TopoDeployTaskDefinition): string[] => {
+    const { target, settings } = definition;
+    const args = ['deploy', '--file', COMPOSE_FILE_NAME, '--target', target];
+    if (settings.port !== undefined) {
+        args.push('-p', String(settings.port));
+    }
+    if (settings.forceRecreate) {
+        args.push('--force-recreate');
+    }
+    if (settings.noRecreate) {
+        args.push('--no-recreate');
+    }
+    return args;
+};
+
 export class DeployTaskFactory implements TopoTaskFactory<TopoDeployTaskDefinition> {
     public readonly command = TOPO_DEPLOY_TASK_COMMAND;
 
@@ -64,7 +79,7 @@ export class DeployTaskFactory implements TopoTaskFactory<TopoDeployTaskDefiniti
     ): vscode.ProcessExecution {
         return new vscode.ProcessExecution(
             this.topoCli.getBinaryPath(),
-            this.createArgs(definition),
+            createArgs(definition),
             { cwd: createTopoComposeTaskCwd(definition) },
         );
     }
@@ -76,26 +91,5 @@ export class DeployTaskFactory implements TopoTaskFactory<TopoDeployTaskDefiniti
             execution,
             { cwd: execution.options?.cwd, definition },
         );
-    }
-
-    private createArgs(definition: TopoDeployTaskDefinition): string[] {
-        const { target, settings } = definition;
-        const args = [
-            'deploy',
-            '--file',
-            COMPOSE_FILE_NAME,
-            '--target',
-            target,
-        ];
-        if (settings.port !== undefined) {
-            args.push('-p', String(settings.port));
-        }
-        if (settings.forceRecreate) {
-            args.push('--force-recreate');
-        }
-        if (settings.noRecreate) {
-            args.push('--no-recreate');
-        }
-        return args;
     }
 }
