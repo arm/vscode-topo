@@ -135,8 +135,6 @@ Add a Topo task to `.vscode/tasks.json` using a compose file path relative to it
 }
 ```
 
-Configured tasks require an explicit `target`.
-
 ## Project Management
 
 The **Projects** view appears in the **Topo** activity bar container and lists workspace projects discovered from top-level `compose.yaml` files.
