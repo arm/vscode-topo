@@ -1,5 +1,8 @@
 import * as vscode from 'vscode';
+import { ensureSkillLink, isSkillLink } from '../util/skillLink';
 import { TopoSkill } from './topoSkill';
+
+vi.mock('../util/skillLink');
 
 describe('TopoSkill', () => {
     const extensionUri = vscode.Uri.file('/fake/extension');
@@ -7,6 +10,7 @@ describe('TopoSkill', () => {
 
     beforeEach(() => {
         vi.resetAllMocks();
+        vi.mocked(isSkillLink).mockResolvedValue(true);
     });
 
     it('reports an installed skill when the skill files match', async () => {
@@ -38,6 +42,16 @@ describe('TopoSkill', () => {
         await expect(topoSkill.getStatus()).resolves.toBe('outdated');
     });
 
+    it('reports an outdated skill when the Claude skill link is missing', async () => {
+        vi.mocked(vscode.workspace.fs.readFile).mockResolvedValue(
+            Uint8Array.from([1, 2, 3]),
+        );
+        vi.mocked(isSkillLink).mockResolvedValue(false);
+        const topoSkill = new TopoSkill(extensionUri, userHomeUri);
+
+        await expect(topoSkill.getStatus()).resolves.toBe('outdated');
+    });
+
     it('installs the bundled skill', async () => {
         vi.mocked(vscode.workspace.fs.readFile).mockResolvedValue(
             Uint8Array.from([1, 2, 3]),
@@ -51,13 +65,27 @@ describe('TopoSkill', () => {
         );
         expect(vscode.workspace.fs.copy).toHaveBeenCalledWith(
             vscode.Uri.joinPath(extensionUri, 'skills', 'topo-cli-location'),
+            expect.objectContaining({
+                path: '/fake/home/.agents/skills/topo-cli-location',
+            }),
+            { overwrite: true },
+        );
+        expect(vscode.workspace.fs.createDirectory).toHaveBeenCalledWith(
+            vscode.Uri.joinPath(userHomeUri, '.claude', 'skills'),
+        );
+        expect(ensureSkillLink).toHaveBeenCalledWith(
             vscode.Uri.joinPath(
                 userHomeUri,
                 '.agents',
                 'skills',
                 'topo-cli-location',
-            ),
-            { overwrite: true },
+            ).fsPath,
+            vscode.Uri.joinPath(
+                userHomeUri,
+                '.claude',
+                'skills',
+                'topo-cli-location',
+            ).fsPath,
         );
     });
 });

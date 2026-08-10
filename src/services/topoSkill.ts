@@ -1,9 +1,11 @@
 import os from 'node:os';
 import * as vscode from 'vscode';
-import { TopoSkillStatus } from '../util/types';
 import { WrappedError } from '../errors/wrappedError';
+import { ensureSkillLink, isSkillLink } from '../util/skillLink';
+import { skillPaths } from '../util/skillPaths';
+import { TopoSkillStatus } from '../util/types';
 
-export const TOPO_SKILL_NAME = 'topo-cli-location';
+export const TOPO_SKILL_NAME = skillPaths.skillName;
 
 const SKILL_FILE_NAME = 'SKILL.md';
 
@@ -21,6 +23,8 @@ export class TopoSkill {
     private readonly bundledDirectoryUri: vscode.Uri;
     private readonly skillsDirectoryUri: vscode.Uri;
     private readonly topoSkillsSubdirectory: vscode.Uri;
+    private readonly claudeSkillsDirectoryUri: vscode.Uri;
+    private readonly claudeSkillUri: vscode.Uri;
 
     constructor(
         extensionUri: vscode.Uri,
@@ -33,12 +37,19 @@ export class TopoSkill {
         );
         this.skillsDirectoryUri = vscode.Uri.joinPath(
             userHomeUri,
-            '.agents',
-            'skills',
+            ...skillPaths.canonicalSkillsDirectory,
         );
         this.topoSkillsSubdirectory = vscode.Uri.joinPath(
-            this.skillsDirectoryUri,
-            TOPO_SKILL_NAME,
+            userHomeUri,
+            ...skillPaths.canonicalSkillPath,
+        );
+        this.claudeSkillsDirectoryUri = vscode.Uri.joinPath(
+            userHomeUri,
+            ...skillPaths.claudeSkillsDirectory,
+        );
+        this.claudeSkillUri = vscode.Uri.joinPath(
+            userHomeUri,
+            ...skillPaths.claudeSkillPath,
         );
     }
 
@@ -62,7 +73,14 @@ export class TopoSkill {
             throw error;
         }
 
-        return rawStringsAreEqual(bundledSkill, installedSkill)
+        if (!rawStringsAreEqual(bundledSkill, installedSkill)) {
+            return 'outdated';
+        }
+
+        return (await isSkillLink(
+            this.topoSkillsSubdirectory.fsPath,
+            this.claudeSkillUri.fsPath,
+        ))
             ? 'installed'
             : 'outdated';
     }
@@ -73,6 +91,13 @@ export class TopoSkill {
             this.bundledDirectoryUri,
             this.topoSkillsSubdirectory,
             { overwrite: true },
+        );
+        await vscode.workspace.fs.createDirectory(
+            this.claudeSkillsDirectoryUri,
+        );
+        await ensureSkillLink(
+            this.topoSkillsSubdirectory.fsPath,
+            this.claudeSkillUri.fsPath,
         );
         const status = await this.getStatus();
         if (status !== 'installed') {
