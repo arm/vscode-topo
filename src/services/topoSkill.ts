@@ -19,7 +19,7 @@ function rawStringsAreEqual(first: Uint8Array, second: Uint8Array): boolean {
 export class TopoSkill {
     private readonly bundledDirectoryUri: vscode.Uri;
     private readonly skillsDirectoryUri: vscode.Uri;
-    private readonly installedDirectoryUri: vscode.Uri;
+    private readonly topoSkillsSubdirectory: vscode.Uri;
 
     constructor(
         extensionUri: vscode.Uri,
@@ -35,7 +35,7 @@ export class TopoSkill {
             '.agents',
             'skills',
         );
-        this.installedDirectoryUri = vscode.Uri.joinPath(
+        this.topoSkillsSubdirectory = vscode.Uri.joinPath(
             this.skillsDirectoryUri,
             TOPO_SKILL_NAME,
         );
@@ -50,7 +50,7 @@ export class TopoSkill {
         try {
             installedSkill = await vscode.workspace.fs.readFile(
                 vscode.Uri.joinPath(
-                    this.installedDirectoryUri,
+                    this.topoSkillsSubdirectory,
                     SKILL_FILE_NAME,
                 ),
             );
@@ -70,7 +70,7 @@ export class TopoSkill {
         await vscode.workspace.fs.createDirectory(this.skillsDirectoryUri);
         await vscode.workspace.fs.copy(
             this.bundledDirectoryUri,
-            this.installedDirectoryUri,
+            this.topoSkillsSubdirectory,
             { overwrite: true },
         );
     }
