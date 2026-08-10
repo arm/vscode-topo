@@ -12,7 +12,7 @@ function isFileNotFound(error: unknown): boolean {
     );
 }
 
-function filesAreEqual(first: Uint8Array, second: Uint8Array): boolean {
+function rawStringsAreEqual(first: Uint8Array, second: Uint8Array): boolean {
     return Buffer.from(first).equals(Buffer.from(second));
 }
 
@@ -61,7 +61,7 @@ export class TopoSkill {
             throw error;
         }
 
-        return filesAreEqual(bundledSkill, installedSkill)
+        return rawStringsAreEqual(bundledSkill, installedSkill)
             ? 'installed'
             : 'outdated';
     }
