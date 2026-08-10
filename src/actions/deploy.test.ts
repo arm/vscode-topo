@@ -61,14 +61,14 @@ describe('Deploy', () => {
 
     function expectDeployTask(
         composeFile: string,
-        settings: TopoDeployTaskDefinition['settings'] = {},
+        deployOptions: TopoDeployTaskDefinition['deployOptions'] = {},
     ): void {
         expect(taskFactory.createTask).toHaveBeenCalledWith({
             type: TOPO_TASK_TYPE,
             command: TOPO_DEPLOY_TASK_COMMAND,
             composeFile,
             target,
-            settings,
+            deployOptions,
         });
         expect(mockRunTask).toHaveBeenCalledWith(task);
     }
@@ -187,7 +187,7 @@ describe('Deploy', () => {
             command: TOPO_DEPLOY_TASK_COMMAND,
             composeFile,
             target,
-            settings: {},
+            deployOptions: {},
         });
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
@@ -203,7 +203,7 @@ describe('Deploy', () => {
         expectDeployTask(composeFile);
     });
 
-    it('passes configured settings from the command handler', async () => {
+    it('passes configured deploy options from the command handler', async () => {
         const deploySettings = { port: 5000, forceRecreate: true };
         config.getTargetSettings.mockReturnValueOnce({
             deploy: deploySettings,

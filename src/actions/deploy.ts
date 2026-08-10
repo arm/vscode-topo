@@ -20,7 +20,7 @@ import {
     type DeployTaskFactory,
 } from '../tasks/deployTaskFactory';
 import { Config } from '../services/config';
-import type { TargetDeploySettings } from '../util/targetSettings';
+import type { DeployOptions } from '../util/targetSettings';
 import { TOPO_DEPLOY_TASK_COMMAND, TOPO_TASK_TYPE } from '../manifest';
 
 const viewLogsItem: vscode.MessageItem = {
@@ -33,7 +33,7 @@ type ComposeFileQuickPickItem = vscode.QuickPickItem & {
 
 type DeployTarget = {
     target: string;
-    settings: TargetDeploySettings;
+    deployOptions: DeployOptions;
 };
 
 export class Deploy {
@@ -119,7 +119,7 @@ export class Deploy {
         const targetSettings = this.config.getTargetSettings(target);
         return {
             target,
-            settings: targetSettings.deploy ?? {},
+            deployOptions: targetSettings.deploy ?? {},
         };
     }
 
@@ -132,7 +132,7 @@ export class Deploy {
             command: TOPO_DEPLOY_TASK_COMMAND,
             target: deployTarget.target,
             composeFile: resource.fsPath,
-            settings: deployTarget.settings,
+            deployOptions: deployTarget.deployOptions,
         };
         await deploy(this.taskFactory, definition);
     }

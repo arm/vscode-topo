@@ -122,6 +122,10 @@ Add a Topo task to `.vscode/tasks.json` using a compose file path relative to it
             "command": "deploy",
             "composeFile": "examples/camera/compose.yaml",
             "target": "topo.local",
+            "deployOptions": {
+                "port": 5000,
+                "forceRecreate": true
+            },
             "label": "Deploy camera"
         },
         {
@@ -134,6 +138,10 @@ Add a Topo task to `.vscode/tasks.json` using a compose file path relative to it
     ]
 }
 ```
+
+Configured deploy tasks use the Topo CLI defaults unless `deployOptions` are
+specified. They do not inherit deploy options from the extension's target
+settings.
 
 ## Project Management
 

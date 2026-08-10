@@ -13,6 +13,7 @@ import {
     unknown,
     validate,
     Infer,
+    is,
 } from 'superstruct';
 import { WrappedError } from '../errors/wrappedError';
 import { CONFIG_TARGET_SETTINGS, PACKAGE_NAME } from '../manifest';
@@ -24,7 +25,7 @@ function withEnumeratedKeys<T, S extends object>(
     return intersection([schema, knownKeys]) as Struct<T, null>;
 }
 
-const targetDeploySettingsSchema = refine(
+const deployOptionsSchema = refine(
     withEnumeratedKeys(
         type({
             port: optional(max(min(integer(), 1), 65_535)),
@@ -40,11 +41,15 @@ const targetDeploySettingsSchema = refine(
         return true;
     },
 );
-export type TargetDeploySettings = Infer<typeof targetDeploySettingsSchema>;
+export type DeployOptions = Infer<typeof deployOptionsSchema>;
+
+export function isDeployOptions(options: unknown): options is DeployOptions {
+    return is(options, deployOptionsSchema);
+}
 
 const targetSettingsSchema = withEnumeratedKeys(
     type({
-        deploy: optional(targetDeploySettingsSchema),
+        deploy: optional(deployOptionsSchema),
     }),
 );
 export type TargetSettings = Infer<typeof targetSettingsSchema>;

@@ -60,6 +60,27 @@
                     "target": {
                         "type": "string",
                         "description": "Topo target on which to run the operation."
+                    },
+                    "deployOptions": {
+                        "type": "object",
+                        "description": "Options for a Topo deploy task. Omit to use the Topo CLI defaults.",
+                        "additionalProperties": false,
+                        "properties": {
+                            "port": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 65535,
+                                "description": "Registry port to use when deploying to the target."
+                            },
+                            "forceRecreate": {
+                                "type": "boolean",
+                                "description": "Recreate containers even when their configuration and image have not changed. Do not use with noRecreate."
+                            },
+                            "noRecreate": {
+                                "type": "boolean",
+                                "description": "Keep existing containers instead of recreating them. Do not use with forceRecreate."
+                            }
+                        }
                     }
                 }
             }

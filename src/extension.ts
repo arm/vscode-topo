@@ -113,7 +113,7 @@ export async function activate(
 
     const config = new Config();
     const taskExecutor = new TaskExecutor(topoCli);
-    const deployTaskFactory = new DeployTaskFactory(config, topoCli);
+    const deployTaskFactory = new DeployTaskFactory(topoCli);
     const stopTaskFactory = new StopTaskFactory(topoCli);
     const taskProvider = new TopoTaskProvider([
         deployTaskFactory,

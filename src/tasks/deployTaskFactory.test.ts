@@ -1,58 +1,47 @@
 import * as vscode from 'vscode';
 import { mock, type MockProxy } from 'vitest-mock-extended';
-import { WrappedError } from '../errors/wrappedError';
 import { TOPO_DEPLOY_TASK_COMMAND, TOPO_TASK_TYPE } from '../manifest';
-import { Config } from '../services/config';
 import { TopoCli } from '../services/topoCli';
-import { logger } from '../util/logger';
 import { DeployTaskFactory } from './deployTaskFactory';
 import { TopoTaskProvider } from './topoTaskProvider';
-
-vi.mock('../util/logger');
 
 describe('Topo deploy task', () => {
     const target = 'topo.local';
     const composeFile = '/projects/camera/compose.yaml';
     const topoBinaryPath = '/extension/resources/topo';
-    let config: MockProxy<Config>;
+    const taskDefinition: vscode.TaskDefinition = {
+        type: TOPO_TASK_TYPE,
+        command: TOPO_DEPLOY_TASK_COMMAND,
+        composeFile,
+        target,
+    };
     let topoCli: MockProxy<TopoCli>;
     let taskProvider: TopoTaskProvider;
 
-    const createConfiguredTask = (configuredTarget = target): vscode.Task =>
+    const createConfiguredTask = (
+        definition: vscode.TaskDefinition = taskDefinition,
+    ): vscode.Task =>
         new vscode.Task(
-            {
-                type: TOPO_TASK_TYPE,
-                command: TOPO_DEPLOY_TASK_COMMAND,
-                composeFile,
-                target: configuredTarget,
-            },
+            definition,
             vscode.TaskScope.Workspace,
             'Deploy camera',
             'topo',
         );
 
     beforeEach(() => {
-        config = mock<Config>();
-        config.getTargetSettings.mockReturnValue({});
         topoCli = mock<TopoCli>();
         topoCli.getBinaryPath.mockReturnValue(topoBinaryPath);
-        taskProvider = new TopoTaskProvider([
-            new DeployTaskFactory(config, topoCli),
-        ]);
-        vi.mocked(logger.error).mockClear();
+        taskProvider = new TopoTaskProvider([new DeployTaskFactory(topoCli)]);
     });
 
-    it('resolves target settings into the deploy arguments', () => {
-        const configuredTarget = 'configured.local';
-        config.getTargetSettings.mockReturnValue({
-            deploy: { forceRecreate: true },
-        });
-
+    it('resolves task deploy options into the deploy arguments', () => {
         const resolvedTask = taskProvider.resolveTask(
-            createConfiguredTask(configuredTarget),
+            createConfiguredTask({
+                ...taskDefinition,
+                deployOptions: { port: 5000, forceRecreate: true },
+            }),
         );
 
-        expect(config.getTargetSettings).toHaveBeenCalledWith(configuredTarget);
         expect(resolvedTask?.execution).toMatchObject({
             process: topoBinaryPath,
             args: [
@@ -60,36 +49,32 @@ describe('Topo deploy task', () => {
                 '--file',
                 'compose.yaml',
                 '--target',
-                configuredTarget,
+                target,
+                '-p',
+                '5000',
                 '--force-recreate',
             ],
             options: { cwd: '/projects/camera' },
         });
     });
 
-    it('handles target configuration errors', () => {
-        const error = new WrappedError('CONFIG', 'Invalid target settings');
-        config.getTargetSettings.mockImplementation(() => {
-            throw error;
-        });
-
+    it('uses CLI defaults when deploy options are omitted', () => {
         const resolvedTask = taskProvider.resolveTask(createConfiguredTask());
 
-        expect(resolvedTask).toBeUndefined();
-        expect(logger.error).toHaveBeenCalledWith(
-            `Failed to resolve ${TOPO_TASK_TYPE} ${TOPO_DEPLOY_TASK_COMMAND} task`,
-            error,
-        );
+        expect(resolvedTask?.execution).toMatchObject({
+            args: ['deploy', '--file', 'compose.yaml', '--target', target],
+        });
     });
 
-    it('does not catch unexpected target configuration errors', () => {
-        const error = new Error('Failed to load target settings');
-        config.getTargetSettings.mockImplementation(() => {
-            throw error;
+    it('does not resolve invalid deploy options', () => {
+        const configuredTask = createConfiguredTask({
+            ...taskDefinition,
+            deployOptions: {
+                forceRecreate: true,
+                noRecreate: true,
+            },
         });
 
-        expect(() => taskProvider.resolveTask(createConfiguredTask())).toThrow(
-            error,
-        );
+        expect(taskProvider.resolveTask(configuredTask)).toBeUndefined();
     });
 });

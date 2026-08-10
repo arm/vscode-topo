@@ -1,12 +1,9 @@
 import * as vscode from 'vscode';
-import { isWrappedError } from '../errors/wrappedError';
 import { TOPO_DEPLOY_TASK_COMMAND, TOPO_TASK_TYPE } from '../manifest';
-import type { Config } from '../services/config';
 import type { TopoCli } from '../services/topoCli';
 import { COMPOSE_FILE_NAME } from '../util/composeFile';
-import { logger } from '../util/logger';
 import { createTask } from '../util/task';
-import type { TargetDeploySettings } from '../util/targetSettings';
+import { isDeployOptions, type DeployOptions } from '../util/targetSettings';
 import {
     createTopoComposeTaskCwd,
     resolveTopoComposeTaskDefinition,
@@ -17,19 +14,19 @@ import type { TopoTaskDefinition, TopoTaskFactory } from './topoTaskProvider';
 export type TopoDeployTaskDefinition = TopoComposeTaskDefinition &
     TopoTaskDefinition & {
         readonly command: typeof TOPO_DEPLOY_TASK_COMMAND;
-        readonly settings: TargetDeploySettings;
+        readonly deployOptions: DeployOptions;
     };
 
 const createArgs = (definition: TopoDeployTaskDefinition): string[] => {
-    const { target, settings } = definition;
+    const { target, deployOptions } = definition;
     const args = ['deploy', '--file', COMPOSE_FILE_NAME, '--target', target];
-    if (settings.port !== undefined) {
-        args.push('-p', String(settings.port));
+    if (deployOptions.port !== undefined) {
+        args.push('-p', String(deployOptions.port));
     }
-    if (settings.forceRecreate) {
+    if (deployOptions.forceRecreate) {
         args.push('--force-recreate');
     }
-    if (settings.noRecreate) {
+    if (deployOptions.noRecreate) {
         args.push('--no-recreate');
     }
     return args;
@@ -38,10 +35,7 @@ const createArgs = (definition: TopoDeployTaskDefinition): string[] => {
 export class DeployTaskFactory implements TopoTaskFactory<TopoDeployTaskDefinition> {
     public readonly command = TOPO_DEPLOY_TASK_COMMAND;
 
-    constructor(
-        private readonly config: Config,
-        private readonly topoCli: TopoCli,
-    ) {}
+    constructor(private readonly topoCli: TopoCli) {}
 
     public resolveDefinition(
         task: vscode.Task,
@@ -51,18 +45,8 @@ export class DeployTaskFactory implements TopoTaskFactory<TopoDeployTaskDefiniti
             return undefined;
         }
 
-        let settings: TargetDeploySettings;
-        try {
-            settings =
-                this.config.getTargetSettings(definition.target).deploy ?? {};
-        } catch (error) {
-            if (!isWrappedError(error, ['CONFIG'])) {
-                throw error;
-            }
-            logger.error(
-                `Failed to resolve ${definition.type} ${definition.command} task`,
-                error,
-            );
+        const deployOptions = definition.deployOptions ?? {};
+        if (!isDeployOptions(deployOptions)) {
             return undefined;
         }
 
@@ -70,7 +54,7 @@ export class DeployTaskFactory implements TopoTaskFactory<TopoDeployTaskDefiniti
             ...definition,
             type: TOPO_TASK_TYPE,
             command: TOPO_DEPLOY_TASK_COMMAND,
-            settings,
+            deployOptions,
         };
     }
 
