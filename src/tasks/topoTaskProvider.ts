@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { TOPO_TASK_TYPE } from '../manifest';
-import { replaceTaskExecution, type TaskExecution } from '../util/task';
+import { withTaskExecution, type TaskExecution } from '../util/task';
 
 export interface TopoTaskDefinition extends vscode.TaskDefinition {
     readonly type: typeof TOPO_TASK_TYPE;
@@ -42,6 +42,6 @@ export class TopoTaskProvider implements vscode.TaskProvider {
         }
 
         const execution = taskFactory.createExecution(resolvedDefinition);
-        return replaceTaskExecution(task, execution);
+        return withTaskExecution(task, execution);
     }
 }

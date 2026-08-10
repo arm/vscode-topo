@@ -74,7 +74,7 @@ export function createTask(
     return task;
 }
 
-export function replaceTaskExecution(
+export function withTaskExecution(
     task: vscode.Task,
     execution: TaskExecution,
 ): vscode.Task {

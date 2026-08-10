@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { replaceTaskExecution, waitForTaskProcess } from './task';
+import { withTaskExecution, waitForTaskProcess } from './task';
 import { TopoCli } from '../services/topoCli';
 
 export class TaskExecutor {
@@ -26,6 +26,6 @@ export class TaskExecutor {
             execution.args,
             execution.options,
         );
-        return replaceTaskExecution(task, resolvedExecution);
+        return withTaskExecution(task, resolvedExecution);
     }
 }
