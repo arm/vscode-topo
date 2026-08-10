@@ -9,7 +9,7 @@ import { TaskExecutor } from '../util/taskExecutor';
 import { loaded, unloaded } from '../util/loadable';
 import type { TargetHealthReport } from '../services/topoCliSchema';
 import { Config } from '../services/config';
-import { ProjectController } from '../controllers/projectController';
+import { refreshProjectContainers } from '../commandIds';
 import { createProjectTreeItem } from '../util/test/projectTreeItem';
 import { WrappedError } from '../errors/wrappedError';
 import { showAndLogError, showAndLogWarning } from '../util/showAndLog';
@@ -44,7 +44,6 @@ describe('Deploy', () => {
     };
     let taskExecutor: MockProxy<TaskExecutor>;
     let targetModel: TargetModel;
-    let projectController: MockProxy<ProjectController>;
     let config: MockProxy<Config>;
 
     function expectDeployTask(
@@ -78,7 +77,6 @@ describe('Deploy', () => {
         targetModel = new TargetModel();
         targetModel.setSelected(target);
         targetModel.setSelectedTargetHealth(loaded(targetHealth));
-        projectController = mock<ProjectController>();
         config = mock<Config>();
         config.getTargetSettings.mockReturnValue({});
         vi.mocked(vscode.workspace.findFiles).mockResolvedValue([]);
@@ -86,12 +84,7 @@ describe('Deploy', () => {
             undefined,
         );
         mutable(vscode.workspace).workspaceFolders = undefined;
-        deployAction = new Deploy(
-            taskExecutor,
-            targetModel,
-            projectController,
-            config,
-        );
+        deployAction = new Deploy(taskExecutor, targetModel, config);
     });
 
     afterEach(() => {
@@ -192,9 +185,9 @@ describe('Deploy', () => {
         await expect(op).resolves.toBeUndefined();
         expect(taskExecutor.run).toHaveBeenCalledTimes(1);
         expectDeployTask(taskExecutor.run.mock.calls[0][0], composeFilePath);
-        expect(
-            projectController.refreshProjectContainersCommandHandler,
-        ).toHaveBeenCalledOnce();
+        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            refreshProjectContainers,
+        );
     });
 
     it.each([
@@ -266,9 +259,9 @@ describe('Deploy', () => {
                 error,
             );
             expect(taskExecutor.run).not.toHaveBeenCalled();
-            expect(
-                projectController.refreshProjectContainersCommandHandler,
-            ).not.toHaveBeenCalled();
+            expect(vscode.commands.executeCommand).not.toHaveBeenCalledWith(
+                refreshProjectContainers,
+            );
         },
     );
 

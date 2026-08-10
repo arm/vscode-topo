@@ -7,7 +7,7 @@ import { HealthCheckTreeItem } from '../views/treeItems/healthCheckTreeItem';
 import { HealthCheck } from '../services/topoCliSchema';
 import { TargetModel } from '../models/targetModel';
 import { TaskExecutor } from '../util/taskExecutor';
-import { TargetController } from '../controllers/targetController';
+import { refreshSelectedTargetHealth } from '../commandIds';
 
 vi.mock('../util/logger');
 
@@ -28,7 +28,6 @@ const mockSelectedQuickPickItems = <T extends vscode.QuickPickItem>(
 describe('FixIssue', () => {
     let targetModel: TargetModel;
     let taskExecutor: MockProxy<TaskExecutor>;
-    let targetController: MockProxy<TargetController>;
 
     const target = 'user@topo.local';
     const healthChecks: HealthCheck[] = [
@@ -58,7 +57,7 @@ describe('FixIssue', () => {
     ];
 
     const createFixIssue = (): FixIssue =>
-        new FixIssue(taskExecutor, targetModel, targetController);
+        new FixIssue(taskExecutor, targetModel);
 
     const createHealthGroupItem = (
         targetHealthChecks: HealthCheck[],
@@ -68,7 +67,6 @@ describe('FixIssue', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         taskExecutor = mock<TaskExecutor>();
-        targetController = mock<TargetController>();
         targetModel = new TargetModel();
         targetModel.setSelected(target);
     });
@@ -109,9 +107,9 @@ describe('FixIssue', () => {
                 }),
             }),
         );
-        expect(
-            targetController.refreshSelectedTargetHealthCommandHandler,
-        ).toHaveBeenCalledOnce();
+        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            refreshSelectedTargetHealth,
+        );
     });
 
     it('fails a single issue fix without an executable command', async () => {
@@ -125,9 +123,9 @@ describe('FixIssue', () => {
         ).rejects.toThrow('No executable fix found for the selected item');
 
         expect(taskExecutor.run).not.toHaveBeenCalled();
-        expect(
-            targetController.refreshSelectedTargetHealthCommandHandler,
-        ).not.toHaveBeenCalled();
+        expect(vscode.commands.executeCommand).not.toHaveBeenCalledWith(
+            refreshSelectedTargetHealth,
+        );
     });
 
     it('refreshes after an issue fix task fails', async () => {
@@ -140,9 +138,9 @@ describe('FixIssue', () => {
         await fixIssue.fixIssueCommandHandler(healthCheckItem);
 
         expect(taskExecutor.run).toHaveBeenCalledOnce();
-        expect(
-            targetController.refreshSelectedTargetHealthCommandHandler,
-        ).toHaveBeenCalledOnce();
+        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            refreshSelectedTargetHealth,
+        );
     });
 
     it('fails a single issue fix when no target is selected', async () => {
@@ -157,9 +155,9 @@ describe('FixIssue', () => {
         ).rejects.toThrow('No selected target found');
 
         expect(taskExecutor.run).not.toHaveBeenCalled();
-        expect(
-            targetController.refreshSelectedTargetHealthCommandHandler,
-        ).not.toHaveBeenCalled();
+        expect(vscode.commands.executeCommand).not.toHaveBeenCalledWith(
+            refreshSelectedTargetHealth,
+        );
     });
 
     it('shows a quick pick when only one target issue fix is available', async () => {
@@ -199,9 +197,9 @@ describe('FixIssue', () => {
                 }),
             }),
         );
-        expect(
-            targetController.refreshSelectedTargetHealthCommandHandler,
-        ).toHaveBeenCalledOnce();
+        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            refreshSelectedTargetHealth,
+        );
     });
 
     it('shows target issue fixes in a quick pick and runs the selected fix', async () => {
@@ -286,9 +284,9 @@ describe('FixIssue', () => {
                 }),
             }),
         );
-        expect(
-            targetController.refreshSelectedTargetHealthCommandHandler,
-        ).toHaveBeenCalledOnce();
+        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            refreshSelectedTargetHealth,
+        );
     });
 
     it('runs a shared target issue fix only once', async () => {
@@ -353,9 +351,9 @@ describe('FixIssue', () => {
         await fixIssue.fixIssueCommandHandler(healthGroupItem);
 
         expect(taskExecutor.run).not.toHaveBeenCalled();
-        expect(
-            targetController.refreshSelectedTargetHealthCommandHandler,
-        ).toHaveBeenCalledOnce();
+        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            refreshSelectedTargetHealth,
+        );
     });
 
     it('fails when a target has no executable issue fixes', async () => {
@@ -370,9 +368,9 @@ describe('FixIssue', () => {
 
         expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
         expect(taskExecutor.run).not.toHaveBeenCalled();
-        expect(
-            targetController.refreshSelectedTargetHealthCommandHandler,
-        ).not.toHaveBeenCalled();
+        expect(vscode.commands.executeCommand).not.toHaveBeenCalledWith(
+            refreshSelectedTargetHealth,
+        );
     });
 
     it('fails when the command is called with an unsupported item', async () => {

@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
+import { refreshProjectContainers } from '../commandIds';
 import { getErrorMessage } from '../util/getErrorMessage';
 import { TaskExecutor } from '../util/taskExecutor';
 import { showAndLogError, showAndLogWarning } from '../util/showAndLog';
 import { TargetModel } from '../models/targetModel';
-import { ProjectController } from '../controllers/projectController';
 import { isWrappedError } from '../errors/wrappedError';
 import {
     COMPOSE_FILE_GLOB,
@@ -41,7 +41,6 @@ export class Deploy {
     constructor(
         private readonly taskExecutor: TaskExecutor,
         private readonly targetModel: TargetModel,
-        private readonly projectController: ProjectController,
         private readonly config: Config,
     ) {}
 
@@ -134,7 +133,7 @@ export class Deploy {
             composeFilePath: resource.fsPath,
             settings: deployTarget.settings,
         });
-        await this.projectController.refreshProjectContainersCommandHandler();
+        await vscode.commands.executeCommand(refreshProjectContainers);
     }
 }
 

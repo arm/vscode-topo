@@ -75,6 +75,20 @@ describe('commands', () => {
                 handlers.targetController
                     .refreshSelectedTargetDataCommandHandler,
             ],
+            [
+                commands.refreshProjectContainers,
+                handlers.projectController
+                    .refreshProjectContainersCommandHandler,
+            ],
+            [
+                commands.refreshSelectedTargetHealth,
+                handlers.targetController
+                    .refreshSelectedTargetHealthCommandHandler,
+            ],
+            [
+                commands.refreshSkillStatus,
+                handlers.hostController.refreshSkillStatus,
+            ],
             [commands.showOutput, vi.mocked(logger.show)],
             [
                 commands.selectTarget,

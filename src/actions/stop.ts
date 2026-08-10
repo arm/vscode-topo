@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
+import { refreshProjectContainers } from '../commandIds';
 import { getErrorMessage } from '../util/getErrorMessage';
 import { TaskExecutor } from '../util/taskExecutor';
 import { showAndLogWarning } from '../util/showAndLog';
 import { TargetModel } from '../models/targetModel';
-import { ProjectController } from '../controllers/projectController';
 import { assertProjectTreeItem } from '../views/treeItems/assertProjectTreeItem';
 import { isWrappedError } from '../errors/wrappedError';
 import {
@@ -24,7 +24,6 @@ export class Stop {
     constructor(
         private readonly taskExecutor: TaskExecutor,
         private readonly targetModel: TargetModel,
-        private readonly projectController: ProjectController,
     ) {}
 
     public async stopCommandHandler(resource?: vscode.Uri): Promise<void> {
@@ -49,7 +48,7 @@ export class Stop {
             target,
             composeFilePath: resource.fsPath,
         });
-        await this.projectController.refreshProjectContainersCommandHandler();
+        await vscode.commands.executeCommand(refreshProjectContainers);
     }
 
     public async stopProjectCommandHandler(treeNode: unknown): Promise<void> {

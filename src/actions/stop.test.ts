@@ -5,7 +5,7 @@ import { Stop, stop } from './stop';
 import { TargetModel } from '../models/targetModel';
 import { mock, MockProxy } from 'vitest-mock-extended';
 import { TaskExecutor } from '../util/taskExecutor';
-import { ProjectController } from '../controllers/projectController';
+import { refreshProjectContainers } from '../commandIds';
 import { loaded, unloaded } from '../util/loadable';
 import type { TargetHealthReport } from '../services/topoCliSchema';
 import { createProjectTreeItem } from '../util/test/projectTreeItem';
@@ -34,7 +34,6 @@ describe('Stop', () => {
     };
     let taskExecutor: MockProxy<TaskExecutor>;
     let targetModel: TargetModel;
-    let projectController: MockProxy<ProjectController>;
 
     function expectStopTask(task: vscode.Task, cwd: string): void {
         expect(task.name).toBe(`Stop ${composeFilePath} on topo.local`);
@@ -47,14 +46,14 @@ describe('Stop', () => {
     }
 
     beforeEach(() => {
+        vi.clearAllMocks();
         taskExecutor = mock<TaskExecutor>();
         targetModel = new TargetModel();
         targetModel.setSelected(target);
         targetModel.setSelectedTargetHealth(loaded(targetHealth));
-        projectController = mock<ProjectController>();
         vi.mocked(vscode.window.showErrorMessage).mockClear();
         vi.mocked(vscode.window.showWarningMessage).mockClear();
-        stopAction = new Stop(taskExecutor, targetModel, projectController);
+        stopAction = new Stop(taskExecutor, targetModel);
     });
 
     afterEach(() => {
@@ -71,9 +70,9 @@ describe('Stop', () => {
             'Cannot stop. No target selected. Please select a target.',
         );
         expect(taskExecutor.run).not.toHaveBeenCalled();
-        expect(
-            projectController.refreshProjectContainersCommandHandler,
-        ).not.toHaveBeenCalled();
+        expect(vscode.commands.executeCommand).not.toHaveBeenCalledWith(
+            refreshProjectContainers,
+        );
     });
 
     it('shows a warning and does not stop when target connectivity is unhealthy', async () => {
@@ -95,9 +94,9 @@ describe('Stop', () => {
             "Cannot stop. Target topo.local connectivity is 'error': unreachable.",
         );
         expect(taskExecutor.run).not.toHaveBeenCalled();
-        expect(
-            projectController.refreshProjectContainersCommandHandler,
-        ).not.toHaveBeenCalled();
+        expect(vscode.commands.executeCommand).not.toHaveBeenCalledWith(
+            refreshProjectContainers,
+        );
     });
 
     it('shows a warning and does not stop when target health is loading', async () => {
@@ -110,9 +109,9 @@ describe('Stop', () => {
             'Cannot stop. Target topo.local health is still being checked. Wait for target health checks to finish.',
         );
         expect(taskExecutor.run).not.toHaveBeenCalled();
-        expect(
-            projectController.refreshProjectContainersCommandHandler,
-        ).not.toHaveBeenCalled();
+        expect(vscode.commands.executeCommand).not.toHaveBeenCalledWith(
+            refreshProjectContainers,
+        );
     });
 
     it('handles task failure', async () => {
@@ -136,9 +135,9 @@ describe('Stop', () => {
             taskExecutor.run.mock.calls[0][0],
             path.dirname(composeFilePath),
         );
-        expect(
-            projectController.refreshProjectContainersCommandHandler,
-        ).toHaveBeenCalledOnce();
+        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            refreshProjectContainers,
+        );
     });
 
     it('stops the project tree item compose file', async () => {
@@ -151,9 +150,9 @@ describe('Stop', () => {
             taskExecutor.run.mock.calls[0][0],
             path.dirname(composeFilePath),
         );
-        expect(
-            projectController.refreshProjectContainersCommandHandler,
-        ).toHaveBeenCalledOnce();
+        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            refreshProjectContainers,
+        );
     });
 
     it('throws when project command is called without a project tree item', async () => {
@@ -162,8 +161,8 @@ describe('Stop', () => {
         ).rejects.toThrow('This operation cannot be performed on this item');
 
         expect(taskExecutor.run).not.toHaveBeenCalled();
-        expect(
-            projectController.refreshProjectContainersCommandHandler,
-        ).not.toHaveBeenCalled();
+        expect(vscode.commands.executeCommand).not.toHaveBeenCalledWith(
+            refreshProjectContainers,
+        );
     });
 });
