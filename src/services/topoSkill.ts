@@ -1,5 +1,7 @@
+import { existsSync } from 'node:fs';
+import { cp, readFile } from 'node:fs/promises';
 import os from 'node:os';
-import * as vscode from 'vscode';
+import path from 'node:path';
 import { WrappedError } from '../errors/wrappedError';
 import { ensureSkillLink, isSkillLink } from '../util/skillLink';
 import { skillPaths } from '../util/skillPaths';
@@ -9,96 +11,81 @@ export const TOPO_SKILL_NAME = skillPaths.skillName;
 
 const SKILL_FILE_NAME = 'SKILL.md';
 
-function isFileNotFound(error: unknown): boolean {
-    return (
-        error instanceof vscode.FileSystemError && error.code === 'FileNotFound'
-    );
-}
-
-function rawStringsAreEqual(first: Uint8Array, second: Uint8Array): boolean {
-    return Buffer.from(first).equals(Buffer.from(second));
-}
-
 export class TopoSkill {
-    private readonly bundledDirectoryUri: vscode.Uri;
-    private readonly skillsDirectoryUri: vscode.Uri;
-    private readonly topoSkillsSubdirectory: vscode.Uri;
-    private readonly claudeSkillsDirectoryUri: vscode.Uri;
-    private readonly claudeSkillUri: vscode.Uri;
+    private readonly bundledDirectoryPath: string;
+    private readonly canonicalSkillPath: string;
+    private readonly claudeHomePath: string;
+    private readonly claudeSkillPath: string;
 
     constructor(
-        extensionUri: vscode.Uri,
-        userHomeUri = vscode.Uri.file(os.homedir()),
+        extensionPath: string,
+        userHomePath = os.homedir(),
+        environment: NodeJS.ProcessEnv = process.env,
     ) {
-        this.bundledDirectoryUri = vscode.Uri.joinPath(
-            extensionUri,
+        this.bundledDirectoryPath = path.join(
+            extensionPath,
             'skills',
             TOPO_SKILL_NAME,
         );
-        this.skillsDirectoryUri = vscode.Uri.joinPath(
-            userHomeUri,
-            ...skillPaths.canonicalSkillsDirectory,
-        );
-        this.topoSkillsSubdirectory = vscode.Uri.joinPath(
-            userHomeUri,
+        this.canonicalSkillPath = path.join(
+            userHomePath,
             ...skillPaths.canonicalSkillPath,
         );
-        this.claudeSkillsDirectoryUri = vscode.Uri.joinPath(
-            userHomeUri,
-            ...skillPaths.claudeSkillsDirectory,
-        );
-        this.claudeSkillUri = vscode.Uri.joinPath(
-            userHomeUri,
-            ...skillPaths.claudeSkillPath,
+        const configuredClaudeHome = environment.CLAUDE_CONFIG_DIR?.trim();
+        this.claudeHomePath = configuredClaudeHome
+            ? configuredClaudeHome
+            : path.join(userHomePath, '.claude');
+        this.claudeSkillPath = path.join(
+            this.claudeHomePath,
+            'skills',
+            TOPO_SKILL_NAME,
         );
     }
 
     public async getStatus(): Promise<TopoSkillStatus> {
-        const bundledSkill = await vscode.workspace.fs.readFile(
-            vscode.Uri.joinPath(this.bundledDirectoryUri, SKILL_FILE_NAME),
+        const bundledSkill = await readFile(
+            path.join(this.bundledDirectoryPath, SKILL_FILE_NAME),
         );
 
-        let installedSkill: Uint8Array;
+        let installedSkill: Buffer;
         try {
-            installedSkill = await vscode.workspace.fs.readFile(
-                vscode.Uri.joinPath(
-                    this.topoSkillsSubdirectory,
-                    SKILL_FILE_NAME,
-                ),
+            installedSkill = await readFile(
+                path.join(this.canonicalSkillPath, SKILL_FILE_NAME),
             );
         } catch (error) {
-            if (isFileNotFound(error)) {
+            if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
                 return 'missing';
             }
             throw error;
         }
 
-        if (!rawStringsAreEqual(bundledSkill, installedSkill)) {
+        if (!bundledSkill.equals(installedSkill)) {
             return 'outdated';
         }
 
+        if (!existsSync(this.claudeHomePath)) {
+            return 'installed';
+        }
+
         return (await isSkillLink(
-            this.topoSkillsSubdirectory.fsPath,
-            this.claudeSkillUri.fsPath,
+            this.canonicalSkillPath,
+            this.claudeSkillPath,
         ))
             ? 'installed'
             : 'outdated';
     }
 
     public async install(): Promise<void> {
-        await vscode.workspace.fs.createDirectory(this.skillsDirectoryUri);
-        await vscode.workspace.fs.copy(
-            this.bundledDirectoryUri,
-            this.topoSkillsSubdirectory,
-            { overwrite: true },
-        );
-        await vscode.workspace.fs.createDirectory(
-            this.claudeSkillsDirectoryUri,
-        );
-        await ensureSkillLink(
-            this.topoSkillsSubdirectory.fsPath,
-            this.claudeSkillUri.fsPath,
-        );
+        await cp(this.bundledDirectoryPath, this.canonicalSkillPath, {
+            recursive: true,
+            force: true,
+        });
+        if (existsSync(this.claudeHomePath)) {
+            await ensureSkillLink(
+                this.canonicalSkillPath,
+                this.claudeSkillPath,
+            );
+        }
         const status = await this.getStatus();
         if (status !== 'installed') {
             throw new WrappedError(

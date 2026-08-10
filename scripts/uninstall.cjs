@@ -8,12 +8,21 @@ function uninstallSkill(
     remove = fs.rmSync,
     linkStatus = fs.lstatSync,
     readLink = fs.readlinkSync,
+    environment = process.env,
 ) {
     const canonicalSkillPath = path.join(
         userHome,
         ...skillPaths.canonicalSkillPath,
     );
-    const claudeSkillPath = path.join(userHome, ...skillPaths.claudeSkillPath);
+    const configuredClaudeHome = environment.CLAUDE_CONFIG_DIR?.trim();
+    const claudeHome = configuredClaudeHome
+        ? configuredClaudeHome
+        : path.join(userHome, '.claude');
+    const claudeSkillPath = path.join(
+        claudeHome,
+        'skills',
+        skillPaths.skillName,
+    );
 
     let status;
     try {

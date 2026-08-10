@@ -62,7 +62,7 @@ export async function activate(
     const targetModel = new TargetModel();
     const hostModel = new HostModel();
     const projectModel = new ProjectModel();
-    const topoSkill = new TopoSkill(context.extensionUri);
+    const topoSkill = new TopoSkill(context.extensionUri.fsPath);
     context.subscriptions.push(targetModel, hostModel, projectModel);
 
     const hostTreeView = new HostTreeView(hostModel);

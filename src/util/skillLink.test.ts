@@ -26,7 +26,6 @@ describe('ensureSkillLink', () => {
             'topo-cli-location',
         );
         await fs.mkdir(skillPath, { recursive: true });
-        await fs.mkdir(path.dirname(claudeSkillPath), { recursive: true });
     });
 
     afterEach(async () => {
@@ -52,6 +51,7 @@ describe('ensureSkillLink', () => {
     it('replaces an existing link to a different skill', async () => {
         const otherSkillPath = path.join(temporaryHome, 'other-skill');
         await fs.mkdir(otherSkillPath);
+        await fs.mkdir(path.dirname(claudeSkillPath), { recursive: true });
         await fs.symlink(
             otherSkillPath,
             claudeSkillPath,
@@ -81,7 +81,7 @@ describe('ensureSkillLink', () => {
     });
 
     it('preserves an existing non-link skill', async () => {
-        await fs.mkdir(claudeSkillPath);
+        await fs.mkdir(claudeSkillPath, { recursive: true });
 
         await expect(isSkillLink(skillPath, claudeSkillPath)).resolves.toBe(
             false,

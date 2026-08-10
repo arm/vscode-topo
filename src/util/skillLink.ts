@@ -1,4 +1,4 @@
-import { lstat, readlink, symlink, unlink } from 'node:fs/promises';
+import { lstat, mkdir, readlink, symlink, unlink } from 'node:fs/promises';
 import path from 'node:path';
 import { WrappedError } from '../errors/wrappedError';
 
@@ -40,6 +40,7 @@ export async function ensureSkillLink(
         process.platform === 'win32'
             ? path.resolve(targetPath)
             : path.relative(path.dirname(linkPath), targetPath);
+    await mkdir(path.dirname(linkPath), { recursive: true });
     await symlink(
         linkTarget,
         linkPath,

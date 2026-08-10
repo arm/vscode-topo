@@ -11,6 +11,7 @@ type Remove = (
 ) => void;
 type LinkStatus = (path: string) => { isSymbolicLink(): boolean };
 type ReadLink = (path: string) => string;
+type Environment = { CLAUDE_CONFIG_DIR?: string };
 
 const loadModule = createRequire(__filename);
 const { uninstallSkill } = loadModule('../../scripts/uninstall.cjs') as {
@@ -19,6 +20,7 @@ const { uninstallSkill } = loadModule('../../scripts/uninstall.cjs') as {
         remove: Remove,
         linkStatus: LinkStatus,
         readLink: ReadLink,
+        environment?: Environment,
     ): void;
 };
 
@@ -40,7 +42,7 @@ describe('InstallSkill', () => {
             refreshSkillStatus,
         );
         expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
-            'Topo CLI location skill installed for Codex and Claude Code. Start a new agent session to check it out.',
+            'Topo CLI location skill installed. Start a new agent session to check it out.',
         );
     });
 
@@ -64,6 +66,36 @@ describe('InstallSkill', () => {
             remove,
             () => ({ isSymbolicLink: () => true }),
             () => skillPath,
+        );
+
+        expect(remove).toHaveBeenNthCalledWith(1, claudeSkillPath, {
+            recursive: true,
+            force: true,
+        });
+        expect(remove).toHaveBeenNthCalledWith(2, skillPath, {
+            recursive: true,
+            force: true,
+        });
+    });
+
+    it('removes the installed skill from a configured Claude directory', () => {
+        const remove = vi.fn<Remove>();
+        const skillPath = vscode.Uri.joinPath(
+            userHomeUri,
+            '.agents',
+            'skills',
+            'topo-cli-location',
+        ).fsPath;
+        const claudeSkillPath = vscode.Uri.file(
+            '/fake/custom-claude/skills/topo-cli-location',
+        ).fsPath;
+
+        uninstallSkill(
+            userHomeUri.fsPath,
+            remove,
+            () => ({ isSymbolicLink: () => true }),
+            () => skillPath,
+            { CLAUDE_CONFIG_DIR: '/fake/custom-claude' },
         );
 
         expect(remove).toHaveBeenNthCalledWith(1, claudeSkillPath, {

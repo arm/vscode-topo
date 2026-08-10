@@ -145,12 +145,12 @@ Use the refresh button in the Host view title bar to reload host health.
 
 Commands available from the Command Palette:
 
-| Command                      | Description                                                              |
-| ---------------------------- | ------------------------------------------------------------------------ |
-| `Topo: Clone Remote Project` | Clone from a custom Git repository or a curated list of projects.        |
-| `Topo: Clone Local Project`  | Clone a project from a local directory.                                  |
-| `Topo: Deploy`               | Select and deploy a compose file to the target.                          |
-| `Topo: Install Skill`        | Install the bundled `topo-cli-location` skill for Codex and Claude Code. |
+| Command                      | Description                                                                   |
+| ---------------------------- | ----------------------------------------------------------------------------- |
+| `Topo: Clone Remote Project` | Clone from a custom Git repository or a curated list of projects.             |
+| `Topo: Clone Local Project`  | Clone a project from a local directory.                                       |
+| `Topo: Deploy`               | Select and deploy a compose file to the target.                               |
+| `Topo: Install Skill`        | Install the bundled skill for Codex and link it to Claude Code when detected. |
 
 Additional commands are available through inline buttons in the Target, Host, and Projects tree views.
 
