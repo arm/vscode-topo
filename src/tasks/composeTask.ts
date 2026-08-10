@@ -2,21 +2,21 @@ import path from 'node:path';
 import * as vscode from 'vscode';
 import { assertComposeFilePath } from '../util/composeFile';
 
-export interface TopoComposeTaskDefinition extends vscode.TaskDefinition {
+export interface ComposeTaskDefinition extends vscode.TaskDefinition {
     readonly composeFile: string;
     readonly target: string;
 }
 
-export const createTopoComposeTaskCwd = (
-    definition: TopoComposeTaskDefinition,
+export const createComposeTaskCwd = (
+    definition: ComposeTaskDefinition,
 ): string => {
     assertComposeFilePath(definition.composeFile);
     return path.dirname(definition.composeFile);
 };
 
-export const resolveTopoComposeTaskDefinition = (
+export const resolveComposeTaskDefinition = (
     task: vscode.Task,
-): TopoComposeTaskDefinition | undefined => {
+): ComposeTaskDefinition | undefined => {
     const { composeFile, target } = task.definition;
     if (isMissingOrEmptyString(composeFile) || isMissingOrEmptyString(target)) {
         return undefined;

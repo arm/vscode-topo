@@ -3,7 +3,7 @@ import { mock, type MockProxy } from 'vitest-mock-extended';
 import { TOPO_DEPLOY_TASK_COMMAND, TOPO_TASK_TYPE } from '../manifest';
 import { TopoCli } from '../services/topoCli';
 import { DeployTaskFactory } from './deployTaskFactory';
-import { TopoTaskProvider } from './topoTaskProvider';
+import { TaskProvider } from './taskProvider';
 
 describe('Topo deploy task', () => {
     const target = 'topo.local';
@@ -16,7 +16,7 @@ describe('Topo deploy task', () => {
         target,
     };
     let topoCli: MockProxy<TopoCli>;
-    let taskProvider: TopoTaskProvider;
+    let taskProvider: TaskProvider;
 
     const createConfiguredTask = (
         definition: vscode.TaskDefinition = taskDefinition,
@@ -31,7 +31,7 @@ describe('Topo deploy task', () => {
     beforeEach(() => {
         topoCli = mock<TopoCli>();
         topoCli.getBinaryPath.mockReturnValue(topoBinaryPath);
-        taskProvider = new TopoTaskProvider([new DeployTaskFactory(topoCli)]);
+        taskProvider = new TaskProvider([new DeployTaskFactory(topoCli)]);
     });
 
     it('resolves task deploy options into the deploy arguments', () => {

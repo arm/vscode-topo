@@ -35,7 +35,7 @@ import { ProjectCloner } from './operations/projectCloner';
 import { InstallSkill } from './actions/installSkill';
 import { DeployTaskFactory } from './tasks/deployTaskFactory';
 import { StopTaskFactory } from './tasks/stopTaskFactory';
-import { TopoTaskProvider } from './tasks/topoTaskProvider';
+import { TaskProvider } from './tasks/taskProvider';
 import { TopoSkill } from './services/topoSkill';
 
 const SELECTED_TARGET_REFRESH_INTERVAL_MS = 60_000;
@@ -115,10 +115,7 @@ export async function activate(
     const taskExecutor = new TaskExecutor(topoCli);
     const deployTaskFactory = new DeployTaskFactory(topoCli);
     const stopTaskFactory = new StopTaskFactory(topoCli);
-    const taskProvider = new TopoTaskProvider([
-        deployTaskFactory,
-        stopTaskFactory,
-    ]);
+    const taskProvider = new TaskProvider([deployTaskFactory, stopTaskFactory]);
     const configure = new Configure(taskExecutor);
     const projectCloner = new ProjectCloner(taskExecutor);
     const projectClone = new ProjectClone(topoCli, targetModel, projectCloner);

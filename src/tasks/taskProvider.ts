@@ -2,21 +2,21 @@ import * as vscode from 'vscode';
 import { TOPO_TASK_TYPE } from '../manifest';
 import { withTaskExecution, type TaskExecution } from '../util/task';
 
-export interface TopoTaskDefinition extends vscode.TaskDefinition {
+export interface TaskDefinition extends vscode.TaskDefinition {
     readonly type: typeof TOPO_TASK_TYPE;
     readonly command: string;
 }
 
-export interface TopoTaskFactory<TDefinition extends TopoTaskDefinition> {
+export interface TaskFactory<TDefinition extends TaskDefinition> {
     readonly command: TDefinition['command'];
     resolveDefinition(task: vscode.Task): TDefinition | undefined;
     createExecution(definition: TDefinition): TaskExecution;
     createTask(definition: TDefinition): vscode.Task;
 }
 
-export class TopoTaskProvider implements vscode.TaskProvider {
+export class TaskProvider implements vscode.TaskProvider {
     constructor(
-        private readonly taskFactories: readonly TopoTaskFactory<TopoTaskDefinition>[],
+        private readonly taskFactories: readonly TaskFactory<TaskDefinition>[],
     ) {}
 
     public provideTasks(): vscode.Task[] {

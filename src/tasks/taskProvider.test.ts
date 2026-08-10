@@ -1,22 +1,22 @@
 import * as vscode from 'vscode';
 import { TOPO_TASK_TYPE } from '../manifest';
 import {
-    TopoTaskProvider,
-    type TopoTaskDefinition,
-    type TopoTaskFactory,
-} from './topoTaskProvider';
+    TaskProvider,
+    type TaskDefinition,
+    type TaskFactory,
+} from './taskProvider';
 
-interface TestTaskDefinition extends TopoTaskDefinition {
+interface TestTaskDefinition extends TaskDefinition {
     readonly command: 'test';
     readonly message: string;
 }
 
-interface OtherTaskDefinition extends TopoTaskDefinition {
+interface OtherTaskDefinition extends TaskDefinition {
     readonly command: 'other';
     readonly message: string;
 }
 
-const taskFactory: TopoTaskFactory<TestTaskDefinition> = {
+const taskFactory: TaskFactory<TestTaskDefinition> = {
     command: 'test',
     resolveDefinition: (task) => {
         const { message } = task.definition;
@@ -40,7 +40,7 @@ const taskFactory: TopoTaskFactory<TestTaskDefinition> = {
         ),
 };
 
-const otherTaskFactory: TopoTaskFactory<OtherTaskDefinition> = {
+const otherTaskFactory: TaskFactory<OtherTaskDefinition> = {
     command: 'other',
     resolveDefinition: (task) => {
         const { message } = task.definition;
@@ -59,8 +59,8 @@ const otherTaskFactory: TopoTaskFactory<OtherTaskDefinition> = {
         ),
 };
 
-describe('TopoTaskProvider', () => {
-    let taskProvider: TopoTaskProvider;
+describe('TaskProvider', () => {
+    let taskProvider: TaskProvider;
 
     const createConfiguredTask = (
         definition: vscode.TaskDefinition = {
@@ -72,7 +72,7 @@ describe('TopoTaskProvider', () => {
         new vscode.Task(definition, vscode.TaskScope.Workspace, 'Test', 'topo');
 
     beforeEach(() => {
-        taskProvider = new TopoTaskProvider([taskFactory, otherTaskFactory]);
+        taskProvider = new TaskProvider([taskFactory, otherTaskFactory]);
     });
 
     it('does not provide detected tasks', () => {

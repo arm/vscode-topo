@@ -5,14 +5,14 @@ import { COMPOSE_FILE_NAME } from '../util/composeFile';
 import { createTask } from '../util/task';
 import { isDeployOptions, type DeployOptions } from '../util/targetSettings';
 import {
-    createTopoComposeTaskCwd,
-    resolveTopoComposeTaskDefinition,
-    type TopoComposeTaskDefinition,
-} from './topoComposeTask';
-import type { TopoTaskDefinition, TopoTaskFactory } from './topoTaskProvider';
+    createComposeTaskCwd,
+    resolveComposeTaskDefinition,
+    type ComposeTaskDefinition,
+} from './composeTask';
+import type { TaskDefinition, TaskFactory } from './taskProvider';
 
-export type TopoDeployTaskDefinition = TopoComposeTaskDefinition &
-    TopoTaskDefinition & {
+export type TopoDeployTaskDefinition = ComposeTaskDefinition &
+    TaskDefinition & {
         readonly command: typeof TOPO_DEPLOY_TASK_COMMAND;
         readonly deployOptions: DeployOptions;
     };
@@ -32,7 +32,7 @@ const createArgs = (definition: TopoDeployTaskDefinition): string[] => {
     return args;
 };
 
-export class DeployTaskFactory implements TopoTaskFactory<TopoDeployTaskDefinition> {
+export class DeployTaskFactory implements TaskFactory<TopoDeployTaskDefinition> {
     public readonly command = TOPO_DEPLOY_TASK_COMMAND;
 
     constructor(private readonly topoCli: TopoCli) {}
@@ -40,7 +40,7 @@ export class DeployTaskFactory implements TopoTaskFactory<TopoDeployTaskDefiniti
     public resolveDefinition(
         task: vscode.Task,
     ): TopoDeployTaskDefinition | undefined {
-        const definition = resolveTopoComposeTaskDefinition(task);
+        const definition = resolveComposeTaskDefinition(task);
         if (!definition) {
             return undefined;
         }
@@ -64,7 +64,7 @@ export class DeployTaskFactory implements TopoTaskFactory<TopoDeployTaskDefiniti
         return new vscode.ProcessExecution(
             this.topoCli.getBinaryPath(),
             createArgs(definition),
-            { cwd: createTopoComposeTaskCwd(definition) },
+            { cwd: createComposeTaskCwd(definition) },
         );
     }
 

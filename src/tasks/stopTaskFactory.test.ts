@@ -3,17 +3,17 @@ import { mock, type MockProxy } from 'vitest-mock-extended';
 import { TOPO_STOP_TASK_COMMAND, TOPO_TASK_TYPE } from '../manifest';
 import { TopoCli } from '../services/topoCli';
 import { StopTaskFactory } from './stopTaskFactory';
-import { TopoTaskProvider } from './topoTaskProvider';
+import { TaskProvider } from './taskProvider';
 
 describe('Topo stop task', () => {
     const topoBinaryPath = '/extension/resources/topo';
     let topoCli: MockProxy<TopoCli>;
-    let taskProvider: TopoTaskProvider;
+    let taskProvider: TaskProvider;
 
     beforeEach(() => {
         topoCli = mock<TopoCli>();
         topoCli.getBinaryPath.mockReturnValue(topoBinaryPath);
-        taskProvider = new TopoTaskProvider([new StopTaskFactory(topoCli)]);
+        taskProvider = new TaskProvider([new StopTaskFactory(topoCli)]);
     });
 
     it('resolves a configured stop task', () => {

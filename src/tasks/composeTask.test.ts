@@ -3,9 +3,9 @@ import * as vscode from 'vscode';
 import { TOPO_TASK_TYPE } from '../manifest';
 import { mutable } from '../util/test/mutable';
 import {
-    createTopoComposeTaskCwd,
-    resolveTopoComposeTaskDefinition,
-} from './topoComposeTask';
+    createComposeTaskCwd,
+    resolveComposeTaskDefinition,
+} from './composeTask';
 
 describe('Topo compose tasks', () => {
     const workspaceFolder: vscode.WorkspaceFolder = {
@@ -30,7 +30,7 @@ describe('Topo compose tasks', () => {
     });
 
     it('derives the working directory from the compose file', () => {
-        const cwd = createTopoComposeTaskCwd({
+        const cwd = createComposeTaskCwd({
             type: TOPO_TASK_TYPE,
             command: 'test',
             composeFile: '/projects/camera/compose.yaml',
@@ -50,8 +50,7 @@ describe('Topo compose tasks', () => {
         };
         const configuredTask = createConfiguredTask(definition);
 
-        const resolvedDefinition =
-            resolveTopoComposeTaskDefinition(configuredTask);
+        const resolvedDefinition = resolveComposeTaskDefinition(configuredTask);
 
         expect(resolvedDefinition).toEqual({
             ...definition,
@@ -75,8 +74,7 @@ describe('Topo compose tasks', () => {
             vscode.TaskScope.Workspace,
         );
 
-        const resolvedDefinition =
-            resolveTopoComposeTaskDefinition(configuredTask);
+        const resolvedDefinition = resolveComposeTaskDefinition(configuredTask);
 
         expect(resolvedDefinition?.composeFile).toBe(
             path.resolve(workspaceFolder.uri.fsPath, 'compose.yaml'),
@@ -91,7 +89,7 @@ describe('Topo compose tasks', () => {
             target,
         });
 
-        expect(() => resolveTopoComposeTaskDefinition(configuredTask)).toThrow(
+        expect(() => resolveComposeTaskDefinition(configuredTask)).toThrow(
             'Unsupported compose file "compose.yml". Only compose.yaml is supported.',
         );
     });
@@ -115,8 +113,7 @@ describe('Topo compose tasks', () => {
             vscode.TaskScope.Workspace,
         );
 
-        const resolvedDefinition =
-            resolveTopoComposeTaskDefinition(configuredTask);
+        const resolvedDefinition = resolveComposeTaskDefinition(configuredTask);
 
         expect(resolvedDefinition).toBeUndefined();
     });
@@ -145,7 +142,7 @@ describe('Topo compose tasks', () => {
             const configuredTask = createConfiguredTask(definition);
 
             const resolvedDefinition =
-                resolveTopoComposeTaskDefinition(configuredTask);
+                resolveComposeTaskDefinition(configuredTask);
 
             expect(resolvedDefinition).toBeUndefined();
         },
