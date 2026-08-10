@@ -23,6 +23,7 @@ describe('extension activation', () => {
             subscriptions: [],
             globalState: mock<vscode.Memento>(),
             workspaceState: mock<vscode.Memento>(),
+            extensionUri: vscode.Uri.file('/fake/extension'),
         });
 
         await activate(context);

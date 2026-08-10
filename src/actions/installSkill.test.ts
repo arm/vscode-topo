@@ -1,6 +1,9 @@
 import { createRequire } from 'node:module';
 import * as vscode from 'vscode';
-import { InstallSkill, installSkill } from './installSkill';
+import { mock } from 'vitest-mock-extended';
+import { InstallSkill } from './installSkill';
+import { TopoSkill } from '../services/topoSkill';
+import { HostController } from '../controllers/hostController';
 
 type Remove = (
     path: string,
@@ -13,7 +16,6 @@ const { uninstallSkill } = loadModule('../../scripts/uninstall.cjs') as {
 };
 
 describe('InstallSkill', () => {
-    const extensionUri = vscode.Uri.file('/fake/extension');
     const userHomeUri = vscode.Uri.file('/fake/home');
 
     beforeEach(() => {
@@ -21,38 +23,16 @@ describe('InstallSkill', () => {
     });
 
     it('installs the bundled skill for the current user', async () => {
-        await installSkill(extensionUri, userHomeUri);
-
-        expect(vscode.workspace.fs.copy).toHaveBeenCalledOnce();
-        expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
-            'Topo CLI location skill installed. Start a new agent session if it is not available immediately.',
-        );
-    });
-
-    it('overwrites an existing installation', async () => {
-        await installSkill(extensionUri, userHomeUri);
-
-        expect(vscode.workspace.fs.copy).toHaveBeenCalledWith(
-            vscode.Uri.joinPath(extensionUri, 'skills', 'topo-cli-location'),
-            vscode.Uri.joinPath(
-                userHomeUri,
-                '.agents',
-                'skills',
-                'topo-cli-location',
-            ),
-            { overwrite: true },
-        );
-    });
-
-    it('reports installation failures from the command handler', async () => {
-        const error = new Error('permission denied');
-        vi.mocked(vscode.workspace.fs.copy).mockRejectedValueOnce(error);
-        const action = new InstallSkill(extensionUri, userHomeUri);
+        const topoSkill = mock<TopoSkill>();
+        const hostController = mock<HostController>();
+        const action = new InstallSkill(topoSkill, hostController);
 
         await action.installSkillCommandHandler();
 
-        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-            'Failed to install the Topo CLI location skill. permission denied',
+        expect(topoSkill.install).toHaveBeenCalledOnce();
+        expect(hostController.refreshSkillStatus).toHaveBeenCalledOnce();
+        expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
+            'Topo CLI location skill installed. Start a new agent session to check it out',
         );
     });
 
