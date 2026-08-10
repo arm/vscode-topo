@@ -151,7 +151,7 @@ describe('project clone utilities', () => {
                 name: 'project-beta',
                 url: 'https://example.com/projects/project-beta.git',
                 description: 'Project Beta description. More detail.',
-                ref: 'r',
+                ref: '8303e66db59a7a11e64877121f3db1b688d2011f',
                 features: [],
             },
         ];
@@ -169,7 +169,7 @@ describe('project clone utilities', () => {
 
             await expect(sourcePromise).resolves.toEqual({
                 type: 'git',
-                url: projectList[1].url,
+                url: `${projectList[1].url}#${projectList[1].ref}`,
             });
             expect(topoCli.listProjects).toHaveBeenCalledWith('me@example.com');
             expect(quickPick.dispose).toHaveBeenCalledOnce();

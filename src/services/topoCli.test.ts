@@ -109,7 +109,7 @@ describe('TopoCli', () => {
         );
         expect(execFileMock).toHaveBeenCalledWith(
             path.join(ext, 'resources', manifest.TOPO_CLI),
-            ['templates', '-o', 'json', '--target', 'me@example.com'],
+            ['projects', '-o', 'json', '--target', 'me@example.com'],
             defaultExecOptions,
         );
     });
@@ -156,7 +156,7 @@ describe('TopoCli', () => {
         await expect(topoCli.listProjects()).resolves.toEqual(list);
         expect(execFileMock).toHaveBeenCalledWith(
             path.join(ext, 'resources', manifest.TOPO_CLI),
-            ['templates', '-o', 'json'],
+            ['projects', '-o', 'json'],
             defaultExecOptions,
         );
     });
