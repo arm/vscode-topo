@@ -27,11 +27,11 @@ function getSkillStatusItem(
             return new SkillStatusTreeItem(skillStatus.data);
         case 'errored':
             return new ErrorTreeItem(
-                'Failed to check Topo CLI skills',
+                'Failed to check Topo Agent Skill',
                 skillStatus,
             );
         case 'unloaded':
-            return new LoadingTreeItem('Topo CLI skills');
+            return new LoadingTreeItem('Topo Agent Skill');
     }
 }
 

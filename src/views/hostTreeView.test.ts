@@ -105,7 +105,7 @@ describe('HostTreeView', () => {
         expect(children[0]).toMatchObject(
             new ErrorTreeItem('Failed to load health', erroredValue),
         );
-        expect(children[1]).toEqual(new LoadingTreeItem('Topo CLI skills'));
+        expect(children[1]).toEqual(new LoadingTreeItem('Topo Agent Skill'));
     });
 
     it('getTreeItem returns the element itself', () => {

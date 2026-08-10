@@ -9,16 +9,16 @@ const statusDescriptions: Record<TopoSkillStatus, string> = {
 
 export class SkillStatusTreeItem extends vscode.TreeItem {
     constructor(public readonly status: TopoSkillStatus) {
-        super('Topo CLI skills', vscode.TreeItemCollapsibleState.None);
+        super('Topo Agent Skill', vscode.TreeItemCollapsibleState.None);
         if (status === 'installed') {
-            this.tooltip = `Topo CLI skills: ${statusDescriptions[status]}`;
+            this.tooltip = `Topo Agent Skill: ${statusDescriptions[status]}. Helps compatible AI assistants locate and use the Topo CLI.`;
             this.iconPath = new vscode.ThemeIcon(
                 'check',
                 new vscode.ThemeColor('testing.iconPassed'),
             );
         } else {
             this.description = statusDescriptions[status];
-            this.tooltip = `Topo CLI skills: ${statusDescriptions[status]}. Install the bundled skill to make it available to coding agents.`;
+            this.tooltip = `Topo Agent Skill: ${statusDescriptions[status]}. Install the bundled version to give compatible AI assistants current guidance for locating and using the Topo CLI.`;
             this.iconPath = new vscode.ThemeIcon('info');
             this.contextValue = 'TopoSkillInstallAvailable';
         }
