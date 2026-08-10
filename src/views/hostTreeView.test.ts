@@ -5,6 +5,8 @@ import { HealthCheckTreeItem } from './treeItems/healthCheckTreeItem';
 import { HostModel } from '../models/hostModel';
 import { errored, loaded } from '../util/loadable';
 import { ErrorTreeItem } from './treeItems/errorTreeItem';
+import { SkillStatusTreeItem } from './treeItems/skillStatusTreeItem';
+import { LoadingTreeItem } from './treeItems/loadingTreeItem';
 
 describe('HostTreeView', () => {
     afterEach(() => {
@@ -23,18 +25,21 @@ describe('HostTreeView', () => {
         );
     });
 
-    it('returns a Health group at the root', async () => {
-        const provider = new HostTreeView(new HostModel());
+    it('returns the current skill status after the Health group', () => {
+        const model = new HostModel();
+        model.setSkillStatus(loaded('installed'));
+        const provider = new HostTreeView(model);
 
         const children = provider.getChildren();
 
-        expect(children).toHaveLength(1);
+        expect(children).toHaveLength(2);
         expect(children[0]).toBeInstanceOf(HealthCheckGroupTreeItem);
         expect(children[0].label).toBe('Health');
         expect(children[0].contextValue).toBe('Health');
+        expect(children[1]).toEqual(new SkillStatusTreeItem('installed'));
     });
 
-    it('returns sorted host health checks without mutating the model', async () => {
+    it('returns sorted host health checks without mutating the model', () => {
         const model = new HostModel();
         model.setHealth(
             loaded({
@@ -88,7 +93,7 @@ describe('HostTreeView', () => {
         });
     });
 
-    it('returns an error item when host health cannot be loaded', async () => {
+    it('returns an error item when host health cannot be loaded', () => {
         const model = new HostModel();
         const erroredValue = errored('uh oh');
         model.setHealth(erroredValue);
@@ -96,10 +101,11 @@ describe('HostTreeView', () => {
 
         const children = provider.getChildren();
 
-        expect(children).toHaveLength(1);
+        expect(children).toHaveLength(2);
         expect(children[0]).toMatchObject(
             new ErrorTreeItem('Failed to load health', erroredValue),
         );
+        expect(children[1]).toEqual(new LoadingTreeItem('Topo Agent Skill'));
     });
 
     it('getTreeItem returns the element itself', () => {
@@ -124,6 +130,17 @@ describe('HostTreeView', () => {
         provider.onDidChangeTreeData(listener);
 
         model.setHealth(errored('irrelevant error'));
+
+        expect(listener).toHaveBeenCalled();
+    });
+
+    it('fires onDidChangeTreeData when the skill status changes', () => {
+        const model = new HostModel();
+        const provider = new HostTreeView(model);
+        const listener = vi.fn();
+        provider.onDidChangeTreeData(listener);
+
+        model.setSkillStatus(loaded('installed'));
 
         expect(listener).toHaveBeenCalled();
     });

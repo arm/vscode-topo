@@ -63,8 +63,8 @@ describe('commands', () => {
     describe('command handlers', () => {
         const cases: [string, Mock][] = [
             [
-                commands.refreshHostHealth,
-                handlers.hostController.refreshHealthCommandHandler,
+                commands.refreshHost,
+                handlers.hostController.refreshHostCommandHandler,
             ],
             [
                 commands.refreshProjects,

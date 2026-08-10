@@ -55,6 +55,7 @@
             {
                 "command": "topo.installSkill",
                 "title": "Install Skill",
+                "icon": "$(file-add)",
                 "category": "Topo"
             },
             {
@@ -130,7 +131,7 @@
                 "category": "Topo"
             },
             {
-                "command": "topo.refreshHostHealth",
+                "command": "topo.refreshHost",
                 "title": "Refresh",
                 "icon": "$(refresh)",
                 "category": "Topo"
@@ -344,7 +345,7 @@
                     "when": "false"
                 },
                 {
-                    "command": "topo.refreshHostHealth",
+                    "command": "topo.refreshHost",
                     "when": "false"
                 },
                 {
@@ -361,6 +362,11 @@
                 }
             ],
             "view/item/context": [
+                {
+                    "command": "topo.installSkill",
+                    "when": "view == topo.host-manager && viewItem == TopoSkillInstallAvailable",
+                    "group": "inline@1"
+                },
                 {
                     "command": "topo.showOutput",
                     "when": "viewItem =~ /OpenableError/",
@@ -449,7 +455,7 @@
                     "group": "navigation"
                 },
                 {
-                    "command": "topo.refreshHostHealth",
+                    "command": "topo.refreshHost",
                     "when": "view == topo.host-manager",
                     "group": "navigation"
                 },

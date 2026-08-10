@@ -7,6 +7,7 @@ export type WrappedErrorCode =
     | 'CONFIG'
     | 'STORAGE'
     | 'TARGET'
+    | 'SKILL'
     | 'INVALID_SSH_DESTINATION';
 
 export interface WrappedErrorLog {

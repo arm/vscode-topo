@@ -21,7 +21,7 @@ function command(id: string): string {
     return `${PACKAGE_NAME}.${id}`;
 }
 
-export const refreshHostHealth = command('refreshHostHealth');
+export const refreshHost = command('refreshHost');
 export const refreshProjects = command('refreshProjects');
 export const refreshTargetData = command('refreshTargetData');
 export const showOutput = command('showOutput');
@@ -69,8 +69,8 @@ export interface CommandHandlers {
 export function register(handlers: CommandHandlers): vscode.Disposable {
     const disposables = new DisposableCollector();
     disposables.collect(
-        vscode.commands.registerCommand(refreshHostHealth, () =>
-            handlers.hostController.refreshHealthCommandHandler(),
+        vscode.commands.registerCommand(refreshHost, () =>
+            handlers.hostController.refreshHostCommandHandler(),
         ),
         vscode.commands.registerCommand(refreshProjects, () =>
             handlers.projectController.refreshProjects(),
