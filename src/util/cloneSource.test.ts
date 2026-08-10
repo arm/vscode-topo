@@ -103,6 +103,13 @@ describe('clone source', () => {
             ],
             [
                 {
+                    type: 'git' as const,
+                    url: 'https://example.com/project.git#8303e66d',
+                },
+                'git:https://example.com/project.git#8303e66d',
+            ],
+            [
+                {
                     type: 'dir' as const,
                     path: '/tmp/source-project',
                 },

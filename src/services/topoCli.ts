@@ -168,7 +168,7 @@ export class TopoCli {
     public async listProjects(
         sshTarget?: string,
     ): Promise<readonly ProjectDescription[]> {
-        const cmd = ['templates', '-o', 'json'];
+        const cmd = ['projects', '-o', 'json'];
         if (sshTarget) {
             cmd.push('--target', sshTarget);
         }

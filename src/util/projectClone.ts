@@ -94,7 +94,7 @@ export const promptForRemoteCloneSource = async (
             projectItems = projects.map((project) => ({
                 label: `$(repo) ${project.name}`,
                 detail: getFirstSentence(project.description),
-                url: project.url,
+                url: `${project.url}#${project.ref}`,
             }));
             if (open) {
                 quickPick.items = buildRemoteQuickPickItems(
