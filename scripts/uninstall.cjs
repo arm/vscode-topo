@@ -27,7 +27,7 @@ function uninstallSkill(
     const linkTarget = status?.isSymbolicLink()
         ? path.resolve(path.dirname(claudeSkillPath), readLink(claudeSkillPath))
         : undefined;
-    if (linkTarget === canonicalSkillPath) {
+    if (linkTarget === path.resolve(canonicalSkillPath)) {
         remove(claudeSkillPath, { recursive: true, force: true });
     }
 
