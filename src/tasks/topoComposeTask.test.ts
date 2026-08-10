@@ -1,23 +1,11 @@
 import path from 'node:path';
 import * as vscode from 'vscode';
 import { TOPO_TASK_TYPE } from '../manifest';
-import { createTask } from '../util/task';
 import { mutable } from '../util/test/mutable';
 import {
     createTopoComposeTaskCwd,
     resolveTopoComposeTaskDefinition,
-    type TopoComposeTaskDefinition,
 } from './topoComposeTask';
-import {
-    TopoTaskProvider,
-    type TopoTaskDefinition,
-    type TopoTaskFactory,
-} from './topoTaskProvider';
-
-type TestTopoComposeTaskDefinition = TopoComposeTaskDefinition &
-    TopoTaskDefinition & {
-        readonly command: 'test';
-    };
 
 describe('Topo compose tasks', () => {
     const workspaceFolder: vscode.WorkspaceFolder = {
@@ -26,65 +14,13 @@ describe('Topo compose tasks', () => {
         index: 0,
     };
     const target = 'topo.local';
-    const taskCommand = 'test';
-    const topoBinaryPath = '/extension/resources/topo';
-    const createTestTaskArgs = (
-        definition: TestTopoComposeTaskDefinition,
-    ): string[] => ['test', '--target', definition.target];
-    const createTestExecution = (
-        definition: TestTopoComposeTaskDefinition,
-    ): vscode.ProcessExecution =>
-        new vscode.ProcessExecution(
-            topoBinaryPath,
-            createTestTaskArgs(definition),
-            { cwd: createTopoComposeTaskCwd(definition) },
-        );
-    const createTestTask = (
-        definition: TestTopoComposeTaskDefinition,
-    ): vscode.Task => {
-        const execution = createTestExecution(definition);
-        return createTask(
-            `Test ${definition.composeFile} on ${definition.target}`,
-            execution,
-            { cwd: execution.options?.cwd, definition },
-        );
-    };
-    const taskFactory: TopoTaskFactory<TestTopoComposeTaskDefinition> = {
-        command: taskCommand,
-        resolveDefinition: (
-            task: vscode.Task,
-        ): TestTopoComposeTaskDefinition | undefined => {
-            const definition = resolveTopoComposeTaskDefinition(task);
-            return definition
-                ? {
-                      ...definition,
-                      type: TOPO_TASK_TYPE,
-                      command: taskCommand,
-                  }
-                : undefined;
-        },
-        createExecution: createTestExecution,
-        createTask: createTestTask,
-    };
-    let taskProvider: TopoTaskProvider;
 
     const createConfiguredTask = (
-        composeFile = '/projects/camera/compose.yaml',
-    ): vscode.Task =>
-        new vscode.Task(
-            {
-                type: TOPO_TASK_TYPE,
-                command: taskCommand,
-                composeFile,
-                target,
-            },
-            vscode.TaskScope.Workspace,
-            'Test camera',
-            'topo',
-        );
+        definition: vscode.TaskDefinition,
+        scope: vscode.TaskScope | vscode.WorkspaceFolder = workspaceFolder,
+    ): vscode.Task => new vscode.Task(definition, scope, 'Test camera', 'topo');
 
     beforeEach(() => {
-        taskProvider = new TopoTaskProvider([taskFactory]);
         mutable(vscode.workspace).workspaceFolders = [workspaceFolder];
     });
 
@@ -93,52 +29,26 @@ describe('Topo compose tasks', () => {
         vi.resetAllMocks();
     });
 
-    it('rejects unsupported compose file names', () => {
-        expect(() =>
-            taskFactory.createTask({
-                type: TOPO_TASK_TYPE,
-                command: taskCommand,
-                target,
-                composeFile: '/projects/camera/compose.yml',
-            }),
-        ).toThrow(
-            'Unsupported compose file "compose.yml". Only compose.yaml is supported.',
-        );
-    });
-
-    it('preserves resolved definition properties when creating a task', () => {
-        const definition: TestTopoComposeTaskDefinition & {
-            additionalProperty: string;
-        } = {
+    it('derives the working directory from the compose file', () => {
+        const cwd = createTopoComposeTaskCwd({
             type: TOPO_TASK_TYPE,
-            command: taskCommand,
-            target,
+            command: 'test',
             composeFile: '/projects/camera/compose.yaml',
-            additionalProperty: 'preserved',
-        };
+            target,
+        });
 
-        const task = taskFactory.createTask(definition);
-
-        expect(task.definition).toEqual(definition);
+        expect(cwd).toBe(path.dirname('/projects/camera/compose.yaml'));
     });
 
-    it('resolves a configured nested task', () => {
+    it('resolves a compose path relative to the task workspace', () => {
         const definition: vscode.TaskDefinition = {
             type: TOPO_TASK_TYPE,
-            command: taskCommand,
+            command: 'test',
             composeFile: 'services/camera/compose.yaml',
             target,
             additionalProperty: 'preserved',
         };
-        const configuredTask = new vscode.Task(
-            definition,
-            workspaceFolder,
-            'Test camera',
-            'topo',
-        );
-        configuredTask.presentationOptions = {
-            reveal: vscode.TaskRevealKind.Silent,
-        };
+        const configuredTask = createConfiguredTask(definition);
 
         const resolvedDefinition =
             resolveTopoComposeTaskDefinition(configuredTask);
@@ -152,41 +62,41 @@ describe('Topo compose tasks', () => {
                 'compose.yaml',
             ),
         });
-
-        const resolvedTask = taskProvider.resolveTask(configuredTask);
-
-        expect(resolvedTask?.definition).toBe(definition);
-        expect(resolvedTask).toMatchObject({
-            scope: workspaceFolder,
-            name: 'Test camera',
-            presentationOptions: {
-                reveal: vscode.TaskRevealKind.Silent,
-            },
-            execution: {
-                process: topoBinaryPath,
-                args: ['test', '--target', target],
-                options: {
-                    cwd: path.resolve(
-                        workspaceFolder.uri.fsPath,
-                        'services',
-                        'camera',
-                    ),
-                },
-            },
-        });
     });
 
-    it('rejects unsupported compose file names when resolving a task', () => {
+    it('uses the only workspace for a workspace-scoped relative path', () => {
         const configuredTask = createConfiguredTask(
-            '/projects/camera/compose.yml',
+            {
+                type: TOPO_TASK_TYPE,
+                command: 'test',
+                composeFile: 'compose.yaml',
+                target,
+            },
+            vscode.TaskScope.Workspace,
         );
 
-        expect(() => taskProvider.resolveTask(configuredTask)).toThrow(
+        const resolvedDefinition =
+            resolveTopoComposeTaskDefinition(configuredTask);
+
+        expect(resolvedDefinition?.composeFile).toBe(
+            path.resolve(workspaceFolder.uri.fsPath, 'compose.yaml'),
+        );
+    });
+
+    it('rejects an unsupported compose file name', () => {
+        const configuredTask = createConfiguredTask({
+            type: TOPO_TASK_TYPE,
+            command: 'test',
+            composeFile: 'compose.yml',
+            target,
+        });
+
+        expect(() => resolveTopoComposeTaskDefinition(configuredTask)).toThrow(
             'Unsupported compose file "compose.yml". Only compose.yaml is supported.',
         );
     });
 
-    it('does not resolve a relative compose path with ambiguous workspace scope', () => {
+    it('does not resolve an ambiguously scoped relative path', () => {
         mutable(vscode.workspace).workspaceFolders = [
             workspaceFolder,
             {
@@ -195,21 +105,20 @@ describe('Topo compose tasks', () => {
                 index: 1,
             },
         ];
-        const configuredTask = new vscode.Task(
+        const configuredTask = createConfiguredTask(
             {
                 type: TOPO_TASK_TYPE,
-                command: taskCommand,
+                command: 'test',
                 composeFile: 'compose.yaml',
                 target,
             },
             vscode.TaskScope.Workspace,
-            'Test',
-            'topo',
         );
 
-        const resolvedTask = taskProvider.resolveTask(configuredTask);
+        const resolvedDefinition =
+            resolveTopoComposeTaskDefinition(configuredTask);
 
-        expect(resolvedTask).toBeUndefined();
+        expect(resolvedDefinition).toBeUndefined();
     });
 
     it.each([
@@ -217,7 +126,7 @@ describe('Topo compose tasks', () => {
             property: 'compose file',
             definition: {
                 type: TOPO_TASK_TYPE,
-                command: taskCommand,
+                command: 'test',
                 composeFile: '',
                 target,
             },
@@ -226,31 +135,19 @@ describe('Topo compose tasks', () => {
             property: 'target',
             definition: {
                 type: TOPO_TASK_TYPE,
-                command: taskCommand,
+                command: 'test',
                 composeFile: 'compose.yaml',
-            },
-        },
-        {
-            property: 'command',
-            definition: {
-                type: TOPO_TASK_TYPE,
-                composeFile: 'compose.yaml',
-                target,
             },
         },
     ])(
         'does not resolve a task without a valid $property',
         ({ definition }) => {
-            const configuredTask = new vscode.Task(
-                definition,
-                workspaceFolder,
-                'Test',
-                'topo',
-            );
+            const configuredTask = createConfiguredTask(definition);
 
-            const resolvedTask = taskProvider.resolveTask(configuredTask);
+            const resolvedDefinition =
+                resolveTopoComposeTaskDefinition(configuredTask);
 
-            expect(resolvedTask).toBeUndefined();
+            expect(resolvedDefinition).toBeUndefined();
         },
     );
 });

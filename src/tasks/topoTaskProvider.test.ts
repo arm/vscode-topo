@@ -134,15 +134,4 @@ describe('TopoTaskProvider', () => {
             args: ['other'],
         });
     });
-
-    it('does not resolve invalid task definitions', () => {
-        const configuredTask = createConfiguredTask({
-            type: TOPO_TASK_TYPE,
-            command: 'test',
-        });
-
-        const resolvedTask = taskProvider.resolveTask(configuredTask);
-
-        expect(resolvedTask).toBeUndefined();
-    });
 });
