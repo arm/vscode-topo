@@ -18,7 +18,7 @@ export const resolveTopoComposeTaskDefinition = (
     task: vscode.Task,
 ): TopoComposeTaskDefinition | undefined => {
     const { composeFile, target } = task.definition;
-    if (!isNonEmptyString(composeFile) || !isNonEmptyString(target)) {
+    if (isMissingOrEmptyString(composeFile) || isMissingOrEmptyString(target)) {
         return undefined;
     }
 
@@ -65,6 +65,6 @@ const resolveComposeFilePath = (
     return path.resolve(workspaceFolder.uri.fsPath, composeFile);
 };
 
-const isNonEmptyString = (value: unknown): value is string => {
-    return typeof value === 'string' && value.trim().length > 0;
+const isMissingOrEmptyString = (value: unknown): boolean => {
+    return typeof value !== 'string' || value.trim().length === 0;
 };
