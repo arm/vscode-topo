@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { withTaskExecution, waitForTaskProcess } from './task';
+import { runTask, withTaskExecution } from './task';
 import { TopoCli } from '../services/topoCli';
 
 export class TaskExecutor {
@@ -7,8 +7,7 @@ export class TaskExecutor {
 
     public async run(task: vscode.Task): Promise<void> {
         const executableTask = this.resolveProcessTaskBinary(task);
-        const taskExecution = await vscode.tasks.executeTask(executableTask);
-        await waitForTaskProcess(taskExecution, task.name);
+        await runTask(executableTask);
     }
 
     private resolveProcessTaskBinary(task: vscode.Task): vscode.Task {

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { getErrorMessage } from '../util/getErrorMessage';
-import { TaskExecutor } from '../util/taskExecutor';
+import { runTask } from '../util/task';
 import { showAndLogError, showAndLogWarning } from '../util/showAndLog';
 import { TargetModel } from '../models/targetModel';
 import { isWrappedError } from '../errors/wrappedError';
@@ -38,7 +38,6 @@ type DeployTarget = {
 
 export class Deploy {
     constructor(
-        private readonly taskExecutor: TaskExecutor,
         private readonly targetModel: TargetModel,
         private readonly config: Config,
         private readonly taskFactory: DeployTaskFactory,
@@ -135,7 +134,7 @@ export class Deploy {
             composeFile: resource.fsPath,
             settings: deployTarget.settings,
         };
-        await deploy(this.taskExecutor, this.taskFactory, definition);
+        await deploy(this.taskFactory, definition);
     }
 }
 
@@ -159,7 +158,6 @@ async function promptForComposeFile(
 }
 
 export async function deploy(
-    taskExecutor: TaskExecutor,
     taskFactory: DeployTaskFactory,
     definition: TopoDeployTaskDefinition,
 ): Promise<void> {
@@ -168,7 +166,7 @@ export async function deploy(
     const taskName = task.name;
 
     try {
-        await taskExecutor.run(task);
+        await runTask(task);
     } catch (e) {
         const terminal = vscode.window.terminals.find(
             (t) => t.name === taskName,

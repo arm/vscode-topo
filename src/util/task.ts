@@ -94,6 +94,11 @@ export function withTaskExecution(
     return resolvedTask;
 }
 
+export async function runTask(task: vscode.Task): Promise<void> {
+    const taskExecution = await vscode.tasks.executeTask(task);
+    await waitForTaskProcess(taskExecution, task.name);
+}
+
 export function waitForTaskProcess(
     taskExecution: vscode.TaskExecution,
     taskName = taskExecution.task.name,

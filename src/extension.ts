@@ -122,13 +122,8 @@ export async function activate(
     const configure = new Configure(taskExecutor);
     const projectCloner = new ProjectCloner(taskExecutor);
     const projectClone = new ProjectClone(topoCli, targetModel, projectCloner);
-    const deploy = new Deploy(
-        taskExecutor,
-        targetModel,
-        config,
-        deployTaskFactory,
-    );
-    const stop = new Stop(taskExecutor, targetModel, stopTaskFactory);
+    const deploy = new Deploy(targetModel, config, deployTaskFactory);
+    const stop = new Stop(targetModel, stopTaskFactory);
     const openContainerShell = new OpenContainerShell(dockerCommands);
     const connectViaSSH = new ConnectViaSSH(targetModel);
     const openContainerInBrowser = new OpenContainerInBrowser();

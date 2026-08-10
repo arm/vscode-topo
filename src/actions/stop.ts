@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { getErrorMessage } from '../util/getErrorMessage';
-import { TaskExecutor } from '../util/taskExecutor';
+import { runTask } from '../util/task';
 import { showAndLogWarning } from '../util/showAndLog';
 import { TargetModel } from '../models/targetModel';
 import { assertProjectTreeItem } from '../views/treeItems/assertProjectTreeItem';
@@ -21,7 +21,6 @@ const viewLogsItem: vscode.MessageItem = {
 
 export class Stop {
     constructor(
-        private readonly taskExecutor: TaskExecutor,
         private readonly targetModel: TargetModel,
         private readonly taskFactory: StopTaskFactory,
     ) {}
@@ -50,7 +49,7 @@ export class Stop {
             target,
             composeFile: resource.fsPath,
         };
-        await stop(this.taskExecutor, this.taskFactory, definition);
+        await stop(this.taskFactory, definition);
     }
 
     public async stopProjectCommandHandler(treeNode: unknown): Promise<void> {
@@ -60,7 +59,6 @@ export class Stop {
 }
 
 export async function stop(
-    taskExecutor: TaskExecutor,
     taskFactory: StopTaskFactory,
     definition: TopoStopTaskDefinition,
 ): Promise<void> {
@@ -69,7 +67,7 @@ export async function stop(
     const taskName = task.name;
 
     try {
-        await taskExecutor.run(task);
+        await runTask(task);
     } catch (e) {
         const terminal = vscode.window.terminals.find(
             (t) => t.name === taskName,
