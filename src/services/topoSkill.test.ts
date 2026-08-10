@@ -39,6 +39,9 @@ describe('TopoSkill', () => {
     });
 
     it('installs the bundled skill', async () => {
+        vi.mocked(vscode.workspace.fs.readFile).mockResolvedValue(
+            Uint8Array.from([1, 2, 3]),
+        );
         const topoSkill = new TopoSkill(extensionUri, userHomeUri);
 
         await topoSkill.install();
