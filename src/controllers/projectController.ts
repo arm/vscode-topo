@@ -154,12 +154,12 @@ export class ProjectController implements vscode.Disposable {
         event: vscode.TaskProcessEndEvent,
     ): void {
         const { command, type, target } = event.execution.task.definition;
-        const changesProjectRuntime =
+        const containersChanged =
             type === TOPO_TASK_TYPE &&
             (command === TOPO_DEPLOY_TASK_COMMAND ||
                 command === TOPO_STOP_TASK_COMMAND);
 
-        if (changesProjectRuntime && target === this.targetModel.selected) {
+        if (containersChanged && target === this.targetModel.selected) {
             void this.refreshProjectContainersCommandHandler();
         }
     }
