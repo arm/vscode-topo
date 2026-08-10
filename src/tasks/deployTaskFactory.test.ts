@@ -3,7 +3,6 @@ import { mock, type MockProxy } from 'vitest-mock-extended';
 import { TOPO_DEPLOY_TASK_COMMAND, TOPO_TASK_TYPE } from '../manifest';
 import { TopoCli } from '../services/topoCli';
 import { DeployTaskFactory } from './deployTaskFactory';
-import { TaskProvider } from './taskProvider';
 
 describe('Topo deploy task', () => {
     const target = 'topo.local';
@@ -16,7 +15,7 @@ describe('Topo deploy task', () => {
         target,
     };
     let topoCli: MockProxy<TopoCli>;
-    let taskProvider: TaskProvider;
+    let taskFactory: DeployTaskFactory;
 
     const createConfiguredTask = (
         definition: vscode.TaskDefinition = taskDefinition,
@@ -31,18 +30,22 @@ describe('Topo deploy task', () => {
     beforeEach(() => {
         topoCli = mock<TopoCli>();
         topoCli.getBinaryPath.mockReturnValue(topoBinaryPath);
-        taskProvider = new TaskProvider([new DeployTaskFactory(topoCli)]);
+        taskFactory = new DeployTaskFactory(topoCli);
     });
 
-    it('resolves task deploy options into the deploy arguments', () => {
-        const resolvedTask = taskProvider.resolveTask(
+    it('creates a deploy execution with the configured options', () => {
+        const definition = taskFactory.resolveDefinition(
             createConfiguredTask({
                 ...taskDefinition,
                 deployOptions: { port: 5000, forceRecreate: true },
             }),
         );
+        if (!definition) {
+            throw new Error('Expected the deploy task definition to resolve');
+        }
+        const execution = taskFactory.createExecution(definition);
 
-        expect(resolvedTask?.execution).toMatchObject({
+        expect(execution).toMatchObject({
             process: topoBinaryPath,
             args: [
                 'deploy',
@@ -58,10 +61,16 @@ describe('Topo deploy task', () => {
         });
     });
 
-    it('uses CLI defaults when deploy options are omitted', () => {
-        const resolvedTask = taskProvider.resolveTask(createConfiguredTask());
+    it('creates a deploy execution with CLI defaults when options are omitted', () => {
+        const definition = taskFactory.resolveDefinition(
+            createConfiguredTask(),
+        );
+        if (!definition) {
+            throw new Error('Expected the deploy task definition to resolve');
+        }
+        const execution = taskFactory.createExecution(definition);
 
-        expect(resolvedTask?.execution).toMatchObject({
+        expect(execution).toMatchObject({
             args: ['deploy', '--file', 'compose.yaml', '--target', target],
         });
     });
@@ -75,6 +84,6 @@ describe('Topo deploy task', () => {
             },
         });
 
-        expect(taskProvider.resolveTask(configuredTask)).toBeUndefined();
+        expect(taskFactory.resolveDefinition(configuredTask)).toBeUndefined();
     });
 });
