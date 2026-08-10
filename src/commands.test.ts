@@ -155,6 +155,10 @@ describe('commands', () => {
                 commands.installSkill,
                 handlers.installSkill.installSkillCommandHandler,
             ],
+            [
+                commands.uninstallSkill,
+                handlers.installSkill.uninstallSkillCommandHandler,
+            ],
         ];
 
         it.each(cases)(

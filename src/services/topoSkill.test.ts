@@ -60,4 +60,25 @@ describe('TopoSkill', () => {
             { overwrite: true },
         );
     });
+
+    it('uninstalls the skill', async () => {
+        vi.mocked(vscode.workspace.fs.readFile)
+            .mockResolvedValueOnce(Uint8Array.from([1, 2, 3]))
+            .mockRejectedValueOnce(
+                vscode.FileSystemError.FileNotFound('SKILL.md'),
+            );
+        const topoSkill = new TopoSkill(extensionUri, userHomeUri);
+
+        await topoSkill.uninstall();
+
+        expect(vscode.workspace.fs.delete).toHaveBeenCalledWith(
+            vscode.Uri.joinPath(
+                userHomeUri,
+                '.agents',
+                'skills',
+                'topo-cli-location',
+            ),
+            { recursive: true },
+        );
+    });
 });

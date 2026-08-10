@@ -15,4 +15,12 @@ export class InstallSkill {
             'Topo CLI location skill installed. Start a new agent session to check it out',
         );
     }
+
+    public async uninstallSkillCommandHandler(): Promise<void> {
+        await this.topoSkill.uninstall();
+        await this.hostController.refreshSkillStatus();
+        vscode.window.showInformationMessage(
+            'Topo CLI location skill uninstalled. Start a new agent session for the change to take effect',
+        );
+    }
 }

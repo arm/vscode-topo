@@ -36,6 +36,20 @@ describe('InstallSkill', () => {
         );
     });
 
+    it('uninstalls the skill for the current user', async () => {
+        const topoSkill = mock<TopoSkill>();
+        const hostController = mock<HostController>();
+        const action = new InstallSkill(topoSkill, hostController);
+
+        await action.uninstallSkillCommandHandler();
+
+        expect(topoSkill.uninstall).toHaveBeenCalledOnce();
+        expect(hostController.refreshSkillStatus).toHaveBeenCalledOnce();
+        expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
+            'Topo CLI location skill uninstalled. Start a new agent session for the change to take effect',
+        );
+    });
+
     it('removes the installed skill on uninstall', () => {
         const remove = vi.fn<Remove>();
 
