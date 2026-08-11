@@ -2,6 +2,7 @@ import { mock } from 'vitest-mock-extended';
 import * as vscode from 'vscode';
 import { HostController } from './controllers/hostController';
 import * as commands from './commands';
+import * as commandIds from './commandIds';
 import { executeCommand } from './util/test/executeCommand';
 import type { Mock } from 'vitest';
 import { logger } from './util/logger';
@@ -45,14 +46,10 @@ describe('commands', () => {
         vi.clearAllMocks();
     });
 
-    it('registers all exported commands', () => {
+    it('registers all command IDs', () => {
         commands.register(handlers);
 
-        for (const command of Object.values(commands)) {
-            if (typeof command !== 'string' || !command.startsWith('topo.')) {
-                continue;
-            }
-
+        for (const command of Object.values(commandIds)) {
             expect(vscode.commands.registerCommand).toHaveBeenCalledWith(
                 command,
                 expect.any(Function),
@@ -63,110 +60,113 @@ describe('commands', () => {
     describe('command handlers', () => {
         const cases: [string, Mock][] = [
             [
-                commands.refreshHost,
+                commandIds.refreshHost,
                 handlers.hostController.refreshHostCommandHandler,
             ],
             [
-                commands.refreshProjects,
+                commandIds.refreshProjects,
                 handlers.projectController.refreshProjects,
             ],
             [
-                commands.refreshTargetData,
+                commandIds.refreshTargetData,
                 handlers.targetController
                     .refreshSelectedTargetDataCommandHandler,
             ],
             [
-                commands.refreshProjectContainers,
+                commandIds.refreshProjectContainers,
                 handlers.projectController
                     .refreshProjectContainersCommandHandler,
             ],
             [
-                commands.refreshSelectedTargetHealth,
+                commandIds.refreshSelectedTargetHealth,
                 handlers.targetController
                     .refreshSelectedTargetHealthCommandHandler,
             ],
             [
-                commands.refreshSkillStatus,
+                commandIds.refreshSkillStatus,
                 handlers.hostController.refreshSkillStatus,
             ],
-            [commands.showOutput, vi.mocked(logger.show)],
+            [commandIds.showOutput, vi.mocked(logger.show)],
             [
-                commands.selectTarget,
+                commandIds.selectTarget,
                 handlers.targetController.selectCommandHandler,
             ],
             [
-                commands.resetExtensionData,
+                commandIds.resetExtensionData,
                 handlers.targetController.resetExtensionDataCommandHandler,
             ],
             [
-                commands.clearTargetSelection,
+                commandIds.clearTargetSelection,
                 handlers.targetController.clearSelectionCommandHandler,
             ],
             [
-                commands.openSettings,
+                commandIds.openSettings,
                 handlers.openSettings.openSettingsCommandHandler,
             ],
-            [commands.cloneProject, handlers.projectClone.cloneCommandHandler],
             [
-                commands.configure,
+                commandIds.cloneProject,
+                handlers.projectClone.cloneCommandHandler,
+            ],
+            [
+                commandIds.configure,
                 handlers.configure.configureContextCommandHandler,
             ],
             [
-                commands.configureProject,
+                commandIds.configureProject,
                 handlers.configure.configureProjectCommandHandler,
             ],
-            [commands.deploy, handlers.deploy.deployCommandHandler],
+            [commandIds.deploy, handlers.deploy.deployCommandHandler],
             [
-                commands.deployContext,
+                commandIds.deployContext,
                 handlers.deploy.deployContextCommandHandler,
             ],
             [
-                commands.deployProject,
+                commandIds.deployProject,
                 handlers.deploy.deployProjectCommandHandler,
             ],
-            [commands.stop, handlers.stop.stopCommandHandler],
-            [commands.stopProject, handlers.stop.stopProjectCommandHandler],
+            [commandIds.stop, handlers.stop.stopCommandHandler],
+            [commandIds.stopProject, handlers.stop.stopProjectCommandHandler],
             [
-                commands.openContainerShell,
+                commandIds.openContainerShell,
                 handlers.openContainerShell.openContainerShellCommandHandler,
             ],
             [
-                commands.connectViaSSH,
+                commandIds.connectViaSSH,
                 handlers.connectViaSSH.connectViaSSHCommandHandler,
             ],
             [
-                commands.openContainerInBrowser,
+                commandIds.openContainerInBrowser,
                 handlers.openContainerInBrowser
                     .openContainerInBrowserCommandHandler,
             ],
             [
-                commands.startContainer,
+                commandIds.startContainer,
                 handlers.containerLifecycle.startContainerCommandHandler,
             ],
             [
-                commands.stopContainer,
+                commandIds.stopContainer,
                 handlers.containerLifecycle.stopContainerCommandHandler,
             ],
             [
-                commands.deleteContainer,
+                commandIds.deleteContainer,
                 handlers.containerLifecycle.deleteContainerCommandHandler,
             ],
 
-            [commands.fixIssue, handlers.fixIssue.fixIssueCommandHandler],
+            [commandIds.fixIssue, handlers.fixIssue.fixIssueCommandHandler],
             [
-                commands.fixTargetIssues,
+                commandIds.fixTargetIssues,
                 handlers.fixIssue.fixIssueCommandHandler,
             ],
             [
-                commands.remoteClone,
+                commandIds.remoteClone,
                 handlers.projectClone.remoteCloneCommandHandler,
             ],
             [
-                commands.localClone,
+                commandIds.localClone,
                 handlers.projectClone.localCloneCommandHandler,
             ],
             [
-                commands.installSkill,
+                commandIds.installSkill,
                 handlers.installSkill.installSkillCommandHandler,
             ],
         ];
@@ -185,7 +185,7 @@ describe('commands', () => {
         it('calls select target without a tree node argument', async () => {
             commands.register(handlers);
 
-            await executeCommand(commands.selectTarget, 'argument');
+            await executeCommand(commandIds.selectTarget, 'argument');
 
             expect(
                 handlers.targetController.selectCommandHandler,
@@ -195,7 +195,7 @@ describe('commands', () => {
         it('connects via SSH without a tree node argument', async () => {
             commands.register(handlers);
 
-            await executeCommand(commands.connectViaSSH, 'argument');
+            await executeCommand(commandIds.connectViaSSH, 'argument');
 
             expect(
                 handlers.connectViaSSH.connectViaSSHCommandHandler,
@@ -219,7 +219,7 @@ describe('commands', () => {
             );
             commands.register(handlers);
 
-            await executeCommand(commands.configureProject, projectItem);
+            await executeCommand(commandIds.configureProject, projectItem);
 
             expect(
                 handlers.configure.configureProjectCommandHandler,
@@ -243,7 +243,7 @@ describe('commands', () => {
             );
             commands.register(handlers);
 
-            await executeCommand(commands.deployProject, projectItem);
+            await executeCommand(commandIds.deployProject, projectItem);
 
             expect(
                 handlers.deploy.deployProjectCommandHandler,
@@ -267,7 +267,7 @@ describe('commands', () => {
             );
             commands.register(handlers);
 
-            await executeCommand(commands.stopProject, projectItem);
+            await executeCommand(commandIds.stopProject, projectItem);
 
             expect(
                 handlers.stop.stopProjectCommandHandler,

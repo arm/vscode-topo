@@ -17,8 +17,6 @@ import type { Configure } from './actions/configure';
 import type { InstallSkill } from './actions/installSkill';
 import * as commandIds from './commandIds';
 
-export * from './commandIds';
-
 export interface CommandHandlers {
     hostController: HostController;
     projectController: ProjectController;
