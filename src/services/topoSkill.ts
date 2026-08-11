@@ -1,6 +1,5 @@
 import os from 'node:os';
 import * as vscode from 'vscode';
-import { WrappedError } from '../errors/wrappedError';
 import { TopoSkillStatus } from '../util/types';
 
 export const TOPO_SKILL_NAME = 'topo-cli-location';
@@ -65,15 +64,5 @@ export class TopoSkill {
 
     public get bundledDirectoryPath(): string {
         return this.bundledDirectoryUri.fsPath;
-    }
-
-    public async verifyInstallation(): Promise<void> {
-        const status = await this.getStatus();
-        if (status !== 'installed') {
-            throw new WrappedError(
-                'SKILL',
-                `Skill installation verification failed: ${status}`,
-            );
-        }
     }
 }

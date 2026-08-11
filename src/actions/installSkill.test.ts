@@ -50,26 +50,12 @@ describe('InstallSkill', () => {
                 args: ['skills', 'add', bundledSkillPath, '--global'],
             },
         });
-        expect(topoSkill.verifyInstallation).toHaveBeenCalledOnce();
         expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
             refreshSkillStatus,
         );
         expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
             'Topo CLI location skill installed. Start a new agent session to check it out.',
         );
-    });
-
-    it('does not report success when installation verification fails', async () => {
-        topoSkill.verifyInstallation.mockRejectedValueOnce(
-            new Error('verification failed'),
-        );
-
-        await expect(action.installSkillCommandHandler()).rejects.toThrow(
-            'verification failed',
-        );
-
-        expect(vscode.commands.executeCommand).not.toHaveBeenCalled();
-        expect(vscode.window.showInformationMessage).not.toHaveBeenCalled();
     });
 
     it.each([
