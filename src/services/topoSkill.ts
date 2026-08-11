@@ -1,91 +1,73 @@
-import { existsSync } from 'node:fs';
-import { cp, readFile } from 'node:fs/promises';
 import os from 'node:os';
-import path from 'node:path';
+import * as vscode from 'vscode';
 import { WrappedError } from '../errors/wrappedError';
-import { ensureSkillLink, isSkillLink } from '../util/skillLink';
-import { skillPaths } from '../util/skillPaths';
 import { TopoSkillStatus } from '../util/types';
 
-export const TOPO_SKILL_NAME = skillPaths.skillName;
+export const TOPO_SKILL_NAME = 'topo-cli-location';
 
 const SKILL_FILE_NAME = 'SKILL.md';
 
+function isFileNotFound(error: unknown): boolean {
+    return (
+        error instanceof vscode.FileSystemError && error.code === 'FileNotFound'
+    );
+}
+
+function rawStringsAreEqual(first: Uint8Array, second: Uint8Array): boolean {
+    return Buffer.from(first).equals(Buffer.from(second));
+}
+
 export class TopoSkill {
-    private readonly bundledDirectoryPath: string;
-    private readonly canonicalSkillPath: string;
-    private readonly claudeHomePath: string;
-    private readonly claudeSkillPath: string;
+    private readonly bundledDirectoryUri: vscode.Uri;
+    private readonly topoSkillsSubdirectory: vscode.Uri;
 
     constructor(
-        extensionPath: string,
-        userHomePath = os.homedir(),
-        environment: NodeJS.ProcessEnv = process.env,
+        extensionUri: vscode.Uri,
+        userHomeUri = vscode.Uri.file(os.homedir()),
     ) {
-        this.bundledDirectoryPath = path.join(
-            extensionPath,
+        this.bundledDirectoryUri = vscode.Uri.joinPath(
+            extensionUri,
             'skills',
             TOPO_SKILL_NAME,
         );
-        this.canonicalSkillPath = path.join(
-            userHomePath,
-            ...skillPaths.canonicalSkillPath,
-        );
-        const configuredClaudeHome = environment.CLAUDE_CONFIG_DIR?.trim();
-        this.claudeHomePath = configuredClaudeHome
-            ? configuredClaudeHome
-            : path.join(userHomePath, '.claude');
-        this.claudeSkillPath = path.join(
-            this.claudeHomePath,
+        this.topoSkillsSubdirectory = vscode.Uri.joinPath(
+            userHomeUri,
+            '.agents',
             'skills',
             TOPO_SKILL_NAME,
         );
     }
 
     public async getStatus(): Promise<TopoSkillStatus> {
-        const bundledSkill = await readFile(
-            path.join(this.bundledDirectoryPath, SKILL_FILE_NAME),
+        const bundledSkill = await vscode.workspace.fs.readFile(
+            vscode.Uri.joinPath(this.bundledDirectoryUri, SKILL_FILE_NAME),
         );
 
-        let installedSkill: Buffer;
+        let installedSkill: Uint8Array;
         try {
-            installedSkill = await readFile(
-                path.join(this.canonicalSkillPath, SKILL_FILE_NAME),
+            installedSkill = await vscode.workspace.fs.readFile(
+                vscode.Uri.joinPath(
+                    this.topoSkillsSubdirectory,
+                    SKILL_FILE_NAME,
+                ),
             );
         } catch (error) {
-            if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+            if (isFileNotFound(error)) {
                 return 'missing';
             }
             throw error;
         }
 
-        if (!bundledSkill.equals(installedSkill)) {
-            return 'outdated';
-        }
-
-        if (!existsSync(this.claudeHomePath)) {
-            return 'installed';
-        }
-
-        return (await isSkillLink(
-            this.canonicalSkillPath,
-            this.claudeSkillPath,
-        ))
+        return rawStringsAreEqual(bundledSkill, installedSkill)
             ? 'installed'
             : 'outdated';
     }
 
-    public async install(): Promise<void> {
-        await cp(this.bundledDirectoryPath, this.canonicalSkillPath, {
-            recursive: true,
-            force: true,
-        });
-        if (existsSync(this.claudeHomePath)) {
-            await ensureSkillLink(
-                this.canonicalSkillPath,
-                this.claudeSkillPath,
-            );
-        }
+    public get bundledDirectoryPath(): string {
+        return this.bundledDirectoryUri.fsPath;
+    }
+
+    public async verifyInstallation(): Promise<void> {
         const status = await this.getStatus();
         if (status !== 'installed') {
             throw new WrappedError(

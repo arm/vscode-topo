@@ -10,7 +10,6 @@ vsc-extension-quickstart.md
 **/tsconfig.json
 **/*.map
 **/*.ts
-!src/util/skillPaths.ts
 __mocks__
 **/__snapshots__
 test-workspace/**

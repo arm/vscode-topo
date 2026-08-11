@@ -24,7 +24,15 @@ export default defineConfig((config: ConfigEnv) => {
             fileName: () => 'extension.js',
         },
         rolldownOptions: {
-            external: ['vscode', /^node:/],
+            external: [
+                'vscode',
+                'node:fs',
+                'node:os',
+                'node:path',
+                'node:child_process',
+                'node:util',
+                'node:net',
+            ],
             output: {
                 exports: 'named',
             },

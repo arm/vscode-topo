@@ -1,43 +1,56 @@
 import { createRequire } from 'node:module';
 import * as vscode from 'vscode';
-import { mock } from 'vitest-mock-extended';
+import { mock, MockProxy } from 'vitest-mock-extended';
 import { refreshSkillStatus } from '../commandIds';
 import { TopoSkill } from '../services/topoSkill';
+import { TaskExecutor } from '../util/taskExecutor';
 import { InstallSkill } from './installSkill';
 
-type Remove = (
-    path: string,
-    options: { recursive: boolean; force: boolean },
-) => void;
-type LinkStatus = (path: string) => { isSymbolicLink(): boolean };
-type ReadLink = (path: string) => string;
-type Environment = { CLAUDE_CONFIG_DIR?: string };
+type UninstallResult = {
+    error?: Error;
+    status: number | null;
+};
+type UninstallRunner = (
+    command: string,
+    args: string[],
+    options: { stdio: 'ignore' },
+) => UninstallResult;
 
 const loadModule = createRequire(__filename);
 const { uninstallSkill } = loadModule('../../scripts/uninstall.cjs') as {
-    uninstallSkill(
-        userHome: string,
-        remove: Remove,
-        linkStatus: LinkStatus,
-        readLink: ReadLink,
-        environment?: Environment,
-    ): void;
+    uninstallSkill(run: UninstallRunner, platform?: NodeJS.Platform): void;
 };
 
 describe('InstallSkill', () => {
-    const userHomeUri = vscode.Uri.file('/fake/home');
+    const bundledSkillPath = vscode.Uri.file(
+        '/fake/extension/skills/topo-cli-location',
+    ).fsPath;
+    let topoSkill: MockProxy<TopoSkill>;
+    let taskExecutor: MockProxy<TaskExecutor>;
+    let action: InstallSkill;
 
     beforeEach(() => {
         vi.resetAllMocks();
+        topoSkill = mock<TopoSkill>({
+            bundledDirectoryPath: bundledSkillPath,
+        });
+        taskExecutor = mock<TaskExecutor>();
+        action = new InstallSkill(topoSkill, taskExecutor);
     });
 
-    it('installs the bundled skill for the current user', async () => {
-        const topoSkill = mock<TopoSkill>();
-        const action = new InstallSkill(topoSkill);
-
+    it('opens the interactive global skill installer', async () => {
         await action.installSkillCommandHandler();
 
-        expect(topoSkill.install).toHaveBeenCalledOnce();
+        expect(taskExecutor.run).toHaveBeenCalledOnce();
+        expect(taskExecutor.run.mock.calls[0][0]).toMatchObject({
+            name: 'Install Topo skill',
+            definition: {
+                type: 'process',
+                command: 'npx',
+                args: ['skills', 'add', bundledSkillPath, '--global'],
+            },
+        });
+        expect(topoSkill.verifyInstallation).toHaveBeenCalledOnce();
         expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
             refreshSkillStatus,
         );
@@ -46,118 +59,48 @@ describe('InstallSkill', () => {
         );
     });
 
-    it('removes the installed skill on uninstall', () => {
-        const remove = vi.fn<Remove>();
-        const skillPath = vscode.Uri.joinPath(
-            userHomeUri,
-            '.agents',
-            'skills',
-            'topo-cli-location',
-        ).fsPath;
-        const claudeSkillPath = vscode.Uri.joinPath(
-            userHomeUri,
-            '.claude',
-            'skills',
-            'topo-cli-location',
-        ).fsPath;
-
-        uninstallSkill(
-            userHomeUri.fsPath,
-            remove,
-            () => ({ isSymbolicLink: () => true }),
-            () => skillPath,
+    it('does not report success when installation verification fails', async () => {
+        topoSkill.verifyInstallation.mockRejectedValueOnce(
+            new Error('verification failed'),
         );
 
-        expect(remove).toHaveBeenNthCalledWith(1, claudeSkillPath, {
-            recursive: true,
-            force: true,
-        });
-        expect(remove).toHaveBeenNthCalledWith(2, skillPath, {
-            recursive: true,
-            force: true,
-        });
+        await expect(action.installSkillCommandHandler()).rejects.toThrow(
+            'verification failed',
+        );
+
+        expect(vscode.commands.executeCommand).not.toHaveBeenCalled();
+        expect(vscode.window.showInformationMessage).not.toHaveBeenCalled();
     });
 
-    it('removes the installed skill from a configured Claude directory', () => {
-        const remove = vi.fn<Remove>();
-        const skillPath = vscode.Uri.joinPath(
-            userHomeUri,
-            '.agents',
-            'skills',
-            'topo-cli-location',
-        ).fsPath;
-        const claudeSkillPath = vscode.Uri.file(
-            '/fake/custom-claude/skills/topo-cli-location',
-        ).fsPath;
+    it.each([
+        ['linux', 'npx'],
+        ['win32', 'npx.cmd'],
+    ] as const)('removes the skill from all agents on %s', (platform, npx) => {
+        const run = vi.fn<UninstallRunner>().mockReturnValue({ status: 0 });
 
-        uninstallSkill(
-            userHomeUri.fsPath,
-            remove,
-            () => ({ isSymbolicLink: () => true }),
-            () => skillPath,
-            { CLAUDE_CONFIG_DIR: '/fake/custom-claude' },
-        );
+        uninstallSkill(run, platform);
 
-        expect(remove).toHaveBeenNthCalledWith(1, claudeSkillPath, {
-            recursive: true,
-            force: true,
-        });
-        expect(remove).toHaveBeenNthCalledWith(2, skillPath, {
-            recursive: true,
-            force: true,
-        });
-    });
-
-    it('preserves a non-link Claude skill during uninstall', () => {
-        const remove = vi.fn<Remove>();
-
-        uninstallSkill(
-            userHomeUri.fsPath,
-            remove,
-            () => ({ isSymbolicLink: () => false }),
-            vi.fn(),
-        );
-
-        expect(remove).toHaveBeenCalledExactlyOnceWith(
-            vscode.Uri.joinPath(
-                userHomeUri,
-                '.agents',
+        expect(run).toHaveBeenCalledExactlyOnceWith(
+            npx,
+            [
+                '--yes',
                 'skills',
+                'remove',
                 'topo-cli-location',
-            ).fsPath,
-            {
-                recursive: true,
-                force: true,
-            },
+                '--global',
+                '--agent',
+                '*',
+                '--yes',
+            ],
+            { stdio: 'ignore' },
         );
     });
 
-    it('ignores a missing Claude skill link during uninstall', () => {
-        const remove = vi.fn<Remove>();
-        const missingLinkError = Object.assign(new Error('missing link'), {
-            code: 'ENOENT',
-        });
+    it('reports skill uninstallation failure', () => {
+        const run = vi.fn<UninstallRunner>().mockReturnValue({ status: 1 });
 
-        uninstallSkill(
-            userHomeUri.fsPath,
-            remove,
-            () => {
-                throw missingLinkError;
-            },
-            vi.fn(),
-        );
-
-        expect(remove).toHaveBeenCalledExactlyOnceWith(
-            vscode.Uri.joinPath(
-                userHomeUri,
-                '.agents',
-                'skills',
-                'topo-cli-location',
-            ).fsPath,
-            {
-                recursive: true,
-                force: true,
-            },
+        expect(() => uninstallSkill(run, 'linux')).toThrow(
+            'Skill uninstallation failed with exit code 1',
         );
     });
 });

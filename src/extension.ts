@@ -62,7 +62,7 @@ export async function activate(
     const targetModel = new TargetModel();
     const hostModel = new HostModel();
     const projectModel = new ProjectModel();
-    const topoSkill = new TopoSkill(context.extensionUri.fsPath);
+    const topoSkill = new TopoSkill(context.extensionUri);
     context.subscriptions.push(targetModel, hostModel, projectModel);
 
     const hostTreeView = new HostTreeView(hostModel);
@@ -120,7 +120,7 @@ export async function activate(
     const containerLifecycle = new ContainerLifecycle(dockerCommands);
     const fixIssue = new FixIssue(taskExecutor, targetModel);
     const openSettings = new OpenSettings();
-    const installSkill = new InstallSkill(topoSkill);
+    const installSkill = new InstallSkill(topoSkill, taskExecutor);
     const protocolHandler = new ProtocolHandler(projectCloner);
 
     context.subscriptions.push(

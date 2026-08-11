@@ -1,49 +1,32 @@
-const fs = require('node:fs');
-const os = require('node:os');
-const path = require('node:path');
-const { skillPaths } = require('../src/util/skillPaths.ts');
+const { spawnSync } = require('node:child_process');
 
-function uninstallSkill(
-    userHome = os.homedir(),
-    remove = fs.rmSync,
-    linkStatus = fs.lstatSync,
-    readLink = fs.readlinkSync,
-    environment = process.env,
-) {
-    const canonicalSkillPath = path.join(
-        userHome,
-        ...skillPaths.canonicalSkillPath,
-    );
-    const configuredClaudeHome = environment.CLAUDE_CONFIG_DIR?.trim();
-    const claudeHome = configuredClaudeHome
-        ? configuredClaudeHome
-        : path.join(userHome, '.claude');
-    const claudeSkillPath = path.join(
-        claudeHome,
-        'skills',
-        skillPaths.skillName,
+const SKILL_NAME = 'topo-cli-location';
+
+function uninstallSkill(run = spawnSync, platform = process.platform) {
+    const npx = platform === 'win32' ? 'npx.cmd' : 'npx';
+    const result = run(
+        npx,
+        [
+            '--yes',
+            'skills',
+            'remove',
+            SKILL_NAME,
+            '--global',
+            '--agent',
+            '*',
+            '--yes',
+        ],
+        { stdio: 'ignore' },
     );
 
-    let status;
-    try {
-        status = linkStatus(claudeSkillPath);
-    } catch (error) {
-        if (error?.code !== 'ENOENT') {
-            throw error;
-        }
+    if (result.error) {
+        throw result.error;
     }
-
-    const linkTarget = status?.isSymbolicLink()
-        ? path.resolve(path.dirname(claudeSkillPath), readLink(claudeSkillPath))
-        : undefined;
-    if (linkTarget === path.resolve(canonicalSkillPath)) {
-        remove(claudeSkillPath, { recursive: true, force: true });
+    if (result.status !== 0) {
+        throw new Error(
+            `Skill uninstallation failed with exit code ${result.status ?? 'unknown'}`,
+        );
     }
-
-    remove(canonicalSkillPath, {
-        recursive: true,
-        force: true,
-    });
 }
 
 if (require.main === module) {
