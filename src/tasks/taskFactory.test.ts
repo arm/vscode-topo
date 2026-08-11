@@ -15,7 +15,10 @@ describe('TaskFactory', () => {
         type: TOPO_TASK_TYPE,
         command: TaskCommand.Configure,
         args: ['GREETING=Hello'],
-        cwd: '/projects/welcome',
+        options: {
+            cwd: '/projects/welcome',
+            env: { GREETING_STYLE: 'enthusiastic' },
+        },
     };
     let topoCli: MockProxy<TopoCli>;
     let taskFactory: TaskFactory;
@@ -42,7 +45,6 @@ describe('TaskFactory', () => {
         { type: 'other', command: 'deploy', args: [] },
         { type: TOPO_TASK_TYPE, command: 'deploy', args: 'invalid' },
         { type: TOPO_TASK_TYPE, command: 'deploy', args: [1] },
-        { type: TOPO_TASK_TYPE, command: 'deploy', args: [], cwd: '' },
         { type: TOPO_TASK_TYPE, command: 'clone', args: [] },
     ])('does not resolve an invalid definition %#', (invalidDefinition) => {
         expect(resolveTaskDefinition(invalidDefinition)).toBeUndefined();
@@ -54,7 +56,10 @@ describe('TaskFactory', () => {
         expect(execution).toMatchObject({
             process: topoBinaryPath,
             args: ['configure', 'GREETING=Hello'],
-            options: { cwd: '/projects/welcome' },
+            options: {
+                cwd: '/projects/welcome',
+                env: { GREETING_STYLE: 'enthusiastic' },
+            },
         });
     });
 

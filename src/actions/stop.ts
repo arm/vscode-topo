@@ -64,7 +64,7 @@ export async function stop(
         type: TOPO_TASK_TYPE,
         command: TaskCommand.Stop,
         args: ['--file', COMPOSE_FILE_NAME, '--target', target],
-        cwd: path.dirname(composeFile),
+        options: { cwd: path.dirname(composeFile) },
     };
     const task = taskFactory.createTask(
         `Stop ${composeFile} on ${target}`,

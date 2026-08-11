@@ -53,7 +53,7 @@ describe('Stop', () => {
                 type: TOPO_TASK_TYPE,
                 command: TaskCommand.Stop,
                 args: ['--file', 'compose.yaml', '--target', target],
-                cwd: path.dirname(composeFile),
+                options: { cwd: path.dirname(composeFile) },
             },
         );
         expect(mockRunTask).toHaveBeenCalledWith(task);

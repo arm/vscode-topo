@@ -129,24 +129,30 @@ Add a Topo task to `.vscode/tasks.json` by specifying a Topo command and its arg
                 "5000",
                 "--force-recreate"
             ],
-            "cwd": "${workspaceFolder}/examples/camera",
+            "options": {
+                "cwd": "${workspaceFolder}/examples/camera"
+            },
             "label": "Deploy camera"
         },
         {
             "type": "topo",
             "command": "stop",
             "args": ["--file", "compose.yaml", "--target", "topo.local"],
-            "cwd": "${workspaceFolder}/examples/camera",
+            "options": {
+                "cwd": "${workspaceFolder}/examples/camera"
+            },
             "label": "Stop camera"
         }
     ]
 }
 ```
 
-The extension runs `topo <command> <args>` using its bundled Topo CLI. Use
-`cwd` when the command needs to run from a particular directory; otherwise it
-runs from the task's workspace folder. Supported commands are `configure`,
-`deploy`, `health`, `install`, `projects`, `ps`, `setup-keys`, and `stop`.
+The extension runs `topo <command> <args>` using its bundled Topo CLI. Set
+`options.cwd` when the command needs to run from a particular directory;
+otherwise it runs from the task's workspace folder. Use `options.env` to add
+string-valued environment variables to the command's inherited environment.
+Supported commands are `configure`, `deploy`, `health`, `install`, `projects`,
+`ps`, `setup-keys`, and `stop`.
 
 ## Project Management
 

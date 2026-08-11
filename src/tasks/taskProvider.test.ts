@@ -13,7 +13,10 @@ describe('TaskProvider', () => {
             type: TOPO_TASK_TYPE,
             command: TaskCommand.Configure,
             args: ['GREETING=Hello'],
-            cwd: '/projects/welcome',
+            options: {
+                cwd: '/projects/welcome',
+                env: { GREETING_STYLE: 'enthusiastic' },
+            },
         },
     ): vscode.Task =>
         new vscode.Task(
@@ -37,7 +40,10 @@ describe('TaskProvider', () => {
         const execution = new vscode.ProcessExecution(
             '/extension/resources/topo',
             ['configure', 'GREETING=Hello'],
-            { cwd: '/projects/welcome' },
+            {
+                cwd: '/projects/welcome',
+                env: { GREETING_STYLE: 'enthusiastic' },
+            },
         );
         taskFactory.createExecution.mockReturnValue(execution);
 

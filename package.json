@@ -65,10 +65,23 @@
                             "type": "string"
                         }
                     },
-                    "cwd": {
-                        "type": "string",
-                        "minLength": 1,
-                        "description": "Working directory for the Topo command. Omit to use the task's workspace folder."
+                    "options": {
+                        "type": "object",
+                        "description": "Execution options for the Topo command.",
+                        "additionalProperties": false,
+                        "properties": {
+                            "cwd": {
+                                "type": "string",
+                                "description": "Working directory for the Topo command. Omit to use the task's workspace folder."
+                            },
+                            "env": {
+                                "type": "object",
+                                "description": "Environment variables added to the Topo command's environment.",
+                                "additionalProperties": {
+                                    "type": "string"
+                                }
+                            }
+                        }
                     }
                 }
             }

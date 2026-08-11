@@ -168,7 +168,7 @@ export async function deploy(
         type: TOPO_TASK_TYPE,
         command: TaskCommand.Deploy,
         args: createDeployArgs(target, deployOptions),
-        cwd: path.dirname(composeFile),
+        options: { cwd: path.dirname(composeFile) },
     };
     const task = taskFactory.createTask(
         `Deploy ${composeFile} to ${target}`,

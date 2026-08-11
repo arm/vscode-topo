@@ -66,7 +66,7 @@ describe('Deploy', () => {
                 type: TOPO_TASK_TYPE,
                 command: TaskCommand.Deploy,
                 args,
-                cwd: path.dirname(composeFile),
+                options: { cwd: path.dirname(composeFile) },
             },
         );
         expect(mockRunTask).toHaveBeenCalledWith(task);

@@ -18,19 +18,18 @@ export interface TaskDefinition extends vscode.TaskDefinition {
     readonly type: typeof TOPO_TASK_TYPE;
     readonly command: TaskCommand;
     readonly args: readonly string[];
-    readonly cwd?: string;
+    readonly options?: vscode.ProcessExecutionOptions;
 }
 
 export const resolveTaskDefinition = (
     definition: vscode.TaskDefinition,
 ): TaskDefinition | undefined => {
-    const { type, command, args, cwd } = definition;
+    const { type, command, args } = definition;
     if (
         type === TOPO_TASK_TYPE &&
         isTaskCommand(command) &&
         Array.isArray(args) &&
-        args.every((arg) => typeof arg === 'string') &&
-        (cwd === undefined || isValidString(cwd))
+        args.every((arg) => typeof arg === 'string')
     ) {
         return definition as TaskDefinition;
     }
@@ -44,7 +43,9 @@ export class TaskFactory {
     public createExecution(
         definition: TaskDefinition,
     ): vscode.ProcessExecution {
-        const options = definition.cwd ? { cwd: definition.cwd } : undefined;
+        const { cwd, env } = definition.options ?? {};
+        const options =
+            cwd === undefined && env === undefined ? undefined : { cwd, env };
         return new vscode.ProcessExecution(
             this.topoCli.getBinaryPath(),
             [definition.command, ...definition.args],
@@ -55,15 +56,11 @@ export class TaskFactory {
     public createTask(name: string, definition: TaskDefinition): vscode.Task {
         const execution = this.createExecution(definition);
         return createTask(name, execution, {
-            cwd: definition.cwd,
+            cwd: definition.options?.cwd,
             definition,
         });
     }
 }
-
-const isValidString = (value: unknown): value is string => {
-    return typeof value === 'string' && value.trim().length > 0;
-};
 
 const isTaskCommand = (value: unknown): value is TaskCommand => {
     return Object.values(TaskCommand).includes(value as TaskCommand);
