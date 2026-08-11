@@ -48,6 +48,7 @@ export const fixTargetIssues = command('fixTargetIssues');
 export const remoteClone = command('remoteClone');
 export const localClone = command('localClone');
 export const installSkill = command('installSkill');
+export const uninstallSkill = command('uninstallSkill');
 
 export interface CommandHandlers {
     hostController: HostController;
@@ -153,6 +154,9 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
         ),
         vscode.commands.registerCommand(installSkill, () =>
             handlers.installSkill.installSkillCommandHandler(),
+        ),
+        vscode.commands.registerCommand(uninstallSkill, () =>
+            handlers.installSkill.uninstallSkillCommandHandler(),
         ),
     );
 

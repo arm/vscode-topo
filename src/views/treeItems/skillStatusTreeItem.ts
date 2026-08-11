@@ -16,11 +16,15 @@ export class SkillStatusTreeItem extends vscode.TreeItem {
                 'check',
                 new vscode.ThemeColor('testing.iconPassed'),
             );
+            this.contextValue = 'TopoSkillUninstallAvailable';
         } else {
             this.description = statusDescriptions[status];
             this.tooltip = `Topo Agent Skill: ${statusDescriptions[status]}. Install the bundled version to give compatible AI assistants current guidance for locating and using the Topo CLI.`;
             this.iconPath = new vscode.ThemeIcon('info');
             this.contextValue = 'TopoSkillInstallAvailable';
+            if (status === 'outdated') {
+                this.contextValue += ' TopoSkillUninstallAvailable';
+            }
         }
     }
 }

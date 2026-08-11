@@ -82,4 +82,24 @@ export class TopoSkill {
             );
         }
     }
+
+    public async uninstall(): Promise<void> {
+        try {
+            await vscode.workspace.fs.delete(this.topoSkillsSubdirectory, {
+                recursive: true,
+            });
+        } catch (error) {
+            if (!isFileNotFound(error)) {
+                throw error;
+            }
+        }
+
+        const status = await this.getStatus();
+        if (status !== 'missing') {
+            throw new WrappedError(
+                'SKILL',
+                `Skill uninstallation verification failed: ${status}`,
+            );
+        }
+    }
 }
