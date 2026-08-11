@@ -12,11 +12,8 @@ import { Config } from '../services/config';
 import { createProjectTreeItem } from '../util/test/projectTreeItem';
 import { WrappedError } from '../errors/wrappedError';
 import { showAndLogError, showAndLogWarning } from '../util/showAndLog';
-import { TOPO_DEPLOY_TASK_COMMAND, TOPO_TASK_TYPE } from '../manifest';
-import type {
-    DeployTaskFactory,
-    TopoDeployTaskDefinition,
-} from '../tasks/deployTaskFactory';
+import { TOPO_TASK_TYPE } from '../manifest';
+import { TaskCommand, type TaskFactory } from '../tasks/taskFactory';
 
 vi.mock('../util/showAndLog');
 vi.mock('../util/task');
@@ -57,19 +54,21 @@ describe('Deploy', () => {
     };
     let targetModel: TargetModel;
     let config: MockProxy<Config>;
-    let taskFactory: MockProxy<DeployTaskFactory>;
+    let taskFactory: MockProxy<TaskFactory>;
 
     function expectDeployTask(
         composeFile: string,
-        deployOptions: TopoDeployTaskDefinition['deployOptions'] = {},
+        args = ['--file', 'compose.yaml', '--target', target],
     ): void {
-        expect(taskFactory.createTask).toHaveBeenCalledWith({
-            type: TOPO_TASK_TYPE,
-            command: TOPO_DEPLOY_TASK_COMMAND,
-            composeFile,
-            target,
-            deployOptions,
-        });
+        expect(taskFactory.createTask).toHaveBeenCalledWith(
+            `Deploy ${composeFile} to ${target}`,
+            {
+                type: TOPO_TASK_TYPE,
+                command: TaskCommand.Deploy,
+                args,
+                cwd: path.dirname(composeFile),
+            },
+        );
         expect(mockRunTask).toHaveBeenCalledWith(task);
     }
 
@@ -91,7 +90,7 @@ describe('Deploy', () => {
         targetModel.setSelectedTargetHealth(loaded(targetHealth));
         config = mock<Config>();
         config.getTargetSettings.mockReturnValue({});
-        taskFactory = mock<DeployTaskFactory>();
+        taskFactory = mock<TaskFactory>();
         taskFactory.createTask.mockReturnValue(task);
         vi.mocked(vscode.workspace.findFiles).mockResolvedValue([]);
         vi.mocked(vscode.workspace.getWorkspaceFolder).mockReturnValue(
@@ -182,13 +181,7 @@ describe('Deploy', () => {
 
     it('handles task failure', async () => {
         mockRunTask.mockRejectedValueOnce(new Error('deploy failed'));
-        await deploy(taskFactory, {
-            type: TOPO_TASK_TYPE,
-            command: TOPO_DEPLOY_TASK_COMMAND,
-            composeFile,
-            target,
-            deployOptions: {},
-        });
+        await deploy(taskFactory, composeFile, target, {});
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
             'Deployment to topo.local failed: deploy failed',
@@ -203,16 +196,43 @@ describe('Deploy', () => {
         expectDeployTask(composeFile);
     });
 
-    it('passes configured deploy options from the command handler', async () => {
-        const deploySettings = { port: 5000, forceRecreate: true };
-        config.getTargetSettings.mockReturnValueOnce({
-            deploy: deploySettings,
-        });
+    it.each([
+        {
+            name: 'registry port and force-recreate',
+            deploySettings: { port: 5000, forceRecreate: true },
+            expectedArgs: [
+                '--file',
+                'compose.yaml',
+                '--target',
+                target,
+                '--registry-port',
+                '5000',
+                '--force-recreate',
+            ],
+        },
+        {
+            name: 'no-recreate',
+            deploySettings: { noRecreate: true },
+            expectedArgs: [
+                '--file',
+                'compose.yaml',
+                '--target',
+                target,
+                '--no-recreate',
+            ],
+        },
+    ])(
+        'passes configured $name options from the command handler',
+        async ({ deploySettings, expectedArgs }) => {
+            config.getTargetSettings.mockReturnValueOnce({
+                deploy: deploySettings,
+            });
 
-        await deployAction.deployContextCommandHandler(composeFileUri);
+            await deployAction.deployContextCommandHandler(composeFileUri);
 
-        expectDeployTask(composeFile, deploySettings);
-    });
+            expectDeployTask(composeFile, expectedArgs);
+        },
+    );
 
     it.each([
         ['deploy', () => deployAction.deployCommandHandler()],

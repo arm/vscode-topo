@@ -107,11 +107,11 @@ Configure a project's parameters, or deploy or stop it on the selected target. A
 - Running **Topo: Deploy** from the Command Palette, then selecting a `compose.yaml` file from the workspace.
 - Right-clicking `compose.yaml` in the Explorer or editor tab and selecting **Topo Configure**, **Topo Deploy**, or **Topo Stop**.
 - Using the inline **Configure**, **Deploy**, or **Stop** buttons on a project in the **Projects** view.
-- Running a configured **Topo** deploy or stop task with **Tasks: Run Task**.
+- Running a configured **Topo** CLI task with **Tasks: Run Task**.
 
 ### Customize a Topo Task
 
-Add a Topo task to `.vscode/tasks.json` using a compose file path relative to its workspace folder:
+Add a Topo task to `.vscode/tasks.json` by specifying a Topo command and its arguments:
 
 ```json
 {
@@ -120,28 +120,33 @@ Add a Topo task to `.vscode/tasks.json` using a compose file path relative to it
         {
             "type": "topo",
             "command": "deploy",
-            "composeFile": "examples/camera/compose.yaml",
-            "target": "topo.local",
-            "deployOptions": {
-                "port": 5000,
-                "forceRecreate": true
-            },
+            "args": [
+                "--file",
+                "compose.yaml",
+                "--target",
+                "topo.local",
+                "--registry-port",
+                "5000",
+                "--force-recreate"
+            ],
+            "cwd": "${workspaceFolder}/examples/camera",
             "label": "Deploy camera"
         },
         {
             "type": "topo",
             "command": "stop",
-            "composeFile": "examples/camera/compose.yaml",
-            "target": "topo.local",
+            "args": ["--file", "compose.yaml", "--target", "topo.local"],
+            "cwd": "${workspaceFolder}/examples/camera",
             "label": "Stop camera"
         }
     ]
 }
 ```
 
-Configured deploy tasks use the Topo CLI defaults unless `deployOptions` are
-specified. They do not inherit deploy options from the extension's target
-settings.
+The extension runs `topo <command> <args>` using its bundled Topo CLI. Use
+`cwd` when the command needs to run from a particular directory; otherwise it
+runs from the task's workspace folder. Supported commands are `configure`,
+`deploy`, `health`, `install`, `projects`, `ps`, `setup-keys`, and `stop`.
 
 ## Project Management
 

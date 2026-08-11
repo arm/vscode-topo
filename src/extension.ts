@@ -33,9 +33,8 @@ import { Config } from './services/config';
 import { Configure } from './actions/configure';
 import { ProjectCloner } from './operations/projectCloner';
 import { InstallSkill } from './actions/installSkill';
-import { DeployTaskFactory } from './tasks/deployTaskFactory';
-import { StopTaskFactory } from './tasks/stopTaskFactory';
 import { TaskProvider } from './tasks/taskProvider';
+import { TaskFactory } from './tasks/taskFactory';
 import { TopoSkill } from './services/topoSkill';
 
 const SELECTED_TARGET_REFRESH_INTERVAL_MS = 60_000;
@@ -113,14 +112,13 @@ export async function activate(
 
     const config = new Config();
     const taskExecutor = new TaskExecutor(topoCli);
-    const deployTaskFactory = new DeployTaskFactory(topoCli);
-    const stopTaskFactory = new StopTaskFactory(topoCli);
-    const taskProvider = new TaskProvider([deployTaskFactory, stopTaskFactory]);
+    const taskFactory = new TaskFactory(topoCli);
+    const taskProvider = new TaskProvider(taskFactory);
     const configure = new Configure(taskExecutor);
     const projectCloner = new ProjectCloner(taskExecutor);
     const projectClone = new ProjectClone(topoCli, targetModel, projectCloner);
-    const deploy = new Deploy(targetModel, config, deployTaskFactory);
-    const stop = new Stop(targetModel, stopTaskFactory);
+    const deploy = new Deploy(targetModel, config, taskFactory);
+    const stop = new Stop(targetModel, taskFactory);
     const openContainerShell = new OpenContainerShell(dockerCommands);
     const connectViaSSH = new ConnectViaSSH(targetModel);
     const openContainerInBrowser = new OpenContainerInBrowser();

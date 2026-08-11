@@ -41,46 +41,34 @@
                 "when": "processExecutionSupported",
                 "required": [
                     "command",
-                    "composeFile",
-                    "target"
+                    "args"
                 ],
                 "properties": {
                     "command": {
                         "type": "string",
                         "enum": [
+                            "configure",
                             "deploy",
+                            "health",
+                            "install",
+                            "projects",
+                            "ps",
+                            "setup-keys",
                             "stop"
                         ],
-                        "description": "Topo operation to run."
+                        "description": "Supported Topo command to run."
                     },
-                    "composeFile": {
-                        "type": "string",
-                        "description": "Path to compose.yaml, relative to the task's workspace folder or absolute."
-                    },
-                    "target": {
-                        "type": "string",
-                        "description": "Topo target on which to run the operation."
-                    },
-                    "deployOptions": {
-                        "type": "object",
-                        "description": "Options for a Topo deploy task. Omit to use the Topo CLI defaults.",
-                        "additionalProperties": false,
-                        "properties": {
-                            "port": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "maximum": 65535,
-                                "description": "Registry port to use when deploying to the target."
-                            },
-                            "forceRecreate": {
-                                "type": "boolean",
-                                "description": "Recreate containers even when their configuration and image have not changed. Do not use with noRecreate."
-                            },
-                            "noRecreate": {
-                                "type": "boolean",
-                                "description": "Keep existing containers instead of recreating them. Do not use with forceRecreate."
-                            }
+                    "args": {
+                        "type": "array",
+                        "description": "Arguments passed to the Topo command in order.",
+                        "items": {
+                            "type": "string"
                         }
+                    },
+                    "cwd": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "Working directory for the Topo command. Omit to use the task's workspace folder."
                     }
                 }
             }

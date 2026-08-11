@@ -8,8 +8,8 @@ import { runTask } from '../util/task';
 import { loaded, unloaded } from '../util/loadable';
 import type { TargetHealthReport } from '../services/topoCliSchema';
 import { createProjectTreeItem } from '../util/test/projectTreeItem';
-import { TOPO_STOP_TASK_COMMAND, TOPO_TASK_TYPE } from '../manifest';
-import type { StopTaskFactory } from '../tasks/stopTaskFactory';
+import { TOPO_TASK_TYPE } from '../manifest';
+import { TaskCommand, type TaskFactory } from '../tasks/taskFactory';
 
 vi.mock('../util/task');
 
@@ -44,15 +44,18 @@ describe('Stop', () => {
         dependencies: [],
     };
     let targetModel: TargetModel;
-    let taskFactory: MockProxy<StopTaskFactory>;
+    let taskFactory: MockProxy<TaskFactory>;
 
     function expectStopTask(): void {
-        expect(taskFactory.createTask).toHaveBeenCalledWith({
-            type: TOPO_TASK_TYPE,
-            command: TOPO_STOP_TASK_COMMAND,
-            composeFile,
-            target,
-        });
+        expect(taskFactory.createTask).toHaveBeenCalledWith(
+            `Stop ${composeFile} on ${target}`,
+            {
+                type: TOPO_TASK_TYPE,
+                command: TaskCommand.Stop,
+                args: ['--file', 'compose.yaml', '--target', target],
+                cwd: path.dirname(composeFile),
+            },
+        );
         expect(mockRunTask).toHaveBeenCalledWith(task);
     }
 
@@ -61,7 +64,7 @@ describe('Stop', () => {
         targetModel = new TargetModel();
         targetModel.setSelected(target);
         targetModel.setSelectedTargetHealth(loaded(targetHealth));
-        taskFactory = mock<StopTaskFactory>();
+        taskFactory = mock<TaskFactory>();
         taskFactory.createTask.mockReturnValue(task);
         vi.mocked(vscode.window.showErrorMessage).mockClear();
         vi.mocked(vscode.window.showWarningMessage).mockClear();
@@ -119,12 +122,7 @@ describe('Stop', () => {
 
     it('handles task failure', async () => {
         mockRunTask.mockRejectedValueOnce(new Error('stop failed'));
-        await stop(taskFactory, {
-            type: TOPO_TASK_TYPE,
-            command: TOPO_STOP_TASK_COMMAND,
-            composeFile,
-            target,
-        });
+        await stop(taskFactory, composeFile, target);
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
             'Stopping services on topo.local failed: stop failed',

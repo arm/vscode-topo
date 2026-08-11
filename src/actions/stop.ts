@@ -1,3 +1,4 @@
+import path from 'node:path';
 import * as vscode from 'vscode';
 import { getErrorMessage } from '../util/getErrorMessage';
 import { runTask } from '../util/task';
@@ -9,11 +10,13 @@ import {
     assertTargetConnected,
     assertTargetSelected,
 } from '../util/assertTargetReady';
-import type {
-    TopoStopTaskDefinition,
-    StopTaskFactory,
-} from '../tasks/stopTaskFactory';
-import { TOPO_STOP_TASK_COMMAND, TOPO_TASK_TYPE } from '../manifest';
+import { TOPO_TASK_TYPE } from '../manifest';
+import {
+    TaskCommand,
+    type TaskDefinition,
+    type TaskFactory,
+} from '../tasks/taskFactory';
+import { COMPOSE_FILE_NAME } from '../util/composeFile';
 
 const viewLogsItem: vscode.MessageItem = {
     title: 'View Logs',
@@ -22,7 +25,7 @@ const viewLogsItem: vscode.MessageItem = {
 export class Stop {
     constructor(
         private readonly targetModel: TargetModel,
-        private readonly taskFactory: StopTaskFactory,
+        private readonly taskFactory: TaskFactory,
     ) {}
 
     public async stopCommandHandler(resource?: vscode.Uri): Promise<void> {
@@ -43,13 +46,7 @@ export class Stop {
             throw err;
         }
 
-        const definition: TopoStopTaskDefinition = {
-            type: TOPO_TASK_TYPE,
-            command: TOPO_STOP_TASK_COMMAND,
-            target,
-            composeFile: resource.fsPath,
-        };
-        await stop(this.taskFactory, definition);
+        await stop(this.taskFactory, resource.fsPath, target);
     }
 
     public async stopProjectCommandHandler(treeNode: unknown): Promise<void> {
@@ -59,11 +56,20 @@ export class Stop {
 }
 
 export async function stop(
-    taskFactory: StopTaskFactory,
-    definition: TopoStopTaskDefinition,
+    taskFactory: TaskFactory,
+    composeFile: string,
+    target: string,
 ): Promise<void> {
-    const { target } = definition;
-    const task = taskFactory.createTask(definition);
+    const definition: TaskDefinition = {
+        type: TOPO_TASK_TYPE,
+        command: TaskCommand.Stop,
+        args: ['--file', COMPOSE_FILE_NAME, '--target', target],
+        cwd: path.dirname(composeFile),
+    };
+    const task = taskFactory.createTask(
+        `Stop ${composeFile} on ${target}`,
+        definition,
+    );
     const taskName = task.name;
 
     try {

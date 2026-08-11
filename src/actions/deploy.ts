@@ -1,3 +1,4 @@
+import path from 'node:path';
 import * as vscode from 'vscode';
 import { getErrorMessage } from '../util/getErrorMessage';
 import { runTask } from '../util/task';
@@ -5,6 +6,7 @@ import { showAndLogError, showAndLogWarning } from '../util/showAndLog';
 import { TargetModel } from '../models/targetModel';
 import { isWrappedError } from '../errors/wrappedError';
 import {
+    COMPOSE_FILE_NAME,
     COMPOSE_FILE_GLOB,
     compareComposeFiles,
     getComposeFileMetadata,
@@ -15,13 +17,14 @@ import {
     assertTargetConnected,
     assertTargetSelected,
 } from '../util/assertTargetReady';
-import {
-    type TopoDeployTaskDefinition,
-    type DeployTaskFactory,
-} from '../tasks/deployTaskFactory';
 import { Config } from '../services/config';
 import type { DeployOptions } from '../util/targetSettings';
-import { TOPO_DEPLOY_TASK_COMMAND, TOPO_TASK_TYPE } from '../manifest';
+import { TOPO_TASK_TYPE } from '../manifest';
+import {
+    TaskCommand,
+    type TaskDefinition,
+    type TaskFactory,
+} from '../tasks/taskFactory';
 
 const viewLogsItem: vscode.MessageItem = {
     title: 'View Logs',
@@ -40,7 +43,7 @@ export class Deploy {
     constructor(
         private readonly targetModel: TargetModel,
         private readonly config: Config,
-        private readonly taskFactory: DeployTaskFactory,
+        private readonly taskFactory: TaskFactory,
     ) {}
 
     public async deployCommandHandler(): Promise<void> {
@@ -127,14 +130,12 @@ export class Deploy {
         resource: vscode.Uri,
         deployTarget: DeployTarget,
     ): Promise<void> {
-        const definition: TopoDeployTaskDefinition = {
-            type: TOPO_TASK_TYPE,
-            command: TOPO_DEPLOY_TASK_COMMAND,
-            target: deployTarget.target,
-            composeFile: resource.fsPath,
-            deployOptions: deployTarget.deployOptions,
-        };
-        await deploy(this.taskFactory, definition);
+        await deploy(
+            this.taskFactory,
+            resource.fsPath,
+            deployTarget.target,
+            deployTarget.deployOptions,
+        );
     }
 }
 
@@ -158,11 +159,21 @@ async function promptForComposeFile(
 }
 
 export async function deploy(
-    taskFactory: DeployTaskFactory,
-    definition: TopoDeployTaskDefinition,
+    taskFactory: TaskFactory,
+    composeFile: string,
+    target: string,
+    deployOptions: DeployOptions,
 ): Promise<void> {
-    const { target } = definition;
-    const task = taskFactory.createTask(definition);
+    const definition: TaskDefinition = {
+        type: TOPO_TASK_TYPE,
+        command: TaskCommand.Deploy,
+        args: createDeployArgs(target, deployOptions),
+        cwd: path.dirname(composeFile),
+    };
+    const task = taskFactory.createTask(
+        `Deploy ${composeFile} to ${target}`,
+        definition,
+    );
     const taskName = task.name;
 
     try {
@@ -188,3 +199,20 @@ export async function deploy(
         `Deployment to ${target} completed successfully.`,
     );
 }
+
+const createDeployArgs = (
+    target: string,
+    deployOptions: DeployOptions,
+): string[] => {
+    const args = ['--file', COMPOSE_FILE_NAME, '--target', target];
+    if (deployOptions.port !== undefined) {
+        args.push('--registry-port', String(deployOptions.port));
+    }
+    if (deployOptions.forceRecreate) {
+        args.push('--force-recreate');
+    }
+    if (deployOptions.noRecreate) {
+        args.push('--no-recreate');
+    }
+    return args;
+};
