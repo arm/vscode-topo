@@ -137,6 +137,11 @@
                 "category": "Topo"
             },
             {
+                "command": "topo.refreshSkillStatus",
+                "title": "Refresh Skill Status",
+                "category": "Topo"
+            },
+            {
                 "command": "topo.refreshProjects",
                 "title": "Refresh",
                 "icon": "$(refresh)",
@@ -346,6 +351,10 @@
                 },
                 {
                     "command": "topo.refreshHost",
+                    "when": "false"
+                },
+                {
+                    "command": "topo.refreshSkillStatus",
                     "when": "false"
                 },
                 {
