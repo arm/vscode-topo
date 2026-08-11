@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import { mock } from 'vitest-mock-extended';
 import { InstallSkill } from './installSkill';
 import { TopoSkill } from '../services/topoSkill';
-import { HostController } from '../controllers/hostController';
+import { refreshSkillStatus } from '../commandIds';
 
 type Remove = (
     path: string,
@@ -24,13 +24,14 @@ describe('InstallSkill', () => {
 
     it('installs the bundled skill for the current user', async () => {
         const topoSkill = mock<TopoSkill>();
-        const hostController = mock<HostController>();
-        const action = new InstallSkill(topoSkill, hostController);
+        const action = new InstallSkill(topoSkill);
 
         await action.installSkillCommandHandler();
 
         expect(topoSkill.install).toHaveBeenCalledOnce();
-        expect(hostController.refreshSkillStatus).toHaveBeenCalledOnce();
+        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            refreshSkillStatus,
+        );
         expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
             'Topo CLI location skill installed. Start a new agent session to check it out',
         );

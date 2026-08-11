@@ -112,23 +112,15 @@ export async function activate(
     const configure = new Configure(taskExecutor);
     const projectCloner = new ProjectCloner(taskExecutor);
     const projectClone = new ProjectClone(topoCli, targetModel, projectCloner);
-    const deploy = new Deploy(
-        taskExecutor,
-        targetModel,
-        projectController,
-        config,
-    );
-    const stop = new Stop(taskExecutor, targetModel, projectController);
+    const deploy = new Deploy(taskExecutor, targetModel, config);
+    const stop = new Stop(taskExecutor, targetModel);
     const openContainerShell = new OpenContainerShell(dockerCommands);
     const connectViaSSH = new ConnectViaSSH(targetModel);
     const openContainerInBrowser = new OpenContainerInBrowser();
-    const containerLifecycle = new ContainerLifecycle(
-        dockerCommands,
-        projectController,
-    );
-    const fixIssue = new FixIssue(taskExecutor, targetModel, targetController);
+    const containerLifecycle = new ContainerLifecycle(dockerCommands);
+    const fixIssue = new FixIssue(taskExecutor, targetModel);
     const openSettings = new OpenSettings();
-    const installSkill = new InstallSkill(topoSkill, hostController);
+    const installSkill = new InstallSkill(topoSkill);
     const protocolHandler = new ProtocolHandler(projectCloner);
 
     context.subscriptions.push(

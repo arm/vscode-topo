@@ -1,11 +1,11 @@
 import * as vscode from 'vscode';
+import { refreshSelectedTargetHealth } from '../commandIds';
 import { HealthCheckGroupTreeItem } from '../views/treeItems/healthCheckGroupTreeItem';
 import { HealthCheckTreeItem } from '../views/treeItems/healthCheckTreeItem';
 import { showAndLogError } from '../util/showAndLog';
 import { createProcessTask } from '../util/task';
 import { TaskExecutor } from '../util/taskExecutor';
 import { TargetModel } from '../models/targetModel';
-import { TargetController } from '../controllers/targetController';
 import {
     hasFixCommand,
     type FixableIssue,
@@ -31,7 +31,6 @@ export class FixIssue {
     constructor(
         private readonly taskExecutor: TaskExecutor,
         private readonly targetModel: TargetModel,
-        private readonly targetController: TargetController,
     ) {}
 
     public async fixIssueCommandHandler(treeNode: unknown): Promise<void> {
@@ -45,7 +44,7 @@ export class FixIssue {
             );
         }
 
-        await this.targetController.refreshSelectedTargetHealthCommandHandler();
+        await vscode.commands.executeCommand(refreshSelectedTargetHealth);
     }
 
     private async fixIssueFromTreeItem(

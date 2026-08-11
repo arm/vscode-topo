@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { mock } from 'vitest-mock-extended';
-import { ProjectController } from '../controllers/projectController';
+import { refreshProjectContainers } from '../commandIds';
 import { WrappedError } from '../errors/wrappedError';
 import { ContainerCommands } from '../services/containerCommands';
 import { ContainerItem } from '../util/types';
@@ -51,15 +51,15 @@ describe('ContainerLifecycle', () => {
     };
     const treeItem = new ContainerTreeItem(container);
 
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
     it.each(lifecycleCases)(
         '$operation invokes the matching command and refreshes containers',
         async ({ command, invoke }) => {
             const containerCommands = mock<ContainerCommands>();
-            const projectController = mock<ProjectController>();
-            const lifecycle = new ContainerLifecycle(
-                containerCommands,
-                projectController,
-            );
+            const lifecycle = new ContainerLifecycle(containerCommands);
 
             await invoke(lifecycle, treeItem);
 
@@ -67,9 +67,9 @@ describe('ContainerLifecycle', () => {
                 container.id,
                 target,
             );
-            expect(
-                projectController.refreshProjectContainersCommandHandler,
-            ).toHaveBeenCalledOnce();
+            expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+                refreshProjectContainers,
+            );
         },
     );
 
@@ -77,14 +77,10 @@ describe('ContainerLifecycle', () => {
         '$operation reports Docker errors without refreshing containers',
         async ({ operation, command, invoke }) => {
             const containerCommands = mock<ContainerCommands>();
-            const projectController = mock<ProjectController>();
             containerCommands[command].mockRejectedValue(
                 new WrappedError('DOCKER', 'fail'),
             );
-            const lifecycle = new ContainerLifecycle(
-                containerCommands,
-                projectController,
-            );
+            const lifecycle = new ContainerLifecycle(containerCommands);
 
             await invoke(lifecycle, treeItem);
 
@@ -95,9 +91,9 @@ describe('ContainerLifecycle', () => {
                     `Failed to ${operation} the container ${container.id}. fail`,
                 ),
             );
-            expect(
-                projectController.refreshProjectContainersCommandHandler,
-            ).not.toHaveBeenCalled();
+            expect(vscode.commands.executeCommand).not.toHaveBeenCalledWith(
+                refreshProjectContainers,
+            );
         },
     );
 
@@ -106,10 +102,7 @@ describe('ContainerLifecycle', () => {
         containerCommands.startContainer.mockRejectedValue(
             new Error('generic error'),
         );
-        const lifecycle = new ContainerLifecycle(
-            containerCommands,
-            mock<ProjectController>(),
-        );
+        const lifecycle = new ContainerLifecycle(containerCommands);
 
         await expect(
             lifecycle.startContainerCommandHandler(treeItem),
