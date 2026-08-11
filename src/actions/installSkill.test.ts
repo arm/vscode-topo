@@ -46,7 +46,7 @@ describe('InstallSkill', () => {
         expect(topoSkill.uninstall).toHaveBeenCalledOnce();
         expect(hostController.refreshSkillStatus).toHaveBeenCalledOnce();
         expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
-            'Topo CLI location skill uninstalled. Start a new agent session for the change to take effect',
+            'Topo Agent Skill uninstalled. Start a new agent session for the change to take effect',
         );
     });
 

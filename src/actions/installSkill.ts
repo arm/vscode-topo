@@ -20,7 +20,7 @@ export class InstallSkill {
         await this.topoSkill.uninstall();
         await this.hostController.refreshSkillStatus();
         vscode.window.showInformationMessage(
-            'Topo CLI location skill uninstalled. Start a new agent session for the change to take effect',
+            'Topo Agent Skill uninstalled. Start a new agent session for the change to take effect',
         );
     }
 }
