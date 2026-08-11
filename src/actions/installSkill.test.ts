@@ -74,8 +74,6 @@ describe('InstallSkill', () => {
                 'remove',
                 'topo-cli-location',
                 '--global',
-                '--agent',
-                '*',
                 '--yes',
             ],
             { stdio: 'ignore' },
