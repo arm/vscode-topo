@@ -27,6 +27,9 @@ export class InstallSkill {
         );
         await this.taskExecutor.run(task);
         await vscode.commands.executeCommand(refreshSkillStatus);
+        if ((await this.topoSkill.getStatus()) !== 'installed') {
+            return;
+        }
         vscode.window.showInformationMessage(
             'Topo CLI location skill installed. Start a new agent session to check it out.',
         );

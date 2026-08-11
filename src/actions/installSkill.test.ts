@@ -34,6 +34,7 @@ describe('InstallSkill', () => {
         topoSkill = mock<TopoSkill>({
             bundledDirectoryPath: bundledSkillPath,
         });
+        topoSkill.getStatus.mockResolvedValue('installed');
         taskExecutor = mock<TaskExecutor>();
         action = new InstallSkill(topoSkill, taskExecutor);
     });
@@ -53,9 +54,21 @@ describe('InstallSkill', () => {
         expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
             refreshSkillStatus,
         );
+        expect(topoSkill.getStatus).toHaveBeenCalledOnce();
         expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
             'Topo CLI location skill installed. Start a new agent session to check it out.',
         );
+    });
+
+    it('does not report success when skill installation is cancelled', async () => {
+        topoSkill.getStatus.mockResolvedValueOnce('missing');
+
+        await action.installSkillCommandHandler();
+
+        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            refreshSkillStatus,
+        );
+        expect(vscode.window.showInformationMessage).not.toHaveBeenCalled();
     });
 
     it.each([
