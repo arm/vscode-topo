@@ -1,7 +1,7 @@
+import path from 'node:path';
 import * as vscode from 'vscode';
-import { refreshProjectContainers } from '../commandIds';
 import { getErrorMessage } from '../util/getErrorMessage';
-import { TaskExecutor } from '../util/taskExecutor';
+import { runTask } from '../util/task';
 import { showAndLogWarning } from '../util/showAndLog';
 import { TargetModel } from '../models/targetModel';
 import { assertProjectTreeItem } from '../views/treeItems/assertProjectTreeItem';
@@ -10,11 +10,13 @@ import {
     assertTargetConnected,
     assertTargetSelected,
 } from '../util/assertTargetReady';
+import { TOPO_TASK_TYPE } from '../manifest';
 import {
-    topoStopTaskSpec,
-    type TopoStopTaskInvocation,
-} from '../tasks/topoStopTask';
-import { createTopoComposeTask } from '../tasks/topoComposeTask';
+    TaskCommand,
+    type TaskDefinition,
+    type TaskFactory,
+} from '../tasks/taskFactory';
+import { COMPOSE_FILE_NAME } from '../util/composeFile';
 
 const viewLogsItem: vscode.MessageItem = {
     title: 'View Logs',
@@ -22,8 +24,8 @@ const viewLogsItem: vscode.MessageItem = {
 
 export class Stop {
     constructor(
-        private readonly taskExecutor: TaskExecutor,
         private readonly targetModel: TargetModel,
+        private readonly taskFactory: TaskFactory,
     ) {}
 
     public async stopCommandHandler(resource?: vscode.Uri): Promise<void> {
@@ -44,11 +46,7 @@ export class Stop {
             throw err;
         }
 
-        await stop(this.taskExecutor, {
-            target,
-            composeFilePath: resource.fsPath,
-        });
-        await vscode.commands.executeCommand(refreshProjectContainers);
+        await stop(this.taskFactory, resource.fsPath, target);
     }
 
     public async stopProjectCommandHandler(treeNode: unknown): Promise<void> {
@@ -58,15 +56,24 @@ export class Stop {
 }
 
 export async function stop(
-    taskExecutor: TaskExecutor,
-    invocation: TopoStopTaskInvocation,
+    taskFactory: TaskFactory,
+    composeFile: string,
+    target: string,
 ): Promise<void> {
-    const { target } = invocation;
-    const task = createTopoComposeTask(topoStopTaskSpec, invocation);
+    const definition: TaskDefinition = {
+        type: TOPO_TASK_TYPE,
+        command: TaskCommand.Stop,
+        args: ['--file', COMPOSE_FILE_NAME, '--target', target],
+        options: { cwd: path.dirname(composeFile) },
+    };
+    const task = taskFactory.createTask(
+        `Stop ${composeFile} on ${target}`,
+        definition,
+    );
     const taskName = task.name;
 
     try {
-        await taskExecutor.run(task);
+        await runTask(task);
     } catch (e) {
         const terminal = vscode.window.terminals.find(
             (t) => t.name === taskName,

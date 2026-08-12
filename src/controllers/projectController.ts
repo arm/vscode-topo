@@ -11,6 +11,8 @@ import { ContainerItem } from '../util/types';
 import { TargetModel } from '../models/targetModel';
 import { showAndLogError } from '../util/showAndLog';
 import { isProjectComposePathDeleted } from '../util/isProjectComposePathDeleted';
+import { TOPO_TASK_TYPE } from '../manifest';
+import { TaskCommand } from '../tasks/taskFactory';
 
 function createContainerItem(item: PsEntry, target: string): ContainerItem {
     return {
@@ -84,6 +86,9 @@ export class ProjectController implements vscode.Disposable {
             this.targetModel.onHealthChanged(() => {
                 void this.refreshProjectContainersCommandHandler();
             }),
+            vscode.tasks.onDidEndTaskProcess((event) => {
+                this.refreshProjectContainersWhenTaskEnds(event);
+            }),
         );
     }
 
@@ -140,6 +145,19 @@ export class ProjectController implements vscode.Disposable {
     public clearProjectContainers(): void {
         this.projectContainersRefresh.abort();
         this.model.clearProjectContainers();
+    }
+
+    private refreshProjectContainersWhenTaskEnds(
+        event: vscode.TaskProcessEndEvent,
+    ): void {
+        const { command, type } = event.execution.task.definition;
+        const containersChanged =
+            type === TOPO_TASK_TYPE &&
+            (command === TaskCommand.Deploy || command === TaskCommand.Stop);
+
+        if (containersChanged) {
+            void this.refreshProjectContainersCommandHandler();
+        }
     }
 
     private async loadProjectContainers(

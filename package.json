@@ -35,6 +35,57 @@
                 "path": "./skills/topo-cli-location/SKILL.md"
             }
         ],
+        "taskDefinitions": [
+            {
+                "type": "topo",
+                "when": "processExecutionSupported",
+                "required": [
+                    "command",
+                    "args"
+                ],
+                "properties": {
+                    "command": {
+                        "type": "string",
+                        "enum": [
+                            "configure",
+                            "deploy",
+                            "health",
+                            "install",
+                            "projects",
+                            "ps",
+                            "setup-keys",
+                            "stop"
+                        ],
+                        "description": "Supported Topo command to run."
+                    },
+                    "args": {
+                        "type": "array",
+                        "description": "Arguments passed to the Topo command in order.",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "options": {
+                        "type": "object",
+                        "description": "Execution options for the Topo command.",
+                        "additionalProperties": false,
+                        "properties": {
+                            "cwd": {
+                                "type": "string",
+                                "description": "Working directory for the Topo command. Omit to use the task's workspace folder."
+                            },
+                            "env": {
+                                "type": "object",
+                                "description": "Environment variables added to the Topo command's environment.",
+                                "additionalProperties": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        ],
         "commands": [
             {
                 "command": "topo.cloneProject",

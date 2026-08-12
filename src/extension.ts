@@ -22,6 +22,7 @@ import { ProjectModel } from './models/projectModel';
 import { ProjectClone } from './actions/projectClone';
 import { showAndLogError } from './util/showAndLog';
 import { topo } from '../package.json';
+import { TOPO_TASK_TYPE } from './manifest';
 import { RefreshLoop } from './util/refreshLoop';
 import { ProjectController } from './controllers/projectController';
 import { TaskExecutor } from './util/taskExecutor';
@@ -32,6 +33,8 @@ import { Config } from './services/config';
 import { Configure } from './actions/configure';
 import { ProjectCloner } from './operations/projectCloner';
 import { InstallSkill } from './actions/installSkill';
+import { TaskProvider } from './tasks/taskProvider';
+import { TaskFactory } from './tasks/taskFactory';
 import { TopoSkill } from './services/topoSkill';
 import { NpxSkills } from './services/npxSkills';
 
@@ -111,11 +114,13 @@ export async function activate(
 
     const config = new Config();
     const taskExecutor = new TaskExecutor(topoCli);
+    const taskFactory = new TaskFactory(topoCli);
+    const taskProvider = new TaskProvider(taskFactory);
     const configure = new Configure(taskExecutor);
     const projectCloner = new ProjectCloner(taskExecutor);
     const projectClone = new ProjectClone(topoCli, targetModel, projectCloner);
-    const deploy = new Deploy(taskExecutor, targetModel, config);
-    const stop = new Stop(taskExecutor, targetModel);
+    const deploy = new Deploy(targetModel, config, taskFactory);
+    const stop = new Stop(targetModel, taskFactory);
     const openContainerShell = new OpenContainerShell(dockerCommands);
     const connectViaSSH = new ConnectViaSSH(targetModel);
     const openContainerInBrowser = new OpenContainerInBrowser();
@@ -126,6 +131,7 @@ export async function activate(
     const protocolHandler = new ProtocolHandler(projectCloner);
 
     context.subscriptions.push(
+        vscode.tasks.registerTaskProvider(TOPO_TASK_TYPE, taskProvider),
         commands.register({
             hostController,
             projectController,
