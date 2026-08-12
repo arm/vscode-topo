@@ -49,9 +49,6 @@ export class TaskFactory {
 
     public createTask(name: string, definition: TaskDefinition): vscode.Task {
         const execution = this.createExecution(definition);
-        return createTask(name, execution, {
-            cwd: definition.options?.cwd,
-            definition,
-        });
+        return createTask(name, execution, definition);
     }
 }

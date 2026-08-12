@@ -4,7 +4,6 @@ import { PACKAGE_NAME } from '../manifest';
 
 export interface TaskOptions {
     cwd?: string;
-    definition?: vscode.TaskDefinition;
 }
 
 export type TaskExecution =
@@ -44,21 +43,18 @@ export function createProcessTask(
         cwd: getProcessExecutionCwd(opts?.cwd),
     });
 
-    return createTask(taskName, processExecution, opts);
+    return createTask(taskName, processExecution);
 }
 
 export function createTask(
     taskName: string,
     execution: TaskExecution,
-    opts?: TaskOptions,
+    definition: vscode.TaskDefinition = { type: 'process' },
 ): vscode.Task {
-    const taskDefinition: vscode.TaskDefinition = opts?.definition ?? {
-        type: 'process',
-    };
-
-    const taskScope = getTaskScope(opts?.cwd);
+    const cwd = 'options' in execution ? execution.options?.cwd : undefined;
+    const taskScope = getTaskScope(cwd);
     const task = new vscode.Task(
-        taskDefinition,
+        definition,
         taskScope,
         taskName,
         PACKAGE_NAME,
