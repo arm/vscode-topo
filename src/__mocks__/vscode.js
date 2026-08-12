@@ -63,12 +63,19 @@ class MockProcessExecution {
 }
 const ProcessExecution = vi.fn(MockProcessExecution);
 class MockTask {
-    constructor(definition, scope, name, type, execution) {
+    constructor(definition, scope, name, source, execution, problemMatchers) {
         this.definition = definition;
         this.scope = scope;
         this.name = name;
-        this.type = type;
+        this.source = source;
         this.execution = execution;
+        this.isBackground = false;
+        this.presentationOptions = {};
+        this.problemMatchers =
+            typeof problemMatchers === 'string'
+                ? [problemMatchers]
+                : (problemMatchers ?? []);
+        this.runOptions = {};
     }
 }
 const Task = vi.fn(MockTask);
@@ -128,6 +135,7 @@ const tasks = {
     fetchTasks: vi.fn(() => []),
     onDidStartTaskProcess: new EventEmitter().event,
     onDidEndTaskProcess: new EventEmitter().event,
+    registerTaskProvider: vi.fn(() => ({ dispose: vi.fn() })),
 };
 const LogLevel = {
     Off: 0,

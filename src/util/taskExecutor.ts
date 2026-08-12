@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { waitForTaskProcess } from './task';
+import { runTask } from './task';
 import { TopoCli } from '../services/topoCli';
 
 export class TaskExecutor {
@@ -7,8 +7,7 @@ export class TaskExecutor {
 
     public async run(task: vscode.Task): Promise<void> {
         const executableTask = this.resolveProcessTaskBinary(task);
-        const taskExecution = await vscode.tasks.executeTask(executableTask);
-        await waitForTaskProcess(taskExecution, task.name);
+        await runTask(executableTask);
     }
 
     private resolveProcessTaskBinary(task: vscode.Task): vscode.Task {
@@ -21,22 +20,7 @@ export class TaskExecutor {
             return task;
         }
 
-        const resolvedExecution = new vscode.ProcessExecution(
-            this.topoCli.getBinaryPath(),
-            execution.args,
-            execution.options,
-        );
-        const resolvedTask = new vscode.Task(
-            task.definition,
-            task.scope ?? vscode.TaskScope.Workspace,
-            task.name,
-            task.source,
-            resolvedExecution,
-            task.problemMatchers,
-        );
-        resolvedTask.presentationOptions = task.presentationOptions;
-        resolvedTask.group = task.group;
-        resolvedTask.isBackground = task.isBackground;
-        return resolvedTask;
+        execution.process = this.topoCli.getBinaryPath();
+        return task;
     }
 }

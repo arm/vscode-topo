@@ -4,8 +4,10 @@ import { PACKAGE_NAME } from '../manifest';
 
 export interface TaskOptions {
     cwd?: string;
-    definition?: vscode.TaskDefinition;
 }
+
+export type TaskExecution =
+    vscode.ProcessExecution | vscode.ShellExecution | vscode.CustomExecution;
 
 function getTaskScope(
     cwd: string | undefined,
@@ -37,21 +39,26 @@ export function createProcessTask(
         throw new Error('No command passed to task');
     }
 
-    const taskDefinition: vscode.TaskDefinition = opts?.definition ?? {
-        type: 'process',
-    };
-
     const processExecution = new vscode.ProcessExecution(cmd, args, {
         cwd: getProcessExecutionCwd(opts?.cwd),
     });
 
-    const taskScope = getTaskScope(opts?.cwd);
+    return createTask(taskName, processExecution);
+}
+
+export function createTask(
+    taskName: string,
+    execution: TaskExecution,
+    definition: vscode.TaskDefinition = { type: 'process' },
+): vscode.Task {
+    const cwd = 'options' in execution ? execution.options?.cwd : undefined;
+    const taskScope = getTaskScope(cwd);
     const task = new vscode.Task(
-        taskDefinition,
+        definition,
         taskScope,
         taskName,
         PACKAGE_NAME,
-        processExecution,
+        execution,
     );
     task.presentationOptions = {
         reveal: vscode.TaskRevealKind.Always,
@@ -61,6 +68,11 @@ export function createProcessTask(
         clear: true,
     };
     return task;
+}
+
+export async function runTask(task: vscode.Task): Promise<void> {
+    const taskExecution = await vscode.tasks.executeTask(task);
+    await waitForTaskProcess(taskExecution, task.name);
 }
 
 export function waitForTaskProcess(

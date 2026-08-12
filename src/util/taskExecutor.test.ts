@@ -52,15 +52,12 @@ describe('TaskExecutor', () => {
         taskEndListener?.({ execution: taskExecution, exitCode: 0 });
         await runningTask;
 
-        expect(vscode.tasks.executeTask).toHaveBeenCalledWith(
-            expect.objectContaining({
-                execution: expect.objectContaining({
-                    process: topoBinaryPath,
-                    args: ['deploy', '--target', 'topo.local'],
-                }),
-                presentationOptions: task.presentationOptions,
-            }),
-        );
+        const executedTask = vi.mocked(vscode.tasks.executeTask).mock
+            .calls[0][0];
+        expect(executedTask.execution).toMatchObject({
+            process: topoBinaryPath,
+            args: ['deploy', '--target', 'topo.local'],
+        });
     });
 
     it('leaves non-topo process task commands unchanged', async () => {

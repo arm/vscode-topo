@@ -1,11 +1,12 @@
+import path from 'node:path';
 import * as vscode from 'vscode';
-import { refreshProjectContainers } from '../commandIds';
 import { getErrorMessage } from '../util/getErrorMessage';
-import { TaskExecutor } from '../util/taskExecutor';
+import { runTask } from '../util/task';
 import { showAndLogError, showAndLogWarning } from '../util/showAndLog';
 import { TargetModel } from '../models/targetModel';
 import { isWrappedError } from '../errors/wrappedError';
 import {
+    COMPOSE_FILE_NAME,
     COMPOSE_FILE_GLOB,
     compareComposeFiles,
     getComposeFileMetadata,
@@ -16,13 +17,14 @@ import {
     assertTargetConnected,
     assertTargetSelected,
 } from '../util/assertTargetReady';
-import {
-    topoDeployTaskSpec,
-    type TopoDeployTaskInvocation,
-} from '../tasks/topoDeployTask';
-import { createTopoComposeTask } from '../tasks/topoComposeTask';
 import { Config } from '../services/config';
-import type { TargetDeploySettings } from '../util/targetSettings';
+import type { DeployOptions } from '../util/targetSettings';
+import { TOPO_TASK_TYPE } from '../manifest';
+import {
+    TaskCommand,
+    type TaskDefinition,
+    type TaskFactory,
+} from '../tasks/taskFactory';
 
 const viewLogsItem: vscode.MessageItem = {
     title: 'View Logs',
@@ -34,14 +36,14 @@ type ComposeFileQuickPickItem = vscode.QuickPickItem & {
 
 type DeployTarget = {
     target: string;
-    settings: TargetDeploySettings;
+    deployOptions: DeployOptions;
 };
 
 export class Deploy {
     constructor(
-        private readonly taskExecutor: TaskExecutor,
         private readonly targetModel: TargetModel,
         private readonly config: Config,
+        private readonly taskFactory: TaskFactory,
     ) {}
 
     public async deployCommandHandler(): Promise<void> {
@@ -120,7 +122,7 @@ export class Deploy {
         const targetSettings = this.config.getTargetSettings(target);
         return {
             target,
-            settings: targetSettings.deploy ?? {},
+            deployOptions: targetSettings.deploy ?? {},
         };
     }
 
@@ -128,12 +130,12 @@ export class Deploy {
         resource: vscode.Uri,
         deployTarget: DeployTarget,
     ): Promise<void> {
-        await deploy(this.taskExecutor, {
-            target: deployTarget.target,
-            composeFilePath: resource.fsPath,
-            settings: deployTarget.settings,
-        });
-        await vscode.commands.executeCommand(refreshProjectContainers);
+        await deploy(
+            this.taskFactory,
+            resource.fsPath,
+            deployTarget.target,
+            deployTarget.deployOptions,
+        );
     }
 }
 
@@ -157,15 +159,25 @@ async function promptForComposeFile(
 }
 
 export async function deploy(
-    taskExecutor: TaskExecutor,
-    invocation: TopoDeployTaskInvocation,
+    taskFactory: TaskFactory,
+    composeFile: string,
+    target: string,
+    deployOptions: DeployOptions,
 ): Promise<void> {
-    const { target } = invocation;
-    const task = createTopoComposeTask(topoDeployTaskSpec, invocation);
+    const definition: TaskDefinition = {
+        type: TOPO_TASK_TYPE,
+        command: TaskCommand.Deploy,
+        args: createDeployArgs(target, deployOptions),
+        options: { cwd: path.dirname(composeFile) },
+    };
+    const task = taskFactory.createTask(
+        `Deploy ${composeFile} to ${target}`,
+        definition,
+    );
     const taskName = task.name;
 
     try {
-        await taskExecutor.run(task);
+        await runTask(task);
     } catch (e) {
         const terminal = vscode.window.terminals.find(
             (t) => t.name === taskName,
@@ -187,3 +199,20 @@ export async function deploy(
         `Deployment to ${target} completed successfully.`,
     );
 }
+
+const createDeployArgs = (
+    target: string,
+    deployOptions: DeployOptions,
+): string[] => {
+    const args = ['--file', COMPOSE_FILE_NAME, '--target', target];
+    if (deployOptions.port !== undefined) {
+        args.push('--registry-port', String(deployOptions.port));
+    }
+    if (deployOptions.forceRecreate) {
+        args.push('--force-recreate');
+    }
+    if (deployOptions.noRecreate) {
+        args.push('--no-recreate');
+    }
+    return args;
+};

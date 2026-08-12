@@ -24,7 +24,7 @@ function withEnumeratedKeys<T, S extends object>(
     return intersection([schema, knownKeys]) as Struct<T, null>;
 }
 
-const targetDeploySettingsSchema = refine(
+const deployOptionsSchema = refine(
     withEnumeratedKeys(
         type({
             port: optional(max(min(integer(), 1), 65_535)),
@@ -40,11 +40,11 @@ const targetDeploySettingsSchema = refine(
         return true;
     },
 );
-export type TargetDeploySettings = Infer<typeof targetDeploySettingsSchema>;
+export type DeployOptions = Infer<typeof deployOptionsSchema>;
 
 const targetSettingsSchema = withEnumeratedKeys(
     type({
-        deploy: optional(targetDeploySettingsSchema),
+        deploy: optional(deployOptionsSchema),
     }),
 );
 export type TargetSettings = Infer<typeof targetSettingsSchema>;

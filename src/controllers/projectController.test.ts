@@ -8,7 +8,8 @@ import { mock } from 'vitest-mock-extended';
 import { TopoCli } from '../services/topoCli';
 import { PsOutput, TargetHealthReport } from '../services/topoCliSchema';
 import { TargetModel } from '../models/targetModel';
-import { PRIMARY_PROCESSING_DOMAIN } from '../manifest';
+import { PRIMARY_PROCESSING_DOMAIN, TOPO_TASK_TYPE } from '../manifest';
+import { TaskCommand } from '../tasks/taskFactory';
 
 vi.mock('../util/project');
 
@@ -64,13 +65,39 @@ const psOutput: PsOutput = {
 };
 
 describe('ProjectController', () => {
+    const originalOnDidEndTaskProcess = vscode.tasks.onDidEndTaskProcess;
+    let taskEndListener:
+        ((event: vscode.TaskProcessEndEvent) => void) | undefined;
+
     beforeEach(() => {
         mutable(vscode.workspace).workspaceFolders = [workspaceFolder];
+        taskEndListener = undefined;
+        mutable(vscode.tasks).onDidEndTaskProcess = (callback, thisArg) => {
+            taskEndListener = thisArg ? callback.bind(thisArg) : callback;
+            return { dispose: vi.fn() };
+        };
     });
 
     afterEach(() => {
         mutable(vscode.workspace).workspaceFolders = undefined;
+        mutable(vscode.tasks).onDidEndTaskProcess = originalOnDidEndTaskProcess;
     });
+
+    const endTask = (
+        definition: vscode.TaskDefinition,
+        exitCode: number | undefined = 0,
+    ): void => {
+        const task = new vscode.Task(
+            definition,
+            vscode.TaskScope.Workspace,
+            'Test task',
+            'topo',
+        );
+        taskEndListener?.({
+            execution: { task, terminate: vi.fn() },
+            exitCode,
+        });
+    };
 
     it('refreshes projects when requested', async () => {
         vi.mocked(findTopLevelComposeProjects).mockResolvedValue(projects);
@@ -168,6 +195,65 @@ describe('ProjectController', () => {
             loaded([{ ...psOutput.containers[0], target }]),
         );
     });
+
+    it.each([
+        { command: TaskCommand.Deploy, exitCode: 0 },
+        { command: TaskCommand.Stop, exitCode: 1 },
+    ])(
+        'refreshes containers whenever a Topo $command task ends',
+        ({ command, exitCode }) => {
+            const targetModel = new TargetModel();
+            targetModel.setSelected(target);
+            const controller = new ProjectController(
+                new ProjectModel(),
+                mock<TopoCli>(),
+                targetModel,
+            );
+            const refresh = vi
+                .spyOn(controller, 'refreshProjectContainersCommandHandler')
+                .mockResolvedValue();
+
+            endTask(
+                {
+                    type: TOPO_TASK_TYPE,
+                    command,
+                    args: ['--target', 'other.local'],
+                },
+                exitCode,
+            );
+
+            expect(refresh).toHaveBeenCalledOnce();
+        },
+    );
+
+    it.each([
+        {
+            type: 'process',
+            command: TaskCommand.Deploy,
+        },
+        {
+            type: TOPO_TASK_TYPE,
+            command: TaskCommand.Health,
+        },
+    ])(
+        'does not refresh containers for a $type $command task',
+        ({ type, command }) => {
+            const targetModel = new TargetModel();
+            targetModel.setSelected(target);
+            const controller = new ProjectController(
+                new ProjectModel(),
+                mock<TopoCli>(),
+                targetModel,
+            );
+            const refresh = vi
+                .spyOn(controller, 'refreshProjectContainersCommandHandler')
+                .mockResolvedValue();
+
+            endTask({ type, command, args: [] });
+
+            expect(refresh).not.toHaveBeenCalled();
+        },
+    );
 
     it('stores per-project errors without failing the whole refresh', async () => {
         const targetModel = new TargetModel();
