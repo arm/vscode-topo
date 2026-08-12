@@ -13,7 +13,6 @@ import {
     unknown,
     validate,
     Infer,
-    is,
 } from 'superstruct';
 import { WrappedError } from '../errors/wrappedError';
 import { CONFIG_TARGET_SETTINGS, PACKAGE_NAME } from '../manifest';
@@ -42,10 +41,6 @@ const deployOptionsSchema = refine(
     },
 );
 export type DeployOptions = Infer<typeof deployOptionsSchema>;
-
-export function isDeployOptions(options: unknown): options is DeployOptions {
-    return is(options, deployOptionsSchema);
-}
 
 const targetSettingsSchema = withEnumeratedKeys(
     type({
