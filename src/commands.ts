@@ -1,53 +1,21 @@
-import { HostController } from './controllers/hostController';
-import { TargetController } from './controllers/targetController';
-import { PACKAGE_NAME } from './manifest';
+import type { HostController } from './controllers/hostController';
+import type { TargetController } from './controllers/targetController';
 import * as vscode from 'vscode';
 import { logger } from './util/logger';
 import { DisposableCollector } from './util/disposableCollector';
-import { Deploy } from './actions/deploy';
-import { Stop } from './actions/stop';
-import { OpenContainerShell } from './actions/openContainerShell';
-import { ContainerLifecycle } from './actions/containerLifecycle';
-import { FixIssue } from './actions/fixIssue';
-import { ProjectClone } from './actions/projectClone';
-import { ProjectController } from './controllers/projectController';
-import { ConnectViaSSH } from './actions/connectViaSSH';
-import { OpenContainerInBrowser } from './actions/openContainerInBrowser';
-import { OpenSettings } from './actions/openSettings';
-import { Configure } from './actions/configure';
-import { InstallSkill } from './actions/installSkill';
-
-function command(id: string): string {
-    return `${PACKAGE_NAME}.${id}`;
-}
-
-export const refreshHost = command('refreshHost');
-export const refreshProjects = command('refreshProjects');
-export const refreshTargetData = command('refreshTargetData');
-export const showOutput = command('showOutput');
-export const selectTarget = command('selectTarget');
-export const resetExtensionData = command('resetExtensionData');
-export const clearTargetSelection = command('clearTargetSelection');
-export const openSettings = command('openSettings');
-export const cloneProject = command('cloneProject');
-export const deploy = command('deploy');
-export const deployContext = command('deploy.context');
-export const deployProject = command('deployProject');
-export const configure = command('configure.context');
-export const configureProject = command('configureProject');
-export const stop = command('stop.context');
-export const stopProject = command('stopProject');
-export const openContainerShell = command('openContainerShell');
-export const connectViaSSH = command('connectViaSSH');
-export const openContainerInBrowser = command('openContainerInBrowser');
-export const startContainer = command('startContainer');
-export const stopContainer = command('stopContainer');
-export const deleteContainer = command('deleteContainer');
-export const fixIssue = command('fixIssue');
-export const fixTargetIssues = command('fixTargetIssues');
-export const remoteClone = command('remoteClone');
-export const localClone = command('localClone');
-export const installSkill = command('installSkill');
+import type { Deploy } from './actions/deploy';
+import type { Stop } from './actions/stop';
+import type { OpenContainerShell } from './actions/openContainerShell';
+import type { ContainerLifecycle } from './actions/containerLifecycle';
+import type { FixIssue } from './actions/fixIssue';
+import type { ProjectClone } from './actions/projectClone';
+import type { ProjectController } from './controllers/projectController';
+import type { ConnectViaSSH } from './actions/connectViaSSH';
+import type { OpenContainerInBrowser } from './actions/openContainerInBrowser';
+import type { OpenSettings } from './actions/openSettings';
+import type { Configure } from './actions/configure';
+import type { InstallSkill } from './actions/installSkill';
+import * as commandIds from './commandIds';
 
 export interface CommandHandlers {
     hostController: HostController;
@@ -69,89 +37,119 @@ export interface CommandHandlers {
 export function register(handlers: CommandHandlers): vscode.Disposable {
     const disposables = new DisposableCollector();
     disposables.collect(
-        vscode.commands.registerCommand(refreshHost, () =>
+        vscode.commands.registerCommand(commandIds.refreshHost, () =>
             handlers.hostController.refreshHostCommandHandler(),
         ),
-        vscode.commands.registerCommand(refreshProjects, () =>
+        vscode.commands.registerCommand(commandIds.refreshProjects, () =>
             handlers.projectController.refreshProjects(),
         ),
-        vscode.commands.registerCommand(refreshTargetData, () =>
+        vscode.commands.registerCommand(commandIds.refreshTargetData, () =>
             handlers.targetController.refreshSelectedTargetDataCommandHandler(),
         ),
-        vscode.commands.registerCommand(showOutput, () => logger.show()),
-        vscode.commands.registerCommand(selectTarget, () =>
+        vscode.commands.registerCommand(
+            commandIds.refreshProjectContainers,
+            () =>
+                handlers.projectController.refreshProjectContainersCommandHandler(),
+        ),
+        vscode.commands.registerCommand(
+            commandIds.refreshSelectedTargetHealth,
+            () =>
+                handlers.targetController.refreshSelectedTargetHealthCommandHandler(),
+        ),
+        vscode.commands.registerCommand(commandIds.refreshSkillStatus, () =>
+            handlers.hostController.refreshSkillStatus(),
+        ),
+        vscode.commands.registerCommand(commandIds.showOutput, () =>
+            logger.show(),
+        ),
+        vscode.commands.registerCommand(commandIds.selectTarget, () =>
             handlers.targetController.selectCommandHandler(),
         ),
-        vscode.commands.registerCommand(resetExtensionData, () =>
+        vscode.commands.registerCommand(commandIds.resetExtensionData, () =>
             handlers.targetController.resetExtensionDataCommandHandler(),
         ),
-        vscode.commands.registerCommand(clearTargetSelection, () =>
+        vscode.commands.registerCommand(commandIds.clearTargetSelection, () =>
             handlers.targetController.clearSelectionCommandHandler(),
         ),
-        vscode.commands.registerCommand(openSettings, () =>
+        vscode.commands.registerCommand(commandIds.openSettings, () =>
             handlers.openSettings.openSettingsCommandHandler(),
         ),
-        vscode.commands.registerCommand(cloneProject, () =>
+        vscode.commands.registerCommand(commandIds.cloneProject, () =>
             handlers.projectClone.cloneCommandHandler(),
         ),
-        vscode.commands.registerCommand(configure, (resource?: vscode.Uri) =>
-            handlers.configure.configureContextCommandHandler(resource),
+        vscode.commands.registerCommand(
+            commandIds.configure,
+            (resource?: vscode.Uri) =>
+                handlers.configure.configureContextCommandHandler(resource),
         ),
-        vscode.commands.registerCommand(configureProject, (treeNode) =>
-            handlers.configure.configureProjectCommandHandler(treeNode),
+        vscode.commands.registerCommand(
+            commandIds.configureProject,
+            (treeNode) =>
+                handlers.configure.configureProjectCommandHandler(treeNode),
         ),
-        vscode.commands.registerCommand(deploy, () =>
+        vscode.commands.registerCommand(commandIds.deploy, () =>
             handlers.deploy.deployCommandHandler(),
         ),
         vscode.commands.registerCommand(
-            deployContext,
+            commandIds.deployContext,
             (resource?: vscode.Uri) =>
                 handlers.deploy.deployContextCommandHandler(resource),
         ),
-        vscode.commands.registerCommand(deployProject, (treeNode) =>
+        vscode.commands.registerCommand(commandIds.deployProject, (treeNode) =>
             handlers.deploy.deployProjectCommandHandler(treeNode),
         ),
-        vscode.commands.registerCommand(stop, (resource?: vscode.Uri) =>
-            handlers.stop.stopCommandHandler(resource),
+        vscode.commands.registerCommand(
+            commandIds.stop,
+            (resource?: vscode.Uri) =>
+                handlers.stop.stopCommandHandler(resource),
         ),
-        vscode.commands.registerCommand(stopProject, (treeNode) =>
+        vscode.commands.registerCommand(commandIds.stopProject, (treeNode) =>
             handlers.stop.stopProjectCommandHandler(treeNode),
         ),
-        vscode.commands.registerCommand(openContainerShell, (treeNode) =>
-            handlers.openContainerShell.openContainerShellCommandHandler(
-                treeNode,
-            ),
+        vscode.commands.registerCommand(
+            commandIds.openContainerShell,
+            (treeNode) =>
+                handlers.openContainerShell.openContainerShellCommandHandler(
+                    treeNode,
+                ),
         ),
-        vscode.commands.registerCommand(connectViaSSH, () =>
+        vscode.commands.registerCommand(commandIds.connectViaSSH, () =>
             handlers.connectViaSSH.connectViaSSHCommandHandler(),
         ),
-        vscode.commands.registerCommand(openContainerInBrowser, (treeNode) =>
-            handlers.openContainerInBrowser.openContainerInBrowserCommandHandler(
-                treeNode,
-            ),
+        vscode.commands.registerCommand(
+            commandIds.openContainerInBrowser,
+            (treeNode) =>
+                handlers.openContainerInBrowser.openContainerInBrowserCommandHandler(
+                    treeNode,
+                ),
         ),
-        vscode.commands.registerCommand(startContainer, (treeNode) =>
+        vscode.commands.registerCommand(commandIds.startContainer, (treeNode) =>
             handlers.containerLifecycle.startContainerCommandHandler(treeNode),
         ),
-        vscode.commands.registerCommand(stopContainer, (treeNode) =>
+        vscode.commands.registerCommand(commandIds.stopContainer, (treeNode) =>
             handlers.containerLifecycle.stopContainerCommandHandler(treeNode),
         ),
-        vscode.commands.registerCommand(deleteContainer, (treeNode) =>
-            handlers.containerLifecycle.deleteContainerCommandHandler(treeNode),
+        vscode.commands.registerCommand(
+            commandIds.deleteContainer,
+            (treeNode) =>
+                handlers.containerLifecycle.deleteContainerCommandHandler(
+                    treeNode,
+                ),
         ),
-        vscode.commands.registerCommand(fixIssue, (treeNode) =>
+        vscode.commands.registerCommand(commandIds.fixIssue, (treeNode) =>
             handlers.fixIssue.fixIssueCommandHandler(treeNode),
         ),
-        vscode.commands.registerCommand(fixTargetIssues, (treeNode) =>
-            handlers.fixIssue.fixIssueCommandHandler(treeNode),
+        vscode.commands.registerCommand(
+            commandIds.fixTargetIssues,
+            (treeNode) => handlers.fixIssue.fixIssueCommandHandler(treeNode),
         ),
-        vscode.commands.registerCommand(remoteClone, () =>
+        vscode.commands.registerCommand(commandIds.remoteClone, () =>
             handlers.projectClone.remoteCloneCommandHandler(),
         ),
-        vscode.commands.registerCommand(localClone, () =>
+        vscode.commands.registerCommand(commandIds.localClone, () =>
             handlers.projectClone.localCloneCommandHandler(),
         ),
-        vscode.commands.registerCommand(installSkill, () =>
+        vscode.commands.registerCommand(commandIds.installSkill, () =>
             handlers.installSkill.installSkillCommandHandler(),
         ),
     );

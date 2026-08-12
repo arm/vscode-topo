@@ -5,7 +5,7 @@ import { mock } from 'vitest-mock-extended';
 import { TargetHealthReport } from '../services/topoCliSchema';
 import { TargetModel } from '../models/targetModel';
 import { errored, loaded, loading, unloaded } from '../util/loadable';
-import { selectTarget } from '../commands';
+import { selectTarget } from '../commandIds';
 
 vi.mock('../util/logger');
 

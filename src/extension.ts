@@ -122,13 +122,10 @@ export async function activate(
     const openContainerShell = new OpenContainerShell(dockerCommands);
     const connectViaSSH = new ConnectViaSSH(targetModel);
     const openContainerInBrowser = new OpenContainerInBrowser();
-    const containerLifecycle = new ContainerLifecycle(
-        dockerCommands,
-        projectController,
-    );
-    const fixIssue = new FixIssue(taskExecutor, targetModel, targetController);
+    const containerLifecycle = new ContainerLifecycle(dockerCommands);
+    const fixIssue = new FixIssue(taskExecutor, targetModel);
     const openSettings = new OpenSettings();
-    const installSkill = new InstallSkill(topoSkill, hostController);
+    const installSkill = new InstallSkill(topoSkill);
     const protocolHandler = new ProtocolHandler(projectCloner);
 
     context.subscriptions.push(

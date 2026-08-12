@@ -1,4 +1,5 @@
-import { ProjectController } from '../controllers/projectController';
+import * as vscode from 'vscode';
+import { refreshProjectContainers } from '../commandIds';
 import { isWrappedError } from '../errors/wrappedError';
 import { ContainerCommands } from '../services/containerCommands';
 import { showAndLogError } from '../util/showAndLog';
@@ -13,10 +14,7 @@ const containerOperationMethods = {
 type ContainerOperation = keyof typeof containerOperationMethods;
 
 export class ContainerLifecycle {
-    constructor(
-        private readonly containerCommands: ContainerCommands,
-        private readonly projectController: ProjectController,
-    ) {}
+    constructor(private readonly containerCommands: ContainerCommands) {}
 
     public async startContainerCommandHandler(
         treeNode: unknown,
@@ -58,6 +56,6 @@ export class ContainerLifecycle {
             throw error;
         }
 
-        await this.projectController.refreshProjectContainersCommandHandler();
+        await vscode.commands.executeCommand(refreshProjectContainers);
     }
 }

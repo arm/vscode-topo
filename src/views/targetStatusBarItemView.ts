@@ -6,7 +6,7 @@ import { getWorstHealthCheckStatus } from '../util/getWorstHealthCheckStatus';
 import { getHealthCheckIcon } from './util/healthIcons';
 import { Loadable } from '../util/loadable';
 import { TargetHealthReport } from '../services/topoCliSchema';
-import { selectTarget } from '../commands';
+import { selectTarget } from '../commandIds';
 import { getErrorMessage } from '../util/getErrorMessage';
 
 function getStatusIconId(state: Loadable<TargetHealthReport>): string {
