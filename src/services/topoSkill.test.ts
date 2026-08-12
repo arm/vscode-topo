@@ -19,8 +19,19 @@ describe('TopoSkill', () => {
         'topo-cli-location',
         'SKILL.md',
     ).fsPath;
-    const codexSkillDirectory = '/fake/home/.agents/skills/topo-cli-location';
-    const claudeSkillDirectory = '/fake/home/.claude/skills/topo-cli-location';
+    const codexSkillDirectory = vscode.Uri.joinPath(
+        userHomeUri,
+        '.agents',
+        'skills',
+        'topo-cli-location',
+    ).fsPath;
+    const claudeSkillDirectory = vscode.Uri.joinPath(
+        userHomeUri,
+        '.claude',
+        'skills',
+        'topo-cli-location',
+    ).fsPath;
+    const customClaudeHome = vscode.Uri.file('/fake/custom-claude');
     const bundledSkill = Uint8Array.from([1, 2, 3]);
     let npxSkills: MockProxy<NpxSkills>;
 
@@ -34,6 +45,11 @@ describe('TopoSkill', () => {
 
     function mockList(skills: ListedSkill[]): void {
         npxSkills.list.mockResolvedValue(skills);
+    }
+
+    function skillFile(directory: string): string {
+        return vscode.Uri.joinPath(vscode.Uri.file(directory), 'SKILL.md')
+            .fsPath;
     }
 
     function mockSkillFiles(files: Readonly<Record<string, Uint8Array>>): void {
@@ -66,7 +82,7 @@ describe('TopoSkill', () => {
     it('reports a listed current skill as installed', async () => {
         mockList([listedSkill(codexSkillDirectory, ['Codex'])]);
         mockSkillFiles({
-            [`${codexSkillDirectory}/SKILL.md`]: bundledSkill,
+            [skillFile(codexSkillDirectory)]: bundledSkill,
         });
         const topoSkill = new TopoSkill(extensionUri, npxSkills, {
             userHomeUri,
@@ -85,7 +101,7 @@ describe('TopoSkill', () => {
     it('uses the path returned by the CLI for copied skills', async () => {
         mockList([listedSkill(claudeSkillDirectory, ['Claude Code'])]);
         mockSkillFiles({
-            [`${claudeSkillDirectory}/SKILL.md`]: bundledSkill,
+            [skillFile(claudeSkillDirectory)]: bundledSkill,
         });
         const topoSkill = new TopoSkill(extensionUri, npxSkills, {
             userHomeUri,
@@ -132,7 +148,7 @@ describe('TopoSkill', () => {
     it('reports a listed skill with different contents as outdated', async () => {
         mockList([listedSkill(claudeSkillDirectory, ['Claude Code'])]);
         mockSkillFiles({
-            [`${claudeSkillDirectory}/SKILL.md`]: Uint8Array.from([1, 2, 4]),
+            [skillFile(claudeSkillDirectory)]: Uint8Array.from([1, 2, 4]),
         });
         const topoSkill = new TopoSkill(extensionUri, npxSkills, {
             userHomeUri,
@@ -147,7 +163,7 @@ describe('TopoSkill', () => {
     it('verifies only agents selected for the current installation', async () => {
         mockList([listedSkill(claudeSkillDirectory, ['Claude Code'])]);
         mockSkillFiles({
-            [`${claudeSkillDirectory}/SKILL.md`]: bundledSkill,
+            [skillFile(claudeSkillDirectory)]: bundledSkill,
         });
         const topoSkill = new TopoSkill(extensionUri, npxSkills, {
             userHomeUri,
@@ -177,7 +193,7 @@ describe('TopoSkill', () => {
         const topoSkill = new TopoSkill(extensionUri, npxSkills, {
             userHomeUri,
             environment: {
-                CLAUDE_CONFIG_DIR: '/fake/custom-claude',
+                CLAUDE_CONFIG_DIR: customClaudeHome.fsPath,
             },
         });
 
@@ -185,7 +201,8 @@ describe('TopoSkill', () => {
             codexSkillDirectory,
         );
         expect(topoSkill.getInstallationDirectoryPath('claude-code')).toBe(
-            '/fake/custom-claude/skills/topo-cli-location',
+            vscode.Uri.joinPath(customClaudeHome, 'skills', 'topo-cli-location')
+                .fsPath,
         );
     });
 });
