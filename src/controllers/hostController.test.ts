@@ -17,6 +17,20 @@ const hostHealth: HostHealthReport = {
         ],
     },
 };
+const installedSkillReport = {
+    status: 'installed' as const,
+    agents: [
+        {
+            name: 'Claude Code',
+            paths: ['/fake/home/.claude/skills/topo-cli-location'],
+            status: 'installed' as const,
+        },
+    ],
+};
+const missingSkillReport = {
+    status: 'missing' as const,
+    agents: [],
+};
 
 describe('HostController', () => {
     afterEach(() => {
@@ -28,18 +42,20 @@ describe('HostController', () => {
             hostHealth: vi.fn().mockResolvedValue(hostHealth),
         });
         const topoSkill = mock<TopoSkill>({
-            getStatus: vi.fn().mockResolvedValue('installed'),
+            getReport: vi.fn().mockResolvedValue(installedSkillReport),
         });
         const model = new HostModel();
 
         new HostController(model, topoCli, topoSkill);
         await vi.waitFor(() => {
             expect(model.health).toStrictEqual(loaded(hostHealth));
-            expect(model.skillStatus).toStrictEqual(loaded('installed'));
+            expect(model.skillReport).toStrictEqual(
+                loaded(installedSkillReport),
+            );
         });
 
         expect(topoCli.hostHealth).toHaveBeenCalled();
-        expect(topoSkill.getStatus).toHaveBeenCalled();
+        expect(topoSkill.getReport).toHaveBeenCalled();
     });
 
     it('refreshes host health and skill status on command', async () => {
@@ -47,21 +63,21 @@ describe('HostController', () => {
             hostHealth: vi.fn().mockResolvedValue(hostHealth),
         });
         const topoSkill = mock<TopoSkill>({
-            getStatus: vi.fn().mockResolvedValue('missing'),
+            getReport: vi.fn().mockResolvedValue(missingSkillReport),
         });
         const model = new HostModel();
         const controller = new HostController(model, topoCli, topoSkill);
         await vi.waitFor(() => {
-            expect(model.skillStatus).toStrictEqual(loaded('missing'));
+            expect(model.skillReport).toStrictEqual(loaded(missingSkillReport));
         });
         vi.clearAllMocks();
-        vi.mocked(topoSkill.getStatus).mockResolvedValue('installed');
+        vi.mocked(topoSkill.getReport).mockResolvedValue(installedSkillReport);
 
         await controller.refreshHostCommandHandler();
 
         expect(topoCli.hostHealth).toHaveBeenCalledOnce();
-        expect(topoSkill.getStatus).toHaveBeenCalledOnce();
+        expect(topoSkill.getReport).toHaveBeenCalledOnce();
         expect(model.health).toStrictEqual(loaded(hostHealth));
-        expect(model.skillStatus).toStrictEqual(loaded('installed'));
+        expect(model.skillReport).toStrictEqual(loaded(installedSkillReport));
     });
 });

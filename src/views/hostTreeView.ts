@@ -7,9 +7,10 @@ import { ErrorTreeItem } from './treeItems/errorTreeItem';
 import { HostModel } from '../models/hostModel';
 import { DisposableCollector } from '../util/disposableCollector';
 import { Loadable, loaded } from '../util/loadable';
-import { TopoSkillStatus } from '../util/types';
+import { TopoSkillReport } from '../services/topoSkill';
 import { SkillStatusTreeItem } from './treeItems/skillStatusTreeItem';
 import { LoadingTreeItem } from './treeItems/loadingTreeItem';
+import { SkillGroupTreeItem } from './treeItems/skillGroupTreeItem';
 
 function sortHealthChecksByName(
     healthChecks: readonly HealthCheck[],
@@ -19,16 +20,20 @@ function sortHealthChecksByName(
     );
 }
 
-function getSkillStatusItem(
-    skillStatus: Loadable<TopoSkillStatus>,
+function getSkillReportItem(
+    skillReport: Loadable<TopoSkillReport>,
 ): vscode.TreeItem {
-    switch (skillStatus.status) {
+    if (skillReport.loading) {
+        return new LoadingTreeItem('Topo Agent Skill');
+    }
+
+    switch (skillReport.status) {
         case 'loaded':
-            return new SkillStatusTreeItem(skillStatus.data);
+            return new SkillGroupTreeItem(skillReport.data);
         case 'errored':
             return new ErrorTreeItem(
                 'Failed to check Topo Agent Skill',
-                skillStatus,
+                skillReport,
             );
         case 'unloaded':
             return new LoadingTreeItem('Topo Agent Skill');
@@ -57,7 +62,7 @@ export class HostTreeView
             this.model.onHealthChanged(() => {
                 this._onDidChangeTreeData.fire(undefined);
             }),
-            this.model.onSkillStatusChanged(() => {
+            this.model.onSkillReportChanged(() => {
                 this._onDidChangeTreeData.fire(undefined);
             }),
         );
@@ -65,13 +70,13 @@ export class HostTreeView
 
     public getChildren(element?: vscode.TreeItem): vscode.TreeItem[] {
         if (!element) {
-            const skillStatusItem = getSkillStatusItem(this.model.skillStatus);
+            const skillReportItem = getSkillReportItem(this.model.skillReport);
 
             const health = this.model.health;
             if (health.status === 'errored') {
                 return [
                     new ErrorTreeItem('Failed to load health', health),
-                    skillStatusItem,
+                    skillReportItem,
                 ];
             }
 
@@ -83,13 +88,19 @@ export class HostTreeView
                 new HealthCheckGroupTreeItem(
                     loaded(healthChecks, health.loading),
                 ),
-                skillStatusItem,
+                skillReportItem,
             ];
         }
 
         if (element instanceof HealthCheckGroupTreeItem) {
             return element.healthChecks.map(
                 (healthCheck) => new HealthCheckTreeItem(loaded(healthCheck)),
+            );
+        }
+
+        if (element instanceof SkillGroupTreeItem) {
+            return element.report.agents.map(
+                (agent) => new SkillStatusTreeItem(agent),
             );
         }
 
