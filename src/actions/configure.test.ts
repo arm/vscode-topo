@@ -2,30 +2,44 @@ import os from 'node:os';
 import path from 'node:path';
 import * as vscode from 'vscode';
 import { mock, MockProxy } from 'vitest-mock-extended';
-import { TaskExecutor } from '../util/taskExecutor';
 import { createProjectTreeItem } from '../util/test/projectTreeItem';
+import { runTask } from '../util/task';
+import { TOPO_TASK_TYPE } from '../manifest';
+import { TaskCommand, type TaskFactory } from '../tasks/taskFactory';
 import { Configure, configure } from './configure';
+
+vi.mock('../util/task');
+
+const mockRunTask = vi.mocked(runTask);
 
 describe('Configure', () => {
     const composeFileUri = vscode.Uri.file(
         path.join(os.tmpdir(), 'demo', 'compose.yaml'),
     );
     const projectPath = path.dirname(composeFileUri.fsPath);
-    let taskExecutor: MockProxy<TaskExecutor>;
+    const task = new vscode.Task(
+        { type: 'process' },
+        vscode.TaskScope.Workspace,
+        'Configure task',
+        'topo',
+    );
+    let taskFactory: MockProxy<TaskFactory>;
     let configureAction: Configure;
 
-    function expectConfigureTask(task: vscode.Task): void {
-        expect(task.name).toBe('Configure demo');
-        expect(task.execution).toMatchObject({
-            process: 'topo',
-            args: ['configure', '--file', 'compose.yaml'],
+    function expectConfigureTask(): void {
+        expect(taskFactory.createTask).toHaveBeenCalledWith('Configure demo', {
+            type: TOPO_TASK_TYPE,
+            command: TaskCommand.Configure,
+            args: ['--file', 'compose.yaml'],
             options: { cwd: projectPath },
         });
+        expect(mockRunTask).toHaveBeenCalledWith(task);
     }
 
     beforeEach(() => {
-        taskExecutor = mock<TaskExecutor>();
-        configureAction = new Configure(taskExecutor);
+        taskFactory = mock<TaskFactory>();
+        taskFactory.createTask.mockReturnValue(task);
+        configureAction = new Configure(taskFactory);
     });
 
     afterEach(() => {
@@ -35,8 +49,7 @@ describe('Configure', () => {
     it('configures the selected compose file', async () => {
         await configureAction.configureContextCommandHandler(composeFileUri);
 
-        expect(taskExecutor.run).toHaveBeenCalledOnce();
-        expectConfigureTask(taskExecutor.run.mock.calls[0][0]);
+        expectConfigureTask();
     });
 
     it('configures the project tree item compose file', async () => {
@@ -44,8 +57,7 @@ describe('Configure', () => {
             createProjectTreeItem(composeFileUri),
         );
 
-        expect(taskExecutor.run).toHaveBeenCalledOnce();
-        expectConfigureTask(taskExecutor.run.mock.calls[0][0]);
+        expectConfigureTask();
     });
 
     it('throws when the context command has no compose file', async () => {
@@ -53,7 +65,7 @@ describe('Configure', () => {
             configureAction.configureContextCommandHandler(),
         ).rejects.toThrow('No compose.yaml selected for configuration');
 
-        expect(taskExecutor.run).not.toHaveBeenCalled();
+        expect(mockRunTask).not.toHaveBeenCalled();
     });
 
     it('throws when the project command has no project tree item', async () => {
@@ -61,11 +73,11 @@ describe('Configure', () => {
             configureAction.configureProjectCommandHandler(undefined),
         ).rejects.toThrow('This operation cannot be performed on this item');
 
-        expect(taskExecutor.run).not.toHaveBeenCalled();
+        expect(mockRunTask).not.toHaveBeenCalled();
     });
 
     it('reports successful configuration', async () => {
-        await configure(taskExecutor, composeFileUri.fsPath);
+        await configure(taskFactory, composeFileUri.fsPath);
 
         expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
             'demo configured successfully.',
@@ -76,18 +88,18 @@ describe('Configure', () => {
         const unsupportedComposeFile = path.join(projectPath, 'compose.yml');
 
         await expect(
-            configure(taskExecutor, unsupportedComposeFile),
+            configure(taskFactory, unsupportedComposeFile),
         ).rejects.toThrow(
             'Unsupported compose file "compose.yml". Only compose.yaml is supported.',
         );
 
-        expect(taskExecutor.run).not.toHaveBeenCalled();
+        expect(mockRunTask).not.toHaveBeenCalled();
     });
 
     it('reports task failure', async () => {
-        taskExecutor.run.mockRejectedValueOnce(new Error('configure failed'));
+        mockRunTask.mockRejectedValueOnce(new Error('configure failed'));
 
-        await configure(taskExecutor, composeFileUri.fsPath);
+        await configure(taskFactory, composeFileUri.fsPath);
 
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
             'Configuring demo failed: configure failed',

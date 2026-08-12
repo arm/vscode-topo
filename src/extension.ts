@@ -25,7 +25,6 @@ import { topo } from '../package.json';
 import { TOPO_TASK_TYPE } from './manifest';
 import { RefreshLoop } from './util/refreshLoop';
 import { ProjectController } from './controllers/projectController';
-import { TaskExecutor } from './util/taskExecutor';
 import { ConnectViaSSH } from './actions/connectViaSSH';
 import { OpenContainerInBrowser } from './actions/openContainerInBrowser';
 import { OpenSettings } from './actions/openSettings';
@@ -111,11 +110,10 @@ export async function activate(
     );
 
     const config = new Config();
-    const taskExecutor = new TaskExecutor(topoCli);
     const taskFactory = new TaskFactory(topoCli);
     const taskProvider = new TaskProvider(taskFactory);
-    const configure = new Configure(taskExecutor);
-    const projectCloner = new ProjectCloner(taskExecutor);
+    const configure = new Configure(taskFactory);
+    const projectCloner = new ProjectCloner(taskFactory);
     const projectClone = new ProjectClone(topoCli, targetModel, projectCloner);
     const deploy = new Deploy(targetModel, config, taskFactory);
     const stop = new Stop(targetModel, taskFactory);
@@ -123,7 +121,7 @@ export async function activate(
     const connectViaSSH = new ConnectViaSSH(targetModel);
     const openContainerInBrowser = new OpenContainerInBrowser();
     const containerLifecycle = new ContainerLifecycle(dockerCommands);
-    const fixIssue = new FixIssue(taskExecutor, targetModel);
+    const fixIssue = new FixIssue(taskFactory, targetModel);
     const openSettings = new OpenSettings();
     const installSkill = new InstallSkill(topoSkill);
     const protocolHandler = new ProtocolHandler(projectCloner);
