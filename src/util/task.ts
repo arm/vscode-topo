@@ -70,26 +70,6 @@ export function createTask(
     return task;
 }
 
-export function withTaskExecution(
-    task: vscode.Task,
-    execution: TaskExecution,
-): vscode.Task {
-    const resolvedTask = new vscode.Task(
-        task.definition,
-        task.scope ?? vscode.TaskScope.Workspace,
-        task.name,
-        task.source,
-        execution,
-        task.problemMatchers,
-    );
-    resolvedTask.presentationOptions = task.presentationOptions;
-    resolvedTask.group = task.group;
-    resolvedTask.isBackground = task.isBackground;
-    resolvedTask.runOptions = task.runOptions;
-    resolvedTask.detail = task.detail;
-    return resolvedTask;
-}
-
 export async function runTask(task: vscode.Task): Promise<void> {
     const taskExecution = await vscode.tasks.executeTask(task);
     await waitForTaskProcess(taskExecution, task.name);

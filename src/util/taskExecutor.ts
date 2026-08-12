@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { runTask, withTaskExecution } from './task';
+import { runTask } from './task';
 import { TopoCli } from '../services/topoCli';
 
 export class TaskExecutor {
@@ -20,11 +20,7 @@ export class TaskExecutor {
             return task;
         }
 
-        const resolvedExecution = new vscode.ProcessExecution(
-            this.topoCli.getBinaryPath(),
-            execution.args,
-            execution.options,
-        );
-        return withTaskExecution(task, resolvedExecution);
+        execution.process = this.topoCli.getBinaryPath();
+        return task;
     }
 }

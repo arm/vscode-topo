@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import { withTaskExecution } from '../util/task';
 import { resolveTaskDefinition, type TaskFactory } from './taskFactory';
 
 export class TaskProvider implements vscode.TaskProvider {
@@ -16,6 +15,19 @@ export class TaskProvider implements vscode.TaskProvider {
         }
 
         const execution = this.taskFactory.createExecution(definition);
-        return withTaskExecution(task, execution);
+        const resolvedTask = new vscode.Task(
+            task.definition,
+            task.scope ?? vscode.TaskScope.Workspace,
+            task.name,
+            task.source,
+            execution,
+            task.problemMatchers,
+        );
+        resolvedTask.presentationOptions = task.presentationOptions;
+        resolvedTask.group = task.group;
+        resolvedTask.isBackground = task.isBackground;
+        resolvedTask.runOptions = task.runOptions;
+        resolvedTask.detail = task.detail;
+        return resolvedTask;
     }
 }
