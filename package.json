@@ -373,7 +373,7 @@
             "view/item/context": [
                 {
                     "command": "topo.installSkill",
-                    "when": "view == topo.host-manager && viewItem == TopoSkillInstallAvailable",
+                    "when": "view == topo.host-manager && viewItem == TopoSkillAgent",
                     "group": "inline@1"
                 },
                 {

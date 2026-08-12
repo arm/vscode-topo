@@ -19,7 +19,7 @@ describe('HostModel', () => {
         const model = new HostModel();
 
         expect(model.health).toStrictEqual(unloaded());
-        expect(model.skillStatus).toStrictEqual(unloaded());
+        expect(model.skillStatuses).toStrictEqual(unloaded());
     });
 
     it('stores the latest host health loadable', async () => {

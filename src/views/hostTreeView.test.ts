@@ -7,6 +7,7 @@ import { errored, loaded } from '../util/loadable';
 import { ErrorTreeItem } from './treeItems/errorTreeItem';
 import { SkillStatusTreeItem } from './treeItems/skillStatusTreeItem';
 import { LoadingTreeItem } from './treeItems/loadingTreeItem';
+import { SkillGroupTreeItem } from './treeItems/skillGroupTreeItem';
 
 describe('HostTreeView', () => {
     afterEach(() => {
@@ -25,18 +26,25 @@ describe('HostTreeView', () => {
         );
     });
 
-    it('returns the current skill status after the Health group', () => {
+    it('returns Codex and Claude statuses under the skill group', () => {
         const model = new HostModel();
-        model.setSkillStatus(loaded('installed'));
+        model.setSkillStatuses(
+            loaded({ codex: 'installed', 'claude-code': 'missing' }),
+        );
         const provider = new HostTreeView(model);
 
-        const children = provider.getChildren();
+        const rootChildren = provider.getChildren();
+        const children = provider.getChildren(rootChildren[1]);
 
-        expect(children).toHaveLength(2);
-        expect(children[0]).toBeInstanceOf(HealthCheckGroupTreeItem);
-        expect(children[0].label).toBe('Health');
-        expect(children[0].contextValue).toBe('Health');
-        expect(children[1]).toEqual(new SkillStatusTreeItem('installed'));
+        expect(rootChildren).toHaveLength(2);
+        expect(rootChildren[0]).toBeInstanceOf(HealthCheckGroupTreeItem);
+        expect(rootChildren[1]).toEqual(
+            new SkillGroupTreeItem(model.skillStatuses),
+        );
+        expect(children).toEqual([
+            new SkillStatusTreeItem('codex', 'installed'),
+            new SkillStatusTreeItem('claude-code', 'missing'),
+        ]);
     });
 
     it('returns sorted host health checks without mutating the model', () => {
@@ -105,7 +113,12 @@ describe('HostTreeView', () => {
         expect(children[0]).toMatchObject(
             new ErrorTreeItem('Failed to load health', erroredValue),
         );
-        expect(children[1]).toEqual(new LoadingTreeItem('Topo Agent Skill'));
+        expect(children[1]).toEqual(
+            new SkillGroupTreeItem(model.skillStatuses),
+        );
+        expect(provider.getChildren(children[1])).toEqual([
+            new LoadingTreeItem('Checking installations'),
+        ]);
     });
 
     it('getTreeItem returns the element itself', () => {
@@ -140,7 +153,9 @@ describe('HostTreeView', () => {
         const listener = vi.fn();
         provider.onDidChangeTreeData(listener);
 
-        model.setSkillStatus(loaded('installed'));
+        model.setSkillStatuses(
+            loaded({ codex: 'installed', 'claude-code': 'missing' }),
+        );
 
         expect(listener).toHaveBeenCalled();
     });

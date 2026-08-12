@@ -145,6 +145,29 @@ describe('InstallSkill', () => {
         expect(vscode.window.showInformationMessage).not.toHaveBeenCalled();
     });
 
+    it('installs directly for the agent selected in the Host view', async () => {
+        await action.installSkillCommandHandler('claude-code');
+
+        expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
+        expect(execFile).toHaveBeenCalledWith(
+            'npx',
+            [
+                '--yes',
+                'skills',
+                'add',
+                bundledSkillPath,
+                '--global',
+                '--agent',
+                'claude-code',
+                '--yes',
+            ],
+            expect.any(Object),
+        );
+        expect(topoSkill.areAgentsInstalled).toHaveBeenCalledWith([
+            'claude-code',
+        ]);
+    });
+
     it('does not report success when installation verification fails', async () => {
         selectAgents('claude-code');
         topoSkill.areAgentsInstalled.mockResolvedValueOnce(false);

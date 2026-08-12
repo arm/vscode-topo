@@ -18,25 +18,14 @@ export class InstallSkill {
         private readonly platform = process.platform,
     ) {}
 
-    public async installSkillCommandHandler(): Promise<void> {
-        const selected = await vscode.window.showQuickPick<AgentQuickPickItem>(
-            TOPO_SKILL_AGENTS.map((agent) => ({
-                agent,
-                label: TOPO_SKILL_AGENT_LABELS[agent],
-                description: this.topoSkill.getInstallationDirectoryPath(agent),
-                picked: true,
-            })),
-            {
-                canPickMany: true,
-                placeHolder: 'Select one or more agents',
-                title: 'Install Topo Agent Skill',
-            },
-        );
-        if (!selected || selected.length === 0) {
+    public async installSkillCommandHandler(
+        agent?: TopoSkillAgent,
+    ): Promise<void> {
+        const agents = agent ? [agent] : await this.pickAgents();
+        if (agents.length === 0) {
             return;
         }
 
-        const agents = selected.map(({ agent }) => agent);
         const npx = this.platform === 'win32' ? 'npx.cmd' : 'npx';
         const args = [
             '--yes',
@@ -68,5 +57,22 @@ export class InstallSkill {
         vscode.window.showInformationMessage(
             'Topo CLI location skill installed. Start a new agent session to check it out.',
         );
+    }
+
+    private async pickAgents(): Promise<TopoSkillAgent[]> {
+        const selected = await vscode.window.showQuickPick<AgentQuickPickItem>(
+            TOPO_SKILL_AGENTS.map((agent) => ({
+                agent,
+                label: TOPO_SKILL_AGENT_LABELS[agent],
+                description: this.topoSkill.getInstallationDirectoryPath(agent),
+                picked: true,
+            })),
+            {
+                canPickMany: true,
+                placeHolder: 'Select one or more agents',
+                title: 'Install Topo Agent Skill',
+            },
+        );
+        return selected?.map(({ agent }) => agent) ?? [];
     }
 }

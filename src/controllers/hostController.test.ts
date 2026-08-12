@@ -19,6 +19,11 @@ const hostHealth: HostHealthReport = {
 };
 
 describe('HostController', () => {
+    const skillStatuses = {
+        codex: 'installed',
+        'claude-code': 'missing',
+    } as const;
+
     afterEach(() => {
         vi.clearAllMocks();
     });
@@ -28,18 +33,18 @@ describe('HostController', () => {
             hostHealth: vi.fn().mockResolvedValue(hostHealth),
         });
         const topoSkill = mock<TopoSkill>({
-            getStatus: vi.fn().mockResolvedValue('installed'),
+            getStatuses: vi.fn().mockResolvedValue(skillStatuses),
         });
         const model = new HostModel();
 
         new HostController(model, topoCli, topoSkill);
         await vi.waitFor(() => {
             expect(model.health).toStrictEqual(loaded(hostHealth));
-            expect(model.skillStatus).toStrictEqual(loaded('installed'));
+            expect(model.skillStatuses).toStrictEqual(loaded(skillStatuses));
         });
 
         expect(topoCli.hostHealth).toHaveBeenCalled();
-        expect(topoSkill.getStatus).toHaveBeenCalled();
+        expect(topoSkill.getStatuses).toHaveBeenCalled();
     });
 
     it('refreshes host health and skill status on command', async () => {
@@ -47,21 +52,27 @@ describe('HostController', () => {
             hostHealth: vi.fn().mockResolvedValue(hostHealth),
         });
         const topoSkill = mock<TopoSkill>({
-            getStatus: vi.fn().mockResolvedValue('missing'),
+            getStatuses: vi.fn().mockResolvedValue(skillStatuses),
         });
         const model = new HostModel();
         const controller = new HostController(model, topoCli, topoSkill);
         await vi.waitFor(() => {
-            expect(model.skillStatus).toStrictEqual(loaded('missing'));
+            expect(model.skillStatuses).toStrictEqual(loaded(skillStatuses));
         });
         vi.clearAllMocks();
-        vi.mocked(topoSkill.getStatus).mockResolvedValue('installed');
+        const updatedSkillStatuses = {
+            codex: 'installed',
+            'claude-code': 'installed',
+        } as const;
+        vi.mocked(topoSkill.getStatuses).mockResolvedValue(
+            updatedSkillStatuses,
+        );
 
         await controller.refreshHostCommandHandler();
 
         expect(topoCli.hostHealth).toHaveBeenCalledOnce();
-        expect(topoSkill.getStatus).toHaveBeenCalledOnce();
+        expect(topoSkill.getStatuses).toHaveBeenCalledOnce();
         expect(model.health).toStrictEqual(loaded(hostHealth));
-        expect(model.skillStatus).toStrictEqual(loaded('installed'));
+        expect(model.skillStatuses).toStrictEqual(loaded(updatedSkillStatuses));
     });
 });

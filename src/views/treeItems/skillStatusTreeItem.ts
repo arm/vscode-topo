@@ -1,4 +1,8 @@
 import * as vscode from 'vscode';
+import {
+    TopoSkillAgent,
+    TOPO_SKILL_AGENT_LABELS,
+} from '../../services/topoSkill';
 import { TopoSkillStatus } from '../../util/types';
 
 const statusDescriptions: Record<TopoSkillStatus, string> = {
@@ -8,19 +12,23 @@ const statusDescriptions: Record<TopoSkillStatus, string> = {
 };
 
 export class SkillStatusTreeItem extends vscode.TreeItem {
-    constructor(public readonly status: TopoSkillStatus) {
-        super('Topo Agent Skill', vscode.TreeItemCollapsibleState.None);
+    constructor(
+        public readonly agent: TopoSkillAgent,
+        public readonly status: TopoSkillStatus,
+    ) {
+        const agentLabel = TOPO_SKILL_AGENT_LABELS[agent];
+        super(agentLabel, vscode.TreeItemCollapsibleState.None);
+        this.contextValue = 'TopoSkillAgent';
         if (status === 'installed') {
-            this.tooltip = `Topo Agent Skill: ${statusDescriptions[status]}. Helps compatible AI assistants locate and use the Topo CLI.`;
+            this.tooltip = `${agentLabel} Topo Agent Skill: ${statusDescriptions[status]}. Helps ${agentLabel} locate and use the Topo CLI.`;
             this.iconPath = new vscode.ThemeIcon(
                 'check',
                 new vscode.ThemeColor('testing.iconPassed'),
             );
         } else {
             this.description = statusDescriptions[status];
-            this.tooltip = `Topo Agent Skill: ${statusDescriptions[status]}. Install the bundled version to give compatible AI assistants current guidance for locating and using the Topo CLI.`;
+            this.tooltip = `${agentLabel} Topo Agent Skill: ${statusDescriptions[status]}. Install the bundled version to give ${agentLabel} current guidance for locating and using the Topo CLI.`;
             this.iconPath = new vscode.ThemeIcon('info');
-            this.contextValue = 'TopoSkillInstallAvailable';
         }
     }
 }

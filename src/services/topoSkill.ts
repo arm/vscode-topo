@@ -6,6 +6,9 @@ import { TopoSkillStatus } from '../util/types';
 export const TOPO_SKILL_NAME = 'topo-cli-location';
 export const TOPO_SKILL_AGENTS = ['codex', 'claude-code'] as const;
 export type TopoSkillAgent = (typeof TOPO_SKILL_AGENTS)[number];
+export type TopoSkillStatuses = Readonly<
+    Record<TopoSkillAgent, TopoSkillStatus>
+>;
 export const TOPO_SKILL_AGENT_LABELS: Readonly<Record<TopoSkillAgent, string>> =
     {
         codex: 'Codex',
@@ -82,28 +85,37 @@ export class TopoSkill {
         this.platform = options.platform ?? process.platform;
     }
 
-    public async getStatus(): Promise<TopoSkillStatus> {
-        const listedSkills = await this.listInstalledSkills(TOPO_SKILL_AGENTS);
-        if (listedSkills.length === 0) {
-            return 'missing';
-        }
-
-        return (await this.getCurrentSkills(listedSkills)).length > 0
-            ? 'installed'
-            : 'outdated';
+    public async getStatuses(): Promise<TopoSkillStatuses> {
+        const [codex, claudeCode] = await Promise.all([
+            this.getStatusForAgent('codex'),
+            this.getStatusForAgent('claude-code'),
+        ]);
+        return {
+            codex,
+            'claude-code': claudeCode,
+        };
     }
 
     public async areAgentsInstalled(
         agents: readonly TopoSkillAgent[],
     ): Promise<boolean> {
-        const currentSkills = await this.getCurrentSkills(
-            await this.listInstalledSkills(agents),
+        const statuses = await Promise.all(
+            agents.map((agent) => this.getStatusForAgent(agent)),
         );
-        return agents.every((agent) =>
-            currentSkills.some((skill) =>
-                skill.agents.includes(TOPO_SKILL_AGENT_LABELS[agent]),
-            ),
-        );
+        return statuses.every((status) => status === 'installed');
+    }
+
+    private async getStatusForAgent(
+        agent: TopoSkillAgent,
+    ): Promise<TopoSkillStatus> {
+        const listedSkills = await this.listInstalledSkills([agent]);
+        if (listedSkills.length === 0) {
+            return 'missing';
+        }
+        if ((await this.getCurrentSkills(listedSkills)).length > 0) {
+            return 'installed';
+        }
+        return 'outdated';
     }
 
     private async listInstalledSkills(

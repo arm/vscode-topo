@@ -3,20 +3,20 @@ import { SkillStatusTreeItem } from './skillStatusTreeItem';
 
 describe('SkillStatusTreeItem', () => {
     it('represents an up-to-date skill with a green check', () => {
-        const item = new SkillStatusTreeItem('installed');
+        const item = new SkillStatusTreeItem('codex', 'installed');
 
         expect(item).toMatchObject({
-            label: 'Topo Agent Skill',
+            label: 'Codex',
             collapsibleState: vscode.TreeItemCollapsibleState.None,
+            contextValue: 'TopoSkillAgent',
             iconPath: new vscode.ThemeIcon(
                 'check',
                 new vscode.ThemeColor('testing.iconPassed'),
             ),
         });
-        expect(item.contextValue).toBeUndefined();
         expect(item.description).toBeUndefined();
         expect(item.tooltip).toBe(
-            'Topo Agent Skill: Up to date. Helps compatible AI assistants locate and use the Topo CLI.',
+            'Codex Topo Agent Skill: Up to date. Helps Codex locate and use the Topo CLI.',
         );
     });
 
@@ -24,13 +24,13 @@ describe('SkillStatusTreeItem', () => {
         ['missing', 'Not installed'],
         ['outdated', 'Out of date'],
     ] as const)('represents the %s status', (status, expectedDescription) => {
-        const item = new SkillStatusTreeItem(status);
+        const item = new SkillStatusTreeItem('claude-code', status);
 
         expect(item).toMatchObject({
-            label: 'Topo Agent Skill',
+            label: 'Claude Code',
             description: expectedDescription,
             collapsibleState: vscode.TreeItemCollapsibleState.None,
-            contextValue: 'TopoSkillInstallAvailable',
+            contextValue: 'TopoSkillAgent',
             iconPath: new vscode.ThemeIcon('info'),
         });
         expect(item.tooltip).toContain(expectedDescription);

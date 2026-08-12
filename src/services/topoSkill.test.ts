@@ -64,25 +64,30 @@ describe('TopoSkill', () => {
         });
         const topoSkill = new TopoSkill(extensionUri, { userHomeUri });
 
-        await expect(topoSkill.getStatus()).resolves.toBe('installed');
-        expect(execFile).toHaveBeenCalledWith(
-            'npx',
-            [
-                '--yes',
-                'skills',
-                'list',
-                '--global',
-                '--agent',
-                'codex',
-                'claude-code',
-                '--json',
-            ],
-            {
-                cwd: userHomeUri.fsPath,
-                encoding: 'utf8',
-                windowsHide: true,
-            },
-        );
+        await expect(topoSkill.getStatuses()).resolves.toEqual({
+            codex: 'installed',
+            'claude-code': 'missing',
+        });
+        expect(execFile).toHaveBeenCalledTimes(2);
+        for (const agent of ['codex', 'claude-code']) {
+            expect(execFile).toHaveBeenCalledWith(
+                'npx',
+                [
+                    '--yes',
+                    'skills',
+                    'list',
+                    '--global',
+                    '--agent',
+                    agent,
+                    '--json',
+                ],
+                {
+                    cwd: userHomeUri.fsPath,
+                    encoding: 'utf8',
+                    windowsHide: true,
+                },
+            );
+        }
     });
 
     it('uses the path returned by the CLI for copied skills', async () => {
@@ -92,7 +97,10 @@ describe('TopoSkill', () => {
         });
         const topoSkill = new TopoSkill(extensionUri, { userHomeUri });
 
-        await expect(topoSkill.getStatus()).resolves.toBe('installed');
+        await expect(topoSkill.getStatuses()).resolves.toEqual({
+            codex: 'missing',
+            'claude-code': 'installed',
+        });
     });
 
     it('reports a missing skill when it is not listed', async () => {
@@ -105,7 +113,10 @@ describe('TopoSkill', () => {
         ]);
         const topoSkill = new TopoSkill(extensionUri, { userHomeUri });
 
-        await expect(topoSkill.getStatus()).resolves.toBe('missing');
+        await expect(topoSkill.getStatuses()).resolves.toEqual({
+            codex: 'missing',
+            'claude-code': 'missing',
+        });
         expect(vscode.workspace.fs.readFile).not.toHaveBeenCalled();
     });
 
@@ -113,7 +124,10 @@ describe('TopoSkill', () => {
         mockList([listedSkill('/fake/home/.cursor/skills/topo', ['Cursor'])]);
         const topoSkill = new TopoSkill(extensionUri, { userHomeUri });
 
-        await expect(topoSkill.getStatus()).resolves.toBe('missing');
+        await expect(topoSkill.getStatuses()).resolves.toEqual({
+            codex: 'missing',
+            'claude-code': 'missing',
+        });
         expect(vscode.workspace.fs.readFile).not.toHaveBeenCalled();
     });
 
@@ -124,7 +138,10 @@ describe('TopoSkill', () => {
         });
         const topoSkill = new TopoSkill(extensionUri, { userHomeUri });
 
-        await expect(topoSkill.getStatus()).resolves.toBe('outdated');
+        await expect(topoSkill.getStatuses()).resolves.toEqual({
+            codex: 'missing',
+            'claude-code': 'outdated',
+        });
     });
 
     it('verifies only agents selected for the current installation', async () => {
@@ -148,7 +165,7 @@ describe('TopoSkill', () => {
             platform: 'win32',
         });
 
-        await topoSkill.getStatus();
+        await topoSkill.getStatuses();
 
         expect(execFile).toHaveBeenCalledWith(
             'npx.cmd',
@@ -164,7 +181,7 @@ describe('TopoSkill', () => {
         });
         const topoSkill = new TopoSkill(extensionUri, { userHomeUri });
 
-        await expect(topoSkill.getStatus()).rejects.toThrow(
+        await expect(topoSkill.getStatuses()).rejects.toThrow(
             'Unexpected output from skills list',
         );
     });

@@ -30,12 +30,12 @@ export class HostController {
     }
 
     public async refreshSkillStatus(): Promise<void> {
-        this.hostModel.setSkillStatus(loading(this.hostModel.skillStatus));
+        this.hostModel.setSkillStatuses(loading(this.hostModel.skillStatuses));
         try {
-            const status = await this.topoSkill.getStatus();
-            this.hostModel.setSkillStatus(loaded(status));
+            const statuses = await this.topoSkill.getStatuses();
+            this.hostModel.setSkillStatuses(loaded(statuses));
         } catch (error) {
-            this.hostModel.setSkillStatus(errored(error));
+            this.hostModel.setSkillStatuses(errored(error));
         }
     }
 }

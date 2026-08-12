@@ -202,6 +202,18 @@ describe('commands', () => {
             ).toHaveBeenCalledWith();
         });
 
+        it('installs the skill for the agent represented by the tree node', async () => {
+            commands.register(handlers);
+
+            await executeCommand(commandIds.installSkill, {
+                agent: 'claude-code',
+            });
+
+            expect(
+                handlers.installSkill.installSkillCommandHandler,
+            ).toHaveBeenCalledWith('claude-code');
+        });
+
         it('configure project calls the project configure handler with the tree node', async () => {
             const composeFileUri = vscode.Uri.file(
                 '/fake/workspace/demo/compose.yaml',

@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { HostHealthReport } from '../services/topoCliSchema';
 import { Loadable, unloaded } from '../util/loadable';
-import { TopoSkillStatus } from '../util/types';
+import { TopoSkillStatuses } from '../services/topoSkill';
 
 export class HostModel implements vscode.Disposable {
     private _onHealthChanged: vscode.EventEmitter<void> =
@@ -9,13 +9,13 @@ export class HostModel implements vscode.Disposable {
     public readonly onHealthChanged: vscode.Event<void> =
         this._onHealthChanged.event;
 
-    private _onSkillStatusChanged: vscode.EventEmitter<void> =
+    private _onSkillStatusesChanged: vscode.EventEmitter<void> =
         new vscode.EventEmitter<void>();
-    public readonly onSkillStatusChanged: vscode.Event<void> =
-        this._onSkillStatusChanged.event;
+    public readonly onSkillStatusesChanged: vscode.Event<void> =
+        this._onSkillStatusesChanged.event;
 
     private _health: Loadable<HostHealthReport> = unloaded();
-    private _skillStatus: Loadable<TopoSkillStatus> = unloaded();
+    private _skillStatuses: Loadable<TopoSkillStatuses> = unloaded();
 
     public setHealth(health: Loadable<HostHealthReport>): void {
         this._health = health;
@@ -26,17 +26,17 @@ export class HostModel implements vscode.Disposable {
         return this._health;
     }
 
-    public setSkillStatus(skillStatus: Loadable<TopoSkillStatus>): void {
-        this._skillStatus = skillStatus;
-        this._onSkillStatusChanged.fire();
+    public setSkillStatuses(skillStatuses: Loadable<TopoSkillStatuses>): void {
+        this._skillStatuses = skillStatuses;
+        this._onSkillStatusesChanged.fire();
     }
 
-    public get skillStatus(): Loadable<TopoSkillStatus> {
-        return this._skillStatus;
+    public get skillStatuses(): Loadable<TopoSkillStatuses> {
+        return this._skillStatuses;
     }
 
     public dispose(): void {
         this._onHealthChanged.dispose();
-        this._onSkillStatusChanged.dispose();
+        this._onSkillStatusesChanged.dispose();
     }
 }

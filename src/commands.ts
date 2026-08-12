@@ -149,8 +149,8 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
         vscode.commands.registerCommand(commandIds.localClone, () =>
             handlers.projectClone.localCloneCommandHandler(),
         ),
-        vscode.commands.registerCommand(commandIds.installSkill, () =>
-            handlers.installSkill.installSkillCommandHandler(),
+        vscode.commands.registerCommand(commandIds.installSkill, (treeNode) =>
+            handlers.installSkill.installSkillCommandHandler(treeNode?.agent),
         ),
     );
 
