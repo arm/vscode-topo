@@ -40,13 +40,10 @@ export class TaskFactory {
     public createExecution(
         definition: TaskDefinition,
     ): vscode.ProcessExecution {
-        const { cwd, env } = definition.options ?? {};
-        const options =
-            cwd === undefined && env === undefined ? undefined : { cwd, env };
         return new vscode.ProcessExecution(
             this.topoCli.getBinaryPath(),
             [definition.command, ...definition.args],
-            options,
+            definition.options,
         );
     }
 
