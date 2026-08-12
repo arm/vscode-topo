@@ -2,9 +2,11 @@ import { createRequire } from 'node:module';
 import * as vscode from 'vscode';
 import { mock, MockProxy } from 'vitest-mock-extended';
 import { refreshSkillStatus } from '../commandIds';
-import { TopoSkill } from '../services/topoSkill';
-import { TaskExecutor } from '../util/taskExecutor';
+import { TopoSkill, TopoSkillAgent } from '../services/topoSkill';
+import { execFile } from '../util/exec';
 import { InstallSkill } from './installSkill';
+
+vi.mock('../util/exec', () => ({ execFile: vi.fn() }));
 
 type UninstallResult = {
     error?: Error;
@@ -15,6 +17,23 @@ type UninstallRunner = (
     args: string[],
     options: { stdio: 'ignore' },
 ) => UninstallResult;
+type AgentQuickPickItem = vscode.QuickPickItem & { agent: TopoSkillAgent };
+type ShowQuickPickMany = (
+    items: AgentQuickPickItem[],
+    options: vscode.QuickPickOptions & { canPickMany: true },
+) => Thenable<AgentQuickPickItem[] | undefined>;
+
+function selectAgents(...agents: TopoSkillAgent[]): void {
+    const labels: Record<TopoSkillAgent, string> = {
+        codex: 'Codex',
+        'claude-code': 'Claude Code',
+    };
+    vi.mocked<ShowQuickPickMany>(
+        vscode.window.showQuickPick,
+    ).mockResolvedValueOnce(
+        agents.map((agent) => ({ agent, label: labels[agent] })),
+    );
+}
 
 const loadModule = createRequire(__filename);
 const { uninstallSkill } = loadModule('../../scripts/uninstall.cjs') as {
@@ -25,46 +44,116 @@ describe('InstallSkill', () => {
     const bundledSkillPath = vscode.Uri.file(
         '/fake/extension/skills/topo-cli-location',
     ).fsPath;
+    const userHomePath = vscode.Uri.file('/fake/home').fsPath;
+    const codexInstallationPath = '/fake/home/.agents/skills/topo-cli-location';
+    const claudeInstallationPath =
+        '/fake/home/.claude/skills/topo-cli-location';
     let topoSkill: MockProxy<TopoSkill>;
-    let taskExecutor: MockProxy<TaskExecutor>;
     let action: InstallSkill;
 
     beforeEach(() => {
         vi.resetAllMocks();
         topoSkill = mock<TopoSkill>({
             bundledDirectoryPath: bundledSkillPath,
+            userHomePath,
         });
-        topoSkill.getStatus.mockResolvedValue('installed');
-        taskExecutor = mock<TaskExecutor>();
-        action = new InstallSkill(topoSkill, taskExecutor);
+        topoSkill.getInstallationDirectoryPath.mockImplementation((agent) =>
+            agent === 'codex' ? codexInstallationPath : claudeInstallationPath,
+        );
+        topoSkill.areAgentsInstalled.mockResolvedValue(true);
+        vi.mocked(execFile).mockResolvedValue({ stdout: '', stderr: '' });
+        action = new InstallSkill(topoSkill, 'linux');
+        vi.mocked(vscode.window.withProgress).mockImplementation(
+            (_options, task) =>
+                task({ report: vi.fn() }, {} as vscode.CancellationToken),
+        );
     });
 
-    it('opens the interactive global skill installer', async () => {
+    it('installs the skill for all selected agents in one background process', async () => {
+        selectAgents('codex', 'claude-code');
+
         await action.installSkillCommandHandler();
 
-        expect(taskExecutor.run).toHaveBeenCalledOnce();
-        expect(taskExecutor.run.mock.calls[0][0]).toMatchObject({
-            name: 'Install Topo skill',
-            definition: {
-                type: 'process',
-                command: 'npx',
-                args: ['skills', 'add', bundledSkillPath, '--global'],
+        expect(vscode.window.showQuickPick).toHaveBeenCalledWith(
+            [
+                {
+                    agent: 'codex',
+                    label: 'Codex',
+                    description: codexInstallationPath,
+                    picked: true,
+                },
+                {
+                    agent: 'claude-code',
+                    label: 'Claude Code',
+                    description: claudeInstallationPath,
+                    picked: true,
+                },
+            ],
+            {
+                canPickMany: true,
+                placeHolder: 'Select one or more agents',
+                title: 'Install Topo Agent Skill',
             },
-        });
+        );
+        expect(execFile).toHaveBeenCalledWith(
+            'npx',
+            [
+                '--yes',
+                'skills',
+                'add',
+                bundledSkillPath,
+                '--global',
+                '--agent',
+                'codex',
+                'claude-code',
+                '--yes',
+            ],
+            {
+                cwd: userHomePath,
+                encoding: 'utf8',
+                windowsHide: true,
+            },
+        );
+        expect(vscode.window.withProgress).toHaveBeenCalledWith(
+            {
+                location: vscode.ProgressLocation.Notification,
+                title: 'Installing Topo agent skill…',
+            },
+            expect.any(Function),
+        );
         expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
             refreshSkillStatus,
         );
-        expect(topoSkill.getStatus).toHaveBeenCalledOnce();
+        expect(topoSkill.areAgentsInstalled).toHaveBeenCalledWith([
+            'codex',
+            'claude-code',
+        ]);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
             'Topo CLI location skill installed. Start a new agent session to check it out.',
         );
     });
 
-    it('does not report success when skill installation is cancelled', async () => {
-        topoSkill.getStatus.mockResolvedValueOnce('missing');
+    it('does nothing when agent selection is cancelled', async () => {
+        vi.mocked<ShowQuickPickMany>(
+            vscode.window.showQuickPick,
+        ).mockResolvedValueOnce(undefined);
 
         await action.installSkillCommandHandler();
 
+        expect(execFile).not.toHaveBeenCalled();
+        expect(vscode.commands.executeCommand).not.toHaveBeenCalled();
+        expect(vscode.window.showInformationMessage).not.toHaveBeenCalled();
+    });
+
+    it('does not report success when installation verification fails', async () => {
+        selectAgents('claude-code');
+        topoSkill.areAgentsInstalled.mockResolvedValueOnce(false);
+
+        await action.installSkillCommandHandler();
+
+        expect(topoSkill.areAgentsInstalled).toHaveBeenCalledWith([
+            'claude-code',
+        ]);
         expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
             refreshSkillStatus,
         );
@@ -74,24 +163,30 @@ describe('InstallSkill', () => {
     it.each([
         ['linux', 'npx'],
         ['win32', 'npx.cmd'],
-    ] as const)('removes the skill from all agents on %s', (platform, npx) => {
-        const run = vi.fn<UninstallRunner>().mockReturnValue({ status: 0 });
+    ] as const)(
+        'removes the skill from Codex and Claude Code on %s',
+        (platform, npx) => {
+            const run = vi.fn<UninstallRunner>().mockReturnValue({ status: 0 });
 
-        uninstallSkill(run, platform);
+            uninstallSkill(run, platform);
 
-        expect(run).toHaveBeenCalledExactlyOnceWith(
-            npx,
-            [
-                '--yes',
-                'skills',
-                'remove',
-                'topo-cli-location',
-                '--global',
-                '--yes',
-            ],
-            { stdio: 'ignore' },
-        );
-    });
+            expect(run).toHaveBeenCalledExactlyOnceWith(
+                npx,
+                [
+                    '--yes',
+                    'skills',
+                    'remove',
+                    'topo-cli-location',
+                    '--global',
+                    '--agent',
+                    'codex',
+                    'claude-code',
+                    '--yes',
+                ],
+                { stdio: 'ignore' },
+            );
+        },
+    );
 
     it('reports skill uninstallation failure', () => {
         const run = vi.fn<UninstallRunner>().mockReturnValue({ status: 1 });

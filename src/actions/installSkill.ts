@@ -1,33 +1,68 @@
 import * as vscode from 'vscode';
 import { refreshSkillStatus } from '../commandIds';
-import { TopoSkill } from '../services/topoSkill';
-import { createProcessTask } from '../util/task';
-import { TaskExecutor } from '../util/taskExecutor';
+import {
+    TopoSkill,
+    TopoSkillAgent,
+    TOPO_SKILL_AGENT_LABELS,
+    TOPO_SKILL_AGENTS,
+} from '../services/topoSkill';
+import { execFile } from '../util/exec';
 
-export function createInstallSkillTask(skillSourcePath: string): vscode.Task {
-    const args = ['skills', 'add', skillSourcePath, '--global'];
-    return createProcessTask('Install Topo skill', ['npx', ...args], {
-        definition: {
-            type: 'process',
-            command: 'npx',
-            args,
-        },
-    });
+interface AgentQuickPickItem extends vscode.QuickPickItem {
+    agent: TopoSkillAgent;
 }
 
 export class InstallSkill {
     constructor(
         private readonly topoSkill: TopoSkill,
-        private readonly taskExecutor: TaskExecutor,
+        private readonly platform = process.platform,
     ) {}
 
     public async installSkillCommandHandler(): Promise<void> {
-        const task = createInstallSkillTask(
-            this.topoSkill.bundledDirectoryPath,
+        const selected = await vscode.window.showQuickPick<AgentQuickPickItem>(
+            TOPO_SKILL_AGENTS.map((agent) => ({
+                agent,
+                label: TOPO_SKILL_AGENT_LABELS[agent],
+                description: this.topoSkill.getInstallationDirectoryPath(agent),
+                picked: true,
+            })),
+            {
+                canPickMany: true,
+                placeHolder: 'Select one or more agents',
+                title: 'Install Topo Agent Skill',
+            },
         );
-        await this.taskExecutor.run(task);
+        if (!selected || selected.length === 0) {
+            return;
+        }
+
+        const agents = selected.map(({ agent }) => agent);
+        const npx = this.platform === 'win32' ? 'npx.cmd' : 'npx';
+        const args = [
+            '--yes',
+            'skills',
+            'add',
+            this.topoSkill.bundledDirectoryPath,
+            '--global',
+            '--agent',
+            ...agents,
+            '--yes',
+        ];
+        await vscode.window.withProgress(
+            {
+                location: vscode.ProgressLocation.Notification,
+                title: 'Installing Topo agent skill…',
+            },
+            async () => {
+                await execFile(npx, args, {
+                    cwd: this.topoSkill.userHomePath,
+                    encoding: 'utf8',
+                    windowsHide: true,
+                });
+            },
+        );
         await vscode.commands.executeCommand(refreshSkillStatus);
-        if ((await this.topoSkill.getStatus()) !== 'installed') {
+        if (!(await this.topoSkill.areAgentsInstalled(agents))) {
             return;
         }
         vscode.window.showInformationMessage(
