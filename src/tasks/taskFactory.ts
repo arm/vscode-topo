@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { array, enums, is, literal, string, type } from 'superstruct';
 import { TOPO_TASK_TYPE } from '../manifest';
 import type { TopoCli } from '../services/topoCli';
 import { createTask } from '../util/task';
@@ -14,6 +15,12 @@ export enum TaskCommand {
     Stop = 'stop',
 }
 
+const taskDefinitionSchema = type({
+    type: literal(TOPO_TASK_TYPE),
+    command: enums(Object.values(TaskCommand)),
+    args: array(string()),
+});
+
 export interface TaskDefinition extends vscode.TaskDefinition {
     readonly type: typeof TOPO_TASK_TYPE;
     readonly command: TaskCommand;
@@ -24,17 +31,7 @@ export interface TaskDefinition extends vscode.TaskDefinition {
 export const resolveTaskDefinition = (
     definition: vscode.TaskDefinition,
 ): TaskDefinition | undefined => {
-    const { type, command, args } = definition;
-    if (
-        type === TOPO_TASK_TYPE &&
-        isTaskCommand(command) &&
-        Array.isArray(args) &&
-        args.every((arg) => typeof arg === 'string')
-    ) {
-        return definition as TaskDefinition;
-    }
-
-    return undefined;
+    return is(definition, taskDefinitionSchema) ? definition : undefined;
 };
 
 export class TaskFactory {
@@ -61,7 +58,3 @@ export class TaskFactory {
         });
     }
 }
-
-const isTaskCommand = (value: unknown): value is TaskCommand => {
-    return Object.values(TaskCommand).includes(value as TaskCommand);
-};
