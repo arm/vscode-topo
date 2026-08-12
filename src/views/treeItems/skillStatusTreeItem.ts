@@ -18,7 +18,6 @@ export class SkillStatusTreeItem extends vscode.TreeItem {
     ) {
         const agentLabel = TOPO_SKILL_AGENT_LABELS[agent];
         super(agentLabel, vscode.TreeItemCollapsibleState.None);
-        this.contextValue = 'TopoSkillAgent';
         if (status === 'installed') {
             this.tooltip = `${agentLabel} Topo Agent Skill: ${statusDescriptions[status]}. Helps ${agentLabel} locate and use the Topo CLI.`;
             this.iconPath = new vscode.ThemeIcon(
@@ -26,6 +25,7 @@ export class SkillStatusTreeItem extends vscode.TreeItem {
                 new vscode.ThemeColor('testing.iconPassed'),
             );
         } else {
+            this.contextValue = 'TopoSkillAgent';
             this.description = statusDescriptions[status];
             this.tooltip = `${agentLabel} Topo Agent Skill: ${statusDescriptions[status]}. Install the bundled version to give ${agentLabel} current guidance for locating and using the Topo CLI.`;
             this.iconPath = new vscode.ThemeIcon('info');

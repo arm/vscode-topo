@@ -4,8 +4,14 @@ import { TopoSkillStatusLoadables } from '../../models/hostModel';
 export class SkillGroupTreeItem extends vscode.TreeItem {
     constructor(public readonly skillStatuses: TopoSkillStatusLoadables) {
         super('Topo Agent Skills', vscode.TreeItemCollapsibleState.Expanded);
-        this.contextValue = 'TopoAgentSkills';
         const statuses = Object.values(skillStatuses);
+        const allInstalled = statuses.every(
+            (status) =>
+                status.status === 'loaded' && status.data === 'installed',
+        );
+        this.contextValue = allInstalled
+            ? 'TopoAgentSkills'
+            : 'TopoAgentSkills Installable';
         if (statuses.some(({ loading }) => loading)) {
             this.iconPath = new vscode.ThemeIcon('loading~spin');
         } else if (

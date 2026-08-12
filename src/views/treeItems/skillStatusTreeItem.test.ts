@@ -8,12 +8,12 @@ describe('SkillStatusTreeItem', () => {
         expect(item).toMatchObject({
             label: 'Codex',
             collapsibleState: vscode.TreeItemCollapsibleState.None,
-            contextValue: 'TopoSkillAgent',
             iconPath: new vscode.ThemeIcon(
                 'check',
                 new vscode.ThemeColor('testing.iconPassed'),
             ),
         });
+        expect(item.contextValue).toBeUndefined();
         expect(item.description).toBeUndefined();
         expect(item.tooltip).toBe(
             'Codex Topo Agent Skill: Up to date. Helps Codex locate and use the Topo CLI.',
