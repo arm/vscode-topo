@@ -33,6 +33,7 @@ import { Configure } from './actions/configure';
 import { ProjectCloner } from './operations/projectCloner';
 import { InstallSkill } from './actions/installSkill';
 import { TopoSkill } from './services/topoSkill';
+import { NpxSkills } from './services/npxSkills';
 
 const SELECTED_TARGET_REFRESH_INTERVAL_MS = 60_000;
 
@@ -62,7 +63,8 @@ export async function activate(
     const targetModel = new TargetModel();
     const hostModel = new HostModel();
     const projectModel = new ProjectModel();
-    const topoSkill = new TopoSkill(context.extensionUri);
+    const npxSkills = new NpxSkills();
+    const topoSkill = new TopoSkill(context.extensionUri, npxSkills);
     context.subscriptions.push(targetModel, hostModel, projectModel);
 
     const hostTreeView = new HostTreeView(hostModel);
@@ -120,7 +122,7 @@ export async function activate(
     const containerLifecycle = new ContainerLifecycle(dockerCommands);
     const fixIssue = new FixIssue(taskExecutor, targetModel);
     const openSettings = new OpenSettings();
-    const installSkill = new InstallSkill(topoSkill);
+    const installSkill = new InstallSkill(topoSkill, npxSkills);
     const protocolHandler = new ProtocolHandler(projectCloner);
 
     context.subscriptions.push(

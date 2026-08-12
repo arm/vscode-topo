@@ -6,7 +6,7 @@ import {
     TOPO_SKILL_AGENT_LABELS,
     TOPO_SKILL_AGENTS,
 } from '../services/topoSkill';
-import { execFile } from '../util/exec';
+import { NpxSkills } from '../services/npxSkills';
 
 interface AgentQuickPickItem extends vscode.QuickPickItem {
     agent: TopoSkillAgent;
@@ -15,7 +15,7 @@ interface AgentQuickPickItem extends vscode.QuickPickItem {
 export class InstallSkill {
     constructor(
         private readonly topoSkill: TopoSkill,
-        private readonly platform = process.platform,
+        private readonly npxSkills: NpxSkills,
     ) {}
 
     public async installSkillCommandHandler(
@@ -26,28 +26,16 @@ export class InstallSkill {
             return;
         }
 
-        const npx = this.platform === 'win32' ? 'npx.cmd' : 'npx';
-        const args = [
-            '--yes',
-            'skills',
-            'add',
-            this.topoSkill.bundledDirectoryPath,
-            '--global',
-            '--agent',
-            ...agents,
-            '--yes',
-        ];
         await vscode.window.withProgress(
             {
                 location: vscode.ProgressLocation.Notification,
                 title: 'Installing Topo agent skill…',
             },
             async () => {
-                await execFile(npx, args, {
-                    cwd: this.topoSkill.userHomePath,
-                    encoding: 'utf8',
-                    windowsHide: true,
-                });
+                await this.npxSkills.add(
+                    this.topoSkill.bundledDirectoryPath,
+                    agents,
+                );
             },
         );
         await vscode.commands.executeCommand(refreshSkillStatus);

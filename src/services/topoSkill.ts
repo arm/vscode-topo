@@ -1,7 +1,6 @@
-import os from 'node:os';
 import * as vscode from 'vscode';
-import { execFile } from '../util/exec';
 import { TopoSkillStatus } from '../util/types';
+import { ListedSkill, NpxSkills } from './npxSkills';
 
 export const TOPO_SKILL_NAME = 'topo-cli-location';
 export const TOPO_SKILL_AGENTS = ['codex', 'claude-code'] as const;
@@ -17,29 +16,9 @@ export const TOPO_SKILL_AGENT_LABELS: Readonly<Record<TopoSkillAgent, string>> =
 
 const SKILL_FILE_NAME = 'SKILL.md';
 
-interface ListedSkill {
-    name: string;
-    path: string;
-    agents: string[];
-}
-
 interface TopoSkillOptions {
     userHomeUri?: vscode.Uri;
-    platform?: NodeJS.Platform;
     environment?: NodeJS.ProcessEnv;
-}
-
-function isListedSkill(value: unknown): value is ListedSkill {
-    if (!value || typeof value !== 'object') {
-        return false;
-    }
-    const skill = value as Partial<ListedSkill>;
-    return (
-        typeof skill.name === 'string' &&
-        typeof skill.path === 'string' &&
-        Array.isArray(skill.agents) &&
-        skill.agents.every((agent) => typeof agent === 'string')
-    );
 }
 
 function rawStringsAreEqual(first: Uint8Array, second: Uint8Array): boolean {
@@ -48,15 +27,16 @@ function rawStringsAreEqual(first: Uint8Array, second: Uint8Array): boolean {
 
 export class TopoSkill {
     private readonly bundledDirectoryUri: vscode.Uri;
-    private readonly platform: NodeJS.Platform;
     private readonly installationDirectoryByAgent: Readonly<
         Record<TopoSkillAgent, vscode.Uri>
     >;
-    public readonly userHomePath: string;
-
-    constructor(extensionUri: vscode.Uri, options: TopoSkillOptions = {}) {
+    constructor(
+        extensionUri: vscode.Uri,
+        private readonly npxSkills: NpxSkills,
+        options: TopoSkillOptions = {},
+    ) {
         const userHomeUri =
-            options.userHomeUri ?? vscode.Uri.file(os.homedir());
+            options.userHomeUri ?? vscode.Uri.file(npxSkills.userHomePath);
         const configuredClaudeHome = (
             options.environment ?? process.env
         ).CLAUDE_CONFIG_DIR?.trim();
@@ -81,8 +61,6 @@ export class TopoSkill {
                 TOPO_SKILL_NAME,
             ),
         };
-        this.userHomePath = userHomeUri.fsPath;
-        this.platform = options.platform ?? process.platform;
     }
 
     public async getStatuses(): Promise<TopoSkillStatuses> {
@@ -108,7 +86,7 @@ export class TopoSkill {
     private async getStatusForAgent(
         agent: TopoSkillAgent,
     ): Promise<TopoSkillStatus> {
-        const listedSkills = await this.listInstalledSkills([agent]);
+        const listedSkills = await this.listInstalledSkills(agent);
         if (listedSkills.length === 0) {
             return 'missing';
         }
@@ -119,40 +97,14 @@ export class TopoSkill {
     }
 
     private async listInstalledSkills(
-        agents: readonly TopoSkillAgent[],
+        agent: TopoSkillAgent,
     ): Promise<ListedSkill[]> {
-        const npx = this.platform === 'win32' ? 'npx.cmd' : 'npx';
-        const { stdout } = await execFile(
-            npx,
-            [
-                '--yes',
-                'skills',
-                'list',
-                '--global',
-                '--agent',
-                ...agents,
-                '--json',
-            ],
-            {
-                cwd: this.userHomePath,
-                encoding: 'utf8',
-                windowsHide: true,
-            },
-        );
-        const listedSkills: unknown = JSON.parse(stdout);
-        if (
-            !Array.isArray(listedSkills) ||
-            !listedSkills.every(isListedSkill)
-        ) {
-            throw new Error('Unexpected output from skills list');
-        }
-        const agentLabels = new Set(
-            agents.map((agent) => TOPO_SKILL_AGENT_LABELS[agent]),
-        );
+        const listedSkills = await this.npxSkills.list([agent]);
+        const agentLabel = TOPO_SKILL_AGENT_LABELS[agent];
         return listedSkills.filter(
             (skill) =>
                 skill.name === TOPO_SKILL_NAME &&
-                skill.agents.some((agent) => agentLabels.has(agent)),
+                skill.agents.includes(agentLabel),
         );
     }
 

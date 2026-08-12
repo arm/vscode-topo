@@ -2,11 +2,9 @@ import { createRequire } from 'node:module';
 import * as vscode from 'vscode';
 import { mock, MockProxy } from 'vitest-mock-extended';
 import { refreshSkillStatus } from '../commandIds';
+import { NpxSkills } from '../services/npxSkills';
 import { TopoSkill, TopoSkillAgent } from '../services/topoSkill';
-import { execFile } from '../util/exec';
 import { InstallSkill } from './installSkill';
-
-vi.mock('../util/exec', () => ({ execFile: vi.fn() }));
 
 type UninstallResult = {
     error?: Error;
@@ -44,25 +42,24 @@ describe('InstallSkill', () => {
     const bundledSkillPath = vscode.Uri.file(
         '/fake/extension/skills/topo-cli-location',
     ).fsPath;
-    const userHomePath = vscode.Uri.file('/fake/home').fsPath;
     const codexInstallationPath = '/fake/home/.agents/skills/topo-cli-location';
     const claudeInstallationPath =
         '/fake/home/.claude/skills/topo-cli-location';
     let topoSkill: MockProxy<TopoSkill>;
+    let npxSkills: MockProxy<NpxSkills>;
     let action: InstallSkill;
 
     beforeEach(() => {
         vi.resetAllMocks();
         topoSkill = mock<TopoSkill>({
             bundledDirectoryPath: bundledSkillPath,
-            userHomePath,
         });
         topoSkill.getInstallationDirectoryPath.mockImplementation((agent) =>
             agent === 'codex' ? codexInstallationPath : claudeInstallationPath,
         );
         topoSkill.areAgentsInstalled.mockResolvedValue(true);
-        vi.mocked(execFile).mockResolvedValue({ stdout: '', stderr: '' });
-        action = new InstallSkill(topoSkill, 'linux');
+        npxSkills = mock<NpxSkills>();
+        action = new InstallSkill(topoSkill, npxSkills);
         vi.mocked(vscode.window.withProgress).mockImplementation(
             (_options, task) =>
                 task({ report: vi.fn() }, {} as vscode.CancellationToken),
@@ -95,25 +92,10 @@ describe('InstallSkill', () => {
                 title: 'Install Topo Agent Skill',
             },
         );
-        expect(execFile).toHaveBeenCalledWith(
-            'npx',
-            [
-                '--yes',
-                'skills',
-                'add',
-                bundledSkillPath,
-                '--global',
-                '--agent',
-                'codex',
-                'claude-code',
-                '--yes',
-            ],
-            {
-                cwd: userHomePath,
-                encoding: 'utf8',
-                windowsHide: true,
-            },
-        );
+        expect(npxSkills.add).toHaveBeenCalledWith(bundledSkillPath, [
+            'codex',
+            'claude-code',
+        ]);
         expect(vscode.window.withProgress).toHaveBeenCalledWith(
             {
                 location: vscode.ProgressLocation.Notification,
@@ -140,7 +122,7 @@ describe('InstallSkill', () => {
 
         await action.installSkillCommandHandler();
 
-        expect(execFile).not.toHaveBeenCalled();
+        expect(npxSkills.add).not.toHaveBeenCalled();
         expect(vscode.commands.executeCommand).not.toHaveBeenCalled();
         expect(vscode.window.showInformationMessage).not.toHaveBeenCalled();
     });
@@ -149,20 +131,9 @@ describe('InstallSkill', () => {
         await action.installSkillCommandHandler('claude-code');
 
         expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
-        expect(execFile).toHaveBeenCalledWith(
-            'npx',
-            [
-                '--yes',
-                'skills',
-                'add',
-                bundledSkillPath,
-                '--global',
-                '--agent',
-                'claude-code',
-                '--yes',
-            ],
-            expect.any(Object),
-        );
+        expect(npxSkills.add).toHaveBeenCalledWith(bundledSkillPath, [
+            'claude-code',
+        ]);
         expect(topoSkill.areAgentsInstalled).toHaveBeenCalledWith([
             'claude-code',
         ]);

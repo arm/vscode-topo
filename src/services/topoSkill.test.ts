@@ -1,8 +1,7 @@
 import * as vscode from 'vscode';
-import { execFile } from '../util/exec';
+import { mock, MockProxy } from 'vitest-mock-extended';
+import { NpxSkills } from './npxSkills';
 import { TopoSkill } from './topoSkill';
-
-vi.mock('../util/exec', () => ({ execFile: vi.fn() }));
 
 interface ListedSkill {
     name: string;
@@ -23,6 +22,7 @@ describe('TopoSkill', () => {
     const codexSkillDirectory = '/fake/home/.agents/skills/topo-cli-location';
     const claudeSkillDirectory = '/fake/home/.claude/skills/topo-cli-location';
     const bundledSkill = Uint8Array.from([1, 2, 3]);
+    let npxSkills: MockProxy<NpxSkills>;
 
     function listedSkill(
         path: string,
@@ -33,10 +33,7 @@ describe('TopoSkill', () => {
     }
 
     function mockList(skills: ListedSkill[]): void {
-        vi.mocked(execFile).mockResolvedValue({
-            stdout: JSON.stringify(skills),
-            stderr: '',
-        });
+        npxSkills.list.mockResolvedValue(skills);
     }
 
     function mockSkillFiles(files: Readonly<Record<string, Uint8Array>>): void {
@@ -53,6 +50,7 @@ describe('TopoSkill', () => {
 
     beforeEach(() => {
         vi.resetAllMocks();
+        npxSkills = mock<NpxSkills>({ userHomePath: userHomeUri.fsPath });
         mockList([]);
         mockSkillFiles({});
     });
@@ -62,31 +60,17 @@ describe('TopoSkill', () => {
         mockSkillFiles({
             [`${codexSkillDirectory}/SKILL.md`]: bundledSkill,
         });
-        const topoSkill = new TopoSkill(extensionUri, { userHomeUri });
+        const topoSkill = new TopoSkill(extensionUri, npxSkills, {
+            userHomeUri,
+        });
 
         await expect(topoSkill.getStatuses()).resolves.toEqual({
             codex: 'installed',
             'claude-code': 'missing',
         });
-        expect(execFile).toHaveBeenCalledTimes(2);
+        expect(npxSkills.list).toHaveBeenCalledTimes(2);
         for (const agent of ['codex', 'claude-code']) {
-            expect(execFile).toHaveBeenCalledWith(
-                'npx',
-                [
-                    '--yes',
-                    'skills',
-                    'list',
-                    '--global',
-                    '--agent',
-                    agent,
-                    '--json',
-                ],
-                {
-                    cwd: userHomeUri.fsPath,
-                    encoding: 'utf8',
-                    windowsHide: true,
-                },
-            );
+            expect(npxSkills.list).toHaveBeenCalledWith([agent]);
         }
     });
 
@@ -95,7 +79,9 @@ describe('TopoSkill', () => {
         mockSkillFiles({
             [`${claudeSkillDirectory}/SKILL.md`]: bundledSkill,
         });
-        const topoSkill = new TopoSkill(extensionUri, { userHomeUri });
+        const topoSkill = new TopoSkill(extensionUri, npxSkills, {
+            userHomeUri,
+        });
 
         await expect(topoSkill.getStatuses()).resolves.toEqual({
             codex: 'missing',
@@ -111,7 +97,9 @@ describe('TopoSkill', () => {
                 'other',
             ),
         ]);
-        const topoSkill = new TopoSkill(extensionUri, { userHomeUri });
+        const topoSkill = new TopoSkill(extensionUri, npxSkills, {
+            userHomeUri,
+        });
 
         await expect(topoSkill.getStatuses()).resolves.toEqual({
             codex: 'missing',
@@ -122,7 +110,9 @@ describe('TopoSkill', () => {
 
     it('ignores installations listed for unsupported agents', async () => {
         mockList([listedSkill('/fake/home/.cursor/skills/topo', ['Cursor'])]);
-        const topoSkill = new TopoSkill(extensionUri, { userHomeUri });
+        const topoSkill = new TopoSkill(extensionUri, npxSkills, {
+            userHomeUri,
+        });
 
         await expect(topoSkill.getStatuses()).resolves.toEqual({
             codex: 'missing',
@@ -136,7 +126,9 @@ describe('TopoSkill', () => {
         mockSkillFiles({
             [`${claudeSkillDirectory}/SKILL.md`]: Uint8Array.from([1, 2, 4]),
         });
-        const topoSkill = new TopoSkill(extensionUri, { userHomeUri });
+        const topoSkill = new TopoSkill(extensionUri, npxSkills, {
+            userHomeUri,
+        });
 
         await expect(topoSkill.getStatuses()).resolves.toEqual({
             codex: 'missing',
@@ -149,7 +141,9 @@ describe('TopoSkill', () => {
         mockSkillFiles({
             [`${claudeSkillDirectory}/SKILL.md`]: bundledSkill,
         });
-        const topoSkill = new TopoSkill(extensionUri, { userHomeUri });
+        const topoSkill = new TopoSkill(extensionUri, npxSkills, {
+            userHomeUri,
+        });
 
         await expect(
             topoSkill.areAgentsInstalled(['claude-code']),
@@ -159,35 +153,8 @@ describe('TopoSkill', () => {
         ).resolves.toBe(false);
     });
 
-    it('uses npx.cmd on Windows', async () => {
-        const topoSkill = new TopoSkill(extensionUri, {
-            userHomeUri,
-            platform: 'win32',
-        });
-
-        await topoSkill.getStatuses();
-
-        expect(execFile).toHaveBeenCalledWith(
-            'npx.cmd',
-            expect.any(Array),
-            expect.any(Object),
-        );
-    });
-
-    it('rejects malformed list output', async () => {
-        vi.mocked(execFile).mockResolvedValue({
-            stdout: '{}',
-            stderr: '',
-        });
-        const topoSkill = new TopoSkill(extensionUri, { userHomeUri });
-
-        await expect(topoSkill.getStatuses()).rejects.toThrow(
-            'Unexpected output from skills list',
-        );
-    });
-
     it('provides the bundled skill directory as the install source', () => {
-        const topoSkill = new TopoSkill(extensionUri, {
+        const topoSkill = new TopoSkill(extensionUri, npxSkills, {
             userHomeUri,
             environment: {},
         });
@@ -199,7 +166,7 @@ describe('TopoSkill', () => {
     });
 
     it('provides the final installation directory for each agent', () => {
-        const topoSkill = new TopoSkill(extensionUri, {
+        const topoSkill = new TopoSkill(extensionUri, npxSkills, {
             userHomeUri,
             environment: {
                 CLAUDE_CONFIG_DIR: '/fake/custom-claude',
