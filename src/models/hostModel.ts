@@ -1,7 +1,12 @@
 import * as vscode from 'vscode';
 import { HostHealthReport } from '../services/topoCliSchema';
 import { Loadable, unloaded } from '../util/loadable';
-import { TopoSkillStatuses } from '../services/topoSkill';
+import { TopoSkillAgent } from '../services/topoSkill';
+import { TopoSkillStatus } from '../util/types';
+
+export type TopoSkillStatusLoadables = Readonly<
+    Record<TopoSkillAgent, Loadable<TopoSkillStatus>>
+>;
 
 export class HostModel implements vscode.Disposable {
     private _onHealthChanged: vscode.EventEmitter<void> =
@@ -15,7 +20,10 @@ export class HostModel implements vscode.Disposable {
         this._onSkillStatusesChanged.event;
 
     private _health: Loadable<HostHealthReport> = unloaded();
-    private _skillStatuses: Loadable<TopoSkillStatuses> = unloaded();
+    private _skillStatuses: TopoSkillStatusLoadables = {
+        codex: unloaded(),
+        'claude-code': unloaded(),
+    };
 
     public setHealth(health: Loadable<HostHealthReport>): void {
         this._health = health;
@@ -26,12 +34,18 @@ export class HostModel implements vscode.Disposable {
         return this._health;
     }
 
-    public setSkillStatuses(skillStatuses: Loadable<TopoSkillStatuses>): void {
-        this._skillStatuses = skillStatuses;
+    public setSkillStatus(
+        agent: TopoSkillAgent,
+        skillStatus: Loadable<TopoSkillStatus>,
+    ): void {
+        this._skillStatuses = {
+            ...this._skillStatuses,
+            [agent]: skillStatus,
+        };
         this._onSkillStatusesChanged.fire();
     }
 
-    public get skillStatuses(): Loadable<TopoSkillStatuses> {
+    public get skillStatuses(): TopoSkillStatusLoadables {
         return this._skillStatuses;
     }
 

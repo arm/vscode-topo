@@ -4,17 +4,19 @@ import { SkillGroupTreeItem } from './skillGroupTreeItem';
 
 describe('SkillGroupTreeItem', () => {
     it('shows an info icon when no agent skill is installed', () => {
-        const item = new SkillGroupTreeItem(
-            loaded({ codex: 'missing', 'claude-code': 'outdated' }),
-        );
+        const item = new SkillGroupTreeItem({
+            codex: loaded('missing'),
+            'claude-code': loaded('outdated'),
+        });
 
         expect(item.iconPath).toEqual(new vscode.ThemeIcon('info'));
     });
 
     it('shows a green tick when at least one agent skill is installed', () => {
-        const item = new SkillGroupTreeItem(
-            loaded({ codex: 'installed', 'claude-code': 'missing' }),
-        );
+        const item = new SkillGroupTreeItem({
+            codex: loaded('installed'),
+            'claude-code': loaded('missing'),
+        });
 
         expect(item.iconPath).toEqual(
             new vscode.ThemeIcon(
@@ -25,7 +27,10 @@ describe('SkillGroupTreeItem', () => {
     });
 
     it('shows a spinner while statuses are loading', () => {
-        const item = new SkillGroupTreeItem(unloaded(true));
+        const item = new SkillGroupTreeItem({
+            codex: loaded('installed'),
+            'claude-code': unloaded(true),
+        });
 
         expect(item.iconPath).toEqual(new vscode.ThemeIcon('loading~spin'));
     });

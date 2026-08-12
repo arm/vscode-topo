@@ -5,9 +5,6 @@ import { ListedSkill, NpxSkills } from './npxSkills';
 export const TOPO_SKILL_NAME = 'topo-cli-location';
 export const TOPO_SKILL_AGENTS = ['codex', 'claude-code'] as const;
 export type TopoSkillAgent = (typeof TOPO_SKILL_AGENTS)[number];
-export type TopoSkillStatuses = Readonly<
-    Record<TopoSkillAgent, TopoSkillStatus>
->;
 export const TOPO_SKILL_AGENT_LABELS: Readonly<Record<TopoSkillAgent, string>> =
     {
         codex: 'Codex',
@@ -63,29 +60,16 @@ export class TopoSkill {
         };
     }
 
-    public async getStatuses(): Promise<TopoSkillStatuses> {
-        const [codex, claudeCode] = await Promise.all([
-            this.getStatusForAgent('codex'),
-            this.getStatusForAgent('claude-code'),
-        ]);
-        return {
-            codex,
-            'claude-code': claudeCode,
-        };
-    }
-
     public async areAgentsInstalled(
         agents: readonly TopoSkillAgent[],
     ): Promise<boolean> {
         const statuses = await Promise.all(
-            agents.map((agent) => this.getStatusForAgent(agent)),
+            agents.map((agent) => this.getStatus(agent)),
         );
         return statuses.every((status) => status === 'installed');
     }
 
-    private async getStatusForAgent(
-        agent: TopoSkillAgent,
-    ): Promise<TopoSkillStatus> {
+    public async getStatus(agent: TopoSkillAgent): Promise<TopoSkillStatus> {
         const listedSkills = await this.listInstalledSkills(agent);
         if (listedSkills.length === 0) {
             return 'missing';

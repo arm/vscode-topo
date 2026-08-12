@@ -1,6 +1,10 @@
 import { HostModel } from '../models/hostModel';
 import { TopoCli } from '../services/topoCli';
-import { TopoSkill } from '../services/topoSkill';
+import {
+    TopoSkill,
+    TopoSkillAgent,
+    TOPO_SKILL_AGENTS,
+} from '../services/topoSkill';
 import { errored, loaded, loading } from '../util/loadable';
 
 export class HostController {
@@ -30,12 +34,25 @@ export class HostController {
     }
 
     public async refreshSkillStatus(): Promise<void> {
-        this.hostModel.setSkillStatuses(loading(this.hostModel.skillStatuses));
+        await Promise.all(
+            TOPO_SKILL_AGENTS.map((agent) =>
+                this.refreshAgentSkillStatus(agent),
+            ),
+        );
+    }
+
+    private async refreshAgentSkillStatus(
+        agent: TopoSkillAgent,
+    ): Promise<void> {
+        this.hostModel.setSkillStatus(
+            agent,
+            loading(this.hostModel.skillStatuses[agent]),
+        );
         try {
-            const statuses = await this.topoSkill.getStatuses();
-            this.hostModel.setSkillStatuses(loaded(statuses));
+            const status = await this.topoSkill.getStatus(agent);
+            this.hostModel.setSkillStatus(agent, loaded(status));
         } catch (error) {
-            this.hostModel.setSkillStatuses(errored(error));
+            this.hostModel.setSkillStatus(agent, errored(error));
         }
     }
 }

@@ -28,9 +28,8 @@ describe('HostTreeView', () => {
 
     it('returns Codex and Claude statuses under the skill group', () => {
         const model = new HostModel();
-        model.setSkillStatuses(
-            loaded({ codex: 'installed', 'claude-code': 'missing' }),
-        );
+        model.setSkillStatus('codex', loaded('installed'));
+        model.setSkillStatus('claude-code', loaded('missing'));
         const provider = new HostTreeView(model);
 
         const rootChildren = provider.getChildren();
@@ -117,7 +116,8 @@ describe('HostTreeView', () => {
             new SkillGroupTreeItem(model.skillStatuses),
         );
         expect(provider.getChildren(children[1])).toEqual([
-            new LoadingTreeItem('Checking installations'),
+            new LoadingTreeItem('Codex'),
+            new LoadingTreeItem('Claude Code'),
         ]);
     });
 
@@ -153,10 +153,39 @@ describe('HostTreeView', () => {
         const listener = vi.fn();
         provider.onDidChangeTreeData(listener);
 
-        model.setSkillStatuses(
-            loaded({ codex: 'installed', 'claude-code': 'missing' }),
-        );
+        model.setSkillStatus('codex', loaded('installed'));
 
         expect(listener).toHaveBeenCalled();
+    });
+
+    it('shows a spinner only on the agent whose status is refreshing', () => {
+        const model = new HostModel();
+        model.setSkillStatus('codex', loaded('installed'));
+        model.setSkillStatus('claude-code', loaded('missing', true));
+        const provider = new HostTreeView(model);
+        const skillGroup = provider.getChildren()[1];
+
+        const agentItems = provider.getChildren(skillGroup);
+
+        expect(agentItems).toEqual([
+            new SkillStatusTreeItem('codex', 'installed'),
+            new LoadingTreeItem('Claude Code'),
+        ]);
+    });
+
+    it('returns an error item only for the agent whose check failed', () => {
+        const model = new HostModel();
+        const codexError = errored('list failed');
+        model.setSkillStatus('codex', codexError);
+        model.setSkillStatus('claude-code', loaded('installed'));
+        const provider = new HostTreeView(model);
+        const skillGroup = provider.getChildren()[1];
+
+        const agentItems = provider.getChildren(skillGroup);
+
+        expect(agentItems).toEqual([
+            new ErrorTreeItem('Failed to check Codex skill', codexError),
+            new SkillStatusTreeItem('claude-code', 'installed'),
+        ]);
     });
 });

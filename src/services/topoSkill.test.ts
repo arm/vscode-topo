@@ -48,6 +48,14 @@ describe('TopoSkill', () => {
         });
     }
 
+    async function getStatuses(topoSkill: TopoSkill) {
+        const [codex, claudeCode] = await Promise.all([
+            topoSkill.getStatus('codex'),
+            topoSkill.getStatus('claude-code'),
+        ]);
+        return { codex, 'claude-code': claudeCode };
+    }
+
     beforeEach(() => {
         vi.resetAllMocks();
         npxSkills = mock<NpxSkills>({ userHomePath: userHomeUri.fsPath });
@@ -64,7 +72,7 @@ describe('TopoSkill', () => {
             userHomeUri,
         });
 
-        await expect(topoSkill.getStatuses()).resolves.toEqual({
+        await expect(getStatuses(topoSkill)).resolves.toEqual({
             codex: 'installed',
             'claude-code': 'missing',
         });
@@ -83,7 +91,7 @@ describe('TopoSkill', () => {
             userHomeUri,
         });
 
-        await expect(topoSkill.getStatuses()).resolves.toEqual({
+        await expect(getStatuses(topoSkill)).resolves.toEqual({
             codex: 'missing',
             'claude-code': 'installed',
         });
@@ -101,7 +109,7 @@ describe('TopoSkill', () => {
             userHomeUri,
         });
 
-        await expect(topoSkill.getStatuses()).resolves.toEqual({
+        await expect(getStatuses(topoSkill)).resolves.toEqual({
             codex: 'missing',
             'claude-code': 'missing',
         });
@@ -114,7 +122,7 @@ describe('TopoSkill', () => {
             userHomeUri,
         });
 
-        await expect(topoSkill.getStatuses()).resolves.toEqual({
+        await expect(getStatuses(topoSkill)).resolves.toEqual({
             codex: 'missing',
             'claude-code': 'missing',
         });
@@ -130,7 +138,7 @@ describe('TopoSkill', () => {
             userHomeUri,
         });
 
-        await expect(topoSkill.getStatuses()).resolves.toEqual({
+        await expect(getStatuses(topoSkill)).resolves.toEqual({
             codex: 'missing',
             'claude-code': 'outdated',
         });

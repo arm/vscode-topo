@@ -19,7 +19,10 @@ describe('HostModel', () => {
         const model = new HostModel();
 
         expect(model.health).toStrictEqual(unloaded());
-        expect(model.skillStatuses).toStrictEqual(unloaded());
+        expect(model.skillStatuses).toStrictEqual({
+            codex: unloaded(),
+            'claude-code': unloaded(),
+        });
     });
 
     it('stores the latest host health loadable', async () => {
@@ -39,5 +42,19 @@ describe('HostModel', () => {
         model.setHealth(loaded(hostHealth));
 
         expect(onChanged).toHaveBeenCalledTimes(1);
+    });
+
+    it('updates and emits changes for one agent skill status', () => {
+        const model = new HostModel();
+        const onChanged = vi.fn();
+        model.onSkillStatusesChanged(onChanged);
+
+        model.setSkillStatus('codex', loaded('installed'));
+
+        expect(model.skillStatuses).toStrictEqual({
+            codex: loaded('installed'),
+            'claude-code': unloaded(),
+        });
+        expect(onChanged).toHaveBeenCalledOnce();
     });
 });

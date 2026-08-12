@@ -10,7 +10,10 @@ import { loaded } from '../util/loadable';
 import { SkillStatusTreeItem } from './treeItems/skillStatusTreeItem';
 import { LoadingTreeItem } from './treeItems/loadingTreeItem';
 import { SkillGroupTreeItem } from './treeItems/skillGroupTreeItem';
-import { TOPO_SKILL_AGENTS } from '../services/topoSkill';
+import {
+    TOPO_SKILL_AGENT_LABELS,
+    TOPO_SKILL_AGENTS,
+} from '../services/topoSkill';
 
 function sortHealthChecksByName(
     healthChecks: readonly HealthCheck[],
@@ -81,24 +84,25 @@ export class HostTreeView
         }
 
         if (element instanceof SkillGroupTreeItem) {
-            switch (element.skillStatuses.status) {
-                case 'loaded': {
-                    const statuses = element.skillStatuses.data;
-                    return TOPO_SKILL_AGENTS.map(
-                        (agent) =>
-                            new SkillStatusTreeItem(agent, statuses[agent]),
-                    );
+            return TOPO_SKILL_AGENTS.map((agent) => {
+                const skillStatus = element.skillStatuses[agent];
+                const label = TOPO_SKILL_AGENT_LABELS[agent];
+                if (skillStatus.loading) {
+                    return new LoadingTreeItem(label);
                 }
-                case 'errored':
-                    return [
-                        new ErrorTreeItem(
-                            'Failed to check Topo Agent Skills',
-                            element.skillStatuses,
-                        ),
-                    ];
-                case 'unloaded':
-                    return [new LoadingTreeItem('Checking installations')];
-            }
+
+                switch (skillStatus.status) {
+                    case 'loaded':
+                        return new SkillStatusTreeItem(agent, skillStatus.data);
+                    case 'errored':
+                        return new ErrorTreeItem(
+                            `Failed to check ${label} skill`,
+                            skillStatus,
+                        );
+                    case 'unloaded':
+                        return new LoadingTreeItem(label);
+                }
+            });
         }
 
         return [];
