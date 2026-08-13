@@ -2,6 +2,8 @@ import path from 'node:path';
 import * as vscode from 'vscode';
 import { MockProxy, mock } from 'vitest-mock-extended';
 import { WrappedError } from '../errors/wrappedError';
+import { TOPO_TASK_TYPE } from '../manifest';
+import { TaskCommand } from '../tasks/taskFactory';
 import {
     promptForDestinationPath,
     promptToOpenFolder,
@@ -31,9 +33,13 @@ describe('ProjectCloner', () => {
     let projectCloner: ProjectCloner;
 
     const expectCloneTask = (projectName: string, args: string[]): void => {
-        expect(taskFactory.createProcessTask).toHaveBeenCalledWith(
+        expect(taskFactory.createTask).toHaveBeenCalledWith(
             `Clone ${projectName}`,
-            ['topo', ...args],
+            {
+                type: TOPO_TASK_TYPE,
+                command: TaskCommand.Clone,
+                args,
+            },
         );
         expect(mockRunTask).toHaveBeenCalledWith(task);
     };
@@ -41,7 +47,7 @@ describe('ProjectCloner', () => {
     beforeEach(() => {
         vi.resetAllMocks();
         taskFactory = mock<TaskFactory>();
-        taskFactory.createProcessTask.mockReturnValue(task);
+        taskFactory.createTask.mockReturnValue(task);
         promptForDestinationPathMock.mockResolvedValue(destinationPath);
         resolveProjectNameMock.mockResolvedValue('virtual-bittermelon-peeler');
         projectCloner = new ProjectCloner(taskFactory);
@@ -85,7 +91,6 @@ describe('ProjectCloner', () => {
             'virtual-bittermelon-peeler',
         );
         expectCloneTask('virtual-bittermelon-peeler', [
-            'clone',
             'git:https://example.com/virtual-bittermelon-peeler.git',
             repositoryPath,
         ]);
@@ -101,7 +106,6 @@ describe('ProjectCloner', () => {
         );
 
         expectCloneTask('virtual-bittermelon-peeler', [
-            'clone',
             'https://example.com/virtual-bittermelon-peeler.git',
             path.join(destinationPath, 'virtual-bittermelon-peeler'),
             'model=some-huggingface-id',

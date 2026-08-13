@@ -53,7 +53,7 @@ describe('TaskFactory', () => {
         { type: 'other', command: 'deploy', args: [] },
         { type: TOPO_TASK_TYPE, command: 'deploy', args: 'invalid' },
         { type: TOPO_TASK_TYPE, command: 'deploy', args: [1] },
-        { type: TOPO_TASK_TYPE, command: 'clone', args: [] },
+        { type: TOPO_TASK_TYPE, command: 'unsupported', args: [] },
     ])('does not resolve an invalid definition %#', (invalidDefinition) => {
         expect(resolveTaskDefinition(invalidDefinition)).toBeUndefined();
     });

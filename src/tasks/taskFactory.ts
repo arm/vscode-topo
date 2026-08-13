@@ -6,6 +6,7 @@ import type { TopoCli } from '../services/topoCli';
 import { createTask } from '../util/task';
 
 export enum TaskCommand {
+    Clone = 'clone',
     Configure = 'configure',
     Deploy = 'deploy',
     Health = 'health',

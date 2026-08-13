@@ -1,5 +1,11 @@
 import path from 'node:path';
 import { WrappedError } from '../errors/wrappedError';
+import { TOPO_TASK_TYPE } from '../manifest';
+import {
+    TaskCommand,
+    type TaskDefinition,
+    type TaskFactory,
+} from '../tasks/taskFactory';
 import {
     buildCloneArguments,
     CloneParameters,
@@ -13,7 +19,6 @@ import {
     resolveProjectName,
 } from '../util/projectClone';
 import { runTask } from '../util/task';
-import type { TaskFactory } from '../tasks/taskFactory';
 
 export class ProjectCloner {
     constructor(private readonly taskFactory: TaskFactory) {}
@@ -36,12 +41,19 @@ export class ProjectCloner {
         }
 
         const repositoryPath = path.join(destinationPath, projectName);
-        const cloneTask = this.taskFactory.createProcessTask(
+        const [, ...args] = buildCloneArguments(
+            source,
+            repositoryPath,
+            parameters,
+        );
+        const definition: TaskDefinition = {
+            type: TOPO_TASK_TYPE,
+            command: TaskCommand.Clone,
+            args,
+        };
+        const cloneTask = this.taskFactory.createTask(
             `Clone ${projectName}`,
-            [
-                'topo',
-                ...buildCloneArguments(source, repositoryPath, parameters),
-            ],
+            definition,
         );
         try {
             await runTask(cloneTask);

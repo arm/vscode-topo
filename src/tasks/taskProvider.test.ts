@@ -60,7 +60,7 @@ describe('TaskProvider', () => {
     it('does not resolve an unsupported configured command', () => {
         const definition = {
             type: TOPO_TASK_TYPE,
-            command: 'clone',
+            command: 'unsupported',
             args: [],
         };
         const resolvedTask = taskProvider.resolveTask(
