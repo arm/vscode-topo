@@ -1,5 +1,11 @@
 import path from 'node:path';
 import { WrappedError } from '../errors/wrappedError';
+import { TOPO_TASK_TYPE } from '../manifest';
+import {
+    TaskCommand,
+    type TaskDefinition,
+    type TaskFactory,
+} from '../tasks/taskFactory';
 import {
     buildCloneArguments,
     CloneParameters,
@@ -12,11 +18,10 @@ import {
     promptToOpenFolder,
     resolveProjectName,
 } from '../util/projectClone';
-import { createProcessTask } from '../util/task';
-import { TaskExecutor } from '../util/taskExecutor';
+import { runTask } from '../util/task';
 
 export class ProjectCloner {
-    constructor(private readonly taskExecutor: TaskExecutor) {}
+    constructor(private readonly taskFactory: TaskFactory) {}
 
     public async clone(
         source: CloneSource,
@@ -36,12 +41,22 @@ export class ProjectCloner {
         }
 
         const repositoryPath = path.join(destinationPath, projectName);
-        const cloneTask = createProcessTask(`Clone ${projectName}`, [
-            'topo',
-            ...buildCloneArguments(source, repositoryPath, parameters),
-        ]);
+        const [, ...args] = buildCloneArguments(
+            source,
+            repositoryPath,
+            parameters,
+        );
+        const definition: TaskDefinition = {
+            type: TOPO_TASK_TYPE,
+            command: TaskCommand.Clone,
+            args,
+        };
+        const cloneTask = this.taskFactory.createTask(
+            `Clone ${projectName}`,
+            definition,
+        );
         try {
-            await this.taskExecutor.run(cloneTask);
+            await runTask(cloneTask);
         } catch (error) {
             throw new WrappedError('CLONE', getErrorMessage(error), [], {
                 cause: error,

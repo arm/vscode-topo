@@ -2,16 +2,21 @@ import path from 'node:path';
 import * as vscode from 'vscode';
 import { getErrorMessage } from '../util/getErrorMessage';
 import { assertComposeFilePath, COMPOSE_FILE_NAME } from '../util/composeFile';
-import { createProcessTask } from '../util/task';
-import { TaskExecutor } from '../util/taskExecutor';
+import { runTask } from '../util/task';
 import { assertProjectTreeItem } from '../views/treeItems/assertProjectTreeItem';
+import { TOPO_TASK_TYPE } from '../manifest';
+import {
+    TaskCommand,
+    type TaskDefinition,
+    type TaskFactory,
+} from '../tasks/taskFactory';
 
 const viewLogsItem: vscode.MessageItem = {
     title: 'View Logs',
 };
 
 export class Configure {
-    constructor(private readonly taskExecutor: TaskExecutor) {}
+    constructor(private readonly taskFactory: TaskFactory) {}
 
     public async configureContextCommandHandler(
         resource?: vscode.Uri,
@@ -20,7 +25,7 @@ export class Configure {
             throw new Error('No compose.yaml selected for configuration');
         }
 
-        await configure(this.taskExecutor, resource.fsPath);
+        await configure(this.taskFactory, resource.fsPath);
     }
 
     public async configureProjectCommandHandler(
@@ -32,23 +37,23 @@ export class Configure {
 }
 
 export async function configure(
-    taskExecutor: TaskExecutor,
+    taskFactory: TaskFactory,
     composeFilePath: string,
 ): Promise<void> {
     assertComposeFilePath(composeFilePath);
     const composeFileDir = path.dirname(composeFilePath);
     const projectName = path.basename(composeFileDir);
-    const task = createProcessTask(
-        `Configure ${projectName}`,
-        ['topo', 'configure', '--file', COMPOSE_FILE_NAME],
-        {
-            cwd: composeFileDir,
-        },
-    );
+    const definition: TaskDefinition = {
+        type: TOPO_TASK_TYPE,
+        command: TaskCommand.Configure,
+        args: ['--file', COMPOSE_FILE_NAME],
+        options: { cwd: composeFileDir },
+    };
+    const task = taskFactory.createTask(`Configure ${projectName}`, definition);
     const taskName = task.name;
 
     try {
-        await taskExecutor.run(task);
+        await runTask(task);
     } catch (error: unknown) {
         const terminal = vscode.window.terminals.find(
             (candidate) => candidate.name === taskName,
