@@ -7,6 +7,27 @@ All notable changes to the "vscode-topo" extension will be documented in this fi
 
 
 
+
+## 0.16.0
+
+<!-- Release notes generated using configuration in .github/release.yml at 93101e645fda27f5820c191f57dc7c650d4936e8 -->
+
+## What's Changed
+### Breaking Changes
+* feat!: remove project init command (#411)
+* feat!: add topo skill item to topo host view (#402)
+### Features and Enhancements
+* feat: only support compose.yaml (#388)
+* feat: remove skill overwriting confirmation (#391)
+* feat: show target issues in the status bar (#390)
+* feat: improve messages for deployment errors related to settings (#396)
+* feat: only support compose.yaml for configure command (#399)
+* feat: support configured deploy and stop task (#400)
+
+
+**Full Changelog**: https://github.com/arm/vscode-topo/compare/v0.14.0...v0.16.0
+
+
 ## 0.14.0
 
 <!-- Release notes generated using configuration in .github/release.yml at eeb81e838b66cdbeb5e20b17a4a4663465d261d3 -->
