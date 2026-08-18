@@ -15,11 +15,13 @@ describe('NpxSkills', () => {
         const npxSkills = new NpxSkills();
         const command = npxSkills.createAddCommand('/fake/skill');
 
-        expect(command).toEqual({
-            executable: process.platform === 'win32' ? 'npx.cmd' : 'npx',
-            arguments: ['--yes', 'skills', 'add', '/fake/skill', '--global'],
-            cwd: os.homedir(),
-        });
+        expect(command).toEqual(
+            expect.objectContaining({
+                process: process.platform === 'win32' ? 'npx.cmd' : 'npx',
+                args: ['--yes', 'skills', 'add', '/fake/skill', '--global'],
+                options: { cwd: os.homedir() },
+            }),
+        );
     });
 
     it('lists global skills as structured data', async () => {

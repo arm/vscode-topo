@@ -35,11 +35,13 @@ describe('InstallSkill', () => {
     beforeEach(() => {
         vi.resetAllMocks();
         topoSkill = mock<TopoSkill>();
-        topoSkill.createInstallCommand.mockReturnValue({
-            executable: 'npx',
-            arguments: ['--yes', 'skills', 'add', '/fake/skill', '--global'],
-            cwd: '/fake/home',
-        });
+        topoSkill.createInstallCommand.mockReturnValue(
+            new vscode.ProcessExecution(
+                'npx',
+                ['--yes', 'skills', 'add', '/fake/skill', '--global'],
+                { cwd: '/fake/home' },
+            ),
+        );
         action = new InstallSkill(topoSkill);
     });
 

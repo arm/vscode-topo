@@ -9,13 +9,7 @@ export class InstallSkill {
     constructor(private readonly topoSkill: TopoSkill) {}
 
     public async installSkillCommandHandler(): Promise<void> {
-        const command = this.topoSkill.createInstallCommand();
-        const execution = new vscode.ProcessExecution(
-            command.executable,
-            [...command.arguments],
-            { cwd: command.cwd },
-        );
-
+        const execution = this.topoSkill.createInstallCommand();
         await runTask(createTask(INSTALL_TASK_NAME, execution));
         await vscode.commands.executeCommand(refreshSkillStatus);
     }

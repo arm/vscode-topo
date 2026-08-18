@@ -1,4 +1,5 @@
 import os from 'node:os';
+import * as vscode from 'vscode';
 import { array, create, Infer, string, type } from 'superstruct';
 import { WrappedError } from '../errors/wrappedError';
 import { execFile } from '../util/exec';
@@ -12,22 +13,16 @@ const listedSkillsSchema = array(listedSkillSchema);
 
 export type ListedSkill = Infer<typeof listedSkillSchema>;
 
-export interface ProcessCommand {
-    readonly executable: string;
-    readonly arguments: readonly string[];
-    readonly cwd: string;
-}
-
 export class NpxSkills {
     private readonly userHomePath = os.homedir();
     private readonly npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 
-    public createAddCommand(sourcePath: string): ProcessCommand {
-        return {
-            executable: this.npx,
-            arguments: ['--yes', 'skills', 'add', sourcePath, '--global'],
-            cwd: this.userHomePath,
-        };
+    public createAddCommand(sourcePath: string): vscode.ProcessExecution {
+        return new vscode.ProcessExecution(
+            this.npx,
+            ['--yes', 'skills', 'add', sourcePath, '--global'],
+            { cwd: this.userHomePath },
+        );
     }
 
     public async listGlobal(): Promise<ListedSkill[]> {

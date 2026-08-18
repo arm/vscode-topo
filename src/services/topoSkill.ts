@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { ListedSkill, NpxSkills, ProcessCommand } from './npxSkills';
+import { ListedSkill, NpxSkills } from './npxSkills';
 
 export const TOPO_SKILL_NAME = 'topo-cli-location';
 
@@ -95,7 +95,7 @@ export class TopoSkill {
         );
     }
 
-    public createInstallCommand(): ProcessCommand {
+    public createInstallCommand(): vscode.ProcessExecution {
         return this.npxSkills.createAddCommand(this.bundledDirectoryUri.fsPath);
     }
 }

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { mock, MockProxy } from 'vitest-mock-extended';
-import { ListedSkill, NpxSkills, ProcessCommand } from './npxSkills';
+import { ListedSkill, NpxSkills } from './npxSkills';
 import { TopoSkill } from './topoSkill';
 
 describe('TopoSkill', () => {
@@ -183,11 +183,9 @@ describe('TopoSkill', () => {
     });
 
     it('creates a command to install the bundled skill globally', () => {
-        const command: ProcessCommand = {
-            executable: 'npx',
-            arguments: ['skills', 'add'],
+        const command = new vscode.ProcessExecution('npx', ['skills', 'add'], {
             cwd: '/fake/home',
-        };
+        });
         npxSkills.createAddCommand.mockReturnValue(command);
         const topoSkill = new TopoSkill(extensionUri, npxSkills);
 
