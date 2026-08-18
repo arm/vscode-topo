@@ -46,8 +46,6 @@ describe('TopoSkill', () => {
     beforeEach(() => {
         vi.resetAllMocks();
         npxSkills = mock<NpxSkills>();
-        npxSkills.listGlobal.mockResolvedValue([]);
-        mockSkillFiles({});
     });
 
     it('reports a listed current skill as installed', async () => {
@@ -183,9 +181,7 @@ describe('TopoSkill', () => {
     });
 
     it('creates a command to install the bundled skill globally', () => {
-        const command = new vscode.ProcessExecution('npx', ['skills', 'add'], {
-            cwd: '/fake/home',
-        });
+        const command = mock<vscode.ProcessExecution>();
         npxSkills.createAddCommand.mockReturnValue(command);
         const topoSkill = new TopoSkill(extensionUri, npxSkills);
 

@@ -30,18 +30,14 @@ const { uninstallSkill } = loadModule('../../scripts/uninstall.cjs') as {
 
 describe('InstallSkill', () => {
     let topoSkill: MockProxy<TopoSkill>;
+    let execution: MockProxy<vscode.ProcessExecution>;
     let action: InstallSkill;
 
     beforeEach(() => {
         vi.resetAllMocks();
         topoSkill = mock<TopoSkill>();
-        topoSkill.createInstallCommand.mockReturnValue(
-            new vscode.ProcessExecution(
-                'npx',
-                ['--yes', 'skills', 'add', '/fake/skill', '--global'],
-                { cwd: '/fake/home' },
-            ),
-        );
+        execution = mock<vscode.ProcessExecution>();
+        topoSkill.createInstallCommand.mockReturnValue(execution);
         action = new InstallSkill(topoSkill);
     });
 
@@ -54,11 +50,7 @@ describe('InstallSkill', () => {
         expect(mockRunTask).toHaveBeenCalledExactlyOnceWith(
             expect.objectContaining({
                 name: 'Install Topo Agent Skill',
-                execution: expect.objectContaining({
-                    process: 'npx',
-                    args: ['--yes', 'skills', 'add', '/fake/skill', '--global'],
-                    options: { cwd: '/fake/home' },
-                }),
+                execution,
             }),
         );
         expect(vscode.commands.executeCommand).toHaveBeenCalledWith(

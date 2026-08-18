@@ -8,7 +8,6 @@ vi.mock('../util/exec', () => ({ execFile: vi.fn() }));
 describe('NpxSkills', () => {
     beforeEach(() => {
         vi.resetAllMocks();
-        vi.mocked(execFile).mockResolvedValue({ stdout: '', stderr: '' });
     });
 
     it('creates the global add command', () => {
