@@ -1,48 +1,50 @@
 import * as vscode from 'vscode';
-import os from 'node:os';
-import { createProcessTask } from './task';
+import { createTask, runTask } from './task';
 import { mutable } from './test/mutable';
+import type { Mock } from 'vitest';
 
-const workspaceFolder: vscode.WorkspaceFolder = {
-    uri: vscode.Uri.file('/workspace/project'),
-    name: 'project',
-    index: 0,
-};
+describe('runTask', () => {
+    const task = createTask(
+        'Fix Debugger',
+        new vscode.ProcessExecution('topo', ['install']),
+    );
+    const taskExecution: vscode.TaskExecution = {
+        task,
+        terminate: vi.fn(),
+    };
+    let taskEndListener:
+        ((event: vscode.TaskProcessEndEvent) => void) | undefined;
+    let dispose: Mock;
 
-describe('createProcessTask', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        mutable(vscode.workspace).workspaceFolders = undefined;
-        vi.mocked(vscode.workspace.getWorkspaceFolder).mockReturnValue(
-            undefined,
-        );
+        dispose = vi.fn();
+        taskEndListener = undefined;
+        vi.mocked(vscode.tasks.executeTask).mockResolvedValue(taskExecution);
+        mutable(vscode.tasks).onDidEndTaskProcess = (callback, thisArg) => {
+            taskEndListener = thisArg ? callback.bind(thisArg) : callback;
+            return { dispose };
+        };
     });
 
-    it('uses the containing workspace folder as scope when cwd is inside a workspace', () => {
-        mutable(vscode.workspace).workspaceFolders = [workspaceFolder];
-        vi.mocked(vscode.workspace.getWorkspaceFolder).mockReturnValue(
-            workspaceFolder,
-        );
+    it('resolves when the matching task process succeeds', async () => {
+        const runningTask = runTask(task);
+        await Promise.resolve();
+        taskEndListener?.({ execution: taskExecution, exitCode: 0 });
 
-        const task = createProcessTask('Deploy', ['topo', 'deploy'], {
-            cwd: '/workspace/project/app',
-        });
-
-        expect(task).toMatchObject({
-            scope: workspaceFolder,
-            execution: expect.objectContaining({
-                options: { cwd: '/workspace/project/app' },
-            }),
-        });
+        await expect(runningTask).resolves.toBeUndefined();
+        expect(vscode.tasks.executeTask).toHaveBeenCalledWith(task);
+        expect(dispose).toHaveBeenCalledOnce();
     });
 
-    it('uses the user home directory when no workspace or cwd is available', () => {
-        const task = createProcessTask('Fix Debugger', ['topo', 'install']);
+    it('rejects when the matching task process exits unsuccessfully', async () => {
+        const runningTask = runTask(task);
+        await Promise.resolve();
+        taskEndListener?.({ execution: taskExecution, exitCode: 1 });
 
-        expect(task).toMatchObject({
-            execution: expect.objectContaining({
-                options: { cwd: os.homedir() },
-            }),
-        });
+        await expect(runningTask).rejects.toThrow(
+            'Fix Debugger failed with exit code 1',
+        );
+        expect(dispose).toHaveBeenCalledOnce();
     });
 });

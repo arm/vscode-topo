@@ -1,12 +1,7 @@
 import * as vscode from 'vscode';
-import os from 'node:os';
 import { PACKAGE_NAME } from '../manifest';
 
-export interface TaskOptions {
-    cwd?: string;
-}
-
-export type TaskExecution =
+type TaskExecution =
     vscode.ProcessExecution | vscode.ShellExecution | vscode.CustomExecution;
 
 function getTaskScope(
@@ -18,32 +13,6 @@ function getTaskScope(
 
     const workspace = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(cwd));
     return workspace ?? vscode.TaskScope.Workspace;
-}
-
-function getProcessExecutionCwd(cwd: string | undefined): string | undefined {
-    const hasWorkspace = (vscode.workspace.workspaceFolders?.length ?? 0) > 0;
-    if (cwd || hasWorkspace) {
-        return cwd;
-    }
-
-    return os.homedir();
-}
-
-export function createProcessTask(
-    taskName: string,
-    command: string[],
-    opts?: TaskOptions,
-): vscode.Task {
-    const [cmd, ...args] = command;
-    if (!cmd) {
-        throw new Error('No command passed to task');
-    }
-
-    const processExecution = new vscode.ProcessExecution(cmd, args, {
-        cwd: getProcessExecutionCwd(opts?.cwd),
-    });
-
-    return createTask(taskName, processExecution);
 }
 
 export function createTask(
@@ -75,7 +44,7 @@ export async function runTask(task: vscode.Task): Promise<void> {
     await waitForTaskProcess(taskExecution, task.name);
 }
 
-export function waitForTaskProcess(
+function waitForTaskProcess(
     taskExecution: vscode.TaskExecution,
     taskName = taskExecution.task.name,
 ): Promise<void> {

@@ -5,7 +5,7 @@
     "publisher": "Arm",
     "description": "Compose, configure, and deploy containerized examples for Arm hardware",
     "license": "Apache-2.0",
-    "version": "0.14.0",
+    "version": "0.16.0",
     "engines": {
         "vscode": "^1.109.0",
         "node": "22",
@@ -47,6 +47,7 @@
                     "command": {
                         "type": "string",
                         "enum": [
+                            "clone",
                             "configure",
                             "deploy",
                             "health",

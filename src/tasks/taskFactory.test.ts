@@ -1,7 +1,10 @@
+import os from 'node:os';
+import * as vscode from 'vscode';
 import { mock, type MockProxy } from 'vitest-mock-extended';
 import { contributes } from '../../package.json';
 import { TOPO_TASK_TYPE } from '../manifest';
 import { TopoCli } from '../services/topoCli';
+import { mutable } from '../util/test/mutable';
 import {
     resolveTaskDefinition,
     TaskCommand,
@@ -24,6 +27,11 @@ describe('TaskFactory', () => {
     let taskFactory: TaskFactory;
 
     beforeEach(() => {
+        vi.clearAllMocks();
+        mutable(vscode.workspace).workspaceFolders = undefined;
+        vi.mocked(vscode.workspace.getWorkspaceFolder).mockReturnValue(
+            undefined,
+        );
         topoCli = mock<TopoCli>();
         topoCli.getBinaryPath.mockReturnValue(topoBinaryPath);
         taskFactory = new TaskFactory(topoCli);
@@ -45,7 +53,7 @@ describe('TaskFactory', () => {
         { type: 'other', command: 'deploy', args: [] },
         { type: TOPO_TASK_TYPE, command: 'deploy', args: 'invalid' },
         { type: TOPO_TASK_TYPE, command: 'deploy', args: [1] },
-        { type: TOPO_TASK_TYPE, command: 'clone', args: [] },
+        { type: TOPO_TASK_TYPE, command: 'unsupported', args: [] },
     ])('does not resolve an invalid definition %#', (invalidDefinition) => {
         expect(resolveTaskDefinition(invalidDefinition)).toBeUndefined();
     });
@@ -60,6 +68,42 @@ describe('TaskFactory', () => {
                 cwd: '/projects/welcome',
                 env: { GREETING_STYLE: 'enthusiastic' },
             },
+        });
+    });
+
+    it('creates a process task using the bundled Topo CLI', () => {
+        const task = taskFactory.createProcessTask('Clone project', [
+            'topo',
+            'clone',
+            'git:https://example.com/project.git',
+        ]);
+
+        expect(task.execution).toMatchObject({
+            process: topoBinaryPath,
+            args: ['clone', 'git:https://example.com/project.git'],
+        });
+    });
+
+    it('leaves non-Topo process task commands unchanged', () => {
+        const task = taskFactory.createProcessTask('List containers', [
+            'docker',
+            'ps',
+        ]);
+
+        expect(task.execution).toMatchObject({
+            process: 'docker',
+            args: ['ps'],
+        });
+    });
+
+    it('uses the user home directory when no workspace or cwd is available', () => {
+        const task = taskFactory.createProcessTask('Fix Debugger', [
+            'topo',
+            'install',
+        ]);
+
+        expect(task.execution).toMatchObject({
+            options: { cwd: os.homedir() },
         });
     });
 

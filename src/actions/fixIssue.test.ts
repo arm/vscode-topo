@@ -6,10 +6,14 @@ import { HealthCheckGroupTreeItem } from '../views/treeItems/healthCheckGroupTre
 import { HealthCheckTreeItem } from '../views/treeItems/healthCheckTreeItem';
 import { HealthCheck } from '../services/topoCliSchema';
 import { TargetModel } from '../models/targetModel';
-import { TaskExecutor } from '../util/taskExecutor';
 import { refreshSelectedTargetHealth } from '../commandIds';
+import { runTask } from '../util/task';
+import type { TaskFactory } from '../tasks/taskFactory';
 
 vi.mock('../util/logger');
+vi.mock('../util/task');
+
+const mockRunTask = vi.mocked(runTask);
 
 type ShowQuickPickMany = <T extends vscode.QuickPickItem>(
     items: T[],
@@ -27,9 +31,15 @@ const mockSelectedQuickPickItems = <T extends vscode.QuickPickItem>(
 
 describe('FixIssue', () => {
     let targetModel: TargetModel;
-    let taskExecutor: MockProxy<TaskExecutor>;
+    let taskFactory: MockProxy<TaskFactory>;
 
     const target = 'user@topo.local';
+    const task = new vscode.Task(
+        { type: 'process' },
+        vscode.TaskScope.Workspace,
+        'Fix task',
+        'topo',
+    );
     const healthChecks: HealthCheck[] = [
         {
             name: 'Container Engine',
@@ -57,7 +67,7 @@ describe('FixIssue', () => {
     ];
 
     const createFixIssue = (): FixIssue =>
-        new FixIssue(taskExecutor, targetModel);
+        new FixIssue(taskFactory, targetModel);
 
     const createHealthGroupItem = (
         targetHealthChecks: HealthCheck[],
@@ -66,7 +76,8 @@ describe('FixIssue', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-        taskExecutor = mock<TaskExecutor>();
+        taskFactory = mock<TaskFactory>();
+        taskFactory.createProcessTask.mockReturnValue(task);
         targetModel = new TargetModel();
         targetModel.setSelected(target);
     });
@@ -76,17 +87,18 @@ describe('FixIssue', () => {
         if (!command) {
             throw new Error('Expected debugger health check to include a fix');
         }
-        const task = createFixIssueTask(target, ['Debugger'], command);
-
-        expect(task).toMatchObject(
-            expect.objectContaining({
-                name: `Fix Debugger on ${target}`,
-                execution: expect.objectContaining({
-                    process: 'topo',
-                    args: ['install', 'debugger', '--target', target],
-                }),
-            }),
+        const createdTask = createFixIssueTask(
+            taskFactory,
+            target,
+            ['Debugger'],
+            command,
         );
+
+        expect(taskFactory.createProcessTask).toHaveBeenCalledWith(
+            `Fix Debugger on ${target}`,
+            ['topo', 'install', 'debugger', '--target', target],
+        );
+        expect(createdTask).toBe(task);
     });
 
     it('runs a single issue fix directly', async () => {
@@ -98,15 +110,11 @@ describe('FixIssue', () => {
         await fixIssue.fixIssueCommandHandler(healthCheckItem);
 
         expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
-        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-        expect(taskExecutor.run).toHaveBeenNthCalledWith(
-            1,
-            expect.objectContaining({
-                execution: expect.objectContaining({
-                    args: ['install', 'container-engine', '--target', target],
-                }),
-            }),
+        expect(taskFactory.createProcessTask).toHaveBeenCalledWith(
+            `Fix Container Engine on ${target}`,
+            ['topo', 'install', 'container-engine', '--target', target],
         );
+        expect(mockRunTask).toHaveBeenCalledWith(task);
         expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
             refreshSelectedTargetHealth,
         );
@@ -122,14 +130,14 @@ describe('FixIssue', () => {
             fixIssue.fixIssueCommandHandler(healthCheckItem),
         ).rejects.toThrow('No executable fix found for the selected item');
 
-        expect(taskExecutor.run).not.toHaveBeenCalled();
+        expect(mockRunTask).not.toHaveBeenCalled();
         expect(vscode.commands.executeCommand).not.toHaveBeenCalledWith(
             refreshSelectedTargetHealth,
         );
     });
 
     it('refreshes after an issue fix task fails', async () => {
-        taskExecutor.run.mockRejectedValueOnce(new Error('fix failed'));
+        mockRunTask.mockRejectedValueOnce(new Error('fix failed'));
         const fixIssue = createFixIssue();
         const healthCheckItem = new HealthCheckTreeItem(
             loaded(healthChecks[0]),
@@ -137,7 +145,7 @@ describe('FixIssue', () => {
 
         await fixIssue.fixIssueCommandHandler(healthCheckItem);
 
-        expect(taskExecutor.run).toHaveBeenCalledOnce();
+        expect(mockRunTask).toHaveBeenCalledOnce();
         expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
             refreshSelectedTargetHealth,
         );
@@ -154,7 +162,7 @@ describe('FixIssue', () => {
             fixIssue.fixIssueCommandHandler(healthCheckItem),
         ).rejects.toThrow('No selected target found');
 
-        expect(taskExecutor.run).not.toHaveBeenCalled();
+        expect(mockRunTask).not.toHaveBeenCalled();
         expect(vscode.commands.executeCommand).not.toHaveBeenCalledWith(
             refreshSelectedTargetHealth,
         );
@@ -188,15 +196,11 @@ describe('FixIssue', () => {
                 placeHolder: `Select fixes for ${target}`,
             },
         );
-        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-        expect(taskExecutor.run).toHaveBeenNthCalledWith(
-            1,
-            expect.objectContaining({
-                execution: expect.objectContaining({
-                    args: ['install', 'container-engine', '--target', target],
-                }),
-            }),
+        expect(taskFactory.createProcessTask).toHaveBeenCalledWith(
+            `Fix Container Engine on ${target}`,
+            ['topo', 'install', 'container-engine', '--target', target],
         );
+        expect(mockRunTask).toHaveBeenCalledWith(task);
         expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
             refreshSelectedTargetHealth,
         );
@@ -236,15 +240,11 @@ describe('FixIssue', () => {
                 placeHolder: `Select fixes for ${target}`,
             },
         );
-        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-        expect(taskExecutor.run).toHaveBeenNthCalledWith(
-            1,
-            expect.objectContaining({
-                execution: expect.objectContaining({
-                    args: ['install', 'debugger', '--target', target],
-                }),
-            }),
+        expect(taskFactory.createProcessTask).toHaveBeenCalledWith(
+            `Fix Debugger on ${target}`,
+            ['topo', 'install', 'debugger', '--target', target],
         );
+        expect(mockRunTask).toHaveBeenCalledWith(task);
     });
 
     it('runs each selected target issue fix', async () => {
@@ -267,23 +267,17 @@ describe('FixIssue', () => {
 
         await fixIssue.fixIssueCommandHandler(healthGroupItem);
 
-        expect(taskExecutor.run).toHaveBeenCalledTimes(2);
-        expect(taskExecutor.run).toHaveBeenNthCalledWith(
+        expect(taskFactory.createProcessTask).toHaveBeenNthCalledWith(
             1,
-            expect.objectContaining({
-                execution: expect.objectContaining({
-                    args: ['install', 'container-engine', '--target', target],
-                }),
-            }),
+            `Fix Container Engine on ${target}`,
+            ['topo', 'install', 'container-engine', '--target', target],
         );
-        expect(taskExecutor.run).toHaveBeenNthCalledWith(
+        expect(taskFactory.createProcessTask).toHaveBeenNthCalledWith(
             2,
-            expect.objectContaining({
-                execution: expect.objectContaining({
-                    args: ['install', 'debugger', '--target', target],
-                }),
-            }),
+            `Fix Debugger on ${target}`,
+            ['topo', 'install', 'debugger', '--target', target],
         );
+        expect(mockRunTask).toHaveBeenCalledTimes(2);
         expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
             refreshSelectedTargetHealth,
         );
@@ -331,16 +325,11 @@ describe('FixIssue', () => {
 
         await fixIssue.fixIssueCommandHandler(healthGroupItem);
 
-        expect(taskExecutor.run).toHaveBeenCalledTimes(1);
-        expect(taskExecutor.run).toHaveBeenNthCalledWith(
-            1,
-            expect.objectContaining({
-                name: `Fix Remoteproc Runtime, Remoteproc Shim on ${target}`,
-                execution: expect.objectContaining({
-                    args: ['install', 'remoteproc', '--target', target],
-                }),
-            }),
+        expect(taskFactory.createProcessTask).toHaveBeenCalledWith(
+            `Fix Remoteproc Runtime, Remoteproc Shim on ${target}`,
+            ['topo', 'install', 'remoteproc', '--target', target],
         );
+        expect(mockRunTask).toHaveBeenCalledOnce();
     });
 
     it('refreshes when target issue selection is cancelled', async () => {
@@ -350,7 +339,7 @@ describe('FixIssue', () => {
 
         await fixIssue.fixIssueCommandHandler(healthGroupItem);
 
-        expect(taskExecutor.run).not.toHaveBeenCalled();
+        expect(mockRunTask).not.toHaveBeenCalled();
         expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
             refreshSelectedTargetHealth,
         );
@@ -367,7 +356,7 @@ describe('FixIssue', () => {
         );
 
         expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
-        expect(taskExecutor.run).not.toHaveBeenCalled();
+        expect(mockRunTask).not.toHaveBeenCalled();
         expect(vscode.commands.executeCommand).not.toHaveBeenCalledWith(
             refreshSelectedTargetHealth,
         );

@@ -1,46 +1,56 @@
-import os from 'node:os';
 import path from 'node:path';
 import * as vscode from 'vscode';
 import { MockProxy, mock } from 'vitest-mock-extended';
 import { WrappedError } from '../errors/wrappedError';
+import { TOPO_TASK_TYPE } from '../manifest';
+import { TaskCommand } from '../tasks/taskFactory';
 import {
     promptForDestinationPath,
     promptToOpenFolder,
     resolveProjectName,
 } from '../util/projectClone';
-import { TaskExecutor } from '../util/taskExecutor';
+import { runTask } from '../util/task';
+import type { TaskFactory } from '../tasks/taskFactory';
 import { ProjectCloner } from './projectCloner';
 
 vi.mock('../util/projectClone');
+vi.mock('../util/task');
 
 const promptForDestinationPathMock = vi.mocked(promptForDestinationPath);
 const promptToOpenFolderMock = vi.mocked(promptToOpenFolder);
 const resolveProjectNameMock = vi.mocked(resolveProjectName);
+const mockRunTask = vi.mocked(runTask);
 
 describe('ProjectCloner', () => {
     const destinationPath = path.resolve('home', 'destination');
-    let taskExecutor: MockProxy<TaskExecutor>;
+    const task = new vscode.Task(
+        { type: 'process' },
+        vscode.TaskScope.Workspace,
+        'Clone task',
+        'topo',
+    );
+    let taskFactory: MockProxy<TaskFactory>;
     let projectCloner: ProjectCloner;
 
-    const expectCloneTask = (
-        task: vscode.Task,
-        projectName: string,
-        args: string[],
-    ): void => {
-        expect(task.name).toBe(`Clone ${projectName}`);
-        expect(task.execution).toMatchObject({
-            process: 'topo',
-            args,
-            options: { cwd: os.homedir() },
-        });
+    const expectCloneTask = (projectName: string, args: string[]): void => {
+        expect(taskFactory.createTask).toHaveBeenCalledWith(
+            `Clone ${projectName}`,
+            {
+                type: TOPO_TASK_TYPE,
+                command: TaskCommand.Clone,
+                args,
+            },
+        );
+        expect(mockRunTask).toHaveBeenCalledWith(task);
     };
 
     beforeEach(() => {
         vi.resetAllMocks();
-        taskExecutor = mock<TaskExecutor>();
+        taskFactory = mock<TaskFactory>();
+        taskFactory.createTask.mockReturnValue(task);
         promptForDestinationPathMock.mockResolvedValue(destinationPath);
         resolveProjectNameMock.mockResolvedValue('virtual-bittermelon-peeler');
-        projectCloner = new ProjectCloner(taskExecutor);
+        projectCloner = new ProjectCloner(taskFactory);
     });
 
     it('stops when destination selection is cancelled', async () => {
@@ -52,7 +62,7 @@ describe('ProjectCloner', () => {
         });
 
         expect(resolveProjectNameMock).not.toHaveBeenCalled();
-        expect(taskExecutor.run).not.toHaveBeenCalled();
+        expect(mockRunTask).not.toHaveBeenCalled();
     });
 
     it('stops when project name selection is cancelled', async () => {
@@ -67,7 +77,7 @@ describe('ProjectCloner', () => {
             destinationPath,
             'virtual-bittermelon-peeler',
         );
-        expect(taskExecutor.run).not.toHaveBeenCalled();
+        expect(mockRunTask).not.toHaveBeenCalled();
     });
 
     it('runs a clone task and then offers the post-clone action', async () => {
@@ -80,15 +90,10 @@ describe('ProjectCloner', () => {
             destinationPath,
             'virtual-bittermelon-peeler',
         );
-        expectCloneTask(
-            taskExecutor.run.mock.calls[0][0],
-            'virtual-bittermelon-peeler',
-            [
-                'clone',
-                'git:https://example.com/virtual-bittermelon-peeler.git',
-                repositoryPath,
-            ],
-        );
+        expectCloneTask('virtual-bittermelon-peeler', [
+            'git:https://example.com/virtual-bittermelon-peeler.git',
+            repositoryPath,
+        ]);
         expect(promptToOpenFolderMock).toHaveBeenCalledWith(repositoryPath);
     });
 
@@ -100,21 +105,16 @@ describe('ProjectCloner', () => {
             { model: 'some-huggingface-id' },
         );
 
-        expectCloneTask(
-            taskExecutor.run.mock.calls[0][0],
-            'virtual-bittermelon-peeler',
-            [
-                'clone',
-                'https://example.com/virtual-bittermelon-peeler.git',
-                path.join(destinationPath, 'virtual-bittermelon-peeler'),
-                'model=some-huggingface-id',
-            ],
-        );
+        expectCloneTask('virtual-bittermelon-peeler', [
+            'https://example.com/virtual-bittermelon-peeler.git',
+            path.join(destinationPath, 'virtual-bittermelon-peeler'),
+            'model=some-huggingface-id',
+        ]);
     });
 
     it('wraps task errors and skips prompting to open clone result folder', async () => {
         const error = new Error('task fail');
-        taskExecutor.run.mockRejectedValueOnce(error);
+        mockRunTask.mockRejectedValueOnce(error);
 
         await expect(
             projectCloner.clone({
@@ -138,6 +138,6 @@ describe('ProjectCloner', () => {
                 url: 'not-a-valid-url',
             }),
         ).rejects.toBeInstanceOf(WrappedError);
-        expect(taskExecutor.run).not.toHaveBeenCalled();
+        expect(mockRunTask).not.toHaveBeenCalled();
     });
 });

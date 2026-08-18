@@ -3,14 +3,14 @@ import { refreshSelectedTargetHealth } from '../commandIds';
 import { HealthCheckGroupTreeItem } from '../views/treeItems/healthCheckGroupTreeItem';
 import { HealthCheckTreeItem } from '../views/treeItems/healthCheckTreeItem';
 import { showAndLogError } from '../util/showAndLog';
-import { createProcessTask } from '../util/task';
-import { TaskExecutor } from '../util/taskExecutor';
+import { runTask } from '../util/task';
 import { TargetModel } from '../models/targetModel';
 import {
     hasFixCommand,
     type FixableIssue,
     getIssueFixCommandGroups,
 } from '../util/issueFixes';
+import type { TaskFactory } from '../tasks/taskFactory';
 
 type IssueFixQuickPickItem = vscode.QuickPickItem & {
     issue: FixableIssue;
@@ -29,7 +29,7 @@ function getIssueFixQuickPickItems(
 
 export class FixIssue {
     constructor(
-        private readonly taskExecutor: TaskExecutor,
+        private readonly taskFactory: TaskFactory,
         private readonly targetModel: TargetModel,
     ) {}
 
@@ -122,10 +122,15 @@ export class FixIssue {
         command: string,
     ): Promise<void> {
         const issueName = issueNames.join(', ');
-        const task = createFixIssueTask(target, issueNames, command);
+        const task = createFixIssueTask(
+            this.taskFactory,
+            target,
+            issueNames,
+            command,
+        );
 
         try {
-            await this.taskExecutor.run(task);
+            await runTask(task);
             vscode.window.showInformationMessage(
                 `${issueName} fixed on target ${target}`,
             );
@@ -139,11 +144,15 @@ export class FixIssue {
 }
 
 export function createFixIssueTask(
+    taskFactory: TaskFactory,
     target: string,
     issueNames: readonly string[],
     command: string,
 ): vscode.Task {
     const issueName = issueNames.join(', ');
     const commandArgs = command.trim().split(/\s+/);
-    return createProcessTask(`Fix ${issueName} on ${target}`, commandArgs);
+    return taskFactory.createProcessTask(
+        `Fix ${issueName} on ${target}`,
+        commandArgs,
+    );
 }

@@ -1,10 +1,12 @@
 import * as vscode from 'vscode';
+import os from 'node:os';
 import { array, enums, is, literal, string, type } from 'superstruct';
 import { TOPO_TASK_TYPE } from '../manifest';
 import type { TopoCli } from '../services/topoCli';
 import { createTask } from '../util/task';
 
 export enum TaskCommand {
+    Clone = 'clone',
     Configure = 'configure',
     Deploy = 'deploy',
     Health = 'health',
@@ -36,6 +38,22 @@ export const resolveTaskDefinition = (
 
 export class TaskFactory {
     constructor(private readonly topoCli: TopoCli) {}
+
+    public createProcessTask(name: string, command: string[]): vscode.Task {
+        const [process, ...args] = command;
+        if (!process) {
+            throw new Error('No command passed to task');
+        }
+
+        const executable =
+            process === 'topo' ? this.topoCli.getBinaryPath() : process;
+        const hasWorkspace =
+            (vscode.workspace.workspaceFolders?.length ?? 0) > 0;
+        const execution = new vscode.ProcessExecution(executable, args, {
+            cwd: hasWorkspace ? undefined : os.homedir(),
+        });
+        return createTask(name, execution);
+    }
 
     public createExecution(
         definition: TaskDefinition,
