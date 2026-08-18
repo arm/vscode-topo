@@ -11,20 +11,14 @@ describe('NpxSkills', () => {
         vi.mocked(execFile).mockResolvedValue({ stdout: '', stderr: '' });
     });
 
-    it('creates the interactive global add task', () => {
+    it('creates the global add command', () => {
         const npxSkills = new NpxSkills();
-        const task = npxSkills.createAddGlobalTask(
-            'Install Agent Skill',
-            '/fake/skill',
-        );
+        const command = npxSkills.createAddCommand('/fake/skill');
 
-        expect(task).toMatchObject({
-            name: 'Install Agent Skill',
-            execution: {
-                process: process.platform === 'win32' ? 'npx.cmd' : 'npx',
-                args: ['--yes', 'skills', 'add', '/fake/skill', '--global'],
-                options: { cwd: os.homedir() },
-            },
+        expect(command).toEqual({
+            executable: process.platform === 'win32' ? 'npx.cmd' : 'npx',
+            arguments: ['--yes', 'skills', 'add', '/fake/skill', '--global'],
+            cwd: os.homedir(),
         });
     });
 

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { mock, MockProxy } from 'vitest-mock-extended';
-import { ListedSkill, NpxSkills } from './npxSkills';
+import { ListedSkill, NpxSkills, ProcessCommand } from './npxSkills';
 import { TopoSkill } from './topoSkill';
 
 describe('TopoSkill', () => {
@@ -182,14 +182,17 @@ describe('TopoSkill', () => {
         });
     });
 
-    it('creates an interactive task to install the bundled skill globally', () => {
-        const task = mock<vscode.Task>();
-        npxSkills.createAddGlobalTask.mockReturnValue(task);
+    it('creates a command to install the bundled skill globally', () => {
+        const command: ProcessCommand = {
+            executable: 'npx',
+            arguments: ['skills', 'add'],
+            cwd: '/fake/home',
+        };
+        npxSkills.createAddCommand.mockReturnValue(command);
         const topoSkill = new TopoSkill(extensionUri, npxSkills);
 
-        expect(topoSkill.createInstallTask()).toBe(task);
-        expect(npxSkills.createAddGlobalTask).toHaveBeenCalledExactlyOnceWith(
-            'Install Topo Agent Skill',
+        expect(topoSkill.createInstallCommand()).toBe(command);
+        expect(npxSkills.createAddCommand).toHaveBeenCalledExactlyOnceWith(
             bundledDirectory.fsPath,
         );
     });
