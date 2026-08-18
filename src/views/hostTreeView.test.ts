@@ -7,6 +7,23 @@ import { errored, loaded } from '../util/loadable';
 import { ErrorTreeItem } from './treeItems/errorTreeItem';
 import { SkillStatusTreeItem } from './treeItems/skillStatusTreeItem';
 import { LoadingTreeItem } from './treeItems/loadingTreeItem';
+import { SkillGroupTreeItem } from './treeItems/skillGroupTreeItem';
+
+const installedSkillReport = {
+    status: 'installed' as const,
+    agents: [
+        {
+            name: 'Claude Code',
+            paths: ['/fake/home/.claude/skills/topo-cli-location'],
+            status: 'installed' as const,
+        },
+        {
+            name: 'Codex',
+            paths: ['/fake/home/.agents/skills/topo-cli-location'],
+            status: 'installed' as const,
+        },
+    ],
+};
 
 describe('HostTreeView', () => {
     afterEach(() => {
@@ -25,18 +42,27 @@ describe('HostTreeView', () => {
         );
     });
 
-    it('returns the current skill status after the Health group', () => {
+    it('returns the skill group and its reported agents', () => {
         const model = new HostModel();
-        model.setSkillStatus(loaded('installed'));
+        model.setSkillReport(loaded(installedSkillReport));
         const provider = new HostTreeView(model);
 
-        const children = provider.getChildren();
+        const rootChildren = provider.getChildren();
 
-        expect(children).toHaveLength(2);
-        expect(children[0]).toBeInstanceOf(HealthCheckGroupTreeItem);
-        expect(children[0].label).toBe('Health');
-        expect(children[0].contextValue).toBe('Health');
-        expect(children[1]).toEqual(new SkillStatusTreeItem('installed'));
+        expect(rootChildren).toHaveLength(2);
+        expect(rootChildren[0]).toBeInstanceOf(HealthCheckGroupTreeItem);
+        expect(rootChildren[0].label).toBe('Health');
+        expect(rootChildren[0].contextValue).toBe('Health');
+        expect(rootChildren[1]).toEqual(
+            new SkillGroupTreeItem(installedSkillReport),
+        );
+
+        const skillChildren = provider.getChildren(rootChildren[1]);
+        expect(skillChildren).toEqual(
+            installedSkillReport.agents.map(
+                (agent) => new SkillStatusTreeItem(agent),
+            ),
+        );
     });
 
     it('returns sorted host health checks without mutating the model', () => {
@@ -108,6 +134,29 @@ describe('HostTreeView', () => {
         expect(children[1]).toEqual(new LoadingTreeItem('Topo Agent Skill'));
     });
 
+    it('returns a loading item while the skill report refreshes', () => {
+        const model = new HostModel();
+        model.setSkillReport(loaded(installedSkillReport, true));
+        const provider = new HostTreeView(model);
+
+        const children = provider.getChildren();
+
+        expect(children[1]).toEqual(new LoadingTreeItem('Topo Agent Skill'));
+    });
+
+    it('returns an error item when the skill report cannot be loaded', () => {
+        const model = new HostModel();
+        const erroredValue = errored('skills failed');
+        model.setSkillReport(erroredValue);
+        const provider = new HostTreeView(model);
+
+        const children = provider.getChildren();
+
+        expect(children[1]).toMatchObject(
+            new ErrorTreeItem('Failed to check Topo Agent Skill', erroredValue),
+        );
+    });
+
     it('getTreeItem returns the element itself', () => {
         const provider = new HostTreeView(new HostModel());
         const item = new HealthCheckTreeItem(
@@ -134,13 +183,13 @@ describe('HostTreeView', () => {
         expect(listener).toHaveBeenCalled();
     });
 
-    it('fires onDidChangeTreeData when the skill status changes', () => {
+    it('fires onDidChangeTreeData when the skill report changes', () => {
         const model = new HostModel();
         const provider = new HostTreeView(model);
         const listener = vi.fn();
         provider.onDidChangeTreeData(listener);
 
-        model.setSkillStatus(loaded('installed'));
+        model.setSkillReport(loaded(installedSkillReport));
 
         expect(listener).toHaveBeenCalled();
     });

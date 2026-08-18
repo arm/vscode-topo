@@ -35,6 +35,7 @@ import { InstallSkill } from './actions/installSkill';
 import { TaskProvider } from './tasks/taskProvider';
 import { TaskFactory } from './tasks/taskFactory';
 import { TopoSkill } from './services/topoSkill';
+import { NpxSkills } from './services/npxSkills';
 
 const SELECTED_TARGET_REFRESH_INTERVAL_MS = 60_000;
 
@@ -64,7 +65,8 @@ export async function activate(
     const targetModel = new TargetModel();
     const hostModel = new HostModel();
     const projectModel = new ProjectModel();
-    const topoSkill = new TopoSkill(context.extensionUri);
+    const npxSkills = new NpxSkills();
+    const topoSkill = new TopoSkill(context.extensionUri, npxSkills);
     context.subscriptions.push(targetModel, hostModel, projectModel);
 
     const hostTreeView = new HostTreeView(hostModel);

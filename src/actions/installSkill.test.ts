@@ -1,58 +1,91 @@
 import { createRequire } from 'node:module';
 import * as vscode from 'vscode';
-import { mock } from 'vitest-mock-extended';
-import { InstallSkill } from './installSkill';
-import { TopoSkill } from '../services/topoSkill';
+import { mock, MockProxy } from 'vitest-mock-extended';
 import { refreshSkillStatus } from '../commandIds';
+import { TopoSkill } from '../services/topoSkill';
+import { InstallSkill } from './installSkill';
+import { runTask } from '../util/task';
 
-type Remove = (
-    path: string,
-    options: { recursive: boolean; force: boolean },
-) => void;
+vi.mock('../util/task');
+
+const mockRunTask = vi.mocked(runTask);
+
+type UninstallResult = {
+    error?: Error;
+    status: number | null;
+};
+type UninstallRunner = (
+    command: string,
+    args: string[],
+    options: { stdio: 'ignore' },
+) => UninstallResult;
 
 const loadModule = createRequire(__filename);
 const { uninstallSkill } = loadModule('../../scripts/uninstall.cjs') as {
-    uninstallSkill(userHome: string, remove: Remove): void;
+    uninstallSkill(run: UninstallRunner, platform?: NodeJS.Platform): void;
 };
 
 describe('InstallSkill', () => {
-    const userHomeUri = vscode.Uri.file('/fake/home');
+    let topoSkill: MockProxy<TopoSkill>;
+    let task: MockProxy<vscode.Task>;
+    let action: InstallSkill;
 
     beforeEach(() => {
         vi.resetAllMocks();
+        task = mock<vscode.Task>();
+        topoSkill = mock<TopoSkill>();
+        topoSkill.createInstallTask.mockReturnValue(task);
+        action = new InstallSkill(topoSkill);
     });
 
-    it('installs the bundled skill for the current user', async () => {
-        const topoSkill = mock<TopoSkill>();
-        const action = new InstallSkill(topoSkill);
-
+    it('runs the upstream interactive installer as a task', async () => {
         await action.installSkillCommandHandler();
 
-        expect(topoSkill.install).toHaveBeenCalledOnce();
+        expect(topoSkill.createInstallTask).toHaveBeenCalledExactlyOnceWith();
+        expect(mockRunTask).toHaveBeenCalledExactlyOnceWith(task);
         expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
             refreshSkillStatus,
         );
-        expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
-            'Topo CLI location skill installed. Start a new agent session to check it out',
+    });
+
+    it('does not refresh skill status when installation fails', async () => {
+        mockRunTask.mockRejectedValue(new Error('install failed'));
+
+        await expect(action.installSkillCommandHandler()).rejects.toThrow(
+            'install failed',
+        );
+        expect(vscode.commands.executeCommand).not.toHaveBeenCalled();
+    });
+
+    it.each([
+        ['linux', 'npx'],
+        ['win32', 'npx.cmd'],
+    ] as const)('removes the skill from all agents on %s', (platform, npx) => {
+        const run = vi.fn<UninstallRunner>().mockReturnValue({ status: 0 });
+
+        uninstallSkill(run, platform);
+
+        expect(run).toHaveBeenCalledExactlyOnceWith(
+            npx,
+            [
+                '--yes',
+                'skills',
+                'remove',
+                'topo-cli-location',
+                '--global',
+                '--agent',
+                '*',
+                '--yes',
+            ],
+            { stdio: 'ignore' },
         );
     });
 
-    it('removes the installed skill on uninstall', () => {
-        const remove = vi.fn<Remove>();
+    it('reports skill uninstallation failure', () => {
+        const run = vi.fn<UninstallRunner>().mockReturnValue({ status: 1 });
 
-        uninstallSkill(userHomeUri.fsPath, remove);
-
-        expect(remove).toHaveBeenCalledExactlyOnceWith(
-            vscode.Uri.joinPath(
-                userHomeUri,
-                '.agents',
-                'skills',
-                'topo-cli-location',
-            ).fsPath,
-            {
-                recursive: true,
-                force: true,
-            },
+        expect(() => uninstallSkill(run, 'linux')).toThrow(
+            'Skill uninstallation failed with exit code 1',
         );
     });
 });

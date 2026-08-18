@@ -185,18 +185,20 @@ vscode://arm.topo/clone?source=git:https://github.com/example/repo
 
 The **Host** view appears in the **Topo** activity bar container and shows host health for tools such as Docker and SSH. Missing or unhealthy health checks are shown in the tree.
 
+The **Topo Agent Skill** item expands to show every agent linked to the bundled skill and whether that agent's copy is up to date.
+
 Use the refresh button in the Host view title bar to reload host health.
 
 ## Commands
 
 Commands available from the Command Palette:
 
-| Command                      | Description                                                         |
-| ---------------------------- | ------------------------------------------------------------------- |
-| `Topo: Clone Remote Project` | Clone from a custom Git repository or a curated list of projects.   |
-| `Topo: Clone Local Project`  | Clone a project from a local directory.                             |
-| `Topo: Deploy`               | Select and deploy a compose file to the target.                     |
-| `Topo: Install Skill`        | Install the bundled `topo-cli-location` skill for the current user. |
+| Command                      | Description                                                                       |
+| ---------------------------- | --------------------------------------------------------------------------------- |
+| `Topo: Clone Remote Project` | Clone from a custom Git repository or a curated list of projects.                 |
+| `Topo: Clone Local Project`  | Clone a project from a local directory.                                           |
+| `Topo: Deploy`               | Select and deploy a compose file to the target.                                   |
+| `Topo: Install Skill`        | Choose compatible agents in the `skills` installer and install the bundled skill. |
 
 Additional commands are available through inline buttons in the Target, Host, and Projects tree views.
 

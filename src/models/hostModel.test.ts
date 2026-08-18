@@ -19,7 +19,7 @@ describe('HostModel', () => {
         const model = new HostModel();
 
         expect(model.health).toStrictEqual(unloaded());
-        expect(model.skillStatus).toStrictEqual(unloaded());
+        expect(model.skillReport).toStrictEqual(unloaded());
     });
 
     it('stores the latest host health loadable', async () => {
@@ -38,6 +38,21 @@ describe('HostModel', () => {
 
         model.setHealth(loaded(hostHealth));
 
+        expect(onChanged).toHaveBeenCalledTimes(1);
+    });
+
+    it('stores the skill report and fires onChanged', () => {
+        const model = new HostModel();
+        const onChanged = vi.fn();
+        const skillReport = loaded({
+            status: 'installed' as const,
+            agents: [],
+        });
+        model.onSkillReportChanged(onChanged);
+
+        model.setSkillReport(skillReport);
+
+        expect(model.skillReport).toBe(skillReport);
         expect(onChanged).toHaveBeenCalledTimes(1);
     });
 });
