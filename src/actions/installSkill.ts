@@ -1,16 +1,13 @@
 import * as vscode from 'vscode';
 import { refreshSkillStatus } from '../commandIds';
 import { TopoSkill } from '../services/topoSkill';
-import { TaskExecutor } from '../util/taskExecutor';
+import { runTask } from '../util/task';
 
 export class InstallSkill {
-    constructor(
-        private readonly topoSkill: TopoSkill,
-        private readonly taskExecutor: TaskExecutor,
-    ) {}
+    constructor(private readonly topoSkill: TopoSkill) {}
 
     public async installSkillCommandHandler(): Promise<void> {
-        await this.taskExecutor.run(this.topoSkill.createInstallTask());
+        await runTask(this.topoSkill.createInstallTask());
         await vscode.commands.executeCommand(refreshSkillStatus);
     }
 }

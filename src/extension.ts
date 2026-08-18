@@ -125,7 +125,7 @@ export async function activate(
     const containerLifecycle = new ContainerLifecycle(dockerCommands);
     const fixIssue = new FixIssue(taskFactory, targetModel);
     const openSettings = new OpenSettings();
-    const installSkill = new InstallSkill(topoSkill, taskExecutor);
+    const installSkill = new InstallSkill(topoSkill);
     const protocolHandler = new ProtocolHandler(projectCloner);
 
     context.subscriptions.push(

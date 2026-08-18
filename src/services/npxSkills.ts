@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import { array, create, Infer, string, type } from 'superstruct';
 import { WrappedError } from '../errors/wrappedError';
 import { execFile } from '../util/exec';
-import { createProcessTask } from '../util/task';
+import { createTask } from '../util/task';
 
 const listedSkillSchema = type({
     name: string(),
@@ -22,11 +22,11 @@ export class NpxSkills {
         taskName: string,
         sourcePath: string,
     ): vscode.Task {
-        return createProcessTask(
-            taskName,
-            [this.npx, '--yes', 'skills', 'add', sourcePath, '--global'],
-            { cwd: this.userHomePath },
-        );
+        const args = ['--yes', 'skills', 'add', sourcePath, '--global'];
+        const execution = new vscode.ProcessExecution(this.npx, args, {
+            cwd: this.userHomePath,
+        });
+        return createTask(taskName, execution);
     }
 
     public async listGlobal(): Promise<ListedSkill[]> {
@@ -41,7 +41,7 @@ export class NpxSkills {
         );
 
         try {
-            return create(JSON.parse(stdout) as unknown, listedSkillsSchema);
+            return create(JSON.parse(stdout), listedSkillsSchema);
         } catch (cause) {
             throw new WrappedError(
                 'SKILL',

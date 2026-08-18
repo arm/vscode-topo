@@ -3,8 +3,12 @@ import * as vscode from 'vscode';
 import { mock, MockProxy } from 'vitest-mock-extended';
 import { refreshSkillStatus } from '../commandIds';
 import { TopoSkill } from '../services/topoSkill';
-import { TaskExecutor } from '../util/taskExecutor';
 import { InstallSkill } from './installSkill';
+import { runTask } from '../util/task';
+
+vi.mock('../util/task');
+
+const mockRunTask = vi.mocked(runTask);
 
 type UninstallResult = {
     error?: Error;
@@ -24,7 +28,6 @@ const { uninstallSkill } = loadModule('../../scripts/uninstall.cjs') as {
 describe('InstallSkill', () => {
     let topoSkill: MockProxy<TopoSkill>;
     let task: MockProxy<vscode.Task>;
-    let taskExecutor: MockProxy<TaskExecutor>;
     let action: InstallSkill;
 
     beforeEach(() => {
@@ -32,23 +35,21 @@ describe('InstallSkill', () => {
         task = mock<vscode.Task>();
         topoSkill = mock<TopoSkill>();
         topoSkill.createInstallTask.mockReturnValue(task);
-        taskExecutor = mock<TaskExecutor>();
-        taskExecutor.run.mockResolvedValue();
-        action = new InstallSkill(topoSkill, taskExecutor);
+        action = new InstallSkill(topoSkill);
     });
 
     it('runs the upstream interactive installer as a task', async () => {
         await action.installSkillCommandHandler();
 
         expect(topoSkill.createInstallTask).toHaveBeenCalledExactlyOnceWith();
-        expect(taskExecutor.run).toHaveBeenCalledExactlyOnceWith(task);
+        expect(mockRunTask).toHaveBeenCalledExactlyOnceWith(task);
         expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
             refreshSkillStatus,
         );
     });
 
     it('does not refresh skill status when installation fails', async () => {
-        taskExecutor.run.mockRejectedValue(new Error('install failed'));
+        mockRunTask.mockRejectedValue(new Error('install failed'));
 
         await expect(action.installSkillCommandHandler()).rejects.toThrow(
             'install failed',
