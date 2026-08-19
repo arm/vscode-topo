@@ -1,13 +1,16 @@
 import * as vscode from 'vscode';
 import { refreshSkillStatus } from '../commandIds';
 import { TopoSkill } from '../services/topoSkill';
-import { runTask } from '../util/task';
+import { createTask, runTask } from '../util/task';
+
+const INSTALL_TASK_NAME = 'Install Topo Agent Skill';
 
 export class InstallSkill {
     constructor(private readonly topoSkill: TopoSkill) {}
 
     public async installSkillCommandHandler(): Promise<void> {
-        await runTask(this.topoSkill.createInstallTask());
+        const execution = this.topoSkill.createInstallCommand();
+        await runTask(createTask(INSTALL_TASK_NAME, execution));
         await vscode.commands.executeCommand(refreshSkillStatus);
     }
 }

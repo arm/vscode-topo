@@ -46,8 +46,6 @@ describe('TopoSkill', () => {
     beforeEach(() => {
         vi.resetAllMocks();
         npxSkills = mock<NpxSkills>();
-        npxSkills.listGlobal.mockResolvedValue([]);
-        mockSkillFiles({});
     });
 
     it('reports a listed current skill as installed', async () => {
@@ -182,14 +180,13 @@ describe('TopoSkill', () => {
         });
     });
 
-    it('creates an interactive task to install the bundled skill globally', () => {
-        const task = mock<vscode.Task>();
-        npxSkills.createAddGlobalTask.mockReturnValue(task);
+    it('creates a command to install the bundled skill globally', () => {
+        const command = mock<vscode.ProcessExecution>();
+        npxSkills.createAddCommand.mockReturnValue(command);
         const topoSkill = new TopoSkill(extensionUri, npxSkills);
 
-        expect(topoSkill.createInstallTask()).toBe(task);
-        expect(npxSkills.createAddGlobalTask).toHaveBeenCalledExactlyOnceWith(
-            'Install Topo Agent Skill',
+        expect(topoSkill.createInstallCommand()).toBe(command);
+        expect(npxSkills.createAddCommand).toHaveBeenCalledExactlyOnceWith(
             bundledDirectory.fsPath,
         );
     });

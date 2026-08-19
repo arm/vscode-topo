@@ -3,7 +3,6 @@ import * as vscode from 'vscode';
 import { array, create, Infer, string, type } from 'superstruct';
 import { WrappedError } from '../errors/wrappedError';
 import { execFile } from '../util/exec';
-import { createTask } from '../util/task';
 
 const listedSkillSchema = type({
     name: string(),
@@ -18,15 +17,12 @@ export class NpxSkills {
     private readonly userHomePath = os.homedir();
     private readonly npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 
-    public createAddGlobalTask(
-        taskName: string,
-        sourcePath: string,
-    ): vscode.Task {
-        const args = ['--yes', 'skills', 'add', sourcePath, '--global'];
-        const execution = new vscode.ProcessExecution(this.npx, args, {
-            cwd: this.userHomePath,
-        });
-        return createTask(taskName, execution);
+    public createAddCommand(sourcePath: string): vscode.ProcessExecution {
+        return new vscode.ProcessExecution(
+            this.npx,
+            ['--yes', 'skills', 'add', sourcePath, '--global'],
+            { cwd: this.userHomePath },
+        );
     }
 
     public async listGlobal(): Promise<ListedSkill[]> {

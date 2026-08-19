@@ -3,10 +3,13 @@ import * as vscode from 'vscode';
 import { mock, MockProxy } from 'vitest-mock-extended';
 import { refreshSkillStatus } from '../commandIds';
 import { TopoSkill } from '../services/topoSkill';
-import { InstallSkill } from './installSkill';
 import { runTask } from '../util/task';
+import { InstallSkill } from './installSkill';
 
-vi.mock('../util/task');
+vi.mock('../util/task', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('../util/task')>()),
+    runTask: vi.fn(),
+}));
 
 const mockRunTask = vi.mocked(runTask);
 
@@ -27,22 +30,29 @@ const { uninstallSkill } = loadModule('../../scripts/uninstall.cjs') as {
 
 describe('InstallSkill', () => {
     let topoSkill: MockProxy<TopoSkill>;
-    let task: MockProxy<vscode.Task>;
+    let execution: MockProxy<vscode.ProcessExecution>;
     let action: InstallSkill;
 
     beforeEach(() => {
         vi.resetAllMocks();
-        task = mock<vscode.Task>();
         topoSkill = mock<TopoSkill>();
-        topoSkill.createInstallTask.mockReturnValue(task);
+        execution = mock<vscode.ProcessExecution>();
+        topoSkill.createInstallCommand.mockReturnValue(execution);
         action = new InstallSkill(topoSkill);
     });
 
     it('runs the upstream interactive installer as a task', async () => {
         await action.installSkillCommandHandler();
 
-        expect(topoSkill.createInstallTask).toHaveBeenCalledExactlyOnceWith();
-        expect(mockRunTask).toHaveBeenCalledExactlyOnceWith(task);
+        expect(
+            topoSkill.createInstallCommand,
+        ).toHaveBeenCalledExactlyOnceWith();
+        expect(mockRunTask).toHaveBeenCalledExactlyOnceWith(
+            expect.objectContaining({
+                name: 'Install Topo Agent Skill',
+                execution,
+            }),
+        );
         expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
             refreshSkillStatus,
         );

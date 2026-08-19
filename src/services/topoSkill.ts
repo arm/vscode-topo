@@ -4,8 +4,6 @@ import { ListedSkill, NpxSkills } from './npxSkills';
 export const TOPO_SKILL_NAME = 'topo-cli-location';
 
 const SKILL_FILE_NAME = 'SKILL.md';
-const INSTALL_TASK_NAME = 'Install Topo Agent Skill';
-
 export type TopoSkillStatus = 'installed' | 'missing' | 'outdated';
 
 export interface TopoSkillAgentStatus {
@@ -97,10 +95,7 @@ export class TopoSkill {
         );
     }
 
-    public createInstallTask(): vscode.Task {
-        return this.npxSkills.createAddGlobalTask(
-            INSTALL_TASK_NAME,
-            this.bundledDirectoryUri.fsPath,
-        );
+    public createInstallCommand(): vscode.ProcessExecution {
+        return this.npxSkills.createAddCommand(this.bundledDirectoryUri.fsPath);
     }
 }
