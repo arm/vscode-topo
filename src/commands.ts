@@ -14,7 +14,7 @@ import type { ConnectViaSSH } from './actions/connectViaSSH';
 import type { OpenContainerInBrowser } from './actions/openContainerInBrowser';
 import type { OpenSettings } from './actions/openSettings';
 import type { Configure } from './actions/configure';
-import type { InstallSkill } from './actions/installSkill';
+import type { SkillLifecycle } from './actions/skillLifecycle';
 import * as commandIds from './commandIds';
 
 export interface CommandHandlers {
@@ -31,7 +31,7 @@ export interface CommandHandlers {
     containerLifecycle: ContainerLifecycle;
     fixIssue: FixIssue;
     openSettings: OpenSettings;
-    installSkill: InstallSkill;
+    skillLifecycle: SkillLifecycle;
 }
 
 export function register(handlers: CommandHandlers): vscode.Disposable {
@@ -150,7 +150,10 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
             handlers.projectClone.localCloneCommandHandler(),
         ),
         vscode.commands.registerCommand(commandIds.installSkill, () =>
-            handlers.installSkill.installSkillCommandHandler(),
+            handlers.skillLifecycle.installSkillCommandHandler(),
+        ),
+        vscode.commands.registerCommand(commandIds.uninstallSkill, () =>
+            handlers.skillLifecycle.uninstallSkillCommandHandler(),
         ),
     );
 

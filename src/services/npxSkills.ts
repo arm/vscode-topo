@@ -25,6 +25,14 @@ export class NpxSkills {
         );
     }
 
+    public createRemoveCommand(skillName: string): vscode.ProcessExecution {
+        return new vscode.ProcessExecution(
+            this.npx,
+            ['--yes', 'skills', 'remove', skillName, '--global', '--yes'],
+            { cwd: this.userHomePath },
+        );
+    }
+
     public async listGlobal(): Promise<ListedSkill[]> {
         const { stdout } = await execFile(
             this.npx,

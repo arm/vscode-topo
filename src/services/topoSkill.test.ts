@@ -190,4 +190,15 @@ describe('TopoSkill', () => {
             bundledDirectory.fsPath,
         );
     });
+
+    it('creates a command to uninstall the skill globally', () => {
+        const command = mock<vscode.ProcessExecution>();
+        npxSkills.createRemoveCommand.mockReturnValue(command);
+        const topoSkill = new TopoSkill(extensionUri, npxSkills);
+
+        expect(topoSkill.createUninstallCommand()).toBe(command);
+        expect(npxSkills.createRemoveCommand).toHaveBeenCalledExactlyOnceWith(
+            'topo-cli-location',
+        );
+    });
 });

@@ -36,3 +36,4 @@ export const fixTargetIssues = command('fixTargetIssues');
 export const remoteClone = command('remoteClone');
 export const localClone = command('localClone');
 export const installSkill = command('installSkill');
+export const uninstallSkill = command('uninstallSkill');

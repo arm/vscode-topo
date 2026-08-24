@@ -31,7 +31,7 @@ import { OpenSettings } from './actions/openSettings';
 import { Config } from './services/config';
 import { Configure } from './actions/configure';
 import { ProjectCloner } from './operations/projectCloner';
-import { InstallSkill } from './actions/installSkill';
+import { SkillLifecycle } from './actions/skillLifecycle';
 import { TaskProvider } from './tasks/taskProvider';
 import { TaskFactory } from './tasks/taskFactory';
 import { TopoSkill } from './services/topoSkill';
@@ -125,7 +125,7 @@ export async function activate(
     const containerLifecycle = new ContainerLifecycle(dockerCommands);
     const fixIssue = new FixIssue(taskFactory, targetModel);
     const openSettings = new OpenSettings();
-    const installSkill = new InstallSkill(topoSkill);
+    const skillLifecycle = new SkillLifecycle(topoSkill);
     const protocolHandler = new ProtocolHandler(projectCloner);
 
     context.subscriptions.push(
@@ -144,7 +144,7 @@ export async function activate(
             fixIssue,
             projectClone,
             openSettings,
-            installSkill,
+            skillLifecycle,
         }),
         vscode.window.registerUriHandler(protocolHandler),
     );

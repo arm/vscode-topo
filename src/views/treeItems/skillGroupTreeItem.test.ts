@@ -26,27 +26,32 @@ describe('SkillGroupTreeItem', () => {
             label: 'Topo Agent Skill',
             description: '1 agent',
             collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
+            contextValue: 'TopoSkillUninstallAvailable',
             iconPath: new vscode.ThemeIcon(
                 'check',
                 new vscode.ThemeColor('testing.iconPassed'),
             ),
         });
-        expect(item.contextValue).toBeUndefined();
     });
 
-    it.each([
-        ['missing', 'Not installed', vscode.TreeItemCollapsibleState.None],
-        ['outdated', 'Out of date', vscode.TreeItemCollapsibleState.Expanded],
-    ] as const)(
-        'represents the %s aggregate status',
-        (status, description, collapsibleState) => {
-            const item = new SkillGroupTreeItem(report(status));
+    it('represents a missing installation', () => {
+        const item = new SkillGroupTreeItem(report('missing'));
 
-            expect(item).toMatchObject({
-                description,
-                collapsibleState,
-                contextValue: 'TopoSkillInstallAvailable',
-            });
-        },
-    );
+        expect(item).toMatchObject({
+            description: 'Not installed',
+            collapsibleState: vscode.TreeItemCollapsibleState.None,
+            contextValue: 'TopoSkillInstallAvailable',
+        });
+    });
+
+    it('represents an outdated installation', () => {
+        const item = new SkillGroupTreeItem(report('outdated'));
+
+        expect(item).toMatchObject({
+            description: 'Out of date',
+            collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
+            contextValue:
+                'TopoSkillInstallAvailable TopoSkillUninstallAvailable',
+        });
+    });
 });
