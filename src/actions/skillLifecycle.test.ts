@@ -4,7 +4,7 @@ import { mock, MockProxy } from 'vitest-mock-extended';
 import { refreshSkillStatus } from '../commandIds';
 import { TopoSkill } from '../services/topoSkill';
 import { runTask } from '../util/task';
-import { InstallSkill } from './installSkill';
+import { SkillLifecycle } from './skillLifecycle';
 
 vi.mock('../util/task', async (importOriginal) => ({
     ...(await importOriginal<typeof import('../util/task')>()),
@@ -28,21 +28,22 @@ const { uninstallSkill } = loadModule('../../scripts/uninstall.cjs') as {
     uninstallSkill(run: UninstallRunner, platform?: NodeJS.Platform): void;
 };
 
-describe('InstallSkill', () => {
+describe('SkillLifecycle', () => {
     let topoSkill: MockProxy<TopoSkill>;
     let execution: MockProxy<vscode.ProcessExecution>;
-    let action: InstallSkill;
+    let lifecycle: SkillLifecycle;
 
     beforeEach(() => {
         vi.resetAllMocks();
         topoSkill = mock<TopoSkill>();
         execution = mock<vscode.ProcessExecution>();
         topoSkill.createInstallCommand.mockReturnValue(execution);
-        action = new InstallSkill(topoSkill);
+        topoSkill.createUninstallCommand.mockReturnValue(execution);
+        lifecycle = new SkillLifecycle(topoSkill);
     });
 
-    it('runs the upstream interactive installer as a task', async () => {
-        await action.installSkillCommandHandler();
+    it('installs the skill as a task and refreshes status', async () => {
+        await lifecycle.installSkillCommandHandler();
 
         expect(
             topoSkill.createInstallCommand,
@@ -58,15 +59,34 @@ describe('InstallSkill', () => {
         );
     });
 
-    it('does not refresh skill status when installation fails', async () => {
+    it('uninstalls the skill as a task and refreshes status', async () => {
+        await lifecycle.uninstallSkillCommandHandler();
+
+        expect(
+            topoSkill.createUninstallCommand,
+        ).toHaveBeenCalledExactlyOnceWith();
+        expect(mockRunTask).toHaveBeenCalledExactlyOnceWith(
+            expect.objectContaining({
+                name: 'Uninstall Topo Agent Skill',
+                execution,
+            }),
+        );
+        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            refreshSkillStatus,
+        );
+    });
+
+    it('does not refresh skill status when the task fails', async () => {
         mockRunTask.mockRejectedValue(new Error('install failed'));
 
-        await expect(action.installSkillCommandHandler()).rejects.toThrow(
+        await expect(lifecycle.installSkillCommandHandler()).rejects.toThrow(
             'install failed',
         );
         expect(vscode.commands.executeCommand).not.toHaveBeenCalled();
     });
+});
 
+describe('extension uninstall hook', () => {
     it.each([
         ['linux', 'npx'],
         ['win32', 'npx.cmd'],

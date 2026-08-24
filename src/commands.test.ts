@@ -20,7 +20,7 @@ import { ConnectViaSSH } from './actions/connectViaSSH';
 import { OpenContainerInBrowser } from './actions/openContainerInBrowser';
 import { OpenSettings } from './actions/openSettings';
 import { Configure } from './actions/configure';
-import { InstallSkill } from './actions/installSkill';
+import { SkillLifecycle } from './actions/skillLifecycle';
 
 vi.mock('./util/logger');
 
@@ -39,7 +39,7 @@ describe('commands', () => {
         containerLifecycle: mock<ContainerLifecycle>(),
         fixIssue: mock<FixIssue>(),
         openSettings: mock<OpenSettings>(),
-        installSkill: mock<InstallSkill>(),
+        skillLifecycle: mock<SkillLifecycle>(),
     } satisfies commands.CommandHandlers;
 
     afterEach(() => {
@@ -167,7 +167,11 @@ describe('commands', () => {
             ],
             [
                 commandIds.installSkill,
-                handlers.installSkill.installSkillCommandHandler,
+                handlers.skillLifecycle.installSkillCommandHandler,
+            ],
+            [
+                commandIds.uninstallSkill,
+                handlers.skillLifecycle.uninstallSkillCommandHandler,
             ],
         ];
 

@@ -23,6 +23,26 @@ describe('NpxSkills', () => {
         );
     });
 
+    it('creates the global remove command for all agents', () => {
+        const npxSkills = new NpxSkills();
+        const command = npxSkills.createRemoveCommand('topo-cli-location');
+
+        expect(command).toEqual(
+            expect.objectContaining({
+                process: process.platform === 'win32' ? 'npx.cmd' : 'npx',
+                args: [
+                    '--yes',
+                    'skills',
+                    'remove',
+                    'topo-cli-location',
+                    '--global',
+                    '--yes',
+                ],
+                options: { cwd: os.homedir() },
+            }),
+        );
+    });
+
     it('lists global skills as structured data', async () => {
         const listedSkills = [
             {

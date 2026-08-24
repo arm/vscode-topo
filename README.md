@@ -199,6 +199,7 @@ Commands available from the Command Palette:
 | `Topo: Clone Local Project`  | Clone a project from a local directory.                                           |
 | `Topo: Deploy`               | Select and deploy a compose file to the target.                                   |
 | `Topo: Install Skill`        | Choose compatible agents in the `skills` installer and install the bundled skill. |
+| `Topo: Uninstall Skill`      | Uninstall the bundled skill globally from compatible agents.                      |
 
 Additional commands are available through inline buttons in the Target, Host, and Projects tree views.
 

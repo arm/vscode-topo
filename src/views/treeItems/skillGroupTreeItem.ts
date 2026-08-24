@@ -19,6 +19,7 @@ export class SkillGroupTreeItem extends vscode.TreeItem {
                     'check',
                     new vscode.ThemeColor('testing.iconPassed'),
                 );
+                this.contextValue = 'TopoSkillUninstallAvailable';
                 break;
             case 'outdated':
                 this.description = 'Out of date';
@@ -28,7 +29,8 @@ export class SkillGroupTreeItem extends vscode.TreeItem {
                     'warning',
                     new vscode.ThemeColor('list.warningForeground'),
                 );
-                this.contextValue = 'TopoSkillInstallAvailable';
+                this.contextValue =
+                    'TopoSkillInstallAvailable TopoSkillUninstallAvailable';
                 break;
             case 'missing':
                 this.description = 'Not installed';
