@@ -103,8 +103,6 @@ describe('extension uninstall hook', () => {
                 'remove',
                 'topo-cli-location',
                 '--global',
-                '--agent',
-                '*',
                 '--yes',
             ],
             { stdio: 'ignore' },

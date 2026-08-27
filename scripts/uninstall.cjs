@@ -6,16 +6,7 @@ function uninstallSkill(run = spawnSync, platform = process.platform) {
     const npx = platform === 'win32' ? 'npx.cmd' : 'npx';
     const result = run(
         npx,
-        [
-            '--yes',
-            'skills',
-            'remove',
-            SKILL_NAME,
-            '--global',
-            '--agent',
-            '*',
-            '--yes',
-        ],
+        ['--yes', 'skills', 'remove', SKILL_NAME, '--global', '--yes'],
         { stdio: 'ignore' },
     );
 
