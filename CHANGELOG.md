@@ -8,6 +8,23 @@ All notable changes to the "vscode-topo" extension will be documented in this fi
 
 
 
+
+## 0.18.0
+
+<!-- Release notes generated using configuration in .github/release.yml at c495c4ea6fde363b02c19ce3defc74c3f85af82c -->
+
+## What's Changed
+### Features and Enhancements
+* feat: support all topo commands as tasks (#418)
+* feat: support multi-agent skill installation (#419)
+* feat: support skill uninstallation (#425)
+### Fixes
+* fix: skill cleanup on extension uninstallation (#426)
+
+
+**Full Changelog**: https://github.com/arm/vscode-topo/compare/v0.16.0...v0.18.0
+
+
 ## 0.16.0
 
 <!-- Release notes generated using configuration in .github/release.yml at 93101e645fda27f5820c191f57dc7c650d4936e8 -->
