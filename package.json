@@ -38,7 +38,7 @@
         "taskDefinitions": [
             {
                 "type": "topo",
-                "when": "processExecutionSupported",
+                "when": "shellExecutionSupported",
                 "required": [
                     "command",
                     "args"

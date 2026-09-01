@@ -24,7 +24,7 @@ const mockRunTask = vi.mocked(runTask);
 describe('ProjectCloner', () => {
     const destinationPath = path.resolve('home', 'destination');
     const task = new vscode.Task(
-        { type: 'process' },
+        { type: 'shell' },
         vscode.TaskScope.Workspace,
         'Clone task',
         'topo',

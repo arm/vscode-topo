@@ -35,7 +35,7 @@ describe('FixIssue', () => {
 
     const target = 'user@topo.local';
     const task = new vscode.Task(
-        { type: 'process' },
+        { type: 'shell' },
         vscode.TaskScope.Workspace,
         'Fix task',
         'topo',
@@ -77,7 +77,7 @@ describe('FixIssue', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         taskFactory = mock<TaskFactory>();
-        taskFactory.createProcessTask.mockReturnValue(task);
+        taskFactory.createShellTask.mockReturnValue(task);
         targetModel = new TargetModel();
         targetModel.setSelected(target);
     });
@@ -94,7 +94,7 @@ describe('FixIssue', () => {
             command,
         );
 
-        expect(taskFactory.createProcessTask).toHaveBeenCalledWith(
+        expect(taskFactory.createShellTask).toHaveBeenCalledWith(
             `Fix Debugger on ${target}`,
             ['topo', 'install', 'debugger', '--target', target],
         );
@@ -110,7 +110,7 @@ describe('FixIssue', () => {
         await fixIssue.fixIssueCommandHandler(healthCheckItem);
 
         expect(vscode.window.showQuickPick).not.toHaveBeenCalled();
-        expect(taskFactory.createProcessTask).toHaveBeenCalledWith(
+        expect(taskFactory.createShellTask).toHaveBeenCalledWith(
             `Fix Container Engine on ${target}`,
             ['topo', 'install', 'container-engine', '--target', target],
         );
@@ -196,7 +196,7 @@ describe('FixIssue', () => {
                 placeHolder: `Select fixes for ${target}`,
             },
         );
-        expect(taskFactory.createProcessTask).toHaveBeenCalledWith(
+        expect(taskFactory.createShellTask).toHaveBeenCalledWith(
             `Fix Container Engine on ${target}`,
             ['topo', 'install', 'container-engine', '--target', target],
         );
@@ -240,7 +240,7 @@ describe('FixIssue', () => {
                 placeHolder: `Select fixes for ${target}`,
             },
         );
-        expect(taskFactory.createProcessTask).toHaveBeenCalledWith(
+        expect(taskFactory.createShellTask).toHaveBeenCalledWith(
             `Fix Debugger on ${target}`,
             ['topo', 'install', 'debugger', '--target', target],
         );
@@ -267,12 +267,12 @@ describe('FixIssue', () => {
 
         await fixIssue.fixIssueCommandHandler(healthGroupItem);
 
-        expect(taskFactory.createProcessTask).toHaveBeenNthCalledWith(
+        expect(taskFactory.createShellTask).toHaveBeenNthCalledWith(
             1,
             `Fix Container Engine on ${target}`,
             ['topo', 'install', 'container-engine', '--target', target],
         );
-        expect(taskFactory.createProcessTask).toHaveBeenNthCalledWith(
+        expect(taskFactory.createShellTask).toHaveBeenNthCalledWith(
             2,
             `Fix Debugger on ${target}`,
             ['topo', 'install', 'debugger', '--target', target],
@@ -325,7 +325,7 @@ describe('FixIssue', () => {
 
         await fixIssue.fixIssueCommandHandler(healthGroupItem);
 
-        expect(taskFactory.createProcessTask).toHaveBeenCalledWith(
+        expect(taskFactory.createShellTask).toHaveBeenCalledWith(
             `Fix Remoteproc Runtime, Remoteproc Shim on ${target}`,
             ['topo', 'install', 'remoteproc', '--target', target],
         );

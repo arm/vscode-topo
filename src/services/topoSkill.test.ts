@@ -181,7 +181,7 @@ describe('TopoSkill', () => {
     });
 
     it('creates a command to install the bundled skill globally', () => {
-        const command = mock<vscode.ProcessExecution>();
+        const command = mock<vscode.ShellExecution>();
         npxSkills.createAddCommand.mockReturnValue(command);
         const topoSkill = new TopoSkill(extensionUri, npxSkills);
 
@@ -192,7 +192,7 @@ describe('TopoSkill', () => {
     });
 
     it('creates a command to uninstall the skill globally', () => {
-        const command = mock<vscode.ProcessExecution>();
+        const command = mock<vscode.ShellExecution>();
         npxSkills.createRemoveCommand.mockReturnValue(command);
         const topoSkill = new TopoSkill(extensionUri, npxSkills);
 

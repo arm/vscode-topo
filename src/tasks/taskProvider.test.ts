@@ -37,7 +37,7 @@ describe('TaskProvider', () => {
 
     it('resolves a supported configured command', () => {
         const configuredTask = createConfiguredTask();
-        const execution = new vscode.ProcessExecution(
+        const execution = new vscode.ShellExecution(
             '/extension/resources/topo',
             ['configure', 'GREETING=Hello'],
             {

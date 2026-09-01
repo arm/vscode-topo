@@ -151,7 +151,7 @@ export function createFixIssueTask(
 ): vscode.Task {
     const issueName = issueNames.join(', ');
     const commandArgs = command.trim().split(/\s+/);
-    return taskFactory.createProcessTask(
+    return taskFactory.createShellTask(
         `Fix ${issueName} on ${target}`,
         commandArgs,
     );
