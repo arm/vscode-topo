@@ -48,11 +48,11 @@ export class TaskFactory {
         const executable =
             executableName === 'topo'
                 ? this.topoCli.getBinaryPath()
-                : executableName;
+                : shellQuote(executableName);
         const hasWorkspace =
             (vscode.workspace.workspaceFolders?.length ?? 0) > 0;
         const execution = new vscode.ShellExecution(
-            shellQuote(executable),
+            executable,
             args.map(shellQuote),
             {
                 cwd: hasWorkspace ? undefined : os.homedir(),
@@ -63,7 +63,7 @@ export class TaskFactory {
 
     public createExecution(definition: TaskDefinition): vscode.ShellExecution {
         return new vscode.ShellExecution(
-            shellQuote(this.topoCli.getBinaryPath()),
+            this.topoCli.getBinaryPath(),
             [definition.command, ...definition.args.map(shellQuote)],
             definition.options,
         );

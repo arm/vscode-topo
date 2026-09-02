@@ -62,10 +62,7 @@ describe('TaskFactory', () => {
         const execution = taskFactory.createExecution(definition);
 
         expect(execution).toMatchObject({
-            command: {
-                value: topoBinaryPath,
-                quoting: vscode.ShellQuoting.Strong,
-            },
+            command: topoBinaryPath,
             args: [
                 'configure',
                 {
@@ -88,10 +85,7 @@ describe('TaskFactory', () => {
         ]);
 
         expect(task.execution).toMatchObject({
-            command: {
-                value: topoBinaryPath,
-                quoting: vscode.ShellQuoting.Strong,
-            },
+            command: topoBinaryPath,
             args: ['clone', 'git:https://example.com/project.git'].map(
                 (value) => ({
                     value,
