@@ -1,8 +1,6 @@
 import * as vscode from 'vscode';
 import { PACKAGE_NAME } from '../manifest';
 
-type TaskExecution = vscode.ShellExecution | vscode.CustomExecution;
-
 export function shellQuote(value: string): vscode.ShellQuotedString {
     return { value, quoting: vscode.ShellQuoting.Strong };
 }
@@ -20,7 +18,7 @@ function getTaskScope(
 
 export function createTask(
     taskName: string,
-    execution: TaskExecution,
+    execution: vscode.ShellExecution,
     definition: vscode.TaskDefinition = { type: 'shell' },
 ): vscode.Task {
     const cwd = 'options' in execution ? execution.options?.cwd : undefined;
