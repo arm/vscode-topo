@@ -6,7 +6,7 @@ import { TargetModel } from '../models/targetModel';
 import { WrappedError } from '../errors/wrappedError';
 import { showAndLogError } from '../util/showAndLog';
 import { TopoCli } from '../services/topoCli';
-import { TargetDescription } from '../util/types';
+import { TargetDescription } from '../services/topoCliSchema';
 import { errored, loaded, unloaded } from '../util/loadable';
 import { HealthReport } from '../services/topoCliSchema';
 

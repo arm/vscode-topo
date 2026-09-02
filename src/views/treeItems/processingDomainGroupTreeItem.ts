@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { Loadable } from '../../util/loadable';
-import { TargetDescription } from '../../util/types';
+import { TargetDescription } from '../../services/topoCliSchema';
 
 function getCollapsibleState(
     targetDescription: Loadable<TargetDescription>,
