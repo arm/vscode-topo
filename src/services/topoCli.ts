@@ -7,6 +7,7 @@ import {
     healthReportSchema,
     hostHealthReportSchema,
     ProjectDescription,
+    TargetDescription,
     targetDescriptionSchema,
     projectSchema,
     topoLogEntrySchema,
@@ -16,7 +17,6 @@ import {
 import { array, create, Struct } from 'superstruct';
 import { WrappedError, WrappedErrorLog } from '../errors/wrappedError';
 import { getErrorMessage } from '../util/getErrorMessage';
-import { TargetDescription } from '../util/types';
 import { execFile } from '../util/exec';
 import { assertComposeFilePath, COMPOSE_FILE_NAME } from '../util/composeFile';
 

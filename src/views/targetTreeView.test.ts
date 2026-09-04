@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as manifest from '../manifest';
 import { TargetSelectionState, TargetTreeView } from './targetTreeView';
-import { TargetDescription } from '../util/types';
+import { TargetDescription } from '../services/topoCliSchema';
 import { mock } from 'vitest-mock-extended';
 import { HealthCheck, TargetHealthReport } from '../services/topoCliSchema';
 import { TargetModel } from '../models/targetModel';

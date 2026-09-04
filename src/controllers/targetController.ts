@@ -6,9 +6,12 @@ import { logError, showAndLogError } from '../util/showAndLog';
 import { defaultSshConfigPath, getHosts } from '../util/ssh';
 import * as vscode from 'vscode';
 import { TopoCli } from '../services/topoCli';
-import { HealthReport, TargetHealthReport } from '../services/topoCliSchema';
+import {
+    HealthReport,
+    TargetDescription,
+    TargetHealthReport,
+} from '../services/topoCliSchema';
 import { errored, Loadable, loaded, loading } from '../util/loadable';
-import { TargetDescription } from '../util/types';
 import { LatestAbortableWork } from '../util/latestAbortableWork';
 import { DisposableCollector } from '../util/disposableCollector';
 

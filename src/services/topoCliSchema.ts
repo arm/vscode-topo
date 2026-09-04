@@ -97,6 +97,10 @@ export const targetDescriptionSchema = type({
     totalMemoryKb: number(),
 });
 
+export type TargetDescription = DeepReadonly<
+    Infer<typeof targetDescriptionSchema>
+>;
+
 const topoLogLevelSchema = trimmed(enums(['DEBUG', 'INFO', 'WARN', 'ERROR']));
 
 export type TopoLogLevel = Infer<typeof topoLogLevelSchema>;

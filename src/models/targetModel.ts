@@ -1,7 +1,9 @@
 import * as vscode from 'vscode';
 import { Loadable, unloaded } from '../util/loadable';
-import { TargetHealthReport } from '../services/topoCliSchema';
-import { TargetDescription } from '../util/types';
+import {
+    TargetDescription,
+    TargetHealthReport,
+} from '../services/topoCliSchema';
 
 export class TargetModel implements vscode.Disposable {
     private _onSelectedChanged: vscode.EventEmitter<void> =
