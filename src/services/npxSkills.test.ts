@@ -1,4 +1,5 @@
 import os from 'node:os';
+import * as vscode from 'vscode';
 import { WrappedError } from '../errors/wrappedError';
 import { execFile } from '../util/exec';
 import { NpxSkills } from './npxSkills';
@@ -16,8 +17,17 @@ describe('NpxSkills', () => {
 
         expect(command).toEqual(
             expect.objectContaining({
-                process: process.platform === 'win32' ? 'npx.cmd' : 'npx',
-                args: ['--yes', 'skills', 'add', '/fake/skill', '--global'],
+                command: process.platform === 'win32' ? 'npx.cmd' : 'npx',
+                args: [
+                    '--yes',
+                    'skills',
+                    'add',
+                    {
+                        value: '/fake/skill',
+                        quoting: vscode.ShellQuoting.Strong,
+                    },
+                    '--global',
+                ],
                 options: { cwd: os.homedir() },
             }),
         );
@@ -29,12 +39,15 @@ describe('NpxSkills', () => {
 
         expect(command).toEqual(
             expect.objectContaining({
-                process: process.platform === 'win32' ? 'npx.cmd' : 'npx',
+                command: process.platform === 'win32' ? 'npx.cmd' : 'npx',
                 args: [
                     '--yes',
                     'skills',
                     'remove',
-                    'topo-cli-location',
+                    {
+                        value: 'topo-cli-location',
+                        quoting: vscode.ShellQuoting.Strong,
+                    },
                     '--global',
                     '--yes',
                 ],

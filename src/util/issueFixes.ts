@@ -1,8 +1,4 @@
-import {
-    HealthCheck,
-    type HealthCheckFix,
-    type TargetHealthReport,
-} from '../services/topoCliSchema';
+import { HealthCheck, type HealthCheckFix } from '../services/topoCliSchema';
 
 export type IssueFixCommandGroup = {
     readonly issueNames: readonly string[];
@@ -17,16 +13,6 @@ export function hasFixCommand(
     healthCheck: HealthCheck | undefined,
 ): healthCheck is FixableIssue {
     return !!healthCheck?.fix?.command;
-}
-
-export function getTargetIssueFixCommandGroups(
-    health: TargetHealthReport | undefined,
-): readonly IssueFixCommandGroup[] {
-    if (!health) {
-        return [];
-    }
-
-    return getIssueFixCommandGroups(getTargetHealthChecks(health));
 }
 
 export function getIssueFixCommandGroups(
@@ -53,14 +39,4 @@ export function getIssueFixCommandGroups(
         issueNames,
         command,
     }));
-}
-
-function getTargetHealthChecks(
-    health: TargetHealthReport,
-): readonly HealthCheck[] {
-    return [
-        health.connectivity,
-        health.processingDomainDriver,
-        ...health.dependencies,
-    ];
 }

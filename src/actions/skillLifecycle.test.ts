@@ -30,13 +30,13 @@ const { uninstallSkill } = loadModule('../../scripts/uninstall.cjs') as {
 
 describe('SkillLifecycle', () => {
     let topoSkill: MockProxy<TopoSkill>;
-    let execution: MockProxy<vscode.ProcessExecution>;
+    let execution: MockProxy<vscode.ShellExecution>;
     let lifecycle: SkillLifecycle;
 
     beforeEach(() => {
         vi.resetAllMocks();
         topoSkill = mock<TopoSkill>();
-        execution = mock<vscode.ProcessExecution>();
+        execution = mock<vscode.ShellExecution>();
         topoSkill.createInstallCommand.mockReturnValue(execution);
         topoSkill.createUninstallCommand.mockReturnValue(execution);
         lifecycle = new SkillLifecycle(topoSkill);

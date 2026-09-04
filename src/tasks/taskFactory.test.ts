@@ -62,8 +62,14 @@ describe('TaskFactory', () => {
         const execution = taskFactory.createExecution(definition);
 
         expect(execution).toMatchObject({
-            process: topoBinaryPath,
-            args: ['configure', 'GREETING=Hello'],
+            command: topoBinaryPath,
+            args: [
+                'configure',
+                {
+                    value: 'GREETING=Hello',
+                    quoting: vscode.ShellQuoting.Strong,
+                },
+            ],
             options: {
                 cwd: '/projects/welcome',
                 env: { GREETING_STYLE: 'enthusiastic' },
@@ -71,33 +77,46 @@ describe('TaskFactory', () => {
         });
     });
 
-    it('creates a process task using the bundled Topo CLI', () => {
-        const task = taskFactory.createProcessTask('Clone project', [
+    it('creates a shell task using the bundled Topo CLI', () => {
+        const task = taskFactory.createShellTask('Clone project', [
             'topo',
             'clone',
             'git:https://example.com/project.git',
         ]);
 
         expect(task.execution).toMatchObject({
-            process: topoBinaryPath,
-            args: ['clone', 'git:https://example.com/project.git'],
+            command: topoBinaryPath,
+            args: ['clone', 'git:https://example.com/project.git'].map(
+                (value) => ({
+                    value,
+                    quoting: vscode.ShellQuoting.Strong,
+                }),
+            ),
         });
     });
 
-    it('leaves non-Topo process task commands unchanged', () => {
-        const task = taskFactory.createProcessTask('List containers', [
+    it('leaves non-Topo shell task commands unchanged', () => {
+        const task = taskFactory.createShellTask('List containers', [
             'docker',
             'ps',
         ]);
 
         expect(task.execution).toMatchObject({
-            process: 'docker',
-            args: ['ps'],
+            command: {
+                value: 'docker',
+                quoting: vscode.ShellQuoting.Strong,
+            },
+            args: [
+                {
+                    value: 'ps',
+                    quoting: vscode.ShellQuoting.Strong,
+                },
+            ],
         });
     });
 
     it('uses the user home directory when no workspace or cwd is available', () => {
-        const task = taskFactory.createProcessTask('Fix Debugger', [
+        const task = taskFactory.createShellTask('Fix Debugger', [
             'topo',
             'install',
         ]);

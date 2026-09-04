@@ -8,7 +8,7 @@ const UNINSTALL_TASK_NAME = 'Uninstall Topo Agent Skill';
 
 async function runSkillTask(
     taskName: string,
-    execution: vscode.ProcessExecution,
+    execution: vscode.ShellExecution,
 ): Promise<void> {
     await runTask(createTask(taskName, execution));
     await vscode.commands.executeCommand(refreshSkillStatus);
