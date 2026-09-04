@@ -95,11 +95,11 @@ export class TopoSkill {
         );
     }
 
-    public createInstallCommand(): vscode.ProcessExecution {
+    public createInstallCommand(): vscode.ShellExecution {
         return this.npxSkills.createAddCommand(this.bundledDirectoryUri.fsPath);
     }
 
-    public createUninstallCommand(): vscode.ProcessExecution {
+    public createUninstallCommand(): vscode.ShellExecution {
         return this.npxSkills.createRemoveCommand(TOPO_SKILL_NAME);
     }
 }

@@ -1,5 +1,8 @@
-import { HealthCheck, TargetHealthReport } from '../../services/topoCliSchema';
-import { TargetDescription } from '../../util/types';
+import {
+    HealthCheck,
+    TargetDescription,
+    TargetHealthReport,
+} from '../../services/topoCliSchema';
 
 export function getVisibleTargetHealthChecks(
     health: TargetHealthReport,
