@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 import { array, create, Infer, string, type } from 'superstruct';
 import { WrappedError } from '../errors/wrappedError';
 import { execFile } from '../util/exec';
+import { shellQuote } from '../util/task';
 
 const listedSkillSchema = type({
     name: string(),
@@ -17,18 +18,25 @@ export class NpxSkills {
     private readonly userHomePath = os.homedir();
     private readonly npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 
-    public createAddCommand(sourcePath: string): vscode.ProcessExecution {
-        return new vscode.ProcessExecution(
+    public createAddCommand(sourcePath: string): vscode.ShellExecution {
+        return new vscode.ShellExecution(
             this.npx,
-            ['--yes', 'skills', 'add', sourcePath, '--global'],
+            ['--yes', 'skills', 'add', shellQuote(sourcePath), '--global'],
             { cwd: this.userHomePath },
         );
     }
 
-    public createRemoveCommand(skillName: string): vscode.ProcessExecution {
-        return new vscode.ProcessExecution(
+    public createRemoveCommand(skillName: string): vscode.ShellExecution {
+        return new vscode.ShellExecution(
             this.npx,
-            ['--yes', 'skills', 'remove', skillName, '--global', '--yes'],
+            [
+                '--yes',
+                'skills',
+                'remove',
+                shellQuote(skillName),
+                '--global',
+                '--yes',
+            ],
             { cwd: this.userHomePath },
         );
     }
