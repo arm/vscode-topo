@@ -1,5 +1,5 @@
 import { TargetHealthReport } from '../../services/topoCliSchema';
-import { TargetDescription } from '../../util/types';
+import { TargetDescription } from '../../services/topoCliSchema';
 import { getVisibleTargetHealthChecks } from './getVisibleTargetHealthChecks';
 
 describe('getVisibleTargetHealthChecks', () => {

@@ -6,7 +6,7 @@ import type { Mock } from 'vitest';
 describe('runTask', () => {
     const task = createTask(
         'Fix Debugger',
-        new vscode.ProcessExecution('topo', ['install']),
+        new vscode.ShellExecution('topo', ['install']),
     );
     const taskExecution: vscode.TaskExecution = {
         task,

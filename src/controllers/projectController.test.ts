@@ -228,7 +228,7 @@ describe('ProjectController', () => {
 
     it.each([
         {
-            type: 'process',
+            type: 'shell',
             command: TaskCommand.Deploy,
         },
         {

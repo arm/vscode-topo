@@ -4,7 +4,7 @@ import { TopoCli, parseWrappedError, parseTopoLogEntries } from './topoCli';
 import * as manifest from '../manifest';
 import { WrappedError } from '../errors/wrappedError';
 import { HealthReport, PsOutput, ProjectDescription } from './topoCliSchema';
-import { TargetDescription } from '../util/types';
+import { TargetDescription } from './topoCliSchema';
 import { execFile } from '../util/exec';
 import type { Mock } from 'vitest';
 

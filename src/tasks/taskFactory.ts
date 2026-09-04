@@ -3,7 +3,7 @@ import os from 'node:os';
 import { array, enums, is, literal, string, type } from 'superstruct';
 import { TOPO_TASK_TYPE } from '../manifest';
 import type { TopoCli } from '../services/topoCli';
-import { createTask } from '../util/task';
+import { createTask, shellQuote } from '../util/task';
 
 export enum TaskCommand {
     Clone = 'clone',
@@ -27,7 +27,7 @@ export interface TaskDefinition extends vscode.TaskDefinition {
     readonly type: typeof TOPO_TASK_TYPE;
     readonly command: TaskCommand;
     readonly args: readonly string[];
-    readonly options?: vscode.ProcessExecutionOptions;
+    readonly options?: vscode.ShellExecutionOptions;
 }
 
 export const resolveTaskDefinition = (
@@ -39,28 +39,32 @@ export const resolveTaskDefinition = (
 export class TaskFactory {
     constructor(private readonly topoCli: TopoCli) {}
 
-    public createProcessTask(name: string, command: string[]): vscode.Task {
-        const [process, ...args] = command;
-        if (!process) {
+    public createShellTask(name: string, command: string[]): vscode.Task {
+        const [executableName, ...args] = command;
+        if (!executableName) {
             throw new Error('No command passed to task');
         }
 
         const executable =
-            process === 'topo' ? this.topoCli.getBinaryPath() : process;
+            executableName === 'topo'
+                ? this.topoCli.getBinaryPath()
+                : shellQuote(executableName);
         const hasWorkspace =
             (vscode.workspace.workspaceFolders?.length ?? 0) > 0;
-        const execution = new vscode.ProcessExecution(executable, args, {
-            cwd: hasWorkspace ? undefined : os.homedir(),
-        });
+        const execution = new vscode.ShellExecution(
+            executable,
+            args.map(shellQuote),
+            {
+                cwd: hasWorkspace ? undefined : os.homedir(),
+            },
+        );
         return createTask(name, execution);
     }
 
-    public createExecution(
-        definition: TaskDefinition,
-    ): vscode.ProcessExecution {
-        return new vscode.ProcessExecution(
+    public createExecution(definition: TaskDefinition): vscode.ShellExecution {
+        return new vscode.ShellExecution(
             this.topoCli.getBinaryPath(),
-            [definition.command, ...definition.args],
+            [definition.command, ...definition.args.map(shellQuote)],
             definition.options,
         );
     }
