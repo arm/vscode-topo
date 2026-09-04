@@ -18,7 +18,7 @@ describe('Configure', () => {
     );
     const projectPath = path.dirname(composeFileUri.fsPath);
     const task = new vscode.Task(
-        { type: 'process' },
+        { type: 'shell' },
         vscode.TaskScope.Workspace,
         'Configure task',
         'topo',

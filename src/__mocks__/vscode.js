@@ -47,21 +47,21 @@ class MockRelativePattern {
 }
 const RelativePattern = vi.fn(MockRelativePattern);
 class MockShellExecution {
-    constructor(executablePath, executionArgs, options) {
-        this.executablePath = executablePath;
-        this.executionArgs = executionArgs;
-        this.options = options;
+    constructor(commandLineOrCommand, argsOrOptions, options) {
+        if (Array.isArray(argsOrOptions)) {
+            this.commandLine = undefined;
+            this.command = commandLineOrCommand;
+            this.args = argsOrOptions;
+            this.options = options;
+        } else {
+            this.commandLine = commandLineOrCommand;
+            this.command = undefined;
+            this.args = undefined;
+            this.options = argsOrOptions;
+        }
     }
 }
 const ShellExecution = vi.fn(MockShellExecution);
-class MockProcessExecution {
-    constructor(process, args, options) {
-        this.process = process;
-        this.args = args;
-        this.options = options;
-    }
-}
-const ProcessExecution = vi.fn(MockProcessExecution);
 class MockTask {
     constructor(definition, scope, name, source, execution, problemMatchers) {
         this.definition = definition;
@@ -101,7 +101,7 @@ const CodeActionKind = {
 const CodeAction = vi.fn((title, kind) => ({ title, kind }));
 
 // Enums
-const ShellQuoting = { Escape: 'Escape' };
+const ShellQuoting = { Escape: 1, Strong: 2, Weak: 3 };
 const StatusBarAlignment = { Left: 1, Right: 2 };
 const TaskScope = { Global: 1, Workspace: 2 };
 const ViewColumn = {
@@ -317,7 +317,6 @@ module.exports = {
     FileSystemError,
     LogLevel,
     Position,
-    ProcessExecution,
     QuickPickItemKind,
     Range,
     RelativePattern,
