@@ -10,6 +10,14 @@ const topoCli = new TopoCli(
 );
 const isWindowsCi = process.platform === 'win32' && process.env.CI === 'true';
 
+beforeAll(() => {
+    vi.stubEnv('TOPO_TARGET', undefined);
+});
+
+afterAll(() => {
+    vi.unstubAllEnvs();
+});
+
 // The real `topo health localhost` integration path can take longer on
 // Windows CI runners because it probes the local host environment.
 vi.setConfig({ testTimeout: process.platform === 'win32' ? 60_000 : 15_000 });
