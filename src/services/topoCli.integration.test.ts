@@ -8,18 +8,13 @@ const topoCli = new TopoCli(
     {} as vscode.EnvironmentVariableCollection,
 );
 const isWindowsCi = process.platform === 'win32' && process.env.CI === 'true';
-const originalTopoTarget = process.env.TOPO_TARGET;
 
 beforeAll(() => {
-    delete process.env.TOPO_TARGET;
+    vi.stubEnv('TOPO_TARGET', undefined);
 });
 
 afterAll(() => {
-    if (originalTopoTarget === undefined) {
-        delete process.env.TOPO_TARGET;
-    } else {
-        process.env.TOPO_TARGET = originalTopoTarget;
-    }
+    vi.unstubAllEnvs();
 });
 
 // The real `topo health localhost` integration path can take longer on
