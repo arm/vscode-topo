@@ -9,6 +9,19 @@ All notable changes to the "vscode-topo" extension will be documented in this fi
 
 
 
+
+## 0.20.0
+
+<!-- Release notes generated using configuration in .github/release.yml at aa15cd477b5c22a0db737a275b1c50d9d5b07d4b -->
+
+## What's Changed
+### Features and Enhancements
+* feat: include env vars declared in startup scripts in tasks (#427)
+
+
+**Full Changelog**: https://github.com/arm/vscode-topo/compare/v0.18.0...v0.20.0
+
+
 ## 0.18.0
 
 <!-- Release notes generated using configuration in .github/release.yml at c495c4ea6fde363b02c19ce3defc74c3f85af82c -->
