@@ -1,6 +1,7 @@
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { TopoCli } from './topoCli';
+import { topo } from '../../package.json';
 
 const extensionPath = path.resolve(__dirname, '../..');
 const topoCli = new TopoCli(
@@ -19,7 +20,7 @@ describe('getVersion', () => {
 
         expect(version).toEqual(
             expect.objectContaining({
-                version: expect.any(String),
+                version: topo.version,
                 commit: expect.any(String),
             }),
         );
