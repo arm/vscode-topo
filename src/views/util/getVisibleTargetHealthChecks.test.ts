@@ -1,5 +1,4 @@
 import { TargetHealthReport } from '../../services/topoCliSchema';
-import { TargetDescription } from '../../services/topoCliSchema';
 import { getVisibleTargetHealthChecks } from './getVisibleTargetHealthChecks';
 
 describe('getVisibleTargetHealthChecks', () => {
@@ -25,47 +24,10 @@ describe('getVisibleTargetHealthChecks', () => {
         },
     };
 
-    it('returns target health checks when there are no remote processors', () => {
-        const targetDescription: TargetDescription = {
-            hostProcessors: [],
-            remoteProcessors: [],
-            totalMemoryKb: 1024,
-        };
-        const healthWithFixableProcessingDomainDriver: TargetHealthReport = {
-            ...health,
-            processingDomainDriver: {
-                name: 'Processing Domain Driver',
-                status: 'error',
-                value: 'missing',
-                fix: {
-                    description: 'Install processing domain driver',
-                    command: 'topo install processing-domain-driver',
-                },
-            },
-        };
-        const expectedHealthChecks = health.dependencies;
-
-        const result = getVisibleTargetHealthChecks(
-            healthWithFixableProcessingDomainDriver,
-            targetDescription,
-        );
-
-        expect(result).toEqual(expectedHealthChecks);
-    });
-
-    it('includes the processing domain driver when remote processors exist', () => {
-        const targetDescription: TargetDescription = {
-            hostProcessors: [],
-            remoteProcessors: [{ name: 'imx-rproc' }],
-            totalMemoryKb: 1024,
-        };
-        const expectedHealthChecks = [
+    it('includes the driver when the target is connected', () => {
+        expect(getVisibleTargetHealthChecks(health)).toEqual([
             ...health.dependencies,
             health.processingDomainDriver,
-        ];
-
-        const result = getVisibleTargetHealthChecks(health, targetDescription);
-
-        expect(result).toEqual(expectedHealthChecks);
+        ]);
     });
 });

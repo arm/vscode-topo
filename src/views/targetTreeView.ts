@@ -78,13 +78,9 @@ function getSelectedTargetChildren(
                 ];
             }
 
-            const description =
-                targetDescription.status === 'loaded'
-                    ? targetDescription.data
-                    : undefined;
             const healthGroup = new HealthCheckGroupTreeItem(
                 loaded(
-                    getVisibleTargetHealthChecks(health.data, description),
+                    getVisibleTargetHealthChecks(health.data),
                     health.loading,
                 ),
             );
