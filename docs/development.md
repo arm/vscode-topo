@@ -42,6 +42,18 @@ To watch for changes during development:
 npm run watch
 ```
 
+## Telemetry
+
+Copy the connection string from the Azure Application Insights resource's
+**Overview** page (the Arm resource is **VSCode-Extensions**). Set it as the
+`AZURE_ANALYTICS_CONNECTION_STRING` environment variable before building.
+
+`topo.telemetry` defaults to `auto`: enabled in production and disabled in
+development and tests. Set it to `on` or `off` to override this.
+
+VS Code's `telemetry.telemetryLevel` must be set to `all` to send usage events,
+including activation events.
+
 ## Lint
 
 Run the full lint suite (Prettier, ESLint, and TypeScript checks):

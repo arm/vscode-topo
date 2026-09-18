@@ -3,6 +3,7 @@ export const PACKAGE_NAME = 'topo';
 export const DISPLAY_NAME = 'Topo';
 export const TOPO_TASK_TYPE = PACKAGE_NAME;
 export const CONFIG_TARGET_SETTINGS = 'targetSettings';
+export const CONFIG_TELEMETRY = 'telemetry';
 export const CONTEXT_SELECTED_TARGET_STATE = `${PACKAGE_NAME}.selectedTargetState`;
 export const CONTEXT_SELECTED_TARGET_CONNECTED = `${PACKAGE_NAME}.selectedTargetConnected`;
 export const CONTEXT_PROJECT_COUNT = `${PACKAGE_NAME}.projectCount`;
