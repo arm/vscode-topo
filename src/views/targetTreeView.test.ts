@@ -275,7 +275,9 @@ describe('TargetTreeView', () => {
             const diagnostics = '"ssh" not found on remote target\'s $PATH';
             targetModel.setSelectedTargetHealth(
                 loaded({
-                    ...targetHealth,
+                    destination: targetHealth.destination,
+                    isLocalhost: false,
+                    dependencies: [],
                     connectivity: {
                         name: 'Connectivity',
                         status: 'error',

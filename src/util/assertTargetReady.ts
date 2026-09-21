@@ -1,12 +1,16 @@
 import { WrappedError } from '../errors/wrappedError';
-import type { TargetHealthReport } from '../services/topoCliSchema';
+import type {
+    ConnectedTargetHealthReport,
+    HealthCheck,
+    TargetHealthReport,
+} from '../services/topoCliSchema';
 import type { Loadable, Loaded } from './loadable';
 
-export type ConnectedTargetHealth = Loaded<
-    TargetHealthReport & {
-        connectivity: TargetHealthReport['connectivity'] & { status: 'ok' };
-    }
->;
+export function isTargetConnected(
+    health: TargetHealthReport,
+): health is ConnectedTargetHealthReport {
+    return health.isLocalhost || health.connectivity.status === 'ok';
+}
 
 export function assertTargetSelected(
     selected: string | undefined,
@@ -22,12 +26,21 @@ export function assertTargetSelected(
 export function assertTargetConnected(
     target: string,
     health: Loadable<TargetHealthReport>,
-): asserts health is ConnectedTargetHealth {
-    if (
-        health.status === 'loaded' &&
-        health.data.connectivity.status === 'ok'
-    ) {
-        return;
+): asserts health is Loaded<ConnectedTargetHealthReport> {
+    if (health.status === 'loaded') {
+        const report = health.data;
+        if (isTargetConnected(report)) {
+            return;
+        }
+        if (!health.loading) {
+            throw new WrappedError(
+                'TARGET',
+                getTargetConnectivityFailureMessage(
+                    target,
+                    report.connectivity,
+                ),
+            );
+        }
     }
 
     if (health.loading) {
@@ -37,25 +50,16 @@ export function assertTargetConnected(
         );
     }
 
-    if (health.status !== 'loaded') {
-        throw new WrappedError(
-            'TARGET',
-            `Target ${target} health is unavailable. Refresh target health and try again.`,
-        );
-    }
-
     throw new WrappedError(
         'TARGET',
-        getTargetConnectivityFailureMessage(target, health.data),
+        `Target ${target} health is unavailable. Refresh target health and try again.`,
     );
 }
 
 function getTargetConnectivityFailureMessage(
     target: string,
-    health: TargetHealthReport,
+    connectivity: HealthCheck,
 ): string {
-    const details = health.connectivity.value
-        ? `: ${health.connectivity.value}`
-        : '';
-    return `Target ${target} connectivity is '${health.connectivity.status}'${details}.`;
+    const details = connectivity.value ? `: ${connectivity.value}` : '';
+    return `Target ${target} connectivity is '${connectivity.status}'${details}.`;
 }

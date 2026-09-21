@@ -81,7 +81,6 @@ describe('health', () => {
             target: expect.objectContaining({
                 isLocalhost: true,
                 dependencies: expect.any(Array),
-                connectivity: expect.any(Object),
                 processingDomainDriver: expect.any(Object),
             }),
         });
@@ -90,6 +89,9 @@ describe('health', () => {
     it('succeeds when target is unreachable', async () => {
         const health = await topoCli.health('unreachable-target');
 
-        expect(health.target.connectivity.status).toBe('error');
+        expect(health.target).toMatchObject({
+            isLocalhost: false,
+            connectivity: { status: 'error' },
+        });
     });
 });
