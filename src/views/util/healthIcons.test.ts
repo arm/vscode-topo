@@ -24,6 +24,12 @@ describe('getHealthCheckIcon', () => {
         );
     });
 
+    it('maps info to an information icon', () => {
+        expect(getHealthCheckIcon('info')).toStrictEqual(
+            new vscode.ThemeIcon('info'),
+        );
+    });
+
     it('maps error to a failed close icon', () => {
         const icon = getHealthCheckIcon('error');
 

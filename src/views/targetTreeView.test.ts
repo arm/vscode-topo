@@ -217,6 +217,9 @@ describe('TargetTreeView', () => {
         });
 
         it('returns health check items for Health group', () => {
+            targetModel.setSelectedTargetDescription(
+                loaded({ ...targetDescription, remoteProcessors: [] }),
+            );
             const processingDomainDriverHealth = mock<HealthCheck>({
                 name: 'rproc-driver',
                 status: 'ok',

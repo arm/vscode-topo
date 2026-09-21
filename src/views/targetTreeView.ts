@@ -11,7 +11,6 @@ import {
     TargetDescription,
     TargetHealthReport,
 } from '../services/topoCliSchema';
-import { getVisibleTargetHealthChecks } from './util/getVisibleTargetHealthChecks';
 import { LoadingTreeItem } from './treeItems/loadingTreeItem';
 import {
     compareProcessingDomains,
@@ -78,15 +77,12 @@ function getSelectedTargetChildren(
                 ];
             }
 
-            const description =
-                targetDescription.status === 'loaded'
-                    ? targetDescription.data
-                    : undefined;
+            const healthChecks = [
+                ...health.data.dependencies,
+                health.data.processingDomainDriver,
+            ];
             const healthGroup = new HealthCheckGroupTreeItem(
-                loaded(
-                    getVisibleTargetHealthChecks(health.data, description),
-                    health.loading,
-                ),
+                loaded(healthChecks, health.loading),
             );
             const processingDomainGroup = new ProcessingDomainGroupTreeItem(
                 targetDescription,
