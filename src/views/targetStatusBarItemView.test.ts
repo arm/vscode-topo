@@ -97,7 +97,9 @@ describe('TargetStatusBarItemView', () => {
         targetModel.setSelected(target);
         targetModel.setSelectedTargetHealth(
             loaded({
-                ...healthyTarget,
+                destination: healthyTarget.destination,
+                isLocalhost: false,
+                dependencies: [],
                 connectivity: {
                     name: 'Connectivity',
                     status: 'error',

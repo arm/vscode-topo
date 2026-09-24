@@ -1,14 +1,15 @@
 import {
     array,
-    boolean,
     enums,
     Infer,
+    literal,
     number,
     nullable,
     optional,
     string,
     trimmed,
     type,
+    union,
     defaulted,
 } from 'superstruct';
 import type { DeepReadonly } from '../util/types';
@@ -50,13 +51,43 @@ export const healthCheckSchema = type({
 
 export type HealthCheck = DeepReadonly<Infer<typeof healthCheckSchema>>;
 
-const targetHealthReportSchema = type({
+const targetHealthReportFields = {
     destination: trimmedStringSchema,
-    isLocalhost: boolean(),
-    connectivity: healthCheckSchema,
-    processingDomainDriver: healthCheckSchema,
     dependencies: array(healthCheckSchema),
-});
+};
+
+const connectedTargetHealthReportSchema = union([
+    type({
+        ...targetHealthReportFields,
+        isLocalhost: literal(true),
+        processingDomainDriver: healthCheckSchema,
+    }),
+    type({
+        ...targetHealthReportFields,
+        isLocalhost: literal(false),
+        connectivity: type({
+            ...healthCheckSchema.schema,
+            status: trimmed(literal('ok')),
+        }),
+        processingDomainDriver: healthCheckSchema,
+    }),
+]);
+
+export type ConnectedTargetHealthReport = DeepReadonly<
+    Infer<typeof connectedTargetHealthReportSchema>
+>;
+
+const targetHealthReportSchema = union([
+    connectedTargetHealthReportSchema,
+    type({
+        ...targetHealthReportFields,
+        isLocalhost: literal(false),
+        connectivity: type({
+            ...healthCheckSchema.schema,
+            status: trimmed(literal('error')),
+        }),
+    }),
+]);
 
 const hostHealthSchema = type({
     dependencies: array(healthCheckSchema),

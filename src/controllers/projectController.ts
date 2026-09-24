@@ -13,6 +13,7 @@ import { showAndLogError } from '../util/showAndLog';
 import { isProjectComposePathDeleted } from '../util/isProjectComposePathDeleted';
 import { TOPO_TASK_TYPE } from '../manifest';
 import { TaskCommand } from '../tasks/taskFactory';
+import { isTargetConnected } from '../util/assertTargetReady';
 
 function createContainerItem(item: PsEntry, target: string): ContainerItem {
     return {
@@ -125,7 +126,7 @@ export class ProjectController implements vscode.Disposable {
             return;
         } else if (
             health.status !== 'loaded' ||
-            health.data.connectivity.status !== 'ok'
+            !isTargetConnected(health.data)
         ) {
             return this.clearProjectContainers();
         }

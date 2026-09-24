@@ -17,6 +17,7 @@ import {
     ProcessingDomainTreeItem,
 } from './treeItems/processingDomainTreeItem';
 import { ProcessingDomainGroupTreeItem } from './treeItems/processingDomainGroupTreeItem';
+import { isTargetConnected } from '../util/assertTargetReady';
 
 export const TargetSelectionState = {
     Unselected: 'unselected',
@@ -69,7 +70,7 @@ function getSelectedTargetChildren(
         case 'errored':
             return [new ErrorTreeItem('Failed to check target health', health)];
         case 'loaded': {
-            if (health.data.connectivity.status !== 'ok') {
+            if (!isTargetConnected(health.data)) {
                 return [
                     new HealthCheckTreeItem(
                         loaded(health.data.connectivity, health.loading),
@@ -115,7 +116,7 @@ function syncSelectedTargetConnectedContext(
     health: Loadable<TargetHealthReport>,
 ): void {
     const connected =
-        health.status === 'loaded' && health.data.connectivity.status === 'ok';
+        health.status === 'loaded' && isTargetConnected(health.data);
     void vscode.commands.executeCommand(
         'setContext',
         manifest.CONTEXT_SELECTED_TARGET_CONNECTED,
