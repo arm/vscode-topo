@@ -27,20 +27,9 @@ export function assertTargetConnected(
     target: string,
     health: Loadable<TargetHealthReport>,
 ): asserts health is Loaded<ConnectedTargetHealthReport> {
-    if (health.status === 'loaded') {
-        const report = health.data;
-        if (isTargetConnected(report)) {
-            return;
-        }
-        if (!health.loading) {
-            throw new WrappedError(
-                'TARGET',
-                getTargetConnectivityFailureMessage(
-                    target,
-                    report.connectivity,
-                ),
-            );
-        }
+    const report = health.status === 'loaded' ? health.data : undefined;
+    if (report && isTargetConnected(report)) {
+        return;
     }
 
     if (health.loading) {
@@ -50,9 +39,16 @@ export function assertTargetConnected(
         );
     }
 
+    if (!report) {
+        throw new WrappedError(
+            'TARGET',
+            `Target ${target} health is unavailable. Refresh target health and try again.`,
+        );
+    }
+
     throw new WrappedError(
         'TARGET',
-        `Target ${target} health is unavailable. Refresh target health and try again.`,
+        getTargetConnectivityFailureMessage(target, report.connectivity),
     );
 }
 
