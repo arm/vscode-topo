@@ -32,8 +32,8 @@ describe('Telemetry', () => {
 
         expect(result).toBe('extension API');
         expect(reporter.sendTelemetryEvent).toHaveBeenCalledWith(
-            'activated',
-            {},
+            'activate',
+            { outcome: 'success' },
             expect.any(Object),
         );
         await telemetry.dispose();

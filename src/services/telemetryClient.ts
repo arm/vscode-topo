@@ -3,6 +3,8 @@ import type { Disposable } from 'vscode';
 import { getErrorMessage } from '../util/getErrorMessage';
 import { logger } from '../util/logger';
 
+export type TelemetryEventName = 'activate';
+
 function getDurationSeconds(startedAt: number): number {
     return (Date.now() - startedAt) / 1000;
 }
@@ -11,7 +13,7 @@ export class TelemetryClient implements Disposable {
     constructor(private readonly reporter: TelemetryReporter) {}
 
     public async track<T>(
-        eventName: string,
+        eventName: TelemetryEventName,
         operation: () => Promise<T>,
         properties: Record<string, string> = {},
     ): Promise<T> {
@@ -20,12 +22,12 @@ export class TelemetryClient implements Disposable {
         try {
             result = await operation();
         } catch (error) {
-            this.send('exception', () =>
+            this.send(eventName, () =>
                 this.reporter.sendTelemetryErrorEvent(
-                    'exception',
+                    eventName,
                     {
                         ...properties,
-                        failedEvent: eventName,
+                        outcome: 'failure',
                         errorMessage: getErrorMessage(error),
                         stack: error instanceof Error ? error.stack : undefined,
                     },
@@ -36,15 +38,17 @@ export class TelemetryClient implements Disposable {
         }
 
         this.send(eventName, () =>
-            this.reporter.sendTelemetryEvent(eventName, properties, {
-                durationSeconds: getDurationSeconds(startedAt),
-            }),
+            this.reporter.sendTelemetryEvent(
+                eventName,
+                { ...properties, outcome: 'success' },
+                { durationSeconds: getDurationSeconds(startedAt) },
+            ),
         );
 
         return result;
     }
 
-    private send(eventName: string, sendEvent: () => void): void {
+    private send(eventName: TelemetryEventName, sendEvent: () => void): void {
         try {
             sendEvent();
         } catch (error) {

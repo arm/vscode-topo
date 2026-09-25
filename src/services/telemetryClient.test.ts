@@ -19,10 +19,10 @@ describe('TelemetryClient', () => {
 
     it('preserves the operation result and reports its properties and duration in seconds', async () => {
         const now = vi.spyOn(Date, 'now').mockReturnValue(0);
-        const properties = { forceRecreate: 'true' };
+        const properties = { extensionVersion: '0.20.0', outcome: 'failure' };
 
         const result = await client.track(
-            'deployed',
+            'activate',
             async () => {
                 now.mockReturnValue(1500);
                 return 'operation result';
@@ -32,8 +32,8 @@ describe('TelemetryClient', () => {
 
         expect(result).toBe('operation result');
         expect(reporter.sendTelemetryEvent).toHaveBeenCalledExactlyOnceWith(
-            'deployed',
-            properties,
+            'activate',
+            { ...properties, outcome: 'success' },
             { durationSeconds: 1.5 },
         );
         expect(reporter.sendTelemetryErrorEvent).not.toHaveBeenCalled();
@@ -45,14 +45,14 @@ describe('TelemetryClient', () => {
 
         await expect(
             client.track(
-                'deployed',
+                'activate',
                 async () => {
                     now.mockReturnValue(250);
                     throw error;
                 },
                 {
-                    forceRecreate: 'true',
-                    failedEvent: 'ignored',
+                    extensionVersion: '0.20.0',
+                    outcome: 'success',
                 },
             ),
         ).rejects.toBe(error);
@@ -60,10 +60,10 @@ describe('TelemetryClient', () => {
         expect(
             reporter.sendTelemetryErrorEvent,
         ).toHaveBeenCalledExactlyOnceWith(
-            'exception',
+            'activate',
             {
-                forceRecreate: 'true',
-                failedEvent: 'deployed',
+                extensionVersion: '0.20.0',
+                outcome: 'failure',
                 errorMessage: error.message,
                 stack: error.stack,
             },
@@ -75,14 +75,15 @@ describe('TelemetryClient', () => {
     it('preserves failures that are not Error objects', async () => {
         await expect(
             client.track(
-                'deployed',
+                'activate',
                 vi.fn().mockRejectedValue('Operation rejected'),
             ),
         ).rejects.toBe('Operation rejected');
 
         expect(reporter.sendTelemetryErrorEvent).toHaveBeenCalledWith(
-            'exception',
+            'activate',
             expect.objectContaining({
+                outcome: 'failure',
                 errorMessage: 'Operation rejected',
             }),
             expect.any(Object),
@@ -95,7 +96,7 @@ describe('TelemetryClient', () => {
         });
 
         await expect(
-            client.track('deployed', async () => 'operation result'),
+            client.track('activate', async () => 'operation result'),
         ).resolves.toBe('operation result');
     });
 
@@ -106,7 +107,7 @@ describe('TelemetryClient', () => {
         });
 
         await expect(
-            client.track('deployed', async () => {
+            client.track('activate', async () => {
                 throw error;
             }),
         ).rejects.toBe(error);

@@ -25,7 +25,7 @@ export class Telemetry implements Disposable {
     }
 
     public trackActivation<T>(activate: () => Promise<T>): Promise<T> {
-        return this.client?.track('activated', activate) ?? activate();
+        return this.client?.track('activate', activate) ?? activate();
     }
 
     public async dispose(): Promise<void> {
