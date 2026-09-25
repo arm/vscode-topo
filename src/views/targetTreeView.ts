@@ -11,13 +11,13 @@ import {
     TargetDescription,
     TargetHealthReport,
 } from '../services/topoCliSchema';
-import { getVisibleTargetHealthChecks } from './util/getVisibleTargetHealthChecks';
 import { LoadingTreeItem } from './treeItems/loadingTreeItem';
 import {
     compareProcessingDomains,
     ProcessingDomainTreeItem,
 } from './treeItems/processingDomainTreeItem';
 import { ProcessingDomainGroupTreeItem } from './treeItems/processingDomainGroupTreeItem';
+import { isTargetConnected } from '../util/assertTargetReady';
 
 export const TargetSelectionState = {
     Unselected: 'unselected',
@@ -70,7 +70,7 @@ function getSelectedTargetChildren(
         case 'errored':
             return [new ErrorTreeItem('Failed to check target health', health)];
         case 'loaded': {
-            if (health.data.connectivity.status !== 'ok') {
+            if (!isTargetConnected(health.data)) {
                 return [
                     new HealthCheckTreeItem(
                         loaded(health.data.connectivity, health.loading),
@@ -78,15 +78,12 @@ function getSelectedTargetChildren(
                 ];
             }
 
-            const description =
-                targetDescription.status === 'loaded'
-                    ? targetDescription.data
-                    : undefined;
+            const healthChecks = [
+                ...health.data.dependencies,
+                health.data.processingDomainDriver,
+            ];
             const healthGroup = new HealthCheckGroupTreeItem(
-                loaded(
-                    getVisibleTargetHealthChecks(health.data, description),
-                    health.loading,
-                ),
+                loaded(healthChecks, health.loading),
             );
             const processingDomainGroup = new ProcessingDomainGroupTreeItem(
                 targetDescription,
@@ -119,7 +116,7 @@ function syncSelectedTargetConnectedContext(
     health: Loadable<TargetHealthReport>,
 ): void {
     const connected =
-        health.status === 'loaded' && health.data.connectivity.status === 'ok';
+        health.status === 'loaded' && isTargetConnected(health.data);
     void vscode.commands.executeCommand(
         'setContext',
         manifest.CONTEXT_SELECTED_TARGET_CONNECTED,

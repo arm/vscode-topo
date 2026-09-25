@@ -8,6 +8,7 @@ import { Loadable } from '../util/loadable';
 import { TargetHealthReport } from '../services/topoCliSchema';
 import { selectTarget } from '../commandIds';
 import { getErrorMessage } from '../util/getErrorMessage';
+import { isTargetConnected } from '../util/assertTargetReady';
 
 function getStatusIconId(state: Loadable<TargetHealthReport>): string {
     if (state.loading) {
@@ -16,7 +17,7 @@ function getStatusIconId(state: Loadable<TargetHealthReport>): string {
 
     if (
         state.status === 'errored' ||
-        (state.status === 'loaded' && state.data.connectivity.status !== 'ok')
+        (state.status === 'loaded' && !isTargetConnected(state.data))
     ) {
         return 'error';
     }
@@ -48,7 +49,7 @@ function getStatusTooltip(
         return lines.join('\n');
     }
 
-    if (selectedHealth.data.connectivity.status !== 'ok') {
+    if (!isTargetConnected(selectedHealth.data)) {
         const { name, value } = selectedHealth.data.connectivity;
         lines.push(`${name}: ${value}`);
     }

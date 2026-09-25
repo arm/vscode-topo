@@ -217,6 +217,9 @@ describe('TargetTreeView', () => {
         });
 
         it('returns health check items for Health group', () => {
+            targetModel.setSelectedTargetDescription(
+                loaded({ ...targetDescription, remoteProcessors: [] }),
+            );
             const processingDomainDriverHealth = mock<HealthCheck>({
                 name: 'rproc-driver',
                 status: 'ok',
@@ -272,7 +275,9 @@ describe('TargetTreeView', () => {
             const diagnostics = '"ssh" not found on remote target\'s $PATH';
             targetModel.setSelectedTargetHealth(
                 loaded({
-                    ...targetHealth,
+                    destination: targetHealth.destination,
+                    isLocalhost: false,
+                    dependencies: [],
                     connectivity: {
                         name: 'Connectivity',
                         status: 'error',

@@ -41,6 +41,17 @@ describe('assertTargetConnected', () => {
         ).not.toThrow();
     });
 
+    it('accepts localhost without an SSH connectivity check', () => {
+        const health = loaded<TargetHealthReport>({
+            destination: 'ssh://localhost',
+            isLocalhost: true,
+            dependencies: targetHealth.dependencies,
+            processingDomainDriver: targetHealth.processingDomainDriver,
+        });
+
+        expect(() => assertTargetConnected('localhost', health)).not.toThrow();
+    });
+
     it('accepts previously healthy target health while it is refreshing', () => {
         expect(() =>
             assertTargetConnected(target, loading(loaded(targetHealth))),
@@ -64,7 +75,9 @@ describe('assertTargetConnected', () => {
 
     it('throws a target error when target connectivity is unhealthy', () => {
         const health = loaded({
-            ...targetHealth,
+            destination: targetHealth.destination,
+            isLocalhost: false as const,
+            dependencies: [],
             connectivity: {
                 ...targetHealth.connectivity,
                 status: 'error' as const,

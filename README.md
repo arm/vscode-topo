@@ -154,6 +154,8 @@ string-valued environment variables to the command's inherited environment.
 Supported commands are `configure`, `deploy`, `health`, `install`, `projects`,
 `ps`, `setup-keys`, and `stop`.
 
+Topo reads `.env` and then `.env.topo` beside the compose file for `deploy`, `ps`, and `stop`, with `.env.topo` taking precedence. To use different files, add `--env-file` arguments to a configured task; explicit files replace these defaults and are resolved relative to the task's working directory.
+
 ## Project Management
 
 The **Projects** view appears in the **Topo** activity bar container and lists workspace projects discovered from top-level `compose.yaml` files.

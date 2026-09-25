@@ -18,6 +18,10 @@ export const getHealthCheckIcon = (
         );
     }
 
+    if (status === 'info') {
+        return new vscode.ThemeIcon('info');
+    }
+
     return new vscode.ThemeIcon(
         'close',
         new vscode.ThemeColor('testing.iconFailed'),

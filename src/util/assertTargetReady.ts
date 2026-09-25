@@ -1,12 +1,16 @@
 import { WrappedError } from '../errors/wrappedError';
-import type { TargetHealthReport } from '../services/topoCliSchema';
+import type {
+    ConnectedTargetHealthReport,
+    HealthCheck,
+    TargetHealthReport,
+} from '../services/topoCliSchema';
 import type { Loadable, Loaded } from './loadable';
 
-export type ConnectedTargetHealth = Loaded<
-    TargetHealthReport & {
-        connectivity: TargetHealthReport['connectivity'] & { status: 'ok' };
-    }
->;
+export function isTargetConnected(
+    health: TargetHealthReport,
+): health is ConnectedTargetHealthReport {
+    return health.isLocalhost || health.connectivity.status === 'ok';
+}
 
 export function assertTargetSelected(
     selected: string | undefined,
@@ -22,11 +26,9 @@ export function assertTargetSelected(
 export function assertTargetConnected(
     target: string,
     health: Loadable<TargetHealthReport>,
-): asserts health is ConnectedTargetHealth {
-    if (
-        health.status === 'loaded' &&
-        health.data.connectivity.status === 'ok'
-    ) {
+): asserts health is Loaded<ConnectedTargetHealthReport> {
+    const report = health.status === 'loaded' ? health.data : undefined;
+    if (report && isTargetConnected(report)) {
         return;
     }
 
@@ -37,7 +39,7 @@ export function assertTargetConnected(
         );
     }
 
-    if (health.status !== 'loaded') {
+    if (!report) {
         throw new WrappedError(
             'TARGET',
             `Target ${target} health is unavailable. Refresh target health and try again.`,
@@ -46,16 +48,14 @@ export function assertTargetConnected(
 
     throw new WrappedError(
         'TARGET',
-        getTargetConnectivityFailureMessage(target, health.data),
+        getTargetConnectivityFailureMessage(target, report.connectivity),
     );
 }
 
 function getTargetConnectivityFailureMessage(
     target: string,
-    health: TargetHealthReport,
+    connectivity: HealthCheck,
 ): string {
-    const details = health.connectivity.value
-        ? `: ${health.connectivity.value}`
-        : '';
-    return `Target ${target} connectivity is '${health.connectivity.status}'${details}.`;
+    const details = connectivity.value ? `: ${connectivity.value}` : '';
+    return `Target ${target} connectivity is '${connectivity.status}'${details}.`;
 }
