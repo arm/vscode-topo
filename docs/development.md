@@ -42,6 +42,12 @@ To watch for changes during development:
 npm run watch
 ```
 
+## Telemetry
+
+Local builds disable telemetry unless `AZURE_ANALYTICS_CONNECTION_STRING` is set when building. To enable it, copy the connection string from the Azure Application Insights resource's **Overview** page (the Arm resource is **VSCode-Extensions**) and set that environment variable before running `npm run build` or `npm run watch`.
+
+Telemetry always respects VS Code's global `telemetry.telemetryLevel` setting. It must be set to `all` to send usage events, including activation events.
+
 ## Lint
 
 Run the full lint suite (Prettier, ESLint, and TypeScript checks):

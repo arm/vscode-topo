@@ -614,6 +614,7 @@
         "yargs": "^18.1.0"
     },
     "dependencies": {
+        "@vscode/extension-telemetry": "^1.5.2",
         "lodash.debounce": "^4.0.8",
         "ssh-config": "^5.2.1",
         "superstruct": "^2.0.2"

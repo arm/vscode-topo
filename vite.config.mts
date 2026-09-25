@@ -9,6 +9,8 @@ const __dirname = path.dirname(__filename);
 
 export default defineConfig((config: ConfigEnv) => {
     const isDev = process.argv.includes('--watch');
+    const connectionString =
+        process.env.AZURE_ANALYTICS_CONNECTION_STRING?.trim() ?? '';
     console.log(
         `Vite is running in ${isDev ? 'development' : 'production'} mode`,
     );
@@ -33,5 +35,12 @@ export default defineConfig((config: ConfigEnv) => {
     };
     return {
         build,
+        define: {
+            __TELEMETRY_CONNECTION_STRING__: JSON.stringify(connectionString),
+        },
+        resolve: {
+            mainFields: ['module', 'main'],
+            conditions: ['node'],
+        },
     };
 });
