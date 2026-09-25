@@ -22,39 +22,59 @@ export class TelemetryClient implements Disposable {
         try {
             result = await operation();
         } catch (error) {
-            this.send(eventName, () =>
-                this.reporter.sendTelemetryErrorEvent(
-                    eventName,
-                    {
-                        ...properties,
-                        outcome: 'failure',
-                        errorMessage: getErrorMessage(error),
-                        stack: error instanceof Error ? error.stack : undefined,
-                    },
-                    { durationSeconds: getDurationSeconds(startedAt) },
-                ),
-            );
+            this.sendError(eventName, error, properties, {
+                durationSeconds: getDurationSeconds(startedAt),
+            });
             throw error;
         }
 
-        this.send(eventName, () =>
-            this.reporter.sendTelemetryEvent(
-                eventName,
-                { ...properties, outcome: 'success' },
-                { durationSeconds: getDurationSeconds(startedAt) },
-            ),
-        );
+        this.send(eventName, properties, {
+            durationSeconds: getDurationSeconds(startedAt),
+        });
 
         return result;
     }
 
-    private send(eventName: TelemetryEventName, sendEvent: () => void): void {
+    private send(
+        eventName: TelemetryEventName,
+        properties: Record<string, string>,
+        measurements: Record<string, number>,
+    ): void {
         try {
-            sendEvent();
+            this.reporter.sendTelemetryEvent(
+                eventName,
+                { ...properties, outcome: 'success' },
+                measurements,
+            );
         } catch (error) {
             logger.warn(
                 `Failed to report telemetry event '${eventName}'`,
                 error,
+            );
+        }
+    }
+
+    private sendError(
+        eventName: TelemetryEventName,
+        error: unknown,
+        properties: Record<string, string>,
+        measurements: Record<string, number>,
+    ): void {
+        try {
+            this.reporter.sendTelemetryErrorEvent(
+                eventName,
+                {
+                    ...properties,
+                    outcome: 'failure',
+                    errorMessage: getErrorMessage(error),
+                    stack: error instanceof Error ? error.stack : undefined,
+                },
+                measurements,
+            );
+        } catch (reportingError) {
+            logger.warn(
+                `Failed to report telemetry event '${eventName}'`,
+                reportingError,
             );
         }
     }
