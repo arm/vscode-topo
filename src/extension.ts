@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { Telemetry } from './services/telemetry';
+import { TelemetryClient } from './services/telemetryClient';
 import * as commands from './commands';
 import { TopoCli } from './services/topoCli';
 import { TargetStatusBarItemView } from './views/targetStatusBarItemView';
@@ -46,7 +47,21 @@ export async function activate(
     context.subscriptions.push(logger);
 
     const config = new Config();
-    const telemetry = new Telemetry();
+    const connectionString = __TELEMETRY_CONNECTION_STRING__;
+    let telemetryClient: TelemetryClient | undefined;
+    if (connectionString) {
+        try {
+            telemetryClient = new TelemetryClient(connectionString);
+        } catch (error) {
+            logger.warn('Failed to initialize telemetry', error);
+        }
+    } else {
+        logger.info(
+            'Telemetry disabled: AZURE_ANALYTICS_CONNECTION_STRING is not configured',
+        );
+    }
+
+    const telemetry = new Telemetry(telemetryClient);
     context.subscriptions.push(telemetry);
     await telemetry.trackActivation(() => activateExtension(context, config));
 }

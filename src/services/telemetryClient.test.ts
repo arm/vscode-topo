@@ -1,15 +1,20 @@
-import type { TelemetryReporter } from '@vscode/extension-telemetry';
+import { TelemetryReporter } from '@vscode/extension-telemetry';
 import { mock } from 'vitest-mock-extended';
 import { TelemetryClient } from './telemetryClient';
 
 vi.mock('../util/logger');
+vi.mock('@vscode/extension-telemetry', () => ({ TelemetryReporter: vi.fn() }));
 
 describe('TelemetryClient', () => {
     const reporter = mock<TelemetryReporter>();
+    const connectionString = 'test-connection-string';
     let client: TelemetryClient;
 
     beforeEach(() => {
-        client = new TelemetryClient(reporter);
+        vi.mocked(TelemetryReporter).mockImplementation(function () {
+            return reporter;
+        });
+        client = new TelemetryClient(connectionString);
     });
 
     afterEach(() => {
@@ -31,12 +36,17 @@ describe('TelemetryClient', () => {
         );
 
         expect(result).toBe('operation result');
+        expect(TelemetryReporter).toHaveBeenCalledExactlyOnceWith(
+            connectionString,
+        );
         expect(reporter.sendTelemetryEvent).toHaveBeenCalledExactlyOnceWith(
             'activate',
             { ...properties, outcome: 'success' },
             { durationSeconds: 1.5 },
         );
         expect(reporter.sendTelemetryErrorEvent).not.toHaveBeenCalled();
+        await client.dispose();
+        expect(reporter.dispose).toHaveBeenCalledOnce();
     });
 
     it('includes custom properties without overriding failure details and rethrows the original error', async () => {

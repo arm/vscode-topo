@@ -1,4 +1,4 @@
-import type { TelemetryReporter } from '@vscode/extension-telemetry';
+import { TelemetryReporter } from '@vscode/extension-telemetry';
 import type { Disposable } from 'vscode';
 import { getErrorMessage } from '../util/getErrorMessage';
 import { logger } from '../util/logger';
@@ -10,7 +10,11 @@ function getDurationSeconds(startedAt: number): number {
 }
 
 export class TelemetryClient implements Disposable {
-    constructor(private readonly reporter: TelemetryReporter) {}
+    private readonly reporter: TelemetryReporter;
+
+    constructor(connectionString: string) {
+        this.reporter = new TelemetryReporter(connectionString);
+    }
 
     public async track<T>(
         eventName: TelemetryEventName,
