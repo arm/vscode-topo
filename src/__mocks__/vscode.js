@@ -101,7 +101,6 @@ const CodeActionKind = {
 const CodeAction = vi.fn((title, kind) => ({ title, kind }));
 
 // Enums
-const ExtensionMode = { Production: 1, Development: 2, Test: 3 };
 const ShellQuoting = { Escape: 1, Strong: 2, Weak: 3 };
 const StatusBarAlignment = { Left: 1, Right: 2 };
 const TaskScope = { Global: 1, Workspace: 2 };
@@ -314,7 +313,6 @@ module.exports = {
     Disposable,
     EndOfLine,
     EventEmitter,
-    ExtensionMode,
     FileType,
     FileSystemError,
     LogLevel,

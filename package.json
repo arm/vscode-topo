@@ -536,31 +536,6 @@
         },
         "configuration": [
             {
-                "title": "Topo",
-                "properties": {
-                    "topo.telemetry": {
-                        "type": "string",
-                        "enum": [
-                            "auto",
-                            "on",
-                            "off"
-                        ],
-                        "enumDescriptions": [
-                            "Enable telemetry in production and disable it in development and tests.",
-                            "Enable telemetry, including in development and tests.",
-                            "Disable all Topo telemetry."
-                        ],
-                        "default": "auto",
-                        "scope": "application",
-                        "markdownDescription": "Controls Topo telemetry. Always respects `#telemetry.telemetryLevel#`.",
-                        "tags": [
-                            "telemetry",
-                            "usesOnlineServices"
-                        ]
-                    }
-                }
-            },
-            {
                 "title": "Target Settings",
                 "properties": {
                     "topo.targetSettings": {

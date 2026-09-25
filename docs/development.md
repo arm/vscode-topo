@@ -44,15 +44,9 @@ npm run watch
 
 ## Telemetry
 
-Copy the connection string from the Azure Application Insights resource's
-**Overview** page (the Arm resource is **VSCode-Extensions**). Set it as the
-`AZURE_ANALYTICS_CONNECTION_STRING` environment variable before building.
+Local builds disable telemetry unless `AZURE_ANALYTICS_CONNECTION_STRING` is set when building. To enable it, copy the connection string from the Azure Application Insights resource's **Overview** page (the Arm resource is **VSCode-Extensions**) and set that environment variable before running `npm run build` or `npm run watch`.
 
-`topo.telemetry` defaults to `auto`: enabled in production and disabled in
-development and tests. Set it to `on` or `off` to override this.
-
-VS Code's `telemetry.telemetryLevel` must be set to `all` to send usage events,
-including activation events.
+Telemetry always respects VS Code's global `telemetry.telemetryLevel` setting. It must be set to `all` to send usage events, including activation events.
 
 ## Lint
 

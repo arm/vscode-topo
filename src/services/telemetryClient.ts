@@ -1,6 +1,5 @@
 import type { TelemetryReporter } from '@vscode/extension-telemetry';
-import { ExtensionMode, type Disposable } from 'vscode';
-import type { Config, TelemetrySetting } from './config';
+import type { Disposable } from 'vscode';
 import { getErrorMessage } from '../util/getErrorMessage';
 import { logger } from '../util/logger';
 
@@ -8,22 +7,8 @@ function getDurationSeconds(startedAt: number): number {
     return (Date.now() - startedAt) / 1000;
 }
 
-function isTelemetryEnabled(
-    setting: TelemetrySetting,
-    mode: ExtensionMode,
-): boolean {
-    return (
-        setting === 'on' ||
-        (setting === 'auto' && mode === ExtensionMode.Production)
-    );
-}
-
 export class TelemetryClient implements Disposable {
-    constructor(
-        private readonly reporter: TelemetryReporter,
-        private readonly config: Config,
-        private readonly extensionMode: ExtensionMode,
-    ) {}
+    constructor(private readonly reporter: TelemetryReporter) {}
 
     public async track<T>(
         eventName: string,
@@ -61,15 +46,6 @@ export class TelemetryClient implements Disposable {
 
     private send(eventName: string, sendEvent: () => void): void {
         try {
-            if (
-                !isTelemetryEnabled(
-                    this.config.getTelemetry(),
-                    this.extensionMode,
-                )
-            ) {
-                logger.info('Telemetry disabled by topo.telemetry setting');
-                return;
-            }
             sendEvent();
         } catch (error) {
             logger.warn(

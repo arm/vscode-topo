@@ -46,7 +46,7 @@ export async function activate(
     context.subscriptions.push(logger);
 
     const config = new Config();
-    const telemetry = new Telemetry(config, context.extensionMode);
+    const telemetry = new Telemetry();
     context.subscriptions.push(telemetry);
     await telemetry.trackActivation(() => activateExtension(context, config));
 }

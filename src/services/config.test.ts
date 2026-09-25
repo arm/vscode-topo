@@ -40,18 +40,4 @@ describe('Config', () => {
 
         expect(settings).toEqual({});
     });
-
-    it('returns the configured telemetry setting', () => {
-        getConfigurationMock.mockReturnValue('off');
-
-        expect(new Config().getTelemetry()).toBe('off');
-        expect(vscode.workspace.getConfiguration).toHaveBeenCalledWith('topo');
-        expect(getConfigurationMock).toHaveBeenCalledWith('telemetry');
-    });
-
-    it('defaults telemetry to auto when the setting is absent', () => {
-        getConfigurationMock.mockReturnValue(undefined);
-
-        expect(new Config().getTelemetry()).toBe('auto');
-    });
 });

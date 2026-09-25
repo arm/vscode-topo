@@ -1,13 +1,12 @@
 import { TelemetryReporter } from '@vscode/extension-telemetry';
-import type { Disposable, ExtensionMode } from 'vscode';
-import type { Config } from './config';
+import type { Disposable } from 'vscode';
 import { TelemetryClient } from './telemetryClient';
 import { logger } from '../util/logger';
 
 export class Telemetry implements Disposable {
     private readonly client?: TelemetryClient;
 
-    constructor(config: Config, extensionMode: ExtensionMode) {
+    constructor() {
         const connectionString = __TELEMETRY_CONNECTION_STRING__;
         if (!connectionString) {
             logger.info(
@@ -19,8 +18,6 @@ export class Telemetry implements Disposable {
         try {
             this.client = new TelemetryClient(
                 new TelemetryReporter(connectionString),
-                config,
-                extensionMode,
             );
         } catch (error) {
             logger.warn('Failed to initialize telemetry', error);

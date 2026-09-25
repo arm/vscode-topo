@@ -1,23 +1,15 @@
 import type { TelemetryReporter } from '@vscode/extension-telemetry';
-import { ExtensionMode } from 'vscode';
 import { mock } from 'vitest-mock-extended';
 import { TelemetryClient } from './telemetryClient';
-import { Config } from './config';
 
 vi.mock('../util/logger');
 
 describe('TelemetryClient', () => {
     const reporter = mock<TelemetryReporter>();
-    const config = mock<Config>();
     let client: TelemetryClient;
 
     beforeEach(() => {
-        config.getTelemetry.mockReturnValue('on');
-        client = new TelemetryClient(
-            reporter,
-            config,
-            ExtensionMode.Production,
-        );
+        client = new TelemetryClient(reporter);
     });
 
     afterEach(() => {
@@ -95,46 +87,6 @@ describe('TelemetryClient', () => {
             }),
             expect.any(Object),
         );
-    });
-
-    it.each([
-        ['auto', ExtensionMode.Production, true],
-        ['auto', ExtensionMode.Development, false],
-        ['auto', ExtensionMode.Test, false],
-        ['on', ExtensionMode.Development, true],
-        ['off', ExtensionMode.Production, false],
-    ] as const)(
-        'applies setting %s in mode %s (enabled: %s)',
-        async (setting, mode, enabled) => {
-            config.getTelemetry.mockReturnValue(setting);
-            const modeClient = new TelemetryClient(reporter, config, mode);
-
-            await expect(
-                modeClient.track('deployed', async () => 'operation result'),
-            ).resolves.toBe('operation result');
-
-            expect(reporter.sendTelemetryEvent).toHaveBeenCalledTimes(
-                enabled ? 1 : 0,
-            );
-        },
-    );
-
-    it('uses the setting at event time for each operation', async () => {
-        config.getTelemetry.mockReturnValue('off');
-        await client.track('deployed', async () => {
-            config.getTelemetry.mockReturnValue('on');
-        });
-
-        const error = new Error('Operation failed');
-        await expect(
-            client.track('deployed', async () => {
-                config.getTelemetry.mockReturnValue('off');
-                throw error;
-            }),
-        ).rejects.toBe(error);
-
-        expect(reporter.sendTelemetryEvent).toHaveBeenCalledOnce();
-        expect(reporter.sendTelemetryErrorEvent).not.toHaveBeenCalled();
     });
 
     it('preserves a successful result when event reporting fails', async () => {
