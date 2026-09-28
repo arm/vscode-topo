@@ -1,4 +1,5 @@
 import { TelemetryReporter } from '@vscode/extension-telemetry';
+import { ExtensionMode } from 'vscode';
 import { mock } from 'vitest-mock-extended';
 import { TelemetryClient } from './telemetryClient';
 
@@ -14,7 +15,10 @@ describe('TelemetryClient', () => {
         vi.mocked(TelemetryReporter).mockImplementation(function () {
             return reporter;
         });
-        client = new TelemetryClient(connectionString);
+        client = new TelemetryClient(
+            connectionString,
+            ExtensionMode.Development,
+        );
     });
 
     afterEach(() => {
@@ -22,9 +26,11 @@ describe('TelemetryClient', () => {
         vi.restoreAllMocks();
     });
 
-    it('preserves the operation result and reports its properties and duration in seconds', async () => {
+    it('keeps event arguments separate from metadata and reports the result and duration in seconds', async () => {
         const now = vi.spyOn(Date, 'now').mockReturnValue(0);
-        const properties = { extensionVersion: '0.20.0', outcome: 'failure' };
+        const args = {
+            test: 'value',
+        };
 
         const result = await client.track(
             'activate',
@@ -32,7 +38,7 @@ describe('TelemetryClient', () => {
                 now.mockReturnValue(1500);
                 return 'operation result';
             },
-            properties,
+            args,
         );
 
         expect(result).toBe('operation result');
@@ -41,7 +47,11 @@ describe('TelemetryClient', () => {
         );
         expect(reporter.sendTelemetryEvent).toHaveBeenCalledExactlyOnceWith(
             'activate',
-            { ...properties, outcome: 'success' },
+            {
+                'args.test': 'value',
+                extensionMode: 'development',
+                outcome: 'success',
+            },
             { durationSeconds: 1.5 },
         );
         expect(reporter.sendTelemetryErrorEvent).not.toHaveBeenCalled();
@@ -49,7 +59,7 @@ describe('TelemetryClient', () => {
         expect(reporter.dispose).toHaveBeenCalledOnce();
     });
 
-    it('includes custom properties without overriding failure details and rethrows the original error', async () => {
+    it('keeps event arguments separate from failure details and rethrows the original error', async () => {
         const now = vi.spyOn(Date, 'now').mockReturnValue(0);
         const error = new Error('Operation failed');
 
@@ -61,8 +71,7 @@ describe('TelemetryClient', () => {
                     throw error;
                 },
                 {
-                    extensionVersion: '0.20.0',
-                    outcome: 'success',
+                    test: 'value',
                 },
             ),
         ).rejects.toBe(error);
@@ -72,7 +81,8 @@ describe('TelemetryClient', () => {
         ).toHaveBeenCalledExactlyOnceWith(
             'activate',
             {
-                extensionVersion: '0.20.0',
+                'args.test': 'value',
+                extensionMode: 'development',
                 outcome: 'failure',
                 errorMessage: error.message,
                 stack: error.stack,
@@ -93,6 +103,7 @@ describe('TelemetryClient', () => {
         expect(reporter.sendTelemetryErrorEvent).toHaveBeenCalledWith(
             'activate',
             expect.objectContaining({
+                extensionMode: 'development',
                 outcome: 'failure',
                 errorMessage: 'Operation rejected',
             }),
