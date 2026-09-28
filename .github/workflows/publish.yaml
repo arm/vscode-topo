@@ -176,6 +176,8 @@ jobs:
               run: npm run download -- --target ${{ matrix.platform }}
             - name: Package VSIX
               run: npm run package -- --target ${{ matrix.platform }} $PRE_RELEASE_FLAG
+              env:
+                  AZURE_ANALYTICS_CONNECTION_STRING: ${{ vars.AZURE_ANALYTICS_CONNECTION_STRING }}
             - name: Upload VSIX
               uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
               with:
