@@ -48,14 +48,6 @@ Local builds disable telemetry unless `AZURE_ANALYTICS_CONNECTION_STRING` is set
 
 Telemetry always respects VS Code's global `telemetry.telemetryLevel` setting. It must be set to `all` to send usage events, including activation events.
 
-All telemetry events include an `extensionMode` property from VS Code's `ExtensionContext.extensionMode`, captured when the telemetry client is constructed:
-
-- `production`: installed normally, including Marketplace and manually installed VSIX packages.
-- `development`: launched with `--extensionDevelopmentPath`, including this repository's F5 launch configuration.
-- `test`: launched with `--extensionTestsPath` to run extension tests.
-
-Pass event arguments as the third argument to `TelemetryClient.track`. They are stored as strings under `args.*` in `customDimensions`, separate from automatic metadata such as `extensionMode` and `outcome`. Undefined arguments are omitted. Duration is stored in `customMeasurements.durationSeconds`.
-
 ## Lint
 
 Run the full lint suite (Prettier, ESLint, and TypeScript checks):
