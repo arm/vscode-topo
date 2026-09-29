@@ -68,27 +68,24 @@ describe('HostTreeView', () => {
     it('returns sorted host health checks without mutating the model', () => {
         const model = new HostModel();
         model.setHealth(
-            loaded({
-                host: {
-                    dependencies: [
-                        {
-                            name: 'Zed',
-                            status: 'warning',
-                            value: 'missing',
-                            fix: {
-                                description: 'Install Zed',
-                                command:
-                                    'topo install zed --target ssh://imx93',
-                            },
-                        },
-                        {
-                            name: 'Alpha',
-                            status: 'ok',
-                            value: 'installed',
-                        },
-                    ],
+            loaded([
+                {
+                    name: 'Zed',
+                    location: 'host',
+                    status: 'warning',
+                    value: 'missing',
+                    fix: {
+                        description: 'Install Zed',
+                        command: 'topo install zed --target ssh://imx93',
+                    },
                 },
-            }),
+                {
+                    name: 'Alpha',
+                    location: 'host',
+                    status: 'ok',
+                    value: 'installed',
+                },
+            ]),
         );
         const provider = new HostTreeView(model);
 
@@ -111,11 +108,7 @@ describe('HostTreeView', () => {
             }),
         ]);
         expect(model.health).toMatchObject({
-            data: {
-                host: {
-                    dependencies: [{ name: 'Zed' }, { name: 'Alpha' }],
-                },
-            },
+            data: [{ name: 'Zed' }, { name: 'Alpha' }],
         });
     });
 
@@ -162,6 +155,7 @@ describe('HostTreeView', () => {
         const item = new HealthCheckTreeItem(
             loaded({
                 name: 'Alpha',
+                location: 'host',
                 status: 'ok',
                 value: 'installed',
             }),

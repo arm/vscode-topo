@@ -2,14 +2,12 @@ import {
     array,
     enums,
     Infer,
-    literal,
     number,
     nullable,
     optional,
     string,
     trimmed,
     type,
-    union,
     defaulted,
 } from 'superstruct';
 import type { DeepReadonly } from '../util/types';
@@ -30,7 +28,7 @@ export const projectSchema = type({
 export type ProjectDescription = DeepReadonly<Infer<typeof projectSchema>>;
 
 const healthCheckStatusSchema = trimmed(
-    enums(['ok', 'warning', 'error', 'info']),
+    enums(['ok', 'warning', 'error', 'info', 'undetermined']),
 );
 
 export type HealthCheckStatus = Infer<typeof healthCheckStatusSchema>;
@@ -44,6 +42,7 @@ export type HealthCheckFix = DeepReadonly<Infer<typeof healthCheckFixSchema>>;
 
 export const healthCheckSchema = type({
     name: trimmedStringSchema,
+    location: enums(['host', 'target']),
     status: healthCheckStatusSchema,
     value: trimmedStringSchema,
     fix: optional(healthCheckFixSchema),
@@ -51,63 +50,15 @@ export const healthCheckSchema = type({
 
 export type HealthCheck = DeepReadonly<Infer<typeof healthCheckSchema>>;
 
-const targetHealthReportFields = {
-    destination: trimmedStringSchema,
-    dependencies: array(healthCheckSchema),
-};
-
-const connectedTargetHealthReportSchema = union([
-    type({
-        ...targetHealthReportFields,
-        isLocalhost: literal(true),
-        processingDomainDriver: healthCheckSchema,
-    }),
-    type({
-        ...targetHealthReportFields,
-        isLocalhost: literal(false),
-        connectivity: type({
-            ...healthCheckSchema.schema,
-            status: trimmed(literal('ok')),
-        }),
-        processingDomainDriver: healthCheckSchema,
-    }),
-]);
-
-export type ConnectedTargetHealthReport = DeepReadonly<
-    Infer<typeof connectedTargetHealthReportSchema>
->;
-
-const targetHealthReportSchema = union([
-    connectedTargetHealthReportSchema,
-    type({
-        ...targetHealthReportFields,
-        isLocalhost: literal(false),
-        connectivity: type({
-            ...healthCheckSchema.schema,
-            status: trimmed(literal('error')),
-        }),
-    }),
-]);
-
-const hostHealthSchema = type({
-    dependencies: array(healthCheckSchema),
-});
-
-export const hostHealthReportSchema = type({
-    host: hostHealthSchema,
-});
-
-export type HostHealthReport = DeepReadonly<
-    Infer<typeof hostHealthReportSchema>
->;
-
-export type TargetHealthReport = DeepReadonly<
-    Infer<typeof targetHealthReportSchema>
->;
-
 export const healthReportSchema = type({
-    host: hostHealthSchema,
-    target: targetHealthReportSchema,
+    capabilities: array(
+        type({
+            name: trimmedStringSchema,
+            status: healthCheckStatusSchema,
+            fix: optional(healthCheckFixSchema),
+            checks: array(healthCheckSchema),
+        }),
+    ),
 });
 
 export type HealthReport = DeepReadonly<Infer<typeof healthReportSchema>>;

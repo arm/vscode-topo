@@ -7,13 +7,14 @@ import { defaultSshConfigPath, getHosts } from '../util/ssh';
 import * as vscode from 'vscode';
 import { TopoCli } from '../services/topoCli';
 import {
+    HealthCheck,
     HealthReport,
     TargetDescription,
-    TargetHealthReport,
 } from '../services/topoCliSchema';
 import { errored, Loadable, loaded, loading } from '../util/loadable';
 import { LatestAbortableWork } from '../util/latestAbortableWork';
 import { DisposableCollector } from '../util/disposableCollector';
+import { getHealthChecks } from '../util/healthReport';
 
 const corruptedDataMessage =
     'The local target data saved by Topo looks corrupted';
@@ -116,7 +117,7 @@ export function buildQuickPickItems(
 async function loadTargetHealth(
     topoCli: TopoCli,
     target: string,
-): Promise<Loadable<TargetHealthReport>> {
+): Promise<Loadable<HealthCheck[]>> {
     let health: HealthReport;
     try {
         health = await topoCli.health(target);
@@ -124,7 +125,7 @@ async function loadTargetHealth(
         return errored(err);
     }
 
-    return loaded(health.target);
+    return loaded(getHealthChecks(health, 'target'));
 }
 
 async function loadTargetDescription(

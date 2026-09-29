@@ -2,6 +2,12 @@ import * as vscode from 'vscode';
 import { getHealthCheckIcon } from './healthIcons';
 
 describe('getHealthCheckIcon', () => {
+    it('maps undetermined to a question icon', () => {
+        expect(getHealthCheckIcon('undetermined')).toStrictEqual(
+            new vscode.ThemeIcon('question'),
+        );
+    });
+
     it('maps ok to a passed check icon', () => {
         const icon = getHealthCheckIcon('ok');
 

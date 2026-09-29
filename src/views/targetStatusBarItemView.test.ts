@@ -2,28 +2,28 @@ import * as vscode from 'vscode';
 import { TargetStatusBarItemView } from './targetStatusBarItemView';
 import { TargetTreeView } from './targetTreeView';
 import { mock } from 'vitest-mock-extended';
-import { TargetHealthReport } from '../services/topoCliSchema';
+import { HealthCheck } from '../services/topoCliSchema';
 import { TargetModel } from '../models/targetModel';
 import { errored, loaded, loading, unloaded } from '../util/loadable';
 import { selectTarget } from '../commandIds';
 
 vi.mock('../util/logger');
 
-const healthyTarget: TargetHealthReport = {
-    destination: 'ssh://root@localhost',
-    isLocalhost: false,
-    connectivity: {
+const healthyTarget: HealthCheck[] = [
+    {
         status: 'ok',
         name: 'Connectivity',
+        location: 'target',
         value: '',
     },
-    dependencies: [{ status: 'ok', name: 'Container Engine', value: '' }],
-    processingDomainDriver: {
+    { status: 'ok', name: 'Container Engine', location: 'target', value: '' },
+    {
         status: 'ok',
         name: 'Processing Domain Driver',
+        location: 'target',
         value: '',
     },
-};
+];
 
 describe('TargetStatusBarItemView', () => {
     beforeEach(() => {
@@ -96,16 +96,14 @@ describe('TargetStatusBarItemView', () => {
         const targetModel = new TargetModel();
         targetModel.setSelected(target);
         targetModel.setSelectedTargetHealth(
-            loaded({
-                destination: healthyTarget.destination,
-                isLocalhost: false,
-                dependencies: [],
-                connectivity: {
+            loaded([
+                {
                     name: 'Connectivity',
+                    location: 'target',
                     status: 'error',
                     value: 'ssh connection failed',
                 },
-            }),
+            ]),
         );
 
         new TargetStatusBarItemView(targetModel);
@@ -151,7 +149,7 @@ describe('TargetStatusBarItemView', () => {
         expect(statusBarItem.hide).not.toHaveBeenCalled();
     });
 
-    it('lists unhealthy dependencies in the status bar tooltip', async () => {
+    it('lists unhealthy checks in the status bar tooltip', () => {
         const statusBarItem = mock<vscode.StatusBarItem>();
         vi.mocked(vscode.window).createStatusBarItem.mockReturnValue(
             statusBarItem,
@@ -160,28 +158,39 @@ describe('TargetStatusBarItemView', () => {
         const targetModel = new TargetModel();
         targetModel.setSelected(target);
         targetModel.setSelectedTargetHealth(
-            loaded({
-                ...healthyTarget,
-                dependencies: [
-                    {
-                        status: 'warning',
-                        name: 'Container Engine',
-                        value: 'missing',
-                    },
-                    {
-                        status: 'error',
-                        name: 'Container Runtime',
-                        value: 'not running',
-                    },
-                ],
-            }),
+            loaded([
+                {
+                    status: 'ok',
+                    name: 'Connectivity',
+                    location: 'target',
+                    value: '',
+                },
+                {
+                    status: 'warning',
+                    name: 'Container Engine',
+                    location: 'target',
+                    value: 'missing',
+                },
+                {
+                    status: 'error',
+                    name: 'Container Runtime',
+                    location: 'target',
+                    value: 'not running',
+                },
+                {
+                    status: 'undetermined',
+                    name: 'Processing Domain Driver (remoteproc)',
+                    location: 'target',
+                    value: 'not checked: prerequisite failed',
+                },
+            ]),
         );
 
         new TargetStatusBarItemView(targetModel);
 
         expect(statusBarItem.text).toBe(`$(close) ${target}`);
         expect(statusBarItem.tooltip).toBe(
-            'SSH destination: root@localhost\nContainer Engine: missing\nContainer Runtime: not running',
+            'SSH destination: root@localhost\nContainer Engine: missing\nContainer Runtime: not running\nProcessing Domain Driver (remoteproc): not checked: prerequisite failed',
         );
     });
 });

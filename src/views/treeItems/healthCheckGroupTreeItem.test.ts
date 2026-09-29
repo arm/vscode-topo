@@ -7,6 +7,7 @@ describe('HealthCheckGroupTreeItem', () => {
         const healthChecks = [
             {
                 name: 'Container Engine',
+                location: 'target' as const,
                 status: 'ok' as const,
                 value: 'docker',
             },
@@ -40,6 +41,7 @@ describe('HealthCheckGroupTreeItem', () => {
             loaded([
                 {
                     name: 'Container Engine',
+                    location: 'target',
                     status: 'error',
                     value: 'missing',
                     fix: {

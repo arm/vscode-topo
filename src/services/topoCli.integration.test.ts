@@ -63,35 +63,42 @@ describe('health', () => {
         async () => {
             const health = await topoCli.hostHealth();
 
-            expect(health).toEqual({
-                host: {
-                    dependencies: expect.any(Array),
-                },
-            });
+            expect(health.capabilities.flatMap(({ checks }) => checks)).toEqual(
+                expect.arrayContaining([
+                    expect.objectContaining({ location: 'host' }),
+                ]),
+            );
         },
     );
 
-    it('parses target health check result correctly', async () => {
+    it('parses local target checks without requiring SSH connectivity or a driver', async () => {
         const health = await topoCli.health('localhost');
+        const checks = health.capabilities.flatMap(({ checks }) => checks);
 
-        expect(health).toEqual({
-            host: {
-                dependencies: expect.any(Array),
-            },
-            target: expect.objectContaining({
-                isLocalhost: true,
-                dependencies: expect.any(Array),
-                processingDomainDriver: expect.any(Object),
-            }),
-        });
+        expect(checks).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({ location: 'host' }),
+                expect.objectContaining({ location: 'target' }),
+            ]),
+        );
+        expect(checks.some(({ name }) => name === 'Connectivity')).toBe(false);
     });
 
     it('succeeds when target is unreachable', async () => {
         const health = await topoCli.health('unreachable-target');
 
-        expect(health.target).toMatchObject({
-            isLocalhost: false,
-            connectivity: { status: 'error' },
-        });
+        expect(health.capabilities.flatMap(({ checks }) => checks)).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({
+                    name: 'Connectivity',
+                    location: 'target',
+                    status: 'error',
+                }),
+                expect.objectContaining({
+                    location: 'target',
+                    status: 'undetermined',
+                }),
+            ]),
+        );
     });
 });

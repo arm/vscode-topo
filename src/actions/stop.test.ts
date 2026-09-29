@@ -6,7 +6,7 @@ import { TargetModel } from '../models/targetModel';
 import { mock, MockProxy } from 'vitest-mock-extended';
 import { runTask } from '../util/task';
 import { loaded, unloaded } from '../util/loadable';
-import type { TargetHealthReport } from '../services/topoCliSchema';
+import type { HealthCheck } from '../services/topoCliSchema';
 import { createProjectTreeItem } from '../util/test/projectTreeItem';
 import { TOPO_TASK_TYPE } from '../manifest';
 import { TaskCommand, type TaskFactory } from '../tasks/taskFactory';
@@ -28,21 +28,20 @@ describe('Stop', () => {
         'Stop task',
         'topo',
     );
-    const targetHealth: TargetHealthReport = {
-        destination: `ssh://${target}`,
-        isLocalhost: false,
-        connectivity: {
+    const targetHealth: HealthCheck[] = [
+        {
             name: 'Connectivity',
+            location: 'target',
             status: 'ok',
             value: 'connected',
         },
-        processingDomainDriver: {
+        {
             name: 'Processing Domain Driver',
+            location: 'target',
             status: 'ok',
             value: 'ready',
         },
-        dependencies: [],
-    };
+    ];
     let targetModel: TargetModel;
     let taskFactory: MockProxy<TaskFactory>;
 
@@ -89,14 +88,14 @@ describe('Stop', () => {
 
     it('shows a warning and does not stop when target connectivity is unhealthy', async () => {
         targetModel.setSelectedTargetHealth(
-            loaded({
-                ...targetHealth,
-                connectivity: {
-                    ...targetHealth.connectivity,
+            loaded([
+                {
+                    name: 'Connectivity',
+                    location: 'target',
                     status: 'error',
                     value: 'unreachable',
                 },
-            }),
+            ]),
         );
 
         const stopOperation = stopAction.stopCommandHandler(composeFileUri);
