@@ -8,7 +8,8 @@ import {
     getArtifactUrl,
 } from './topoArtifacts.ts';
 
-const VERSION_PATTERN = /^\d+\.\d+\.\d+$/;
+const VERSION_PATTERN =
+    /^\d+\.\d+\.\d+(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
 
 const getChecksum = async (
     version: string,
@@ -38,7 +39,8 @@ const main = async (): Promise<void> => {
             'Updates the bundled Topo CLI version and checksums',
             (command) =>
                 command.positional('version', {
-                    description: 'Topo CLI version in major.minor.patch format',
+                    description:
+                        'Topo CLI version, optionally including a prerelease suffix',
                     type: 'string',
                     demandOption: true,
                 }),
@@ -48,7 +50,9 @@ const main = async (): Promise<void> => {
                 typeof args.version !== 'string' ||
                 !VERSION_PATTERN.test(args.version)
             ) {
-                throw new Error('Version must use major.minor.patch format');
+                throw new Error(
+                    'Version must use major.minor.patch format with an optional prerelease suffix',
+                );
             }
             return true;
         })
