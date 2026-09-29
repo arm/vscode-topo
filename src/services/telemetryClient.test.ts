@@ -26,10 +26,11 @@ describe('TelemetryClient', () => {
         vi.restoreAllMocks();
     });
 
-    it('keeps event arguments separate from metadata and reports the result and duration in seconds', async () => {
+    it('keeps event properties separate from metadata and reports the result and duration in seconds', async () => {
         const now = vi.spyOn(Date, 'now').mockReturnValue(0);
-        const args = {
-            test: 'value',
+        const properties = {
+            activationReason: 'workspaceContains',
+            outcome: 'failure',
         };
 
         const result = await client.track(
@@ -38,7 +39,7 @@ describe('TelemetryClient', () => {
                 now.mockReturnValue(1500);
                 return 'operation result';
             },
-            args,
+            properties,
         );
 
         expect(result).toBe('operation result');
@@ -48,9 +49,10 @@ describe('TelemetryClient', () => {
         expect(reporter.sendTelemetryEvent).toHaveBeenCalledExactlyOnceWith(
             'activate',
             {
-                'args.test': 'value',
-                extensionMode: 'development',
-                outcome: 'success',
+                'event.activationReason': 'workspaceContains',
+                'event.outcome': 'failure',
+                'meta.extensionMode': 'development',
+                'meta.outcome': 'success',
             },
             { durationSeconds: 1.5 },
         );
@@ -59,7 +61,7 @@ describe('TelemetryClient', () => {
         expect(reporter.dispose).toHaveBeenCalledOnce();
     });
 
-    it('keeps event arguments separate from failure details and rethrows the original error', async () => {
+    it('keeps event properties separate from failure details and rethrows the original error', async () => {
         const now = vi.spyOn(Date, 'now').mockReturnValue(0);
         const error = new Error('Operation failed');
 
@@ -71,7 +73,8 @@ describe('TelemetryClient', () => {
                     throw error;
                 },
                 {
-                    test: 'value',
+                    outcome: 'success',
+                    errorMessage: 'event context',
                 },
             ),
         ).rejects.toBe(error);
@@ -81,11 +84,12 @@ describe('TelemetryClient', () => {
         ).toHaveBeenCalledExactlyOnceWith(
             'activate',
             {
-                'args.test': 'value',
-                extensionMode: 'development',
-                outcome: 'failure',
-                errorMessage: error.message,
-                stack: error.stack,
+                'event.outcome': 'success',
+                'event.errorMessage': 'event context',
+                'meta.extensionMode': 'development',
+                'meta.outcome': 'failure',
+                'meta.errorMessage': error.message,
+                'meta.stack': error.stack,
             },
             { durationSeconds: 0.25 },
         );
@@ -103,9 +107,9 @@ describe('TelemetryClient', () => {
         expect(reporter.sendTelemetryErrorEvent).toHaveBeenCalledWith(
             'activate',
             expect.objectContaining({
-                extensionMode: 'development',
-                outcome: 'failure',
-                errorMessage: 'Operation rejected',
+                'meta.extensionMode': 'development',
+                'meta.outcome': 'failure',
+                'meta.errorMessage': 'Operation rejected',
             }),
             expect.any(Object),
         );
