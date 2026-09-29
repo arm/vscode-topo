@@ -23,7 +23,10 @@ const ASSET_MAPPING: Record<DownloadTarget, string> = {
 export const getArtifactUrl = (
     version: string,
     target: DownloadTarget,
-): string => `${ARTIFACT_BASE_URL}/v${version}/${ASSET_MAPPING[target]}`;
+): string => {
+    const releasePath = version.includes('-') ? 'pre-releases/' : '';
+    return `${ARTIFACT_BASE_URL}/${releasePath}v${version}/${ASSET_MAPPING[target]}`;
+};
 
 const SHA256_PATTERN = /^[a-f0-9]{64}$/i;
 
