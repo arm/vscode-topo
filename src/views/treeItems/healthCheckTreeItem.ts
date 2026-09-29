@@ -14,7 +14,7 @@ export class HealthCheckTreeItem extends vscode.TreeItem {
         this.description = healthCheckData.value;
 
         const statusCapitalized = capitalizeFirstLetter(healthCheckData.status);
-        this.tooltip = `Status: ${statusCapitalized}\nValue: ${healthCheckData.value ?? '-'}`;
+        this.tooltip = `Status: ${statusCapitalized}\nValue: ${healthCheckData.value}`;
         this.contextValue = [
             'HealthCheck',
             statusCapitalized,

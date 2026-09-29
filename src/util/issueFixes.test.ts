@@ -6,6 +6,7 @@ describe('getIssueFixCommandGroups', () => {
         const healthChecks: HealthCheck[] = [
             {
                 name: 'Remoteproc Runtime',
+                location: 'target',
                 status: 'error',
                 value: 'missing',
                 fix: {
@@ -15,6 +16,7 @@ describe('getIssueFixCommandGroups', () => {
             },
             {
                 name: 'Remoteproc Shim',
+                location: 'target',
                 status: 'error',
                 value: 'missing',
                 fix: {
@@ -24,6 +26,7 @@ describe('getIssueFixCommandGroups', () => {
             },
             {
                 name: 'Debugger',
+                location: 'target',
                 status: 'warning',
                 value: 'missing',
                 fix: {
@@ -58,6 +61,7 @@ describe('hasFixCommand', () => {
             name: 'executable fix',
             healthCheck: {
                 name: 'Container Engine',
+                location: 'target',
                 status: 'error',
                 value: 'missing',
                 fix: {
@@ -71,6 +75,7 @@ describe('hasFixCommand', () => {
             name: 'healthy health check',
             healthCheck: {
                 name: 'Debugger',
+                location: 'target',
                 status: 'ok',
                 value: 'installed',
             },
@@ -80,6 +85,7 @@ describe('hasFixCommand', () => {
             name: 'informational health check',
             healthCheck: {
                 name: 'Runtime',
+                location: 'target',
                 status: 'info',
                 value: 'available',
             },
@@ -89,6 +95,7 @@ describe('hasFixCommand', () => {
             name: 'manual fix without command',
             healthCheck: {
                 name: 'Runtime',
+                location: 'target',
                 status: 'warning',
                 value: 'missing',
                 fix: {

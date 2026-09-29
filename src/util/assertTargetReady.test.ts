@@ -1,4 +1,4 @@
-import type { TargetHealthReport } from '../services/topoCliSchema';
+import type { HealthCheck } from '../services/topoCliSchema';
 import {
     assertTargetConnected,
     assertTargetSelected,
@@ -19,37 +19,19 @@ describe('assertTargetSelected', () => {
 
 describe('assertTargetConnected', () => {
     const target = 'topo.local';
-    const targetHealth: TargetHealthReport = {
-        destination: `ssh://${target}`,
-        isLocalhost: false,
-        connectivity: {
+    const targetHealth: HealthCheck[] = [
+        {
             name: 'Connectivity',
+            location: 'target',
             status: 'ok',
             value: 'connected',
         },
-        processingDomainDriver: {
-            name: 'Processing Domain Driver',
-            status: 'ok',
-            value: 'ready',
-        },
-        dependencies: [],
-    };
+    ];
 
     it('accepts loaded target health with working connectivity', () => {
         expect(() =>
             assertTargetConnected(target, loaded(targetHealth)),
         ).not.toThrow();
-    });
-
-    it('accepts localhost without an SSH connectivity check', () => {
-        const health = loaded<TargetHealthReport>({
-            destination: 'ssh://localhost',
-            isLocalhost: true,
-            dependencies: targetHealth.dependencies,
-            processingDomainDriver: targetHealth.processingDomainDriver,
-        });
-
-        expect(() => assertTargetConnected('localhost', health)).not.toThrow();
     });
 
     it('accepts previously healthy target health while it is refreshing', () => {
@@ -73,17 +55,21 @@ describe('assertTargetConnected', () => {
         },
     );
 
+    it('accepts an empty loaded target health report', () => {
+        expect(() =>
+            assertTargetConnected(target, loaded<HealthCheck[]>([])),
+        ).not.toThrow();
+    });
+
     it('throws a target error when target connectivity is unhealthy', () => {
-        const health = loaded({
-            destination: targetHealth.destination,
-            isLocalhost: false as const,
-            dependencies: [],
-            connectivity: {
-                ...targetHealth.connectivity,
-                status: 'error' as const,
+        const health = loaded<HealthCheck[]>([
+            {
+                name: 'Connectivity',
+                location: 'target',
+                status: 'error',
                 value: 'unreachable',
             },
-        });
+        ]);
 
         expect(() => assertTargetConnected(target, health)).toThrow(
             "Target topo.local connectivity is 'error': unreachable.",
@@ -92,14 +78,14 @@ describe('assertTargetConnected', () => {
 
     it('waits for refreshing target health when the previous value was unhealthy', () => {
         const health = loading(
-            loaded({
-                ...targetHealth,
-                connectivity: {
-                    ...targetHealth.connectivity,
-                    status: 'error' as const,
+            loaded<HealthCheck[]>([
+                {
+                    name: 'Connectivity',
+                    location: 'target',
+                    status: 'error',
                     value: 'unreachable',
                 },
-            }),
+            ]),
         );
 
         expect(() => assertTargetConnected(target, health)).toThrow(
@@ -108,14 +94,14 @@ describe('assertTargetConnected', () => {
     });
 
     it('omits empty details from target connectivity failure messages', () => {
-        const health = loaded({
-            ...targetHealth,
-            connectivity: {
-                ...targetHealth.connectivity,
-                status: 'error' as const,
+        const health = loaded<HealthCheck[]>([
+            {
+                name: 'Connectivity',
+                location: 'target',
+                status: 'error',
                 value: '',
             },
-        });
+        ]);
 
         expect(() => assertTargetConnected(target, health)).toThrow(
             "Target topo.local connectivity is 'error'.",

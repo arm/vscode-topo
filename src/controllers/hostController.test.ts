@@ -2,20 +2,32 @@ import { mock } from 'vitest-mock-extended';
 import { HostModel } from '../models/hostModel';
 import { TopoCli } from '../services/topoCli';
 import { HostController } from './hostController';
-import { HostHealthReport } from '../services/topoCliSchema';
+import { HealthReport, HealthCheck } from '../services/topoCliSchema';
 import { TopoSkill } from '../services/topoSkill';
 import { loaded } from '../util/loadable';
 
-const hostHealth: HostHealthReport = {
-    host: {
-        dependencies: [
-            {
-                name: 'Container Engine',
-                status: 'ok',
-                value: 'docker',
-            },
-        ],
-    },
+const hostCheck: HealthCheck = {
+    name: 'Container Engine',
+    status: 'ok',
+    value: 'docker',
+    location: 'host',
+};
+const hostHealth: HealthReport = {
+    capabilities: [
+        {
+            name: 'Deployment',
+            status: 'error',
+            checks: [
+                hostCheck,
+                {
+                    name: 'Connectivity',
+                    status: 'error',
+                    value: 'unreachable',
+                    location: 'target',
+                },
+            ],
+        },
+    ],
 };
 const installedSkillReport = {
     status: 'installed' as const,
@@ -37,7 +49,7 @@ describe('HostController', () => {
         vi.clearAllMocks();
     });
 
-    it('refreshes host health and skill status on creation', async () => {
+    it('refreshes only host checks and skill status on creation', async () => {
         const topoCli = mock<TopoCli>({
             hostHealth: vi.fn().mockResolvedValue(hostHealth),
         });
@@ -48,7 +60,7 @@ describe('HostController', () => {
 
         new HostController(model, topoCli, topoSkill);
         await vi.waitFor(() => {
-            expect(model.health).toStrictEqual(loaded(hostHealth));
+            expect(model.health).toStrictEqual(loaded([hostCheck]));
             expect(model.skillReport).toStrictEqual(
                 loaded(installedSkillReport),
             );
@@ -77,7 +89,7 @@ describe('HostController', () => {
 
         expect(topoCli.hostHealth).toHaveBeenCalledOnce();
         expect(topoSkill.getReport).toHaveBeenCalledOnce();
-        expect(model.health).toStrictEqual(loaded(hostHealth));
+        expect(model.health).toStrictEqual(loaded([hostCheck]));
         expect(model.skillReport).toStrictEqual(loaded(installedSkillReport));
     });
 });
