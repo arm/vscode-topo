@@ -1,3 +1,4 @@
+import { type Result, success } from '../util/result';
 import os from 'node:os';
 import * as vscode from 'vscode';
 import { array, create, Infer, string, type } from 'superstruct';
@@ -41,7 +42,7 @@ export class NpxSkills {
         );
     }
 
-    public async listGlobal(): Promise<ListedSkill[]> {
+    public async listGlobal(): Promise<Result<ListedSkill[]>> {
         const { stdout } = await execFile(
             this.npx,
             ['--yes', 'skills', 'list', '--global', '--json'],
@@ -53,9 +54,9 @@ export class NpxSkills {
         );
 
         try {
-            return create(JSON.parse(stdout), listedSkillsSchema);
+            return success(create(JSON.parse(stdout), listedSkillsSchema));
         } catch (cause) {
-            throw new WrappedError(
+            return new WrappedError(
                 'SKILL',
                 'Unexpected output from skills list',
                 [],

@@ -1,3 +1,4 @@
+import { success } from '../util/result';
 import * as vscode from 'vscode';
 import { mock } from 'vitest-mock-extended';
 import { ProjectClone } from './projectClone';
@@ -42,6 +43,7 @@ describe('ProjectClone action', () => {
 
     beforeEach(() => {
         vi.resetAllMocks();
+        projectCloner.clone.mockResolvedValue(success());
         targetModel = new TargetModel();
         projectClone = new ProjectClone(topoCli, targetModel, projectCloner);
     });
@@ -151,32 +153,24 @@ describe('ProjectClone action', () => {
     });
 
     describe('clone error handling', () => {
-        it('shows clone errors instead of throwing them', async () => {
-            const error = new WrappedError('CLONE', 'task fail');
+        it('shows returned clone errors, preserving log entries', async () => {
+            const logs = [{ level: 'ERROR' as const, msg: 'task failed' }];
+            const error = new WrappedError('CLONE', 'task fail', logs);
             promptForRemoteCloneSourceMock.mockResolvedValueOnce({
                 type: 'git',
                 url: 'https://example.com/virtual-bittermelon-peeler.git',
             });
-            projectCloner.clone.mockRejectedValueOnce(error);
+            projectCloner.clone.mockResolvedValueOnce(error);
 
             await projectClone.remoteCloneCommandHandler();
 
             expect(showAndLogError).toHaveBeenCalledWith(
                 'Failed to clone project',
-                error,
-            );
-        });
-
-        it('shows CLI errors from project lookup instead of throwing them, preserving log entries', async () => {
-            const logs = [{ level: 'ERROR' as const, msg: 'lscpu not found' }];
-            const error = new WrappedError('CLI', 'boom', logs);
-            promptForRemoteCloneSourceMock.mockRejectedValueOnce(error);
-
-            await projectClone.remoteCloneCommandHandler();
-
-            expect(showAndLogError).toHaveBeenCalledWith(
-                'Failed to clone project',
-                expect.objectContaining({ code: 'CLI', logs }),
+                expect.objectContaining({
+                    code: 'CLONE',
+                    message: error.message,
+                    logs,
+                }),
             );
         });
 

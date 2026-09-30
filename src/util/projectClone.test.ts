@@ -1,3 +1,4 @@
+import { success } from './result';
 import fs from 'node:fs';
 import path from 'node:path';
 import * as vscode from 'vscode';
@@ -157,7 +158,7 @@ describe('project clone utilities', () => {
         ];
 
         it('returns a selected catalog project', async () => {
-            topoCli.listProjects.mockResolvedValue(projectList);
+            topoCli.listProjects.mockResolvedValue(success(projectList));
             const { quickPick, acceptItem } = mockRemoteQuickPick();
 
             const sourcePromise = promptForRemoteCloneSource(
@@ -177,7 +178,7 @@ describe('project clone utilities', () => {
 
         it('offers a trimmed custom URL before catalog projects', async () => {
             const url = 'https://example.com/custom.git';
-            topoCli.listProjects.mockResolvedValue(projectList);
+            topoCli.listProjects.mockResolvedValue(success(projectList));
             const { quickPick, enterValue, acceptItem } = mockRemoteQuickPick();
 
             const sourcePromise = promptForRemoteCloneSource(topoCli);
@@ -199,9 +200,9 @@ describe('project clone utilities', () => {
         it('falls back to the local catalog after a target CLI error', async () => {
             topoCli.listProjects.mockImplementation(async (sshTarget) => {
                 if (sshTarget) {
-                    throw new WrappedError('CLI', 'target unhealthy');
+                    return new WrappedError('CLI', 'target unhealthy');
                 }
-                return projectList;
+                return success(projectList);
             });
             const { quickPick } = mockRemoteQuickPick();
 
@@ -220,14 +221,15 @@ describe('project clone utilities', () => {
             expect(topoCli.listProjects).toHaveBeenNthCalledWith(2);
         });
 
-        it('keeps custom URL entry available when catalog loading fails', async () => {
+        it('keeps custom URL entry available when catalog loading rejects', async () => {
             const error = new Error('command failed');
             const url = 'https://example.com/custom.git';
             topoCli.listProjects.mockRejectedValueOnce(error);
-            const { enterValue, acceptItem } = mockRemoteQuickPick();
+            const { quickPick, enterValue, acceptItem } = mockRemoteQuickPick();
 
             const sourcePromise = promptForRemoteCloneSource(topoCli);
             enterValue(url);
+            await vi.waitFor(() => expect(quickPick.busy).toBe(false));
             acceptItem(0);
 
             await expect(sourcePromise).resolves.toEqual({
@@ -237,6 +239,32 @@ describe('project clone utilities', () => {
             expect(showAndLogError).toHaveBeenCalledWith(
                 'Failed to list projects',
                 error,
+            );
+        });
+
+        it('keeps custom URL entry available after a returned CLI error', async () => {
+            const logs = [{ level: 'ERROR' as const, msg: 'lscpu not found' }];
+            const error = new WrappedError('CLI', 'command failed', logs);
+            const url = 'https://example.com/custom.git';
+            topoCli.listProjects.mockResolvedValueOnce(error);
+            const { quickPick, enterValue, acceptItem } = mockRemoteQuickPick();
+
+            const sourcePromise = promptForRemoteCloneSource(topoCli);
+            enterValue(url);
+            await vi.waitFor(() => expect(quickPick.busy).toBe(false));
+            acceptItem(0);
+
+            await expect(sourcePromise).resolves.toEqual({
+                type: 'git',
+                url,
+            });
+            expect(showAndLogError).toHaveBeenCalledWith(
+                'Failed to list projects',
+                expect.objectContaining({
+                    code: 'CLI',
+                    message: error.message,
+                    logs,
+                }),
             );
         });
     });

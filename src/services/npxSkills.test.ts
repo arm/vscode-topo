@@ -1,3 +1,4 @@
+import { success } from '../util/result';
 import os from 'node:os';
 import * as vscode from 'vscode';
 import { WrappedError } from '../errors/wrappedError';
@@ -72,7 +73,9 @@ describe('NpxSkills', () => {
         });
         const npxSkills = new NpxSkills();
 
-        await expect(npxSkills.listGlobal()).resolves.toEqual(listedSkills);
+        await expect(npxSkills.listGlobal()).resolves.toEqual(
+            success(listedSkills),
+        );
         expect(execFile).toHaveBeenCalledExactlyOnceWith(
             process.platform === 'win32' ? 'npx.cmd' : 'npx',
             ['--yes', 'skills', 'list', '--global', '--json'],
@@ -84,10 +87,10 @@ describe('NpxSkills', () => {
         );
     });
 
-    it('rejects malformed list output', async () => {
+    it('returns a wrapped error for malformed list output', async () => {
         vi.mocked(execFile).mockResolvedValue({ stdout: '{}', stderr: '' });
 
-        await expect(new NpxSkills().listGlobal()).rejects.toEqual(
+        await expect(new NpxSkills().listGlobal()).resolves.toEqual(
             expect.objectContaining<Partial<WrappedError>>({
                 name: 'WrappedError',
                 code: 'SKILL',

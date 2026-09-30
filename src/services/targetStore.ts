@@ -5,7 +5,8 @@ import { string, type, assert, record } from 'superstruct';
 import { DisposableCollector } from '../util/disposableCollector';
 import { WrappedError } from '../errors/wrappedError';
 import { getErrorMessage } from '../util/getErrorMessage';
-import { assertValidSshDestination } from '../util/assertValidSshDestination';
+import { validateSshDestination } from '../util/validateSshDestination';
+import { type Result, success } from '../util/result';
 
 type GlobalStoreKeys = 'targets';
 type WorkspaceStoreKeys = 'selectedTarget';
@@ -92,44 +93,67 @@ export class TargetStore {
         await this.setWorkspace('selectedTarget', target);
     }
 
-    public async addTarget(target: string): Promise<void> {
-        assertValidSshDestination(target);
-        const targets = this.getTargets();
+    public async addTarget(target: string): Promise<Result<void>> {
+        const destinationResult = validateSshDestination(target);
+        if (destinationResult.kind === 'error') {
+            return destinationResult;
+        }
+        const result = this.getTargets();
+        if (result.kind === 'error') {
+            return result;
+        }
+        const targets = result.value;
         if (targets.has(target)) {
             throw new Error(`Target "${target}" already exists`);
         }
         targets.add(target);
         await this.saveTargets(targets);
+        return success();
     }
 
-    public getSelectedTarget(): string | undefined {
+    public getSelectedTarget(): Result<string | undefined> {
         const selected = this.getWorkspace('selectedTarget');
-        const targets = this.getTargets();
-        return selected && targets.has(selected) ? selected : undefined;
+        const targetsResult = this.getTargets();
+        if (targetsResult.kind === 'error') {
+            return targetsResult;
+        }
+        return success(
+            selected && targetsResult.value.has(selected)
+                ? selected
+                : undefined,
+        );
     }
 
-    public async deleteTarget(target: string): Promise<void> {
-        const targets = this.getTargets();
+    public async deleteTarget(target: string): Promise<Result<void>> {
+        const result = this.getTargets();
+        if (result.kind === 'error') {
+            return result;
+        }
+        const targets = result.value;
         if (!targets.has(target)) {
             throw new Error(`Target "${target}" does not exist`);
         }
         targets.delete(target);
-        const currentSelected = this.getSelectedTarget();
+        const selectedTargetResult = this.getSelectedTarget();
+        if (selectedTargetResult.kind === 'error') {
+            return selectedTargetResult;
+        }
         await this.saveTargets(targets);
-        if (currentSelected === target) {
+        if (selectedTargetResult.value === target) {
             await this.setSelected(undefined);
         }
+        return success();
     }
 
-    public getTargets(): Set<string> {
+    public getTargets(): Result<Set<string>> {
         const rawTargets = this.getGlobal('targets');
         try {
             const targets = rawTargets ? JSON.parse(rawTargets) : {};
             assert(targets, serializedTargetsSchema);
-            return new Set(Object.keys(targets));
+            return success(new Set(Object.keys(targets)));
         } catch (err) {
             const errorMsg = 'Failed to parse stored targets';
-            throw new WrappedError(
+            return new WrappedError(
                 'STORAGE',
                 errorMsg,
                 [{ level: 'ERROR', msg: getErrorMessage(err) }],

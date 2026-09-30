@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { refreshProjectContainers } from '../commandIds';
-import { isWrappedError } from '../errors/wrappedError';
 import { ContainerCommands } from '../services/containerCommands';
 import { showAndLogError } from '../util/showAndLog';
 import { assertContainerTreeItem } from '../views/treeItems/assertContainerTreeItem';
@@ -40,20 +39,19 @@ export class ContainerLifecycle {
         const containerId = treeNode.containerItem.id;
         const commandMethod = containerOperationMethods[operation];
 
-        try {
-            await this.containerCommands[commandMethod](
-                containerId,
-                treeNode.containerItem.target,
-            );
-        } catch (error: unknown) {
-            if (isWrappedError(error, ['DOCKER'])) {
-                showAndLogError(
-                    `Failed to ${operation} the container ${containerId}`,
-                    error,
-                );
-                return;
+        const result = await this.containerCommands[commandMethod](
+            containerId,
+            treeNode.containerItem.target,
+        );
+        if (result.kind === 'error') {
+            if (result.code !== 'DOCKER') {
+                throw result;
             }
-            throw error;
+            showAndLogError(
+                `Failed to ${operation} the container ${containerId}`,
+                result,
+            );
+            return;
         }
 
         await vscode.commands.executeCommand(refreshProjectContainers);

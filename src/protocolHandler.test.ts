@@ -1,3 +1,4 @@
+import { success } from './util/result';
 import * as vscode from 'vscode';
 import { mock, MockProxy } from 'vitest-mock-extended';
 import { WrappedError } from './errors/wrappedError';
@@ -14,6 +15,7 @@ describe('ProtocolHandler', () => {
     beforeEach(() => {
         vi.resetAllMocks();
         projectCloner = mock<ProjectCloner>();
+        projectCloner.clone.mockResolvedValue(success());
         protocolHandler = new ProtocolHandler(projectCloner);
     });
 
@@ -70,7 +72,7 @@ describe('ProtocolHandler', () => {
 
     it('shows clone operation errors', async () => {
         const error = new WrappedError('CLONE', 'task failed');
-        projectCloner.clone.mockRejectedValueOnce(error);
+        projectCloner.clone.mockResolvedValueOnce(error);
 
         await protocolHandler.handleUri(
             vscode.Uri.parse(

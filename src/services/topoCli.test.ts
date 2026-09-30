@@ -1,3 +1,5 @@
+import assert from 'node:assert/strict';
+import { success } from '../util/result';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { TopoCli, parseWrappedError, parseTopoLogEntries } from './topoCli';
@@ -75,17 +77,19 @@ describe('TopoCli', () => {
             stderr: '',
         });
 
-        const version = await topoCli.getVersion();
+        const versionResult = await topoCli.getVersion();
 
         expect(execFileMock).toHaveBeenCalledWith(
             path.join(ext, 'resources', manifest.TOPO_CLI),
             ['--version'],
             defaultExecOptions,
         );
-        expect(version).toEqual({
-            version: '1.2.3',
-            commit: 'abcd',
-        });
+        expect(versionResult).toEqual(
+            success({
+                version: '1.2.3',
+                commit: 'abcd',
+            }),
+        );
     });
 
     it('listProjects parses JSON output', async () => {
@@ -105,7 +109,7 @@ describe('TopoCli', () => {
         });
 
         await expect(topoCli.listProjects('me@example.com')).resolves.toEqual(
-            list,
+            success(list),
         );
         expect(execFileMock).toHaveBeenCalledWith(
             path.join(ext, 'resources', manifest.TOPO_CLI),
@@ -129,7 +133,9 @@ describe('TopoCli', () => {
             stderr: '',
         });
 
-        const [project] = await topoCli.listProjects();
+        const result = await topoCli.listProjects();
+        assert(result.kind === 'success');
+        const [project] = result.value;
 
         expect(project).toMatchObject({
             name: 'project',
@@ -153,7 +159,7 @@ describe('TopoCli', () => {
             stderr: '',
         });
 
-        await expect(topoCli.listProjects()).resolves.toEqual(list);
+        await expect(topoCli.listProjects()).resolves.toEqual(success(list));
         expect(execFileMock).toHaveBeenCalledWith(
             path.join(ext, 'resources', manifest.TOPO_CLI),
             ['projects', '-o', 'json'],
@@ -169,7 +175,7 @@ describe('TopoCli', () => {
         );
     });
 
-    it('listProjects throws WrappedError when stderr contains structured log entries', async () => {
+    it('listProjects returns WrappedError when stderr contains structured log entries', async () => {
         const stderrOutput = [
             '{"time":"2026-04-16T15:14:48Z","level":"ERROR","msg":"collecting CPU info: \\"lscpu\\" not found"}',
             '{"time":"2026-04-16T15:14:49Z","level":"ERROR","msg":"connection lost"}',
@@ -189,7 +195,7 @@ describe('TopoCli', () => {
             { cause: execError },
         );
 
-        await expect(topoCli.listProjects('me@example.com')).rejects.toThrow(
+        await expect(topoCli.listProjects('me@example.com')).resolves.toEqual(
             expectedError,
         );
     });
@@ -210,7 +216,7 @@ describe('TopoCli', () => {
         await expect(topoCli.listProjects()).rejects.toBe(execError);
     });
 
-    it('listProjects throws WrappedError with only ERROR messages when stderr has mixed log levels', async () => {
+    it('listProjects returns WrappedError with only ERROR messages when stderr has mixed log levels', async () => {
         const stderrOutput = [
             '{"time":"2026-04-16T15:00:00Z","level":"INFO","msg":"starting up"}',
             '{"time":"2026-04-16T15:00:01Z","level":"ERROR","msg":"disk full"}',
@@ -224,7 +230,7 @@ describe('TopoCli', () => {
             { level: 'WARN', msg: 'retrying' },
         ]);
 
-        await expect(topoCli.listProjects()).rejects.toThrow(expectedError);
+        await expect(topoCli.listProjects()).resolves.toEqual(expectedError);
     });
 
     it('describe resolves parsed JSON and runs topo describe with JSON output', async () => {
@@ -242,7 +248,9 @@ describe('TopoCli', () => {
 
         const target = 'user@topo.local';
 
-        await expect(topoCli.describe(target)).resolves.toEqual(description);
+        await expect(topoCli.describe(target)).resolves.toEqual(
+            success(description),
+        );
 
         expect(execFileMock).toHaveBeenCalledWith(
             topoCli.getBinaryPath(),
@@ -314,7 +322,7 @@ describe('TopoCli', () => {
         const composeFilePath = path.join(projectPath, 'compose.yaml');
 
         await expect(topoCli.ps(target, composeFilePath)).resolves.toEqual(
-            output,
+            success(output),
         );
         expect(execFileMock).toHaveBeenCalledWith(
             topoCli.getBinaryPath(),
@@ -411,7 +419,9 @@ describe('TopoCli', () => {
             stderr: '',
         });
 
-        await expect(topoCli.health('hostname')).resolves.toMatchObject(want);
+        await expect(topoCli.health('hostname')).resolves.toMatchObject(
+            success(want),
+        );
         expect(execFileMock).toHaveBeenCalledTimes(1);
         expect(execFileMock).toHaveBeenCalledWith(
             topoCli.getBinaryPath(),
@@ -436,23 +446,28 @@ describe('TopoCli', () => {
         );
     });
 
-    it('assertVersion does not throw when versions match', async () => {
+    it('assertVersion returns success when versions match', async () => {
         execFileMock.mockResolvedValue({
             stdout: 'topo version 1.2.3 (commit: abcd)\n',
             stderr: '',
         });
 
-        await expect(topoCli.assertVersion('1.2.3')).resolves.toBeUndefined();
+        await expect(topoCli.assertVersion('1.2.3')).resolves.toEqual(
+            success(),
+        );
     });
 
-    it('assertVersion throws when versions mismatch', async () => {
+    it('assertVersion returns a wrapped error when versions mismatch', async () => {
         execFileMock.mockResolvedValue({
             stdout: 'topo version 1.2.3 (commit: abcd)\n',
             stderr: '',
         });
 
-        await expect(topoCli.assertVersion('2.0.0')).rejects.toThrow(
-            'version mismatch: found=1.2.3 expected=2.0.0',
+        await expect(topoCli.assertVersion('2.0.0')).resolves.toEqual(
+            new WrappedError(
+                'CLI',
+                'version mismatch: found=1.2.3 expected=2.0.0',
+            ),
         );
     });
 

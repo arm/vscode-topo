@@ -22,8 +22,12 @@ export class HostController {
     public async refreshHealthCommandHandler(): Promise<void> {
         this.hostModel.setHealth(loading(this.hostModel.health));
         try {
-            const health = await this.topoCli.hostHealth();
-            this.hostModel.setHealth(loaded(health));
+            const healthResult = await this.topoCli.hostHealth();
+            this.hostModel.setHealth(
+                healthResult.kind === 'error'
+                    ? errored(healthResult)
+                    : loaded(healthResult.value),
+            );
         } catch (e) {
             this.hostModel.setHealth(errored(e));
         }
@@ -32,8 +36,12 @@ export class HostController {
     public async refreshSkillStatus(): Promise<void> {
         this.hostModel.setSkillReport(loading(this.hostModel.skillReport));
         try {
-            const report = await this.topoSkill.getReport();
-            this.hostModel.setSkillReport(loaded(report));
+            const reportResult = await this.topoSkill.getReport();
+            this.hostModel.setSkillReport(
+                reportResult.kind === 'error'
+                    ? errored(reportResult)
+                    : loaded(reportResult.value),
+            );
         } catch (error) {
             this.hostModel.setSkillReport(errored(error));
         }

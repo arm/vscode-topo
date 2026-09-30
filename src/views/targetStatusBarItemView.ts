@@ -8,7 +8,7 @@ import { Loadable } from '../util/loadable';
 import { TargetHealthReport } from '../services/topoCliSchema';
 import { selectTarget } from '../commandIds';
 import { getErrorMessage } from '../util/getErrorMessage';
-import { isTargetConnected } from '../util/assertTargetReady';
+import { isTargetConnected } from '../util/validateTargetReady';
 
 function getStatusIconId(state: Loadable<TargetHealthReport>): string {
     if (state.loading) {

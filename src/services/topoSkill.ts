@@ -1,3 +1,4 @@
+import { type Result, success } from '../util/result';
 import * as vscode from 'vscode';
 import { ListedSkill, NpxSkills } from './npxSkills';
 
@@ -35,13 +36,17 @@ export class TopoSkill {
         );
     }
 
-    public async getReport(): Promise<TopoSkillReport> {
-        const listedSkills = (await this.npxSkills.listGlobal()).filter(
+    public async getReport(): Promise<Result<TopoSkillReport>> {
+        const result = await this.npxSkills.listGlobal();
+        if (result.kind === 'error') {
+            return result;
+        }
+        const listedSkills = result.value.filter(
             (skill) =>
                 skill.name === TOPO_SKILL_NAME && skill.agents.length > 0,
         );
         if (listedSkills.length === 0) {
-            return { status: 'missing', agents: [] };
+            return success({ status: 'missing', agents: [] });
         }
 
         const bundledSkill = await vscode.workspace.fs.readFile(
@@ -81,12 +86,12 @@ export class TopoSkill {
                 sensitivity: 'base',
             }),
         );
-        return {
+        return success({
             status: agents.every(({ status }) => status === 'installed')
                 ? 'installed'
                 : 'outdated',
             agents,
-        };
+        });
     }
 
     private async readSkillFile(skill: ListedSkill): Promise<Uint8Array> {
