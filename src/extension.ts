@@ -51,7 +51,10 @@ export async function activate(
     let telemetryClient: TelemetryClient | undefined;
     if (connectionString) {
         try {
-            telemetryClient = new TelemetryClient(connectionString);
+            telemetryClient = new TelemetryClient(
+                connectionString,
+                context.extensionMode,
+            );
         } catch (error) {
             logger.warn('Failed to initialize telemetry', error);
         }
