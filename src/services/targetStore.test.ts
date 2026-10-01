@@ -1,3 +1,5 @@
+import assert from 'node:assert/strict';
+import { success } from '../util/result';
 import * as vscode from 'vscode';
 import { TargetStore } from './targetStore';
 import { mutable } from '../util/test/mutable';
@@ -114,9 +116,10 @@ describe('TargetStore', () => {
 
         const addTargetOperation = store.addTarget(t);
 
-        await expect(addTargetOperation).resolves.toBeUndefined();
-        const targets = store.getTargets();
-        expect(targets).toContain(t);
+        await expect(addTargetOperation).resolves.toEqual(success());
+        const targetsResult = store.getTargets();
+        assert(targetsResult.kind === 'success');
+        expect(targetsResult.value).toContain(t);
         const raw = context.globalState.get<string>('targets');
         expect(raw).toBeTypeOf('string');
         const parsed = JSON.parse(raw || '{}');
@@ -146,7 +149,7 @@ describe('TargetStore', () => {
         const { context } = createMockContext();
         const store = new TargetStore(context);
 
-        await expect(store.addTarget(target)).rejects.toMatchObject({
+        await expect(store.addTarget(target)).resolves.toMatchObject({
             code: 'INVALID_SSH_DESTINATION',
         });
         expect(context.globalState.get('targets')).toBeUndefined();
@@ -159,8 +162,9 @@ describe('TargetStore', () => {
         const t = 'alice@example.com';
         await store.addTarget(t);
 
-        const targets = store.getTargets();
-        expect(targets).toContain(t);
+        const targetsResult = store.getTargets();
+        assert(targetsResult.kind === 'success');
+        expect(targetsResult.value).toContain(t);
 
         const raw = context.globalState.get<string>('targets');
         expect(raw).toBeTypeOf('string');
@@ -189,11 +193,11 @@ describe('TargetStore', () => {
         await store.addTarget(t);
         await store.setSelected('carol@example.com');
 
-        const selected = store.getSelectedTarget();
-        expect(selected).toBe('carol@example.com');
+        const selectedResult = store.getSelectedTarget();
+        expect(selectedResult).toEqual(success('carol@example.com'));
     });
 
-    it('throws a STORAGE WrappedError when stored targets are malformed JSON', () => {
+    it('returns a STORAGE WrappedError when stored targets are malformed JSON', () => {
         const { context, globalState } = createMockContext();
         globalState.get.mockImplementation((key: string) =>
             key === 'targets' ? 'not-json' : undefined,
@@ -210,10 +214,10 @@ describe('TargetStore', () => {
             ],
         );
 
-        expect(() => store.getTargets()).toThrow(expectedError);
+        expect(store.getTargets()).toEqual(expectedError);
     });
 
-    it('throws a STORAGE WrappedError when stored targets fail schema validation', () => {
+    it('returns a STORAGE WrappedError when stored targets fail schema validation', () => {
         const { context, globalState } = createMockContext();
         globalState.get.mockImplementation((key: string) =>
             key === 'targets'
@@ -232,7 +236,7 @@ describe('TargetStore', () => {
             ],
         );
 
-        expect(() => store.getTargets()).toThrow(expectedError);
+        expect(store.getTargets()).toEqual(expectedError);
     });
 
     it('does not wrap errors when reading stored targets fails', () => {
@@ -281,10 +285,11 @@ describe('TargetStore', () => {
 
         await store.deleteTarget(t2);
 
-        const targets = store.getTargets();
-        expect(targets).not.toContain(t2);
-        const selected = store.getSelectedTarget();
-        expect(selected).toBe(t1);
+        const targetsResult = store.getTargets();
+        assert(targetsResult.kind === 'success');
+        expect(targetsResult.value).not.toContain(t2);
+        const selectedResult = store.getSelectedTarget();
+        expect(selectedResult).toEqual(success(t1));
     });
 
     it('removes the selected target and clears selection even when targets remain', async () => {
@@ -300,10 +305,11 @@ describe('TargetStore', () => {
 
         await store.deleteTarget(t2);
 
-        const targets = store.getTargets();
-        expect(targets).not.toContain(t2);
-        const selected = store.getSelectedTarget();
-        expect(selected).toBeUndefined();
+        const targetsResult = store.getTargets();
+        assert(targetsResult.kind === 'success');
+        expect(targetsResult.value).not.toContain(t2);
+        const selectedResult = store.getSelectedTarget();
+        expect(selectedResult).toEqual(success(undefined));
     });
 
     it('removes the only selected target and clears selection when none remain', async () => {
@@ -315,10 +321,11 @@ describe('TargetStore', () => {
 
         await store.deleteTarget(lone);
 
-        const targets = store.getTargets();
-        expect(targets.size).toBe(0);
-        const selected = store.getSelectedTarget();
-        expect(selected).toBeUndefined();
+        const targetsResult = store.getTargets();
+        assert(targetsResult.kind === 'success');
+        expect(targetsResult.value.size).toBe(0);
+        const selectedResult = store.getSelectedTarget();
+        expect(selectedResult).toEqual(success(undefined));
     });
 
     it('throws when deleting a non-existent target id', async () => {

@@ -5,21 +5,20 @@ import {
     promptForLocalCloneSource,
     promptForRemoteCloneSource,
 } from '../util/projectClone';
-import { isWrappedError } from '../errors/wrappedError';
+import { type Result, success } from '../util/result';
 import { showAndLogError } from '../util/showAndLog';
 import { ProjectCloner } from '../operations/projectCloner';
 
 function wrapCloneCommandWithCloneErrorHandling(
-    commandHandler: () => Promise<void>,
+    commandHandler: () => Promise<Result<void>>,
 ): () => Promise<void> {
     return async () => {
-        try {
-            await commandHandler();
-        } catch (error: unknown) {
-            if (isWrappedError(error, ['CLONE', 'CLI'])) {
-                return showAndLogError('Failed to clone project', error);
+        const result = await commandHandler();
+        if (result.kind === 'error') {
+            if (result.code !== 'CLONE' && result.code !== 'CLI') {
+                throw result;
             }
-            throw error;
+            showAndLogError('Failed to clone project', result);
         }
     };
 }
@@ -72,9 +71,9 @@ export class ProjectClone {
                 selectedTarget,
             );
             if (!source) {
-                return;
+                return success();
             }
-            await this.projectCloner.clone(source);
+            return this.projectCloner.clone(source);
         },
     );
 
@@ -82,9 +81,9 @@ export class ProjectClone {
         async () => {
             const source = await promptForLocalCloneSource();
             if (!source) {
-                return;
+                return success();
             }
-            await this.projectCloner.clone(source);
+            return this.projectCloner.clone(source);
         },
     );
 }

@@ -4,7 +4,8 @@ import type {
     HealthCheck,
     TargetHealthReport,
 } from '../services/topoCliSchema';
-import type { Loadable, Loaded } from './loadable';
+import type { Loadable } from './loadable';
+import { type Result, success } from './result';
 
 export function isTargetConnected(
     health: TargetHealthReport,
@@ -12,41 +13,42 @@ export function isTargetConnected(
     return health.isLocalhost || health.connectivity.status === 'ok';
 }
 
-export function assertTargetSelected(
+export function validateTargetSelected(
     selected: string | undefined,
-): asserts selected is string {
+): Result<string> {
     if (!selected) {
-        throw new WrappedError(
+        return new WrappedError(
             'TARGET',
             'No target selected. Please select a target.',
         );
     }
+    return success(selected);
 }
 
-export function assertTargetConnected(
+export function validateTargetConnected(
     target: string,
     health: Loadable<TargetHealthReport>,
-): asserts health is Loaded<ConnectedTargetHealthReport> {
+): Result<void> {
     const report = health.status === 'loaded' ? health.data : undefined;
     if (report && isTargetConnected(report)) {
-        return;
+        return success();
     }
 
     if (health.loading) {
-        throw new WrappedError(
+        return new WrappedError(
             'TARGET',
             `Target ${target} health is still being checked. Wait for target health checks to finish.`,
         );
     }
 
     if (!report) {
-        throw new WrappedError(
+        return new WrappedError(
             'TARGET',
             `Target ${target} health is unavailable. Refresh target health and try again.`,
         );
     }
 
-    throw new WrappedError(
+    return new WrappedError(
         'TARGET',
         getTargetConnectivityFailureMessage(target, report.connectivity),
     );

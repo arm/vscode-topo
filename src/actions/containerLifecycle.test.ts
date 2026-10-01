@@ -1,3 +1,4 @@
+import { success } from '../util/result';
 import * as vscode from 'vscode';
 import { mock } from 'vitest-mock-extended';
 import { refreshProjectContainers } from '../commandIds';
@@ -59,6 +60,7 @@ describe('ContainerLifecycle', () => {
         '$operation invokes the matching command and refreshes containers',
         async ({ command, invoke }) => {
             const containerCommands = mock<ContainerCommands>();
+            containerCommands[command].mockResolvedValueOnce(success());
             const lifecycle = new ContainerLifecycle(containerCommands);
 
             await invoke(lifecycle, treeItem);
@@ -77,7 +79,7 @@ describe('ContainerLifecycle', () => {
         '$operation reports Docker errors without refreshing containers',
         async ({ operation, command, invoke }) => {
             const containerCommands = mock<ContainerCommands>();
-            containerCommands[command].mockRejectedValue(
+            containerCommands[command].mockResolvedValue(
                 new WrappedError('DOCKER', 'fail'),
             );
             const lifecycle = new ContainerLifecycle(containerCommands);

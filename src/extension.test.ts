@@ -1,3 +1,4 @@
+import { success } from './util/result';
 import * as vscode from 'vscode';
 import { mock } from 'vitest-mock-extended';
 import { activate } from './extension';
@@ -6,6 +7,7 @@ import { TopoCli } from './services/topoCli';
 import { Telemetry } from './services/telemetry';
 import { TelemetryClient } from './services/telemetryClient';
 import { logger } from './util/logger';
+import { WrappedError } from './errors/wrappedError';
 
 vi.mock('child_process');
 vi.mock('./util/logger');
@@ -28,6 +30,7 @@ describe('extension activation', () => {
 
     beforeEach(() => {
         vi.stubGlobal('__TELEMETRY_CONNECTION_STRING__', connectionString);
+        vi.mocked(TopoCli.prototype.assertVersion).mockResolvedValue(success());
         vi.mocked(TelemetryClient).mockImplementation(function () {
             return telemetryClient;
         });
@@ -74,7 +77,7 @@ describe('extension activation', () => {
         const topoCli = mock<TopoCli>({
             assertVersion: vi
                 .fn()
-                .mockRejectedValue(new Error('version mismatch')),
+                .mockResolvedValue(new WrappedError('CLI', 'version mismatch')),
         });
         vi.mocked(TopoCli).mockImplementation(function () {
             return topoCli;

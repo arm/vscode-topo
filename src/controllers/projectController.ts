@@ -6,14 +6,14 @@ import { DisposableCollector } from '../util/disposableCollector';
 import { COMPOSE_FILE_GLOB } from '../util/composeFile';
 import { LatestAbortableWork } from '../util/latestAbortableWork';
 import { TopoCli } from '../services/topoCli';
-import { PsEntry, PsOutput } from '../services/topoCliSchema';
+import { PsEntry } from '../services/topoCliSchema';
 import { ContainerItem } from '../util/types';
 import { TargetModel } from '../models/targetModel';
 import { showAndLogError } from '../util/showAndLog';
 import { isProjectComposePathDeleted } from '../util/isProjectComposePathDeleted';
 import { TOPO_TASK_TYPE } from '../manifest';
 import { TaskCommand } from '../tasks/taskFactory';
-import { isTargetConnected } from '../util/assertTargetReady';
+import { isTargetConnected } from '../util/validateTargetReady';
 
 function createContainerItem(item: PsEntry, target: string): ContainerItem {
     return {
@@ -27,17 +27,21 @@ async function loadContainers(
     target: string,
     project: ProjectMetadata,
 ): Promise<Loadable<ContainerItem[]>> {
-    let psResult: PsOutput;
     try {
-        psResult = await topoCli.ps(target, project.composeFileUri.fsPath);
+        const psResult = await topoCli.ps(
+            target,
+            project.composeFileUri.fsPath,
+        );
+        if (psResult.kind === 'error') {
+            return errored(psResult);
+        }
+        const containers = psResult.value.containers.map((container) =>
+            createContainerItem(container, target),
+        );
+        return loaded(containers);
     } catch (error) {
         return errored(error);
     }
-
-    const containers = psResult.containers.map((container) =>
-        createContainerItem(container, target),
-    );
-    return loaded(containers);
 }
 
 export class ProjectController implements vscode.Disposable {

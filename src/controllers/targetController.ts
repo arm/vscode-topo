@@ -1,13 +1,11 @@
 import { TargetModel } from '../models/targetModel';
 import { TargetStore } from '../services/targetStore';
-import { isWrappedError } from '../errors/wrappedError';
 import { logger } from '../util/logger';
 import { logError, showAndLogError } from '../util/showAndLog';
 import { defaultSshConfigPath, getHosts } from '../util/ssh';
 import * as vscode from 'vscode';
 import { TopoCli } from '../services/topoCli';
 import {
-    HealthReport,
     TargetDescription,
     TargetHealthReport,
 } from '../services/topoCliSchema';
@@ -117,28 +115,28 @@ async function loadTargetHealth(
     topoCli: TopoCli,
     target: string,
 ): Promise<Loadable<TargetHealthReport>> {
-    let health: HealthReport;
     try {
-        health = await topoCli.health(target);
+        const healthResult = await topoCli.health(target);
+        return healthResult.kind === 'error'
+            ? errored(healthResult)
+            : loaded(healthResult.value.target);
     } catch (err) {
         return errored(err);
     }
-
-    return loaded(health.target);
 }
 
 async function loadTargetDescription(
     topoCli: TopoCli,
     target: string,
 ): Promise<Loadable<TargetDescription>> {
-    let desc: TargetDescription;
     try {
-        desc = await topoCli.describe(target);
+        const descriptionResult = await topoCli.describe(target);
+        return descriptionResult.kind === 'error'
+            ? errored(descriptionResult)
+            : loaded(descriptionResult.value);
     } catch (err) {
         return errored(err);
     }
-
-    return loaded(desc);
 }
 
 export class TargetController {
@@ -158,23 +156,24 @@ export class TargetController {
     }
 
     public updateTargetsFromStore(): void {
-        let targets: Set<string>;
-        try {
-            targets = this.targetStore.getTargets();
-        } catch (err) {
-            if (!isWrappedError(err, ['STORAGE'])) {
-                throw err;
+        const targetsResult = this.targetStore.getTargets();
+        if (targetsResult.kind === 'error') {
+            if (targetsResult.code !== 'STORAGE') {
+                throw targetsResult;
             }
             if (this.model.targets.status !== 'errored') {
-                logError(corruptedDataMessage, err);
+                logError(corruptedDataMessage, targetsResult);
             }
-            this.model.setTargets(errored(err));
+            this.model.setTargets(errored(targetsResult));
             return;
         }
 
-        const selectedTarget = this.targetStore.getSelectedTarget();
-        this.model.setTargets(loaded([...targets]));
-        this.model.setSelected(selectedTarget);
+        const selectedTargetResult = this.targetStore.getSelectedTarget();
+        if (selectedTargetResult.kind === 'error') {
+            throw selectedTargetResult;
+        }
+        this.model.setTargets(loaded([...targetsResult.value]));
+        this.model.setSelected(selectedTargetResult.value);
     }
 
     public async resetExtensionDataCommandHandler(): Promise<void> {
@@ -194,7 +193,11 @@ export class TargetController {
 
     private async removeTarget(target: string): Promise<void> {
         try {
-            await this.targetStore.deleteTarget(target);
+            const result = await this.targetStore.deleteTarget(target);
+            if (result.kind === 'error') {
+                showAndLogError('Failed to remove target', result);
+                return;
+            }
             this.updateTargetsFromStore();
         } catch (err) {
             const errorMessage = `Failed to remove target`;
@@ -245,17 +248,16 @@ export class TargetController {
         }
 
         if (!currentTargets.includes(target)) {
-            try {
-                await this.targetStore.addTarget(target);
-            } catch (error) {
-                if (isWrappedError(error, ['INVALID_SSH_DESTINATION'])) {
-                    showAndLogError(
-                        'Cannot add target. Enter a valid SSH destination',
-                        error,
-                    );
-                    return;
+            const addTargetResult = await this.targetStore.addTarget(target);
+            if (addTargetResult.kind === 'error') {
+                if (addTargetResult.code !== 'INVALID_SSH_DESTINATION') {
+                    throw addTargetResult;
                 }
-                throw error;
+                showAndLogError(
+                    'Cannot add target. Enter a valid SSH destination',
+                    addTargetResult,
+                );
+                return;
             }
         }
         await this.targetStore.setSelected(target);

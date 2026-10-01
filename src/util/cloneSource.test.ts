@@ -1,3 +1,4 @@
+import { success } from './result';
 import path from 'node:path';
 import {
     buildCloneArguments,
@@ -13,14 +14,18 @@ describe('clone source', () => {
                 parseCloneSource(
                     'git:https://example.com/virtual-bittermelon-peeler.git',
                 ),
-            ).toEqual({
-                type: 'git',
-                url: 'https://example.com/virtual-bittermelon-peeler.git',
-            });
-            expect(parseCloneSource('dir:/tmp/project')).toEqual({
-                type: 'dir',
-                path: '/tmp/project',
-            });
+            ).toEqual(
+                success({
+                    type: 'git',
+                    url: 'https://example.com/virtual-bittermelon-peeler.git',
+                }),
+            );
+            expect(parseCloneSource('dir:/tmp/project')).toEqual(
+                success({
+                    type: 'dir',
+                    path: '/tmp/project',
+                }),
+            );
         });
 
         it.each([
@@ -28,7 +33,9 @@ describe('clone source', () => {
             'ssh://example.com/virtual-bittermelon-peeler.git',
             'git@example.com:virtual-bittermelon-peeler.git',
         ])('keeps an untyped git source raw (%s)', (source) => {
-            expect(parseCloneSource(source)).toEqual({ value: source });
+            expect(parseCloneSource(source)).toEqual(
+                success({ value: source }),
+            );
         });
 
         it.each([
@@ -40,7 +47,7 @@ describe('clone source', () => {
                 'Invalid type: invalid',
             ],
         ])('rejects invalid source %s', (source, message) => {
-            expect(() => parseCloneSource(source)).toThrow(
+            expect(parseCloneSource(source)).toEqual(
                 expect.objectContaining({ code: 'CLONE', message }),
             );
         });
@@ -52,12 +59,12 @@ describe('clone source', () => {
                 getDefaultProjectNameFromUrl(
                     'https://example.com/virtual-bittermelon-peeler.git#8303e66d',
                 ),
-            ).toBe('virtual-bittermelon-peeler');
+            ).toEqual(success('virtual-bittermelon-peeler'));
             expect(
                 getDefaultProjectNameFromUrl(
                     'git@example.com:owner/virtual-bittermelon-peeler.git#main',
                 ),
-            ).toBe('virtual-bittermelon-peeler');
+            ).toEqual(success('virtual-bittermelon-peeler'));
         });
 
         it('gets the project name for every clone source type', () => {
@@ -66,24 +73,22 @@ describe('clone source', () => {
                     type: 'git',
                     url: 'https://example.com/project.git',
                 }),
-            ).toBe('project');
+            ).toEqual(success('project'));
             expect(
                 getDefaultProjectName({
                     value: 'https://example.com/raw-project.git',
                 }),
-            ).toBe('raw-project');
+            ).toEqual(success('raw-project'));
             expect(
                 getDefaultProjectName({
                     type: 'dir',
                     path: path.join('/tmp', 'local-project'),
                 }),
-            ).toBe('local-project');
+            ).toEqual(success('local-project'));
         });
 
         it('rejects URLs without a repository name', () => {
-            expect(() =>
-                getDefaultProjectNameFromUrl('not-a-valid-url'),
-            ).toThrow(
+            expect(getDefaultProjectNameFromUrl('not-a-valid-url')).toEqual(
                 expect.objectContaining({
                     code: 'CLONE',
                     message: 'Invalid URL: not-a-valid-url',

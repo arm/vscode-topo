@@ -19,6 +19,7 @@ import {
     resolveProjectName,
 } from '../util/projectClone';
 import { runTask } from '../util/task';
+import { type Result, success } from '../util/result';
 
 export class ProjectCloner {
     constructor(private readonly taskFactory: TaskFactory) {}
@@ -26,18 +27,22 @@ export class ProjectCloner {
     public async clone(
         source: CloneSource,
         parameters: CloneParameters = {},
-    ): Promise<void> {
+    ): Promise<Result<void>> {
         const destinationPath = await promptForDestinationPath();
         if (!destinationPath) {
-            return;
+            return success();
         }
 
+        const defaultProjectNameResult = getDefaultProjectName(source);
+        if (defaultProjectNameResult.kind === 'error') {
+            return defaultProjectNameResult;
+        }
         const projectName = await resolveProjectName(
             destinationPath,
-            getDefaultProjectName(source),
+            defaultProjectNameResult.value,
         );
         if (!projectName) {
-            return;
+            return success();
         }
 
         const repositoryPath = path.join(destinationPath, projectName);
@@ -58,11 +63,12 @@ export class ProjectCloner {
         try {
             await runTask(cloneTask);
         } catch (error) {
-            throw new WrappedError('CLONE', getErrorMessage(error), [], {
+            return new WrappedError('CLONE', getErrorMessage(error), [], {
                 cause: error,
             });
         }
 
         await promptToOpenFolder(repositoryPath);
+        return success();
     }
 }

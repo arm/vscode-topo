@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { WrappedError } from '../errors/wrappedError';
+import { type Result, success } from './result';
 
 interface CloneRemoteSource {
     url: string;
@@ -27,28 +28,28 @@ const isGitUrl = (source: string): boolean =>
     source.startsWith('http://') ||
     source.startsWith('git://');
 
-export const parseCloneSource = (source: string): CloneSource => {
+export const parseCloneSource = (source: string): Result<CloneSource> => {
     if (isGitUrl(source)) {
-        return { value: source };
+        return success({ value: source });
     }
 
     const [sourceType, ...valueParts] = source.split(':');
     if (!sourceType || valueParts.length === 0) {
-        throw new WrappedError('CLONE', `Invalid URL: ${source}`);
+        return new WrappedError('CLONE', `Invalid URL: ${source}`);
     }
     const value = valueParts.join(':');
 
     switch (sourceType) {
         case 'dir':
-            return { type: 'dir', path: value };
+            return success({ type: 'dir', path: value });
         case 'git':
-            return { type: 'git', url: value };
+            return success({ type: 'git', url: value });
         default:
-            throw new WrappedError('CLONE', `Invalid type: ${sourceType}`);
+            return new WrappedError('CLONE', `Invalid type: ${sourceType}`);
     }
 };
 
-export const getDefaultProjectNameFromUrl = (url: string): string => {
+export const getDefaultProjectNameFromUrl = (url: string): Result<string> => {
     let pathname: string;
     const [urlWithoutFragment] = url.split('#');
     // Support scp-like SSH URLs (e.g. git@host:owner/repo.git).
@@ -59,7 +60,7 @@ export const getDefaultProjectNameFromUrl = (url: string): string => {
         try {
             pathname = new URL(urlWithoutFragment).pathname;
         } catch {
-            throw new WrappedError('CLONE', `Invalid URL: ${url}`);
+            return new WrappedError('CLONE', `Invalid URL: ${url}`);
         }
     }
 
@@ -69,15 +70,15 @@ export const getDefaultProjectNameFromUrl = (url: string): string => {
         .pop()
         ?.replace(/\.git$/, '');
     if (!projectName) {
-        throw new WrappedError('CLONE', `Invalid URL: ${url}`);
+        return new WrappedError('CLONE', `Invalid URL: ${url}`);
     }
-    return projectName;
+    return success(projectName);
 };
 
-export const getDefaultProjectName = (source: CloneSource): string => {
+export const getDefaultProjectName = (source: CloneSource): Result<string> => {
     switch (source.type) {
         case 'dir':
-            return path.basename(source.path);
+            return success(path.basename(source.path));
         case 'git':
             return getDefaultProjectNameFromUrl(source.url);
         case undefined:

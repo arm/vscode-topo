@@ -1,3 +1,4 @@
+import { success } from '../util/result';
 import { ProjectController } from './projectController';
 import { ProjectModel } from '../models/projectModel';
 import { findTopLevelComposeProjects, ProjectMetadata } from '../util/project';
@@ -175,7 +176,7 @@ describe('ProjectController', () => {
         const model = new ProjectModel();
         model.setProjects(loaded([projects[0], otherProject]));
         const topoCli = mock<TopoCli>();
-        topoCli.ps.mockResolvedValue(psOutput);
+        topoCli.ps.mockResolvedValue(success(psOutput));
         const controller = new ProjectController(model, topoCli, targetModel);
 
         await controller.refreshProjectContainersCommandHandler();
@@ -264,7 +265,7 @@ describe('ProjectController', () => {
         const topoCli = mock<TopoCli>();
         topoCli.ps.mockImplementation(async (_target, composeFilePath) => {
             if (composeFilePath === projects[0].composeFileUri.fsPath) {
-                return psOutput;
+                return success(psOutput);
             }
             throw new Error('ps failed');
         });
