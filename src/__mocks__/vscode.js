@@ -298,6 +298,12 @@ const UIKind = {
     Web: 2,
 };
 
+const ExtensionMode = {
+    Production: 1,
+    Development: 2,
+    Test: 3,
+};
+
 const EndOfLine = {
     LF: 1,
     CRLF: 2,
@@ -313,6 +319,7 @@ module.exports = {
     Disposable,
     EndOfLine,
     EventEmitter,
+    ExtensionMode,
     FileType,
     FileSystemError,
     LogLevel,

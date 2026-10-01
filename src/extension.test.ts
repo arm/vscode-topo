@@ -18,6 +18,7 @@ function createContext(): vscode.ExtensionContext {
         globalState: mock<vscode.Memento>(),
         workspaceState: mock<vscode.Memento>(),
         extensionUri: vscode.Uri.file('/fake/extension'),
+        extensionMode: vscode.ExtensionMode.Production,
     });
 }
 
@@ -53,8 +54,14 @@ describe('extension activation', () => {
         expect(
             vscode.tasks.registerTaskProvider,
         ).toHaveBeenCalledExactlyOnceWith(TOPO_TASK_TYPE, expect.any(Object));
-        expect(TelemetryClient).toHaveBeenCalledWith(connectionString);
-        expect(telemetryClient.track).toHaveBeenCalledOnce();
+        expect(TelemetryClient).toHaveBeenCalledWith(
+            connectionString,
+            vscode.ExtensionMode.Production,
+        );
+        expect(telemetryClient.track).toHaveBeenCalledExactlyOnceWith(
+            'activate',
+            expect.any(Function),
+        );
         expect(context.subscriptions).toContainEqual(expect.any(Telemetry));
         expect(setTimeoutSpy).toHaveBeenCalledWith(
             expect.any(Function),

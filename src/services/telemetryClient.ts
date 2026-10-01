@@ -1,25 +1,49 @@
 import { TelemetryReporter } from '@vscode/extension-telemetry';
-import type { Disposable } from 'vscode';
+import { type Disposable, ExtensionMode } from 'vscode';
 import { getErrorMessage } from '../util/getErrorMessage';
 import { logger } from '../util/logger';
 
 export type TelemetryEventName = 'activate';
 
+export type TelemetryEventProperties = Readonly<
+    Record<string, string | number | boolean | undefined>
+>;
+
+const EXTENSION_MODE_NAMES: Record<ExtensionMode, string> = {
+    [ExtensionMode.Production]: 'production',
+    [ExtensionMode.Development]: 'development',
+    [ExtensionMode.Test]: 'test',
+};
+
 function getDurationSeconds(startedAt: number): number {
     return (Date.now() - startedAt) / 1000;
 }
 
+function serializeEventProperties(
+    properties: TelemetryEventProperties,
+): Record<string, string> {
+    const serialized: Record<string, string> = {};
+    for (const [name, value] of Object.entries(properties)) {
+        if (value !== undefined) {
+            serialized[`event.${name}`] = String(value);
+        }
+    }
+    return serialized;
+}
+
 export class TelemetryClient implements Disposable {
     private readonly reporter: TelemetryReporter;
+    private readonly extensionMode: string;
 
-    constructor(connectionString: string) {
+    constructor(connectionString: string, extensionMode: ExtensionMode) {
+        this.extensionMode = EXTENSION_MODE_NAMES[extensionMode];
         this.reporter = new TelemetryReporter(connectionString);
     }
 
     public async track<T>(
         eventName: TelemetryEventName,
         operation: () => Promise<T>,
-        properties: Record<string, string> = {},
+        properties: TelemetryEventProperties = {},
     ): Promise<T> {
         const startedAt = Date.now();
         let result: T;
@@ -41,13 +65,17 @@ export class TelemetryClient implements Disposable {
 
     private send(
         eventName: TelemetryEventName,
-        properties: Record<string, string>,
+        properties: TelemetryEventProperties,
         measurements: Record<string, number>,
     ): void {
         try {
             this.reporter.sendTelemetryEvent(
                 eventName,
-                { ...properties, outcome: 'success' },
+                {
+                    ...serializeEventProperties(properties),
+                    'meta.extensionMode': this.extensionMode,
+                    'meta.outcome': 'success',
+                },
                 measurements,
             );
         } catch (error) {
@@ -61,17 +89,19 @@ export class TelemetryClient implements Disposable {
     private sendError(
         eventName: TelemetryEventName,
         error: unknown,
-        properties: Record<string, string>,
+        properties: TelemetryEventProperties,
         measurements: Record<string, number>,
     ): void {
         try {
             this.reporter.sendTelemetryErrorEvent(
                 eventName,
                 {
-                    ...properties,
-                    outcome: 'failure',
-                    errorMessage: getErrorMessage(error),
-                    stack: error instanceof Error ? error.stack : undefined,
+                    ...serializeEventProperties(properties),
+                    'meta.extensionMode': this.extensionMode,
+                    'meta.outcome': 'failure',
+                    'meta.errorMessage': getErrorMessage(error),
+                    'meta.stack':
+                        error instanceof Error ? error.stack : undefined,
                 },
                 measurements,
             );
