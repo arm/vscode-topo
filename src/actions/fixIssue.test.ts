@@ -43,6 +43,7 @@ describe('FixIssue', () => {
     const healthChecks: HealthCheck[] = [
         {
             name: 'Container Engine',
+            location: 'target',
             status: 'error',
             value: 'missing',
             fix: {
@@ -52,6 +53,7 @@ describe('FixIssue', () => {
         },
         {
             name: 'Debugger',
+            location: 'target',
             status: 'warning',
             value: 'missing',
             fix: {
@@ -61,6 +63,7 @@ describe('FixIssue', () => {
         },
         {
             name: 'Hardware Info',
+            location: 'target',
             status: 'ok',
             value: 'lscpu',
         },
@@ -287,6 +290,7 @@ describe('FixIssue', () => {
         const sharedCommand = `topo install remoteproc --target ${target}`;
         const remoteprocRuntime: HealthCheck = {
             name: 'Remoteproc Runtime',
+            location: 'target',
             status: 'error',
             value: 'missing',
             fix: {
@@ -296,6 +300,7 @@ describe('FixIssue', () => {
         };
         const remoteprocShim: HealthCheck = {
             name: 'Remoteproc Shim',
+            location: 'target',
             status: 'error',
             value: 'missing',
             fix: {

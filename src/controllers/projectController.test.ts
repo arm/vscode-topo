@@ -6,7 +6,7 @@ import * as vscode from 'vscode';
 import { mutable } from '../util/test/mutable';
 import { mock } from 'vitest-mock-extended';
 import { TopoCli } from '../services/topoCli';
-import { PsOutput, TargetHealthReport } from '../services/topoCliSchema';
+import { PsOutput, HealthCheck } from '../services/topoCliSchema';
 import { TargetModel } from '../models/targetModel';
 import { PRIMARY_PROCESSING_DOMAIN, TOPO_TASK_TYPE } from '../manifest';
 import { TaskCommand } from '../tasks/taskFactory';
@@ -35,21 +35,14 @@ const workspaceFolder: vscode.WorkspaceFolder = {
     name: 'workspace',
     index: 0,
 };
-const healthyTarget: TargetHealthReport = {
-    destination: `ssh://${target}`,
-    isLocalhost: false,
-    connectivity: {
+const healthyTarget: HealthCheck[] = [
+    {
         name: 'Connectivity',
+        location: 'target',
         status: 'ok',
         value: 'connected',
     },
-    processingDomainDriver: {
-        name: 'Processing Domain Driver',
-        status: 'ok',
-        value: 'ready',
-    },
-    dependencies: [],
-};
+];
 const psOutput: PsOutput = {
     containers: [
         {
@@ -300,13 +293,14 @@ describe('ProjectController', () => {
         const targetModel = new TargetModel();
         targetModel.setSelected(target);
         targetModel.setSelectedTargetHealth(
-            loaded({
-                ...healthyTarget,
-                connectivity: {
-                    ...healthyTarget.connectivity,
+            loaded([
+                {
+                    name: 'Connectivity',
+                    location: 'target',
                     status: 'error',
+                    value: 'connected',
                 },
-            }),
+            ]),
         );
         const model = new ProjectModel();
         model.setProjects(loaded(projects));

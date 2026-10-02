@@ -7,7 +7,7 @@ import { MockProxy, mock } from 'vitest-mock-extended';
 import { mutable } from '../util/test/mutable';
 import { runTask } from '../util/task';
 import { loaded, unloaded } from '../util/loadable';
-import type { TargetHealthReport } from '../services/topoCliSchema';
+import type { HealthCheck } from '../services/topoCliSchema';
 import { Config } from '../services/config';
 import { createProjectTreeItem } from '../util/test/projectTreeItem';
 import { WrappedError } from '../errors/wrappedError';
@@ -37,21 +37,14 @@ describe('Deploy', () => {
         'Deploy task',
         'topo',
     );
-    const targetHealth: TargetHealthReport = {
-        destination: `ssh://${target}`,
-        isLocalhost: false,
-        connectivity: {
+    const targetHealth: HealthCheck[] = [
+        {
             name: 'Connectivity',
+            location: 'target',
             status: 'ok',
             value: 'connected',
         },
-        processingDomainDriver: {
-            name: 'Processing Domain Driver',
-            status: 'ok',
-            value: 'ready',
-        },
-        dependencies: [],
-    };
+    ];
     let targetModel: TargetModel;
     let config: MockProxy<Config>;
     let taskFactory: MockProxy<TaskFactory>;
@@ -123,14 +116,14 @@ describe('Deploy', () => {
 
     it('shows a warning and does not deploy when target connectivity is unhealthy', async () => {
         targetModel.setSelectedTargetHealth(
-            loaded({
-                ...targetHealth,
-                connectivity: {
-                    ...targetHealth.connectivity,
+            loaded([
+                {
+                    name: 'Connectivity',
+                    location: 'target',
                     status: 'error',
                     value: 'unreachable',
                 },
-            }),
+            ]),
         );
 
         const deployOperation =

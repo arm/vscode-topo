@@ -1,15 +1,10 @@
 import { WrappedError } from '../errors/wrappedError';
-import type {
-    ConnectedTargetHealthReport,
-    HealthCheck,
-    TargetHealthReport,
-} from '../services/topoCliSchema';
+import type { HealthCheck } from '../services/topoCliSchema';
 import type { Loadable, Loaded } from './loadable';
+import { getTargetConnectivityCheck } from './healthReport';
 
-export function isTargetConnected(
-    health: TargetHealthReport,
-): health is ConnectedTargetHealthReport {
-    return health.isLocalhost || health.connectivity.status === 'ok';
+export function isTargetConnected(health: readonly HealthCheck[]): boolean {
+    return getTargetConnectivityCheck(health)?.status !== 'error';
 }
 
 export function assertTargetSelected(
@@ -25,11 +20,20 @@ export function assertTargetSelected(
 
 export function assertTargetConnected(
     target: string,
-    health: Loadable<TargetHealthReport>,
-): asserts health is Loaded<ConnectedTargetHealthReport> {
-    const report = health.status === 'loaded' ? health.data : undefined;
-    if (report && isTargetConnected(report)) {
-        return;
+    health: Loadable<HealthCheck[]>,
+): asserts health is Loaded<HealthCheck[]> {
+    if (health.status === 'loaded') {
+        const connectivity = getTargetConnectivityCheck(health.data);
+        if (connectivity?.status !== 'error') {
+            return;
+        }
+
+        if (!health.loading) {
+            throw new WrappedError(
+                'TARGET',
+                getTargetConnectivityFailureMessage(target, connectivity),
+            );
+        }
     }
 
     if (health.loading) {
@@ -39,16 +43,9 @@ export function assertTargetConnected(
         );
     }
 
-    if (!report) {
-        throw new WrappedError(
-            'TARGET',
-            `Target ${target} health is unavailable. Refresh target health and try again.`,
-        );
-    }
-
     throw new WrappedError(
         'TARGET',
-        getTargetConnectivityFailureMessage(target, report.connectivity),
+        `Target ${target} health is unavailable. Refresh target health and try again.`,
     );
 }
 
