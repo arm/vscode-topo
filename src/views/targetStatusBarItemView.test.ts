@@ -16,13 +16,6 @@ const healthyTarget: HealthCheck[] = [
         location: 'target',
         value: '',
     },
-    { status: 'ok', name: 'Container Engine', location: 'target', value: '' },
-    {
-        status: 'ok',
-        name: 'Processing Domain Driver',
-        location: 'target',
-        value: '',
-    },
 ];
 
 describe('TargetStatusBarItemView', () => {

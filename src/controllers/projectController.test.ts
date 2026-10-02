@@ -42,12 +42,6 @@ const healthyTarget: HealthCheck[] = [
         status: 'ok',
         value: 'connected',
     },
-    {
-        name: 'Processing Domain Driver',
-        location: 'target',
-        status: 'ok',
-        value: 'ready',
-    },
 ];
 const psOutput: PsOutput = {
     containers: [

@@ -2,14 +2,7 @@ import { HostModel } from './hostModel';
 import { HealthCheck } from '../services/topoCliSchema';
 import { loaded, unloaded } from '../util/loadable';
 
-const hostHealth: HealthCheck[] = [
-    {
-        name: 'Container Engine',
-        location: 'host',
-        status: 'ok',
-        value: 'docker',
-    },
-];
+const hostHealth: HealthCheck[] = [];
 
 describe('HostModel', () => {
     it('defaults to an unloaded state', async () => {

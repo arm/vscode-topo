@@ -44,12 +44,6 @@ describe('Deploy', () => {
             status: 'ok',
             value: 'connected',
         },
-        {
-            name: 'Processing Domain Driver',
-            location: 'target',
-            status: 'ok',
-            value: 'ready',
-        },
     ];
     let targetModel: TargetModel;
     let config: MockProxy<Config>;
