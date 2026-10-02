@@ -1,7 +1,9 @@
 import type { TopoLogLevel } from '../services/topoCliSchema';
 
 export type WrappedErrorCode =
+    | 'ENGINE'
     | 'DOCKER'
+    | 'PODMAN'
     | 'CLONE'
     | 'CLI'
     | 'CONFIG'

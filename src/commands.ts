@@ -65,6 +65,9 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
         vscode.commands.registerCommand(commandIds.selectTarget, () =>
             handlers.targetController.selectCommandHandler(),
         ),
+        vscode.commands.registerCommand(commandIds.selectContainerEngine, () =>
+            handlers.hostController.selectContainerEngineCommandHandler(),
+        ),
         vscode.commands.registerCommand(commandIds.resetExtensionData, () =>
             handlers.targetController.resetExtensionDataCommandHandler(),
         ),

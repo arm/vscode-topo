@@ -4,13 +4,15 @@ import { HealthCapabilityTreeItem } from './treeItems/healthCapabilityTreeItem';
 import { ErrorTreeItem } from './treeItems/errorTreeItem';
 import { HostModel } from '../models/hostModel';
 import { DisposableCollector } from '../util/disposableCollector';
-import { Loadable, loaded } from '../util/loadable';
+import { Loadable, errored, loaded } from '../util/loadable';
 import { TopoSkillReport } from '../services/topoSkill';
 import { SkillStatusTreeItem } from './treeItems/skillStatusTreeItem';
 import { LoadingTreeItem } from './treeItems/loadingTreeItem';
 import { SkillGroupTreeItem } from './treeItems/skillGroupTreeItem';
 import { HealthTreeItem } from './treeItems/healthTreeItem';
 import type { HostHealth } from '../util/healthReport';
+import { ContainerEngineTreeItem } from './treeItems/containerEngineTreeItem';
+import { isWrappedError } from '../errors/wrappedError';
 
 function getHealthReportItem(health: Loadable<HostHealth>): vscode.TreeItem {
     switch (health.status) {
@@ -22,6 +24,19 @@ function getHealthReportItem(health: Loadable<HostHealth>): vscode.TreeItem {
             return new HealthTreeItem(
                 loaded({ capabilities: [] }, health.loading),
             );
+    }
+}
+
+function getContainerEngineItem(model: HostModel): vscode.TreeItem {
+    try {
+        return new ContainerEngineTreeItem(model.containerEngine);
+    } catch (error) {
+        if (!isWrappedError(error, ['ENGINE'])) {
+            throw error;
+        }
+        const item = new ErrorTreeItem('Container Engine', errored(error));
+        item.contextValue = 'ContainerEngine';
+        return item;
     }
 }
 
@@ -64,6 +79,9 @@ export class HostTreeView
         this.disposables.collect(
             treeView,
             this._onDidChangeTreeData,
+            this.model.onContainerEngineChanged(() => {
+                this._onDidChangeTreeData.fire(undefined);
+            }),
             this.model.onHealthChanged(() => {
                 this._onDidChangeTreeData.fire(undefined);
             }),
@@ -76,6 +94,7 @@ export class HostTreeView
     public getChildren(element?: vscode.TreeItem): vscode.TreeItem[] {
         if (!element) {
             return [
+                getContainerEngineItem(this.model),
                 getHealthReportItem(this.model.health),
                 getSkillReportItem(this.model.skillReport),
             ];

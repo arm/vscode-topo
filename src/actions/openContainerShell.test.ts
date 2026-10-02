@@ -1,29 +1,29 @@
 import * as vscode from 'vscode';
-import {
-    OpenContainerShell,
-    openContainerShell,
-} from '../actions/openContainerShell';
+import { OpenContainerShell } from './openContainerShell';
 import { mock } from 'vitest-mock-extended';
 import { ContainerItem } from '../util/types';
-import { DockerCommands } from '../services/dockerCommands';
+import { ContainerCommands } from '../services/containerCommands';
 import { ContainerTreeItem } from '../views/treeItems/containerTreeItem';
 
-vi.mock('../util/logger');
-
 describe('OpenContainerShell', () => {
-    const dockerCommands = new DockerCommands();
     const target = 'user@topo.local';
-
-    beforeEach(() => {
-        vi.clearAllMocks();
-    });
 
     afterEach(() => {
         vi.clearAllMocks();
     });
 
-    it('openContainerShell command opens a docker exec terminal', async () => {
-        const openContainerShellAction = new OpenContainerShell(dockerCommands);
+    it('opens the provided shell command in a terminal', async () => {
+        const containerCommands = mock<ContainerCommands>();
+        containerCommands.getAttachShellCommand.mockReturnValue([
+            'podman',
+            'exec',
+            '-it',
+            'cid',
+            'sh',
+        ]);
+        const openContainerShellAction = new OpenContainerShell(
+            containerCommands,
+        );
         const fakeItem = mock<ContainerItem>({
             id: 'cid',
             image: 'clabel',
@@ -37,39 +37,13 @@ describe('OpenContainerShell', () => {
             treeItem,
         );
 
-        const expectedCommand = dockerCommands.getAttachShellCommand(
-            fakeItem.id,
-            fakeItem.target,
-        );
+        expect(
+            containerCommands.getAttachShellCommand,
+        ).toHaveBeenCalledExactlyOnceWith('cid', target);
         expect(vscode.window.createTerminal).toHaveBeenCalledWith({
             name: 'Shell: clabel',
-            shellPath: expectedCommand[0],
-            shellArgs: expectedCommand.slice(1),
-        });
-        const terminal = vi.mocked(vscode.window.createTerminal).mock.results[0]
-            .value;
-        expect(terminal.sendText).not.toHaveBeenCalled();
-        expect(terminal.show).toHaveBeenCalled();
-    });
-
-    it('openContainerShell opens a docker exec terminal', () => {
-        const fakeItem = mock<ContainerItem>({
-            id: 'cid',
-            image: 'clabel',
-            target,
-            state: 'running',
-        });
-
-        openContainerShell(fakeItem, dockerCommands);
-
-        const expectedCommand = dockerCommands.getAttachShellCommand(
-            fakeItem.id,
-            fakeItem.target,
-        );
-        expect(vscode.window.createTerminal).toHaveBeenCalledWith({
-            name: 'Shell: clabel',
-            shellPath: expectedCommand[0],
-            shellArgs: expectedCommand.slice(1),
+            shellPath: 'podman',
+            shellArgs: ['exec', '-it', 'cid', 'sh'],
         });
         const terminal = vi.mocked(vscode.window.createTerminal).mock.results[0]
             .value;

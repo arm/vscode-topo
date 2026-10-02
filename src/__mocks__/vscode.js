@@ -206,7 +206,7 @@ const workspace = {
     fs,
     findFiles: vi.fn(async () => []),
     getConfiguration: vi.fn(() => ({
-        get: vi.fn(),
+        get: vi.fn((_section, defaultValue) => defaultValue),
         has: vi.fn(),
         inspect: vi.fn(),
         update: vi.fn(),

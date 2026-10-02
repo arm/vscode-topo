@@ -8,6 +8,8 @@ import { TargetTreeView } from './views/targetTreeView';
 import { ContainerLifecycle } from './actions/containerLifecycle';
 import { OpenContainerShell } from './actions/openContainerShell';
 import { DockerCommands } from './services/dockerCommands';
+import { PodmanCommands } from './services/podmanCommands';
+import { ContainerEngineCommands } from './services/containerEngineCommands';
 import { TargetStore } from './services/targetStore';
 import { Deploy } from './actions/deploy';
 import { Stop } from './actions/stop';
@@ -24,7 +26,11 @@ import { ProjectModel } from './models/projectModel';
 import { ProjectClone } from './actions/projectClone';
 import { showAndLogError } from './util/showAndLog';
 import { topo } from '../package.json';
-import { TOPO_TASK_TYPE } from './manifest';
+import {
+    CONFIG_CONTAINER_ENGINE,
+    PACKAGE_NAME,
+    TOPO_TASK_TYPE,
+} from './manifest';
 import { RefreshLoop } from './util/refreshLoop';
 import { ProjectController } from './controllers/projectController';
 import { ConnectViaSSH } from './actions/connectViaSSH';
@@ -76,6 +82,7 @@ async function activateExtension(
     const topoCli = new TopoCli(
         context.extensionPath,
         context.environmentVariableCollection,
+        config,
     );
     context.subscriptions.push(topoCli);
     topoCli.activate();
@@ -87,7 +94,11 @@ async function activateExtension(
         return;
     }
 
-    const dockerCommands = new DockerCommands();
+    const containerCommands = new ContainerEngineCommands(
+        config,
+        new DockerCommands(),
+        new PodmanCommands(),
+    );
     const targetStore = new TargetStore(context);
     context.subscriptions.push(targetStore);
 
@@ -109,7 +120,12 @@ async function activateExtension(
         targetStatusBarItemView,
     );
 
-    const hostController = new HostController(hostModel, topoCli, topoSkill);
+    const hostController = new HostController(
+        hostModel,
+        topoCli,
+        topoSkill,
+        config,
+    );
     const projectController = new ProjectController(
         projectModel,
         topoCli,
@@ -128,6 +144,7 @@ async function activateExtension(
     }, SELECTED_TARGET_REFRESH_INTERVAL_MS);
 
     context.subscriptions.push(
+        hostController,
         projectController,
         targetController,
         selectedTargetRefreshLoop,
@@ -136,6 +153,19 @@ async function activateExtension(
         ),
         targetModel.onSelectedChanged(() => {
             void targetController.loadSelectedTargetDescriptionCommandHandler();
+            void targetController.refreshSelectedTargetHealthCommandHandler();
+        }),
+        vscode.workspace.onDidChangeConfiguration((event) => {
+            if (
+                !event.affectsConfiguration(
+                    `${PACKAGE_NAME}.${CONFIG_CONTAINER_ENGINE}`,
+                )
+            ) {
+                return;
+            }
+            hostController.refreshContainerEngine();
+            projectController.clearProjectContainers();
+            void hostController.refreshHealthCommandHandler();
             void targetController.refreshSelectedTargetHealthCommandHandler();
         }),
     );
@@ -147,10 +177,10 @@ async function activateExtension(
     const projectClone = new ProjectClone(topoCli, targetModel, projectCloner);
     const deploy = new Deploy(targetModel, config, taskFactory);
     const stop = new Stop(targetModel, taskFactory);
-    const openContainerShell = new OpenContainerShell(dockerCommands);
+    const openContainerShell = new OpenContainerShell(containerCommands);
     const connectViaSSH = new ConnectViaSSH(targetModel);
     const openContainerInBrowser = new OpenContainerInBrowser();
-    const containerLifecycle = new ContainerLifecycle(dockerCommands);
+    const containerLifecycle = new ContainerLifecycle(containerCommands);
     const fixIssue = new FixIssue(taskFactory, targetModel);
     const openSettings = new OpenSettings();
     const skillLifecycle = new SkillLifecycle(topoSkill);
