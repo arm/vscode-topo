@@ -3,20 +3,7 @@ import { TargetDescription } from '../services/topoCliSchema';
 import { errored, loaded, unloaded } from '../util/loadable';
 import { TargetModel } from './targetModel';
 
-const targetHealth: HealthCheck[] = [
-    {
-        name: 'Connectivity',
-        location: 'target',
-        status: 'ok',
-        value: 'connected',
-    },
-    {
-        name: 'Processing Domain Driver',
-        location: 'target',
-        status: 'ok',
-        value: 'ready',
-    },
-];
+const targetHealth: HealthCheck[] = [];
 
 const targetDescription: TargetDescription = {
     hostProcessors: [],

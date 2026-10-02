@@ -29,18 +29,6 @@ describe('TargetTreeView', () => {
             status: 'ok',
             value: 'ok',
         },
-        {
-            name: 'Container Engine',
-            location: 'target',
-            status: 'ok',
-            value: 'present',
-        },
-        {
-            name: 'ProcessingDomainDriver',
-            location: 'target',
-            status: 'ok',
-            value: 'ready',
-        },
     ];
 
     beforeEach(() => {
@@ -145,18 +133,6 @@ describe('TargetTreeView', () => {
                         status: 'error',
                         value: 'ok',
                     },
-                    {
-                        name: 'Container Engine',
-                        location: 'target',
-                        status: 'ok',
-                        value: 'present',
-                    },
-                    {
-                        name: 'ProcessingDomainDriver',
-                        location: 'target',
-                        status: 'ok',
-                        value: 'ready',
-                    },
                 ]),
             );
 
@@ -194,12 +170,6 @@ describe('TargetTreeView', () => {
                         location: 'target',
                         status: 'warning',
                         value: 'missing',
-                    },
-                    {
-                        name: 'ProcessingDomainDriver',
-                        location: 'target',
-                        status: 'ok',
-                        value: 'ready',
                     },
                 ]),
             );
@@ -372,18 +342,6 @@ describe('TargetTreeView', () => {
         it('marks health group fixable when visible target health checks have executable fixes', async () => {
             targetModel.setSelectedTargetHealth(
                 loaded([
-                    {
-                        name: 'Connectivity',
-                        location: 'target',
-                        status: 'ok',
-                        value: 'ok',
-                    },
-                    {
-                        name: 'Container Engine',
-                        location: 'target',
-                        status: 'ok',
-                        value: 'present',
-                    },
                     {
                         name: 'ProcessingDomainDriver',
                         location: 'target',
