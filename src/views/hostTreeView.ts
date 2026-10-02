@@ -6,11 +6,13 @@ import { HealthCheckTreeItem } from './treeItems/healthCheckTreeItem';
 import { ErrorTreeItem } from './treeItems/errorTreeItem';
 import { HostModel } from '../models/hostModel';
 import { DisposableCollector } from '../util/disposableCollector';
-import { Loadable, loaded } from '../util/loadable';
+import { Loadable, errored, loaded } from '../util/loadable';
 import { TopoSkillReport } from '../services/topoSkill';
 import { SkillStatusTreeItem } from './treeItems/skillStatusTreeItem';
 import { LoadingTreeItem } from './treeItems/loadingTreeItem';
 import { SkillGroupTreeItem } from './treeItems/skillGroupTreeItem';
+import { ContainerEngineTreeItem } from './treeItems/containerEngineTreeItem';
+import { isWrappedError } from '../errors/wrappedError';
 
 function sortHealthChecksByName(
     healthChecks: readonly HealthCheck[],
@@ -18,6 +20,19 @@ function sortHealthChecksByName(
     return healthChecks.toSorted((a, b) =>
         a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
     );
+}
+
+function getContainerEngineItem(model: HostModel): vscode.TreeItem {
+    try {
+        return new ContainerEngineTreeItem(model.containerEngine);
+    } catch (error) {
+        if (!isWrappedError(error, ['ENGINE'])) {
+            throw error;
+        }
+        const item = new ErrorTreeItem('Container Engine', errored(error));
+        item.contextValue = 'ContainerEngine';
+        return item;
+    }
 }
 
 function getSkillReportItem(
@@ -59,6 +74,9 @@ export class HostTreeView
         this.disposables.collect(
             treeView,
             this._onDidChangeTreeData,
+            this.model.onContainerEngineChanged(() => {
+                this._onDidChangeTreeData.fire(undefined);
+            }),
             this.model.onHealthChanged(() => {
                 this._onDidChangeTreeData.fire(undefined);
             }),
@@ -70,11 +88,13 @@ export class HostTreeView
 
     public getChildren(element?: vscode.TreeItem): vscode.TreeItem[] {
         if (!element) {
+            const containerEngineItem = getContainerEngineItem(this.model);
             const skillReportItem = getSkillReportItem(this.model.skillReport);
 
             const health = this.model.health;
             if (health.status === 'errored') {
                 return [
+                    containerEngineItem,
                     new ErrorTreeItem('Failed to load health', health),
                     skillReportItem,
                 ];
@@ -85,6 +105,7 @@ export class HostTreeView
                     ? sortHealthChecksByName(health.data)
                     : [];
             return [
+                containerEngineItem,
                 new HealthCheckGroupTreeItem(
                     loaded(healthChecks, health.loading),
                 ),
