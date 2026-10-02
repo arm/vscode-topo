@@ -18,6 +18,29 @@ describe('Config', () => {
         vi.resetAllMocks();
     });
 
+    it('reads the configured container engine', () => {
+        getConfigurationMock.mockReturnValue('podman');
+
+        expect(new Config().getContainerEngine()).toBe('podman');
+        expect(getConfigurationMock).toHaveBeenCalledWith('containerEngine');
+    });
+
+    it('updates an existing workspace engine setting', async () => {
+        const configuration = vscode.workspace.getConfiguration('topo');
+        vi.mocked(configuration.inspect).mockReturnValue({
+            key: 'topo.containerEngine',
+            workspaceValue: 'docker',
+        });
+
+        await new Config().setContainerEngine('podman');
+
+        expect(configuration.update).toHaveBeenCalledWith(
+            'containerEngine',
+            'podman',
+            vscode.ConfigurationTarget.Workspace,
+        );
+    });
+
     it('returns settings for the requested target', () => {
         const targetSettings: TargetSettings = {
             deploy: { port: 5000 },

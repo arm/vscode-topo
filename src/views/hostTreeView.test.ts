@@ -49,15 +49,15 @@ describe('HostTreeView', () => {
 
         const rootChildren = provider.getChildren();
 
-        expect(rootChildren).toHaveLength(2);
-        expect(rootChildren[0]).toBeInstanceOf(HealthCheckGroupTreeItem);
-        expect(rootChildren[0].label).toBe('Health');
-        expect(rootChildren[0].contextValue).toBe('Health');
-        expect(rootChildren[1]).toEqual(
+        expect(rootChildren).toHaveLength(3);
+        expect(rootChildren[1]).toBeInstanceOf(HealthCheckGroupTreeItem);
+        expect(rootChildren[1].label).toBe('Health');
+        expect(rootChildren[1].contextValue).toBe('Health');
+        expect(rootChildren[2]).toEqual(
             new SkillGroupTreeItem(installedSkillReport),
         );
 
-        const skillChildren = provider.getChildren(rootChildren[1]);
+        const skillChildren = provider.getChildren(rootChildren[2]);
         expect(skillChildren).toEqual(
             installedSkillReport.agents.map(
                 (agent) => new SkillStatusTreeItem(agent),
@@ -90,7 +90,7 @@ describe('HostTreeView', () => {
         const provider = new HostTreeView(model);
 
         const rootChildren = provider.getChildren();
-        const children = provider.getChildren(rootChildren[0]);
+        const children = provider.getChildren(rootChildren[1]);
 
         expect(children).toHaveLength(2);
         expect(
@@ -120,11 +120,12 @@ describe('HostTreeView', () => {
 
         const children = provider.getChildren();
 
-        expect(children).toHaveLength(2);
-        expect(children[0]).toMatchObject(
+        expect(children).toHaveLength(3);
+        expect(children[0].contextValue).toBe('ContainerEngine');
+        expect(children[1]).toMatchObject(
             new ErrorTreeItem('Failed to load health', erroredValue),
         );
-        expect(children[1]).toEqual(new LoadingTreeItem('Topo Agent Skill'));
+        expect(children[2]).toEqual(new LoadingTreeItem('Topo Agent Skill'));
     });
 
     it('returns a loading item while the skill report refreshes', () => {
@@ -134,7 +135,7 @@ describe('HostTreeView', () => {
 
         const children = provider.getChildren();
 
-        expect(children[1]).toEqual(new LoadingTreeItem('Topo Agent Skill'));
+        expect(children[2]).toEqual(new LoadingTreeItem('Topo Agent Skill'));
     });
 
     it('returns an error item when the skill report cannot be loaded', () => {
@@ -145,7 +146,7 @@ describe('HostTreeView', () => {
 
         const children = provider.getChildren();
 
-        expect(children[1]).toMatchObject(
+        expect(children[2]).toMatchObject(
             new ErrorTreeItem('Failed to check Topo Agent Skill', erroredValue),
         );
     });
@@ -164,6 +165,33 @@ describe('HostTreeView', () => {
         const treeItem = provider.getTreeItem(item);
 
         expect(treeItem).toBe(item);
+    });
+
+    it('shows the engine with a separate action even before health loads', () => {
+        const provider = new HostTreeView(new HostModel());
+
+        const [engine] = provider.getChildren();
+
+        expect(engine).toMatchObject({
+            label: 'Container Engine',
+            description: 'docker',
+            collapsibleState: vscode.TreeItemCollapsibleState.None,
+            contextValue: 'ContainerEngine',
+        });
+        expect(engine.command).toBeUndefined();
+        expect(provider.getChildren(engine)).toEqual([]);
+    });
+
+    it('updates the displayed engine when it changes', () => {
+        const model = new HostModel();
+        const provider = new HostTreeView(model);
+        const listener = vi.fn();
+        provider.onDidChangeTreeData(listener);
+
+        model.setContainerEngine('podman');
+
+        expect(listener).toHaveBeenCalledOnce();
+        expect(provider.getChildren()[0].description).toBe('podman');
     });
 
     it('fires onDidChangeTreeData when host health changes', () => {

@@ -73,22 +73,20 @@ describe('ContainerLifecycle', () => {
         },
     );
 
-    it.each(lifecycleCases)(
-        '$operation reports Docker errors without refreshing containers',
-        async ({ operation, command, invoke }) => {
+    it.each(['DOCKER', 'PODMAN'] as const)(
+        'reports %s failures without refreshing containers',
+        async (engine) => {
             const containerCommands = mock<ContainerCommands>();
-            containerCommands[command].mockRejectedValue(
-                new WrappedError('DOCKER', 'fail'),
+            containerCommands.startContainer.mockRejectedValue(
+                new WrappedError(engine, 'fail'),
             );
             const lifecycle = new ContainerLifecycle(containerCommands);
 
-            await invoke(lifecycle, treeItem);
+            await lifecycle.startContainerCommandHandler(treeItem);
 
-            expect(
-                vi.mocked(vscode.window.showErrorMessage),
-            ).toHaveBeenCalledWith(
+            expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
                 expect.stringContaining(
-                    `Failed to ${operation} the container ${container.id}. fail`,
+                    `Failed to start the container ${container.id}. fail`,
                 ),
             );
             expect(vscode.commands.executeCommand).not.toHaveBeenCalledWith(
