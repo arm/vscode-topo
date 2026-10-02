@@ -64,11 +64,11 @@ Saved targets that do not come from SSH config can be removed from the picker wi
 
 The Target view header shows the selected SSH destination. The tree below it shows:
 
-| Item                   | Description                                                                                       |
-| ---------------------- | ------------------------------------------------------------------------------------------------- |
-| **Connectivity**       | SSH or target health connectivity errors when the selected target cannot be used.                 |
-| **Health**             | Required target components and processing-domain driver health-check issues shown for the target. |
-| **Processing Domains** | Processing domains available on the target, including the Linux Host and remote processors.       |
+| Item                   | Description                                                                                 |
+| ---------------------- | ------------------------------------------------------------------------------------------- |
+| **Connectivity**       | SSH or target health connectivity errors when the selected target cannot be used.           |
+| **Health**             | Target checks grouped by capability.                                                        |
+| **Processing Domains** | Processing domains available on the target, including the Linux Host and remote processors. |
 
 If no target is selected, the view shows a **Select a target** button.
 
@@ -86,7 +86,7 @@ Use the buttons in the Target view title bar to access these actions:
 
 ### Health Actions
 
-Use the inline **Fix** button on a fixable health issue to run the executable fix command reported by the Topo health check. Use **Fix Issues** on the **Health** row to select and run fixes for multiple target health issues.
+Use the inline **Fix** button on a fixable health issue to run the executable fix command reported by the Topo health check. Use **Fix Issues** on a capability row to select fixes for that capability, or on the **Health** row to select fixes across all target health checks.
 
 ## Container Actions
 
@@ -185,7 +185,7 @@ vscode://arm.topo/clone?source=git:https://github.com/example/repo
 
 ## Host Health Check
 
-The **Host** view appears in the **Topo** activity bar container and shows host health for tools such as Docker and SSH. Missing or unhealthy health checks are shown in the tree.
+The **Host** view appears in the **Topo** activity bar container and shows host health for tools such as Docker and SSH. Under **Health**, checks are grouped into **Deployment** and **Project management** .
 
 The **Topo Agent Skill** item expands to show every agent linked to the bundled skill and whether that agent's copy is up to date.
 

@@ -7,7 +7,7 @@ import { MockProxy, mock } from 'vitest-mock-extended';
 import { mutable } from '../util/test/mutable';
 import { runTask } from '../util/task';
 import { loaded, unloaded } from '../util/loadable';
-import type { TargetHealthCheck } from '../services/topoCliSchema';
+import { TargetHealth } from '../models/health';
 import { Config } from '../services/config';
 import { createProjectTreeItem } from '../util/test/projectTreeItem';
 import { WrappedError } from '../errors/wrappedError';
@@ -37,14 +37,21 @@ describe('Deploy', () => {
         'Deploy task',
         'topo',
     );
-    const targetHealth: TargetHealthCheck[] = [
-        {
-            name: 'Connectivity',
-            location: 'target',
-            status: 'ok',
-            value: 'connected',
-        },
-    ];
+    const connectedTargetHealth: TargetHealth = {
+        capabilities: [
+            {
+                name: 'Deployment',
+                checks: [
+                    {
+                        name: 'Connectivity',
+                        location: 'target',
+                        status: 'ok',
+                        value: 'connected',
+                    },
+                ],
+            },
+        ],
+    };
     let targetModel: TargetModel;
     let config: MockProxy<Config>;
     let taskFactory: MockProxy<TaskFactory>;
@@ -80,7 +87,7 @@ describe('Deploy', () => {
     beforeEach(() => {
         targetModel = new TargetModel();
         targetModel.setSelected(target);
-        targetModel.setSelectedTargetHealth(loaded(targetHealth));
+        targetModel.setSelectedTargetHealth(loaded(connectedTargetHealth));
         config = mock<Config>();
         config.getTargetSettings.mockReturnValue({});
         taskFactory = mock<TaskFactory>();
@@ -116,14 +123,21 @@ describe('Deploy', () => {
 
     it('shows a warning and does not deploy when target connectivity is unhealthy', async () => {
         targetModel.setSelectedTargetHealth(
-            loaded([
-                {
-                    name: 'Connectivity',
-                    location: 'target',
-                    status: 'error',
-                    value: 'unreachable',
-                },
-            ]),
+            loaded({
+                capabilities: [
+                    {
+                        name: 'Deployment',
+                        checks: [
+                            {
+                                name: 'Connectivity',
+                                location: 'target',
+                                status: 'error',
+                                value: 'unreachable',
+                            },
+                        ],
+                    },
+                ],
+            }),
         );
 
         const deployOperation =

@@ -6,7 +6,7 @@ import { TargetModel } from '../models/targetModel';
 import { mock, MockProxy } from 'vitest-mock-extended';
 import { runTask } from '../util/task';
 import { loaded, unloaded } from '../util/loadable';
-import type { TargetHealthCheck } from '../services/topoCliSchema';
+import { TargetHealth } from '../models/health';
 import { createProjectTreeItem } from '../util/test/projectTreeItem';
 import { TOPO_TASK_TYPE } from '../manifest';
 import { TaskCommand, type TaskFactory } from '../tasks/taskFactory';
@@ -28,14 +28,21 @@ describe('Stop', () => {
         'Stop task',
         'topo',
     );
-    const targetHealth: TargetHealthCheck[] = [
-        {
-            name: 'Connectivity',
-            location: 'target',
-            status: 'ok',
-            value: 'connected',
-        },
-    ];
+    const connectedTargetHealth: TargetHealth = {
+        capabilities: [
+            {
+                name: 'Deployment',
+                checks: [
+                    {
+                        name: 'Connectivity',
+                        location: 'target',
+                        status: 'ok',
+                        value: 'connected',
+                    },
+                ],
+            },
+        ],
+    };
     let targetModel: TargetModel;
     let taskFactory: MockProxy<TaskFactory>;
 
@@ -56,7 +63,7 @@ describe('Stop', () => {
         vi.clearAllMocks();
         targetModel = new TargetModel();
         targetModel.setSelected(target);
-        targetModel.setSelectedTargetHealth(loaded(targetHealth));
+        targetModel.setSelectedTargetHealth(loaded(connectedTargetHealth));
         taskFactory = mock<TaskFactory>();
         taskFactory.createTask.mockReturnValue(task);
         vi.mocked(vscode.window.showErrorMessage).mockClear();
@@ -82,14 +89,21 @@ describe('Stop', () => {
 
     it('shows a warning and does not stop when target connectivity is unhealthy', async () => {
         targetModel.setSelectedTargetHealth(
-            loaded([
-                {
-                    name: 'Connectivity',
-                    location: 'target',
-                    status: 'error',
-                    value: 'unreachable',
-                },
-            ]),
+            loaded({
+                capabilities: [
+                    {
+                        name: 'Deployment',
+                        checks: [
+                            {
+                                name: 'Connectivity',
+                                location: 'target',
+                                status: 'error',
+                                value: 'unreachable',
+                            },
+                        ],
+                    },
+                ],
+            }),
         );
 
         const stopOperation = stopAction.stopCommandHandler(composeFileUri);

@@ -6,7 +6,8 @@ import * as vscode from 'vscode';
 import { mutable } from '../util/test/mutable';
 import { mock } from 'vitest-mock-extended';
 import { TopoCli } from '../services/topoCli';
-import { PsOutput, TargetHealthCheck } from '../services/topoCliSchema';
+import { PsOutput } from '../services/topoCliSchema';
+import { TargetHealth } from '../models/health';
 import { TargetModel } from '../models/targetModel';
 import { PRIMARY_PROCESSING_DOMAIN, TOPO_TASK_TYPE } from '../manifest';
 import { TaskCommand } from '../tasks/taskFactory';
@@ -35,14 +36,21 @@ const workspaceFolder: vscode.WorkspaceFolder = {
     name: 'workspace',
     index: 0,
 };
-const healthyTarget: TargetHealthCheck[] = [
-    {
-        name: 'Connectivity',
-        location: 'target',
-        status: 'ok',
-        value: 'connected',
-    },
-];
+const connectedTargetHealth: TargetHealth = {
+    capabilities: [
+        {
+            name: 'Deployment',
+            checks: [
+                {
+                    name: 'Connectivity',
+                    location: 'target',
+                    status: 'ok',
+                    value: 'connected',
+                },
+            ],
+        },
+    ],
+};
 const psOutput: PsOutput = {
     containers: [
         {
@@ -164,7 +172,7 @@ describe('ProjectController', () => {
     it('loads containers for all projects at once', async () => {
         const targetModel = new TargetModel();
         targetModel.setSelected(target);
-        targetModel.setSelectedTargetHealth(loaded(healthyTarget));
+        targetModel.setSelectedTargetHealth(loaded(connectedTargetHealth));
         const model = new ProjectModel();
         model.setProjects(loaded([projects[0], otherProject]));
         const topoCli = mock<TopoCli>();
@@ -251,7 +259,7 @@ describe('ProjectController', () => {
     it('stores per-project errors without failing the whole refresh', async () => {
         const targetModel = new TargetModel();
         targetModel.setSelected(target);
-        targetModel.setSelectedTargetHealth(loaded(healthyTarget));
+        targetModel.setSelectedTargetHealth(loaded(connectedTargetHealth));
         const model = new ProjectModel();
         model.setProjects(loaded([projects[0], otherProject]));
         const topoCli = mock<TopoCli>();
@@ -274,7 +282,9 @@ describe('ProjectController', () => {
     it('keeps existing containers while target health is loading', async () => {
         const targetModel = new TargetModel();
         targetModel.setSelected(target);
-        targetModel.setSelectedTargetHealth(loading(loaded(healthyTarget)));
+        targetModel.setSelectedTargetHealth(
+            loading(loaded(connectedTargetHealth)),
+        );
         const model = new ProjectModel();
         model.setProjects(loaded(projects));
         model.setProjectContainers(projects[0], loaded([]));
@@ -293,14 +303,21 @@ describe('ProjectController', () => {
         const targetModel = new TargetModel();
         targetModel.setSelected(target);
         targetModel.setSelectedTargetHealth(
-            loaded([
-                {
-                    name: 'Connectivity',
-                    location: 'target',
-                    status: 'error',
-                    value: 'connected',
-                },
-            ]),
+            loaded({
+                capabilities: [
+                    {
+                        name: 'Deployment',
+                        checks: [
+                            {
+                                name: 'Connectivity',
+                                location: 'target',
+                                status: 'error',
+                                value: 'connected',
+                            },
+                        ],
+                    },
+                ],
+            }),
         );
         const model = new ProjectModel();
         model.setProjects(loaded(projects));
