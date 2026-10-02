@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { PACKAGE_NAME } from '../manifest';
-import { HealthCheck } from '../services/topoCliSchema';
 import { HealthCheckGroupTreeItem } from './treeItems/healthCheckGroupTreeItem';
 import { HealthCheckTreeItem } from './treeItems/healthCheckTreeItem';
 import { ErrorTreeItem } from './treeItems/errorTreeItem';
@@ -11,14 +10,7 @@ import { TopoSkillReport } from '../services/topoSkill';
 import { SkillStatusTreeItem } from './treeItems/skillStatusTreeItem';
 import { LoadingTreeItem } from './treeItems/loadingTreeItem';
 import { SkillGroupTreeItem } from './treeItems/skillGroupTreeItem';
-
-function sortHealthChecksByName(
-    healthChecks: readonly HealthCheck[],
-): HealthCheck[] {
-    return healthChecks.toSorted((a, b) =>
-        a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
-    );
-}
+import { HealthTreeItem } from './treeItems/healthTreeItem';
 
 function getSkillReportItem(
     skillReport: Loadable<TopoSkillReport>,
@@ -80,21 +72,26 @@ export class HostTreeView
                 ];
             }
 
-            const healthChecks =
-                health.status === 'loaded'
-                    ? sortHealthChecksByName(health.data)
-                    : [];
             return [
-                new HealthCheckGroupTreeItem(
-                    loaded(healthChecks, health.loading),
+                new HealthTreeItem(
+                    health.status === 'loaded'
+                        ? health
+                        : loaded({ capabilities: [] }, health.loading),
                 ),
                 skillReportItem,
             ];
         }
 
+        if (element instanceof HealthTreeItem) {
+            return element.getChildren();
+        }
+
         if (element instanceof HealthCheckGroupTreeItem) {
             return element.healthChecks.map(
-                (healthCheck) => new HealthCheckTreeItem(loaded(healthCheck)),
+                (healthCheck) =>
+                    new HealthCheckTreeItem(
+                        loaded(healthCheck, element.loading),
+                    ),
             );
         }
 

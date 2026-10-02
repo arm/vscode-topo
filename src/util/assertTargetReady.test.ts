@@ -1,4 +1,4 @@
-import type { TargetHealthCheck } from '../services/topoCliSchema';
+import type { TargetHealth } from '../models/health';
 import {
     assertTargetConnected,
     assertTargetSelected,
@@ -19,24 +19,49 @@ describe('assertTargetSelected', () => {
 
 describe('assertTargetConnected', () => {
     const target = 'topo.local';
-    const targetHealth: TargetHealthCheck[] = [
-        {
-            name: 'Connectivity',
-            location: 'target',
-            status: 'ok',
-            value: 'connected',
-        },
-    ];
+    const connectedTargetHealth: TargetHealth = {
+        capabilities: [
+            {
+                name: 'Deployment',
+                checks: [
+                    {
+                        name: 'Connectivity',
+                        location: 'target',
+                        status: 'ok',
+                        value: 'connected',
+                    },
+                ],
+            },
+        ],
+    };
+    const disconnectedTargetHealth: TargetHealth = {
+        capabilities: [
+            {
+                name: 'Deployment',
+                checks: [
+                    {
+                        name: 'Connectivity',
+                        location: 'target',
+                        status: 'error',
+                        value: 'unreachable',
+                    },
+                ],
+            },
+        ],
+    };
 
     it('accepts loaded target health with working connectivity', () => {
         expect(() =>
-            assertTargetConnected(target, loaded(targetHealth)),
+            assertTargetConnected(target, loaded(connectedTargetHealth)),
         ).not.toThrow();
     });
 
     it('accepts previously healthy target health while it is refreshing', () => {
         expect(() =>
-            assertTargetConnected(target, loading(loaded(targetHealth))),
+            assertTargetConnected(
+                target,
+                loading(loaded(connectedTargetHealth)),
+            ),
         ).not.toThrow();
     });
 
@@ -57,19 +82,12 @@ describe('assertTargetConnected', () => {
 
     it('accepts an empty loaded target health report', () => {
         expect(() =>
-            assertTargetConnected(target, loaded<TargetHealthCheck[]>([])),
+            assertTargetConnected(target, loaded({ capabilities: [] })),
         ).not.toThrow();
     });
 
     it('throws a target error when target connectivity is unhealthy', () => {
-        const health = loaded<TargetHealthCheck[]>([
-            {
-                name: 'Connectivity',
-                location: 'target',
-                status: 'error',
-                value: 'unreachable',
-            },
-        ]);
+        const health = loaded(disconnectedTargetHealth);
 
         expect(() => assertTargetConnected(target, health)).toThrow(
             "Target topo.local connectivity is 'error': unreachable.",
@@ -77,16 +95,7 @@ describe('assertTargetConnected', () => {
     });
 
     it('waits for refreshing target health when the previous value was unhealthy', () => {
-        const health = loading(
-            loaded<TargetHealthCheck[]>([
-                {
-                    name: 'Connectivity',
-                    location: 'target',
-                    status: 'error',
-                    value: 'unreachable',
-                },
-            ]),
-        );
+        const health = loading(loaded(disconnectedTargetHealth));
 
         expect(() => assertTargetConnected(target, health)).toThrow(
             'Target topo.local health is still being checked. Wait for target health checks to finish.',
@@ -94,14 +103,21 @@ describe('assertTargetConnected', () => {
     });
 
     it('omits empty details from target connectivity failure messages', () => {
-        const health = loaded<TargetHealthCheck[]>([
-            {
-                name: 'Connectivity',
-                location: 'target',
-                status: 'error',
-                value: '',
-            },
-        ]);
+        const health = loaded<TargetHealth>({
+            capabilities: [
+                {
+                    name: 'Deployment',
+                    checks: [
+                        {
+                            name: 'Connectivity',
+                            location: 'target',
+                            status: 'error',
+                            value: '',
+                        },
+                    ],
+                },
+            ],
+        });
 
         expect(() => assertTargetConnected(target, health)).toThrow(
             "Target topo.local connectivity is 'error'.",

@@ -2,7 +2,7 @@ import { HostModel } from '../models/hostModel';
 import { TopoCli } from '../services/topoCli';
 import { TopoSkill } from '../services/topoSkill';
 import { errored, loaded, loading } from '../util/loadable';
-import { filterHealthChecks } from '../util/healthReport';
+import { getHostHealth } from '../util/healthReport';
 
 export class HostController {
     constructor(
@@ -24,9 +24,7 @@ export class HostController {
         this.hostModel.setHealth(loading(this.hostModel.health));
         try {
             const health = await this.topoCli.hostHealth();
-            this.hostModel.setHealth(
-                loaded(filterHealthChecks(health, 'host')),
-            );
+            this.hostModel.setHealth(loaded(getHostHealth(health)));
         } catch (e) {
             this.hostModel.setHealth(errored(e));
         }
