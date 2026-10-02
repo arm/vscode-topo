@@ -1,9 +1,10 @@
 import os from 'node:os';
 import * as vscode from 'vscode';
-import { mock, type MockProxy } from 'vitest-mock-extended';
+import { mock } from 'vitest-mock-extended';
 import { contributes } from '../../package.json';
 import { TOPO_TASK_TYPE } from '../manifest';
 import { TopoCli } from '../services/topoCli';
+import { Config } from '../services/config';
 import { mutable } from '../util/test/mutable';
 import {
     resolveTaskDefinition,
@@ -23,7 +24,8 @@ describe('TaskFactory', () => {
             env: { GREETING_STYLE: 'enthusiastic' },
         },
     };
-    let topoCli: MockProxy<TopoCli>;
+    const config = mock<Config>();
+    let topoCli: TopoCli;
     let taskFactory: TaskFactory;
 
     beforeEach(() => {
@@ -32,8 +34,13 @@ describe('TaskFactory', () => {
         vi.mocked(vscode.workspace.getWorkspaceFolder).mockReturnValue(
             undefined,
         );
-        topoCli = mock<TopoCli>();
-        topoCli.getBinaryPath.mockReturnValue(topoBinaryPath);
+        config.getContainerEngine.mockReturnValue('docker');
+        topoCli = new TopoCli(
+            '/extension',
+            mock<vscode.EnvironmentVariableCollection>(),
+            config,
+        );
+        vi.spyOn(topoCli, 'getBinaryPath').mockReturnValue(topoBinaryPath);
         taskFactory = new TaskFactory(topoCli);
     });
 
@@ -134,6 +141,42 @@ describe('TaskFactory', () => {
         });
 
         expect(execution.options).toBeUndefined();
+    });
+
+    it('uses Podman for configured deploy tasks', () => {
+        config.getContainerEngine.mockReturnValue('podman');
+
+        const execution = taskFactory.createExecution({
+            ...definition,
+            command: TaskCommand.Deploy,
+            args: [],
+        });
+
+        expect(execution).toMatchObject({
+            args: [
+                'deploy',
+                ...['--engine', 'podman'].map((value) => ({
+                    value,
+                    quoting: vscode.ShellQuoting.Strong,
+                })),
+            ],
+        });
+    });
+
+    it('uses Podman for shell stop tasks', () => {
+        config.getContainerEngine.mockReturnValue('podman');
+
+        const task = taskFactory.createShellTask('Stop project', [
+            'topo',
+            'stop',
+        ]);
+
+        expect(task.execution).toMatchObject({
+            args: ['stop', '--engine', 'podman'].map((value) => ({
+                value,
+                quoting: vscode.ShellQuoting.Strong,
+            })),
+        });
     });
 
     it('creates a named task from a generic definition', () => {

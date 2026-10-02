@@ -1,3 +1,4 @@
+import * as vscode from 'vscode';
 import { mock } from 'vitest-mock-extended';
 import { HostModel } from '../models/hostModel';
 import { TopoCli } from '../services/topoCli';
@@ -5,6 +6,9 @@ import { HostController } from './hostController';
 import { HealthReport, HostHealthCheck } from '../services/topoCliSchema';
 import { TopoSkill } from '../services/topoSkill';
 import { loaded } from '../util/loadable';
+import { Config } from '../services/config';
+
+vi.mock('../util/logger');
 
 const hostCheck: HostHealthCheck = {
     name: 'Container Engine',
@@ -45,11 +49,18 @@ const missingSkillReport = {
 };
 
 describe('HostController', () => {
+    const config = mock<Config>();
+
+    beforeEach(() => {
+        config.getContainerEngine.mockReturnValue('docker');
+    });
+
     afterEach(() => {
-        vi.clearAllMocks();
+        vi.resetAllMocks();
     });
 
     it('refreshes only host checks and skill status on creation', async () => {
+        config.getContainerEngine.mockReturnValue('podman');
         const topoCli = mock<TopoCli>({
             hostHealth: vi.fn().mockResolvedValue(hostHealth),
         });
@@ -58,8 +69,9 @@ describe('HostController', () => {
         });
         const model = new HostModel();
 
-        new HostController(model, topoCli, topoSkill);
+        new HostController(model, topoCli, topoSkill, config);
         await vi.waitFor(() => {
+            expect(model.containerEngine).toBe('podman');
             expect(model.health).toStrictEqual(loaded([hostCheck]));
             expect(model.skillReport).toStrictEqual(
                 loaded(installedSkillReport),
@@ -78,7 +90,12 @@ describe('HostController', () => {
             getReport: vi.fn().mockResolvedValue(missingSkillReport),
         });
         const model = new HostModel();
-        const controller = new HostController(model, topoCli, topoSkill);
+        const controller = new HostController(
+            model,
+            topoCli,
+            topoSkill,
+            config,
+        );
         await vi.waitFor(() => {
             expect(model.skillReport).toStrictEqual(loaded(missingSkillReport));
         });
@@ -91,5 +108,89 @@ describe('HostController', () => {
         expect(topoSkill.getReport).toHaveBeenCalledOnce();
         expect(model.health).toStrictEqual(loaded([hostCheck]));
         expect(model.skillReport).toStrictEqual(loaded(installedSkillReport));
+    });
+
+    function createController() {
+        const model = new HostModel();
+        const topoCli = mock<TopoCli>({
+            hostHealth: vi.fn().mockResolvedValue(hostHealth),
+        });
+        const controller = new HostController(
+            model,
+            topoCli,
+            mock<TopoSkill>(),
+            config,
+        );
+        return { model, topoCli, controller };
+    }
+
+    it('offers both engines and saves the selected engine', async () => {
+        const { controller } = createController();
+        vi.mocked(vscode.window.showQuickPick).mockImplementationOnce(
+            async (items) => {
+                return (await items)[1];
+            },
+        );
+
+        await controller.selectContainerEngineCommandHandler();
+
+        expect(config.setContainerEngine).toHaveBeenCalledExactlyOnceWith(
+            'podman',
+        );
+    });
+
+    it('does not save a cancelled selection', async () => {
+        const { controller } = createController();
+        vi.mocked(vscode.window.showQuickPick).mockResolvedValueOnce(undefined);
+
+        await controller.selectContainerEngineCommandHandler();
+
+        expect(config.setContainerEngine).not.toHaveBeenCalled();
+    });
+
+    it('reports a failed settings update without changing the displayed engine', async () => {
+        const { model, controller } = createController();
+        vi.mocked(vscode.window.showQuickPick).mockImplementationOnce(
+            async (items) => (await items)[1],
+        );
+        config.setContainerEngine.mockRejectedValueOnce(
+            new Error('Settings are read-only'),
+        );
+
+        await controller.selectContainerEngineCommandHandler();
+
+        expect(model.containerEngine).toBe('docker');
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
+            expect.stringContaining('Settings are read-only'),
+        );
+    });
+
+    it('ignores health from a previous engine after another refresh starts', async () => {
+        const { model, topoCli, controller } = createController();
+        await controller.refreshHealthCommandHandler();
+        let resolvePreviousHealth!: (health: HealthReport) => void;
+        topoCli.hostHealth.mockReturnValueOnce(
+            new Promise((resolve) => {
+                resolvePreviousHealth = resolve;
+            }),
+        );
+        const previousRefresh = controller.refreshHealthCommandHandler();
+        const podmanCheck: HostHealthCheck = { ...hostCheck, value: 'podman' };
+        const podmanHealth: HealthReport = {
+            capabilities: [
+                {
+                    name: 'Deployment',
+                    status: 'ok',
+                    checks: [podmanCheck],
+                },
+            ],
+        };
+        topoCli.hostHealth.mockResolvedValueOnce(podmanHealth);
+
+        await controller.refreshHealthCommandHandler();
+        resolvePreviousHealth(hostHealth);
+        await previousRefresh;
+
+        expect(model.health).toStrictEqual(loaded([podmanCheck]));
     });
 });

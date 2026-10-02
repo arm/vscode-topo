@@ -17,6 +17,14 @@ import { WrappedError, WrappedErrorLog } from '../errors/wrappedError';
 import { getErrorMessage } from '../util/getErrorMessage';
 import { execFile } from '../util/exec';
 import { assertComposeFilePath, COMPOSE_FILE_NAME } from '../util/composeFile';
+import { Config } from './config';
+
+const engineAwareCommands: readonly string[] = [
+    'deploy',
+    'health',
+    'ps',
+    'stop',
+];
 
 export interface TopoCliVersion {
     version: string;
@@ -75,12 +83,28 @@ export class TopoCli {
     constructor(
         private readonly extensionPath: string,
         private readonly env: vscode.EnvironmentVariableCollection,
+        private readonly config: Config,
     ) {}
 
     public activate(): void {
         const sep = process.platform === 'win32' ? ';' : ':';
         this.env.prepend('PATH', this.getBinaryFolder() + sep);
         this.env.replace('TOPO_DISABLE_SELF_UPGRADE', '1');
+    }
+
+    public withDefaultContainerEngine(
+        command: string,
+        args: readonly string[],
+    ): string[] {
+        if (
+            engineAwareCommands.includes(command) &&
+            !args.some(
+                (arg) => arg === '--engine' || arg.startsWith('--engine='),
+            )
+        ) {
+            return [...args, '--engine', this.config.getContainerEngine()];
+        }
+        return [...args];
     }
 
     public dispose(): void {
@@ -93,16 +117,21 @@ export class TopoCli {
 
     private async exec(cmd: string[], options?: ExecOptions): Promise<string> {
         const bin = this.getBinaryPath();
+        const [command, ...args] = cmd;
         let out: string;
         try {
-            const { stdout } = await execFile(bin, cmd, {
-                encoding: 'utf8',
-                windowsHide: true,
-                ...options,
-                env: {
-                    ...process.env,
+            const { stdout } = await execFile(
+                bin,
+                [command, ...this.withDefaultContainerEngine(command, args)],
+                {
+                    encoding: 'utf8',
+                    windowsHide: true,
+                    ...options,
+                    env: {
+                        ...process.env,
+                    },
                 },
-            });
+            );
             out = stdout;
         } catch (error: unknown) {
             throw parseWrappedError(error) ?? error;

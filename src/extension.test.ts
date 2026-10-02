@@ -41,6 +41,7 @@ describe('extension activation', () => {
         vi.useRealTimers();
         vi.unstubAllGlobals();
         vi.resetAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('registers commands, tasks, and prepares disposables', async () => {
@@ -101,5 +102,30 @@ describe('extension activation', () => {
         await activate(createContext());
 
         expect(vscode.commands.registerCommand).toHaveBeenCalled();
+    });
+
+    it('refreshes host health when the engine setting changes', async () => {
+        vi.useFakeTimers();
+        const changes =
+            new vscode.EventEmitter<vscode.ConfigurationChangeEvent>();
+        vi.spyOn(
+            vscode.workspace,
+            'onDidChangeConfiguration',
+        ).mockImplementation(changes.event);
+        const context = createContext();
+        await activate(context);
+        const topoCli = vi.mocked(TopoCli).mock.instances[0];
+        vi.mocked(topoCli.hostHealth).mockClear();
+
+        changes.fire(
+            mock<vscode.ConfigurationChangeEvent>({
+                affectsConfiguration: (section) =>
+                    section === 'topo.containerEngine',
+            }),
+        );
+
+        expect(topoCli.hostHealth).toHaveBeenCalledOnce();
+
+        context.subscriptions.forEach((disposable) => disposable.dispose());
     });
 });

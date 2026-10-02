@@ -183,9 +183,11 @@ The extension supports a URI scheme for cloning projects from external links:
 vscode://arm.topo/clone?source=git:https://github.com/example/repo
 ```
 
-## Host Health Check
+## Host Settings and Health
 
 The **Host** view appears in the **Topo** activity bar container and shows host health for tools such as Docker and SSH. Missing or unhealthy health checks are shown in the tree.
+
+Use the button beside **Container Engine** to choose Docker (the default) or Podman.
 
 The **Topo Agent Skill** item expands to show every agent linked to the bundled skill and whether that agent's copy is up to date.
 
@@ -195,13 +197,14 @@ Use the refresh button in the Host view title bar to reload host health.
 
 Commands available from the Command Palette:
 
-| Command                      | Description                                                                       |
-| ---------------------------- | --------------------------------------------------------------------------------- |
-| `Topo: Clone Remote Project` | Clone from a custom Git repository or a curated list of projects.                 |
-| `Topo: Clone Local Project`  | Clone a project from a local directory.                                           |
-| `Topo: Deploy`               | Select and deploy a compose file to the target.                                   |
-| `Topo: Install Skill`        | Choose compatible agents in the `skills` installer and install the bundled skill. |
-| `Topo: Uninstall Skill`      | Uninstall the bundled skill globally from compatible agents.                      |
+| Command                         | Description                                                                       |
+| ------------------------------- | --------------------------------------------------------------------------------- |
+| `Topo: Clone Remote Project`    | Clone from a custom Git repository or a curated list of projects.                 |
+| `Topo: Clone Local Project`     | Clone a project from a local directory.                                           |
+| `Topo: Deploy`                  | Select and deploy a compose file to the target.                                   |
+| `Topo: Select Container Engine` | Select Docker or Podman as the container engine.                                  |
+| `Topo: Install Skill`           | Choose compatible agents in the `skills` installer and install the bundled skill. |
+| `Topo: Uninstall Skill`         | Uninstall the bundled skill globally from compatible agents.                      |
 
 Additional commands are available through inline buttons in the Target, Host, and Projects tree views.
 

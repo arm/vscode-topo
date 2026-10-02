@@ -46,7 +46,7 @@ export class ContainerLifecycle {
                 treeNode.containerItem.target,
             );
         } catch (error: unknown) {
-            if (isWrappedError(error, ['DOCKER'])) {
+            if (isWrappedError(error, ['DOCKER', 'PODMAN'])) {
                 showAndLogError(
                     `Failed to ${operation} the container ${containerId}`,
                     error,
