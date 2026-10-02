@@ -3,7 +3,7 @@ import * as manifest from '../manifest';
 import { TargetSelectionState, TargetTreeView } from './targetTreeView';
 import { TargetDescription } from '../services/topoCliSchema';
 import { mock } from 'vitest-mock-extended';
-import { HealthCheck } from '../services/topoCliSchema';
+import { TargetHealthCheck } from '../services/topoCliSchema';
 import { TargetModel } from '../models/targetModel';
 import { TargetDataIssueTreeItem } from './treeItems/targetDataIssueTreeItem';
 import { ErrorTreeItem } from './treeItems/errorTreeItem';
@@ -22,7 +22,7 @@ describe('TargetTreeView', () => {
         remoteProcessors: [{ name: 'imx-rproc' }, { name: 'other-rproc' }],
         totalMemoryKb: 1024,
     };
-    const targetHealth: HealthCheck[] = [
+    const targetHealth: TargetHealthCheck[] = [
         {
             name: 'Connectivity',
             location: 'target',
@@ -224,18 +224,18 @@ describe('TargetTreeView', () => {
             targetModel.setSelectedTargetDescription(
                 loaded({ ...targetDescription, remoteProcessors: [] }),
             );
-            const processingDomainDriverHealth = mock<HealthCheck>({
+            const processingDomainDriverHealth = mock<TargetHealthCheck>({
                 name: 'rproc-driver',
                 location: 'target',
                 status: 'ok',
             });
             const dependencies = [
-                mock<HealthCheck>({
+                mock<TargetHealthCheck>({
                     name: 'Container Engine',
                     location: 'target',
                     status: 'ok',
                 }),
-                mock<HealthCheck>({
+                mock<TargetHealthCheck>({
                     name: 'Some Health Check',
                     location: 'target',
                     status: 'ok',

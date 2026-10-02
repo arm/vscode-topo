@@ -7,7 +7,7 @@ import { MockProxy, mock } from 'vitest-mock-extended';
 import { mutable } from '../util/test/mutable';
 import { runTask } from '../util/task';
 import { loaded, unloaded } from '../util/loadable';
-import type { HealthCheck } from '../services/topoCliSchema';
+import type { TargetHealthCheck } from '../services/topoCliSchema';
 import { Config } from '../services/config';
 import { createProjectTreeItem } from '../util/test/projectTreeItem';
 import { WrappedError } from '../errors/wrappedError';
@@ -37,7 +37,7 @@ describe('Deploy', () => {
         'Deploy task',
         'topo',
     );
-    const targetHealth: HealthCheck[] = [
+    const targetHealth: TargetHealthCheck[] = [
         {
             name: 'Connectivity',
             location: 'target',

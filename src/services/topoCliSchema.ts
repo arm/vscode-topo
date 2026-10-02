@@ -49,6 +49,8 @@ export const healthCheckSchema = type({
 });
 
 export type HealthCheck = DeepReadonly<Infer<typeof healthCheckSchema>>;
+export type HostHealthCheck = HealthCheck & { readonly location: 'host' };
+export type TargetHealthCheck = HealthCheck & { readonly location: 'target' };
 
 export const healthReportSchema = type({
     capabilities: array(

@@ -1,4 +1,4 @@
-import type { HealthCheck } from '../services/topoCliSchema';
+import type { TargetHealthCheck } from '../services/topoCliSchema';
 import {
     assertTargetConnected,
     assertTargetSelected,
@@ -19,7 +19,7 @@ describe('assertTargetSelected', () => {
 
 describe('assertTargetConnected', () => {
     const target = 'topo.local';
-    const targetHealth: HealthCheck[] = [
+    const targetHealth: TargetHealthCheck[] = [
         {
             name: 'Connectivity',
             location: 'target',
@@ -57,12 +57,12 @@ describe('assertTargetConnected', () => {
 
     it('accepts an empty loaded target health report', () => {
         expect(() =>
-            assertTargetConnected(target, loaded<HealthCheck[]>([])),
+            assertTargetConnected(target, loaded<TargetHealthCheck[]>([])),
         ).not.toThrow();
     });
 
     it('throws a target error when target connectivity is unhealthy', () => {
-        const health = loaded<HealthCheck[]>([
+        const health = loaded<TargetHealthCheck[]>([
             {
                 name: 'Connectivity',
                 location: 'target',
@@ -78,7 +78,7 @@ describe('assertTargetConnected', () => {
 
     it('waits for refreshing target health when the previous value was unhealthy', () => {
         const health = loading(
-            loaded<HealthCheck[]>([
+            loaded<TargetHealthCheck[]>([
                 {
                     name: 'Connectivity',
                     location: 'target',
@@ -94,7 +94,7 @@ describe('assertTargetConnected', () => {
     });
 
     it('omits empty details from target connectivity failure messages', () => {
-        const health = loaded<HealthCheck[]>([
+        const health = loaded<TargetHealthCheck[]>([
             {
                 name: 'Connectivity',
                 location: 'target',

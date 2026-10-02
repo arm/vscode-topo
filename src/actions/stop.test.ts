@@ -6,7 +6,7 @@ import { TargetModel } from '../models/targetModel';
 import { mock, MockProxy } from 'vitest-mock-extended';
 import { runTask } from '../util/task';
 import { loaded, unloaded } from '../util/loadable';
-import type { HealthCheck } from '../services/topoCliSchema';
+import type { TargetHealthCheck } from '../services/topoCliSchema';
 import { createProjectTreeItem } from '../util/test/projectTreeItem';
 import { TOPO_TASK_TYPE } from '../manifest';
 import { TaskCommand, type TaskFactory } from '../tasks/taskFactory';
@@ -28,7 +28,7 @@ describe('Stop', () => {
         'Stop task',
         'topo',
     );
-    const targetHealth: HealthCheck[] = [
+    const targetHealth: TargetHealthCheck[] = [
         {
             name: 'Connectivity',
             location: 'target',

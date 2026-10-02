@@ -5,12 +5,12 @@ import { DisposableCollector } from '../util/disposableCollector';
 import { getWorstHealthCheckStatus } from '../util/getWorstHealthCheckStatus';
 import { getHealthCheckIcon } from './util/healthIcons';
 import { Loadable } from '../util/loadable';
-import { HealthCheck } from '../services/topoCliSchema';
+import { TargetHealthCheck } from '../services/topoCliSchema';
 import { selectTarget } from '../commandIds';
 import { getErrorMessage } from '../util/getErrorMessage';
 import { isTargetConnected } from '../util/assertTargetReady';
 
-function getStatusIconId(state: Loadable<HealthCheck[]>): string {
+function getStatusIconId(state: Loadable<TargetHealthCheck[]>): string {
     if (state.loading) {
         return 'loading~spin';
     }
@@ -36,7 +36,7 @@ function getStatusIconId(state: Loadable<HealthCheck[]>): string {
 
 function getStatusTooltip(
     target: string,
-    selectedHealth: Loadable<HealthCheck[]>,
+    selectedHealth: Loadable<TargetHealthCheck[]>,
 ): string {
     const lines = [`SSH destination: ${target}`];
 
@@ -64,7 +64,7 @@ function getStatusTooltip(
 function renderStatusBarItem(
     statusBarItem: vscode.StatusBarItem,
     target: string | undefined,
-    selectedHealth: Loadable<HealthCheck[]>,
+    selectedHealth: Loadable<TargetHealthCheck[]>,
 ): void {
     if (target) {
         const iconId = getStatusIconId(selectedHealth);
