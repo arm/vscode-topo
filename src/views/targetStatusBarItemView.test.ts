@@ -2,21 +2,28 @@ import * as vscode from 'vscode';
 import { TargetStatusBarItemView } from './targetStatusBarItemView';
 import { TargetTreeView } from './targetTreeView';
 import { mock } from 'vitest-mock-extended';
-import { TargetHealthCheck } from '../services/topoCliSchema';
+import { TargetHealth } from '../models/health';
 import { TargetModel } from '../models/targetModel';
 import { errored, loaded, loading, unloaded } from '../util/loadable';
 import { selectTarget } from '../commandIds';
 
 vi.mock('../util/logger');
 
-const healthyTarget: TargetHealthCheck[] = [
-    {
-        status: 'ok',
-        name: 'Connectivity',
-        location: 'target',
-        value: '',
-    },
-];
+const connectedTargetHealth: TargetHealth = {
+    capabilities: [
+        {
+            name: 'Deployment',
+            checks: [
+                {
+                    status: 'ok',
+                    name: 'Connectivity',
+                    location: 'target',
+                    value: '',
+                },
+            ],
+        },
+    ],
+};
 
 describe('TargetStatusBarItemView', () => {
     beforeEach(() => {
@@ -27,7 +34,7 @@ describe('TargetStatusBarItemView', () => {
         const target = 'root@localhost';
         const targetModel = new TargetModel();
         targetModel.setSelected(target);
-        targetModel.setSelectedTargetHealth(loaded(healthyTarget));
+        targetModel.setSelectedTargetHealth(loaded(connectedTargetHealth));
 
         new TargetStatusBarItemView(targetModel);
 
@@ -45,7 +52,9 @@ describe('TargetStatusBarItemView', () => {
         const target = 'root@localhost';
         const targetModel = new TargetModel();
         targetModel.setSelected(target);
-        targetModel.setSelectedTargetHealth(loading(loaded(healthyTarget)));
+        targetModel.setSelectedTargetHealth(
+            loading(loaded(connectedTargetHealth)),
+        );
 
         new TargetStatusBarItemView(targetModel);
 
@@ -89,14 +98,21 @@ describe('TargetStatusBarItemView', () => {
         const targetModel = new TargetModel();
         targetModel.setSelected(target);
         targetModel.setSelectedTargetHealth(
-            loaded([
-                {
-                    name: 'Connectivity',
-                    location: 'target',
-                    status: 'error',
-                    value: 'ssh connection failed',
-                },
-            ]),
+            loaded({
+                capabilities: [
+                    {
+                        name: 'Deployment',
+                        checks: [
+                            {
+                                name: 'Connectivity',
+                                location: 'target',
+                                status: 'error',
+                                value: 'ssh connection failed',
+                            },
+                        ],
+                    },
+                ],
+            }),
         );
 
         new TargetStatusBarItemView(targetModel);
@@ -128,14 +144,14 @@ describe('TargetStatusBarItemView', () => {
         const targetModel = new TargetModel();
 
         targetModel.setSelected(target1);
-        targetModel.setSelectedTargetHealth(loaded(healthyTarget));
+        targetModel.setSelectedTargetHealth(loaded(connectedTargetHealth));
         new TargetStatusBarItemView(targetModel);
         const statusBarItem = vi.mocked(vscode.window.createStatusBarItem).mock
             .results[0].value;
         expect(statusBarItem.text).toBe(`$(pass-filled) ${target1}`);
 
         targetModel.setSelected(target2);
-        targetModel.setSelectedTargetHealth(loaded(healthyTarget));
+        targetModel.setSelectedTargetHealth(loaded(connectedTargetHealth));
 
         expect(vscode.window.createStatusBarItem).toHaveBeenCalledTimes(1);
         expect(statusBarItem.text).toBe(`$(pass-filled) ${target2}`);
@@ -151,32 +167,34 @@ describe('TargetStatusBarItemView', () => {
         const targetModel = new TargetModel();
         targetModel.setSelected(target);
         targetModel.setSelectedTargetHealth(
-            loaded([
-                {
-                    status: 'ok',
-                    name: 'Connectivity',
-                    location: 'target',
-                    value: '',
-                },
-                {
-                    status: 'warning',
-                    name: 'Container Engine',
-                    location: 'target',
-                    value: 'missing',
-                },
-                {
-                    status: 'error',
-                    name: 'Container Runtime',
-                    location: 'target',
-                    value: 'not running',
-                },
-                {
-                    status: 'undetermined',
-                    name: 'Processing Domain Driver (remoteproc)',
-                    location: 'target',
-                    value: 'not checked: prerequisite failed',
-                },
-            ]),
+            loaded({
+                capabilities: [
+                    {
+                        name: 'Deployment',
+                        checks: [
+                            ...connectedTargetHealth.capabilities[0].checks,
+                            {
+                                status: 'warning',
+                                name: 'Container Engine',
+                                location: 'target',
+                                value: 'missing',
+                            },
+                            {
+                                status: 'error',
+                                name: 'Container Runtime',
+                                location: 'target',
+                                value: 'not running',
+                            },
+                            {
+                                status: 'undetermined',
+                                name: 'Processing Domain Driver (remoteproc)',
+                                location: 'target',
+                                value: 'not checked: prerequisite failed',
+                            },
+                        ],
+                    },
+                ],
+            }),
         );
 
         new TargetStatusBarItemView(targetModel);

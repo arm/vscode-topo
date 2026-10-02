@@ -7,10 +7,8 @@ import { DisposableCollector } from '../util/disposableCollector';
 import { Loadable, loaded } from '../util/loadable';
 import { TargetDataIssueTreeItem } from './treeItems/targetDataIssueTreeItem';
 import { ErrorTreeItem } from './treeItems/errorTreeItem';
-import {
-    TargetDescription,
-    TargetHealthCheck,
-} from '../services/topoCliSchema';
+import { TargetDescription } from '../services/topoCliSchema';
+import { TargetHealth } from '../models/health';
 import { LoadingTreeItem } from './treeItems/loadingTreeItem';
 import {
     compareProcessingDomains,
@@ -19,15 +17,12 @@ import {
 import { ProcessingDomainGroupTreeItem } from './treeItems/processingDomainGroupTreeItem';
 import { isTargetConnected } from '../util/assertTargetReady';
 import { getTargetConnectivityCheck } from '../util/healthReport';
+import { HealthTreeItem } from './treeItems/healthTreeItem';
 
 export const TargetSelectionState = {
     Unselected: 'unselected',
     Selected: 'selected',
 } as const;
-
-function compareByName(a: { name: string }, b: { name: string }): number {
-    return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
-}
 
 function getProcessingDomainGroupChildren(
     targetDescription: Loadable<TargetDescription>,
@@ -60,7 +55,7 @@ function getProcessingDomainGroupChildren(
 }
 
 function getSelectedTargetChildren(
-    health: Loadable<TargetHealthCheck[]>,
+    health: Loadable<TargetHealth>,
     targetDescription: Loadable<TargetDescription>,
 ): vscode.TreeItem[] {
     switch (health.status) {
@@ -80,7 +75,7 @@ function getSelectedTargetChildren(
                 ];
             }
 
-            const healthGroup = new HealthCheckGroupTreeItem(health);
+            const healthGroup = new HealthTreeItem(health);
             const processingDomainGroup = new ProcessingDomainGroupTreeItem(
                 targetDescription,
             );
@@ -191,10 +186,16 @@ export class TargetTreeView
             );
         }
 
+        if (element instanceof HealthTreeItem) {
+            return element.getChildren();
+        }
+
         if (element instanceof HealthCheckGroupTreeItem) {
-            const healthChecks = element.healthChecks.toSorted(compareByName);
-            return healthChecks.map(
-                (healthCheck) => new HealthCheckTreeItem(loaded(healthCheck)),
+            return element.healthChecks.map(
+                (healthCheck) =>
+                    new HealthCheckTreeItem(
+                        loaded(healthCheck, element.loading),
+                    ),
             );
         }
 

@@ -65,51 +65,54 @@ describe('HostTreeView', () => {
         );
     });
 
-    it('returns sorted host health checks without mutating the model', () => {
+    it('returns host health checks under their capability in CLI order', () => {
         const model = new HostModel();
         model.setHealth(
-            loaded([
-                {
-                    name: 'Zed',
-                    location: 'host',
-                    status: 'warning',
-                    value: 'missing',
-                    fix: {
-                        description: 'Install Zed',
-                        command: 'topo install zed --target ssh://imx93',
+            loaded({
+                capabilities: [
+                    {
+                        name: 'Deployment',
+                        checks: [
+                            {
+                                name: 'Zed',
+                                location: 'host',
+                                status: 'warning',
+                                value: 'missing',
+                                fix: {
+                                    description: 'Install Zed',
+                                    command:
+                                        'topo install zed --target ssh://imx93',
+                                },
+                            },
+                            {
+                                name: 'Alpha',
+                                location: 'host',
+                                status: 'ok',
+                                value: 'installed',
+                            },
+                        ],
                     },
-                },
-                {
-                    name: 'Alpha',
-                    location: 'host',
-                    status: 'ok',
-                    value: 'installed',
-                },
-            ]),
+                ],
+            }),
         );
         const provider = new HostTreeView(model);
 
         const rootChildren = provider.getChildren();
-        const children = provider.getChildren(rootChildren[0]);
+        const capabilities = provider.getChildren(rootChildren[0]);
+        expect(capabilities.map((item) => item.label)).toEqual(['Deployment']);
+        const children = provider.getChildren(capabilities[0]);
 
-        expect(children).toHaveLength(2);
-        expect(
-            children.every((item) => item instanceof HealthCheckTreeItem),
-        ).toBe(true);
         expect(children).toMatchObject([
-            expect.objectContaining({
-                label: 'Alpha',
-                description: 'installed',
-            }),
-            expect.objectContaining({
+            {
                 label: 'Zed',
                 contextValue: 'HealthCheck Warning Fixable',
                 description: 'missing',
-            }),
+            },
+            {
+                label: 'Alpha',
+                description: 'installed',
+            },
         ]);
-        expect(model.health).toMatchObject({
-            data: [{ name: 'Zed' }, { name: 'Alpha' }],
-        });
     });
 
     it('returns an error item when host health cannot be loaded', () => {

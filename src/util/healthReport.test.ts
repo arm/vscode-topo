@@ -1,4 +1,8 @@
-import { getHealthChecks } from './healthReport';
+import {
+    getHealthChecks,
+    getHostHealth,
+    getTargetHealth,
+} from './healthReport';
 import type { HealthReport } from '../services/topoCliSchema';
 
 const hostCheck = {
@@ -28,16 +32,38 @@ const report: HealthReport = {
     ],
 };
 
-describe('getHealthChecks', () => {
-    it('shows shared host checks once, preserving diagnostics and fixes', () => {
-        expect(getHealthChecks(report, 'host')).toEqual([hostCheck]);
+describe('healthReport', () => {
+    it('preserves capability order and shared host checks without target data', () => {
+        expect(getHostHealth(report)).toEqual({
+            capabilities: [
+                { name: 'Deployment', checks: [hostCheck] },
+                { name: 'Project management', checks: [hostCheck] },
+            ],
+        });
     });
 
-    it('keeps target checks separate from host checks with the same name', () => {
-        expect(getHealthChecks(report, 'target')).toEqual([targetCheck]);
+    it('preserves target capabilities and omits groups without target checks', () => {
+        expect(
+            getTargetHealth({
+                capabilities: [
+                    { name: 'Host only', status: 'error', checks: [hostCheck] },
+                    ...report.capabilities,
+                    { name: 'Empty', status: 'ok', checks: [] },
+                ],
+            }),
+        ).toEqual({
+            capabilities: [
+                { name: 'Deployment', checks: [targetCheck] },
+                { name: 'Project management', checks: [targetCheck] },
+            ],
+        });
+    });
+
+    it('deduplicates shared checks when flattening scoped health', () => {
+        expect(getHealthChecks(getTargetHealth(report))).toEqual([targetCheck]);
     });
 
     it('returns no checks for an empty report', () => {
-        expect(getHealthChecks({ capabilities: [] }, 'host')).toEqual([]);
+        expect(getHealthChecks({ capabilities: [] })).toEqual([]);
     });
 });
