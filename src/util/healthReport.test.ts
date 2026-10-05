@@ -32,7 +32,7 @@ const report: HealthReport = {
     ],
 };
 
-describe('healthReport', () => {
+describe('getHostHealth', () => {
     it('preserves capability order and shared host checks without target data', () => {
         expect(getHostHealth(report)).toEqual({
             capabilities: [
@@ -41,7 +41,9 @@ describe('healthReport', () => {
             ],
         });
     });
+});
 
+describe('getTargetHealth', () => {
     it('preserves target capabilities and omits groups without target checks', () => {
         expect(
             getTargetHealth({
@@ -58,7 +60,9 @@ describe('healthReport', () => {
             ],
         });
     });
+});
 
+describe('getHealthChecks', () => {
     it('deduplicates shared checks when flattening scoped health', () => {
         expect(getHealthChecks(getTargetHealth(report))).toEqual([targetCheck]);
     });
