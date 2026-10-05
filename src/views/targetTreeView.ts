@@ -105,13 +105,11 @@ function syncSelectedTargetContext(targetModel: TargetModel): void {
     );
 }
 
-function syncSelectedTargetConnectedContext(targetModel: TargetModel): void {
-    const target = targetModel.selected;
-    const health = targetModel.selectedTargetHealth;
+function syncSelectedTargetConnectedContext(
+    health: Loadable<HealthCheck[]>,
+): void {
     const connected =
-        target !== undefined &&
-        health.status === 'loaded' &&
-        isTargetConnected(health.data);
+        health.status === 'loaded' && isTargetConnected(health.data);
     void vscode.commands.executeCommand(
         'setContext',
         manifest.CONTEXT_SELECTED_TARGET_CONNECTED,
@@ -159,7 +157,9 @@ export class TargetTreeView
                 this.refreshTreeView();
             }),
             this.targetModel.onHealthChanged(() => {
-                syncSelectedTargetConnectedContext(this.targetModel);
+                syncSelectedTargetConnectedContext(
+                    this.targetModel.selectedTargetHealth,
+                );
                 this.refreshTreeView();
             }),
             this.targetModel.onDescriptionChanged(() => {
@@ -168,7 +168,9 @@ export class TargetTreeView
             this._onDidChangeTreeData,
         );
         syncTargetDataIssueContext(this.targetModel.targets);
-        syncSelectedTargetConnectedContext(this.targetModel);
+        syncSelectedTargetConnectedContext(
+            this.targetModel.selectedTargetHealth,
+        );
     }
 
     public getChildren(element?: vscode.TreeItem): vscode.TreeItem[] {
