@@ -3,7 +3,11 @@ import {
     getHostHealth,
     getTargetHealth,
 } from './healthReport';
-import type { HealthCheck, HealthReport } from '../services/topoCliSchema';
+import type {
+    HealthCheck,
+    HealthReport,
+    TargetHealthCheck,
+} from '../services/topoCliSchema';
 
 const hostCheck: HealthCheck = {
     name: 'Docker daemon',
@@ -63,8 +67,32 @@ describe('getTargetHealth', () => {
 });
 
 describe('getHealthChecks', () => {
-    it('deduplicates shared checks when flattening scoped health', () => {
-        expect(getHealthChecks(getTargetHealth(report))).toEqual([targetCheck]);
+    it('preserves same-name checks and their diagnostics in capability order', () => {
+        const healthyCheck: TargetHealthCheck = {
+            name: 'Container Engine',
+            location: 'target',
+            status: 'ok',
+            value: 'docker',
+        };
+        const failingCheck: TargetHealthCheck = {
+            name: 'Container Engine',
+            location: 'target',
+            status: 'error',
+            value: 'Docker is not running',
+            fix: { description: 'Start Docker', command: 'start-docker' },
+        };
+
+        const checks = getHealthChecks({
+            capabilities: [
+                { name: 'Deployment', checks: [healthyCheck] },
+                {
+                    name: 'Project management',
+                    checks: [failingCheck],
+                },
+            ],
+        });
+
+        expect(checks).toEqual([healthyCheck, failingCheck]);
     });
 
     it('returns no checks for an empty report', () => {

@@ -44,15 +44,7 @@ export function getTargetHealth(report: HealthReport): TargetHealth {
 }
 
 export function getHealthChecks<T extends HealthCheck>(health: Health<T>): T[] {
-    const checks = new Map<string, T>();
-    for (const capability of health.capabilities) {
-        for (const check of capability.checks) {
-            if (!checks.has(check.name)) {
-                checks.set(check.name, check);
-            }
-        }
-    }
-    return [...checks.values()];
+    return health.capabilities.flatMap(({ checks }) => checks);
 }
 
 export function getTargetConnectivityCheck(
