@@ -2,8 +2,8 @@ import * as vscode from 'vscode';
 import { mock, MockProxy } from 'vitest-mock-extended';
 import { FixIssue, createFixIssueTask } from './fixIssue';
 import { loaded } from '../util/loadable';
-import { HealthCheckGroupTreeItem } from '../views/treeItems/healthCheckGroupTreeItem';
 import { HealthCheckTreeItem } from '../views/treeItems/healthCheckTreeItem';
+import { HealthTreeItem } from '../views/treeItems/healthTreeItem';
 import { HealthCheck } from '../services/topoCliSchema';
 import { TargetModel } from '../models/targetModel';
 import { refreshSelectedTargetHealth } from '../commandIds';
@@ -72,10 +72,16 @@ describe('FixIssue', () => {
     const createFixIssue = (): FixIssue =>
         new FixIssue(taskFactory, targetModel);
 
-    const createHealthGroupItem = (
+    const createHealthItem = (
         targetHealthChecks: HealthCheck[],
-    ): HealthCheckGroupTreeItem =>
-        new HealthCheckGroupTreeItem(loaded(targetHealthChecks));
+    ): HealthTreeItem =>
+        new HealthTreeItem(
+            loaded({
+                capabilities: [
+                    { name: 'Deployment', checks: targetHealthChecks },
+                ],
+            }),
+        );
 
     beforeEach(() => {
         vi.clearAllMocks();
@@ -173,7 +179,7 @@ describe('FixIssue', () => {
 
     it('shows a quick pick when only one target issue fix is available', async () => {
         const fixIssue = createFixIssue();
-        const healthGroupItem = createHealthGroupItem([healthChecks[0]]);
+        const healthItem = createHealthItem([healthChecks[0]]);
         mockSelectedQuickPickItems([
             {
                 label: 'Container Engine',
@@ -183,7 +189,7 @@ describe('FixIssue', () => {
             },
         ]);
 
-        await fixIssue.fixIssueCommandHandler(healthGroupItem);
+        await fixIssue.fixIssueCommandHandler(healthItem);
 
         expect(vscode.window.showQuickPick).toHaveBeenCalledWith(
             [
@@ -209,9 +215,19 @@ describe('FixIssue', () => {
         );
     });
 
-    it('shows target issue fixes in a quick pick and runs the selected fix', async () => {
+    it('shows fixes across capabilities from the health root and runs the selected fix', async () => {
         const fixIssue = createFixIssue();
-        const healthGroupItem = createHealthGroupItem(healthChecks);
+        const healthItem = new HealthTreeItem(
+            loaded({
+                capabilities: [
+                    { name: 'Deployment', checks: [healthChecks[0]] },
+                    {
+                        name: 'Project management',
+                        checks: healthChecks.slice(1),
+                    },
+                ],
+            }),
+        );
         mockSelectedQuickPickItems([
             {
                 label: 'Debugger',
@@ -221,7 +237,7 @@ describe('FixIssue', () => {
             },
         ]);
 
-        await fixIssue.fixIssueCommandHandler(healthGroupItem);
+        await fixIssue.fixIssueCommandHandler(healthItem);
 
         expect(vscode.window.showQuickPick).toHaveBeenCalledWith(
             [
@@ -248,11 +264,14 @@ describe('FixIssue', () => {
             ['topo', 'install', 'debugger', '--target', target],
         );
         expect(mockRunTask).toHaveBeenCalledWith(task);
+        expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+            refreshSelectedTargetHealth,
+        );
     });
 
     it('runs each selected target issue fix', async () => {
         const fixIssue = createFixIssue();
-        const healthGroupItem = createHealthGroupItem(healthChecks);
+        const healthItem = createHealthItem(healthChecks);
         mockSelectedQuickPickItems([
             {
                 label: 'Container Engine',
@@ -268,7 +287,7 @@ describe('FixIssue', () => {
             },
         ]);
 
-        await fixIssue.fixIssueCommandHandler(healthGroupItem);
+        await fixIssue.fixIssueCommandHandler(healthItem);
 
         expect(taskFactory.createShellTask).toHaveBeenNthCalledWith(
             1,
@@ -309,7 +328,7 @@ describe('FixIssue', () => {
             },
         };
         const fixIssue = createFixIssue();
-        const healthGroupItem = createHealthGroupItem([
+        const healthItem = createHealthItem([
             remoteprocRuntime,
             remoteprocShim,
         ]);
@@ -328,7 +347,7 @@ describe('FixIssue', () => {
             },
         ]);
 
-        await fixIssue.fixIssueCommandHandler(healthGroupItem);
+        await fixIssue.fixIssueCommandHandler(healthItem);
 
         expect(taskFactory.createShellTask).toHaveBeenCalledWith(
             `Fix Remoteproc Runtime, Remoteproc Shim on ${target}`,
@@ -339,10 +358,10 @@ describe('FixIssue', () => {
 
     it('refreshes when target issue selection is cancelled', async () => {
         const fixIssue = createFixIssue();
-        const healthGroupItem = createHealthGroupItem(healthChecks);
+        const healthItem = createHealthItem(healthChecks);
         mockSelectedQuickPickItems([]);
 
-        await fixIssue.fixIssueCommandHandler(healthGroupItem);
+        await fixIssue.fixIssueCommandHandler(healthItem);
 
         expect(mockRunTask).not.toHaveBeenCalled();
         expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
@@ -352,10 +371,10 @@ describe('FixIssue', () => {
 
     it('fails when a target has no executable issue fixes', async () => {
         const fixIssue = createFixIssue();
-        const healthGroupItem = createHealthGroupItem([healthChecks[2]]);
+        const healthItem = createHealthItem([healthChecks[2]]);
 
         await expect(
-            fixIssue.fixIssueCommandHandler(healthGroupItem),
+            fixIssue.fixIssueCommandHandler(healthItem),
         ).rejects.toThrow(
             `No executable issue fixes found for target ${target}`,
         );
@@ -373,7 +392,7 @@ describe('FixIssue', () => {
         await expect(
             fixIssue.fixIssueCommandHandler({ unexpected: true }),
         ).rejects.toThrow(
-            'Invalid item for fix issues: expected HealthCheckGroupTreeItem or HealthCheckTreeItem but received:',
+            'Invalid item for fix issues: expected HealthTreeItem or HealthCheckTreeItem but received:',
         );
     });
 
@@ -383,7 +402,7 @@ describe('FixIssue', () => {
         await expect(
             fixIssue.fixIssueCommandHandler(undefined),
         ).rejects.toThrow(
-            'Invalid item for fix issues: expected HealthCheckGroupTreeItem or HealthCheckTreeItem but received: undefined',
+            'Invalid item for fix issues: expected HealthTreeItem or HealthCheckTreeItem but received: undefined',
         );
     });
 });

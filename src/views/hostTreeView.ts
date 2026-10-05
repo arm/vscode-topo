@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { PACKAGE_NAME } from '../manifest';
-import { HealthCheckGroupTreeItem } from './treeItems/healthCheckGroupTreeItem';
+import { HealthCapabilityTreeItem } from './treeItems/healthCapabilityTreeItem';
 import { HealthCheckTreeItem } from './treeItems/healthCheckTreeItem';
 import { ErrorTreeItem } from './treeItems/errorTreeItem';
 import { HostModel } from '../models/hostModel';
@@ -86,7 +86,7 @@ export class HostTreeView
             return element.getChildren();
         }
 
-        if (element instanceof HealthCheckGroupTreeItem) {
+        if (element instanceof HealthCapabilityTreeItem) {
             return element.healthChecks.map(
                 (healthCheck) =>
                     new HealthCheckTreeItem(

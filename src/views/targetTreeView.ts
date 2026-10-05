@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as manifest from '../manifest';
-import { HealthCheckGroupTreeItem } from './treeItems/healthCheckGroupTreeItem';
+import { HealthCapabilityTreeItem } from './treeItems/healthCapabilityTreeItem';
 import { HealthCheckTreeItem } from './treeItems/healthCheckTreeItem';
 import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
@@ -197,7 +197,7 @@ export class TargetTreeView
             return element.getChildren();
         }
 
-        if (element instanceof HealthCheckGroupTreeItem) {
+        if (element instanceof HealthCapabilityTreeItem) {
             return element.healthChecks.map(
                 (healthCheck) =>
                     new HealthCheckTreeItem(

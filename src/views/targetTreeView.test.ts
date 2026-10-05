@@ -279,7 +279,7 @@ describe('TargetTreeView', () => {
             ]);
         });
 
-        it('shows loading icons on capabilities and checks while refreshing', () => {
+        it('shows loading icons on the health root, capabilities and checks while refreshing', () => {
             targetModel.setSelectedTargetHealth(
                 loading(loaded(connectedTargetHealth)),
             );
@@ -289,6 +289,7 @@ describe('TargetTreeView', () => {
             const [check] = view.getChildren(capability);
             const loadingIcon = new vscode.ThemeIcon('loading~spin');
 
+            expect(healthItem.iconPath).toEqual(loadingIcon);
             expect(capability.iconPath).toEqual(loadingIcon);
             expect(check.iconPath).toEqual(loadingIcon);
         });
@@ -359,7 +360,7 @@ describe('TargetTreeView', () => {
             });
         });
 
-        it('marks health group fixable when visible target health checks have executable fixes', async () => {
+        it('offers fixes on the health root and individual checks, excluding capability groups', () => {
             targetModel.setSelectedTargetHealth(
                 loaded({
                     capabilities: [
@@ -384,11 +385,13 @@ describe('TargetTreeView', () => {
                 }),
             );
 
-            const rootChildren = view.getChildren();
+            const [healthItem] = view.getChildren();
+            const [capability] = view.getChildren(healthItem);
+            const [check] = view.getChildren(capability);
 
-            expect(rootChildren[0].contextValue).toBe(
-                'Health HasFixableIssues',
-            );
+            expect(healthItem.contextValue).toBe('Health HasFixableIssues');
+            expect(capability.contextValue).toBeUndefined();
+            expect(check.contextValue).toBe('HealthCheck Error Fixable');
         });
 
         it('returns processing domains without rendering container children', () => {

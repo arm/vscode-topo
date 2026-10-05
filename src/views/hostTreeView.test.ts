@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { HostTreeView } from './hostTreeView';
-import { HealthCheckGroupTreeItem } from './treeItems/healthCheckGroupTreeItem';
+import { HealthTreeItem } from './treeItems/healthTreeItem';
 import { HealthCheckTreeItem } from './treeItems/healthCheckTreeItem';
 import { HostModel } from '../models/hostModel';
 import { errored, loaded } from '../util/loadable';
@@ -50,7 +50,7 @@ describe('HostTreeView', () => {
         const rootChildren = provider.getChildren();
 
         expect(rootChildren).toHaveLength(2);
-        expect(rootChildren[0]).toBeInstanceOf(HealthCheckGroupTreeItem);
+        expect(rootChildren[0]).toBeInstanceOf(HealthTreeItem);
         expect(rootChildren[0].label).toBe('Health');
         expect(rootChildren[0].contextValue).toBe('Health');
         expect(rootChildren[1]).toEqual(

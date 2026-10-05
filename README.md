@@ -86,7 +86,7 @@ Use the buttons in the Target view title bar to access these actions:
 
 ### Health Actions
 
-Use the inline **Fix** button on a fixable health issue to run the executable fix command reported by the Topo health check. Use **Fix Issues** on a capability row to select fixes for that capability, or on the **Health** row to select fixes across all target health checks.
+Use the inline **Fix** button on a fixable health issue to run the executable fix command reported by the Topo health check. Use **Fix Issues** on the **Health** row to select fixes across all target health checks.
 
 ## Container Actions
 
