@@ -16,9 +16,7 @@ export class HealthTreeItem extends vscode.TreeItem {
         this.contextValue = this.healthChecks.some(hasFixCommand)
             ? 'Health HasFixableIssues'
             : 'Health';
-        this.iconPath = getHealthGroupIcon(
-            loaded(this.healthChecks, health.loading),
-        );
+        this.iconPath = getHealthGroupIcon(this.healthChecks, health.loading);
     }
 
     public getChildren(): HealthCapabilityTreeItem[] {

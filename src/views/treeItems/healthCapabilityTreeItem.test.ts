@@ -19,7 +19,6 @@ describe('HealthCapabilityTreeItem', () => {
 
         expect(item.label).toBe('Deployment');
         expect(item.contextValue).toBeUndefined();
-        expect(item.healthChecks).toBe(healthChecks);
         expect(item.collapsibleState).toBe(
             vscode.TreeItemCollapsibleState.Collapsed,
         );

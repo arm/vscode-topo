@@ -12,6 +12,6 @@ export class HealthCapabilityTreeItem extends vscode.TreeItem {
         this.healthChecks = healthChecks.data;
         this.loading = healthChecks.loading;
 
-        this.iconPath = getHealthGroupIcon(healthChecks);
+        this.iconPath = getHealthGroupIcon(this.healthChecks, this.loading);
     }
 }
