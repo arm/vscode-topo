@@ -4,7 +4,7 @@ import type { Loadable, Loaded } from './loadable';
 import { getTargetConnectivityCheck } from './healthReport';
 
 export function isTargetConnected(health: readonly HealthCheck[]): boolean {
-    return getTargetConnectivityCheck(health)?.status !== 'error';
+    return isConnectivitySuccessful(getTargetConnectivityCheck(health));
 }
 
 export function assertTargetSelected(
@@ -24,7 +24,7 @@ export function assertTargetConnected(
 ): asserts health is Loaded<HealthCheck[]> {
     if (health.status === 'loaded') {
         const connectivity = getTargetConnectivityCheck(health.data);
-        if (connectivity?.status !== 'error') {
+        if (isConnectivitySuccessful(connectivity)) {
             return;
         }
 
@@ -47,6 +47,12 @@ export function assertTargetConnected(
         'TARGET',
         `Target ${target} health is unavailable. Refresh target health and try again.`,
     );
+}
+
+export function isConnectivitySuccessful(
+    connectivity: HealthCheck | undefined,
+): connectivity is HealthCheck | undefined {
+    return connectivity?.status !== 'error';
 }
 
 function getTargetConnectivityFailureMessage(
