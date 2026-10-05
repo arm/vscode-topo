@@ -14,7 +14,10 @@ import {
     ProcessingDomainTreeItem,
 } from './treeItems/processingDomainTreeItem';
 import { ProcessingDomainGroupTreeItem } from './treeItems/processingDomainGroupTreeItem';
-import { isTargetConnected } from '../util/assertTargetReady';
+import {
+    isConnectivitySuccessful,
+    isTargetConnected,
+} from '../util/assertTargetReady';
 import { getTargetConnectivityCheck } from '../util/healthReport';
 
 export const TargetSelectionState = {
@@ -69,7 +72,7 @@ function getSelectedTargetChildren(
             return [new ErrorTreeItem('Failed to check target health', health)];
         case 'loaded': {
             const connectivity = getTargetConnectivityCheck(health.data);
-            if (connectivity?.status === 'error') {
+            if (!isConnectivitySuccessful(connectivity)) {
                 return [
                     new HealthCheckTreeItem(
                         loaded(connectivity, health.loading),
