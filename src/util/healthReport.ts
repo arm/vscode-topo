@@ -1,6 +1,6 @@
 import type { HealthCheck, HealthReport } from '../services/topoCliSchema';
 
-export function getHealthChecks(
+export function filterHealthChecks(
     report: HealthReport,
     location: HealthCheck['location'],
 ): HealthCheck[] {

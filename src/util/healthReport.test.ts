@@ -1,4 +1,4 @@
-import { getHealthChecks } from './healthReport';
+import { filterHealthChecks } from './healthReport';
 import type { HealthCheck, HealthReport } from '../services/topoCliSchema';
 
 const hostCheck: HealthCheck = {
@@ -28,16 +28,16 @@ const report: HealthReport = {
     ],
 };
 
-describe('getHealthChecks', () => {
+describe('filterHealthChecks', () => {
     it('shows shared host checks once, preserving diagnostics and fixes', () => {
-        expect(getHealthChecks(report, 'host')).toEqual([hostCheck]);
+        expect(filterHealthChecks(report, 'host')).toEqual([hostCheck]);
     });
 
     it('keeps target checks separate from host checks with the same name', () => {
-        expect(getHealthChecks(report, 'target')).toEqual([targetCheck]);
+        expect(filterHealthChecks(report, 'target')).toEqual([targetCheck]);
     });
 
     it('returns no checks for an empty report', () => {
-        expect(getHealthChecks({ capabilities: [] }, 'host')).toEqual([]);
+        expect(filterHealthChecks({ capabilities: [] }, 'host')).toEqual([]);
     });
 });
