@@ -5,11 +5,10 @@ import { runTask } from '../util/task';
 import { showAndLogWarning } from '../util/showAndLog';
 import { TargetModel } from '../models/targetModel';
 import { assertProjectTreeItem } from '../views/treeItems/assertProjectTreeItem';
-import { isWrappedError } from '../errors/wrappedError';
 import {
-    assertTargetConnected,
-    assertTargetSelected,
-} from '../util/assertTargetReady';
+    validateTargetConnected,
+    validateTargetSelected,
+} from '../util/validateTargetReady';
 import { TOPO_TASK_TYPE } from '../manifest';
 import {
     TaskCommand,
@@ -33,20 +32,27 @@ export class Stop {
             throw new Error('No compose.yaml selected for stop');
         }
 
-        const target = this.targetModel.selected;
-        const health = this.targetModel.selectedTargetHealth;
-        try {
-            assertTargetSelected(target);
-            assertTargetConnected(target, health);
-        } catch (err: unknown) {
-            if (isWrappedError(err, ['TARGET'])) {
-                showAndLogWarning('Cannot stop', err);
-                return;
+        const targetResult = validateTargetSelected(this.targetModel.selected);
+        if (targetResult.kind === 'error') {
+            if (targetResult.code !== 'TARGET') {
+                throw targetResult;
             }
-            throw err;
+            showAndLogWarning('Cannot stop', targetResult);
+            return;
+        }
+        const healthResult = validateTargetConnected(
+            targetResult.value,
+            this.targetModel.selectedTargetHealth,
+        );
+        if (healthResult.kind === 'error') {
+            if (healthResult.code !== 'TARGET') {
+                throw healthResult;
+            }
+            showAndLogWarning('Cannot stop', healthResult);
+            return;
         }
 
-        await stop(this.taskFactory, resource.fsPath, target);
+        await stop(this.taskFactory, resource.fsPath, targetResult.value);
     }
 
     public async stopProjectCommandHandler(treeNode: unknown): Promise<void> {

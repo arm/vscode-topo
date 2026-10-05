@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import * as vscode from 'vscode';
-import { isWrappedError } from '../errors/wrappedError';
+import type { Result } from './result';
 import { TopoCli } from '../services/topoCli';
 import { ProjectDescription } from '../services/topoCliSchema';
 import { CloneSource } from './cloneSource';
@@ -36,18 +36,15 @@ export const getFirstSentence = (text: string): string => {
 const listProjects = async (
     topoCli: TopoCli,
     sshTarget?: string,
-): Promise<readonly ProjectDescription[]> => {
+): Promise<Result<readonly ProjectDescription[]>> => {
     if (!sshTarget) {
         return topoCli.listProjects();
     }
-    try {
-        return await topoCli.listProjects(sshTarget);
-    } catch (error) {
-        if (!isWrappedError(error, ['CLI'])) {
-            throw error;
-        }
+    const result = await topoCli.listProjects(sshTarget);
+    if (result.kind === 'error' && result.code === 'CLI') {
         return topoCli.listProjects();
     }
+    return result;
 };
 
 const buildRemoteQuickPickItems = (
@@ -87,7 +84,12 @@ export const promptForRemoteCloneSource = async (
         void (async () => {
             let projects: readonly ProjectDescription[] = [];
             try {
-                projects = await listProjects(topoCli, sshTarget);
+                const result = await listProjects(topoCli, sshTarget);
+                if (result.kind === 'error') {
+                    showAndLogError('Failed to list projects', result);
+                } else {
+                    projects = result.value;
+                }
             } catch (error) {
                 showAndLogError('Failed to list projects', error);
             }

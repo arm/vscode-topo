@@ -1,3 +1,4 @@
+import { success } from '../util/result';
 import path from 'node:path';
 import os from 'node:os';
 import * as vscode from 'vscode';
@@ -89,7 +90,7 @@ describe('Deploy', () => {
         targetModel.setSelected(target);
         targetModel.setSelectedTargetHealth(loaded(targetHealth));
         config = mock<Config>();
-        config.getTargetSettings.mockReturnValue({});
+        config.getTargetSettings.mockReturnValue(success({}));
         taskFactory = mock<TaskFactory>();
         taskFactory.createTask.mockReturnValue(task);
         vi.mocked(vscode.workspace.findFiles).mockResolvedValue([]);
@@ -224,9 +225,11 @@ describe('Deploy', () => {
     ])(
         'passes configured $name options from the command handler',
         async ({ deploySettings, expectedArgs }) => {
-            config.getTargetSettings.mockReturnValueOnce({
-                deploy: deploySettings,
-            });
+            config.getTargetSettings.mockReturnValueOnce(
+                success({
+                    deploy: deploySettings,
+                }),
+            );
 
             await deployAction.deployContextCommandHandler(composeFileUri);
 
@@ -252,7 +255,7 @@ describe('Deploy', () => {
         async (_command, commandHandler) => {
             const error = new WrappedError('CONFIG', 'boom');
             config.getTargetSettings.mockImplementationOnce(() => {
-                throw error;
+                return error;
             });
 
             await commandHandler();

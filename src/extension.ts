@@ -80,10 +80,9 @@ async function activateExtension(
     context.subscriptions.push(topoCli);
     topoCli.activate();
 
-    try {
-        await topoCli.assertVersion(topo.version);
-    } catch (err) {
-        showAndLogError(`Topo CLI version check failed`, err);
+    const versionResult = await topoCli.assertVersion(topo.version);
+    if (versionResult.kind === 'error') {
+        showAndLogError('Topo CLI version check failed', versionResult);
         return;
     }
 

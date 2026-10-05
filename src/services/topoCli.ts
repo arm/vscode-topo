@@ -16,6 +16,7 @@ import {
 } from './topoCliSchema';
 import { array, create, Struct } from 'superstruct';
 import { WrappedError, WrappedErrorLog } from '../errors/wrappedError';
+import { type Result, success } from '../util/result';
 import { getErrorMessage } from '../util/getErrorMessage';
 import { execFile } from '../util/exec';
 import { assertComposeFilePath, COMPOSE_FILE_NAME } from '../util/composeFile';
@@ -93,7 +94,10 @@ export class TopoCli {
         return path.join(this.extensionPath, 'resources');
     }
 
-    private async exec(cmd: string[], options?: ExecOptions): Promise<string> {
+    private async exec(
+        cmd: string[],
+        options?: ExecOptions,
+    ): Promise<Result<string>> {
         const bin = this.getBinaryPath();
         let out: string;
         try {
@@ -107,9 +111,13 @@ export class TopoCli {
             });
             out = stdout;
         } catch (error: unknown) {
-            throw parseWrappedError(error) ?? error;
+            const wrappedError = parseWrappedError(error);
+            if (wrappedError) {
+                return wrappedError;
+            }
+            throw error;
         }
-        return out;
+        return success(out);
     }
 
     private async execJson<T>(
@@ -117,12 +125,15 @@ export class TopoCli {
         schema: Struct<T>,
         outputDescription: string,
         options?: ExecOptions,
-    ): Promise<T> {
-        const output = await this.exec(cmd, options);
+    ): Promise<Result<T>> {
+        const outputResult = await this.exec(cmd, options);
+        if (outputResult.kind === 'error') {
+            return outputResult;
+        }
 
         let parsed: unknown;
         try {
-            parsed = JSON.parse(output);
+            parsed = JSON.parse(outputResult.value);
         } catch (parseError) {
             throw new Error(
                 `Failed to parse ${outputDescription} JSON: ${getErrorMessage(parseError)}`,
@@ -131,7 +142,7 @@ export class TopoCli {
         }
 
         try {
-            return create(parsed, schema);
+            return success(create(parsed, schema));
         } catch (validationError) {
             throw new Error(
                 `Invalid ${outputDescription} JSON: ${getErrorMessage(validationError)}`,
@@ -150,24 +161,29 @@ export class TopoCli {
         return base;
     }
 
-    public async getVersion(): Promise<TopoCliVersion> {
-        const out = await this.exec(['--version']);
-        const match = out.match(
+    public async getVersion(): Promise<Result<TopoCliVersion>> {
+        const outputResult = await this.exec(['--version']);
+        if (outputResult.kind === 'error') {
+            return outputResult;
+        }
+        const match = outputResult.value.match(
             /topo version (?<version>\S+) \(commit: (?<commit>\S+)\)/i,
         );
         if (!match || !match.groups) {
-            throw new Error(`Failed to parse version output: ${out}`);
+            throw new Error(
+                `Failed to parse version output: ${outputResult.value}`,
+            );
         }
         const versionInfo: TopoCliVersion = {
             version: match.groups.version,
             commit: match.groups.commit,
         };
-        return versionInfo;
+        return success(versionInfo);
     }
 
     public async listProjects(
         sshTarget?: string,
-    ): Promise<readonly ProjectDescription[]> {
+    ): Promise<Result<readonly ProjectDescription[]>> {
         const cmd = ['projects', '-o', 'json'];
         if (sshTarget) {
             cmd.push('--target', sshTarget);
@@ -175,7 +191,9 @@ export class TopoCli {
         return this.execJson(cmd, array(projectSchema), 'project catalog');
     }
 
-    public async describe(sshTarget: string): Promise<TargetDescription> {
+    public async describe(
+        sshTarget: string,
+    ): Promise<Result<TargetDescription>> {
         const cmd = ['describe', '--target', sshTarget, '-o', 'json'];
         return this.execJson(
             cmd,
@@ -187,7 +205,7 @@ export class TopoCli {
     public async ps(
         sshTarget: string,
         composeFilePath: string,
-    ): Promise<PsOutput> {
+    ): Promise<Result<PsOutput>> {
         assertComposeFilePath(composeFilePath);
         const cmd = [
             'ps',
@@ -208,7 +226,7 @@ export class TopoCli {
         schema: Struct<T>,
         outputDescription: string,
         sshTarget?: string,
-    ): Promise<T> {
+    ): Promise<Result<T>> {
         const cmd = ['health', '-o', 'json'];
         if (sshTarget) {
             cmd.push('--target', sshTarget);
@@ -216,11 +234,11 @@ export class TopoCli {
         return this.execJson(cmd, schema, outputDescription);
     }
 
-    public async hostHealth(): Promise<HostHealthReport> {
+    public async hostHealth(): Promise<Result<HostHealthReport>> {
         return this.runHealth(hostHealthReportSchema, 'host health report');
     }
 
-    public async health(sshTarget: string): Promise<HealthReport> {
+    public async health(sshTarget: string): Promise<Result<HealthReport>> {
         return this.runHealth(
             healthReportSchema,
             'target health report',
@@ -228,12 +246,18 @@ export class TopoCli {
         );
     }
 
-    public async assertVersion(expected: string): Promise<void> {
-        const actual = (await this.getVersion()).version;
+    public async assertVersion(expected: string): Promise<Result<void>> {
+        const versionResult = await this.getVersion();
+        if (versionResult.kind === 'error') {
+            return versionResult;
+        }
+        const actual = versionResult.value.version;
         if (actual !== expected) {
-            throw new Error(
+            return new WrappedError(
+                'CLI',
                 `version mismatch: found=${actual} expected=${expected}`,
             );
         }
+        return success();
     }
 }

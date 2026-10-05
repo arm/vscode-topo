@@ -1,3 +1,4 @@
+import { success } from '../util/result';
 import * as vscode from 'vscode';
 import { mock } from 'vitest-mock-extended';
 import { Config } from './config';
@@ -26,18 +27,18 @@ describe('Config', () => {
             'topo.local': targetSettings,
         });
 
-        const settings = new Config().getTargetSettings('topo.local');
+        const settingsResult = new Config().getTargetSettings('topo.local');
 
         expect(vscode.workspace.getConfiguration).toHaveBeenCalledWith('topo');
         expect(getConfigurationMock).toHaveBeenCalledWith('targetSettings');
-        expect(settings).toEqual(targetSettings);
+        expect(settingsResult).toEqual(success(targetSettings));
     });
 
     it('returns empty settings when target settings are absent', () => {
         getConfigurationMock.mockReturnValue(undefined);
 
-        const settings = new Config().getTargetSettings('topo.local');
+        const settingsResult = new Config().getTargetSettings('topo.local');
 
-        expect(settings).toEqual({});
+        expect(settingsResult).toEqual(success({}));
     });
 });

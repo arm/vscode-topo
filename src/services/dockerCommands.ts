@@ -1,3 +1,4 @@
+import { type Result, success } from '../util/result';
 import { WrappedError, WrappedErrorLog } from '../errors/wrappedError';
 import { execFile, ExecFileResult } from '../util/exec';
 import { logger } from '../util/logger';
@@ -29,7 +30,7 @@ const isDockerError = (err: unknown): err is DockerError => {
  * @param args - The docker command arguments to run.
  * @param warnMsg - The message to log if there is any stderr output.
  * @param shouldTreatErrorAsWarning - Optional function to determine if an error should be treated as a warning.
- * @returns The stdout of the command.
+ * @returns Success when the command completes, or a recognized Docker error.
  */
 export const parseDockerStderr = (
     stderr: string,
@@ -47,7 +48,7 @@ const runDockerCmd = async (
     args: string[],
     warnMsg: string,
     shouldTreatErrorAsWarning?: (err: string) => boolean,
-): Promise<string> => {
+): Promise<Result<void>> => {
     let res: ExecFileResult;
     try {
         res = await execFile('docker', args);
@@ -56,10 +57,10 @@ const runDockerCmd = async (
             const stderr = err.stderr.toString().trim();
             if (shouldTreatErrorAsWarning?.(stderr)) {
                 logger.warn(warnMsg, stderr);
-                return err.stdout.toString().trim();
+                return success();
             }
             const logs = parseDockerStderr(stderr);
-            throw new WrappedError('DOCKER', stderr, logs, { cause: err });
+            return new WrappedError('DOCKER', stderr, logs, { cause: err });
         } else {
             throw err;
         }
@@ -68,17 +69,16 @@ const runDockerCmd = async (
     if (stderr) {
         logger.warn(warnMsg, stderr);
     }
-    const stdout = res.stdout.toString().trim();
-    return stdout;
+    return success();
 };
 
 export class DockerCommands implements ContainerCommands {
     public async stopContainer(
         containerId: string,
         targetSshConnection: string,
-    ): Promise<void> {
+    ): Promise<Result<void>> {
         const warnMsg = `Warnings emitted when stopping container ${containerId}`;
-        await runDockerCmd(
+        return runDockerCmd(
             ['--host', getSshUri(targetSshConnection), 'stop', containerId],
             warnMsg,
         );
@@ -87,9 +87,9 @@ export class DockerCommands implements ContainerCommands {
     public async startContainer(
         containerId: string,
         targetSshConnection: string,
-    ): Promise<void> {
+    ): Promise<Result<void>> {
         const warnMsg = `Warnings emitted when starting container ${containerId}`;
-        await runDockerCmd(
+        return runDockerCmd(
             ['--host', getSshUri(targetSshConnection), 'start', containerId],
             warnMsg,
         );
@@ -98,9 +98,9 @@ export class DockerCommands implements ContainerCommands {
     public async deleteContainer(
         containerId: string,
         targetSshConnection: string,
-    ): Promise<void> {
+    ): Promise<Result<void>> {
         const warnMsg = `Warnings emitted when deleting container ${containerId}`;
-        await runDockerCmd(
+        return runDockerCmd(
             ['--host', getSshUri(targetSshConnection), 'rm', '-f', containerId],
             warnMsg,
         );

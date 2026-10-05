@@ -1,3 +1,4 @@
+import { success } from '../util/result';
 import { mock } from 'vitest-mock-extended';
 import { buildQuickPickItems, TargetController } from './targetController';
 import * as vscode from 'vscode';
@@ -52,12 +53,13 @@ function mockTargetStore(
     let targets = initialTargets;
     let selected = initialSelected;
     const targetStore = mock<TargetStore>();
-    targetStore.getTargets.mockImplementation(() => new Set(targets));
+    targetStore.getTargets.mockImplementation(() => success(new Set(targets)));
     targetStore.getSelectedTarget.mockImplementation(() =>
-        targets.includes(selected ?? '') ? selected : undefined,
+        success(targets.includes(selected ?? '') ? selected : undefined),
     );
     targetStore.addTarget.mockImplementation(async (target) => {
         targets = [...targets, target];
+        return success();
     });
     targetStore.setSelected.mockImplementation(async (target) => {
         selected = target;
@@ -67,14 +69,15 @@ function mockTargetStore(
         if (selected === target) {
             selected = undefined;
         }
+        return success();
     });
     return targetStore;
 }
 
 function mockControllerDependencies() {
     const topoCli = mock<TopoCli>();
-    topoCli.describe.mockResolvedValue(targetDescription);
-    topoCli.health.mockResolvedValue(health);
+    topoCli.describe.mockResolvedValue(success(targetDescription));
+    topoCli.health.mockResolvedValue(success(health));
     return { topoCli };
 }
 
@@ -284,7 +287,7 @@ describe('load from store', () => {
         const targetStore = mockTargetStore();
         const targetModel = new TargetModel();
         targetStore.getTargets.mockImplementation(() => {
-            throw new WrappedError('STORAGE', 'Failed to load targets');
+            return new WrappedError('STORAGE', 'Failed to load targets');
         });
 
         const { controller } = createController(targetModel, targetStore);
@@ -292,6 +295,18 @@ describe('load from store', () => {
 
         expect(targetModel.targets.status).toBe('errored');
         expect(targetModel.selected).toBeUndefined();
+    });
+
+    it('propagates non-storage failures without marking target data as corrupted', () => {
+        const targetStore = mockTargetStore();
+        const targetModel = new TargetModel();
+        const error = new WrappedError('CLI', 'Unexpected failure');
+        targetStore.getTargets.mockReturnValueOnce(error);
+        const { controller } = createController(targetModel, targetStore);
+
+        expect(() => controller.updateTargetsFromStore()).toThrow(error);
+
+        expect(targetModel.targets).toEqual(unloaded());
     });
 
     it('clears the target error after targets load successfully', () => {
@@ -332,13 +347,17 @@ describe('load from store', () => {
         const targetStore = mockTargetStore(['host-a']);
         const targetModel = new TargetModel();
         targetStore.getSelectedTarget.mockImplementation(() => {
-            throw new WrappedError('STORAGE', 'Failed to load selected target');
+            return new WrappedError(
+                'STORAGE',
+                'Failed to load selected target',
+            );
         });
         const { controller } = createController(targetModel, targetStore);
 
         expect(() => controller.updateTargetsFromStore()).toThrow(
             'Failed to load selected target',
         );
+        expect(targetModel.targets).toEqual(unloaded());
         expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
     });
 });
@@ -524,7 +543,7 @@ describe('target addition', () => {
         const targetModel = new TargetModel();
         const { controller } = createController(targetModel, targetStore);
         const error = new WrappedError('STORAGE', 'Failed to load targets');
-        targetStore.deleteTarget.mockRejectedValue(error);
+        targetStore.deleteTarget.mockResolvedValue(error);
         controller.updateTargetsFromStore();
         mockQuickPick({ triggerButtonForLabel: 'manual-host' });
 
@@ -542,7 +561,7 @@ describe('target addition', () => {
         const targetModel = new TargetModel();
         const { controller } = createController(targetModel, targetStore);
         const error = new WrappedError('INVALID_SSH_DESTINATION', 'boom');
-        targetStore.addTarget.mockRejectedValueOnce(error);
+        targetStore.addTarget.mockResolvedValueOnce(error);
         mockQuickPick({ selectedItem: { label: 'root@192.0.2.1' } });
 
         await controller.selectCommandHandler();
@@ -571,17 +590,18 @@ describe('target addition', () => {
         expect(targetStore.setSelected).not.toHaveBeenCalled();
     });
 
-    it('throws when targetStore.addTarget fails with a storage error', async () => {
+    it('propagates a storage error returned by targetStore.addTarget', async () => {
         const targetStore = mockTargetStore();
         const targetModel = new TargetModel();
         const { controller } = createController(targetModel, targetStore);
         const error = new WrappedError('STORAGE', 'Failed to load targets');
-        targetStore.addTarget.mockRejectedValueOnce(error);
+        targetStore.addTarget.mockResolvedValueOnce(error);
         mockQuickPick({ selectedItem: { label: 'root@192.0.2.1' } });
 
-        await expect(controller.selectCommandHandler()).rejects.toThrow(error);
+        await expect(controller.selectCommandHandler()).rejects.toBe(error);
 
         expect(showAndLogError).not.toHaveBeenCalled();
+        expect(targetStore.setSelected).not.toHaveBeenCalled();
     });
 });
 

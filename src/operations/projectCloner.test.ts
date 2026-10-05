@@ -121,7 +121,7 @@ describe('ProjectCloner', () => {
                 type: 'git',
                 url: 'https://example.com/virtual-bittermelon-peeler.git',
             }),
-        ).rejects.toEqual(
+        ).resolves.toEqual(
             expect.objectContaining({
                 code: 'CLONE',
                 message: error.message,
@@ -131,13 +131,13 @@ describe('ProjectCloner', () => {
         expect(promptToOpenFolderMock).not.toHaveBeenCalled();
     });
 
-    it('rejects invalid source URLs before executing a task', async () => {
+    it('returns errors for invalid source URLs before executing a task', async () => {
         await expect(
             projectCloner.clone({
                 type: 'git',
                 url: 'not-a-valid-url',
             }),
-        ).rejects.toBeInstanceOf(WrappedError);
+        ).resolves.toBeInstanceOf(WrappedError);
         expect(mockRunTask).not.toHaveBeenCalled();
     });
 });

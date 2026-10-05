@@ -1,10 +1,11 @@
+import { type Result, success } from '../util/result';
 import path from 'node:path';
 import * as vscode from 'vscode';
 import { getErrorMessage } from '../util/getErrorMessage';
 import { runTask } from '../util/task';
 import { showAndLogError, showAndLogWarning } from '../util/showAndLog';
 import { TargetModel } from '../models/targetModel';
-import { isWrappedError } from '../errors/wrappedError';
+import type { WrappedError } from '../errors/wrappedError';
 import {
     COMPOSE_FILE_NAME,
     COMPOSE_FILE_GLOB,
@@ -14,9 +15,9 @@ import {
 } from '../util/composeFile';
 import { assertProjectTreeItem } from '../views/treeItems/assertProjectTreeItem';
 import {
-    assertTargetConnected,
-    assertTargetSelected,
-} from '../util/assertTargetReady';
+    validateTargetConnected,
+    validateTargetSelected,
+} from '../util/validateTargetReady';
 import { Config } from '../services/config';
 import type { DeployOptions } from '../util/targetSettings';
 import { TOPO_TASK_TYPE } from '../manifest';
@@ -47,11 +48,9 @@ export class Deploy {
     ) {}
 
     public async deployCommandHandler(): Promise<void> {
-        let deployTarget: DeployTarget;
-        try {
-            deployTarget = this.getSelectedDeployTarget();
-        } catch (error: unknown) {
-            this.handleDeployTargetError(error);
+        const deployTargetResult = this.getSelectedDeployTarget();
+        if (deployTargetResult.kind === 'error') {
+            this.handleDeployTargetError(deployTargetResult);
             return;
         }
 
@@ -75,7 +74,7 @@ export class Deploy {
         if (!resource) {
             return;
         }
-        await this.deployComposeFile(resource, deployTarget);
+        await this.deployComposeFile(resource, deployTargetResult.value);
     }
 
     public async deployContextCommandHandler(
@@ -85,15 +84,13 @@ export class Deploy {
             throw new Error('No compose.yaml selected for deployment');
         }
 
-        let deployTarget: DeployTarget;
-        try {
-            deployTarget = this.getSelectedDeployTarget();
-        } catch (error: unknown) {
-            this.handleDeployTargetError(error);
+        const deployTargetResult = this.getSelectedDeployTarget();
+        if (deployTargetResult.kind === 'error') {
+            this.handleDeployTargetError(deployTargetResult);
             return;
         }
 
-        await this.deployComposeFile(resource, deployTarget);
+        await this.deployComposeFile(resource, deployTargetResult.value);
     }
 
     public async deployProjectCommandHandler(treeNode: unknown): Promise<void> {
@@ -101,29 +98,40 @@ export class Deploy {
         await this.deployContextCommandHandler(treeNode.composeFileUri);
     }
 
-    private handleDeployTargetError(error: unknown): void {
-        if (isWrappedError(error, ['TARGET'])) {
+    private handleDeployTargetError(error: WrappedError): void {
+        if (error.code === 'TARGET') {
             showAndLogWarning('Cannot deploy', error);
             return;
         }
-        if (isWrappedError(error, ['CONFIG'])) {
+        if (error.code === 'CONFIG') {
             showAndLogError('Error retrieving target settings', error);
             return;
         }
         throw error;
     }
 
-    private getSelectedDeployTarget(): DeployTarget {
-        const target = this.targetModel.selected;
-        const health = this.targetModel.selectedTargetHealth;
-        assertTargetSelected(target);
-        assertTargetConnected(target, health);
-
-        const targetSettings = this.config.getTargetSettings(target);
-        return {
-            target,
-            deployOptions: targetSettings.deploy ?? {},
-        };
+    private getSelectedDeployTarget(): Result<DeployTarget> {
+        const targetResult = validateTargetSelected(this.targetModel.selected);
+        if (targetResult.kind === 'error') {
+            return targetResult;
+        }
+        const healthResult = validateTargetConnected(
+            targetResult.value,
+            this.targetModel.selectedTargetHealth,
+        );
+        if (healthResult.kind === 'error') {
+            return healthResult;
+        }
+        const targetSettingsResult = this.config.getTargetSettings(
+            targetResult.value,
+        );
+        if (targetSettingsResult.kind === 'error') {
+            return targetSettingsResult;
+        }
+        return success({
+            target: targetResult.value,
+            deployOptions: targetSettingsResult.value.deploy ?? {},
+        });
     }
 
     private async deployComposeFile(

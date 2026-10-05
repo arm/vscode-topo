@@ -16,6 +16,8 @@ export interface WrappedErrorLog {
 }
 
 export class WrappedError extends Error {
+    public readonly kind = 'error';
+
     constructor(
         public readonly code: WrappedErrorCode,
         message: string,

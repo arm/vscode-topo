@@ -1,3 +1,4 @@
+import { success } from './result';
 import { WrappedError } from '../errors/wrappedError';
 import { resolveSettingsForTarget, TargetSettings } from './targetSettings';
 
@@ -8,9 +9,7 @@ describe('resolveSettingsForTarget', () => {
         settingsByTarget: unknown,
         detail: string,
     ): void {
-        expect(() =>
-            resolveSettingsForTarget(target, settingsByTarget),
-        ).toThrow(
+        expect(resolveSettingsForTarget(target, settingsByTarget)).toEqual(
             new WrappedError(
                 'CONFIG',
                 `Invalid topo.targetSettings entry for "topo.local": ${detail}`,
@@ -19,20 +18,20 @@ describe('resolveSettingsForTarget', () => {
     }
 
     it('accepts undefined target settings', () => {
-        const settings = resolveSettingsForTarget(target, undefined);
+        const settingsResult = resolveSettingsForTarget(target, undefined);
 
-        expect(settings).toEqual({});
+        expect(settingsResult).toEqual(success({}));
     });
 
     it('accepts empty target settings', () => {
-        const settings = resolveSettingsForTarget(target, {
+        const settingsResult = resolveSettingsForTarget(target, {
             [target]: {},
         });
 
-        expect(settings).toEqual({});
+        expect(settingsResult).toEqual(success({}));
     });
 
-    it('throws a WrappedError with CONFIG tag when target settings are malformed', () => {
+    it('returns a WrappedError with CONFIG tag when target settings are malformed', () => {
         expectInvalidTargetSettings(
             'not-an-object',
             'Expected an object, but received: "not-an-object"',
@@ -47,7 +46,7 @@ describe('resolveSettingsForTarget', () => {
                 noRecreate: false,
             },
         };
-        const settings = resolveSettingsForTarget(target, {
+        const settingsResult = resolveSettingsForTarget(target, {
             [target]: targetSettings,
             ['other.local']: {
                 deploy: {
@@ -57,10 +56,10 @@ describe('resolveSettingsForTarget', () => {
             },
         });
 
-        expect(settings).toEqual(targetSettings);
+        expect(settingsResult).toEqual(success(targetSettings));
     });
 
-    it('throws when the target entry is malformed', () => {
+    it('returns an error when the target entry is malformed', () => {
         expectInvalidTargetSettings(
             {
                 [target]: 'not-an-object',
@@ -69,7 +68,7 @@ describe('resolveSettingsForTarget', () => {
         );
     });
 
-    it('throws when deploy settings are malformed', () => {
+    it('returns an error when deploy settings are malformed', () => {
         expectInvalidTargetSettings(
             {
                 [target]: {
@@ -80,7 +79,7 @@ describe('resolveSettingsForTarget', () => {
         );
     });
 
-    it('throws when deploy port is invalid', () => {
+    it('returns an error when deploy port is invalid', () => {
         expectInvalidTargetSettings(
             {
                 [target]: {
@@ -93,7 +92,7 @@ describe('resolveSettingsForTarget', () => {
         );
     });
 
-    it('throws a clear error when a deploy boolean is invalid', () => {
+    it('returns a clear error when a deploy boolean is invalid', () => {
         expectInvalidTargetSettings(
             {
                 [target]: {
@@ -106,7 +105,7 @@ describe('resolveSettingsForTarget', () => {
         );
     });
 
-    it('throws when deploy recreate options conflict', () => {
+    it('returns an error when deploy recreate options conflict', () => {
         expectInvalidTargetSettings(
             {
                 [target]: {
@@ -120,7 +119,7 @@ describe('resolveSettingsForTarget', () => {
         );
     });
 
-    it('throws a clear error for an unknown target setting', () => {
+    it('returns a clear error for an unknown target setting', () => {
         expectInvalidTargetSettings(
             {
                 [target]: {
@@ -131,7 +130,7 @@ describe('resolveSettingsForTarget', () => {
         );
     });
 
-    it('throws when deploy settings contain an unknown field', () => {
+    it('returns an error when deploy settings contain an unknown field', () => {
         expectInvalidTargetSettings(
             {
                 [target]: {

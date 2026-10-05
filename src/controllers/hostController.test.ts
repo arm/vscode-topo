@@ -1,3 +1,4 @@
+import { success } from '../util/result';
 import { mock } from 'vitest-mock-extended';
 import { HostModel } from '../models/hostModel';
 import { TopoCli } from '../services/topoCli';
@@ -39,10 +40,10 @@ describe('HostController', () => {
 
     it('refreshes host health and skill status on creation', async () => {
         const topoCli = mock<TopoCli>({
-            hostHealth: vi.fn().mockResolvedValue(hostHealth),
+            hostHealth: vi.fn().mockResolvedValue(success(hostHealth)),
         });
         const topoSkill = mock<TopoSkill>({
-            getReport: vi.fn().mockResolvedValue(installedSkillReport),
+            getReport: vi.fn().mockResolvedValue(success(installedSkillReport)),
         });
         const model = new HostModel();
 
@@ -60,10 +61,10 @@ describe('HostController', () => {
 
     it('refreshes host health and skill status on command', async () => {
         const topoCli = mock<TopoCli>({
-            hostHealth: vi.fn().mockResolvedValue(hostHealth),
+            hostHealth: vi.fn().mockResolvedValue(success(hostHealth)),
         });
         const topoSkill = mock<TopoSkill>({
-            getReport: vi.fn().mockResolvedValue(missingSkillReport),
+            getReport: vi.fn().mockResolvedValue(success(missingSkillReport)),
         });
         const model = new HostModel();
         const controller = new HostController(model, topoCli, topoSkill);
@@ -71,7 +72,9 @@ describe('HostController', () => {
             expect(model.skillReport).toStrictEqual(loaded(missingSkillReport));
         });
         vi.clearAllMocks();
-        vi.mocked(topoSkill.getReport).mockResolvedValue(installedSkillReport);
+        vi.mocked(topoSkill.getReport).mockResolvedValue(
+            success(installedSkillReport),
+        );
 
         await controller.refreshHostCommandHandler();
 

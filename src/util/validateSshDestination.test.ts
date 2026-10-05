@@ -1,7 +1,7 @@
 import { WrappedError } from '../errors/wrappedError';
-import { assertValidSshDestination } from './assertValidSshDestination';
+import { validateSshDestination } from './validateSshDestination';
 
-describe('assertValidSshDestination', () => {
+describe('validateSshDestination', () => {
     it.each([
         'user@example.com',
         'topo.local',
@@ -9,7 +9,9 @@ describe('assertValidSshDestination', () => {
         '[fe80::1%eth0]',
         'board+debug',
     ])('accepts valid SSH destination "%s"', (sshDestination) => {
-        expect(() => assertValidSshDestination(sshDestination)).not.toThrow();
+        expect(validateSshDestination(sshDestination)).toMatchObject({
+            kind: 'success',
+        });
     });
 
     it.each([
@@ -24,7 +26,7 @@ describe('assertValidSshDestination', () => {
         'prod=west',
         'user@example.com;alias',
     ])(
-        'throws an INVALID_SSH_DESTINATION WrappedError for invalid SSH destination "%s"',
+        'returns an INVALID_SSH_DESTINATION WrappedError for invalid SSH destination "%s"',
         (sshDestination) => {
             const expectedMsg = `Invalid SSH destination: ${sshDestination}`;
             const expectedError = new WrappedError(
@@ -33,7 +35,7 @@ describe('assertValidSshDestination', () => {
                 [{ level: 'ERROR', msg: expectedMsg }],
             );
 
-            expect(() => assertValidSshDestination(sshDestination)).toThrow(
+            expect(validateSshDestination(sshDestination)).toEqual(
                 expectedError,
             );
         },

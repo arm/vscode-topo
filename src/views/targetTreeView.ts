@@ -17,7 +17,7 @@ import {
     ProcessingDomainTreeItem,
 } from './treeItems/processingDomainTreeItem';
 import { ProcessingDomainGroupTreeItem } from './treeItems/processingDomainGroupTreeItem';
-import { isTargetConnected } from '../util/assertTargetReady';
+import { isTargetConnected } from '../util/validateTargetReady';
 
 export const TargetSelectionState = {
     Unselected: 'unselected',

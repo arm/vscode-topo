@@ -1,3 +1,4 @@
+import assert from 'node:assert/strict';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { TopoCli } from './topoCli';
@@ -24,9 +25,10 @@ vi.setConfig({ testTimeout: process.platform === 'win32' ? 60_000 : 15_000 });
 
 describe('getVersion', () => {
     it('parses output', async () => {
-        const version = await topoCli.getVersion();
+        const versionResult = await topoCli.getVersion();
+        assert(versionResult.kind === 'success');
 
-        expect(version).toEqual(
+        expect(versionResult.value).toEqual(
             expect.objectContaining({
                 version: topo.version,
                 commit: expect.any(String),
@@ -37,10 +39,11 @@ describe('getVersion', () => {
 
 describe('listProjects', () => {
     it('parses projects correctly', async () => {
-        const projects = await topoCli.listProjects();
+        const projectsResult = await topoCli.listProjects();
+        assert(projectsResult.kind === 'success');
 
-        expect(projects.length).toBeGreaterThan(0);
-        for (const project of projects) {
+        expect(projectsResult.value.length).toBeGreaterThan(0);
+        for (const project of projectsResult.value) {
             expect(project).toEqual(
                 expect.objectContaining({
                     name: expect.any(String),
@@ -61,9 +64,10 @@ describe('health', () => {
     it.skipIf(isWindowsCi)(
         'parses host health check result correctly',
         async () => {
-            const health = await topoCli.hostHealth();
+            const healthResult = await topoCli.hostHealth();
+            assert(healthResult.kind === 'success');
 
-            expect(health).toEqual({
+            expect(healthResult.value).toEqual({
                 host: {
                     dependencies: expect.any(Array),
                 },
@@ -72,9 +76,10 @@ describe('health', () => {
     );
 
     it('parses target health check result correctly', async () => {
-        const health = await topoCli.health('localhost');
+        const healthResult = await topoCli.health('localhost');
+        assert(healthResult.kind === 'success');
 
-        expect(health).toEqual({
+        expect(healthResult.value).toEqual({
             host: {
                 dependencies: expect.any(Array),
             },
@@ -87,9 +92,10 @@ describe('health', () => {
     });
 
     it('succeeds when target is unreachable', async () => {
-        const health = await topoCli.health('unreachable-target');
+        const healthResult = await topoCli.health('unreachable-target');
+        assert(healthResult.kind === 'success');
 
-        expect(health.target).toMatchObject({
+        expect(healthResult.value.target).toMatchObject({
             isLocalhost: false,
             connectivity: { status: 'error' },
         });

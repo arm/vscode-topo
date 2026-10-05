@@ -16,6 +16,7 @@ import {
 } from 'superstruct';
 import { WrappedError } from '../errors/wrappedError';
 import { CONFIG_TARGET_SETTINGS, PACKAGE_NAME } from '../manifest';
+import { type Result, success } from './result';
 
 function withEnumeratedKeys<T, S extends object>(
     schema: Struct<T, S>,
@@ -60,13 +61,13 @@ function getTargetSchema(target: string) {
 export function resolveSettingsForTarget(
     target: string,
     settingsByTarget: unknown,
-): TargetSettings {
+): Result<TargetSettings> {
     const [validationError, validSettingsByTarget] = validate(
         settingsByTarget ?? {},
         getTargetSchema(target),
     );
     if (validationError) {
-        throw new WrappedError(
+        return new WrappedError(
             'CONFIG',
             `Invalid ${PACKAGE_NAME}.${CONFIG_TARGET_SETTINGS} entry for "${target}": ${validationError.message}`,
             [],
@@ -74,5 +75,5 @@ export function resolveSettingsForTarget(
         );
     }
 
-    return validSettingsByTarget?.[target] ?? {};
+    return success(validSettingsByTarget?.[target] ?? {});
 }
