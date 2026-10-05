@@ -52,7 +52,7 @@ describe('HostController', () => {
         vi.clearAllMocks();
     });
 
-    it('preserves health capabilities and refreshes skill status on creation', async () => {
+    it('refreshes host health and skill status on creation', async () => {
         const topoCli = mock<TopoCli>({
             hostHealth: vi.fn().mockResolvedValue(healthReport),
         });
