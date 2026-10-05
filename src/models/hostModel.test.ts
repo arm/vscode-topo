@@ -1,5 +1,5 @@
 import { HostModel } from './hostModel';
-import { HostHealth } from './health';
+import type { HostHealth } from '../util/healthReport';
 import { loaded, unloaded } from '../util/loadable';
 
 const hostHealth: HostHealth = { capabilities: [] };

@@ -1,8 +1,7 @@
 import { WrappedError } from '../errors/wrappedError';
 import type { TargetHealthCheck } from '../services/topoCliSchema';
-import type { TargetHealth } from '../models/health';
 import type { Loadable, Loaded } from './loadable';
-import { getTargetConnectivityCheck } from './healthReport';
+import { getTargetConnectivityCheck, type TargetHealth } from './healthReport';
 
 export function isTargetConnected(health: TargetHealth): boolean {
     return isConnectivitySuccessful(getTargetConnectivityCheck(health));

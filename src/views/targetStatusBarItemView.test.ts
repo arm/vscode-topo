@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { TargetStatusBarItemView } from './targetStatusBarItemView';
 import { TargetTreeView } from './targetTreeView';
 import { mock } from 'vitest-mock-extended';
-import { TargetHealth } from '../models/health';
+import type { TargetHealth } from '../util/healthReport';
 import { TargetModel } from '../models/targetModel';
 import { errored, loaded, loading, unloaded } from '../util/loadable';
 import { selectTarget } from '../commandIds';

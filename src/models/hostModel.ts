@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { HostHealth } from './health';
+import type { HostHealth } from '../util/healthReport';
 import { Loadable, unloaded } from '../util/loadable';
 import { TopoSkillReport } from '../services/topoSkill';
 

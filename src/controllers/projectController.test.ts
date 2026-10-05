@@ -7,7 +7,7 @@ import { mutable } from '../util/test/mutable';
 import { mock } from 'vitest-mock-extended';
 import { TopoCli } from '../services/topoCli';
 import { PsOutput } from '../services/topoCliSchema';
-import { TargetHealth } from '../models/health';
+import type { TargetHealth } from '../util/healthReport';
 import { TargetModel } from '../models/targetModel';
 import { PRIMARY_PROCESSING_DOMAIN, TOPO_TASK_TYPE } from '../manifest';
 import { TaskCommand } from '../tasks/taskFactory';

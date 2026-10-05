@@ -6,7 +6,7 @@ import { TargetModel } from '../models/targetModel';
 import { mock, MockProxy } from 'vitest-mock-extended';
 import { runTask } from '../util/task';
 import { loaded, unloaded } from '../util/loadable';
-import { TargetHealth } from '../models/health';
+import type { TargetHealth } from '../util/healthReport';
 import { createProjectTreeItem } from '../util/test/projectTreeItem';
 import { TOPO_TASK_TYPE } from '../manifest';
 import { TaskCommand, type TaskFactory } from '../tasks/taskFactory';

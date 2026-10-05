@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as manifest from '../manifest';
 import { TargetSelectionState, TargetTreeView } from './targetTreeView';
 import { TargetDescription } from '../services/topoCliSchema';
-import { TargetHealth } from '../models/health';
+import type { TargetHealth } from '../util/healthReport';
 import { TargetModel } from '../models/targetModel';
 import { TargetDataIssueTreeItem } from './treeItems/targetDataIssueTreeItem';
 import { ErrorTreeItem } from './treeItems/errorTreeItem';

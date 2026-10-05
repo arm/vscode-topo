@@ -5,11 +5,10 @@ import { DisposableCollector } from '../util/disposableCollector';
 import { getWorstHealthCheckStatus } from '../util/getWorstHealthCheckStatus';
 import { getHealthCheckIcon } from './util/healthIcons';
 import { Loadable } from '../util/loadable';
-import { TargetHealth } from '../models/health';
 import { selectTarget } from '../commandIds';
 import { getErrorMessage } from '../util/getErrorMessage';
 import { isTargetConnected } from '../util/assertTargetReady';
-import { getHealthChecks } from '../util/healthReport';
+import { getHealthChecks, type TargetHealth } from '../util/healthReport';
 
 function getStatusIconId(state: Loadable<TargetHealth>): string {
     if (state.loading) {

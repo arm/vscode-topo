@@ -8,7 +8,6 @@ import { Loadable, loaded } from '../util/loadable';
 import { TargetDataIssueTreeItem } from './treeItems/targetDataIssueTreeItem';
 import { ErrorTreeItem } from './treeItems/errorTreeItem';
 import { TargetDescription } from '../services/topoCliSchema';
-import { TargetHealth } from '../models/health';
 import { LoadingTreeItem } from './treeItems/loadingTreeItem';
 import {
     compareProcessingDomains,
@@ -19,7 +18,10 @@ import {
     isConnectivitySuccessful,
     isTargetConnected,
 } from '../util/assertTargetReady';
-import { getTargetConnectivityCheck } from '../util/healthReport';
+import {
+    getTargetConnectivityCheck,
+    type TargetHealth,
+} from '../util/healthReport';
 import { HealthTreeItem } from './treeItems/healthTreeItem';
 
 export const TargetSelectionState = {

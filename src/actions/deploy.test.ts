@@ -7,7 +7,7 @@ import { MockProxy, mock } from 'vitest-mock-extended';
 import { mutable } from '../util/test/mutable';
 import { runTask } from '../util/task';
 import { loaded, unloaded } from '../util/loadable';
-import { TargetHealth } from '../models/health';
+import type { TargetHealth } from '../util/healthReport';
 import { Config } from '../services/config';
 import { createProjectTreeItem } from '../util/test/projectTreeItem';
 import { WrappedError } from '../errors/wrappedError';

@@ -1,4 +1,4 @@
-import type { TargetHealth } from '../models/health';
+import type { TargetHealth } from './healthReport';
 import {
     assertTargetConnected,
     assertTargetSelected,

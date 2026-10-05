@@ -1,5 +1,4 @@
-import type { Health } from '../../models/health';
-import { getHealthChecks } from '../../util/healthReport';
+import { getHealthChecks, type Health } from '../../util/healthReport';
 import { loaded, type Loaded } from '../../util/loadable';
 import { HealthCheckGroupTreeItem } from './healthCheckGroupTreeItem';
 
