@@ -87,10 +87,10 @@ describe('SkillLifecycle', () => {
 });
 
 describe('extension uninstall hook', () => {
-    it.each([
+    it.each<[NodeJS.Platform, string]>([
         ['linux', 'npx'],
         ['win32', 'npx.cmd'],
-    ] as const)('removes the skill from all agents on %s', (platform, npx) => {
+    ])('removes the skill from all agents on %s', (platform, npx) => {
         const run = vi.fn<UninstallRunner>().mockReturnValue({ status: 0 });
 
         uninstallSkill(run, platform);

@@ -1,5 +1,6 @@
 import { HostModel } from './hostModel';
 import type { HostHealth } from '../util/healthReport';
+import type { TopoSkillReport } from '../services/topoSkill';
 import { loaded, unloaded } from '../util/loadable';
 
 const hostHealth: HostHealth = { capabilities: [] };
@@ -34,8 +35,8 @@ describe('HostModel', () => {
     it('stores the skill report and fires onChanged', () => {
         const model = new HostModel();
         const onChanged = vi.fn();
-        const skillReport = loaded({
-            status: 'installed' as const,
+        const skillReport = loaded<TopoSkillReport>({
+            status: 'installed',
             agents: [],
         });
         model.onSkillReportChanged(onChanged);
