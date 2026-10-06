@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import { PACKAGE_NAME } from '../manifest';
 import { HealthCapabilityTreeItem } from './treeItems/healthCapabilityTreeItem';
-import { HealthCheckTreeItem } from './treeItems/healthCheckTreeItem';
 import { ErrorTreeItem } from './treeItems/errorTreeItem';
 import { HostModel } from '../models/hostModel';
 import { DisposableCollector } from '../util/disposableCollector';
@@ -11,6 +10,20 @@ import { SkillStatusTreeItem } from './treeItems/skillStatusTreeItem';
 import { LoadingTreeItem } from './treeItems/loadingTreeItem';
 import { SkillGroupTreeItem } from './treeItems/skillGroupTreeItem';
 import { HealthTreeItem } from './treeItems/healthTreeItem';
+import type { HostHealth } from '../util/healthReport';
+
+function getHealthReportItem(health: Loadable<HostHealth>): vscode.TreeItem {
+    switch (health.status) {
+        case 'loaded':
+            return new HealthTreeItem(health);
+        case 'errored':
+            return new ErrorTreeItem('Failed to load health', health);
+        case 'unloaded':
+            return new HealthTreeItem(
+                loaded({ capabilities: [] }, health.loading),
+            );
+    }
+}
 
 function getSkillReportItem(
     skillReport: Loadable<TopoSkillReport>,
@@ -62,23 +75,9 @@ export class HostTreeView
 
     public getChildren(element?: vscode.TreeItem): vscode.TreeItem[] {
         if (!element) {
-            const skillReportItem = getSkillReportItem(this.model.skillReport);
-
-            const health = this.model.health;
-            if (health.status === 'errored') {
-                return [
-                    new ErrorTreeItem('Failed to load health', health),
-                    skillReportItem,
-                ];
-            }
-
             return [
-                new HealthTreeItem(
-                    health.status === 'loaded'
-                        ? health
-                        : loaded({ capabilities: [] }, health.loading),
-                ),
-                skillReportItem,
+                getHealthReportItem(this.model.health),
+                getSkillReportItem(this.model.skillReport),
             ];
         }
 
@@ -87,12 +86,7 @@ export class HostTreeView
         }
 
         if (element instanceof HealthCapabilityTreeItem) {
-            return element.healthChecks.map(
-                (healthCheck) =>
-                    new HealthCheckTreeItem(
-                        loaded(healthCheck, element.loading),
-                    ),
-            );
+            return element.getChildren();
         }
 
         if (element instanceof SkillGroupTreeItem) {

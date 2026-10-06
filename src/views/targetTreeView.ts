@@ -198,12 +198,7 @@ export class TargetTreeView
         }
 
         if (element instanceof HealthCapabilityTreeItem) {
-            return element.healthChecks.map(
-                (healthCheck) =>
-                    new HealthCheckTreeItem(
-                        loaded(healthCheck, element.loading),
-                    ),
-            );
+            return element.getChildren();
         }
 
         if (element instanceof ProcessingDomainGroupTreeItem) {
