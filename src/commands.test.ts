@@ -60,6 +60,10 @@ describe('commands', () => {
     describe('command handlers', () => {
         const cases: [string, Mock][] = [
             [
+                commandIds.selectContainerEngine,
+                handlers.hostController.selectContainerEngineCommandHandler,
+            ],
+            [
                 commandIds.refreshHost,
                 handlers.hostController.refreshHostCommandHandler,
             ],

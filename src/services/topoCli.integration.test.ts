@@ -2,11 +2,13 @@ import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { TopoCli } from './topoCli';
 import { topo } from '../../package.json';
+import { Config } from './config';
 
 const extensionPath = path.resolve(__dirname, '../..');
 const topoCli = new TopoCli(
     extensionPath,
     {} as vscode.EnvironmentVariableCollection,
+    new Config(),
 );
 const isWindowsCi = process.platform === 'win32' && process.env.CI === 'true';
 

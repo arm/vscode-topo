@@ -14,6 +14,7 @@ export const refreshSelectedTargetHealth = command(
 export const refreshSkillStatus = command('refreshSkillStatus');
 export const showOutput = command('showOutput');
 export const selectTarget = command('selectTarget');
+export const selectContainerEngine = command('selectContainerEngine');
 export const resetExtensionData = command('resetExtensionData');
 export const clearTargetSelection = command('clearTargetSelection');
 export const openSettings = command('openSettings');

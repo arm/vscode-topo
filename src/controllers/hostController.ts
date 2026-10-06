@@ -1,16 +1,59 @@
+import * as vscode from 'vscode';
 import { HostModel } from '../models/hostModel';
 import { TopoCli } from '../services/topoCli';
 import { TopoSkill } from '../services/topoSkill';
 import { errored, loaded, loading } from '../util/loadable';
 import { filterHealthChecks } from '../util/healthReport';
+import { Config } from '../services/config';
+import { CONTAINER_ENGINE_SETTINGS } from '../manifest';
+import { showAndLogError } from '../util/showAndLog';
+import { LatestAbortableWork } from '../util/latestAbortableWork';
 
-export class HostController {
+export class HostController implements vscode.Disposable {
+    private readonly healthRefresh = new LatestAbortableWork();
+
     constructor(
         private readonly hostModel: HostModel,
         private readonly topoCli: TopoCli,
         private readonly topoSkill: TopoSkill,
+        private readonly config: Config,
     ) {
+        this.refreshContainerEngine();
         void this.refreshHostCommandHandler();
+    }
+
+    public refreshContainerEngine(): void {
+        this.hostModel.setContainerEngine(
+            this.config.getContainerEngineSetting(),
+            process.env.TOPO_ENGINE,
+        );
+    }
+
+    public async selectContainerEngineCommandHandler(): Promise<void> {
+        const currentEngine = this.config.getContainerEngineSetting();
+        const environmentEngine = process.env.TOPO_ENGINE?.trim();
+        const selected = await vscode.window.showQuickPick(
+            CONTAINER_ENGINE_SETTINGS.map((engine) => ({
+                label: engine,
+                description: engine === currentEngine ? 'Current' : undefined,
+                detail:
+                    engine === 'auto'
+                        ? 'TOPO_ENGINE env var (or docker if unset)'
+                        : environmentEngine
+                          ? `Override TOPO_ENGINE=${environmentEngine}`
+                          : undefined,
+                engine,
+            })),
+            { title: 'Select Container Engine' },
+        );
+        if (!selected || selected.engine === currentEngine) {
+            return;
+        }
+        try {
+            await this.config.setContainerEngine(selected.engine);
+        } catch (error) {
+            showAndLogError('Failed to change container engine', error);
+        }
     }
 
     public async refreshHostCommandHandler(): Promise<void> {
@@ -23,10 +66,14 @@ export class HostController {
     public async refreshHealthCommandHandler(): Promise<void> {
         this.hostModel.setHealth(loading(this.hostModel.health));
         try {
-            const health = await this.topoCli.hostHealth();
-            this.hostModel.setHealth(
-                loaded(filterHealthChecks(health, 'host')),
+            const health = await this.healthRefresh.run(() =>
+                this.topoCli.hostHealth(),
             );
+            if (health !== undefined) {
+                this.hostModel.setHealth(
+                    loaded(filterHealthChecks(health, 'host')),
+                );
+            }
         } catch (e) {
             this.hostModel.setHealth(errored(e));
         }
@@ -40,5 +87,9 @@ export class HostController {
         } catch (error) {
             this.hostModel.setSkillReport(errored(error));
         }
+    }
+
+    public dispose(): void {
+        this.healthRefresh.dispose();
     }
 }
