@@ -1,14 +1,15 @@
 import * as vscode from 'vscode';
 import { HealthCheckGroupTreeItem } from './healthCheckGroupTreeItem';
 import { loaded, loading } from '../../util/loadable';
+import type { HealthCheck } from '../../services/topoCliSchema';
 
 describe('HealthCheckGroupTreeItem', () => {
     it('sets group metadata for health checks', () => {
-        const healthChecks = [
+        const healthChecks: HealthCheck[] = [
             {
                 name: 'Container Engine',
-                location: 'target' as const,
-                status: 'ok' as const,
+                location: 'target',
+                status: 'ok',
                 value: 'docker',
             },
         ];

@@ -3,7 +3,7 @@ import { HostModel } from '../models/hostModel';
 import { TopoCli } from '../services/topoCli';
 import { TopoSkill } from '../services/topoSkill';
 import { errored, loaded, loading } from '../util/loadable';
-import { getHealthChecks } from '../util/healthReport';
+import { filterHealthChecks } from '../util/healthReport';
 import { Config } from '../services/config';
 import { CONTAINER_ENGINE_SETTINGS } from '../manifest';
 import { showAndLogError } from '../util/showAndLog';
@@ -71,7 +71,7 @@ export class HostController implements vscode.Disposable {
             );
             if (health !== undefined) {
                 this.hostModel.setHealth(
-                    loaded(getHealthChecks(health, 'host')),
+                    loaded(filterHealthChecks(health, 'host')),
                 );
             }
         } catch (e) {
