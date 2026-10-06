@@ -10,6 +10,21 @@ All notable changes to the "vscode-topo" extension will be documented in this fi
 
 
 
+
+## 0.21.0
+
+<!-- Release notes generated using configuration in .github/release.yml at 208bc540c330e96b81399bd79bceefc6ca2777ef -->
+
+## What's Changed
+### Features and Enhancements
+* feat: show `processingDomainDriver` when no remote processors are available (#436)
+* feat: bump topo to version 13.0.0 (#437)
+* feat: initial support for analytics (#435)
+
+
+**Full Changelog**: https://github.com/arm/vscode-topo/compare/v0.20.0...v0.21.0
+
+
 ## 0.20.0
 
 <!-- Release notes generated using configuration in .github/release.yml at aa15cd477b5c22a0db737a275b1c50d9d5b07d4b -->
