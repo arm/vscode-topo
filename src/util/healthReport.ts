@@ -5,16 +5,16 @@ import type {
     TargetHealthCheck,
 } from '../services/topoCliSchema';
 
-export function getHealthChecks(
+export function filterHealthChecks(
     report: HealthReport,
     location: 'host',
 ): HostHealthCheck[];
-export function getHealthChecks(
+export function filterHealthChecks(
     report: HealthReport,
     location: 'target',
 ): TargetHealthCheck[];
 
-export function getHealthChecks(
+export function filterHealthChecks(
     report: HealthReport,
     location: HealthCheck['location'],
 ): HealthCheck[] {

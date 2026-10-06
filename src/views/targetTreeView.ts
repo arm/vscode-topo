@@ -17,7 +17,10 @@ import {
     ProcessingDomainTreeItem,
 } from './treeItems/processingDomainTreeItem';
 import { ProcessingDomainGroupTreeItem } from './treeItems/processingDomainGroupTreeItem';
-import { isTargetConnected } from '../util/assertTargetReady';
+import {
+    isConnectivitySuccessful,
+    isTargetConnected,
+} from '../util/assertTargetReady';
 import { getTargetConnectivityCheck } from '../util/healthReport';
 
 export const TargetSelectionState = {
@@ -72,7 +75,7 @@ function getSelectedTargetChildren(
             return [new ErrorTreeItem('Failed to check target health', health)];
         case 'loaded': {
             const connectivity = getTargetConnectivityCheck(health.data);
-            if (connectivity?.status === 'error') {
+            if (!isConnectivitySuccessful(connectivity)) {
                 return [
                     new HealthCheckTreeItem(
                         loaded(connectivity, health.loading),
@@ -108,13 +111,11 @@ function syncSelectedTargetContext(targetModel: TargetModel): void {
     );
 }
 
-function syncSelectedTargetConnectedContext(targetModel: TargetModel): void {
-    const target = targetModel.selected;
-    const health = targetModel.selectedTargetHealth;
+function syncSelectedTargetConnectedContext(
+    health: Loadable<TargetHealthCheck[]>,
+): void {
     const connected =
-        target !== undefined &&
-        health.status === 'loaded' &&
-        isTargetConnected(health.data);
+        health.status === 'loaded' && isTargetConnected(health.data);
     void vscode.commands.executeCommand(
         'setContext',
         manifest.CONTEXT_SELECTED_TARGET_CONNECTED,
@@ -162,7 +163,9 @@ export class TargetTreeView
                 this.refreshTreeView();
             }),
             this.targetModel.onHealthChanged(() => {
-                syncSelectedTargetConnectedContext(this.targetModel);
+                syncSelectedTargetConnectedContext(
+                    this.targetModel.selectedTargetHealth,
+                );
                 this.refreshTreeView();
             }),
             this.targetModel.onDescriptionChanged(() => {
@@ -171,7 +174,9 @@ export class TargetTreeView
             this._onDidChangeTreeData,
         );
         syncTargetDataIssueContext(this.targetModel.targets);
-        syncSelectedTargetConnectedContext(this.targetModel);
+        syncSelectedTargetConnectedContext(
+            this.targetModel.selectedTargetHealth,
+        );
     }
 
     public getChildren(element?: vscode.TreeItem): vscode.TreeItem[] {

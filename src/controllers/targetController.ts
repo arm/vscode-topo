@@ -14,7 +14,7 @@ import {
 import { errored, Loadable, loaded, loading } from '../util/loadable';
 import { LatestAbortableWork } from '../util/latestAbortableWork';
 import { DisposableCollector } from '../util/disposableCollector';
-import { getHealthChecks } from '../util/healthReport';
+import { filterHealthChecks } from '../util/healthReport';
 
 const corruptedDataMessage =
     'The local target data saved by Topo looks corrupted';
@@ -125,7 +125,7 @@ async function loadTargetHealth(
         return errored(err);
     }
 
-    return loaded(getHealthChecks(health, 'target'));
+    return loaded(filterHealthChecks(health, 'target'));
 }
 
 async function loadTargetDescription(
