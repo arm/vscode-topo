@@ -1,13 +1,9 @@
 import * as vscode from 'vscode';
 import { HostTreeView } from './hostTreeView';
-import { HealthTreeItem } from './treeItems/healthTreeItem';
-import { HealthCheckTreeItem } from './treeItems/healthCheckTreeItem';
 import { HostModel } from '../models/hostModel';
 import { errored, loaded } from '../util/loadable';
 import { ErrorTreeItem } from './treeItems/errorTreeItem';
-import { SkillStatusTreeItem } from './treeItems/skillStatusTreeItem';
 import { LoadingTreeItem } from './treeItems/loadingTreeItem';
-import { SkillGroupTreeItem } from './treeItems/skillGroupTreeItem';
 
 const installedSkillReport = {
     status: 'installed' as const,
@@ -42,30 +38,16 @@ describe('HostTreeView', () => {
         );
     });
 
-    it('returns the skill group and its reported agents', () => {
-        const model = new HostModel();
-        model.setSkillReport(loaded(installedSkillReport));
-        const provider = new HostTreeView(model);
+    it('shows the root groups before reports are loaded', () => {
+        const provider = new HostTreeView(new HostModel());
 
-        const rootChildren = provider.getChildren();
-
-        expect(rootChildren).toHaveLength(2);
-        expect(rootChildren[0]).toBeInstanceOf(HealthTreeItem);
-        expect(rootChildren[0].label).toBe('Health');
-        expect(rootChildren[0].contextValue).toBe('Health');
-        expect(rootChildren[1]).toEqual(
-            new SkillGroupTreeItem(installedSkillReport),
-        );
-
-        const skillChildren = provider.getChildren(rootChildren[1]);
-        expect(skillChildren).toEqual(
-            installedSkillReport.agents.map(
-                (agent) => new SkillStatusTreeItem(agent),
-            ),
-        );
+        expect(provider.getChildren()).toMatchObject([
+            { label: 'Health', contextValue: 'Health' },
+            { label: 'Topo Agent Skill' },
+        ]);
     });
 
-    it('returns host health checks under their capability in CLI order', () => {
+    it('shows health checks and installed agents under their root groups', () => {
         const model = new HostModel();
         model.setHealth(
             loaded({
@@ -74,44 +56,33 @@ describe('HostTreeView', () => {
                         name: 'Deployment',
                         checks: [
                             {
-                                name: 'Zed',
-                                location: 'host',
-                                status: 'warning',
-                                value: 'missing',
-                                fix: {
-                                    description: 'Install Zed',
-                                    command:
-                                        'topo install zed --target ssh://imx93',
-                                },
-                            },
-                            {
-                                name: 'Alpha',
+                                name: 'Container Engine',
                                 location: 'host',
                                 status: 'ok',
-                                value: 'installed',
+                                value: 'docker',
                             },
                         ],
                     },
                 ],
             }),
         );
+        model.setSkillReport(loaded(installedSkillReport));
         const provider = new HostTreeView(model);
 
         const rootChildren = provider.getChildren();
-        const capabilities = provider.getChildren(rootChildren[0]);
-        expect(capabilities.map((item) => item.label)).toEqual(['Deployment']);
-        const children = provider.getChildren(capabilities[0]);
 
-        expect(children).toMatchObject([
-            {
-                label: 'Zed',
-                contextValue: 'HealthCheck Warning Fixable',
-                description: 'missing',
-            },
-            {
-                label: 'Alpha',
-                description: 'installed',
-            },
+        expect(rootChildren).toMatchObject([
+            { label: 'Health' },
+            { label: 'Topo Agent Skill' },
+        ]);
+        const capabilities = provider.getChildren(rootChildren[0]);
+        expect(capabilities).toMatchObject([{ label: 'Deployment' }]);
+        expect(provider.getChildren(capabilities[0])).toMatchObject([
+            { label: 'Container Engine' },
+        ]);
+        expect(provider.getChildren(rootChildren[1])).toMatchObject([
+            { label: 'Claude Code' },
+            { label: 'Codex' },
         ]);
     });
 
@@ -123,11 +94,10 @@ describe('HostTreeView', () => {
 
         const children = provider.getChildren();
 
-        expect(children).toHaveLength(2);
-        expect(children[0]).toMatchObject(
+        expect(children).toMatchObject([
             new ErrorTreeItem('Failed to load health', erroredValue),
-        );
-        expect(children[1]).toEqual(new LoadingTreeItem('Topo Agent Skill'));
+            new LoadingTreeItem('Topo Agent Skill'),
+        ]);
     });
 
     it('returns a loading item while the skill report refreshes', () => {
@@ -151,22 +121,6 @@ describe('HostTreeView', () => {
         expect(children[1]).toMatchObject(
             new ErrorTreeItem('Failed to check Topo Agent Skill', erroredValue),
         );
-    });
-
-    it('getTreeItem returns the element itself', () => {
-        const provider = new HostTreeView(new HostModel());
-        const item = new HealthCheckTreeItem(
-            loaded({
-                name: 'Alpha',
-                location: 'host',
-                status: 'ok',
-                value: 'installed',
-            }),
-        );
-
-        const treeItem = provider.getTreeItem(item);
-
-        expect(treeItem).toBe(item);
     });
 
     it('fires onDidChangeTreeData when host health changes', () => {

@@ -9,10 +9,6 @@ import { TargetDataIssueTreeItem } from './treeItems/targetDataIssueTreeItem';
 import { ErrorTreeItem } from './treeItems/errorTreeItem';
 import { TargetDescription } from '../services/topoCliSchema';
 import { LoadingTreeItem } from './treeItems/loadingTreeItem';
-import {
-    compareProcessingDomains,
-    ProcessingDomainTreeItem,
-} from './treeItems/processingDomainTreeItem';
 import { ProcessingDomainGroupTreeItem } from './treeItems/processingDomainGroupTreeItem';
 import {
     isConnectivitySuccessful,
@@ -28,36 +24,6 @@ export const TargetSelectionState = {
     Unselected: 'unselected',
     Selected: 'selected',
 } as const;
-
-function getProcessingDomainGroupChildren(
-    targetDescription: Loadable<TargetDescription>,
-): vscode.TreeItem[] {
-    if (targetDescription.status === 'errored') {
-        return [
-            new ErrorTreeItem(
-                'Failed to load processing domains',
-                targetDescription,
-            ),
-        ];
-    }
-
-    if (targetDescription.status === 'unloaded') {
-        return [];
-    }
-
-    const processingDomains = [
-        manifest.PRIMARY_PROCESSING_DOMAIN,
-        ...targetDescription.data.remoteProcessors.map(
-            (remoteProcessor) => remoteProcessor.name,
-        ),
-    ];
-
-    return processingDomains
-        .map((processingDomain) => {
-            return new ProcessingDomainTreeItem(processingDomain);
-        })
-        .sort(compareProcessingDomains);
-}
 
 function getSelectedTargetChildren(
     health: Loadable<TargetHealth>,
@@ -193,16 +159,12 @@ export class TargetTreeView
             );
         }
 
-        if (element instanceof HealthTreeItem) {
+        if (
+            element instanceof HealthTreeItem ||
+            element instanceof HealthCapabilityTreeItem ||
+            element instanceof ProcessingDomainGroupTreeItem
+        ) {
             return element.getChildren();
-        }
-
-        if (element instanceof HealthCapabilityTreeItem) {
-            return element.getChildren();
-        }
-
-        if (element instanceof ProcessingDomainGroupTreeItem) {
-            return getProcessingDomainGroupChildren(element.targetDescription);
         }
 
         return [];

@@ -6,7 +6,6 @@ import { HostModel } from '../models/hostModel';
 import { DisposableCollector } from '../util/disposableCollector';
 import { Loadable, loaded } from '../util/loadable';
 import { TopoSkillReport } from '../services/topoSkill';
-import { SkillStatusTreeItem } from './treeItems/skillStatusTreeItem';
 import { LoadingTreeItem } from './treeItems/loadingTreeItem';
 import { SkillGroupTreeItem } from './treeItems/skillGroupTreeItem';
 import { HealthTreeItem } from './treeItems/healthTreeItem';
@@ -81,18 +80,12 @@ export class HostTreeView
             ];
         }
 
-        if (element instanceof HealthTreeItem) {
+        if (
+            element instanceof HealthTreeItem ||
+            element instanceof HealthCapabilityTreeItem ||
+            element instanceof SkillGroupTreeItem
+        ) {
             return element.getChildren();
-        }
-
-        if (element instanceof HealthCapabilityTreeItem) {
-            return element.getChildren();
-        }
-
-        if (element instanceof SkillGroupTreeItem) {
-            return element.report.agents.map(
-                (agent) => new SkillStatusTreeItem(agent),
-            );
         }
 
         return [];

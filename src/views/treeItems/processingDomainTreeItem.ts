@@ -1,27 +1,21 @@
 import * as vscode from 'vscode';
 import { ContainerItem } from '../../util/types';
-import { PRIMARY_PROCESSING_DOMAIN } from '../../manifest';
+import { ContainerTreeItem } from './containerTreeItem';
 
-export function compareProcessingDomains(
-    a: ProcessingDomainTreeItem,
-    b: ProcessingDomainTreeItem,
-): number {
-    if (a.processingDomain === PRIMARY_PROCESSING_DOMAIN) {
+function compareContainers(a: ContainerItem, b: ContainerItem): number {
+    if (a.state === 'running' && b.state !== 'running') {
         return -1;
     }
-    if (b.processingDomain === PRIMARY_PROCESSING_DOMAIN) {
+    if (a.state !== 'running' && b.state === 'running') {
         return 1;
     }
-
-    return a.processingDomain.localeCompare(b.processingDomain, undefined, {
-        sensitivity: 'base',
-    });
+    return a.names.localeCompare(b.names, undefined, { sensitivity: 'base' });
 }
 
 export class ProcessingDomainTreeItem extends vscode.TreeItem {
     constructor(
-        public readonly processingDomain: string,
-        public readonly containers?: readonly ContainerItem[],
+        processingDomain: string,
+        private readonly containers?: readonly ContainerItem[],
     ) {
         super(
             processingDomain,
@@ -34,5 +28,11 @@ export class ProcessingDomainTreeItem extends vscode.TreeItem {
         }
         this.iconPath = new vscode.ThemeIcon('multiple-windows');
         this.contextValue = `ProcessingDomain ${processingDomain}`;
+    }
+
+    public getChildren(): ContainerTreeItem[] {
+        return (this.containers ?? [])
+            .toSorted(compareContainers)
+            .map((container) => new ContainerTreeItem(container));
     }
 }

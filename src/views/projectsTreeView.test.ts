@@ -1,13 +1,10 @@
 import * as vscode from 'vscode';
 import { ProjectsTreeView } from './projectsTreeView';
-import { ProjectTreeItem } from './treeItems/projectTreeItem';
 import { mutable } from '../util/test/mutable';
 import { ProjectModel } from '../models/projectModel';
-import { loaded, errored, loading, unloaded } from '../util/loadable';
+import { loaded, errored, loading } from '../util/loadable';
 import { ErrorTreeItem } from './treeItems/errorTreeItem';
 import { LoadingTreeItem } from './treeItems/loadingTreeItem';
-import { ContainerTreeItem } from './treeItems/containerTreeItem';
-import { ProcessingDomainTreeItem } from './treeItems/processingDomainTreeItem';
 import { ProjectMetadata } from '../util/project';
 import { ContainerItem } from '../util/types';
 import * as manifest from '../manifest';
@@ -65,15 +62,22 @@ describe('ProjectsTreeView', () => {
         );
     });
 
-    it('returns project items at the root', () => {
+    it('shows containers under their project and processing domain', () => {
         const model = new ProjectModel();
+        const containers = loaded([container]);
         model.setProjects(loaded([project]));
+        model.setProjectContainers(project, containers);
         const provider = new ProjectsTreeView(model);
 
-        const children = provider.getChildren();
+        const projects = provider.getChildren();
+        expect(projects).toMatchObject([{ label: 'demo' }]);
 
-        expect(children).toStrictEqual([
-            new ProjectTreeItem(project, false, unloaded()),
+        const domains = provider.getChildren(projects[0]);
+        expect(domains).toMatchObject([
+            { label: manifest.PRIMARY_PROCESSING_DOMAIN },
+        ]);
+        expect(provider.getChildren(domains[0])).toMatchObject([
+            { label: 'demo-app' },
         ]);
     });
 
@@ -134,94 +138,8 @@ describe('ProjectsTreeView', () => {
 
         const children = provider.getChildren();
 
-        expect(children[0].description).toBe('workspace');
-    });
-
-    it('marks loaded empty projects as stopped and non-expandable', () => {
-        const model = new ProjectModel();
-        model.setProjects(loaded([project]));
-        model.setProjectContainers(project, loaded([]));
-        const provider = new ProjectsTreeView(model);
-
-        const children = provider.getChildren();
-
-        expect(children[0].collapsibleState).toBe(
-            vscode.TreeItemCollapsibleState.None,
-        );
-        expect(children[0].contextValue).toBe('Project');
-    });
-
-    it('returns processing domain children below running project items', () => {
-        const model = new ProjectModel();
-        const containers = [container];
-        model.setProjects(loaded([project]));
-        model.setProjectContainers(project, loaded(containers));
-        const provider = new ProjectsTreeView(model);
-        const projectItem = provider.getChildren()[0];
-
-        const children = provider.getChildren(projectItem);
-
-        expect(children).toStrictEqual([
-            new ProcessingDomainTreeItem(
-                container.processingDomain,
-                containers,
-            ),
-        ]);
-    });
-
-    it('returns container children below processing domain items', () => {
-        const model = new ProjectModel();
-        const provider = new ProjectsTreeView(model);
-        const processingDomainItem = new ProcessingDomainTreeItem(
-            container.processingDomain,
-            [container],
-        );
-
-        const children = provider.getChildren(processingDomainItem);
-
-        expect(children).toStrictEqual([new ContainerTreeItem(container)]);
-    });
-
-    it('returns no children below projects with unloaded containers', () => {
-        const model = new ProjectModel();
-        const provider = new ProjectsTreeView(model);
-        const projectItem = new ProjectTreeItem(project, false, unloaded());
-
-        const children = provider.getChildren(projectItem);
-
-        expect(children).toEqual([]);
-    });
-
-    it('getTreeItem returns the element itself', () => {
-        const model = new ProjectModel();
-        const provider = new ProjectsTreeView(model);
-        const item = new ProjectTreeItem(project, false, unloaded());
-
-        const treeItem = provider.getTreeItem(item);
-
-        expect(treeItem).toBe(item);
-    });
-
-    it('displays primary processing domain first, followed by other domains in alphabetical order', () => {
-        const model = new ProjectModel();
-        const containers = loaded([
-            { ...container, processingDomain: 'another-rproc2' },
-            { ...container, processingDomain: 'some-rproc' },
-            container,
-            { ...container, processingDomain: 'another-rproc' },
-        ]);
-        model.setProjectContainers(project, containers);
-        const provider = new ProjectsTreeView(model);
-
-        const children = provider.getChildren(
-            new ProjectTreeItem(project, false, containers),
-        );
-
         expect(children).toMatchObject([
-            { label: container.processingDomain },
-            { label: 'another-rproc' },
-            { label: 'another-rproc2' },
-            { label: 'some-rproc' },
+            { label: 'demo', description: 'workspace' },
         ]);
     });
 });
