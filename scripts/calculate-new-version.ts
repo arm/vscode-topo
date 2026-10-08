@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { spawnSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 
 type Version = { major: number; minor: number; patch: number };
 type Manifest = { name?: string; publisher?: string; version?: string };
@@ -60,7 +60,39 @@ const getLatestPrereleaseVersion = (id: string): Version | undefined => {
     }
 };
 
-function calculateNewVersion(releaseType: string): string {
+function getStableVersion(action: 'current' | 'next'): Version {
+    const output = execFileSync(
+        'go',
+        [
+            'run',
+            'github.com/caarlos0/svu/v3@v3.4.0',
+            action,
+            '--json',
+            '--tag.pattern',
+            'v*.*[02468].*',
+            '--tag.mode',
+            'current',
+            ...(action === 'next' ? ['--v0'] : []),
+        ],
+        { encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'] },
+    );
+    return JSON.parse(output) as Version;
+}
+
+function calculateNewVersion(preRelease: boolean): string {
+    if (!preRelease) {
+        const current = getStableVersion('current');
+        const next = getStableVersion('next');
+        if (!greaterThan(next, current)) {
+            return '';
+        }
+        // Reserve odd minor versions for prereleases.
+        if (next.minor % 2 !== 0) {
+            next.minor += 1;
+        }
+        return formatVersion(next);
+    }
+
     const packageJson = join(process.cwd(), 'package.json');
     if (!existsSync(packageJson)) {
         throw new Error('package.json not found in the current directory');
@@ -80,54 +112,26 @@ function calculateNewVersion(releaseType: string): string {
         throw new Error('package.json version must use major.minor.patch');
     }
 
-    if (current.major === 0 && current.minor === 0 && current.patch === 0) {
-        return '0.0.1';
+    const latest = getLatestPrereleaseVersion(`${publisher}.${name}`);
+    if (latest && greaterThan(latest, current)) {
+        return formatVersion({
+            major: latest.major,
+            minor: latest.minor,
+            patch: latest.patch + 1,
+        });
     }
 
-    const oddMinor = current.minor % 2 !== 0;
-    const preFallback = formatVersion({
+    return formatVersion({
         major: current.major,
-        minor: oddMinor ? current.minor + 2 : current.minor + 1,
+        minor: current.minor + (current.minor % 2 !== 0 ? 2 : 1),
         patch: 0,
     });
-
-    let next: string;
-    if (releaseType === 'Major') {
-        next = formatVersion({ major: current.major + 1, minor: 0, patch: 0 });
-    } else if (releaseType === 'Minor') {
-        next = formatVersion({
-            major: current.major,
-            minor: oddMinor ? current.minor + 1 : current.minor + 2,
-            patch: 0,
-        });
-    } else if (releaseType === 'Patch') {
-        next = formatVersion({
-            major: current.major,
-            minor: current.minor,
-            patch: current.patch + 1,
-        });
-    } else if (releaseType === 'Pre-release') {
-        const latest = getLatestPrereleaseVersion(`${publisher}.${name}`);
-        if (latest && greaterThan(latest, current)) {
-            next = formatVersion({
-                major: latest.major,
-                minor: latest.minor,
-                patch: latest.patch + 1,
-            });
-        } else {
-            next = preFallback;
-        }
-    } else if (releaseType === 'None') {
-        next = '';
-    } else {
-        throw new Error(`Unknown release type: ${releaseType}`);
-    }
-
-    return next;
 }
 
 try {
-    const newVersion = calculateNewVersion(process.env.RELEASE_TYPE || 'None');
+    const newVersion = calculateNewVersion(
+        process.argv.includes('--pre-release'),
+    );
     console.log(newVersion);
 } catch (e) {
     console.error(e instanceof Error ? e.message : String(e));
