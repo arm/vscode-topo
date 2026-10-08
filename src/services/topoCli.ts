@@ -103,6 +103,7 @@ export class TopoCli {
                 ...options,
                 env: {
                     ...process.env,
+                    TOPO_DISABLE_SELF_UPGRADE: '1',
                 },
             });
             out = stdout;
