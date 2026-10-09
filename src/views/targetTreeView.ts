@@ -1,16 +1,13 @@
 import * as vscode from 'vscode';
 import * as manifest from '../manifest';
-import { HealthCheckGroupTreeItem } from './treeItems/healthCheckGroupTreeItem';
+import { HealthCapabilityTreeItem } from './treeItems/healthCapabilityTreeItem';
 import { HealthCheckTreeItem } from './treeItems/healthCheckTreeItem';
 import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
 import { Loadable, loaded } from '../util/loadable';
 import { TargetDataIssueTreeItem } from './treeItems/targetDataIssueTreeItem';
 import { ErrorTreeItem } from './treeItems/errorTreeItem';
-import {
-    TargetDescription,
-    TargetHealthCheck,
-} from '../services/topoCliSchema';
+import { TargetDescription } from '../services/topoCliSchema';
 import { LoadingTreeItem } from './treeItems/loadingTreeItem';
 import {
     compareProcessingDomains,
@@ -18,18 +15,19 @@ import {
 } from './treeItems/processingDomainTreeItem';
 import { ProcessingDomainGroupTreeItem } from './treeItems/processingDomainGroupTreeItem';
 import {
-    getTargetConnectivityFailure,
+    isConnectivitySuccessful,
     isTargetConnected,
 } from '../util/assertTargetReady';
+import {
+    getTargetConnectivityCheck,
+    type TargetHealth,
+} from '../util/healthReport';
+import { HealthTreeItem } from './treeItems/healthTreeItem';
 
 export const TargetSelectionState = {
     Unselected: 'unselected',
     Selected: 'selected',
 } as const;
-
-function compareByName(a: { name: string }, b: { name: string }): number {
-    return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
-}
 
 function getProcessingDomainGroupChildren(
     targetDescription: Loadable<TargetDescription>,
@@ -62,7 +60,7 @@ function getProcessingDomainGroupChildren(
 }
 
 function getSelectedTargetChildren(
-    health: Loadable<TargetHealthCheck[]>,
+    health: Loadable<TargetHealth>,
     targetDescription: Loadable<TargetDescription>,
 ): vscode.TreeItem[] {
     switch (health.status) {
@@ -73,18 +71,16 @@ function getSelectedTargetChildren(
         case 'errored':
             return [new ErrorTreeItem('Failed to check target health', health)];
         case 'loaded': {
-            const connectivityFailure = getTargetConnectivityFailure(
-                health.data,
-            );
-            if (connectivityFailure) {
+            const connectivity = getTargetConnectivityCheck(health.data);
+            if (!isConnectivitySuccessful(connectivity)) {
                 return [
                     new HealthCheckTreeItem(
-                        loaded(connectivityFailure, health.loading),
+                        loaded(connectivity, health.loading),
                     ),
                 ];
             }
 
-            const healthGroup = new HealthCheckGroupTreeItem(health);
+            const healthGroup = new HealthTreeItem(health);
             const processingDomainGroup = new ProcessingDomainGroupTreeItem(
                 targetDescription,
             );
@@ -113,7 +109,7 @@ function syncSelectedTargetContext(targetModel: TargetModel): void {
 }
 
 function syncSelectedTargetConnectedContext(
-    health: Loadable<TargetHealthCheck[]>,
+    health: Loadable<TargetHealth>,
 ): void {
     const connected =
         health.status === 'loaded' && isTargetConnected(health.data);
@@ -197,11 +193,12 @@ export class TargetTreeView
             );
         }
 
-        if (element instanceof HealthCheckGroupTreeItem) {
-            const healthChecks = element.healthChecks.toSorted(compareByName);
-            return healthChecks.map(
-                (healthCheck) => new HealthCheckTreeItem(loaded(healthCheck)),
-            );
+        if (element instanceof HealthTreeItem) {
+            return element.getChildren();
+        }
+
+        if (element instanceof HealthCapabilityTreeItem) {
+            return element.getChildren();
         }
 
         if (element instanceof ProcessingDomainGroupTreeItem) {

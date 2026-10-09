@@ -12,7 +12,7 @@ const hostCheck: HostHealthCheck = {
     value: 'docker',
     location: 'host',
 };
-const hostHealth: HealthReport = {
+const healthReport: HealthReport = {
     capabilities: [
         {
             name: 'Deployment',
@@ -28,6 +28,9 @@ const hostHealth: HealthReport = {
             ],
         },
     ],
+};
+const hostHealth = {
+    capabilities: [{ name: 'Deployment', checks: [hostCheck] }],
 };
 const installedSkillReport = {
     status: 'installed' as const,
@@ -49,9 +52,9 @@ describe('HostController', () => {
         vi.clearAllMocks();
     });
 
-    it('refreshes only host checks and skill status on creation', async () => {
+    it('refreshes host health and skill status on creation', async () => {
         const topoCli = mock<TopoCli>({
-            hostHealth: vi.fn().mockResolvedValue(hostHealth),
+            hostHealth: vi.fn().mockResolvedValue(healthReport),
         });
         const topoSkill = mock<TopoSkill>({
             getReport: vi.fn().mockResolvedValue(installedSkillReport),
@@ -60,7 +63,7 @@ describe('HostController', () => {
 
         new HostController(model, topoCli, topoSkill);
         await vi.waitFor(() => {
-            expect(model.health).toStrictEqual(loaded([hostCheck]));
+            expect(model.health).toStrictEqual(loaded(hostHealth));
             expect(model.skillReport).toStrictEqual(
                 loaded(installedSkillReport),
             );
@@ -72,7 +75,7 @@ describe('HostController', () => {
 
     it('refreshes host health and skill status on command', async () => {
         const topoCli = mock<TopoCli>({
-            hostHealth: vi.fn().mockResolvedValue(hostHealth),
+            hostHealth: vi.fn().mockResolvedValue(healthReport),
         });
         const topoSkill = mock<TopoSkill>({
             getReport: vi.fn().mockResolvedValue(missingSkillReport),
@@ -89,7 +92,7 @@ describe('HostController', () => {
 
         expect(topoCli.hostHealth).toHaveBeenCalledOnce();
         expect(topoSkill.getReport).toHaveBeenCalledOnce();
-        expect(model.health).toStrictEqual(loaded([hostCheck]));
+        expect(model.health).toStrictEqual(loaded(hostHealth));
         expect(model.skillReport).toStrictEqual(loaded(installedSkillReport));
     });
 });

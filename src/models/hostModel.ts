@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { HostHealthCheck } from '../services/topoCliSchema';
+import type { HostHealth } from '../util/healthReport';
 import { Loadable, unloaded } from '../util/loadable';
 import { TopoSkillReport } from '../services/topoSkill';
 
@@ -14,15 +14,15 @@ export class HostModel implements vscode.Disposable {
     public readonly onSkillReportChanged: vscode.Event<void> =
         this._onSkillReportChanged.event;
 
-    private _health: Loadable<HostHealthCheck[]> = unloaded();
+    private _health: Loadable<HostHealth> = unloaded();
     private _skillReport: Loadable<TopoSkillReport> = unloaded();
 
-    public setHealth(health: Loadable<HostHealthCheck[]>): void {
+    public setHealth(health: Loadable<HostHealth>): void {
         this._health = health;
         this._onHealthChanged.fire();
     }
 
-    public get health(): Loadable<HostHealthCheck[]> {
+    public get health(): Loadable<HostHealth> {
         return this._health;
     }
 

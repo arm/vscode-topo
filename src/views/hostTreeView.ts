@@ -1,8 +1,6 @@
 import * as vscode from 'vscode';
 import { PACKAGE_NAME } from '../manifest';
-import { HostHealthCheck } from '../services/topoCliSchema';
-import { HealthCheckGroupTreeItem } from './treeItems/healthCheckGroupTreeItem';
-import { HealthCheckTreeItem } from './treeItems/healthCheckTreeItem';
+import { HealthCapabilityTreeItem } from './treeItems/healthCapabilityTreeItem';
 import { ErrorTreeItem } from './treeItems/errorTreeItem';
 import { HostModel } from '../models/hostModel';
 import { DisposableCollector } from '../util/disposableCollector';
@@ -11,13 +9,20 @@ import { TopoSkillReport } from '../services/topoSkill';
 import { SkillStatusTreeItem } from './treeItems/skillStatusTreeItem';
 import { LoadingTreeItem } from './treeItems/loadingTreeItem';
 import { SkillGroupTreeItem } from './treeItems/skillGroupTreeItem';
+import { HealthTreeItem } from './treeItems/healthTreeItem';
+import type { HostHealth } from '../util/healthReport';
 
-function sortHealthChecksByName(
-    healthChecks: readonly HostHealthCheck[],
-): HostHealthCheck[] {
-    return healthChecks.toSorted((a, b) =>
-        a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
-    );
+function getHealthReportItem(health: Loadable<HostHealth>): vscode.TreeItem {
+    switch (health.status) {
+        case 'loaded':
+            return new HealthTreeItem(health);
+        case 'errored':
+            return new ErrorTreeItem('Failed to load health', health);
+        case 'unloaded':
+            return new HealthTreeItem(
+                loaded({ capabilities: [] }, health.loading),
+            );
+    }
 }
 
 function getSkillReportItem(
@@ -70,32 +75,18 @@ export class HostTreeView
 
     public getChildren(element?: vscode.TreeItem): vscode.TreeItem[] {
         if (!element) {
-            const skillReportItem = getSkillReportItem(this.model.skillReport);
-
-            const health = this.model.health;
-            if (health.status === 'errored') {
-                return [
-                    new ErrorTreeItem('Failed to load health', health),
-                    skillReportItem,
-                ];
-            }
-
-            const healthChecks =
-                health.status === 'loaded'
-                    ? sortHealthChecksByName(health.data)
-                    : [];
             return [
-                new HealthCheckGroupTreeItem(
-                    loaded(healthChecks, health.loading),
-                ),
-                skillReportItem,
+                getHealthReportItem(this.model.health),
+                getSkillReportItem(this.model.skillReport),
             ];
         }
 
-        if (element instanceof HealthCheckGroupTreeItem) {
-            return element.healthChecks.map(
-                (healthCheck) => new HealthCheckTreeItem(loaded(healthCheck)),
-            );
+        if (element instanceof HealthTreeItem) {
+            return element.getChildren();
+        }
+
+        if (element instanceof HealthCapabilityTreeItem) {
+            return element.getChildren();
         }
 
         if (element instanceof SkillGroupTreeItem) {

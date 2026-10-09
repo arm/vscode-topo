@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { refreshSelectedTargetHealth } from '../commandIds';
-import { HealthCheckGroupTreeItem } from '../views/treeItems/healthCheckGroupTreeItem';
 import { HealthCheckTreeItem } from '../views/treeItems/healthCheckTreeItem';
+import { HealthTreeItem } from '../views/treeItems/healthTreeItem';
 import { showAndLogError } from '../util/showAndLog';
 import { runTask } from '../util/task';
 import { TargetModel } from '../models/targetModel';
@@ -34,13 +34,13 @@ export class FixIssue {
     ) {}
 
     public async fixIssueCommandHandler(treeNode: unknown): Promise<void> {
-        if (treeNode instanceof HealthCheckGroupTreeItem) {
-            await this.fixHealthGroupChecksFromTreeItem(treeNode);
+        if (treeNode instanceof HealthTreeItem) {
+            await this.fixHealthFromTreeItem(treeNode);
         } else if (treeNode instanceof HealthCheckTreeItem) {
             await this.fixIssueFromTreeItem(treeNode);
         } else {
             throw new Error(
-                `Invalid item for fix issues: expected HealthCheckGroupTreeItem or HealthCheckTreeItem but received: ${String(treeNode)}`,
+                `Invalid item for fix issues: expected HealthTreeItem or HealthCheckTreeItem but received: ${String(treeNode)}`,
             );
         }
 
@@ -67,16 +67,15 @@ export class FixIssue {
         );
     }
 
-    private async fixHealthGroupChecksFromTreeItem(
-        healthGroupItem: HealthCheckGroupTreeItem,
+    private async fixHealthFromTreeItem(
+        healthItem: HealthTreeItem,
     ): Promise<void> {
         const target = this.targetModel.selected;
         if (!target) {
             throw new Error('No selected target found');
         }
 
-        const fixableIssues =
-            healthGroupItem.healthChecks.filter(hasFixCommand);
+        const fixableIssues = healthItem.healthChecks.filter(hasFixCommand);
         if (fixableIssues.length === 0) {
             throw new Error(
                 `No executable issue fixes found for target ${target}`,
