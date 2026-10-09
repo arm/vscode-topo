@@ -2,7 +2,7 @@
     "compilerOptions": {
         "target": "ES2023",
         "module": "commonjs",
-        "lib": ["ES2023"],
+        "lib": ["ES2023", "ES2024.Collection"],
         "types": ["node", "vitest/globals"],
         "sourceMap": true,
         "strict": true,

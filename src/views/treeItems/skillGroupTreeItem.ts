@@ -1,8 +1,9 @@
 import * as vscode from 'vscode';
 import { TopoSkillReport } from '../../services/topoSkill';
+import { SkillStatusTreeItem } from './skillStatusTreeItem';
 
 export class SkillGroupTreeItem extends vscode.TreeItem {
-    constructor(public readonly report: TopoSkillReport) {
+    constructor(private readonly report: TopoSkillReport) {
         super(
             'Topo Agent Skill',
             report.agents.length > 0
@@ -40,5 +41,11 @@ export class SkillGroupTreeItem extends vscode.TreeItem {
                 this.contextValue = 'TopoSkillInstallAvailable';
                 break;
         }
+    }
+
+    public getChildren(): SkillStatusTreeItem[] {
+        return this.report.agents.map(
+            (agent) => new SkillStatusTreeItem(agent),
+        );
     }
 }
