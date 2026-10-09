@@ -32,10 +32,6 @@ describe('isTargetConnected', () => {
                 location: 'target',
                 status,
                 value: 'connection details',
-                fix: {
-                    description: 'Set up SSH keys',
-                    command: 'topo setup-keys',
-                },
             };
 
             expect(
