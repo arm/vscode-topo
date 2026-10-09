@@ -3,7 +3,7 @@ import { HealthCheckTreeItem } from './healthCheckTreeItem';
 import { loaded } from '../../util/loadable';
 
 describe('HealthCheckTreeItem', () => {
-    it('sets label and description', () => {
+    it('sets label, description, context value and icon for an ok health check', () => {
         const item = new HealthCheckTreeItem(
             loaded({
                 name: 'Container Engine',
@@ -15,18 +15,6 @@ describe('HealthCheckTreeItem', () => {
 
         expect(item.label).toBe('Container Engine');
         expect(item.description).toBe('docker');
-    });
-
-    it('sets context value and icon for an ok health check', () => {
-        const item = new HealthCheckTreeItem(
-            loaded({
-                name: 'Container Engine',
-                location: 'target',
-                value: 'docker',
-                status: 'ok',
-            }),
-        );
-
         expect(item.contextValue).toBe('HealthCheck Ok');
         expect(item.iconPath).toStrictEqual(
             new vscode.ThemeIcon(

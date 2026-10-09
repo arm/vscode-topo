@@ -2,8 +2,43 @@ import type { TargetHealthCheck } from '../services/topoCliSchema';
 import {
     assertTargetConnected,
     assertTargetSelected,
+    isTargetConnected,
 } from './assertTargetReady';
 import { errored, loaded, loading, unloaded } from './loadable';
+
+describe('isTargetConnected', () => {
+    it('treats local targets without a connectivity check as connected', () => {
+        expect(isTargetConnected([])).toBe(true);
+    });
+
+    it.each<{ status: TargetHealthCheck['status']; connected: boolean }>([
+        { status: 'ok', connected: true },
+        { status: 'warning', connected: true },
+        { status: 'info', connected: true },
+        { status: 'undetermined', connected: true },
+        { status: 'error', connected: false },
+    ])(
+        'reports connected=$connected for $status connectivity, ignoring dependency errors',
+        ({ status, connected }) => {
+            const dependencyFailure: TargetHealthCheck = {
+                name: 'Container Engine',
+                location: 'target',
+                status: 'error',
+                value: 'unavailable',
+            };
+            const connectivity: TargetHealthCheck = {
+                name: 'Connectivity',
+                location: 'target',
+                status,
+                value: 'connection details',
+            };
+
+            expect(isTargetConnected([dependencyFailure, connectivity])).toBe(
+                connected,
+            );
+        },
+    );
+});
 
 describe('assertTargetSelected', () => {
     it('accepts a selected target', () => {
@@ -40,14 +75,17 @@ describe('assertTargetConnected', () => {
         ).not.toThrow();
     });
 
-    it('throws a target error when target health is loading', () => {
-        expect(() => assertTargetConnected(target, unloaded(true))).toThrow(
-            'Target topo.local health is still being checked. Wait for target health checks to finish.',
-        );
-    });
+    it.each([unloaded(true), loading(errored('health check failed'))])(
+        'waits for a health report while $status health is loading',
+        (health) => {
+            expect(() => assertTargetConnected(target, health)).toThrow(
+                'Target topo.local health is still being checked. Wait for target health checks to finish.',
+            );
+        },
+    );
 
     it.each([unloaded(), errored('health check failed')])(
-        'throws a target error when target health is unavailable',
+        'reports unavailable health when the report is $status and no check is running',
         (health) => {
             expect(() => assertTargetConnected(target, health)).toThrow(
                 'Target topo.local health is unavailable. Refresh target health and try again.',
