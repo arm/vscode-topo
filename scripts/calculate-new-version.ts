@@ -5,6 +5,9 @@ import { execFileSync, spawnSync } from 'node:child_process';
 type Version = { major: number; minor: number; patch: number };
 type Manifest = { name?: string; publisher?: string; version?: string };
 
+// Like svu --v0, keep breaking changes on 0.x. Set to false to allow a major bump.
+const keepMajorZero = true;
+
 function parseVersion(v: string): Version | undefined {
     const m = /^(\d+)\.(\d+)\.(\d+)$/.exec(v.trim());
 
@@ -60,37 +63,62 @@ const getLatestPrereleaseVersion = (id: string): Version | undefined => {
     }
 };
 
-function getStableVersion(action: 'current' | 'next'): Version {
-    const output = execFileSync(
-        'go',
-        [
-            'run',
-            'github.com/caarlos0/svu/v3@v3.4.0',
-            action,
-            '--json',
-            '--tag.pattern',
-            'v*.*[02468].*',
-            '--tag.mode',
-            'current',
-            ...(action === 'next' ? ['--v0'] : []),
-        ],
-        { encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'] },
+function git(...args: string[]): string {
+    return execFileSync('git', args, {
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'inherit'],
+    }).trim();
+}
+
+function calculateStableVersion(): string {
+    // Only even-minor release tags reachable from HEAD are stable baselines.
+    const tag = git('tag', '--merged', 'HEAD', '--sort=-version:refname')
+        .split('\n')
+        .find((tag) => /^v\d+\.\d*[02468]\.\d+$/.test(tag));
+    const current = tag && parseVersion(tag.slice(1));
+    if (!current) {
+        throw new Error('No stable release tag found');
+    }
+
+    const messages = git(
+        '-c',
+        'log.showSignature=false',
+        'log',
+        `refs/tags/${tag}..HEAD`,
+        '--no-decorate',
+        '--no-color',
+        '--format=%B%x00',
+    )
+        .split('\0')
+        .map((message) => message.trim());
+    const breaking = messages.some(
+        (message) =>
+            /^\w+(\(.*\))?!:/i.test(message) ||
+            /\nBREAKING[ -]CHANGE:/.test(message),
     );
-    return JSON.parse(output) as Version;
+
+    if (breaking && (!keepMajorZero || current.major > 0)) {
+        return formatVersion({ major: current.major + 1, minor: 0, patch: 0 });
+    }
+    if (
+        breaking ||
+        messages.some((message) => /^feat(\(.*\))?:/i.test(message))
+    ) {
+        return formatVersion({
+            ...current,
+            minor: current.minor + 2,
+            patch: 0,
+        });
+    }
+    if (messages.some((message) => /^fix(\(.*\))?:/i.test(message))) {
+        return formatVersion({ ...current, patch: current.patch + 1 });
+    }
+    return '';
 }
 
 function calculateNewVersion(preRelease: boolean): string {
     if (!preRelease) {
-        const current = getStableVersion('current');
-        const next = getStableVersion('next');
-        if (!greaterThan(next, current)) {
-            return '';
-        }
-        // Reserve odd minor versions for prereleases.
-        if (next.minor % 2 !== 0) {
-            next.minor += 1;
-        }
-        return formatVersion(next);
+        return calculateStableVersion();
     }
 
     const packageJson = join(process.cwd(), 'package.json');
