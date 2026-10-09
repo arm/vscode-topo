@@ -4,7 +4,7 @@ import { FixIssue, createFixIssueTask } from './fixIssue';
 import { loaded } from '../util/loadable';
 import { HealthCheckGroupTreeItem } from '../views/treeItems/healthCheckGroupTreeItem';
 import { HealthCheckTreeItem } from '../views/treeItems/healthCheckTreeItem';
-import { HealthCheck } from '../services/topoCliSchema';
+import { TargetHealthCheck } from '../services/topoCliSchema';
 import { TargetModel } from '../models/targetModel';
 import { refreshSelectedTargetHealth } from '../commandIds';
 import { runTask } from '../util/task';
@@ -40,7 +40,7 @@ describe('FixIssue', () => {
         'Fix task',
         'topo',
     );
-    const healthChecks: HealthCheck[] = [
+    const healthChecks: TargetHealthCheck[] = [
         {
             name: 'Container Engine',
             location: 'target',
@@ -73,7 +73,7 @@ describe('FixIssue', () => {
         new FixIssue(taskFactory, targetModel);
 
     const createHealthGroupItem = (
-        targetHealthChecks: HealthCheck[],
+        targetHealthChecks: TargetHealthCheck[],
     ): HealthCheckGroupTreeItem =>
         new HealthCheckGroupTreeItem(loaded(targetHealthChecks));
 
@@ -288,7 +288,7 @@ describe('FixIssue', () => {
 
     it('runs a shared target issue fix only once', async () => {
         const sharedCommand = `topo install remoteproc --target ${target}`;
-        const remoteprocRuntime: HealthCheck = {
+        const remoteprocRuntime: TargetHealthCheck = {
             name: 'Remoteproc Runtime',
             location: 'target',
             status: 'error',
@@ -298,7 +298,7 @@ describe('FixIssue', () => {
                 command: sharedCommand,
             },
         };
-        const remoteprocShim: HealthCheck = {
+        const remoteprocShim: TargetHealthCheck = {
             name: 'Remoteproc Shim',
             location: 'target',
             status: 'error',
