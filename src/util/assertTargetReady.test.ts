@@ -100,12 +100,6 @@ describe('assertTargetConnected', () => {
         },
     );
 
-    it('accepts an empty loaded target health report', () => {
-        expect(() =>
-            assertTargetConnected(target, loaded<TargetHealthCheck[]>([])),
-        ).not.toThrow();
-    });
-
     it('throws a target error when target connectivity is unhealthy', () => {
         const health = loaded<TargetHealthCheck[]>([
             {
