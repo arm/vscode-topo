@@ -2,6 +2,7 @@ import type { TargetHealthCheck } from '../services/topoCliSchema';
 import {
     assertTargetConnected,
     assertTargetSelected,
+    getTargetConnectivityFailure,
     isTargetConnected,
 } from './assertTargetReady';
 import { errored, loaded, loading, unloaded } from './loadable';
@@ -10,16 +11,18 @@ describe('isTargetConnected', () => {
     it('treats local targets without a connectivity check as connected', () => {
         expect(isTargetConnected([])).toBe(true);
     });
+});
 
-    it.each<{ status: TargetHealthCheck['status']; connected: boolean }>([
-        { status: 'ok', connected: true },
-        { status: 'warning', connected: true },
-        { status: 'info', connected: true },
-        { status: 'undetermined', connected: true },
-        { status: 'error', connected: false },
+describe('getTargetConnectivityFailure', () => {
+    it.each<{ status: TargetHealthCheck['status']; failed: boolean }>([
+        { status: 'ok', failed: false },
+        { status: 'warning', failed: false },
+        { status: 'info', failed: false },
+        { status: 'undetermined', failed: false },
+        { status: 'error', failed: true },
     ])(
-        'reports connected=$connected for $status connectivity, ignoring dependency errors',
-        ({ status, connected }) => {
+        'reports failure=$failed for $status connectivity, ignoring dependency errors',
+        ({ status, failed }) => {
             const dependencyFailure: TargetHealthCheck = {
                 name: 'Container Engine',
                 location: 'target',
@@ -31,11 +34,15 @@ describe('isTargetConnected', () => {
                 location: 'target',
                 status,
                 value: 'connection details',
+                fix: {
+                    description: 'Set up SSH keys',
+                    command: 'topo setup-keys',
+                },
             };
 
-            expect(isTargetConnected([dependencyFailure, connectivity])).toBe(
-                connected,
-            );
+            expect(
+                getTargetConnectivityFailure([dependencyFailure, connectivity]),
+            ).toEqual(failed ? connectivity : undefined);
         },
     );
 });

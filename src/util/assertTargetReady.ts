@@ -6,7 +6,20 @@ import { getTargetConnectivityCheck } from './healthReport';
 export function isTargetConnected(
     health: readonly TargetHealthCheck[],
 ): boolean {
-    return isConnectivitySuccessful(getTargetConnectivityCheck(health));
+    return getTargetConnectivityFailure(health) === undefined;
+}
+
+export function getTargetConnectivityFailure(
+    health: readonly TargetHealthCheck[],
+): TargetHealthCheck | undefined {
+    const connectivity = getTargetConnectivityCheck(health);
+    const isTargetLocal = connectivity === undefined;
+
+    if (isTargetLocal) {
+        return undefined;
+    }
+
+    return connectivity.status === 'error' ? connectivity : undefined;
 }
 
 export function assertTargetSelected(
@@ -24,41 +37,36 @@ export function assertTargetConnected(
     target: string,
     health: Loadable<TargetHealthCheck[]>,
 ): asserts health is Loaded<TargetHealthCheck[]> {
-    if (health.status === 'loaded') {
-        const connectivity = getTargetConnectivityCheck(health.data);
-        if (isConnectivitySuccessful(connectivity)) {
-            return;
-        }
+    const pendingHealthMessage = `Target ${target} health is still being checked. Wait for target health checks to finish.`;
 
-        if (!health.loading) {
+    switch (health.status) {
+        case 'unloaded':
+        case 'errored':
             throw new WrappedError(
                 'TARGET',
-                getTargetConnectivityFailureMessage(target, connectivity),
+                health.loading
+                    ? pendingHealthMessage
+                    : `Target ${target} health is unavailable. Refresh target health and try again.`,
+            );
+        case 'loaded': {
+            const connectivityFailure = getTargetConnectivityFailure(
+                health.data,
+            );
+            if (!connectivityFailure) {
+                return;
+            }
+
+            throw new WrappedError(
+                'TARGET',
+                health.loading
+                    ? pendingHealthMessage
+                    : getTargetConnectivityFailureMessage(
+                          target,
+                          connectivityFailure,
+                      ),
             );
         }
     }
-
-    if (health.loading) {
-        throw new WrappedError(
-            'TARGET',
-            `Target ${target} health is still being checked. Wait for target health checks to finish.`,
-        );
-    }
-
-    throw new WrappedError(
-        'TARGET',
-        `Target ${target} health is unavailable. Refresh target health and try again.`,
-    );
-}
-
-export function isConnectivitySuccessful(
-    connectivity: TargetHealthCheck | undefined,
-): connectivity is
-    | (TargetHealthCheck & {
-          status: Exclude<TargetHealthCheck['status'], 'error'>;
-      })
-    | undefined {
-    return connectivity?.status !== 'error';
 }
 
 function getTargetConnectivityFailureMessage(
