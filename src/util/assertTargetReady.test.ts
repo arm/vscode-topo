@@ -2,8 +2,50 @@ import type { HealthCheck } from '../services/topoCliSchema';
 import {
     assertTargetConnected,
     assertTargetSelected,
+    getTargetConnectivityFailure,
+    isTargetConnected,
 } from './assertTargetReady';
 import { errored, loaded, loading, unloaded } from './loadable';
+
+describe('isTargetConnected', () => {
+    it('treats local targets without a connectivity check as connected', () => {
+        expect(isTargetConnected([])).toBe(true);
+    });
+});
+
+describe('getTargetConnectivityFailure', () => {
+    it.each<{ status: HealthCheck['status']; failed: boolean }>([
+        { status: 'ok', failed: false },
+        { status: 'warning', failed: false },
+        { status: 'info', failed: false },
+        { status: 'undetermined', failed: false },
+        { status: 'error', failed: true },
+    ])(
+        'reports failure=$failed for $status connectivity, ignoring dependency errors',
+        ({ status, failed }) => {
+            const dependencyFailure: HealthCheck = {
+                name: 'Container Engine',
+                location: 'target',
+                status: 'error',
+                value: 'unavailable',
+            };
+            const connectivity: HealthCheck = {
+                name: 'Connectivity',
+                location: 'target',
+                status,
+                value: 'connection details',
+                fix: {
+                    description: 'Set up SSH keys',
+                    command: 'topo setup-keys',
+                },
+            };
+
+            expect(
+                getTargetConnectivityFailure([dependencyFailure, connectivity]),
+            ).toEqual(failed ? connectivity : undefined);
+        },
+    );
+});
 
 describe('assertTargetSelected', () => {
     it('accepts a selected target', () => {
@@ -40,26 +82,23 @@ describe('assertTargetConnected', () => {
         ).not.toThrow();
     });
 
-    it('throws a target error when target health is loading', () => {
-        expect(() => assertTargetConnected(target, unloaded(true))).toThrow(
-            'Target topo.local health is still being checked. Wait for target health checks to finish.',
-        );
-    });
+    it.each([unloaded(true), loading(errored('health check failed'))])(
+        'waits for a health report while $status health is loading',
+        (health) => {
+            expect(() => assertTargetConnected(target, health)).toThrow(
+                'Target topo.local health is still being checked. Wait for target health checks to finish.',
+            );
+        },
+    );
 
     it.each([unloaded(), errored('health check failed')])(
-        'throws a target error when target health is unavailable',
+        'reports unavailable health when the report is $status and no check is running',
         (health) => {
             expect(() => assertTargetConnected(target, health)).toThrow(
                 'Target topo.local health is unavailable. Refresh target health and try again.',
             );
         },
     );
-
-    it('accepts an empty loaded target health report', () => {
-        expect(() =>
-            assertTargetConnected(target, loaded<HealthCheck[]>([])),
-        ).not.toThrow();
-    });
 
     it('throws a target error when target connectivity is unhealthy', () => {
         const health = loaded<HealthCheck[]>([

@@ -194,18 +194,6 @@ describe('TargetTreeView', () => {
                 true,
             );
         });
-
-        it('marks target connected without a connectivity check', () => {
-            targetModel.setSelectedTargetHealth(loaded([]));
-
-            expect(
-                vscode.commands.executeCommand,
-            ).toHaveBeenCalledExactlyOnceWith(
-                'setContext',
-                manifest.CONTEXT_SELECTED_TARGET_CONNECTED,
-                true,
-            );
-        });
     });
 
     describe('getChildren', () => {
