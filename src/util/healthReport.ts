@@ -1,4 +1,18 @@
-import type { HealthCheck, HealthReport } from '../services/topoCliSchema';
+import type {
+    HealthCheck,
+    HealthReport,
+    HostHealthCheck,
+    TargetHealthCheck,
+} from '../services/topoCliSchema';
+
+export function filterHealthChecks(
+    report: HealthReport,
+    location: 'host',
+): HostHealthCheck[];
+export function filterHealthChecks(
+    report: HealthReport,
+    location: 'target',
+): TargetHealthCheck[];
 
 export function filterHealthChecks(
     report: HealthReport,
@@ -16,7 +30,7 @@ export function filterHealthChecks(
 }
 
 export function getTargetConnectivityCheck(
-    checks: readonly HealthCheck[],
-): HealthCheck | undefined {
+    checks: readonly TargetHealthCheck[],
+): TargetHealthCheck | undefined {
     return checks.find((check) => check.name === 'Connectivity');
 }

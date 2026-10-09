@@ -8,7 +8,7 @@ import { showAndLogError } from '../util/showAndLog';
 import { TopoCli } from '../services/topoCli';
 import {
     HealthReport,
-    HealthCheck,
+    TargetHealthCheck,
     TargetDescription,
 } from '../services/topoCliSchema';
 import { errored, loaded, unloaded } from '../util/loadable';
@@ -17,7 +17,7 @@ vi.mock('../util/logger');
 vi.mock('../util/showAndLog');
 
 const target = 'user@target';
-const targetChecks: readonly HealthCheck[] = [
+const targetChecks: readonly TargetHealthCheck[] = [
     {
         name: 'Connectivity',
         location: 'target',

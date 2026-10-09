@@ -1,14 +1,18 @@
 import { filterHealthChecks } from './healthReport';
-import type { HealthCheck, HealthReport } from '../services/topoCliSchema';
+import type {
+    HealthReport,
+    HostHealthCheck,
+    TargetHealthCheck,
+} from '../services/topoCliSchema';
 
-const hostCheck: HealthCheck = {
+const hostCheck: HostHealthCheck = {
     name: 'Docker daemon',
     location: 'host',
     status: 'error',
     value: 'Docker is not running',
     fix: { description: 'Start Docker', command: 'start-docker' },
 };
-const targetCheck: HealthCheck = {
+const targetCheck: TargetHealthCheck = {
     ...hostCheck,
     location: 'target',
     status: 'undetermined',

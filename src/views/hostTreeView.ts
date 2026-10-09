@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { PACKAGE_NAME } from '../manifest';
-import { HealthCheck } from '../services/topoCliSchema';
+import { HostHealthCheck } from '../services/topoCliSchema';
 import { HealthCheckGroupTreeItem } from './treeItems/healthCheckGroupTreeItem';
 import { HealthCheckTreeItem } from './treeItems/healthCheckTreeItem';
 import { ErrorTreeItem } from './treeItems/errorTreeItem';
@@ -13,8 +13,8 @@ import { LoadingTreeItem } from './treeItems/loadingTreeItem';
 import { SkillGroupTreeItem } from './treeItems/skillGroupTreeItem';
 
 function sortHealthChecksByName(
-    healthChecks: readonly HealthCheck[],
-): HealthCheck[] {
+    healthChecks: readonly HostHealthCheck[],
+): HostHealthCheck[] {
     return healthChecks.toSorted((a, b) =>
         a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
     );

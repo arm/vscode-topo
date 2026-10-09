@@ -7,7 +7,10 @@ import { DisposableCollector } from '../util/disposableCollector';
 import { Loadable, loaded } from '../util/loadable';
 import { TargetDataIssueTreeItem } from './treeItems/targetDataIssueTreeItem';
 import { ErrorTreeItem } from './treeItems/errorTreeItem';
-import { TargetDescription, HealthCheck } from '../services/topoCliSchema';
+import {
+    TargetDescription,
+    TargetHealthCheck,
+} from '../services/topoCliSchema';
 import { LoadingTreeItem } from './treeItems/loadingTreeItem';
 import {
     compareProcessingDomains,
@@ -59,7 +62,7 @@ function getProcessingDomainGroupChildren(
 }
 
 function getSelectedTargetChildren(
-    health: Loadable<HealthCheck[]>,
+    health: Loadable<TargetHealthCheck[]>,
     targetDescription: Loadable<TargetDescription>,
 ): vscode.TreeItem[] {
     switch (health.status) {
@@ -110,7 +113,7 @@ function syncSelectedTargetContext(targetModel: TargetModel): void {
 }
 
 function syncSelectedTargetConnectedContext(
-    health: Loadable<HealthCheck[]>,
+    health: Loadable<TargetHealthCheck[]>,
 ): void {
     const connected =
         health.status === 'loaded' && isTargetConnected(health.data);

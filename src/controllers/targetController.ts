@@ -7,7 +7,7 @@ import { defaultSshConfigPath, getHosts } from '../util/ssh';
 import * as vscode from 'vscode';
 import { TopoCli } from '../services/topoCli';
 import {
-    HealthCheck,
+    TargetHealthCheck,
     HealthReport,
     TargetDescription,
 } from '../services/topoCliSchema';
@@ -117,7 +117,7 @@ export function buildQuickPickItems(
 async function loadTargetHealth(
     topoCli: TopoCli,
     target: string,
-): Promise<Loadable<HealthCheck[]>> {
+): Promise<Loadable<TargetHealthCheck[]>> {
     let health: HealthReport;
     try {
         health = await topoCli.health(target);

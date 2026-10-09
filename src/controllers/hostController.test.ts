@@ -2,11 +2,11 @@ import { mock } from 'vitest-mock-extended';
 import { HostModel } from '../models/hostModel';
 import { TopoCli } from '../services/topoCli';
 import { HostController } from './hostController';
-import { HealthReport, HealthCheck } from '../services/topoCliSchema';
+import { HealthReport, HostHealthCheck } from '../services/topoCliSchema';
 import { TopoSkill } from '../services/topoSkill';
 import { loaded } from '../util/loadable';
 
-const hostCheck: HealthCheck = {
+const hostCheck: HostHealthCheck = {
     name: 'Container Engine',
     status: 'ok',
     value: 'docker',

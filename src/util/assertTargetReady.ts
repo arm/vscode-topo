@@ -1,15 +1,17 @@
 import { WrappedError } from '../errors/wrappedError';
-import type { HealthCheck } from '../services/topoCliSchema';
+import type { TargetHealthCheck } from '../services/topoCliSchema';
 import type { Loadable, Loaded } from './loadable';
 import { getTargetConnectivityCheck } from './healthReport';
 
-export function isTargetConnected(health: readonly HealthCheck[]): boolean {
+export function isTargetConnected(
+    health: readonly TargetHealthCheck[],
+): boolean {
     return getTargetConnectivityFailure(health) === undefined;
 }
 
 export function getTargetConnectivityFailure(
-    health: readonly HealthCheck[],
-): HealthCheck | undefined {
+    health: readonly TargetHealthCheck[],
+): TargetHealthCheck | undefined {
     const connectivity = getTargetConnectivityCheck(health);
     const isTargetLocal = connectivity === undefined;
 
@@ -33,8 +35,8 @@ export function assertTargetSelected(
 
 export function assertTargetConnected(
     target: string,
-    health: Loadable<HealthCheck[]>,
-): asserts health is Loaded<HealthCheck[]> {
+    health: Loadable<TargetHealthCheck[]>,
+): asserts health is Loaded<TargetHealthCheck[]> {
     const pendingHealthMessage = `Target ${target} health is still being checked. Wait for target health checks to finish.`;
 
     switch (health.status) {
@@ -69,7 +71,7 @@ export function assertTargetConnected(
 
 function getTargetConnectivityFailureMessage(
     target: string,
-    connectivity: HealthCheck,
+    connectivity: TargetHealthCheck,
 ): string {
     const details = connectivity.value ? `: ${connectivity.value}` : '';
     return `Target ${target} connectivity is '${connectivity.status}'${details}.`;

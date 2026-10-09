@@ -1,4 +1,4 @@
-import type { HealthCheck } from '../services/topoCliSchema';
+import type { TargetHealthCheck } from '../services/topoCliSchema';
 import {
     assertTargetConnected,
     assertTargetSelected,
@@ -14,7 +14,7 @@ describe('isTargetConnected', () => {
 });
 
 describe('getTargetConnectivityFailure', () => {
-    it.each<{ status: HealthCheck['status']; failed: boolean }>([
+    it.each<{ status: TargetHealthCheck['status']; failed: boolean }>([
         { status: 'ok', failed: false },
         { status: 'warning', failed: false },
         { status: 'info', failed: false },
@@ -23,13 +23,13 @@ describe('getTargetConnectivityFailure', () => {
     ])(
         'reports failure=$failed for $status connectivity, ignoring dependency errors',
         ({ status, failed }) => {
-            const dependencyFailure: HealthCheck = {
+            const dependencyFailure: TargetHealthCheck = {
                 name: 'Container Engine',
                 location: 'target',
                 status: 'error',
                 value: 'unavailable',
             };
-            const connectivity: HealthCheck = {
+            const connectivity: TargetHealthCheck = {
                 name: 'Connectivity',
                 location: 'target',
                 status,
@@ -61,7 +61,7 @@ describe('assertTargetSelected', () => {
 
 describe('assertTargetConnected', () => {
     const target = 'topo.local';
-    const targetHealth: HealthCheck[] = [
+    const targetHealth: TargetHealthCheck[] = [
         {
             name: 'Connectivity',
             location: 'target',
@@ -101,7 +101,7 @@ describe('assertTargetConnected', () => {
     );
 
     it('throws a target error when target connectivity is unhealthy', () => {
-        const health = loaded<HealthCheck[]>([
+        const health = loaded<TargetHealthCheck[]>([
             {
                 name: 'Connectivity',
                 location: 'target',
@@ -117,7 +117,7 @@ describe('assertTargetConnected', () => {
 
     it('waits for refreshing target health when the previous value was unhealthy', () => {
         const health = loading(
-            loaded<HealthCheck[]>([
+            loaded<TargetHealthCheck[]>([
                 {
                     name: 'Connectivity',
                     location: 'target',
@@ -133,7 +133,7 @@ describe('assertTargetConnected', () => {
     });
 
     it('omits empty details from target connectivity failure messages', () => {
-        const health = loaded<HealthCheck[]>([
+        const health = loaded<TargetHealthCheck[]>([
             {
                 name: 'Connectivity',
                 location: 'target',

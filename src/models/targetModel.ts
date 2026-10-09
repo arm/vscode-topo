@@ -1,6 +1,9 @@
 import * as vscode from 'vscode';
 import { Loadable, unloaded } from '../util/loadable';
-import { TargetDescription, HealthCheck } from '../services/topoCliSchema';
+import {
+    TargetDescription,
+    TargetHealthCheck,
+} from '../services/topoCliSchema';
 
 export class TargetModel implements vscode.Disposable {
     private _onSelectedChanged: vscode.EventEmitter<void> =
@@ -25,7 +28,7 @@ export class TargetModel implements vscode.Disposable {
 
     private _selected?: string;
     private _targets: Loadable<string[]> = unloaded();
-    private _health: Loadable<HealthCheck[]> = unloaded();
+    private _health: Loadable<TargetHealthCheck[]> = unloaded();
     private _description: Loadable<TargetDescription> = unloaded();
 
     public setSelected(selected: string | undefined): void {
@@ -47,7 +50,7 @@ export class TargetModel implements vscode.Disposable {
         }
     }
 
-    public setSelectedTargetHealth(state: Loadable<HealthCheck[]>) {
+    public setSelectedTargetHealth(state: Loadable<TargetHealthCheck[]>) {
         const changed = this._health !== state;
         this._health = state;
         if (changed) {
@@ -68,7 +71,7 @@ export class TargetModel implements vscode.Disposable {
         return this._targets;
     }
 
-    public get selectedTargetHealth(): Loadable<HealthCheck[]> {
+    public get selectedTargetHealth(): Loadable<TargetHealthCheck[]> {
         return this._health;
     }
 
