@@ -5,12 +5,12 @@ import { DisposableCollector } from '../util/disposableCollector';
 import { getWorstHealthCheckStatus } from '../util/getWorstHealthCheckStatus';
 import { getHealthCheckIcon } from './util/healthIcons';
 import { Loadable } from '../util/loadable';
-import { TargetHealthReport } from '../services/topoCliSchema';
+import { HealthCheck } from '../services/topoCliSchema';
 import { selectTarget } from '../commandIds';
 import { getErrorMessage } from '../util/getErrorMessage';
 import { isTargetConnected } from '../util/assertTargetReady';
 
-function getStatusIconId(state: Loadable<TargetHealthReport>): string {
+function getStatusIconId(state: Loadable<HealthCheck[]>): string {
     if (state.loading) {
         return 'loading~spin';
     }
@@ -26,7 +26,7 @@ function getStatusIconId(state: Loadable<TargetHealthReport>): string {
         return 'target';
     }
 
-    const status = getWorstHealthCheckStatus(state.data.dependencies);
+    const status = getWorstHealthCheckStatus(state.data);
     if (status === 'ok') {
         return 'pass-filled';
     }
@@ -36,7 +36,7 @@ function getStatusIconId(state: Loadable<TargetHealthReport>): string {
 
 function getStatusTooltip(
     target: string,
-    selectedHealth: Loadable<TargetHealthReport>,
+    selectedHealth: Loadable<HealthCheck[]>,
 ): string {
     const lines = [`SSH destination: ${target}`];
 
@@ -49,13 +49,11 @@ function getStatusTooltip(
         return lines.join('\n');
     }
 
-    if (!isTargetConnected(selectedHealth.data)) {
-        const { name, value } = selectedHealth.data.connectivity;
-        lines.push(`${name}: ${value}`);
-    }
-
-    const dependencyIssues = selectedHealth.data.dependencies.filter(
-        ({ status }) => status === 'warning' || status === 'error',
+    const dependencyIssues = selectedHealth.data.filter(
+        ({ status }) =>
+            status === 'warning' ||
+            status === 'error' ||
+            status === 'undetermined',
     );
     lines.push(
         ...dependencyIssues.map(({ name, value }) => `${name}: ${value}`),
@@ -66,7 +64,7 @@ function getStatusTooltip(
 function renderStatusBarItem(
     statusBarItem: vscode.StatusBarItem,
     target: string | undefined,
-    selectedHealth: Loadable<TargetHealthReport>,
+    selectedHealth: Loadable<HealthCheck[]>,
 ): void {
     if (target) {
         const iconId = getStatusIconId(selectedHealth);

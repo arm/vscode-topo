@@ -1,15 +1,23 @@
 import { WrappedError } from '../errors/wrappedError';
-import type {
-    ConnectedTargetHealthReport,
-    HealthCheck,
-    TargetHealthReport,
-} from '../services/topoCliSchema';
+import type { HealthCheck } from '../services/topoCliSchema';
 import type { Loadable, Loaded } from './loadable';
+import { getTargetConnectivityCheck } from './healthReport';
 
-export function isTargetConnected(
-    health: TargetHealthReport,
-): health is ConnectedTargetHealthReport {
-    return health.isLocalhost || health.connectivity.status === 'ok';
+export function isTargetConnected(health: readonly HealthCheck[]): boolean {
+    return getTargetConnectivityFailure(health) === undefined;
+}
+
+export function getTargetConnectivityFailure(
+    health: readonly HealthCheck[],
+): HealthCheck | undefined {
+    const connectivity = getTargetConnectivityCheck(health);
+    const isTargetLocal = connectivity === undefined;
+
+    if (isTargetLocal) {
+        return undefined;
+    }
+
+    return connectivity.status === 'error' ? connectivity : undefined;
 }
 
 export function assertTargetSelected(
@@ -25,31 +33,38 @@ export function assertTargetSelected(
 
 export function assertTargetConnected(
     target: string,
-    health: Loadable<TargetHealthReport>,
-): asserts health is Loaded<ConnectedTargetHealthReport> {
-    const report = health.status === 'loaded' ? health.data : undefined;
-    if (report && isTargetConnected(report)) {
-        return;
-    }
+    health: Loadable<HealthCheck[]>,
+): asserts health is Loaded<HealthCheck[]> {
+    const pendingHealthMessage = `Target ${target} health is still being checked. Wait for target health checks to finish.`;
 
-    if (health.loading) {
-        throw new WrappedError(
-            'TARGET',
-            `Target ${target} health is still being checked. Wait for target health checks to finish.`,
-        );
-    }
+    switch (health.status) {
+        case 'unloaded':
+        case 'errored':
+            throw new WrappedError(
+                'TARGET',
+                health.loading
+                    ? pendingHealthMessage
+                    : `Target ${target} health is unavailable. Refresh target health and try again.`,
+            );
+        case 'loaded': {
+            const connectivityFailure = getTargetConnectivityFailure(
+                health.data,
+            );
+            if (!connectivityFailure) {
+                return;
+            }
 
-    if (!report) {
-        throw new WrappedError(
-            'TARGET',
-            `Target ${target} health is unavailable. Refresh target health and try again.`,
-        );
+            throw new WrappedError(
+                'TARGET',
+                health.loading
+                    ? pendingHealthMessage
+                    : getTargetConnectivityFailureMessage(
+                          target,
+                          connectivityFailure,
+                      ),
+            );
+        }
     }
-
-    throw new WrappedError(
-        'TARGET',
-        getTargetConnectivityFailureMessage(target, report.connectivity),
-    );
 }
 
 function getTargetConnectivityFailureMessage(

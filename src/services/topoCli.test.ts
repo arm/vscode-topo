@@ -383,35 +383,41 @@ describe('TopoCli', () => {
 
     it('health parses JSON output', async () => {
         const want: HealthReport = {
-            host: { dependencies: [] },
-            target: {
-                destination: 'ssh://hostname',
-                isLocalhost: false,
-                dependencies: [
-                    {
-                        name: 'Container Engine',
-                        status: 'ok',
-                        value: 'docker',
-                    },
-                ],
-                connectivity: {
-                    name: 'Connected',
-                    status: 'ok',
-                    value: '',
+            capabilities: [
+                {
+                    name: 'Deployment',
+                    status: 'undetermined',
+                    fix: { description: 'Check target setup' },
+                    checks: [
+                        {
+                            name: 'Docker CLI',
+                            location: 'host',
+                            status: 'ok',
+                            value: 'installed',
+                        },
+                        {
+                            name: 'Connectivity',
+                            location: 'target',
+                            status: 'ok',
+                            value: 'connected',
+                        },
+                        {
+                            name: 'Processing Domain Driver (remoteproc)',
+                            location: 'target',
+                            status: 'undetermined',
+                            value: 'not checked: prerequisite failed',
+                        },
+                    ],
                 },
-                processingDomainDriver: {
-                    name: 'Processing Domain Driver (remoteproc)',
-                    status: 'ok',
-                    value: 'driver-x',
-                },
-            },
+                { name: 'Project management', status: 'ok', checks: [] },
+            ],
         };
         execFileMock.mockResolvedValue({
             stdout: JSON.stringify(want),
             stderr: '',
         });
 
-        await expect(topoCli.health('hostname')).resolves.toMatchObject(want);
+        await expect(topoCli.health('hostname')).resolves.toEqual(want);
         expect(execFileMock).toHaveBeenCalledTimes(1);
         expect(execFileMock).toHaveBeenCalledWith(
             topoCli.getBinaryPath(),
@@ -422,7 +428,7 @@ describe('TopoCli', () => {
 
     it('hostHealth omits --target', async () => {
         execFileMock.mockResolvedValue({
-            stdout: JSON.stringify({ host: { dependencies: [] } }),
+            stdout: JSON.stringify({ capabilities: [] }),
             stderr: '',
         });
 

@@ -6,33 +6,41 @@ import { TargetModel } from '../models/targetModel';
 import { WrappedError } from '../errors/wrappedError';
 import { showAndLogError } from '../util/showAndLog';
 import { TopoCli } from '../services/topoCli';
-import { TargetDescription } from '../services/topoCliSchema';
+import {
+    HealthReport,
+    HealthCheck,
+    TargetDescription,
+} from '../services/topoCliSchema';
 import { errored, loaded, unloaded } from '../util/loadable';
-import { HealthReport } from '../services/topoCliSchema';
 
 vi.mock('../util/logger');
 vi.mock('../util/showAndLog');
 
 const target = 'user@target';
+const targetChecks: readonly HealthCheck[] = [
+    {
+        name: 'Connectivity',
+        location: 'target',
+        status: 'ok',
+        value: 'connected',
+    },
+];
 const health: HealthReport = {
-    host: {
-        dependencies: [],
-    },
-    target: {
-        destination: 'ssh://target',
-        isLocalhost: false,
-        connectivity: {
-            name: 'Connectivity',
-            status: 'ok',
-            value: 'connected',
+    capabilities: [
+        {
+            name: 'Deployment',
+            status: 'error',
+            checks: [
+                {
+                    name: 'Connectivity',
+                    location: 'host',
+                    status: 'error',
+                    value: 'host check failed',
+                },
+                ...targetChecks,
+            ],
         },
-        processingDomainDriver: {
-            name: 'Processing Domain Driver',
-            status: 'ok',
-            value: 'ready',
-        },
-        dependencies: [],
-    },
+    ],
 };
 
 const targetDescription: TargetDescription = {
@@ -666,7 +674,7 @@ describe('selected target description load', () => {
 });
 
 describe('selected target health refresh', () => {
-    it('loads health for the selected target', async () => {
+    it('loads only target checks for the selected target', async () => {
         const targetStore = mockTargetStore([target], target);
         const targetModel = new TargetModel();
         targetModel.setSelected(target);
@@ -678,7 +686,7 @@ describe('selected target health refresh', () => {
         await controller.refreshSelectedTargetHealthCommandHandler();
 
         expect(targetModel.selectedTargetHealth).toStrictEqual(
-            loaded(health.target),
+            loaded(targetChecks),
         );
         expect(topoCli.health).toHaveBeenCalledWith(target);
     });
@@ -697,7 +705,7 @@ describe('selected target data refresh', () => {
         await controller.refreshSelectedTargetDataCommandHandler();
 
         expect(targetModel.selectedTargetHealth).toStrictEqual(
-            loaded(health.target),
+            loaded(targetChecks),
         );
         expect(targetModel.selectedTargetDescription).toStrictEqual(
             loaded(targetDescription),

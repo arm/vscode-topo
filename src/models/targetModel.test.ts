@@ -1,23 +1,9 @@
-import { TargetHealthReport } from '../services/topoCliSchema';
+import { HealthCheck } from '../services/topoCliSchema';
 import { TargetDescription } from '../services/topoCliSchema';
 import { errored, loaded, unloaded } from '../util/loadable';
 import { TargetModel } from './targetModel';
 
-const targetHealth: TargetHealthReport = {
-    destination: 'ssh://target',
-    isLocalhost: false,
-    connectivity: {
-        name: 'Connectivity',
-        status: 'ok',
-        value: 'connected',
-    },
-    processingDomainDriver: {
-        name: 'Processing Domain Driver',
-        status: 'ok',
-        value: 'ready',
-    },
-    dependencies: [],
-};
+const targetHealth: HealthCheck[] = [];
 
 const targetDescription: TargetDescription = {
     hostProcessors: [],

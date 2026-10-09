@@ -19,14 +19,14 @@
     ],
     "main": "./dist/extension.js",
     "topo": {
-        "version": "13.0.0",
+        "version": "14.0.0",
         "sha256": {
-            "win32-x64": "27ab7d6527d15427078f6ffe012db37e31e4aa423861ec3f0f32ed06c710c401",
-            "win32-arm64": "cc3b8031c65a13c814730268166fbfc8291ef7cfc03fad073c11d6fb36703910",
-            "linux-x64": "0695a59326c8e27aac5756923300f967559d2f123137e0fef7e459400e5c2cc2",
-            "linux-arm64": "3e1fc29a7f871d974dcd07cd3893ad298d7d1007196e7e83c3a1be8b2b80df1a",
-            "darwin-x64": "a8de3ca9fee19b5f0fcee9546af84f66aefc18ee28fb44936360e0250b3f6435",
-            "darwin-arm64": "a137ba7a4eefd5f25eaa5995ac5f29103e680ce7bbacdc19494011c4957600ab"
+            "win32-x64": "421824523406291c83880f9b134451f75ff2a669e106ad3b8eb276c68393b0bc",
+            "win32-arm64": "16ff553faa5b1db8ca83c941848b0a9baa35afe2fde38695f2cca3dd974fa248",
+            "linux-x64": "ea5463b7743372de6a170e286b1af8284f77feed272b8e17bd0a744e2f20ab56",
+            "linux-arm64": "6e944039930e419bf817277109d5eaa2e4f0bcd9ab74b9bbeeaecfee3fb18187",
+            "darwin-x64": "d0591884fc3aa4932eee51d0bfb65ce9e5c7ebe23fc6a08c76eeb28a35e1dbdf",
+            "darwin-arm64": "3f28975fdf2df7d37e173e2f1d8d05df3a112ca790c176dee8a56affa76f251a"
         }
     },
     "contributes": {

@@ -3,9 +3,7 @@ import * as vscode from 'vscode';
 import * as manifest from '../manifest';
 import {
     HealthReport,
-    HostHealthReport,
     healthReportSchema,
-    hostHealthReportSchema,
     ProjectDescription,
     TargetDescription,
     targetDescriptionSchema,
@@ -217,8 +215,8 @@ export class TopoCli {
         return this.execJson(cmd, schema, outputDescription);
     }
 
-    public async hostHealth(): Promise<HostHealthReport> {
-        return this.runHealth(hostHealthReportSchema, 'host health report');
+    public async hostHealth(): Promise<HealthReport> {
+        return this.runHealth(healthReportSchema, 'host health report');
     }
 
     public async health(sshTarget: string): Promise<HealthReport> {

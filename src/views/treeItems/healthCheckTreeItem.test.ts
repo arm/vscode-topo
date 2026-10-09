@@ -3,10 +3,11 @@ import { HealthCheckTreeItem } from './healthCheckTreeItem';
 import { loaded } from '../../util/loadable';
 
 describe('HealthCheckTreeItem', () => {
-    it('sets label and description', () => {
+    it('sets label, description, context value and icon for an ok health check', () => {
         const item = new HealthCheckTreeItem(
             loaded({
                 name: 'Container Engine',
+                location: 'target',
                 value: 'docker',
                 status: 'ok',
             }),
@@ -14,17 +15,6 @@ describe('HealthCheckTreeItem', () => {
 
         expect(item.label).toBe('Container Engine');
         expect(item.description).toBe('docker');
-    });
-
-    it('sets context value and icon for an ok health check', () => {
-        const item = new HealthCheckTreeItem(
-            loaded({
-                name: 'Container Engine',
-                value: 'docker',
-                status: 'ok',
-            }),
-        );
-
         expect(item.contextValue).toBe('HealthCheck Ok');
         expect(item.iconPath).toStrictEqual(
             new vscode.ThemeIcon(
@@ -38,6 +28,7 @@ describe('HealthCheckTreeItem', () => {
         const item = new HealthCheckTreeItem(
             loaded({
                 name: 'Container Engine',
+                location: 'target',
                 value: 'docker',
                 status: 'warning',
             }),
@@ -56,6 +47,7 @@ describe('HealthCheckTreeItem', () => {
         const item = new HealthCheckTreeItem(
             loaded({
                 name: 'Container Engine',
+                location: 'target',
                 value: 'missing',
                 status: 'error',
             }),
@@ -74,6 +66,7 @@ describe('HealthCheckTreeItem', () => {
         const item = new HealthCheckTreeItem(
             loaded({
                 name: 'Container Engine',
+                location: 'target',
                 value: 'missing',
                 status: 'warning',
                 fix: {
@@ -87,23 +80,12 @@ describe('HealthCheckTreeItem', () => {
         expect(item.contextValue).toBe('HealthCheck Warning Fixable');
     });
 
-    it('does not mark healthy remoteproc health checks as fixable', () => {
-        const item = new HealthCheckTreeItem(
-            loaded({
-                name: 'Remoteproc Runtime',
-                value: 'installed',
-                status: 'ok',
-            }),
-        );
-
-        expect(item.contextValue).toBe('HealthCheck Ok');
-    });
-
     it('uses a spinning icon when loading', () => {
         const item = new HealthCheckTreeItem(
             loaded(
                 {
                     name: 'Connectivity',
+                    location: 'target',
                     value: 'Checking target connectivity',
                     status: 'warning',
                 },

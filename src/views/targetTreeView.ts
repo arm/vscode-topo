@@ -7,17 +7,17 @@ import { DisposableCollector } from '../util/disposableCollector';
 import { Loadable, loaded } from '../util/loadable';
 import { TargetDataIssueTreeItem } from './treeItems/targetDataIssueTreeItem';
 import { ErrorTreeItem } from './treeItems/errorTreeItem';
-import {
-    TargetDescription,
-    TargetHealthReport,
-} from '../services/topoCliSchema';
+import { TargetDescription, HealthCheck } from '../services/topoCliSchema';
 import { LoadingTreeItem } from './treeItems/loadingTreeItem';
 import {
     compareProcessingDomains,
     ProcessingDomainTreeItem,
 } from './treeItems/processingDomainTreeItem';
 import { ProcessingDomainGroupTreeItem } from './treeItems/processingDomainGroupTreeItem';
-import { isTargetConnected } from '../util/assertTargetReady';
+import {
+    getTargetConnectivityFailure,
+    isTargetConnected,
+} from '../util/assertTargetReady';
 
 export const TargetSelectionState = {
     Unselected: 'unselected',
@@ -59,7 +59,7 @@ function getProcessingDomainGroupChildren(
 }
 
 function getSelectedTargetChildren(
-    health: Loadable<TargetHealthReport>,
+    health: Loadable<HealthCheck[]>,
     targetDescription: Loadable<TargetDescription>,
 ): vscode.TreeItem[] {
     switch (health.status) {
@@ -70,21 +70,18 @@ function getSelectedTargetChildren(
         case 'errored':
             return [new ErrorTreeItem('Failed to check target health', health)];
         case 'loaded': {
-            if (!isTargetConnected(health.data)) {
+            const connectivityFailure = getTargetConnectivityFailure(
+                health.data,
+            );
+            if (connectivityFailure) {
                 return [
                     new HealthCheckTreeItem(
-                        loaded(health.data.connectivity, health.loading),
+                        loaded(connectivityFailure, health.loading),
                     ),
                 ];
             }
 
-            const healthChecks = [
-                ...health.data.dependencies,
-                health.data.processingDomainDriver,
-            ];
-            const healthGroup = new HealthCheckGroupTreeItem(
-                loaded(healthChecks, health.loading),
-            );
+            const healthGroup = new HealthCheckGroupTreeItem(health);
             const processingDomainGroup = new ProcessingDomainGroupTreeItem(
                 targetDescription,
             );
@@ -113,7 +110,7 @@ function syncSelectedTargetContext(targetModel: TargetModel): void {
 }
 
 function syncSelectedTargetConnectedContext(
-    health: Loadable<TargetHealthReport>,
+    health: Loadable<HealthCheck[]>,
 ): void {
     const connected =
         health.status === 'loaded' && isTargetConnected(health.data);

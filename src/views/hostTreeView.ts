@@ -82,7 +82,7 @@ export class HostTreeView
 
             const healthChecks =
                 health.status === 'loaded'
-                    ? sortHealthChecksByName(health.data.host.dependencies)
+                    ? sortHealthChecksByName(health.data)
                     : [];
             return [
                 new HealthCheckGroupTreeItem(
