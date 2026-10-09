@@ -15,7 +15,7 @@ vi.mock('../util/exec', () => ({
 const execFileMock: Mock = vi.mocked(execFile);
 const defaultExecOptions = {
     encoding: 'utf8',
-    env: {},
+    env: { TOPO_DISABLE_SELF_UPGRADE: '1' },
     windowsHide: true,
 };
 
