@@ -26,7 +26,11 @@ import { ProjectModel } from './models/projectModel';
 import { ProjectClone } from './actions/projectClone';
 import { showAndLogError } from './util/showAndLog';
 import { topo } from '../package.json';
-import { TOPO_TASK_TYPE } from './manifest';
+import {
+    CONFIG_CONTAINER_ENGINE,
+    PACKAGE_NAME,
+    TOPO_TASK_TYPE,
+} from './manifest';
 import { RefreshLoop } from './util/refreshLoop';
 import { ProjectController } from './controllers/projectController';
 import { ConnectViaSSH } from './actions/connectViaSSH';
@@ -78,6 +82,7 @@ async function activateExtension(
     const topoCli = new TopoCli(
         context.extensionPath,
         context.environmentVariableCollection,
+        config,
     );
     context.subscriptions.push(topoCli);
     topoCli.activate();
@@ -90,6 +95,7 @@ async function activateExtension(
     }
 
     const containerCommands = new ContainerEngineCommands(
+        config,
         new DockerCommands(),
         new PodmanCommands(),
     );
@@ -114,7 +120,12 @@ async function activateExtension(
         targetStatusBarItemView,
     );
 
-    const hostController = new HostController(hostModel, topoCli, topoSkill);
+    const hostController = new HostController(
+        hostModel,
+        topoCli,
+        topoSkill,
+        config,
+    );
     const projectController = new ProjectController(
         projectModel,
         topoCli,
@@ -141,6 +152,19 @@ async function activateExtension(
         ),
         targetModel.onSelectedChanged(() => {
             void targetController.loadSelectedTargetDescriptionCommandHandler();
+            void targetController.refreshSelectedTargetHealthCommandHandler();
+        }),
+        vscode.workspace.onDidChangeConfiguration((event) => {
+            if (
+                !event.affectsConfiguration(
+                    `${PACKAGE_NAME}.${CONFIG_CONTAINER_ENGINE}`,
+                )
+            ) {
+                return;
+            }
+            hostController.refreshContainerEngine();
+            projectController.clearProjectContainers();
+            void hostController.refreshHealthCommandHandler();
             void targetController.refreshSelectedTargetHealthCommandHandler();
         }),
     );

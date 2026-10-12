@@ -183,9 +183,13 @@ The extension supports a URI scheme for cloning projects from external links:
 vscode://arm.topo/clone?source=git:https://github.com/example/repo
 ```
 
-## Host Health Check
+## Host Settings and Health
 
 The **Host** view appears in the **Topo** activity bar container and shows host health for tools such as Docker and SSH. Under **Health**, checks are grouped into **Deployment** and **Project management** .
+
+Set `topo.containerEngine` in VS Code Settings to **Auto** (the default), **Docker**, or **Podman**. Auto uses `TOPO_ENGINE`, falling back to Docker when it is unset.
+
+Engine selection follows this priority: an explicit `--engine` argument, a Docker or Podman choice in `topo.containerEngine`, then `TOPO_ENGINE`. In Auto mode, Topo tasks use `options.env.TOPO_ENGINE` or their inherited environment; an explicit Docker or Podman setting overrides both.
 
 The **Topo Agent Skill** item expands to show every agent linked to the bundled skill and whether that agent's copy is up to date.
 

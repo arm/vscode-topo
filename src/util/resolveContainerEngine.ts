@@ -2,11 +2,20 @@ import { WrappedError } from '../errors/wrappedError';
 
 const CONTAINER_ENGINES = ['docker', 'podman'] as const;
 export type ContainerEngine = (typeof CONTAINER_ENGINES)[number];
+export const CONTAINER_ENGINE_SETTINGS = [
+    'auto',
+    ...CONTAINER_ENGINES,
+] as const;
+export type ContainerEngineSetting = (typeof CONTAINER_ENGINE_SETTINGS)[number];
 
 export const resolveContainerEngine = (
+    settingsContainerEngine: ContainerEngineSetting,
     environmentContainerEngine?: string,
 ): ContainerEngine => {
-    const value = environmentContainerEngine?.trim() || 'docker';
+    const value =
+        settingsContainerEngine === 'auto'
+            ? environmentContainerEngine?.trim() || 'docker'
+            : settingsContainerEngine;
     const engine = CONTAINER_ENGINES.find((engine) => engine === value);
     if (engine) {
         return engine;

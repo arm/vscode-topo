@@ -1,17 +1,21 @@
 import { resolveContainerEngine } from './resolveContainerEngine';
 
 describe('resolveContainerEngine', () => {
-    it('uses the environment engine', () => {
-        expect(resolveContainerEngine(' podman ')).toBe('podman');
+    it('prefers the setting over the environment', () => {
+        expect(resolveContainerEngine('docker', 'podman')).toBe('docker');
     });
 
-    it('defaults to Docker when the environment value is unset or empty', () => {
-        expect(resolveContainerEngine()).toBe('docker');
-        expect(resolveContainerEngine(' ')).toBe('docker');
+    it('uses the environment in auto mode', () => {
+        expect(resolveContainerEngine('auto', ' podman ')).toBe('podman');
+    });
+
+    it('defaults auto to Docker when the environment value is unset or empty', () => {
+        expect(resolveContainerEngine('auto')).toBe('docker');
+        expect(resolveContainerEngine('auto', ' ')).toBe('docker');
     });
 
     it('rejects an invalid engine with a CONTAINER_ENGINE error', () => {
-        expect(() => resolveContainerEngine('invalid')).toThrow(
+        expect(() => resolveContainerEngine('auto', 'invalid')).toThrow(
             expect.objectContaining({
                 name: 'WrappedError',
                 code: 'CONTAINER_ENGINE',

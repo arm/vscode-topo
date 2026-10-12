@@ -78,6 +78,9 @@ export class HostTreeView
         this.disposables.collect(
             treeView,
             this._onDidChangeTreeData,
+            this.model.onContainerEngineChanged(() => {
+                this._onDidChangeTreeData.fire(undefined);
+            }),
             this.model.onHealthChanged(() => {
                 this._onDidChangeTreeData.fire(undefined);
             }),
