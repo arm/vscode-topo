@@ -5,12 +5,12 @@ import { DisposableCollector } from '../util/disposableCollector';
 import { getWorstHealthCheckStatus } from '../util/getWorstHealthCheckStatus';
 import { getHealthCheckIcon } from './util/healthIcons';
 import { Loadable } from '../util/loadable';
-import { TargetHealthCheck } from '../services/topoCliSchema';
 import { selectTarget } from '../commandIds';
 import { getErrorMessage } from '../util/getErrorMessage';
 import { isTargetConnected } from '../util/assertTargetReady';
+import { getHealthChecks, type TargetHealth } from '../util/healthReport';
 
-function getStatusIconId(state: Loadable<TargetHealthCheck[]>): string {
+function getStatusIconId(state: Loadable<TargetHealth>): string {
     if (state.loading) {
         return 'loading~spin';
     }
@@ -26,7 +26,7 @@ function getStatusIconId(state: Loadable<TargetHealthCheck[]>): string {
         return 'target';
     }
 
-    const status = getWorstHealthCheckStatus(state.data);
+    const status = getWorstHealthCheckStatus(getHealthChecks(state.data));
     if (status === 'ok') {
         return 'pass-filled';
     }
@@ -36,7 +36,7 @@ function getStatusIconId(state: Loadable<TargetHealthCheck[]>): string {
 
 function getStatusTooltip(
     target: string,
-    selectedHealth: Loadable<TargetHealthCheck[]>,
+    selectedHealth: Loadable<TargetHealth>,
 ): string {
     const lines = [`SSH destination: ${target}`];
 
@@ -49,7 +49,7 @@ function getStatusTooltip(
         return lines.join('\n');
     }
 
-    const dependencyIssues = selectedHealth.data.filter(
+    const dependencyIssues = getHealthChecks(selectedHealth.data).filter(
         ({ status }) =>
             status === 'warning' ||
             status === 'error' ||
@@ -64,7 +64,7 @@ function getStatusTooltip(
 function renderStatusBarItem(
     statusBarItem: vscode.StatusBarItem,
     target: string | undefined,
-    selectedHealth: Loadable<TargetHealthCheck[]>,
+    selectedHealth: Loadable<TargetHealth>,
 ): void {
     if (target) {
         const iconId = getStatusIconId(selectedHealth);

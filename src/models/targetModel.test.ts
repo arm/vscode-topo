@@ -1,9 +1,9 @@
-import { TargetHealthCheck } from '../services/topoCliSchema';
+import type { TargetHealth } from '../util/healthReport';
 import { TargetDescription } from '../services/topoCliSchema';
 import { errored, loaded, unloaded } from '../util/loadable';
 import { TargetModel } from './targetModel';
 
-const targetHealth: TargetHealthCheck[] = [];
+const targetHealth: TargetHealth = { capabilities: [] };
 
 const targetDescription: TargetDescription = {
     hostProcessors: [],

@@ -1,5 +1,9 @@
 import * as vscode from 'vscode';
-import { HealthCheckStatus } from '../../services/topoCliSchema';
+import type {
+    HealthCheck,
+    HealthCheckStatus,
+} from '../../services/topoCliSchema';
+import { getWorstHealthCheckStatus } from '../../util/getWorstHealthCheckStatus';
 
 export const getHealthCheckIcon = (
     status: HealthCheckStatus,
@@ -30,4 +34,13 @@ export const getHealthCheckIcon = (
         'close',
         new vscode.ThemeColor('testing.iconFailed'),
     );
+};
+
+export const getHealthGroupIcon = (
+    healthChecks: readonly HealthCheck[],
+    loading: boolean,
+): vscode.ThemeIcon => {
+    return loading
+        ? new vscode.ThemeIcon('loading~spin')
+        : getHealthCheckIcon(getWorstHealthCheckStatus(healthChecks));
 };

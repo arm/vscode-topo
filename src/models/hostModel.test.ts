@@ -1,8 +1,8 @@
 import { HostModel } from './hostModel';
-import { HostHealthCheck } from '../services/topoCliSchema';
+import type { HostHealth } from '../util/healthReport';
 import { loaded, unloaded } from '../util/loadable';
 
-const hostHealth: HostHealthCheck[] = [];
+const hostHealth: HostHealth = { capabilities: [] };
 
 describe('HostModel', () => {
     it('defaults to an unloaded state', async () => {
