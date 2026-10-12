@@ -1,14 +1,15 @@
 import * as vscode from 'vscode';
+import type { HealthCheck } from '../../services/topoCliSchema';
 import { HealthCapabilityTreeItem } from './healthCapabilityTreeItem';
 import { loaded } from '../../util/loadable';
 
 describe('HealthCapabilityTreeItem', () => {
     it('shows the capability name and health status', () => {
-        const healthChecks = [
+        const healthChecks: HealthCheck[] = [
             {
                 name: 'Container Engine',
-                location: 'target' as const,
-                status: 'ok' as const,
+                location: 'target',
+                status: 'ok',
                 value: 'docker',
             },
         ];
