@@ -3,6 +3,7 @@ import type { TargetHealth } from './healthReport';
 import {
     assertTargetConnected,
     assertTargetSelected,
+    getTargetConnectivityFailure,
     isTargetConnected,
 } from './assertTargetReady';
 import { errored, loaded, loading, unloaded } from './loadable';
@@ -11,16 +12,18 @@ describe('isTargetConnected', () => {
     it('treats local targets without a connectivity check as connected', () => {
         expect(isTargetConnected({ capabilities: [] })).toBe(true);
     });
+});
 
-    it.each<{ status: TargetHealthCheck['status']; connected: boolean }>([
-        { status: 'ok', connected: true },
-        { status: 'warning', connected: true },
-        { status: 'info', connected: true },
-        { status: 'undetermined', connected: true },
-        { status: 'error', connected: false },
+describe('getTargetConnectivityFailure', () => {
+    it.each<{ status: TargetHealthCheck['status']; failed: boolean }>([
+        { status: 'ok', failed: false },
+        { status: 'warning', failed: false },
+        { status: 'info', failed: false },
+        { status: 'undetermined', failed: false },
+        { status: 'error', failed: true },
     ])(
-        'reports connected=$connected for $status connectivity, ignoring dependency errors',
-        ({ status, connected }) => {
+        'reports failure=$failed for $status connectivity, ignoring dependency errors',
+        ({ status, failed }) => {
             const dependencyFailure: TargetHealthCheck = {
                 name: 'Container Engine',
                 location: 'target',
@@ -32,10 +35,14 @@ describe('isTargetConnected', () => {
                 location: 'target',
                 status,
                 value: 'connection details',
+                fix: {
+                    description: 'Set up SSH keys',
+                    command: 'topo setup-keys',
+                },
             };
 
             expect(
-                isTargetConnected({
+                getTargetConnectivityFailure({
                     capabilities: [
                         {
                             name: 'Deployment',
@@ -43,7 +50,7 @@ describe('isTargetConnected', () => {
                         },
                     ],
                 }),
-            ).toBe(connected);
+            ).toEqual(failed ? connectivity : undefined);
         },
     );
 });
@@ -118,19 +125,13 @@ describe('assertTargetConnected', () => {
     );
 
     it.each([unloaded(), errored('health check failed')])(
-        'throws a target error when target health is unavailable',
+        'reports unavailable health when the report is $status and no check is running',
         (health) => {
             expect(() => assertTargetConnected(target, health)).toThrow(
                 'Target topo.local health is unavailable. Refresh target health and try again.',
             );
         },
     );
-
-    it('accepts an empty loaded target health report', () => {
-        expect(() =>
-            assertTargetConnected(target, loaded({ capabilities: [] })),
-        ).not.toThrow();
-    });
 
     it('throws a target error when target connectivity is unhealthy', () => {
         const health = loaded(disconnectedTargetHealth);

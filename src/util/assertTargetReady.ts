@@ -4,7 +4,20 @@ import type { Loadable, Loaded } from './loadable';
 import { getTargetConnectivityCheck, type TargetHealth } from './healthReport';
 
 export function isTargetConnected(health: TargetHealth): boolean {
-    return isConnectivitySuccessful(getTargetConnectivityCheck(health));
+    return getTargetConnectivityFailure(health) === undefined;
+}
+
+export function getTargetConnectivityFailure(
+    health: TargetHealth,
+): TargetHealthCheck | undefined {
+    const connectivity = getTargetConnectivityCheck(health);
+    const isTargetLocal = connectivity === undefined;
+
+    if (isTargetLocal) {
+        return undefined;
+    }
+
+    return connectivity.status === 'error' ? connectivity : undefined;
 }
 
 export function assertTargetSelected(
@@ -34,8 +47,10 @@ export function assertTargetConnected(
                     : `Target ${target} health is unavailable. Refresh target health and try again.`,
             );
         case 'loaded': {
-            const connectivity = getTargetConnectivityCheck(health.data);
-            if (isConnectivitySuccessful(connectivity)) {
+            const connectivityFailure = getTargetConnectivityFailure(
+                health.data,
+            );
+            if (!connectivityFailure) {
                 return;
             }
 
@@ -43,20 +58,13 @@ export function assertTargetConnected(
                 'TARGET',
                 health.loading
                     ? pendingHealthMessage
-                    : getTargetConnectivityFailureMessage(target, connectivity),
+                    : getTargetConnectivityFailureMessage(
+                          target,
+                          connectivityFailure,
+                      ),
             );
         }
     }
-}
-
-export function isConnectivitySuccessful(
-    connectivity: TargetHealthCheck | undefined,
-): connectivity is
-    | (TargetHealthCheck & {
-          status: Exclude<TargetHealthCheck['status'], 'error'>;
-      })
-    | undefined {
-    return connectivity?.status !== 'error';
 }
 
 function getTargetConnectivityFailureMessage(
