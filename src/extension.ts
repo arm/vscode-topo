@@ -8,6 +8,8 @@ import { TargetTreeView } from './views/targetTreeView';
 import { ContainerLifecycle } from './actions/containerLifecycle';
 import { OpenContainerShell } from './actions/openContainerShell';
 import { DockerCommands } from './services/dockerCommands';
+import { PodmanCommands } from './services/podmanCommands';
+import { ContainerEngineCommands } from './services/containerEngineCommands';
 import { TargetStore } from './services/targetStore';
 import { Deploy } from './actions/deploy';
 import { Stop } from './actions/stop';
@@ -87,7 +89,10 @@ async function activateExtension(
         return;
     }
 
-    const dockerCommands = new DockerCommands();
+    const containerCommands = new ContainerEngineCommands(
+        new DockerCommands(),
+        new PodmanCommands(),
+    );
     const targetStore = new TargetStore(context);
     context.subscriptions.push(targetStore);
 
@@ -147,10 +152,10 @@ async function activateExtension(
     const projectClone = new ProjectClone(topoCli, targetModel, projectCloner);
     const deploy = new Deploy(targetModel, config, taskFactory);
     const stop = new Stop(targetModel, taskFactory);
-    const openContainerShell = new OpenContainerShell(dockerCommands);
+    const openContainerShell = new OpenContainerShell(containerCommands);
     const connectViaSSH = new ConnectViaSSH(targetModel);
     const openContainerInBrowser = new OpenContainerInBrowser();
-    const containerLifecycle = new ContainerLifecycle(dockerCommands);
+    const containerLifecycle = new ContainerLifecycle(containerCommands);
     const fixIssue = new FixIssue(taskFactory, targetModel);
     const openSettings = new OpenSettings();
     const skillLifecycle = new SkillLifecycle(topoSkill);
