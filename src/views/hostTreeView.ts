@@ -32,8 +32,11 @@ function getContainerEngineItem(
     switch (containerEngine.status) {
         case 'loaded':
             return new ContainerEngineTreeItem(containerEngine.data);
-        case 'errored':
-            return new ErrorTreeItem('Container Engine', containerEngine);
+        case 'errored': {
+            const item = new ErrorTreeItem('Container Engine', containerEngine);
+            item.contextValue = 'ContainerEngine';
+            return item;
+        }
         case 'unloaded':
             return new LoadingTreeItem('Container Engine');
     }

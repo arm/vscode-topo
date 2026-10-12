@@ -1,3 +1,4 @@
+import * as vscode from 'vscode';
 import { mock } from 'vitest-mock-extended';
 import { HostModel } from '../models/hostModel';
 import { TopoCli } from '../services/topoCli';
@@ -50,41 +51,21 @@ const missingSkillReport: TopoSkillReport = {
 
 describe('HostController', () => {
     const config = mock<Config>();
+    const topoCli = mock<TopoCli>();
+    const topoSkill = mock<TopoSkill>();
 
     beforeEach(() => {
+        vi.stubEnv('TOPO_ENGINE', undefined);
         config.getContainerEngineSetting.mockReturnValue('docker');
+        topoCli.hostHealth.mockResolvedValue(healthReport);
+        topoSkill.getReport.mockResolvedValue(installedSkillReport);
     });
 
-    it('refreshes host health and skill status on creation', async () => {
-        config.getContainerEngineSetting.mockReturnValue('podman');
-        const topoCli = mock<TopoCli>({
-            hostHealth: vi.fn().mockResolvedValue(healthReport),
-        });
-        const topoSkill = mock<TopoSkill>({
-            getReport: vi.fn().mockResolvedValue(installedSkillReport),
-        });
-        const model = new HostModel();
-
-        new HostController(model, topoCli, topoSkill, config);
-        await vi.waitFor(() => {
-            expect(model.containerEngine).toStrictEqual(loaded('podman'));
-            expect(model.health).toStrictEqual(loaded(hostHealth));
-            expect(model.skillReport).toStrictEqual(
-                loaded(installedSkillReport),
-            );
-        });
-
-        expect(topoCli.hostHealth).toHaveBeenCalled();
-        expect(topoSkill.getReport).toHaveBeenCalled();
+    afterEach(() => {
+        vi.unstubAllEnvs();
     });
 
-    it('refreshes host health and skill status on command', async () => {
-        const topoCli = mock<TopoCli>({
-            hostHealth: vi.fn().mockResolvedValue(healthReport),
-        });
-        const topoSkill = mock<TopoSkill>({
-            getReport: vi.fn().mockResolvedValue(missingSkillReport),
-        });
+    function createController() {
         const model = new HostModel();
         const controller = new HostController(
             model,
@@ -92,11 +73,30 @@ describe('HostController', () => {
             topoSkill,
             config,
         );
+        return { model, controller };
+    }
+
+    it('refreshes host health and skill status on creation', async () => {
+        config.getContainerEngineSetting.mockReturnValue('podman');
+        const { model } = createController();
+
+        await vi.waitFor(() => {
+            expect(model.containerEngine).toStrictEqual(loaded('podman'));
+            expect(model.health).toStrictEqual(loaded(hostHealth));
+            expect(model.skillReport).toStrictEqual(
+                loaded(installedSkillReport),
+            );
+        });
+    });
+
+    it('refreshes host health and skill status on command', async () => {
+        topoSkill.getReport.mockResolvedValue(missingSkillReport);
+        const { model, controller } = createController();
         await vi.waitFor(() => {
             expect(model.skillReport).toStrictEqual(loaded(missingSkillReport));
         });
         vi.clearAllMocks();
-        vi.mocked(topoSkill.getReport).mockResolvedValue(installedSkillReport);
+        topoSkill.getReport.mockResolvedValue(installedSkillReport);
 
         await controller.refreshHostCommandHandler();
 
@@ -104,5 +104,59 @@ describe('HostController', () => {
         expect(topoSkill.getReport).toHaveBeenCalledOnce();
         expect(model.health).toStrictEqual(loaded(hostHealth));
         expect(model.skillReport).toStrictEqual(loaded(installedSkillReport));
+    });
+
+    it('shows the environment default and saves an explicit engine', async () => {
+        config.getContainerEngineSetting.mockReturnValue('auto');
+        vi.stubEnv('TOPO_ENGINE', 'podman');
+        const { controller } = createController();
+        vi.mocked(vscode.window.showQuickPick).mockImplementationOnce(
+            async (items) => {
+                const choices = await items;
+                expect(choices).toMatchObject([
+                    {
+                        label: 'auto',
+                        description: 'Current',
+                        detail: 'TOPO_ENGINE env var (or docker if unset)',
+                    },
+                    {
+                        label: 'docker',
+                        detail: 'Override TOPO_ENGINE=podman',
+                    },
+                    { label: 'podman' },
+                ]);
+                return choices[2];
+            },
+        );
+
+        await controller.selectContainerEngineCommandHandler();
+
+        expect(config.setContainerEngine).toHaveBeenCalledExactlyOnceWith(
+            'podman',
+        );
+    });
+
+    it('does not save a cancelled selection', async () => {
+        const { controller } = createController();
+        vi.mocked(vscode.window.showQuickPick).mockResolvedValueOnce(undefined);
+
+        await controller.selectContainerEngineCommandHandler();
+
+        expect(config.setContainerEngine).not.toHaveBeenCalled();
+    });
+
+    it('propagates a failed settings update without changing the displayed engine', async () => {
+        const { model, controller } = createController();
+        vi.mocked(vscode.window.showQuickPick).mockImplementationOnce(
+            async (items) => (await items)[2],
+        );
+        const error = new Error('Settings are read-only');
+        config.setContainerEngine.mockRejectedValueOnce(error);
+
+        await expect(
+            controller.selectContainerEngineCommandHandler(),
+        ).rejects.toBe(error);
+
+        expect(model.containerEngine).toStrictEqual(loaded('docker'));
     });
 });
