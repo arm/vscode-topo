@@ -15,10 +15,6 @@ describe('assertContainerTreeItem', () => {
     const errMsg = 'This operation cannot be performed on this item';
     const loggerErrMsg = `Expected ContainerTreeItem but received`;
 
-    beforeEach(() => {
-        vi.clearAllMocks();
-    });
-
     it('does not throw for an object that is an instance of ContainerTreeItem', () => {
         const containerItem: ContainerItem = {
             id: 'test-id',

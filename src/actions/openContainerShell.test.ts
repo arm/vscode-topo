@@ -14,14 +14,6 @@ describe('OpenContainerShell', () => {
     const dockerCommands = new DockerCommands();
     const target = 'user@topo.local';
 
-    beforeEach(() => {
-        vi.clearAllMocks();
-    });
-
-    afterEach(() => {
-        vi.clearAllMocks();
-    });
-
     it('openContainerShell command opens a docker exec terminal', async () => {
         const openContainerShellAction = new OpenContainerShell(dockerCommands);
         const fakeItem = mock<ContainerItem>({

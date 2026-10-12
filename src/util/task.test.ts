@@ -17,7 +17,6 @@ describe('runTask', () => {
     let dispose: Mock;
 
     beforeEach(() => {
-        vi.clearAllMocks();
         dispose = vi.fn();
         taskEndListener = undefined;
         vi.mocked(vscode.tasks.executeTask).mockResolvedValue(taskExecution);

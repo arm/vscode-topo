@@ -19,10 +19,6 @@ const healthyTarget: TargetHealthCheck[] = [
 ];
 
 describe('TargetStatusBarItemView', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-    });
-
     it('shows an item in the status bar with the currently selected target', async () => {
         const target = 'root@localhost';
         const targetModel = new TargetModel();

@@ -42,10 +42,6 @@ describe('commands', () => {
         skillLifecycle: mock<SkillLifecycle>(),
     } satisfies commands.CommandHandlers;
 
-    afterEach(() => {
-        vi.clearAllMocks();
-    });
-
     it('registers all command IDs', () => {
         commands.register(handlers);
 

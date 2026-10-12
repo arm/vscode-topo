@@ -255,12 +255,12 @@ describe('ProjectController', () => {
         const model = new ProjectModel();
         model.setProjects(loaded([projects[0], otherProject]));
         const topoCli = mock<TopoCli>();
-        topoCli.ps.mockImplementation(async (_target, composeFilePath) => {
-            if (composeFilePath === projects[0].composeFileUri.fsPath) {
-                return psOutput;
-            }
-            throw new Error('ps failed');
-        });
+        const error = new Error('ps failed');
+        vi.when(topoCli.ps, { onUnmatched: 'throw' })
+            .calledWith(target, projects[0].composeFileUri.fsPath)
+            .thenResolve(psOutput)
+            .calledWith(target, otherProject.composeFileUri.fsPath)
+            .thenReject(error);
         const controller = new ProjectController(model, topoCli, targetModel);
 
         await controller.refreshProjectContainersCommandHandler();
@@ -268,7 +268,9 @@ describe('ProjectController', () => {
         expect(model.getProjectContainers(projects[0])).toEqual(
             loaded([{ ...psOutput.containers[0], target }]),
         );
-        expect(model.getProjectContainers(otherProject).status).toBe('errored');
+        expect(model.getProjectContainers(otherProject)).toEqual(
+            errored(error),
+        );
     });
 
     it('keeps existing containers while target health is loading', async () => {

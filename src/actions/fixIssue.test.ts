@@ -78,7 +78,6 @@ describe('FixIssue', () => {
         new HealthCheckGroupTreeItem(loaded(targetHealthChecks));
 
     beforeEach(() => {
-        vi.clearAllMocks();
         taskFactory = mock<TaskFactory>();
         taskFactory.createShellTask.mockReturnValue(task);
         targetModel = new TargetModel();

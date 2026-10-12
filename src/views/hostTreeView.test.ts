@@ -26,10 +26,6 @@ const installedSkillReport = {
 };
 
 describe('HostTreeView', () => {
-    afterEach(() => {
-        vi.clearAllMocks();
-    });
-
     it('registers the host health tree', () => {
         const provider = new HostTreeView(new HostModel());
 

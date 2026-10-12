@@ -27,7 +27,6 @@ describe('TaskFactory', () => {
     let taskFactory: TaskFactory;
 
     beforeEach(() => {
-        vi.clearAllMocks();
         mutable(vscode.workspace).workspaceFolders = undefined;
         vi.mocked(vscode.workspace.getWorkspaceFolder).mockReturnValue(
             undefined,

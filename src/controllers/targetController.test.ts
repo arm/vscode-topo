@@ -49,10 +49,6 @@ const targetDescription: TargetDescription = {
     totalMemoryKb: 1024,
 };
 
-afterEach(() => {
-    vi.clearAllMocks();
-});
-
 function mockTargetStore(
     initialTargets: string[] = [],
     initialSelected?: string,
