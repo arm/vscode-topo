@@ -2,6 +2,10 @@ import * as vscode from 'vscode';
 import type { HostHealth } from '../util/healthReport';
 import { Loadable, unloaded } from '../util/loadable';
 import { TopoSkillReport } from '../services/topoSkill';
+import {
+    type ContainerEngine,
+    resolveContainerEngine,
+} from '../util/resolveContainerEngine';
 
 export class HostModel implements vscode.Disposable {
     private _onHealthChanged: vscode.EventEmitter<void> =
@@ -16,6 +20,10 @@ export class HostModel implements vscode.Disposable {
 
     private _health: Loadable<HostHealth> = unloaded();
     private _skillReport: Loadable<TopoSkillReport> = unloaded();
+
+    public get containerEngine(): ContainerEngine {
+        return resolveContainerEngine(process.env.TOPO_ENGINE);
+    }
 
     public setHealth(health: Loadable<HostHealth>): void {
         this._health = health;
