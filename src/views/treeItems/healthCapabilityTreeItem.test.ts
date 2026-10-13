@@ -19,7 +19,6 @@ describe('HealthCapabilityTreeItem', () => {
         );
 
         expect(item.label).toBe('Deployment');
-        expect(item.contextValue).toBeUndefined();
         expect(item.collapsibleState).toBe(
             vscode.TreeItemCollapsibleState.Collapsed,
         );
@@ -29,5 +28,38 @@ describe('HealthCapabilityTreeItem', () => {
                 new vscode.ThemeColor('testing.iconPassed'),
             ),
         );
+    });
+
+    it('keeps fix actions on individual checks', () => {
+        const item = new HealthCapabilityTreeItem(
+            loaded([
+                {
+                    name: 'Zed',
+                    location: 'host',
+                    status: 'warning',
+                    value: 'missing',
+                    fix: {
+                        description: 'Install Zed',
+                        command: 'topo install zed --target ssh://imx93',
+                    },
+                },
+                {
+                    name: 'Alpha',
+                    location: 'host',
+                    status: 'warning',
+                    value: 'missing',
+                },
+            ]),
+            'Deployment',
+        );
+
+        expect(item.contextValue).toBeUndefined();
+        const children = item.getChildren();
+        expect(children.find(({ label }) => label === 'Zed')).toMatchObject({
+            contextValue: 'HealthCheck Warning Fixable',
+        });
+        expect(children.find(({ label }) => label === 'Alpha')).toMatchObject({
+            contextValue: 'HealthCheck Warning',
+        });
     });
 });

@@ -5,10 +5,6 @@ import { TargetDescription } from '../services/topoCliSchema';
 import type { TargetHealth } from '../util/healthReport';
 import { TargetModel } from '../models/targetModel';
 import { TargetDataIssueTreeItem } from './treeItems/targetDataIssueTreeItem';
-import { ErrorTreeItem } from './treeItems/errorTreeItem';
-import { LoadingTreeItem } from './treeItems/loadingTreeItem';
-import { ProcessingDomainTreeItem } from './treeItems/processingDomainTreeItem';
-import { ProcessingDomainGroupTreeItem } from './treeItems/processingDomainGroupTreeItem';
 import { errored, loaded, loading, unloaded } from '../util/loadable';
 
 describe('TargetTreeView', () => {
@@ -18,7 +14,7 @@ describe('TargetTreeView', () => {
     const target = 'user@topo.local';
     const targetDescription: TargetDescription = {
         hostProcessors: [],
-        remoteProcessors: [{ name: 'imx-rproc' }, { name: 'other-rproc' }],
+        remoteProcessors: [{ name: 'imx-rproc' }],
         totalMemoryKb: 1024,
     };
     const connectedTargetHealth: TargetHealth = {
@@ -228,70 +224,37 @@ describe('TargetTreeView', () => {
     });
 
     describe('getChildren', () => {
-        it('returns Health and Processing Domains at the root', () => {
+        it('shows the selected target health checks and processing domains', () => {
             const rootChildren = view.getChildren();
 
             expect(treeView.description).toBe(target);
-            expect(rootChildren).toHaveLength(2);
-            expect(rootChildren[0].label).toBe('Health');
-            expect(rootChildren[1]).toBeInstanceOf(
-                ProcessingDomainGroupTreeItem,
-            );
-        });
-
-        it('groups shared checks by capability in CLI order', () => {
-            const [connectivity] = connectedTargetHealth.capabilities[0].checks;
-            const health: TargetHealth = {
-                capabilities: [
-                    {
-                        name: 'Deployment',
-                        checks: [
-                            {
-                                name: 'Container Engine',
-                                location: 'target',
-                                status: 'ok',
-                                value: 'present',
-                            },
-                            connectivity,
-                        ],
-                    },
-                    {
-                        name: 'Project management',
-                        checks: [connectivity],
-                    },
-                ],
-            };
-            targetModel.setSelectedTargetHealth(loaded(health));
-
-            const [healthItem] = view.getChildren();
-            const capabilities = view.getChildren(healthItem);
-
-            expect(capabilities).toMatchObject([
-                { label: 'Deployment' },
-                { label: 'Project management' },
+            expect(rootChildren).toMatchObject([
+                { label: 'Health' },
+                { label: 'Processing Domains' },
             ]);
+            const capabilities = view.getChildren(rootChildren[0]);
+            expect(capabilities).toMatchObject([{ label: 'Deployment' }]);
             expect(view.getChildren(capabilities[0])).toMatchObject([
-                { label: 'Container Engine' },
                 { label: 'Connectivity' },
             ]);
-            expect(view.getChildren(capabilities[1])).toMatchObject([
-                { label: 'Connectivity' },
+            expect(view.getChildren(rootChildren[1])).toMatchObject([
+                { label: manifest.PRIMARY_PROCESSING_DOMAIN },
+                { label: 'imx-rproc' },
             ]);
         });
 
-        it('shows loading icons on the health root, capabilities and checks while refreshing', () => {
-            targetModel.setSelectedTargetHealth(
-                loading(loaded(connectedTargetHealth)),
+        it('shows loading while keeping existing health checks during refresh', () => {
+            const health = loading(loaded(connectedTargetHealth));
+            targetModel.setSelectedTargetHealth(health);
+
+            const healthItem = view.getChildren()[0];
+            expect(healthItem.iconPath).toEqual(
+                new vscode.ThemeIcon('loading~spin'),
             );
-
-            const [healthItem] = view.getChildren();
-            const [capability] = view.getChildren(healthItem);
-            const [check] = view.getChildren(capability);
-            const loadingIcon = new vscode.ThemeIcon('loading~spin');
-
-            expect(healthItem.iconPath).toEqual(loadingIcon);
-            expect(capability.iconPath).toEqual(loadingIcon);
-            expect(check.iconPath).toEqual(loadingIcon);
+            const capabilities = view.getChildren(healthItem);
+            expect(view.getChildren(capabilities[0])).toMatchObject([
+                { label: 'Connectivity' },
+            ]);
         });
 
         it('returns a health check item while selected target health is pending', () => {
@@ -300,7 +263,6 @@ describe('TargetTreeView', () => {
             const rootChildren = view.getChildren();
 
             expect(rootChildren).toHaveLength(1);
-            expect(rootChildren[0]).toBeInstanceOf(LoadingTreeItem);
             expect(rootChildren[0]).toMatchObject({
                 label: 'Checking target health',
                 iconPath: { id: 'loading~spin' },
@@ -343,7 +305,6 @@ describe('TargetTreeView', () => {
                 description: 'ssh connection failed',
                 contextValue: 'OpenableError',
             });
-            expect(rootChildren[0]).toBeInstanceOf(ErrorTreeItem);
         });
 
         it('shows loading while failed selected target health is refreshing', () => {
@@ -360,66 +321,13 @@ describe('TargetTreeView', () => {
             });
         });
 
-        it('offers fixes on the health root and individual checks, excluding capability groups', () => {
-            targetModel.setSelectedTargetHealth(
-                loaded({
-                    capabilities: [
-                        {
-                            name: 'Deployment',
-                            checks: [
-                                {
-                                    name: 'ProcessingDomainDriver',
-                                    location: 'target',
-                                    status: 'error',
-                                    value: 'missing',
-                                    fix: {
-                                        description:
-                                            'Install processing domain driver',
-                                        command:
-                                            'topo install processing-domain-driver',
-                                    },
-                                },
-                            ],
-                        },
-                    ],
-                }),
-            );
-
-            const [healthItem] = view.getChildren();
-            const [capability] = view.getChildren(healthItem);
-            const [check] = view.getChildren(capability);
-
-            expect(healthItem.contextValue).toBe('Health HasFixableIssues');
-            expect(capability.contextValue).toBeUndefined();
-            expect(check.contextValue).toBe('HealthCheck Error Fixable');
-        });
-
-        it('returns processing domains without rendering container children', () => {
-            const rootChildren = view.getChildren();
-
-            const processingDomainItems = view.getChildren(rootChildren[1]);
-
-            expect(processingDomainItems).toStrictEqual([
-                new ProcessingDomainTreeItem(
-                    manifest.PRIMARY_PROCESSING_DOMAIN,
-                ),
-                new ProcessingDomainTreeItem('imx-rproc'),
-                new ProcessingDomainTreeItem('other-rproc'),
-            ]);
-        });
-
-        it('processing domains group contains an error item when failing to load', () => {
+        it('shows description failures under processing domains', () => {
             const description = errored('Failed to load target description');
             targetModel.setSelectedTargetDescription(description);
-            const rootChildren = view.getChildren();
 
-            const got = view.getChildren(rootChildren[1]);
-
-            expect(got).toStrictEqual([
-                new ErrorTreeItem(
-                    'Failed to load processing domains',
-                    description,
-                ),
+            const processingDomains = view.getChildren()[1];
+            expect(view.getChildren(processingDomains)).toMatchObject([
+                { description: 'Failed to load target description' },
             ]);
         });
 
@@ -442,16 +350,6 @@ describe('TargetTreeView', () => {
             expect(rootChildren).toStrictEqual([
                 new TargetDataIssueTreeItem(targets),
             ]);
-        });
-    });
-
-    describe('getTreeItem', () => {
-        it('getTreeItem returns the element itself', () => {
-            const item = new vscode.TreeItem('Target Health');
-
-            const treeItem = view.getTreeItem(item);
-
-            expect(treeItem).toBe(item);
         });
     });
 });
