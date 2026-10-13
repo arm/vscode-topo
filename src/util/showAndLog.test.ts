@@ -46,7 +46,7 @@ describe('showAndLogError', () => {
             },
         ] as const;
         const error = new WrappedError(
-            'DOCKER',
+            'CONTAINER_ENGINE',
             'Error: No such container: abc123',
             [...logEntries],
         );
@@ -79,7 +79,7 @@ describe('showAndLogError', () => {
     });
 
     it('logs WrappedError message even when it has no log entries', () => {
-        const error = new WrappedError('DOCKER', 'empty');
+        const error = new WrappedError('CONTAINER_ENGINE', 'empty');
 
         showAndLogError('Failed', error);
 

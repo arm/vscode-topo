@@ -50,7 +50,7 @@ async function runCommand(
                 : '';
         const message = stderr || getErrorMessage(error);
         throw new WrappedError(
-            'PODMAN',
+            'CONTAINER_ENGINE',
             message,
             [{ level: 'ERROR', msg: message }],
             { cause: error },

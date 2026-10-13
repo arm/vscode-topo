@@ -61,7 +61,7 @@ describe('PodmanCommands', () => {
         ]);
     });
 
-    it('preserves remote command diagnostics as a Podman error', async () => {
+    it('preserves remote command diagnostics as a container engine error', async () => {
         const error = Object.assign(new Error('Command failed'), {
             stderr: 'Error: container not found\n',
         });
@@ -70,7 +70,7 @@ describe('PodmanCommands', () => {
         await expect(
             commands.stopContainer('cid', 'user@board'),
         ).rejects.toMatchObject({
-            code: 'PODMAN',
+            code: 'CONTAINER_ENGINE',
             message: 'Error: container not found',
             cause: error,
         });
@@ -84,7 +84,7 @@ describe('PodmanCommands', () => {
         await expect(
             commands.startContainer('cid', 'localhost'),
         ).rejects.toMatchObject({
-            code: 'PODMAN',
+            code: 'CONTAINER_ENGINE',
             message: 'spawn podman ENOENT',
         });
     });

@@ -10,11 +10,11 @@ describe('resolveContainerEngine', () => {
         expect(resolveContainerEngine(' ')).toBe('docker');
     });
 
-    it('rejects an invalid engine with an ENGINE error', () => {
+    it('rejects an invalid engine with a CONTAINER_ENGINE error', () => {
         expect(() => resolveContainerEngine('invalid')).toThrow(
             expect.objectContaining({
                 name: 'WrappedError',
-                code: 'ENGINE',
+                code: 'CONTAINER_ENGINE',
                 message:
                     'Invalid TOPO_ENGINE value "invalid": expected docker or podman',
             }),

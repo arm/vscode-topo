@@ -73,27 +73,24 @@ describe('ContainerLifecycle', () => {
         },
     );
 
-    it.each(['ENGINE', 'DOCKER', 'PODMAN'] as const)(
-        'reports %s failures without refreshing containers',
-        async (engine) => {
-            const containerCommands = mock<ContainerCommands>();
-            containerCommands.startContainer.mockRejectedValue(
-                new WrappedError(engine, 'fail'),
-            );
-            const lifecycle = new ContainerLifecycle(containerCommands);
+    it('reports container engine failures without refreshing containers', async () => {
+        const containerCommands = mock<ContainerCommands>();
+        containerCommands.startContainer.mockRejectedValue(
+            new WrappedError('CONTAINER_ENGINE', 'fail'),
+        );
+        const lifecycle = new ContainerLifecycle(containerCommands);
 
-            await lifecycle.startContainerCommandHandler(treeItem);
+        await lifecycle.startContainerCommandHandler(treeItem);
 
-            expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-                expect.stringContaining(
-                    `Failed to start the container ${container.id}. fail`,
-                ),
-            );
-            expect(vscode.commands.executeCommand).not.toHaveBeenCalledWith(
-                refreshProjectContainers,
-            );
-        },
-    );
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
+            expect.stringContaining(
+                `Failed to start the container ${container.id}. fail`,
+            ),
+        );
+        expect(vscode.commands.executeCommand).not.toHaveBeenCalledWith(
+            refreshProjectContainers,
+        );
+    });
 
     it('rethrows unexpected command errors', async () => {
         const containerCommands = mock<ContainerCommands>();

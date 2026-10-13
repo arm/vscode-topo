@@ -12,7 +12,7 @@ export const resolveContainerEngine = (
         return engine;
     }
     throw new WrappedError(
-        'ENGINE',
+        'CONTAINER_ENGINE',
         `Invalid TOPO_ENGINE value "${value}": expected docker or podman`,
     );
 };
