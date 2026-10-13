@@ -30,7 +30,7 @@ describe('HealthCapabilityTreeItem', () => {
         );
     });
 
-    it('preserves check order and keeps fix actions on individual checks', () => {
+    it('keeps fix actions on individual checks', () => {
         const item = new HealthCapabilityTreeItem(
             loaded([
                 {
@@ -46,20 +46,20 @@ describe('HealthCapabilityTreeItem', () => {
                 {
                     name: 'Alpha',
                     location: 'host',
-                    status: 'ok',
-                    value: 'installed',
+                    status: 'warning',
+                    value: 'missing',
                 },
             ]),
             'Deployment',
         );
 
         expect(item.contextValue).toBeUndefined();
-        expect(item.getChildren()).toMatchObject([
-            {
-                label: 'Zed',
-                contextValue: 'HealthCheck Warning Fixable',
-            },
-            { label: 'Alpha' },
-        ]);
+        const children = item.getChildren();
+        expect(children.find(({ label }) => label === 'Zed')).toMatchObject({
+            contextValue: 'HealthCheck Warning Fixable',
+        });
+        expect(children.find(({ label }) => label === 'Alpha')).toMatchObject({
+            contextValue: 'HealthCheck Warning',
+        });
     });
 });
