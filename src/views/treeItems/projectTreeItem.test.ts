@@ -37,6 +37,7 @@ describe('ProjectTreeItem', () => {
 
     it('groups containers by domain, with the primary domain first and others alphabetical', () => {
         const containers = [
+            { ...container, id: 'mno345', processingDomain: '' },
             { ...container, id: 'ghi789', processingDomain: 'other-rproc' },
             container,
             { ...container, id: 'jkl012', processingDomain: 'imx-rproc' },
@@ -49,6 +50,7 @@ describe('ProjectTreeItem', () => {
             { label: PRIMARY_PROCESSING_DOMAIN },
             { label: 'imx-rproc' },
             { label: 'other-rproc' },
+            { label: 'Unknown' },
         ]);
         expect(domains[0].getChildren()).toMatchObject([
             { containerItem: { id: 'abc123' } },
@@ -59,6 +61,9 @@ describe('ProjectTreeItem', () => {
         ]);
         expect(domains[2].getChildren()).toMatchObject([
             { containerItem: { id: 'ghi789' } },
+        ]);
+        expect(domains[3].getChildren()).toMatchObject([
+            { containerItem: { id: 'mno345' } },
         ]);
     });
 
