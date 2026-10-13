@@ -1,5 +1,7 @@
-import { CONTAINER_ENGINES, type ContainerEngine } from '../manifest';
 import { WrappedError } from '../errors/wrappedError';
+
+const CONTAINER_ENGINES = ['docker', 'podman'] as const;
+type ContainerEngine = (typeof CONTAINER_ENGINES)[number];
 
 export const resolveContainerEngine = (
     environmentContainerEngine?: string,
