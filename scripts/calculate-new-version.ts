@@ -40,28 +40,26 @@ function calculateVersion(
         throw new Error(`No commits since ${tag}; nothing to release`);
     }
 
-    const messages = git(
+    const subjects = git(
         '-c',
         'log.showSignature=false',
         'log',
         range,
         '--no-decorate',
         '--no-color',
-        '--format=%B%x00',
+        '--format=%s%x00',
     )
         .split('\0')
-        .map((message) => message.trim())
+        .map((subject) => subject.trim())
         .filter(Boolean);
-    const hasBreakingChanges = messages.some(
-        (message) =>
-            /^\w+(\(.*\))?!:/i.test(message) ||
-            /\nBREAKING[ -]CHANGE:/.test(message),
+    const hasBreakingChanges = subjects.some((subject) =>
+        /\w+(\(.*\))?!:/i.test(subject),
     );
-    const hasFeatures = messages.some((message) =>
-        /^feat(\(.*\))?:/i.test(message),
+    const hasFeatures = subjects.some((subject) =>
+        /^feat(\(.*\))?:/i.test(subject),
     );
-    const hasFixes = messages.some((message) =>
-        /^fix(\(.*\))?:/i.test(message),
+    const hasFixes = subjects.some((subject) =>
+        /^fix(\(.*\))?:/i.test(subject),
     );
 
     // Explicit prereleases also allow changes such as chores and refactors.
