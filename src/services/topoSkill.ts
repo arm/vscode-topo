@@ -54,8 +54,8 @@ export class TopoSkill {
                     bundledSkill,
                     await this.readSkillFile(skill),
                 )
-                    ? ('installed' as const)
-                    : ('outdated' as const),
+                    ? 'installed'
+                    : 'outdated',
             })),
         );
 

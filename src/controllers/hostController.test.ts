@@ -3,7 +3,7 @@ import { HostModel } from '../models/hostModel';
 import { TopoCli } from '../services/topoCli';
 import { HostController } from './hostController';
 import { HealthReport, HostHealthCheck } from '../services/topoCliSchema';
-import { TopoSkill } from '../services/topoSkill';
+import { TopoSkill, type TopoSkillReport } from '../services/topoSkill';
 import { loaded } from '../util/loadable';
 
 const hostCheck: HostHealthCheck = {
@@ -32,18 +32,18 @@ const healthReport: HealthReport = {
 const hostHealth = {
     capabilities: [{ name: 'Deployment', checks: [hostCheck] }],
 };
-const installedSkillReport = {
-    status: 'installed' as const,
+const installedSkillReport: TopoSkillReport = {
+    status: 'installed',
     agents: [
         {
             name: 'Claude Code',
             paths: ['/fake/home/.claude/skills/topo-cli-location'],
-            status: 'installed' as const,
+            status: 'installed',
         },
     ],
 };
-const missingSkillReport = {
-    status: 'missing' as const,
+const missingSkillReport: TopoSkillReport = {
+    status: 'missing',
     agents: [],
 };
 

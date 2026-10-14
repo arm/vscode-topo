@@ -1,6 +1,7 @@
 import path from 'node:path';
 import {
     buildCloneArguments,
+    type CloneSource,
     getDefaultProjectName,
     getDefaultProjectNameFromUrl,
     parseCloneSource,
@@ -93,24 +94,24 @@ describe('clone source', () => {
     });
 
     describe('argument building', () => {
-        it.each([
+        it.each<[CloneSource, string]>([
             [
                 {
-                    type: 'git' as const,
+                    type: 'git',
                     url: 'https://example.com/project.git',
                 },
                 'git:https://example.com/project.git',
             ],
             [
                 {
-                    type: 'git' as const,
+                    type: 'git',
                     url: 'https://example.com/project.git#8303e66d',
                 },
                 'git:https://example.com/project.git#8303e66d',
             ],
             [
                 {
-                    type: 'dir' as const,
+                    type: 'dir',
                     path: '/tmp/source-project',
                 },
                 'dir:/tmp/source-project',

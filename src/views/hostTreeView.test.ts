@@ -4,19 +4,20 @@ import { HostModel } from '../models/hostModel';
 import { errored, loaded } from '../util/loadable';
 import { ErrorTreeItem } from './treeItems/errorTreeItem';
 import { LoadingTreeItem } from './treeItems/loadingTreeItem';
+import type { TopoSkillReport } from '../services/topoSkill';
 
-const installedSkillReport = {
-    status: 'installed' as const,
+const installedSkillReport: TopoSkillReport = {
+    status: 'installed',
     agents: [
         {
             name: 'Claude Code',
             paths: ['/fake/home/.claude/skills/topo-cli-location'],
-            status: 'installed' as const,
+            status: 'installed',
         },
         {
             name: 'Codex',
             paths: ['/fake/home/.agents/skills/topo-cli-location'],
-            status: 'installed' as const,
+            status: 'installed',
         },
     ],
 };

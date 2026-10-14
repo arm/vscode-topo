@@ -3,13 +3,14 @@ import { mock } from 'vitest-mock-extended';
 import { ProjectClone } from './projectClone';
 import { TopoCli } from '../services/topoCli';
 import { TargetModel } from '../models/targetModel';
-import { WrappedError } from '../errors/wrappedError';
+import { WrappedError, type WrappedErrorLog } from '../errors/wrappedError';
 import { showAndLogError } from '../util/showAndLog';
 import {
     promptForLocalCloneSource,
     promptForRemoteCloneSource,
 } from '../util/projectClone';
 import { ProjectCloner } from '../operations/projectCloner';
+import type { CloneSource } from '../util/cloneSource';
 
 vi.mock('../util/showAndLog');
 vi.mock('../util/projectClone');
@@ -110,8 +111,8 @@ describe('ProjectClone action', () => {
 
         it('clones the selected remote source for the selected target', async () => {
             targetModel.setSelected('me@example.com');
-            const source = {
-                type: 'git' as const,
+            const source: CloneSource = {
+                type: 'git',
                 url: 'https://example.com/virtual-bittermelon-peeler.git',
             };
             promptForRemoteCloneSourceMock.mockResolvedValueOnce(source);
@@ -168,7 +169,9 @@ describe('ProjectClone action', () => {
         });
 
         it('shows CLI errors from project lookup instead of throwing them, preserving log entries', async () => {
-            const logs = [{ level: 'ERROR' as const, msg: 'lscpu not found' }];
+            const logs: readonly WrappedErrorLog[] = [
+                { level: 'ERROR', msg: 'lscpu not found' },
+            ];
             const error = new WrappedError('CLI', 'boom', logs);
             promptForRemoteCloneSourceMock.mockRejectedValueOnce(error);
 
