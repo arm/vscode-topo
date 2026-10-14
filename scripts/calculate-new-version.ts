@@ -1,9 +1,9 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { execFileSync, spawnSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 
 type Version = { major: number; minor: number; patch: number };
-type Manifest = { name?: string; publisher?: string; version?: string };
+type Manifest = { version?: string };
 
 // Like svu --v0, keep breaking changes on 0.x. Set to false to allow a major bump.
 const keepMajorZero = true;
@@ -23,51 +23,73 @@ function formatVersion({ major, minor, patch }: Version) {
     return `${major}.${minor}.${patch}`;
 }
 
-function greaterThan(a: Version, b: Version) {
-    if (a.major !== b.major) {
-        return a.major > b.major;
-    }
-
-    if (a.minor !== b.minor) {
-        return a.minor > b.minor;
-    }
-
-    return a.patch > b.patch;
-}
-
-const getLatestPrereleaseVersion = (id: string): Version | undefined => {
-    const r = spawnSync('npx', ['@vscode/vsce', 'show', id, '--json'], {
-        encoding: 'utf8',
-    });
-    if (r.error || !r.stdout) {
-        return undefined;
-    }
-
-    try {
-        const data = JSON.parse(r.stdout) as {
-            versions?: {
-                version?: string;
-                properties?: { key?: string; value?: string }[];
-            }[];
-        };
-        const found = data.versions?.find((x) =>
-            x.properties?.some(
-                (p) =>
-                    p.key === 'Microsoft.VisualStudio.Code.PreRelease' &&
-                    p.value === 'true',
-            ),
-        )?.version;
-        return found ? parseVersion(found) : undefined;
-    } catch {
-        return undefined;
-    }
-};
-
 function git(...args: string[]): string {
     return execFileSync('git', args, {
         encoding: 'utf8',
         stdio: ['ignore', 'pipe', 'inherit'],
     }).trim();
+}
+
+function calculateVersion(
+    current: Version,
+    tag: string,
+    preRelease: boolean,
+): string {
+    const range = `refs/tags/${tag}..HEAD`;
+    if (git('rev-list', '--count', range) === '0') {
+        throw new Error(`No commits since ${tag}; nothing to release`);
+    }
+
+    const messages = git(
+        '-c',
+        'log.showSignature=false',
+        'log',
+        range,
+        '--no-decorate',
+        '--no-color',
+        '--format=%B%x00',
+    )
+        .split('\0')
+        .map((message) => message.trim())
+        .filter(Boolean);
+    const hasBreakingChanges = messages.some(
+        (message) =>
+            /^\w+(\(.*\))?!:/i.test(message) ||
+            /\nBREAKING[ -]CHANGE:/.test(message),
+    );
+    const hasFeatures = messages.some((message) =>
+        /^feat(\(.*\))?:/i.test(message),
+    );
+    const hasFixes = messages.some((message) =>
+        /^fix(\(.*\))?:/i.test(message),
+    );
+
+    // Explicit prereleases also allow changes such as chores and refactors.
+    if (!preRelease && !hasBreakingChanges && !hasFeatures && !hasFixes) {
+        throw new Error(
+            `Commits since ${tag} do not warrant a stable version bump`,
+        );
+    }
+
+    let next: Version;
+    if (hasBreakingChanges && (!keepMajorZero || current.major > 0)) {
+        next = { major: current.major + 1, minor: 0, patch: 0 };
+    } else if (hasBreakingChanges || hasFeatures) {
+        next = {
+            ...current,
+            minor: current.minor + 1,
+            patch: 0,
+        };
+    } else {
+        next = { ...current, patch: current.patch + 1 };
+    }
+
+    // Reserve odd minor versions for prereleases and even ones for stable releases.
+    if (next.minor % 2 !== (preRelease ? 1 : 0)) {
+        next.minor += 1;
+        next.patch = 0;
+    }
+    return formatVersion(next);
 }
 
 function calculateStableVersion(): string {
@@ -76,44 +98,11 @@ function calculateStableVersion(): string {
         .split('\n')
         .find((tag) => /^v\d+\.\d*[02468]\.\d+$/.test(tag));
     const current = tag && parseVersion(tag.slice(1));
-    if (!current) {
+    if (!tag || !current) {
         throw new Error('No stable release tag found');
     }
 
-    const messages = git(
-        '-c',
-        'log.showSignature=false',
-        'log',
-        `refs/tags/${tag}..HEAD`,
-        '--no-decorate',
-        '--no-color',
-        '--format=%B%x00',
-    )
-        .split('\0')
-        .map((message) => message.trim());
-    const breaking = messages.some(
-        (message) =>
-            /^\w+(\(.*\))?!:/i.test(message) ||
-            /\nBREAKING[ -]CHANGE:/.test(message),
-    );
-
-    if (breaking && (!keepMajorZero || current.major > 0)) {
-        return formatVersion({ major: current.major + 1, minor: 0, patch: 0 });
-    }
-    if (
-        breaking ||
-        messages.some((message) => /^feat(\(.*\))?:/i.test(message))
-    ) {
-        return formatVersion({
-            ...current,
-            minor: current.minor + 2,
-            patch: 0,
-        });
-    }
-    if (messages.some((message) => /^fix(\(.*\))?:/i.test(message))) {
-        return formatVersion({ ...current, patch: current.patch + 1 });
-    }
-    return '';
+    return calculateVersion(current, tag, false);
 }
 
 function calculateNewVersion(preRelease: boolean): string {
@@ -126,13 +115,11 @@ function calculateNewVersion(preRelease: boolean): string {
         throw new Error('package.json not found in the current directory');
     }
 
-    const { name, publisher, version } = JSON.parse(
+    const { version } = JSON.parse(
         readFileSync(packageJson, 'utf8'),
     ) as Manifest;
-    if (!name || !publisher || !version) {
-        throw new Error(
-            'package.json must include name, publisher and version',
-        );
+    if (!version) {
+        throw new Error('package.json must include version');
     }
 
     const current = parseVersion(version);
@@ -140,20 +127,7 @@ function calculateNewVersion(preRelease: boolean): string {
         throw new Error('package.json version must use major.minor.patch');
     }
 
-    const latest = getLatestPrereleaseVersion(`${publisher}.${name}`);
-    if (latest && greaterThan(latest, current)) {
-        return formatVersion({
-            major: latest.major,
-            minor: latest.minor,
-            patch: latest.patch + 1,
-        });
-    }
-
-    return formatVersion({
-        major: current.major,
-        minor: current.minor + (current.minor % 2 !== 0 ? 2 : 1),
-        patch: 0,
-    });
+    return calculateVersion(current, `v${formatVersion(current)}`, true);
 }
 
 try {
