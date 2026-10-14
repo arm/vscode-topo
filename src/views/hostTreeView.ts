@@ -4,14 +4,14 @@ import { HealthCapabilityTreeItem } from './treeItems/healthCapabilityTreeItem';
 import { ErrorTreeItem } from './treeItems/errorTreeItem';
 import { HostModel } from '../models/hostModel';
 import { DisposableCollector } from '../util/disposableCollector';
-import { Loadable, errored, loaded } from '../util/loadable';
+import { Loadable, loaded } from '../util/loadable';
 import { TopoSkillReport } from '../services/topoSkill';
 import { LoadingTreeItem } from './treeItems/loadingTreeItem';
 import { SkillGroupTreeItem } from './treeItems/skillGroupTreeItem';
 import { HealthTreeItem } from './treeItems/healthTreeItem';
 import type { HostHealth } from '../util/healthReport';
 import { ContainerEngineTreeItem } from './treeItems/containerEngineTreeItem';
-import { isWrappedError } from '../errors/wrappedError';
+import type { ContainerEngine } from '../util/resolveContainerEngine';
 
 function getHealthReportItem(health: Loadable<HostHealth>): vscode.TreeItem {
     switch (health.status) {
@@ -26,14 +26,16 @@ function getHealthReportItem(health: Loadable<HostHealth>): vscode.TreeItem {
     }
 }
 
-function getContainerEngineItem(model: HostModel): vscode.TreeItem {
-    try {
-        return new ContainerEngineTreeItem(model.containerEngine);
-    } catch (error) {
-        if (!isWrappedError(error, ['CONTAINER_ENGINE'])) {
-            throw error;
-        }
-        return new ErrorTreeItem('Container Engine', errored(error));
+function getContainerEngineItem(
+    containerEngine: Loadable<ContainerEngine>,
+): vscode.TreeItem {
+    switch (containerEngine.status) {
+        case 'loaded':
+            return new ContainerEngineTreeItem(containerEngine.data);
+        case 'errored':
+            return new ErrorTreeItem('Container Engine', containerEngine);
+        case 'unloaded':
+            return new LoadingTreeItem('Container Engine');
     }
 }
 
@@ -88,7 +90,7 @@ export class HostTreeView
     public getChildren(element?: vscode.TreeItem): vscode.TreeItem[] {
         if (!element) {
             return [
-                getContainerEngineItem(this.model),
+                getContainerEngineItem(this.model.containerEngine),
                 getHealthReportItem(this.model.health),
                 getSkillReportItem(this.model.skillReport),
             ];

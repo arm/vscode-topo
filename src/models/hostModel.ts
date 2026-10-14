@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import type { HostHealth } from '../util/healthReport';
-import { Loadable, unloaded } from '../util/loadable';
+import { Loadable, errored, loaded, unloaded } from '../util/loadable';
 import { TopoSkillReport } from '../services/topoSkill';
 import {
     type ContainerEngine,
@@ -21,8 +21,12 @@ export class HostModel implements vscode.Disposable {
     private _health: Loadable<HostHealth> = unloaded();
     private _skillReport: Loadable<TopoSkillReport> = unloaded();
 
-    public get containerEngine(): ContainerEngine {
-        return resolveContainerEngine(process.env.TOPO_ENGINE);
+    public get containerEngine(): Loadable<ContainerEngine> {
+        try {
+            return loaded(resolveContainerEngine(process.env.TOPO_ENGINE));
+        } catch (error) {
+            return errored(error);
+        }
     }
 
     public setHealth(health: Loadable<HostHealth>): void {

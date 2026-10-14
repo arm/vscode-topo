@@ -6,9 +6,25 @@ import { loaded, unloaded } from '../util/loadable';
 const hostHealth: HostHealth = { capabilities: [] };
 
 describe('HostModel', () => {
-    it('defaults to an unloaded state', async () => {
+    afterEach(() => {
+        vi.unstubAllEnvs();
+    });
+
+    it('represents an invalid engine as an errored state', () => {
+        vi.stubEnv('TOPO_ENGINE', 'invalid');
         const model = new HostModel();
 
+        expect(model.containerEngine).toMatchObject({
+            status: 'errored',
+            error: expect.any(Error),
+        });
+    });
+
+    it('starts with the resolved engine and unloaded reports', () => {
+        vi.stubEnv('TOPO_ENGINE', 'podman');
+        const model = new HostModel();
+
+        expect(model.containerEngine).toStrictEqual(loaded('podman'));
         expect(model.health).toStrictEqual(unloaded());
         expect(model.skillReport).toStrictEqual(unloaded());
     });
