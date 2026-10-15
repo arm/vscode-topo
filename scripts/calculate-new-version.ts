@@ -1,9 +1,6 @@
-import { existsSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 
 type Version = { major: number; minor: number; patch: number };
-type Manifest = { version?: string };
 
 // Like svu --v0, keep breaking changes on 0.x. Set to false to allow a major bump.
 const keepMajorZero = true;
@@ -30,7 +27,7 @@ function git(...args: string[]): string {
     }).trim();
 }
 
-function calculateVersion(
+function calculateVersionFromCommits(
     current: Version,
     tag: string,
     preRelease: boolean,
@@ -90,46 +87,26 @@ function calculateVersion(
     return formatVersion(next);
 }
 
-function calculateStableVersion(): string {
-    // Only even-minor release tags reachable from HEAD are stable baselines.
+function getNextReleaseVersion(preRelease: boolean): string {
+    // Prereleases use any release tag; stable releases use only even-minor tags.
+    const tagRegex = preRelease
+        ? /^v\d+\.\d+\.\d+$/
+        : /^v\d+\.\d*[02468]\.\d+$/;
     const tag = git('tag', '--merged', 'HEAD', '--sort=-version:refname')
         .split('\n')
-        .find((tag) => /^v\d+\.\d*[02468]\.\d+$/.test(tag));
+        .find((tag) => tagRegex.test(tag));
     const current = tag && parseVersion(tag.slice(1));
     if (!tag || !current) {
-        throw new Error('No stable release tag found');
+        throw new Error(
+            preRelease ? 'No release tag found' : 'No stable release tag found',
+        );
     }
 
-    return calculateVersion(current, tag, false);
-}
-
-function calculateNewVersion(preRelease: boolean): string {
-    if (!preRelease) {
-        return calculateStableVersion();
-    }
-
-    const packageJson = join(process.cwd(), 'package.json');
-    if (!existsSync(packageJson)) {
-        throw new Error('package.json not found in the current directory');
-    }
-
-    const { version } = JSON.parse(
-        readFileSync(packageJson, 'utf8'),
-    ) as Manifest;
-    if (!version) {
-        throw new Error('package.json must include version');
-    }
-
-    const current = parseVersion(version);
-    if (!current) {
-        throw new Error('package.json version must use major.minor.patch');
-    }
-
-    return calculateVersion(current, `v${formatVersion(current)}`, true);
+    return calculateVersionFromCommits(current, tag, preRelease);
 }
 
 try {
-    const newVersion = calculateNewVersion(
+    const newVersion = getNextReleaseVersion(
         process.argv.includes('--pre-release'),
     );
     console.log(newVersion);
