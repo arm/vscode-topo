@@ -178,7 +178,7 @@ describe('TaskFactory', () => {
         });
     });
 
-    it('uses Podman for shell stop tasks', () => {
+    it('uses config-specified container engine for shell tasks', () => {
         config.getContainerEngineSetting.mockReturnValue('podman');
 
         const task = taskFactory.createShellTask('Stop project', [
