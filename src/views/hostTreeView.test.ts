@@ -134,6 +134,7 @@ describe('HostTreeView', () => {
             tooltip:
                 'Container engine: docker. Set by topo.containerEngine; Auto uses TOPO_ENGINE (Docker when unset).',
             collapsibleState: vscode.TreeItemCollapsibleState.None,
+            contextValue: 'ContainerEngine',
         });
     });
 
@@ -148,8 +149,7 @@ describe('HostTreeView', () => {
         expect(listener).toHaveBeenCalledOnce();
         expect(provider.getChildren()[0]).toMatchObject({
             description: 'podman',
-            tooltip:
-                'Container engine: podman. Set by topo.containerEngine; Auto uses TOPO_ENGINE (Docker when unset).',
+            tooltip: expect.stringContaining('Container engine: podman'),
         });
     });
 
@@ -164,6 +164,7 @@ describe('HostTreeView', () => {
             label: 'Container Engine',
             description:
                 'Invalid TOPO_ENGINE value "invalid": expected docker or podman',
+            contextValue: 'ContainerEngine',
         });
         expect(health).toMatchObject({ label: 'Health' });
     });

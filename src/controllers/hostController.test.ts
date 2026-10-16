@@ -49,41 +49,21 @@ const missingSkillReport: TopoSkillReport = {
 
 describe('HostController', () => {
     const config = mock<Config>();
+    const topoCli = mock<TopoCli>();
+    const topoSkill = mock<TopoSkill>();
 
     beforeEach(() => {
+        vi.stubEnv('TOPO_ENGINE', undefined);
         config.getContainerEngineSetting.mockReturnValue('docker');
+        topoCli.hostHealth.mockResolvedValue(healthReport);
+        topoSkill.getReport.mockResolvedValue(installedSkillReport);
     });
 
-    it('refreshes host health and skill status on creation', async () => {
-        config.getContainerEngineSetting.mockReturnValue('podman');
-        const topoCli = mock<TopoCli>({
-            hostHealth: vi.fn().mockResolvedValue(healthReport),
-        });
-        const topoSkill = mock<TopoSkill>({
-            getReport: vi.fn().mockResolvedValue(installedSkillReport),
-        });
-        const model = new HostModel();
-
-        new HostController(model, topoCli, topoSkill, config);
-        await vi.waitFor(() => {
-            expect(model.containerEngine).toStrictEqual(loaded('podman'));
-            expect(model.health).toStrictEqual(loaded(hostHealth));
-            expect(model.skillReport).toStrictEqual(
-                loaded(installedSkillReport),
-            );
-        });
-
-        expect(topoCli.hostHealth).toHaveBeenCalled();
-        expect(topoSkill.getReport).toHaveBeenCalled();
+    afterEach(() => {
+        vi.unstubAllEnvs();
     });
 
-    it('refreshes host health and skill status on command', async () => {
-        const topoCli = mock<TopoCli>({
-            hostHealth: vi.fn().mockResolvedValue(healthReport),
-        });
-        const topoSkill = mock<TopoSkill>({
-            getReport: vi.fn().mockResolvedValue(missingSkillReport),
-        });
+    function createController() {
         const model = new HostModel();
         const controller = new HostController(
             model,
@@ -91,11 +71,30 @@ describe('HostController', () => {
             topoSkill,
             config,
         );
+        return { model, controller };
+    }
+
+    it('refreshes host health and skill status on creation', async () => {
+        config.getContainerEngineSetting.mockReturnValue('podman');
+        const { model } = createController();
+
+        await vi.waitFor(() => {
+            expect(model.containerEngine).toStrictEqual(loaded('podman'));
+            expect(model.health).toStrictEqual(loaded(hostHealth));
+            expect(model.skillReport).toStrictEqual(
+                loaded(installedSkillReport),
+            );
+        });
+    });
+
+    it('refreshes host health and skill status on command', async () => {
+        topoSkill.getReport.mockResolvedValue(missingSkillReport);
+        const { model, controller } = createController();
         await vi.waitFor(() => {
             expect(model.skillReport).toStrictEqual(loaded(missingSkillReport));
         });
         vi.clearAllMocks();
-        vi.mocked(topoSkill.getReport).mockResolvedValue(installedSkillReport);
+        topoSkill.getReport.mockResolvedValue(installedSkillReport);
 
         await controller.refreshHostCommandHandler();
 

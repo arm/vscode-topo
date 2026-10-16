@@ -28,6 +28,36 @@ describe('Config', () => {
         );
     });
 
+    it.each([
+        {
+            scope: 'workspace',
+            workspaceValue: 'docker',
+            target: vscode.ConfigurationTarget.Workspace,
+        },
+        {
+            scope: 'user',
+            workspaceValue: undefined,
+            target: vscode.ConfigurationTarget.Global,
+        },
+    ])(
+        'saves the engine to $scope settings',
+        async ({ workspaceValue, target }) => {
+            const configuration = vscode.workspace.getConfiguration('topo');
+            vi.mocked(configuration.inspect).mockReturnValue({
+                key: 'topo.containerEngine',
+                workspaceValue,
+            });
+
+            await new Config().setContainerEngine('auto');
+
+            expect(configuration.update).toHaveBeenCalledWith(
+                'containerEngine',
+                'auto',
+                target,
+            );
+        },
+    );
+
     it('returns settings for the requested target', () => {
         const targetSettings: TargetSettings = {
             deploy: { port: 5000 },
