@@ -27,15 +27,16 @@ describe('SelectContainerEngine', () => {
         const [items] = picker.mock.calls[0];
         expect(await items).toMatchObject([
             {
-                label: 'auto',
-                description: 'Current',
+                label: 'Auto',
+                description: '$(check)',
                 detail: 'TOPO_ENGINE env var (or docker if unset)',
             },
             {
-                label: 'docker',
+                label: 'Docker',
+                description: undefined,
                 detail: 'Override TOPO_ENGINE=podman',
             },
-            { label: 'podman' },
+            { label: 'Podman', description: undefined },
         ]);
     });
 

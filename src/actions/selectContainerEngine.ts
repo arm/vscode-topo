@@ -10,8 +10,8 @@ export class SelectContainerEngine {
         const environmentEngine = process.env.TOPO_ENGINE?.trim();
         const selected = await vscode.window.showQuickPick(
             CONTAINER_ENGINE_SETTINGS.map((engine) => ({
-                label: engine,
-                description: engine === currentEngine ? 'Current' : undefined,
+                label: engine.charAt(0).toUpperCase() + engine.slice(1),
+                description: engine === currentEngine ? '$(check)' : undefined,
                 detail:
                     engine === 'auto'
                         ? 'TOPO_ENGINE env var (or docker if unset)'
