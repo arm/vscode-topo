@@ -25,7 +25,7 @@ const targetChecks: readonly TargetHealthCheck[] = [
         value: 'connected',
     },
 ];
-const health: HealthReport = {
+const healthReport: HealthReport = {
     capabilities: [
         {
             name: 'Deployment',
@@ -41,6 +41,9 @@ const health: HealthReport = {
             ],
         },
     ],
+};
+const targetHealth = {
+    capabilities: [{ name: 'Deployment', checks: targetChecks }],
 };
 
 const targetDescription: TargetDescription = {
@@ -78,7 +81,7 @@ function mockTargetStore(
 function mockControllerDependencies() {
     const topoCli = mock<TopoCli>();
     topoCli.describe.mockResolvedValue(targetDescription);
-    topoCli.health.mockResolvedValue(health);
+    topoCli.health.mockResolvedValue(healthReport);
     return { topoCli };
 }
 
@@ -670,7 +673,7 @@ describe('selected target description load', () => {
 });
 
 describe('selected target health refresh', () => {
-    it('loads only target checks for the selected target', async () => {
+    it('preserves health capabilities for the selected target', async () => {
         const targetStore = mockTargetStore([target], target);
         const targetModel = new TargetModel();
         targetModel.setSelected(target);
@@ -682,7 +685,7 @@ describe('selected target health refresh', () => {
         await controller.refreshSelectedTargetHealthCommandHandler();
 
         expect(targetModel.selectedTargetHealth).toStrictEqual(
-            loaded(targetChecks),
+            loaded(targetHealth),
         );
         expect(topoCli.health).toHaveBeenCalledWith(target);
     });
@@ -701,7 +704,7 @@ describe('selected target data refresh', () => {
         await controller.refreshSelectedTargetDataCommandHandler();
 
         expect(targetModel.selectedTargetHealth).toStrictEqual(
-            loaded(targetChecks),
+            loaded(targetHealth),
         );
         expect(targetModel.selectedTargetDescription).toStrictEqual(
             loaded(targetDescription),

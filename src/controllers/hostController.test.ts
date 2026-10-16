@@ -3,7 +3,7 @@ import { HostModel } from '../models/hostModel';
 import { TopoCli } from '../services/topoCli';
 import { HostController } from './hostController';
 import { HealthReport, HostHealthCheck } from '../services/topoCliSchema';
-import { TopoSkill } from '../services/topoSkill';
+import { TopoSkill, type TopoSkillReport } from '../services/topoSkill';
 import { loaded } from '../util/loadable';
 
 const hostCheck: HostHealthCheck = {
@@ -12,7 +12,7 @@ const hostCheck: HostHealthCheck = {
     value: 'docker',
     location: 'host',
 };
-const hostHealth: HealthReport = {
+const healthReport: HealthReport = {
     capabilities: [
         {
             name: 'Deployment',
@@ -29,25 +29,28 @@ const hostHealth: HealthReport = {
         },
     ],
 };
-const installedSkillReport = {
-    status: 'installed' as const,
+const hostHealth = {
+    capabilities: [{ name: 'Deployment', checks: [hostCheck] }],
+};
+const installedSkillReport: TopoSkillReport = {
+    status: 'installed',
     agents: [
         {
             name: 'Claude Code',
             paths: ['/fake/home/.claude/skills/topo-cli-location'],
-            status: 'installed' as const,
+            status: 'installed',
         },
     ],
 };
-const missingSkillReport = {
-    status: 'missing' as const,
+const missingSkillReport: TopoSkillReport = {
+    status: 'missing',
     agents: [],
 };
 
 describe('HostController', () => {
-    it('refreshes only host checks and skill status on creation', async () => {
+    it('refreshes host health and skill status on creation', async () => {
         const topoCli = mock<TopoCli>({
-            hostHealth: vi.fn().mockResolvedValue(hostHealth),
+            hostHealth: vi.fn().mockResolvedValue(healthReport),
         });
         const topoSkill = mock<TopoSkill>({
             getReport: vi.fn().mockResolvedValue(installedSkillReport),
@@ -56,7 +59,7 @@ describe('HostController', () => {
 
         new HostController(model, topoCli, topoSkill);
         await vi.waitFor(() => {
-            expect(model.health).toStrictEqual(loaded([hostCheck]));
+            expect(model.health).toStrictEqual(loaded(hostHealth));
             expect(model.skillReport).toStrictEqual(
                 loaded(installedSkillReport),
             );
@@ -68,7 +71,7 @@ describe('HostController', () => {
 
     it('refreshes host health and skill status on command', async () => {
         const topoCli = mock<TopoCli>({
-            hostHealth: vi.fn().mockResolvedValue(hostHealth),
+            hostHealth: vi.fn().mockResolvedValue(healthReport),
         });
         const topoSkill = mock<TopoSkill>({
             getReport: vi.fn().mockResolvedValue(missingSkillReport),
@@ -85,7 +88,7 @@ describe('HostController', () => {
 
         expect(topoCli.hostHealth).toHaveBeenCalledOnce();
         expect(topoSkill.getReport).toHaveBeenCalledOnce();
-        expect(model.health).toStrictEqual(loaded([hostCheck]));
+        expect(model.health).toStrictEqual(loaded(hostHealth));
         expect(model.skillReport).toStrictEqual(loaded(installedSkillReport));
     });
 });

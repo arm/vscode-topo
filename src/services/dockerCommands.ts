@@ -59,7 +59,9 @@ const runDockerCmd = async (
                 return err.stdout.toString().trim();
             }
             const logs = parseDockerStderr(stderr);
-            throw new WrappedError('DOCKER', stderr, logs, { cause: err });
+            throw new WrappedError('CONTAINER_ENGINE', stderr, logs, {
+                cause: err,
+            });
         } else {
             throw err;
         }

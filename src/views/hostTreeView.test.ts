@@ -1,31 +1,36 @@
 import * as vscode from 'vscode';
 import { HostTreeView } from './hostTreeView';
-import { HealthCheckGroupTreeItem } from './treeItems/healthCheckGroupTreeItem';
-import { HealthCheckTreeItem } from './treeItems/healthCheckTreeItem';
 import { HostModel } from '../models/hostModel';
 import { errored, loaded } from '../util/loadable';
 import { ErrorTreeItem } from './treeItems/errorTreeItem';
-import { SkillStatusTreeItem } from './treeItems/skillStatusTreeItem';
 import { LoadingTreeItem } from './treeItems/loadingTreeItem';
-import { SkillGroupTreeItem } from './treeItems/skillGroupTreeItem';
+import type { TopoSkillReport } from '../services/topoSkill';
 
-const installedSkillReport = {
-    status: 'installed' as const,
+const installedSkillReport: TopoSkillReport = {
+    status: 'installed',
     agents: [
         {
             name: 'Claude Code',
             paths: ['/fake/home/.claude/skills/topo-cli-location'],
-            status: 'installed' as const,
+            status: 'installed',
         },
         {
             name: 'Codex',
             paths: ['/fake/home/.agents/skills/topo-cli-location'],
-            status: 'installed' as const,
+            status: 'installed',
         },
     ],
 };
 
 describe('HostTreeView', () => {
+    beforeEach(() => {
+        vi.stubEnv('TOPO_ENGINE', undefined);
+    });
+
+    afterEach(() => {
+        vi.unstubAllEnvs();
+    });
+
     it('registers the host health tree', () => {
         const provider = new HostTreeView(new HostModel());
 
@@ -38,74 +43,54 @@ describe('HostTreeView', () => {
         );
     });
 
-    it('returns the skill group and its reported agents', () => {
+    it('shows the root groups before reports are loaded', () => {
+        const provider = new HostTreeView(new HostModel());
+
+        expect(provider.getChildren()).toMatchObject([
+            { label: 'Container Engine', description: 'docker' },
+            { label: 'Health', contextValue: 'Health' },
+            { label: 'Topo Agent Skill' },
+        ]);
+    });
+
+    it('shows health checks and installed agents under their root groups', () => {
         const model = new HostModel();
+        model.setHealth(
+            loaded({
+                capabilities: [
+                    {
+                        name: 'Deployment',
+                        checks: [
+                            {
+                                name: 'Container Engine',
+                                location: 'host',
+                                status: 'ok',
+                                value: 'docker',
+                            },
+                        ],
+                    },
+                ],
+            }),
+        );
         model.setSkillReport(loaded(installedSkillReport));
         const provider = new HostTreeView(model);
 
         const rootChildren = provider.getChildren();
 
-        expect(rootChildren).toHaveLength(2);
-        expect(rootChildren[0]).toBeInstanceOf(HealthCheckGroupTreeItem);
-        expect(rootChildren[0].label).toBe('Health');
-        expect(rootChildren[0].contextValue).toBe('Health');
-        expect(rootChildren[1]).toEqual(
-            new SkillGroupTreeItem(installedSkillReport),
-        );
-
-        const skillChildren = provider.getChildren(rootChildren[1]);
-        expect(skillChildren).toEqual(
-            installedSkillReport.agents.map(
-                (agent) => new SkillStatusTreeItem(agent),
-            ),
-        );
-    });
-
-    it('returns sorted host health checks without mutating the model', () => {
-        const model = new HostModel();
-        model.setHealth(
-            loaded([
-                {
-                    name: 'Zed',
-                    location: 'host',
-                    status: 'warning',
-                    value: 'missing',
-                    fix: {
-                        description: 'Install Zed',
-                        command: 'topo install zed --target ssh://imx93',
-                    },
-                },
-                {
-                    name: 'Alpha',
-                    location: 'host',
-                    status: 'ok',
-                    value: 'installed',
-                },
-            ]),
-        );
-        const provider = new HostTreeView(model);
-
-        const rootChildren = provider.getChildren();
-        const children = provider.getChildren(rootChildren[0]);
-
-        expect(children).toHaveLength(2);
-        expect(
-            children.every((item) => item instanceof HealthCheckTreeItem),
-        ).toBe(true);
-        expect(children).toMatchObject([
-            expect.objectContaining({
-                label: 'Alpha',
-                description: 'installed',
-            }),
-            expect.objectContaining({
-                label: 'Zed',
-                contextValue: 'HealthCheck Warning Fixable',
-                description: 'missing',
-            }),
+        expect(rootChildren).toMatchObject([
+            { label: 'Container Engine', description: 'docker' },
+            { label: 'Health' },
+            { label: 'Topo Agent Skill' },
         ]);
-        expect(model.health).toMatchObject({
-            data: [{ name: 'Zed' }, { name: 'Alpha' }],
-        });
+        const capabilities = provider.getChildren(rootChildren[1]);
+        expect(capabilities).toMatchObject([{ label: 'Deployment' }]);
+        expect(provider.getChildren(capabilities[0])).toMatchObject([
+            { label: 'Container Engine' },
+        ]);
+        expect(provider.getChildren(rootChildren[2])).toMatchObject([
+            { label: 'Claude Code' },
+            { label: 'Codex' },
+        ]);
     });
 
     it('returns an error item when host health cannot be loaded', () => {
@@ -116,11 +101,11 @@ describe('HostTreeView', () => {
 
         const children = provider.getChildren();
 
-        expect(children).toHaveLength(2);
-        expect(children[0]).toMatchObject(
+        expect(children).toMatchObject([
+            { label: 'Container Engine', description: 'docker' },
             new ErrorTreeItem('Failed to load health', erroredValue),
-        );
-        expect(children[1]).toEqual(new LoadingTreeItem('Topo Agent Skill'));
+            new LoadingTreeItem('Topo Agent Skill'),
+        ]);
     });
 
     it('returns a loading item while the skill report refreshes', () => {
@@ -130,7 +115,7 @@ describe('HostTreeView', () => {
 
         const children = provider.getChildren();
 
-        expect(children[1]).toEqual(new LoadingTreeItem('Topo Agent Skill'));
+        expect(children[2]).toEqual(new LoadingTreeItem('Topo Agent Skill'));
     });
 
     it('returns an error item when the skill report cannot be loaded', () => {
@@ -141,25 +126,48 @@ describe('HostTreeView', () => {
 
         const children = provider.getChildren();
 
-        expect(children[1]).toMatchObject(
+        expect(children[2]).toMatchObject(
             new ErrorTreeItem('Failed to check Topo Agent Skill', erroredValue),
         );
     });
 
-    it('getTreeItem returns the element itself', () => {
+    it('shows the engine before health loads', () => {
         const provider = new HostTreeView(new HostModel());
-        const item = new HealthCheckTreeItem(
-            loaded({
-                name: 'Alpha',
-                location: 'host',
-                status: 'ok',
-                value: 'installed',
-            }),
-        );
 
-        const treeItem = provider.getTreeItem(item);
+        const [engine] = provider.getChildren();
 
-        expect(treeItem).toBe(item);
+        expect(engine).toMatchObject({
+            label: 'Container Engine',
+            description: 'docker',
+            tooltip:
+                'Container engine from TOPO_ENGINE (Docker when unset): docker',
+            collapsibleState: vscode.TreeItemCollapsibleState.None,
+        });
+    });
+
+    it('shows the engine from TOPO_ENGINE', () => {
+        vi.stubEnv('TOPO_ENGINE', 'podman');
+        const provider = new HostTreeView(new HostModel());
+
+        expect(provider.getChildren()[0]).toMatchObject({
+            description: 'podman',
+            tooltip:
+                'Container engine from TOPO_ENGINE (Docker when unset): podman',
+        });
+    });
+
+    it('shows invalid environment values without hiding health', () => {
+        vi.stubEnv('TOPO_ENGINE', 'invalid');
+        const provider = new HostTreeView(new HostModel());
+
+        const [engine, health] = provider.getChildren();
+
+        expect(engine).toMatchObject({
+            label: 'Container Engine',
+            description:
+                'Invalid TOPO_ENGINE value "invalid": expected docker or podman',
+        });
+        expect(health).toMatchObject({ label: 'Health' });
     });
 
     it('fires onDidChangeTreeData when host health changes', () => {

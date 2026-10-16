@@ -1,68 +1,29 @@
 import * as vscode from 'vscode';
 import * as manifest from '../manifest';
-import { HealthCheckGroupTreeItem } from './treeItems/healthCheckGroupTreeItem';
+import { HealthCapabilityTreeItem } from './treeItems/healthCapabilityTreeItem';
 import { HealthCheckTreeItem } from './treeItems/healthCheckTreeItem';
 import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
 import { Loadable, loaded } from '../util/loadable';
 import { TargetDataIssueTreeItem } from './treeItems/targetDataIssueTreeItem';
 import { ErrorTreeItem } from './treeItems/errorTreeItem';
-import {
-    TargetDescription,
-    TargetHealthCheck,
-} from '../services/topoCliSchema';
+import { TargetDescription } from '../services/topoCliSchema';
 import { LoadingTreeItem } from './treeItems/loadingTreeItem';
-import {
-    compareProcessingDomains,
-    ProcessingDomainTreeItem,
-} from './treeItems/processingDomainTreeItem';
 import { ProcessingDomainGroupTreeItem } from './treeItems/processingDomainGroupTreeItem';
 import {
     getTargetConnectivityFailure,
     isTargetConnected,
 } from '../util/assertTargetReady';
+import type { TargetHealth } from '../util/healthReport';
+import { HealthTreeItem } from './treeItems/healthTreeItem';
 
 export const TargetSelectionState = {
     Unselected: 'unselected',
     Selected: 'selected',
 } as const;
 
-function compareByName(a: { name: string }, b: { name: string }): number {
-    return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
-}
-
-function getProcessingDomainGroupChildren(
-    targetDescription: Loadable<TargetDescription>,
-): vscode.TreeItem[] {
-    if (targetDescription.status === 'errored') {
-        return [
-            new ErrorTreeItem(
-                'Failed to load processing domains',
-                targetDescription,
-            ),
-        ];
-    }
-
-    if (targetDescription.status === 'unloaded') {
-        return [];
-    }
-
-    const processingDomains = [
-        manifest.PRIMARY_PROCESSING_DOMAIN,
-        ...targetDescription.data.remoteProcessors.map(
-            (remoteProcessor) => remoteProcessor.name,
-        ),
-    ];
-
-    return processingDomains
-        .map((processingDomain) => {
-            return new ProcessingDomainTreeItem(processingDomain);
-        })
-        .sort(compareProcessingDomains);
-}
-
 function getSelectedTargetChildren(
-    health: Loadable<TargetHealthCheck[]>,
+    health: Loadable<TargetHealth>,
     targetDescription: Loadable<TargetDescription>,
 ): vscode.TreeItem[] {
     switch (health.status) {
@@ -84,7 +45,7 @@ function getSelectedTargetChildren(
                 ];
             }
 
-            const healthGroup = new HealthCheckGroupTreeItem(health);
+            const healthGroup = new HealthTreeItem(health);
             const processingDomainGroup = new ProcessingDomainGroupTreeItem(
                 targetDescription,
             );
@@ -113,7 +74,7 @@ function syncSelectedTargetContext(targetModel: TargetModel): void {
 }
 
 function syncSelectedTargetConnectedContext(
-    health: Loadable<TargetHealthCheck[]>,
+    health: Loadable<TargetHealth>,
 ): void {
     const connected =
         health.status === 'loaded' && isTargetConnected(health.data);
@@ -197,15 +158,12 @@ export class TargetTreeView
             );
         }
 
-        if (element instanceof HealthCheckGroupTreeItem) {
-            const healthChecks = element.healthChecks.toSorted(compareByName);
-            return healthChecks.map(
-                (healthCheck) => new HealthCheckTreeItem(loaded(healthCheck)),
-            );
-        }
-
-        if (element instanceof ProcessingDomainGroupTreeItem) {
-            return getProcessingDomainGroupChildren(element.targetDescription);
+        if (
+            element instanceof HealthTreeItem ||
+            element instanceof HealthCapabilityTreeItem ||
+            element instanceof ProcessingDomainGroupTreeItem
+        ) {
+            return element.getChildren();
         }
 
         return [];

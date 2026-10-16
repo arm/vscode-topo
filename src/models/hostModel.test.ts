@@ -1,13 +1,30 @@
 import { HostModel } from './hostModel';
-import { HostHealthCheck } from '../services/topoCliSchema';
+import type { HostHealth } from '../util/healthReport';
+import type { TopoSkillReport } from '../services/topoSkill';
 import { loaded, unloaded } from '../util/loadable';
 
-const hostHealth: HostHealthCheck[] = [];
+const hostHealth: HostHealth = { capabilities: [] };
 
 describe('HostModel', () => {
-    it('defaults to an unloaded state', async () => {
+    afterEach(() => {
+        vi.unstubAllEnvs();
+    });
+
+    it('represents an invalid engine as an errored state', () => {
+        vi.stubEnv('TOPO_ENGINE', 'invalid');
         const model = new HostModel();
 
+        expect(model.containerEngine).toMatchObject({
+            status: 'errored',
+            error: expect.any(Error),
+        });
+    });
+
+    it('starts with the resolved engine and unloaded reports', () => {
+        vi.stubEnv('TOPO_ENGINE', 'podman');
+        const model = new HostModel();
+
+        expect(model.containerEngine).toStrictEqual(loaded('podman'));
         expect(model.health).toStrictEqual(unloaded());
         expect(model.skillReport).toStrictEqual(unloaded());
     });
@@ -34,8 +51,8 @@ describe('HostModel', () => {
     it('stores the skill report and fires onChanged', () => {
         const model = new HostModel();
         const onChanged = vi.fn();
-        const skillReport = loaded({
-            status: 'installed' as const,
+        const skillReport = loaded<TopoSkillReport>({
+            status: 'installed',
             agents: [],
         });
         model.onSkillReportChanged(onChanged);

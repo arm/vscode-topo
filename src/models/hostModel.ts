@@ -1,7 +1,11 @@
 import * as vscode from 'vscode';
-import { HostHealthCheck } from '../services/topoCliSchema';
-import { Loadable, unloaded } from '../util/loadable';
+import type { HostHealth } from '../util/healthReport';
+import { Loadable, errored, loaded, unloaded } from '../util/loadable';
 import { TopoSkillReport } from '../services/topoSkill';
+import {
+    type ContainerEngine,
+    resolveContainerEngine,
+} from '../util/resolveContainerEngine';
 
 export class HostModel implements vscode.Disposable {
     private _onHealthChanged: vscode.EventEmitter<void> =
@@ -14,15 +18,23 @@ export class HostModel implements vscode.Disposable {
     public readonly onSkillReportChanged: vscode.Event<void> =
         this._onSkillReportChanged.event;
 
-    private _health: Loadable<HostHealthCheck[]> = unloaded();
+    private _health: Loadable<HostHealth> = unloaded();
     private _skillReport: Loadable<TopoSkillReport> = unloaded();
 
-    public setHealth(health: Loadable<HostHealthCheck[]>): void {
+    public get containerEngine(): Loadable<ContainerEngine> {
+        try {
+            return loaded(resolveContainerEngine(process.env.TOPO_ENGINE));
+        } catch (error) {
+            return errored(error);
+        }
+    }
+
+    public setHealth(health: Loadable<HostHealth>): void {
         this._health = health;
         this._onHealthChanged.fire();
     }
 
-    public get health(): Loadable<HostHealthCheck[]> {
+    public get health(): Loadable<HostHealth> {
         return this._health;
     }
 

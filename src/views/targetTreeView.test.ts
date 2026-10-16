@@ -2,14 +2,9 @@ import * as vscode from 'vscode';
 import * as manifest from '../manifest';
 import { TargetSelectionState, TargetTreeView } from './targetTreeView';
 import { TargetDescription } from '../services/topoCliSchema';
-import { mock } from 'vitest-mock-extended';
-import { TargetHealthCheck } from '../services/topoCliSchema';
+import type { TargetHealth } from '../util/healthReport';
 import { TargetModel } from '../models/targetModel';
 import { TargetDataIssueTreeItem } from './treeItems/targetDataIssueTreeItem';
-import { ErrorTreeItem } from './treeItems/errorTreeItem';
-import { LoadingTreeItem } from './treeItems/loadingTreeItem';
-import { ProcessingDomainTreeItem } from './treeItems/processingDomainTreeItem';
-import { ProcessingDomainGroupTreeItem } from './treeItems/processingDomainGroupTreeItem';
 import { errored, loaded, loading, unloaded } from '../util/loadable';
 
 describe('TargetTreeView', () => {
@@ -19,23 +14,46 @@ describe('TargetTreeView', () => {
     const target = 'user@topo.local';
     const targetDescription: TargetDescription = {
         hostProcessors: [],
-        remoteProcessors: [{ name: 'imx-rproc' }, { name: 'other-rproc' }],
+        remoteProcessors: [{ name: 'imx-rproc' }],
         totalMemoryKb: 1024,
     };
-    const targetHealth: TargetHealthCheck[] = [
-        {
-            name: 'Connectivity',
-            location: 'target',
-            status: 'ok',
-            value: 'ok',
-        },
-    ];
+    const connectedTargetHealth: TargetHealth = {
+        capabilities: [
+            {
+                name: 'Deployment',
+                checks: [
+                    {
+                        name: 'Connectivity',
+                        location: 'target',
+                        status: 'ok',
+                        value: 'ok',
+                    },
+                ],
+            },
+        ],
+    };
+
+    const disconnectedTargetHealth: TargetHealth = {
+        capabilities: [
+            {
+                name: 'Deployment',
+                checks: [
+                    {
+                        name: 'Connectivity',
+                        location: 'target',
+                        status: 'error',
+                        value: '"ssh" not found on remote target\'s $PATH',
+                    },
+                ],
+            },
+        ],
+    };
 
     beforeEach(() => {
         targetModel = new TargetModel();
         targetModel.setTargets(loaded([target]));
         targetModel.setSelected(target);
-        targetModel.setSelectedTargetHealth(loaded(targetHealth));
+        targetModel.setSelectedTargetHealth(loaded(connectedTargetHealth));
         targetModel.setSelectedTargetDescription(loaded(targetDescription));
         view = new TargetTreeView(targetModel);
         treeView = vi.mocked(vscode.window.createTreeView).mock.results[0]
@@ -126,14 +144,7 @@ describe('TargetTreeView', () => {
 
         it('syncs connected target context when target health changes', () => {
             targetModel.setSelectedTargetHealth(
-                loaded([
-                    {
-                        name: 'Connectivity',
-                        location: 'target',
-                        status: 'error',
-                        value: 'ok',
-                    },
-                ]),
+                loaded(disconnectedTargetHealth),
             );
 
             expect(
@@ -145,7 +156,7 @@ describe('TargetTreeView', () => {
             );
 
             vi.mocked(vscode.commands.executeCommand).mockClear();
-            targetModel.setSelectedTargetHealth(loaded(targetHealth));
+            targetModel.setSelectedTargetHealth(loaded(connectedTargetHealth));
 
             expect(
                 vscode.commands.executeCommand,
@@ -158,20 +169,22 @@ describe('TargetTreeView', () => {
 
         it('keeps a target connected when dependencies have issues', () => {
             targetModel.setSelectedTargetHealth(
-                loaded([
-                    {
-                        name: 'Connectivity',
-                        location: 'target',
-                        status: 'ok',
-                        value: 'ok',
-                    },
-                    {
-                        name: 'Container Engine',
-                        location: 'target',
-                        status: 'warning',
-                        value: 'missing',
-                    },
-                ]),
+                loaded({
+                    capabilities: [
+                        {
+                            name: 'Deployment',
+                            checks: [
+                                ...connectedTargetHealth.capabilities[0].checks,
+                                {
+                                    name: 'Container Engine',
+                                    location: 'target',
+                                    status: 'warning',
+                                    value: 'missing',
+                                },
+                            ],
+                        },
+                    ],
+                }),
             );
 
             expect(
@@ -184,7 +197,21 @@ describe('TargetTreeView', () => {
         });
 
         it('keeps a target connected while its health is refreshing', () => {
-            targetModel.setSelectedTargetHealth(loading(loaded(targetHealth)));
+            targetModel.setSelectedTargetHealth(
+                loading(loaded(connectedTargetHealth)),
+            );
+
+            expect(
+                vscode.commands.executeCommand,
+            ).toHaveBeenCalledExactlyOnceWith(
+                'setContext',
+                manifest.CONTEXT_SELECTED_TARGET_CONNECTED,
+                true,
+            );
+        });
+
+        it('marks target connected without a connectivity check', () => {
+            targetModel.setSelectedTargetHealth(loaded({ capabilities: [] }));
 
             expect(
                 vscode.commands.executeCommand,
@@ -197,59 +224,36 @@ describe('TargetTreeView', () => {
     });
 
     describe('getChildren', () => {
-        it('returns Health and Processing Domains at the root', () => {
+        it('shows the selected target health checks and processing domains', () => {
             const rootChildren = view.getChildren();
 
             expect(treeView.description).toBe(target);
-            expect(rootChildren).toHaveLength(2);
-            expect(rootChildren[0].label).toBe('Health');
-            expect(rootChildren[1]).toBeInstanceOf(
-                ProcessingDomainGroupTreeItem,
-            );
+            expect(rootChildren).toMatchObject([
+                { label: 'Health' },
+                { label: 'Processing Domains' },
+            ]);
+            const capabilities = view.getChildren(rootChildren[0]);
+            expect(capabilities).toMatchObject([{ label: 'Deployment' }]);
+            expect(view.getChildren(capabilities[0])).toMatchObject([
+                { label: 'Connectivity' },
+            ]);
+            expect(view.getChildren(rootChildren[1])).toMatchObject([
+                { label: manifest.PRIMARY_PROCESSING_DOMAIN },
+                { label: 'imx-rproc' },
+            ]);
         });
 
-        it('returns health check items for Health group', () => {
-            targetModel.setSelectedTargetDescription(
-                loaded({ ...targetDescription, remoteProcessors: [] }),
-            );
-            const processingDomainDriverHealth = mock<TargetHealthCheck>({
-                name: 'rproc-driver',
-                location: 'target',
-                status: 'ok',
-            });
-            const dependencies = [
-                mock<TargetHealthCheck>({
-                    name: 'Container Engine',
-                    location: 'target',
-                    status: 'ok',
-                }),
-                mock<TargetHealthCheck>({
-                    name: 'Some Health Check',
-                    location: 'target',
-                    status: 'ok',
-                }),
-            ];
-            targetModel.setSelectedTargetHealth(
-                loaded([
-                    {
-                        name: 'Connectivity',
-                        location: 'target',
-                        status: 'ok',
-                        value: 'ok',
-                    },
-                    ...dependencies,
-                    processingDomainDriverHealth,
-                ]),
-            );
-            const rootChildren = view.getChildren();
+        it('shows loading while keeping existing health checks during refresh', () => {
+            const health = loading(loaded(connectedTargetHealth));
+            targetModel.setSelectedTargetHealth(health);
 
-            const got = view.getChildren(rootChildren[0]);
-
-            expect(got.map((item) => item.label)).toEqual([
-                'Connectivity',
-                dependencies[0].name,
-                processingDomainDriverHealth.name,
-                dependencies[1].name,
+            const healthItem = view.getChildren()[0];
+            expect(healthItem.iconPath).toEqual(
+                new vscode.ThemeIcon('loading~spin'),
+            );
+            const capabilities = view.getChildren(healthItem);
+            expect(view.getChildren(capabilities[0])).toMatchObject([
+                { label: 'Connectivity' },
             ]);
         });
 
@@ -259,7 +263,6 @@ describe('TargetTreeView', () => {
             const rootChildren = view.getChildren();
 
             expect(rootChildren).toHaveLength(1);
-            expect(rootChildren[0]).toBeInstanceOf(LoadingTreeItem);
             expect(rootChildren[0]).toMatchObject({
                 label: 'Checking target health',
                 iconPath: { id: 'loading~spin' },
@@ -273,23 +276,15 @@ describe('TargetTreeView', () => {
         });
 
         it('returns a connectivity item when selected target has a connectivity error', () => {
-            const diagnostics = '"ssh" not found on remote target\'s $PATH';
             targetModel.setSelectedTargetHealth(
-                loaded([
-                    {
-                        name: 'Connectivity',
-                        location: 'target',
-                        status: 'error',
-                        value: diagnostics,
-                    },
-                ]),
+                loaded(disconnectedTargetHealth),
             );
 
             const rootChildren = view.getChildren();
 
             expect(rootChildren[0]).toMatchObject({
                 label: 'Connectivity',
-                description: diagnostics,
+                description: '"ssh" not found on remote target\'s $PATH',
                 contextValue: 'HealthCheck Error',
             });
         });
@@ -310,7 +305,6 @@ describe('TargetTreeView', () => {
                 description: 'ssh connection failed',
                 contextValue: 'OpenableError',
             });
-            expect(rootChildren[0]).toBeInstanceOf(ErrorTreeItem);
         });
 
         it('shows loading while failed selected target health is refreshing', () => {
@@ -327,55 +321,13 @@ describe('TargetTreeView', () => {
             });
         });
 
-        it('marks health group fixable when visible target health checks have executable fixes', async () => {
-            targetModel.setSelectedTargetHealth(
-                loaded([
-                    {
-                        name: 'ProcessingDomainDriver',
-                        location: 'target',
-                        status: 'error',
-                        value: 'missing',
-                        fix: {
-                            description: 'Install processing domain driver',
-                            command: 'topo install processing-domain-driver',
-                        },
-                    },
-                ]),
-            );
-
-            const rootChildren = view.getChildren();
-
-            expect(rootChildren[0].contextValue).toBe(
-                'Health HasFixableIssues',
-            );
-        });
-
-        it('returns processing domains without rendering container children', () => {
-            const rootChildren = view.getChildren();
-
-            const processingDomainItems = view.getChildren(rootChildren[1]);
-
-            expect(processingDomainItems).toStrictEqual([
-                new ProcessingDomainTreeItem(
-                    manifest.PRIMARY_PROCESSING_DOMAIN,
-                ),
-                new ProcessingDomainTreeItem('imx-rproc'),
-                new ProcessingDomainTreeItem('other-rproc'),
-            ]);
-        });
-
-        it('processing domains group contains an error item when failing to load', () => {
+        it('shows description failures under processing domains', () => {
             const description = errored('Failed to load target description');
             targetModel.setSelectedTargetDescription(description);
-            const rootChildren = view.getChildren();
 
-            const got = view.getChildren(rootChildren[1]);
-
-            expect(got).toStrictEqual([
-                new ErrorTreeItem(
-                    'Failed to load processing domains',
-                    description,
-                ),
+            const processingDomains = view.getChildren()[1];
+            expect(view.getChildren(processingDomains)).toMatchObject([
+                { description: 'Failed to load target description' },
             ]);
         });
 
@@ -398,16 +350,6 @@ describe('TargetTreeView', () => {
             expect(rootChildren).toStrictEqual([
                 new TargetDataIssueTreeItem(targets),
             ]);
-        });
-    });
-
-    describe('getTreeItem', () => {
-        it('getTreeItem returns the element itself', () => {
-            const item = new vscode.TreeItem('Target Health');
-
-            const treeItem = view.getTreeItem(item);
-
-            expect(treeItem).toBe(item);
         });
     });
 });

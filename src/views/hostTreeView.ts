@@ -1,23 +1,42 @@
 import * as vscode from 'vscode';
 import { PACKAGE_NAME } from '../manifest';
-import { HostHealthCheck } from '../services/topoCliSchema';
-import { HealthCheckGroupTreeItem } from './treeItems/healthCheckGroupTreeItem';
-import { HealthCheckTreeItem } from './treeItems/healthCheckTreeItem';
+import { HealthCapabilityTreeItem } from './treeItems/healthCapabilityTreeItem';
 import { ErrorTreeItem } from './treeItems/errorTreeItem';
 import { HostModel } from '../models/hostModel';
 import { DisposableCollector } from '../util/disposableCollector';
 import { Loadable, loaded } from '../util/loadable';
 import { TopoSkillReport } from '../services/topoSkill';
-import { SkillStatusTreeItem } from './treeItems/skillStatusTreeItem';
 import { LoadingTreeItem } from './treeItems/loadingTreeItem';
 import { SkillGroupTreeItem } from './treeItems/skillGroupTreeItem';
+import { HealthTreeItem } from './treeItems/healthTreeItem';
+import type { HostHealth } from '../util/healthReport';
+import { ContainerEngineTreeItem } from './treeItems/containerEngineTreeItem';
+import type { ContainerEngine } from '../util/resolveContainerEngine';
 
-function sortHealthChecksByName(
-    healthChecks: readonly HostHealthCheck[],
-): HostHealthCheck[] {
-    return healthChecks.toSorted((a, b) =>
-        a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
-    );
+function getHealthReportItem(health: Loadable<HostHealth>): vscode.TreeItem {
+    switch (health.status) {
+        case 'loaded':
+            return new HealthTreeItem(health);
+        case 'errored':
+            return new ErrorTreeItem('Failed to load health', health);
+        case 'unloaded':
+            return new HealthTreeItem(
+                loaded({ capabilities: [] }, health.loading),
+            );
+    }
+}
+
+function getContainerEngineItem(
+    containerEngine: Loadable<ContainerEngine>,
+): vscode.TreeItem {
+    switch (containerEngine.status) {
+        case 'loaded':
+            return new ContainerEngineTreeItem(containerEngine.data);
+        case 'errored':
+            return new ErrorTreeItem('Container Engine', containerEngine);
+        case 'unloaded':
+            return new LoadingTreeItem('Container Engine');
+    }
 }
 
 function getSkillReportItem(
@@ -70,38 +89,19 @@ export class HostTreeView
 
     public getChildren(element?: vscode.TreeItem): vscode.TreeItem[] {
         if (!element) {
-            const skillReportItem = getSkillReportItem(this.model.skillReport);
-
-            const health = this.model.health;
-            if (health.status === 'errored') {
-                return [
-                    new ErrorTreeItem('Failed to load health', health),
-                    skillReportItem,
-                ];
-            }
-
-            const healthChecks =
-                health.status === 'loaded'
-                    ? sortHealthChecksByName(health.data)
-                    : [];
             return [
-                new HealthCheckGroupTreeItem(
-                    loaded(healthChecks, health.loading),
-                ),
-                skillReportItem,
+                getContainerEngineItem(this.model.containerEngine),
+                getHealthReportItem(this.model.health),
+                getSkillReportItem(this.model.skillReport),
             ];
         }
 
-        if (element instanceof HealthCheckGroupTreeItem) {
-            return element.healthChecks.map(
-                (healthCheck) => new HealthCheckTreeItem(loaded(healthCheck)),
-            );
-        }
-
-        if (element instanceof SkillGroupTreeItem) {
-            return element.report.agents.map(
-                (agent) => new SkillStatusTreeItem(agent),
-            );
+        if (
+            element instanceof HealthTreeItem ||
+            element instanceof HealthCapabilityTreeItem ||
+            element instanceof SkillGroupTreeItem
+        ) {
+            return element.getChildren();
         }
 
         return [];
