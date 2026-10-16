@@ -1,11 +1,9 @@
-import * as vscode from 'vscode';
 import { HostModel } from '../models/hostModel';
 import { TopoCli } from '../services/topoCli';
 import { TopoSkill } from '../services/topoSkill';
 import { errored, loaded, loading } from '../util/loadable';
 import { getHostHealth } from '../util/healthReport';
 import { Config } from '../services/config';
-import { CONTAINER_ENGINE_SETTINGS } from '../util/resolveContainerEngine';
 
 export class HostController {
     constructor(
@@ -23,29 +21,6 @@ export class HostController {
             this.config.getContainerEngineSetting(),
             process.env.TOPO_ENGINE,
         );
-    }
-
-    public async selectContainerEngineCommandHandler(): Promise<void> {
-        const currentEngine = this.config.getContainerEngineSetting();
-        const environmentEngine = process.env.TOPO_ENGINE?.trim();
-        const selected = await vscode.window.showQuickPick(
-            CONTAINER_ENGINE_SETTINGS.map((engine) => ({
-                label: engine,
-                description: engine === currentEngine ? 'Current' : undefined,
-                detail:
-                    engine === 'auto'
-                        ? 'TOPO_ENGINE env var (or docker if unset)'
-                        : environmentEngine
-                          ? `Override TOPO_ENGINE=${environmentEngine}`
-                          : undefined,
-                engine,
-            })),
-            { title: 'Select Container Engine' },
-        );
-        if (!selected || selected.engine === currentEngine) {
-            return;
-        }
-        await this.config.setContainerEngine(selected.engine);
     }
 
     public async refreshHostCommandHandler(): Promise<void> {

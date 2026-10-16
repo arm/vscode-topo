@@ -21,6 +21,7 @@ import { OpenContainerInBrowser } from './actions/openContainerInBrowser';
 import { OpenSettings } from './actions/openSettings';
 import { Configure } from './actions/configure';
 import { SkillLifecycle } from './actions/skillLifecycle';
+import { SelectContainerEngine } from './actions/selectContainerEngine';
 
 vi.mock('./util/logger');
 
@@ -40,6 +41,7 @@ describe('commands', () => {
         fixIssue: mock<FixIssue>(),
         openSettings: mock<OpenSettings>(),
         skillLifecycle: mock<SkillLifecycle>(),
+        selectContainerEngine: mock<SelectContainerEngine>(),
     } satisfies commands.CommandHandlers;
 
     it('registers all command IDs', () => {
@@ -57,7 +59,8 @@ describe('commands', () => {
         const cases: [string, Mock][] = [
             [
                 commandIds.selectContainerEngine,
-                handlers.hostController.selectContainerEngineCommandHandler,
+                handlers.selectContainerEngine
+                    .selectContainerEngineCommandHandler,
             ],
             [
                 commandIds.refreshHost,

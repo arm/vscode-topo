@@ -15,6 +15,7 @@ import type { OpenContainerInBrowser } from './actions/openContainerInBrowser';
 import type { OpenSettings } from './actions/openSettings';
 import type { Configure } from './actions/configure';
 import type { SkillLifecycle } from './actions/skillLifecycle';
+import type { SelectContainerEngine } from './actions/selectContainerEngine';
 import * as commandIds from './commandIds';
 
 export interface CommandHandlers {
@@ -32,6 +33,7 @@ export interface CommandHandlers {
     fixIssue: FixIssue;
     openSettings: OpenSettings;
     skillLifecycle: SkillLifecycle;
+    selectContainerEngine: SelectContainerEngine;
 }
 
 export function register(handlers: CommandHandlers): vscode.Disposable {
@@ -66,7 +68,7 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
             handlers.targetController.selectCommandHandler(),
         ),
         vscode.commands.registerCommand(commandIds.selectContainerEngine, () =>
-            handlers.hostController.selectContainerEngineCommandHandler(),
+            handlers.selectContainerEngine.selectContainerEngineCommandHandler(),
         ),
         vscode.commands.registerCommand(commandIds.resetExtensionData, () =>
             handlers.targetController.resetExtensionDataCommandHandler(),

@@ -1,4 +1,3 @@
-import * as vscode from 'vscode';
 import { mock } from 'vitest-mock-extended';
 import { HostModel } from '../models/hostModel';
 import { TopoCli } from '../services/topoCli';
@@ -53,14 +52,12 @@ describe('HostController', () => {
     const config = mock<Config>();
     const topoCli = mock<TopoCli>();
     const topoSkill = mock<TopoSkill>();
-    const picker = vi.mocked(vscode.window.showQuickPick);
 
     beforeEach(() => {
         vi.stubEnv('TOPO_ENGINE', undefined);
         config.getContainerEngineSetting.mockReturnValue('docker');
         topoCli.hostHealth.mockResolvedValue(healthReport);
         topoSkill.getReport.mockResolvedValue(installedSkillReport);
-        picker.mockResolvedValue(undefined);
     });
 
     afterEach(() => {
@@ -106,61 +103,5 @@ describe('HostController', () => {
         expect(topoSkill.getReport).toHaveBeenCalledOnce();
         expect(model.health).toStrictEqual(loaded(hostHealth));
         expect(model.skillReport).toStrictEqual(loaded(installedSkillReport));
-    });
-
-    it('shows the current setting and environment descriptions in the picker', async () => {
-        config.getContainerEngineSetting.mockReturnValue('auto');
-        vi.stubEnv('TOPO_ENGINE', 'podman');
-        const { controller } = createController();
-
-        await controller.selectContainerEngineCommandHandler();
-
-        const [items] = picker.mock.calls[0];
-        expect(await items).toMatchObject([
-            {
-                label: 'auto',
-                description: 'Current',
-                detail: 'TOPO_ENGINE env var (or docker if unset)',
-            },
-            {
-                label: 'docker',
-                detail: 'Override TOPO_ENGINE=podman',
-            },
-            { label: 'podman' },
-        ]);
-    });
-
-    it('saves an explicitly selected engine', async () => {
-        config.getContainerEngineSetting.mockReturnValue('auto');
-        vi.stubEnv('TOPO_ENGINE', 'podman');
-        const { controller } = createController();
-        picker.mockImplementationOnce(async (items) => (await items)[2]);
-
-        await controller.selectContainerEngineCommandHandler();
-
-        expect(config.setContainerEngine).toHaveBeenCalledExactlyOnceWith(
-            'podman',
-        );
-    });
-
-    it('does not save a cancelled selection', async () => {
-        const { controller } = createController();
-
-        await controller.selectContainerEngineCommandHandler();
-
-        expect(config.setContainerEngine).not.toHaveBeenCalled();
-    });
-
-    it('propagates a failed settings update without changing the displayed engine', async () => {
-        const { model, controller } = createController();
-        picker.mockImplementationOnce(async (items) => (await items)[2]);
-        const error = new Error('Failed to update settings');
-        config.setContainerEngine.mockRejectedValueOnce(error);
-
-        await expect(
-            controller.selectContainerEngineCommandHandler(),
-        ).rejects.toBe(error);
-
-        expect(model.containerEngine).toStrictEqual(loaded('docker'));
     });
 });

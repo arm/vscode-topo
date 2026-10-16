@@ -40,6 +40,7 @@ import { Config } from './services/config';
 import { Configure } from './actions/configure';
 import { ProjectCloner } from './operations/projectCloner';
 import { SkillLifecycle } from './actions/skillLifecycle';
+import { SelectContainerEngine } from './actions/selectContainerEngine';
 import { TaskProvider } from './tasks/taskProvider';
 import { TaskFactory } from './tasks/taskFactory';
 import { TopoSkill } from './services/topoSkill';
@@ -183,6 +184,7 @@ async function activateExtension(
     const fixIssue = new FixIssue(taskFactory, targetModel);
     const openSettings = new OpenSettings();
     const skillLifecycle = new SkillLifecycle(topoSkill);
+    const selectContainerEngine = new SelectContainerEngine(config);
     const protocolHandler = new ProtocolHandler(projectCloner);
 
     context.subscriptions.push(
@@ -202,6 +204,7 @@ async function activateExtension(
             projectClone,
             openSettings,
             skillLifecycle,
+            selectContainerEngine,
         }),
         vscode.window.registerUriHandler(protocolHandler),
     );
