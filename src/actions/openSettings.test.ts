@@ -2,10 +2,6 @@ import * as vscode from 'vscode';
 import { OpenSettings, openSettings } from './openSettings';
 
 describe('OpenSettings', () => {
-    afterEach(() => {
-        vi.clearAllMocks();
-    });
-
     it('opens the Topo extension settings from the command handler', async () => {
         const action = new OpenSettings();
 

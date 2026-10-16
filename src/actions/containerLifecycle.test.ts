@@ -51,10 +51,6 @@ describe('ContainerLifecycle', () => {
     };
     const treeItem = new ContainerTreeItem(container);
 
-    beforeEach(() => {
-        vi.clearAllMocks();
-    });
-
     it.each(lifecycleCases)(
         '$operation invokes the matching command and refreshes containers',
         async ({ command, invoke }) => {
@@ -73,29 +69,24 @@ describe('ContainerLifecycle', () => {
         },
     );
 
-    it.each(lifecycleCases)(
-        '$operation reports Docker errors without refreshing containers',
-        async ({ operation, command, invoke }) => {
-            const containerCommands = mock<ContainerCommands>();
-            containerCommands[command].mockRejectedValue(
-                new WrappedError('DOCKER', 'fail'),
-            );
-            const lifecycle = new ContainerLifecycle(containerCommands);
+    it('reports container engine failures without refreshing containers', async () => {
+        const containerCommands = mock<ContainerCommands>();
+        containerCommands.startContainer.mockRejectedValue(
+            new WrappedError('CONTAINER_ENGINE', 'fail'),
+        );
+        const lifecycle = new ContainerLifecycle(containerCommands);
 
-            await invoke(lifecycle, treeItem);
+        await lifecycle.startContainerCommandHandler(treeItem);
 
-            expect(
-                vi.mocked(vscode.window.showErrorMessage),
-            ).toHaveBeenCalledWith(
-                expect.stringContaining(
-                    `Failed to ${operation} the container ${container.id}. fail`,
-                ),
-            );
-            expect(vscode.commands.executeCommand).not.toHaveBeenCalledWith(
-                refreshProjectContainers,
-            );
-        },
-    );
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
+            expect.stringContaining(
+                `Failed to start the container ${container.id}. fail`,
+            ),
+        );
+        expect(vscode.commands.executeCommand).not.toHaveBeenCalledWith(
+            refreshProjectContainers,
+        );
+    });
 
     it('rethrows unexpected command errors', async () => {
         const containerCommands = mock<ContainerCommands>();

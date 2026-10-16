@@ -84,7 +84,6 @@ describe('FixIssue', () => {
         );
 
     beforeEach(() => {
-        vi.clearAllMocks();
         taskFactory = mock<TaskFactory>();
         taskFactory.createShellTask.mockReturnValue(task);
         targetModel = new TargetModel();

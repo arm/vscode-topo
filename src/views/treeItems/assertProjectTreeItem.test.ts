@@ -10,10 +10,6 @@ describe('assertProjectTreeItem', () => {
     const errMsg = 'This operation cannot be performed on this item';
     const loggerErrMsg = `Expected ProjectTreeItem but received`;
 
-    beforeEach(() => {
-        vi.clearAllMocks();
-    });
-
     it('does not throw for a ProjectTreeItem', () => {
         const projectTreeItem = new ProjectTreeItem(
             {

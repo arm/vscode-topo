@@ -4,6 +4,7 @@ export default defineConfig({
     test: {
         environment: 'node',
         globals: true,
+        fsModuleCache: true,
         include: ['src/**/*.test.ts', 'scripts/**/*.test.ts'],
         passWithNoTests: true,
         setupFiles: ['./vitest.setup.ts'],

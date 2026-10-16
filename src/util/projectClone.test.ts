@@ -197,12 +197,11 @@ describe('project clone utilities', () => {
         });
 
         it('falls back to the local catalog after a target CLI error', async () => {
-            topoCli.listProjects.mockImplementation(async (sshTarget) => {
-                if (sshTarget) {
-                    throw new WrappedError('CLI', 'target unhealthy');
-                }
-                return projectList;
-            });
+            vi.when(topoCli.listProjects, { onUnmatched: 'throw' })
+                .calledWith(expect.toSatisfy(Boolean))
+                .thenReject(new WrappedError('CLI', 'target unhealthy'))
+                .calledWith()
+                .thenResolve(projectList);
             const { quickPick } = mockRemoteQuickPick();
 
             const sourcePromise = promptForRemoteCloneSource(

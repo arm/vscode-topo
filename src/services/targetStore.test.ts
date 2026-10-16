@@ -104,7 +104,6 @@ describe('TargetStore', () => {
             focused: true,
             active: true,
         };
-        vi.clearAllMocks();
     });
 
     it('adds a target successfully and persists it', async () => {

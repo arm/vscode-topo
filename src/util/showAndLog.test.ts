@@ -13,10 +13,6 @@ vi.mock('./logger', () => ({
 }));
 
 describe('showAndLogError', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-    });
-
     it('shows error message and logs error for plain errors', () => {
         const error = new Error('something broke');
 
@@ -46,7 +42,7 @@ describe('showAndLogError', () => {
             },
         ] as const;
         const error = new WrappedError(
-            'DOCKER',
+            'CONTAINER_ENGINE',
             'Error: No such container: abc123',
             [...logEntries],
         );
@@ -79,7 +75,7 @@ describe('showAndLogError', () => {
     });
 
     it('logs WrappedError message even when it has no log entries', () => {
-        const error = new WrappedError('DOCKER', 'empty');
+        const error = new WrappedError('CONTAINER_ENGINE', 'empty');
 
         showAndLogError('Failed', error);
 
@@ -107,10 +103,6 @@ describe('showAndLogError', () => {
 });
 
 describe('showAndLogWarning', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-    });
-
     it('shows warning message and logs warning for plain errors', () => {
         const error = new Error('target is not ready');
 
