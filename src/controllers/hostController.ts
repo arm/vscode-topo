@@ -1,11 +1,15 @@
+import * as vscode from 'vscode';
 import { HostModel } from '../models/hostModel';
 import { TopoCli } from '../services/topoCli';
 import { TopoSkill } from '../services/topoSkill';
 import { errored, loaded, loading } from '../util/loadable';
 import { getHostHealth } from '../util/healthReport';
 import { Config } from '../services/config';
+import { LatestAbortableWork } from '../util/latestAbortableWork';
 
-export class HostController {
+export class HostController implements vscode.Disposable {
+    private readonly healthRefresh = new LatestAbortableWork();
+
     constructor(
         private readonly hostModel: HostModel,
         private readonly topoCli: TopoCli,
@@ -33,8 +37,11 @@ export class HostController {
     public async refreshHealthCommandHandler(): Promise<void> {
         this.hostModel.setHealth(loading(this.hostModel.health));
         try {
-            const health = await this.topoCli.hostHealth();
-            this.hostModel.setHealth(loaded(getHostHealth(health)));
+            await this.healthRefresh.run(async (signal) => {
+                const health = await this.topoCli.hostHealth();
+                signal.throwIfAborted();
+                this.hostModel.setHealth(loaded(getHostHealth(health)));
+            });
         } catch (e) {
             this.hostModel.setHealth(errored(e));
         }
@@ -48,5 +55,9 @@ export class HostController {
         } catch (error) {
             this.hostModel.setSkillReport(errored(error));
         }
+    }
+
+    public dispose(): void {
+        this.healthRefresh.dispose();
     }
 }
