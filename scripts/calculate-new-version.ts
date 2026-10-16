@@ -29,9 +29,8 @@ function getNextReleaseVersion(preRelease: boolean): string {
         '--format=%s%x00',
     )
         .split('\0')
-        // Drop the trailing separator, preserving commits with empty subjects.
-        .slice(0, -1)
-        .map((subject) => subject.trim());
+        .map((subject) => subject.trim())
+        .filter(Boolean);
 
     return calculateVersionFromCommits(baseline, subjects, preRelease);
 }
