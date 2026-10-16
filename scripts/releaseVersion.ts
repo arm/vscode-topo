@@ -1,4 +1,5 @@
 type Version = { major: number; minor: number; patch: number };
+type ReleaseBaseline = { current: Version; latest: Version; tag: string };
 
 // Like svu --v0, keep breaking changes on 0.x. Set to false to allow a major bump.
 const keepMajorZero = true;
@@ -14,18 +15,27 @@ function parseVersion(v: string): Version | undefined {
     return { major, minor, patch };
 }
 
-function formatVersion({ major, minor, patch }: Version) {
+function formatVersion({ major, minor, patch }: Version): string {
     return `${major}.${minor}.${patch}`;
 }
 
 export function calculateVersionFromCommits(
-    current: Version,
-    tag: string,
+    { current, latest, tag }: ReleaseBaseline,
     subjects: readonly string[],
     preRelease: boolean,
 ): string {
+    const hasPrerelease = latest.minor % 2 !== 0;
     if (subjects.length === 0) {
         throw new Error(`No commits since ${tag}; nothing to release`);
+    }
+
+    // Keep one prerelease track; apply feature and major bumps at stable release.
+    if (preRelease) {
+        return formatVersion(
+            current.minor % 2 !== 0
+                ? { ...current, patch: current.patch + 1 }
+                : { major: current.major, minor: current.minor + 1, patch: 0 },
+        );
     }
 
     const headers = subjects.map((subject) =>
@@ -37,8 +47,7 @@ export function calculateVersionFromCommits(
     const hasFeatures = headers.some((header) => header?.[1] === 'feat');
     const hasFixes = headers.some((header) => header?.[1] === 'fix');
 
-    // Explicit prereleases also allow changes such as chores and refactors.
-    if (!preRelease && !hasBreakingChanges && !hasFeatures && !hasFixes) {
+    if (!hasPrerelease && !hasBreakingChanges && !hasFeatures && !hasFixes) {
         throw new Error(
             `Commits since ${tag} do not warrant a stable version bump`,
         );
@@ -57,10 +66,17 @@ export function calculateVersionFromCommits(
         next = { ...current, patch: current.patch + 1 };
     }
 
-    // Reserve odd minor versions for prereleases and even ones for stable releases.
-    if (next.minor % 2 !== (preRelease ? 1 : 0)) {
+    // Stable releases use even minor versions and must exceed any prerelease.
+    if (next.minor % 2 !== 0) {
         next.minor += 1;
         next.patch = 0;
+    }
+    if (
+        hasPrerelease &&
+        (next.major < latest.major ||
+            (next.major === latest.major && next.minor < latest.minor))
+    ) {
+        next = { major: latest.major, minor: latest.minor + 1, patch: 0 };
     }
     return formatVersion(next);
 }
@@ -69,18 +85,19 @@ export function calculateVersionFromCommits(
 export function getReleaseBaseline(
     tags: readonly string[],
     preRelease: boolean,
-) {
-    // Prereleases use any release tag; stable releases use only even-minor tags.
-    const tagRegex = preRelease
-        ? /^v\d+\.\d+\.\d+$/
-        : /^v\d+\.\d*[02468]\.\d+$/;
-    const tag = tags.find((tag) => tagRegex.test(tag));
+): ReleaseBaseline {
+    const releaseTags = tags.filter((tag) => /^v\d+\.\d+\.\d+$/.test(tag));
+    const latestTag = releaseTags[0];
+    const tag = preRelease
+        ? latestTag
+        : releaseTags.find((tag) => /^v\d+\.\d*[02468]\.\d+$/.test(tag));
     const current = tag && parseVersion(tag.slice(1));
-    if (!tag || !current) {
+    const latest = latestTag && parseVersion(latestTag.slice(1));
+    if (!tag || !current || !latest) {
         throw new Error(
             preRelease ? 'No release tag found' : 'No stable release tag found',
         );
     }
 
-    return { current, tag };
+    return { current, latest, tag };
 }

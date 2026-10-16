@@ -18,12 +18,12 @@ function getNextReleaseVersion(preRelease: boolean): string {
         'HEAD',
         '--sort=-version:refname',
     ).split('\n');
-    const { current, tag } = getReleaseBaseline(tags, preRelease);
+    const baseline = getReleaseBaseline(tags, preRelease);
     const subjects = git(
         '-c',
         'log.showSignature=false',
         'log',
-        `refs/tags/${tag}..HEAD`,
+        `refs/tags/${baseline.tag}..HEAD`,
         '--no-decorate',
         '--no-color',
         '--format=%s%x00',
@@ -33,7 +33,7 @@ function getNextReleaseVersion(preRelease: boolean): string {
         .slice(0, -1)
         .map((subject) => subject.trim());
 
-    return calculateVersionFromCommits(current, tag, subjects, preRelease);
+    return calculateVersionFromCommits(baseline, subjects, preRelease);
 }
 
 try {
