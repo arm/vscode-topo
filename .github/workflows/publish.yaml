@@ -85,7 +85,7 @@ jobs:
                   GH_TOKEN: ${{ steps.get-app-token.outputs.token }}
             - name: Store release notes
               if: steps.calculate-version.outputs.version
-              uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
               with:
                   name: release-notes
                   path: ./release-notes.md
@@ -95,7 +95,7 @@ jobs:
               run: git diff > new-version.patch
             - name: Store version bump patch
               if: steps.calculate-version.outputs.version
-              uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
               with:
                   name: new-version-patch
                   path: ./new-version.patch
@@ -123,7 +123,7 @@ jobs:
                   cache: npm
             - name: Download version bump patch
               if: needs.prepare-version.outputs.version
-              uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
               with:
                   name: new-version-patch
                   path: ~/patches
@@ -139,7 +139,7 @@ jobs:
               env:
                   AZURE_ANALYTICS_CONNECTION_STRING: ${{ secrets.AZURE_ANALYTICS_CONNECTION_STRING }}
             - name: Upload VSIX
-              uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
               with:
                   name: vsix-package-${{ matrix.platform }}
                   path: ./*${{ matrix.platform }}*.vsix
@@ -166,7 +166,7 @@ jobs:
               with:
                   token: ${{ steps.get-app-token.outputs.token }}
             - name: Download version bump patch
-              uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
               with:
                   name: new-version-patch
                   path: ~/patches
@@ -196,11 +196,11 @@ jobs:
         permissions:
             contents: write
         steps:
-            - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+            - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
               with:
                   path: artifacts
             - name: Download release notes
-              uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
               with:
                   name: release-notes
                   path: release-notes
@@ -224,7 +224,7 @@ jobs:
             - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
               with:
                   persist-credentials: false
-            - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+            - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
               with:
                   pattern: vsix-package-*
                   merge-multiple: true
