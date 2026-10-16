@@ -168,6 +168,24 @@ describe('HostTreeView', () => {
         expect(health).toMatchObject({ label: 'Health' });
     });
 
+    it('replaces an invalid environment error when the setting selects Podman', () => {
+        const model = new HostModel();
+        model.setContainerEngine('auto', 'invalid');
+        const provider = new HostTreeView(model);
+        const listener = vi.fn();
+        provider.onDidChangeTreeData(listener);
+
+        expect(provider.getChildren()[0]).toBeInstanceOf(ErrorTreeItem);
+
+        model.setContainerEngine('podman', 'invalid');
+
+        expect(listener).toHaveBeenCalledOnce();
+        expect(provider.getChildren()[0]).toMatchObject({
+            label: 'Container Engine',
+            description: 'podman',
+        });
+    });
+
     it('fires onDidChangeTreeData when host health changes', () => {
         const model = new HostModel();
         const provider = new HostTreeView(model);
