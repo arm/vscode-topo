@@ -5,7 +5,6 @@ import { HealthCheckTreeItem } from './treeItems/healthCheckTreeItem';
 import { TargetModel } from '../models/targetModel';
 import { DisposableCollector } from '../util/disposableCollector';
 import { Loadable, loaded } from '../util/loadable';
-import { TargetDataIssueTreeItem } from './treeItems/targetDataIssueTreeItem';
 import { ErrorTreeItem } from './treeItems/errorTreeItem';
 import { TargetDescription } from '../services/topoCliSchema';
 import { LoadingTreeItem } from './treeItems/loadingTreeItem';
@@ -144,7 +143,13 @@ export class TargetTreeView
     public getChildren(element?: vscode.TreeItem): vscode.TreeItem[] {
         if (!element) {
             if (this.targetModel.targets.status === 'errored') {
-                return [new TargetDataIssueTreeItem(this.targetModel.targets)];
+                return [
+                    new ErrorTreeItem(
+                        'The target data could not be loaded',
+                        this.targetModel.targets,
+                        ['DataIssueError'],
+                    ),
+                ];
             }
 
             const selectedTarget = this.targetModel.selected;

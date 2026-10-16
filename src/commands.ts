@@ -74,6 +74,11 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
         vscode.commands.registerCommand(commandIds.openSettings, () =>
             handlers.openSettings.openSettingsCommandHandler(),
         ),
+        vscode.commands.registerCommand(
+            commandIds.openContainerEngineSettings,
+            () =>
+                handlers.openSettings.openContainerEngineSettingsCommandHandler(),
+        ),
         vscode.commands.registerCommand(commandIds.cloneProject, () =>
             handlers.projectClone.cloneCommandHandler(),
         ),
