@@ -189,7 +189,7 @@ The **Host** view appears in the **Topo** activity bar container and shows host 
 
 Set `topo.containerEngine` in VS Code Settings to **Auto** (the default), **Docker**, or **Podman**. Auto uses `TOPO_ENGINE`, falling back to Docker when it is unset.
 
-Engine selection follows this priority: an explicit `--engine` argument, a Docker or Podman choice in `topo.containerEngine`, then `TOPO_ENGINE`. In Auto mode, Topo tasks use `options.env.TOPO_ENGINE` or their inherited environment; an explicit Docker or Podman setting overrides both.
+For Topo tasks, engine selection follows this priority: an explicit `--engine` argument in the task’s `args`, a Docker or Podman choice in `topo.containerEngine`, then `TOPO_ENGINE`. In Auto mode, Topo tasks use `options.env.TOPO_ENGINE` or their inherited environment; an explicit Docker or Podman setting overrides both.
 
 The **Topo Agent Skill** item expands to show every agent linked to the bundled skill and whether that agent's copy is up to date.
 
