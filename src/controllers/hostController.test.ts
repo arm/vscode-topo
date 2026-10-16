@@ -6,6 +6,7 @@ import { HealthReport, HostHealthCheck } from '../services/topoCliSchema';
 import { TopoSkill, type TopoSkillReport } from '../services/topoSkill';
 import { loaded } from '../util/loadable';
 import { Config } from '../services/config';
+import { getHostHealth } from '../util/healthReport';
 
 const hostCheck: HostHealthCheck = {
     name: 'Container Engine',
@@ -30,9 +31,7 @@ const healthReport: HealthReport = {
         },
     ],
 };
-const hostHealth = {
-    capabilities: [{ name: 'Deployment', checks: [hostCheck] }],
-};
+const hostHealth = getHostHealth(healthReport);
 const installedSkillReport: TopoSkillReport = {
     status: 'installed',
     agents: [
@@ -103,5 +102,31 @@ describe('HostController', () => {
         expect(topoSkill.getReport).toHaveBeenCalledOnce();
         expect(model.health).toStrictEqual(loaded(hostHealth));
         expect(model.skillReport).toStrictEqual(loaded(installedSkillReport));
+    });
+
+    it('keeps the latest host health when an earlier refresh finishes later', async () => {
+        const model = new HostModel();
+        const topoCli = mock<TopoCli>({
+            hostHealth: vi.fn().mockResolvedValue(healthReport),
+        });
+        const controller = new HostController(
+            model,
+            topoCli,
+            mock<TopoSkill>(),
+            config,
+        );
+        let resolvePreviousHealth!: (health: HealthReport) => void;
+        topoCli.hostHealth.mockReturnValueOnce(
+            new Promise((resolve) => {
+                resolvePreviousHealth = resolve;
+            }),
+        );
+        const previousRefresh = controller.refreshHealthCommandHandler();
+
+        await controller.refreshHealthCommandHandler();
+        resolvePreviousHealth({ capabilities: [] });
+        await previousRefresh;
+
+        expect(model.health).toStrictEqual(loaded(hostHealth));
     });
 });

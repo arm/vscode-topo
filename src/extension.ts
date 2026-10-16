@@ -145,6 +145,7 @@ async function activateExtension(
     }, SELECTED_TARGET_REFRESH_INTERVAL_MS);
 
     context.subscriptions.push(
+        hostController,
         projectController,
         targetController,
         selectedTargetRefreshLoop,
