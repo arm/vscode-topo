@@ -15,10 +15,6 @@ describe('OpenContainerInBrowser', () => {
         target: 'user@target.local',
     };
 
-    afterEach(() => {
-        vi.clearAllMocks();
-    });
-
     it('opens the only published endpoint without prompting', async () => {
         const action = new OpenContainerInBrowser();
 

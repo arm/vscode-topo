@@ -48,10 +48,6 @@ const missingSkillReport: TopoSkillReport = {
 };
 
 describe('HostController', () => {
-    afterEach(() => {
-        vi.clearAllMocks();
-    });
-
     it('refreshes host health and skill status on creation', async () => {
         const topoCli = mock<TopoCli>({
             hostHealth: vi.fn().mockResolvedValue(healthReport),

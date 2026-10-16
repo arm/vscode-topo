@@ -60,14 +60,11 @@ describe('Stop', () => {
     }
 
     beforeEach(() => {
-        vi.clearAllMocks();
         targetModel = new TargetModel();
         targetModel.setSelected(target);
         targetModel.setSelectedTargetHealth(loaded(connectedTargetHealth));
         taskFactory = mock<TaskFactory>();
         taskFactory.createTask.mockReturnValue(task);
-        vi.mocked(vscode.window.showErrorMessage).mockClear();
-        vi.mocked(vscode.window.showWarningMessage).mockClear();
         stopAction = new Stop(targetModel, taskFactory);
     });
 

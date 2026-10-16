@@ -51,10 +51,6 @@ describe('ContainerLifecycle', () => {
     };
     const treeItem = new ContainerTreeItem(container);
 
-    beforeEach(() => {
-        vi.clearAllMocks();
-    });
-
     it.each(lifecycleCases)(
         '$operation invokes the matching command and refreshes containers',
         async ({ command, invoke }) => {

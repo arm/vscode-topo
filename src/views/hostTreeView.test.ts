@@ -29,7 +29,6 @@ describe('HostTreeView', () => {
 
     afterEach(() => {
         vi.unstubAllEnvs();
-        vi.clearAllMocks();
     });
 
     it('registers the host health tree', () => {

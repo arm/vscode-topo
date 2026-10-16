@@ -5,10 +5,6 @@ import { TargetModel } from '../models/targetModel';
 describe('ConnectViaSSH', () => {
     const target = 'user@topo.local';
 
-    afterEach(() => {
-        vi.clearAllMocks();
-    });
-
     it('connects to the selected target', () => {
         const targetModel = new TargetModel();
         targetModel.setSelected(target);

@@ -13,10 +13,6 @@ vi.mock('./logger', () => ({
 }));
 
 describe('showAndLogError', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-    });
-
     it('shows error message and logs error for plain errors', () => {
         const error = new Error('something broke');
 
@@ -107,10 +103,6 @@ describe('showAndLogError', () => {
 });
 
 describe('showAndLogWarning', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-    });
-
     it('shows warning message and logs warning for plain errors', () => {
         const error = new Error('target is not ready');
 
