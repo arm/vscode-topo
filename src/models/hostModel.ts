@@ -26,28 +26,26 @@ export class HostModel implements vscode.Disposable {
 
     private _health: Loadable<HostHealth> = unloaded();
     private _skillReport: Loadable<TopoSkillReport> = unloaded();
-    private _settingsContainerEngine: ContainerEngineSetting = 'auto';
-    private _environmentContainerEngine?: string;
+    private _containerEngine: Loadable<ContainerEngine> = loaded('docker');
 
     public get containerEngine(): Loadable<ContainerEngine> {
-        try {
-            return loaded(
-                resolveContainerEngine(
-                    this._settingsContainerEngine,
-                    this._environmentContainerEngine,
-                ),
-            );
-        } catch (error) {
-            return errored(error);
-        }
+        return this._containerEngine;
     }
 
     public setContainerEngine(
         settingsContainerEngine: ContainerEngineSetting,
         environmentContainerEngine?: string,
     ): void {
-        this._settingsContainerEngine = settingsContainerEngine;
-        this._environmentContainerEngine = environmentContainerEngine;
+        try {
+            this._containerEngine = loaded(
+                resolveContainerEngine(
+                    settingsContainerEngine,
+                    environmentContainerEngine,
+                ),
+            );
+        } catch (error) {
+            this._containerEngine = errored(error);
+        }
         this._onContainerEngineChanged.fire();
     }
 
