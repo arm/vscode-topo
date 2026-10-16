@@ -7,6 +7,8 @@ import { HealthReport, PsOutput, ProjectDescription } from './topoCliSchema';
 import { TargetDescription } from './topoCliSchema';
 import { execFile } from '../util/exec';
 import type { Mock } from 'vitest';
+import { mock } from 'vitest-mock-extended';
+import { Config } from './config';
 
 vi.mock('../util/exec', () => ({
     execFile: vi.fn(),
@@ -33,6 +35,7 @@ describe('TopoCli', () => {
     let topoCli: TopoCli;
     let origPlatform: string;
     let origEnv: NodeJS.ProcessEnv;
+    const config = mock<Config>();
 
     beforeAll(() => {
         origPlatform = process.platform;
@@ -47,7 +50,8 @@ describe('TopoCli', () => {
 
     beforeEach(() => {
         vi.resetAllMocks();
-        topoCli = new TopoCli(ext, env);
+        config.getContainerEngineSetting.mockReturnValue('docker');
+        topoCli = new TopoCli(ext, env, config);
     });
 
     it('getBinaryPath builds correct path', () => {
@@ -66,6 +70,22 @@ describe('TopoCli', () => {
         expect(env.replace).toHaveBeenCalledWith(
             'TOPO_DISABLE_SELF_UPGRADE',
             '1',
+        );
+        expect(env.replace).not.toHaveBeenCalledWith(
+            'TOPO_ENGINE',
+            expect.anything(),
+        );
+    });
+
+    it('preserves explicit engine arguments', () => {
+        const separateArgs = ['--engine', 'podman'];
+        const joinedArgs = ['--engine=podman'];
+
+        expect(
+            topoCli.withDefaultContainerEngine('deploy', separateArgs),
+        ).toEqual(separateArgs);
+        expect(topoCli.withDefaultContainerEngine('stop', joinedArgs)).toEqual(
+            joinedArgs,
         );
     });
 
@@ -282,6 +302,7 @@ describe('TopoCli', () => {
     });
 
     it('ps parses JSON output and runs topo ps in the project directory', async () => {
+        config.getContainerEngineSetting.mockReturnValue('podman');
         const output: PsOutput = {
             containers: [
                 {
@@ -327,6 +348,8 @@ describe('TopoCli', () => {
                 target,
                 '-o',
                 'json',
+                '--engine',
+                'podman',
             ],
             { ...defaultExecOptions, cwd: projectPath },
         );
@@ -421,7 +444,15 @@ describe('TopoCli', () => {
         expect(execFileMock).toHaveBeenCalledTimes(1);
         expect(execFileMock).toHaveBeenCalledWith(
             topoCli.getBinaryPath(),
-            ['health', '-o', 'json', '--target', 'hostname'],
+            [
+                'health',
+                '-o',
+                'json',
+                '--target',
+                'hostname',
+                '--engine',
+                'docker',
+            ],
             defaultExecOptions,
         );
     });
@@ -437,7 +468,7 @@ describe('TopoCli', () => {
         expect(execFileMock).toHaveBeenCalledTimes(1);
         expect(execFileMock).toHaveBeenCalledWith(
             topoCli.getBinaryPath(),
-            ['health', '-o', 'json'],
+            ['health', '-o', 'json', '--engine', 'docker'],
             defaultExecOptions,
         );
     });

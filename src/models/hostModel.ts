@@ -4,10 +4,16 @@ import { Loadable, errored, loaded, unloaded } from '../util/loadable';
 import { TopoSkillReport } from '../services/topoSkill';
 import {
     type ContainerEngine,
+    type ContainerEngineSetting,
     resolveContainerEngine,
 } from '../util/resolveContainerEngine';
 
 export class HostModel implements vscode.Disposable {
+    private readonly _onContainerEngineChanged =
+        new vscode.EventEmitter<void>();
+    public readonly onContainerEngineChanged =
+        this._onContainerEngineChanged.event;
+
     private _onHealthChanged: vscode.EventEmitter<void> =
         new vscode.EventEmitter<void>();
     public readonly onHealthChanged: vscode.Event<void> =
@@ -20,13 +26,27 @@ export class HostModel implements vscode.Disposable {
 
     private _health: Loadable<HostHealth> = unloaded();
     private _skillReport: Loadable<TopoSkillReport> = unloaded();
+    private _containerEngine: Loadable<ContainerEngine> = loaded('docker');
 
     public get containerEngine(): Loadable<ContainerEngine> {
+        return this._containerEngine;
+    }
+
+    public setContainerEngine(
+        settingsContainerEngine: ContainerEngineSetting,
+        environmentContainerEngine?: string,
+    ): void {
         try {
-            return loaded(resolveContainerEngine(process.env.TOPO_ENGINE));
+            this._containerEngine = loaded(
+                resolveContainerEngine(
+                    settingsContainerEngine,
+                    environmentContainerEngine,
+                ),
+            );
         } catch (error) {
-            return errored(error);
+            this._containerEngine = errored(error);
         }
+        this._onContainerEngineChanged.fire();
     }
 
     public setHealth(health: Loadable<HostHealth>): void {
@@ -48,6 +68,7 @@ export class HostModel implements vscode.Disposable {
     }
 
     public dispose(): void {
+        this._onContainerEngineChanged.dispose();
         this._onHealthChanged.dispose();
         this._onSkillReportChanged.dispose();
     }

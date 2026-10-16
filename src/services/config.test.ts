@@ -18,6 +18,16 @@ describe('Config', () => {
         vi.resetAllMocks();
     });
 
+    it('reads the configured container engine', () => {
+        getConfigurationMock.mockReturnValue('podman');
+
+        expect(new Config().getContainerEngineSetting()).toBe('podman');
+        expect(getConfigurationMock).toHaveBeenCalledWith(
+            'containerEngine',
+            'auto',
+        );
+    });
+
     it('returns settings for the requested target', () => {
         const targetSettings: TargetSettings = {
             deploy: { port: 5000 },

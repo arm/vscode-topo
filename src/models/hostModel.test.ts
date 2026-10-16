@@ -6,13 +6,9 @@ import { loaded, unloaded } from '../util/loadable';
 const hostHealth: HostHealth = { capabilities: [] };
 
 describe('HostModel', () => {
-    afterEach(() => {
-        vi.unstubAllEnvs();
-    });
-
     it('represents an invalid engine as an errored state', () => {
-        vi.stubEnv('TOPO_ENGINE', 'invalid');
         const model = new HostModel();
+        model.setContainerEngine('auto', 'invalid');
 
         expect(model.containerEngine).toMatchObject({
             status: 'errored',
@@ -20,11 +16,10 @@ describe('HostModel', () => {
         });
     });
 
-    it('starts with the resolved engine and unloaded reports', () => {
-        vi.stubEnv('TOPO_ENGINE', 'podman');
+    it('starts with the default engine and unloaded reports', () => {
         const model = new HostModel();
 
-        expect(model.containerEngine).toStrictEqual(loaded('podman'));
+        expect(model.containerEngine).toStrictEqual(loaded('docker'));
         expect(model.health).toStrictEqual(unloaded());
         expect(model.skillReport).toStrictEqual(unloaded());
     });

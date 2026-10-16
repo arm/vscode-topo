@@ -5,6 +5,7 @@ import { HostController } from './hostController';
 import { HealthReport, HostHealthCheck } from '../services/topoCliSchema';
 import { TopoSkill, type TopoSkillReport } from '../services/topoSkill';
 import { loaded } from '../util/loadable';
+import { Config } from '../services/config';
 
 const hostCheck: HostHealthCheck = {
     name: 'Container Engine',
@@ -48,7 +49,14 @@ const missingSkillReport: TopoSkillReport = {
 };
 
 describe('HostController', () => {
+    const config = mock<Config>();
+
+    beforeEach(() => {
+        config.getContainerEngineSetting.mockReturnValue('docker');
+    });
+
     it('refreshes host health and skill status on creation', async () => {
+        config.getContainerEngineSetting.mockReturnValue('podman');
         const topoCli = mock<TopoCli>({
             hostHealth: vi.fn().mockResolvedValue(healthReport),
         });
@@ -57,8 +65,9 @@ describe('HostController', () => {
         });
         const model = new HostModel();
 
-        new HostController(model, topoCli, topoSkill);
+        new HostController(model, topoCli, topoSkill, config);
         await vi.waitFor(() => {
+            expect(model.containerEngine).toStrictEqual(loaded('podman'));
             expect(model.health).toStrictEqual(loaded(hostHealth));
             expect(model.skillReport).toStrictEqual(
                 loaded(installedSkillReport),
@@ -77,7 +86,12 @@ describe('HostController', () => {
             getReport: vi.fn().mockResolvedValue(missingSkillReport),
         });
         const model = new HostModel();
-        const controller = new HostController(model, topoCli, topoSkill);
+        const controller = new HostController(
+            model,
+            topoCli,
+            topoSkill,
+            config,
+        );
         await vi.waitFor(() => {
             expect(model.skillReport).toStrictEqual(loaded(missingSkillReport));
         });

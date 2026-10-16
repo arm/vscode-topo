@@ -1,8 +1,10 @@
+import { Config } from './config';
 import { ContainerCommands } from './containerCommands';
 import { resolveContainerEngine } from '../util/resolveContainerEngine';
 
 export class ContainerEngineCommands implements ContainerCommands {
     constructor(
+        private readonly config: Config,
         private readonly dockerCommands: ContainerCommands,
         private readonly podmanCommands: ContainerCommands,
     ) {}
@@ -48,7 +50,10 @@ export class ContainerEngineCommands implements ContainerCommands {
     }
 
     private getCommands(): ContainerCommands {
-        const engine = resolveContainerEngine(process.env.TOPO_ENGINE);
+        const engine = resolveContainerEngine(
+            this.config.getContainerEngineSetting(),
+            process.env.TOPO_ENGINE,
+        );
         return engine === 'podman' ? this.podmanCommands : this.dockerCommands;
     }
 }

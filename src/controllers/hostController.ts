@@ -3,14 +3,24 @@ import { TopoCli } from '../services/topoCli';
 import { TopoSkill } from '../services/topoSkill';
 import { errored, loaded, loading } from '../util/loadable';
 import { getHostHealth } from '../util/healthReport';
+import { Config } from '../services/config';
 
 export class HostController {
     constructor(
         private readonly hostModel: HostModel,
         private readonly topoCli: TopoCli,
         private readonly topoSkill: TopoSkill,
+        private readonly config: Config,
     ) {
+        this.refreshContainerEngine();
         void this.refreshHostCommandHandler();
+    }
+
+    public refreshContainerEngine(): void {
+        this.hostModel.setContainerEngine(
+            this.config.getContainerEngineSetting(),
+            process.env.TOPO_ENGINE,
+        );
     }
 
     public async refreshHostCommandHandler(): Promise<void> {

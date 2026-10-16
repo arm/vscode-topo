@@ -536,6 +536,27 @@
         },
         "configuration": [
             {
+                "title": "Topo",
+                "properties": {
+                    "topo.containerEngine": {
+                        "type": "string",
+                        "enum": [
+                            "auto",
+                            "docker",
+                            "podman"
+                        ],
+                        "enumDescriptions": [
+                            "Use TOPO_ENGINE, or Docker when it is unset.",
+                            "Use Docker, overriding TOPO_ENGINE.",
+                            "Use Podman, overriding TOPO_ENGINE."
+                        ],
+                        "default": "auto",
+                        "scope": "window",
+                        "markdownDescription": "Container engine for extension actions and Topo tasks. Priority: explicit task `--engine` argument, then a Docker or Podman setting, then `TOPO_ENGINE`. Auto uses the environment variable, falling back to Docker when unset."
+                    }
+                }
+            },
+            {
                 "title": "Target Settings",
                 "properties": {
                     "topo.targetSettings": {

@@ -49,11 +49,22 @@ export class TaskFactory {
             executableName === 'topo'
                 ? this.topoCli.getBinaryPath()
                 : shellQuote(executableName);
+        let executionArgs = args;
+        if (executableName === 'topo' && args.length > 0) {
+            const [commandName, ...commandArgs] = args;
+            executionArgs = [
+                commandName,
+                ...this.topoCli.withDefaultContainerEngine(
+                    commandName,
+                    commandArgs,
+                ),
+            ];
+        }
         const hasWorkspace =
             (vscode.workspace.workspaceFolders?.length ?? 0) > 0;
         const execution = new vscode.ShellExecution(
             executable,
-            args.map(shellQuote),
+            executionArgs.map(shellQuote),
             {
                 cwd: hasWorkspace ? undefined : os.homedir(),
             },
@@ -62,9 +73,13 @@ export class TaskFactory {
     }
 
     public createExecution(definition: TaskDefinition): vscode.ShellExecution {
+        const args = this.topoCli.withDefaultContainerEngine(
+            definition.command,
+            definition.args,
+        );
         return new vscode.ShellExecution(
             this.topoCli.getBinaryPath(),
-            [definition.command, ...definition.args.map(shellQuote)],
+            [definition.command, ...args.map(shellQuote)],
             definition.options,
         );
     }

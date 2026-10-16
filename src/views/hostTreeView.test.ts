@@ -23,14 +23,6 @@ const installedSkillReport: TopoSkillReport = {
 };
 
 describe('HostTreeView', () => {
-    beforeEach(() => {
-        vi.stubEnv('TOPO_ENGINE', undefined);
-    });
-
-    afterEach(() => {
-        vi.unstubAllEnvs();
-    });
-
     it('registers the host health tree', () => {
         const provider = new HostTreeView(new HostModel());
 
@@ -140,25 +132,31 @@ describe('HostTreeView', () => {
             label: 'Container Engine',
             description: 'docker',
             tooltip:
-                'Container engine from TOPO_ENGINE (Docker when unset): docker',
+                'Container engine: docker. Set by topo.containerEngine; Auto uses TOPO_ENGINE (Docker when unset).',
             collapsibleState: vscode.TreeItemCollapsibleState.None,
         });
     });
 
-    it('shows the engine from TOPO_ENGINE', () => {
-        vi.stubEnv('TOPO_ENGINE', 'podman');
-        const provider = new HostTreeView(new HostModel());
+    it('shows the engine from TOPO_ENGINE in auto mode', () => {
+        const model = new HostModel();
+        const provider = new HostTreeView(model);
+        const listener = vi.fn();
+        provider.onDidChangeTreeData(listener);
 
+        model.setContainerEngine('auto', 'podman');
+
+        expect(listener).toHaveBeenCalledOnce();
         expect(provider.getChildren()[0]).toMatchObject({
             description: 'podman',
             tooltip:
-                'Container engine from TOPO_ENGINE (Docker when unset): podman',
+                'Container engine: podman. Set by topo.containerEngine; Auto uses TOPO_ENGINE (Docker when unset).',
         });
     });
 
     it('shows invalid environment values without hiding health', () => {
-        vi.stubEnv('TOPO_ENGINE', 'invalid');
-        const provider = new HostTreeView(new HostModel());
+        const model = new HostModel();
+        model.setContainerEngine('auto', 'invalid');
+        const provider = new HostTreeView(model);
 
         const [engine, health] = provider.getChildren();
 
@@ -168,6 +166,24 @@ describe('HostTreeView', () => {
                 'Invalid TOPO_ENGINE value "invalid": expected docker or podman',
         });
         expect(health).toMatchObject({ label: 'Health' });
+    });
+
+    it('replaces an invalid environment error when the setting selects Podman', () => {
+        const model = new HostModel();
+        model.setContainerEngine('auto', 'invalid');
+        const provider = new HostTreeView(model);
+        const listener = vi.fn();
+        provider.onDidChangeTreeData(listener);
+
+        expect(provider.getChildren()[0]).toBeInstanceOf(ErrorTreeItem);
+
+        model.setContainerEngine('podman', 'invalid');
+
+        expect(listener).toHaveBeenCalledOnce();
+        expect(provider.getChildren()[0]).toMatchObject({
+            label: 'Container Engine',
+            description: 'podman',
+        });
     });
 
     it('fires onDidChangeTreeData when host health changes', () => {
