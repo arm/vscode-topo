@@ -14,7 +14,7 @@ describe('ContainerEngineCommands', () => {
         vi.resetAllMocks();
     });
 
-    it('routes container actions using the current setting', async () => {
+    it('switches container actions when the engine setting changes', async () => {
         config.getContainerEngineSetting.mockReturnValue('docker');
         await commands.stopContainer('cid', 'target');
 
