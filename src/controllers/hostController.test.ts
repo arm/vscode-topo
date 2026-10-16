@@ -150,7 +150,7 @@ describe('HostController', () => {
         vi.mocked(vscode.window.showQuickPick).mockImplementationOnce(
             async (items) => (await items)[2],
         );
-        const error = new Error('Settings are read-only');
+        const error = new Error('Failed to update settings');
         config.setContainerEngine.mockRejectedValueOnce(error);
 
         await expect(
