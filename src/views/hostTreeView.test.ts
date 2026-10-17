@@ -134,6 +134,7 @@ describe('HostTreeView', () => {
             tooltip:
                 'Container engine: docker. Set by topo.containerEngine; Auto uses TOPO_ENGINE (Docker when unset).',
             collapsibleState: vscode.TreeItemCollapsibleState.None,
+            contextValue: 'ContainerEngine',
         });
     });
 
@@ -164,6 +165,7 @@ describe('HostTreeView', () => {
             label: 'Container Engine',
             description:
                 'Invalid TOPO_ENGINE value "invalid": expected docker or podman',
+            contextValue: 'OpenableError ContainerEngine',
         });
         expect(health).toMatchObject({ label: 'Health' });
     });

@@ -100,6 +100,10 @@ describe('commands', () => {
                 handlers.openSettings.openSettingsCommandHandler,
             ],
             [
+                commandIds.openContainerEngineSettings,
+                handlers.openSettings.openContainerEngineSettingsCommandHandler,
+            ],
+            [
                 commandIds.cloneProject,
                 handlers.projectClone.cloneCommandHandler,
             ],
