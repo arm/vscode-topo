@@ -72,6 +72,10 @@ Generate a `.vsix` package for distribution:
 npm run package
 ```
 
+## Releases
+
+To make a release, open the [Publish workflow](../.github/workflows/publish.yaml) in GitHub Actions, select **Run workflow**, choose the branch, and enable **Pre-release** if needed. If the workflow fails, use **Re-run failed jobs** on the same run.
+
 ## Update the Topo CLI Version
 
 To update the Topo CLI version bundled with the extension, pass the new version
