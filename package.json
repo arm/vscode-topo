@@ -647,7 +647,7 @@
         "vitest": "^5.0.3",
         "vitest-mock-extended": "^5.1.1",
         "vscode-uri": "^3.1.0",
-        "yargs": "^18.1.0"
+        "yargs": "^18.2.0"
     },
     "dependencies": {
         "@vscode/extension-telemetry": "^1.5.2",
