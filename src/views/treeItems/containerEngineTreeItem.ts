@@ -8,5 +8,6 @@ export class ContainerEngineTreeItem extends vscode.TreeItem {
         this.description = containerEngine;
         this.tooltip = `Container engine: ${containerEngine}. Set by topo.containerEngine; Auto uses TOPO_ENGINE (Docker when unset).`;
         this.iconPath = new vscode.ThemeIcon('package');
+        this.contextValue = 'ContainerEngine';
     }
 }

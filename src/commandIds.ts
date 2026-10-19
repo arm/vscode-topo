@@ -17,6 +17,9 @@ export const selectTarget = command('selectTarget');
 export const resetExtensionData = command('resetExtensionData');
 export const clearTargetSelection = command('clearTargetSelection');
 export const openSettings = command('openSettings');
+export const openContainerEngineSettings = command(
+    'openContainerEngineSettings',
+);
 export const cloneProject = command('cloneProject');
 export const deploy = command('deploy');
 export const deployContext = command('deploy.context');

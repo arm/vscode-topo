@@ -3,7 +3,11 @@ import { Errored } from '../../util/loadable';
 import { getErrorMessage } from '../../util/getErrorMessage';
 
 export class ErrorTreeItem extends vscode.TreeItem {
-    constructor(label: string, errored?: Errored) {
+    constructor(
+        label: string,
+        errored?: Errored,
+        contextValues: string[] = [],
+    ) {
         super(label, vscode.TreeItemCollapsibleState.None);
         if (errored) {
             const message = getErrorMessage(errored.error);
@@ -17,6 +21,6 @@ export class ErrorTreeItem extends vscode.TreeItem {
         if (errored?.loading) {
             this.iconPath = new vscode.ThemeIcon('loading~spin');
         }
-        this.contextValue = 'OpenableError';
+        this.contextValue = ['OpenableError', ...contextValues].join(' ');
     }
 }

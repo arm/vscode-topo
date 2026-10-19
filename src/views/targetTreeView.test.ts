@@ -4,7 +4,7 @@ import { TargetSelectionState, TargetTreeView } from './targetTreeView';
 import { TargetDescription } from '../services/topoCliSchema';
 import type { TargetHealth } from '../util/healthReport';
 import { TargetModel } from '../models/targetModel';
-import { TargetDataIssueTreeItem } from './treeItems/targetDataIssueTreeItem';
+import { ErrorTreeItem } from './treeItems/errorTreeItem';
 import { errored, loaded, loading, unloaded } from '../util/loadable';
 
 describe('TargetTreeView', () => {
@@ -348,7 +348,11 @@ describe('TargetTreeView', () => {
             const rootChildren = view.getChildren();
 
             expect(rootChildren).toStrictEqual([
-                new TargetDataIssueTreeItem(targets),
+                new ErrorTreeItem(
+                    'The target data could not be loaded',
+                    targets,
+                    ['DataIssueError'],
+                ),
             ]);
         });
     });

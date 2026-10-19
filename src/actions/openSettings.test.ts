@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { OpenSettings, openSettings } from './openSettings';
+import { OpenSettings } from './openSettings';
 
 describe('OpenSettings', () => {
     it('opens the Topo extension settings from the command handler', async () => {
@@ -13,12 +13,14 @@ describe('OpenSettings', () => {
         );
     });
 
-    it('opens the Topo extension settings', async () => {
-        await openSettings();
+    it('opens only the container engine setting', async () => {
+        const action = new OpenSettings();
+
+        await action.openContainerEngineSettingsCommandHandler();
 
         expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
             'workbench.action.openSettings',
-            '@ext:arm.topo',
+            '@id:topo.containerEngine',
         );
     });
 });

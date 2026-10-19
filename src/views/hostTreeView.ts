@@ -33,7 +33,9 @@ function getContainerEngineItem(
         case 'loaded':
             return new ContainerEngineTreeItem(containerEngine.data);
         case 'errored':
-            return new ErrorTreeItem('Container Engine', containerEngine);
+            return new ErrorTreeItem('Container Engine', containerEngine, [
+                'ContainerEngine',
+            ]);
         case 'unloaded':
             return new LoadingTreeItem('Container Engine');
     }
