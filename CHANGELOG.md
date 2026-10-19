@@ -11,6 +11,26 @@ All notable changes to the "vscode-topo" extension will be documented in this fi
 
 
 
+
+## 0.22.0
+
+<!-- Release notes generated using configuration in .github/release.yml at 610c792545c896df94c3074c936869682a4eb5e4 -->
+
+## What's Changed
+### Features and Enhancements
+* feat: show health capabilities (#450)
+* feat: support TOPO_ENGINE for container actions (#463)
+* feat: display the default container engine in the host tree (#464)
+* feat: configure the default container engine in settings (#466)
+* feat: open engine settings from the host tree (#477)
+### Fixes
+* fix: ignore out of date topo CLI (#453)
+* fix: ignore stale host health refresh results (#476)
+
+
+**Full Changelog**: https://github.com/arm/vscode-topo/compare/v0.21.0...v0.22.0
+
+
 ## 0.21.0
 
 <!-- Release notes generated using configuration in .github/release.yml at 208bc540c330e96b81399bd79bceefc6ca2777ef -->
