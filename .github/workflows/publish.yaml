@@ -15,6 +15,10 @@ env:
 permissions:
     contents: read
 
+concurrency:
+    group: publish
+    cancel-in-progress: false
+
 jobs:
     ci:
         uses: ./.github/workflows/ci.yaml
@@ -25,9 +29,16 @@ jobs:
         runs-on: ubuntu-latest
         outputs:
             version: ${{ steps.calculate-version.outputs.version }}
+            release_commit: ${{ steps.commit-version.outputs.release_commit }}
         steps:
+            - name: Require a branch
+              if: github.ref_type != 'branch'
+              run: |
+                  echo '::error::Run Publish from a branch.'
+                  exit 1
             - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
               with:
+                  ref: ${{ github.sha }}
                   fetch-depth: 0
                   persist-credentials: false
             - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
@@ -90,21 +101,27 @@ jobs:
                   name: release-notes
                   path: ./release-notes.md
                   if-no-files-found: error
-            - name: Create version bump patch
+                  overwrite: true
+            - name: Commit and push release version
+              id: commit-version
               if: steps.calculate-version.outputs.version
-              run: git diff > new-version.patch
-            - name: Store version bump patch
-              if: steps.calculate-version.outputs.version
-              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
-              with:
-                  name: new-version-patch
-                  path: ./new-version.patch
-                  if-no-files-found: error
+              env:
+                  VERSION: ${{ steps.calculate-version.outputs.version }}
+                  GH_TOKEN: ${{ steps.get-app-token.outputs.token }}
+              run: |
+                  set -euo pipefail
+                  git config user.email "135710658+extensions-repo-access[bot]@users.noreply.github.com"
+                  git config user.name "extensions-repo-access[bot]"
+                  git add package.json package-lock.json CHANGELOG.md
+                  git commit -m "chore: $VERSION release"
+                  gh auth setup-git
+                  git push origin "HEAD:$GITHUB_REF"
+                  echo "release_commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
     build:
         name: Build ${{ matrix.platform }}
-        needs:
-            - ci
-            - prepare-version
+        needs: prepare-version
+        if: needs.prepare-version.outputs.release_commit
         runs-on: ubuntu-latest
         strategy:
             matrix:
@@ -116,20 +133,12 @@ jobs:
         steps:
             - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
               with:
+                  ref: ${{ needs.prepare-version.outputs.release_commit }}
                   persist-credentials: false
             - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
               with:
                   node-version: ${{ env.NODE_VERSION }}
                   cache: npm
-            - name: Download version bump patch
-              if: needs.prepare-version.outputs.version
-              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
-              with:
-                  name: new-version-patch
-                  path: ~/patches
-            - name: Apply version bump patch
-              if: needs.prepare-version.outputs.version
-              run: git apply ~/patches/new-version.patch
             - name: Install NPM dependencies
               run: npm ci --ignore-scripts --prefer-offline --no-audit --fund=false
             - name: Download other dependencies
@@ -146,51 +155,11 @@ jobs:
                   retention-days: 1
                   if-no-files-found: error
 
-    push-new-version:
-        name: Push New Version
-        needs:
-            - prepare-version
-            - build
-        if: needs.prepare-version.outputs.version
-        runs-on: ubuntu-latest
-        outputs:
-            release_commit: ${{ steps.commit-version.outputs.release_commit }}
-        steps:
-            - id: get-app-token
-              uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
-              with:
-                  client-id: ${{ secrets.TOPO_ACCESS_APP_ID }}
-                  private-key: ${{ secrets.TOPO_ACCESS_APP_PRIVATE_KEY }}
-                  permission-contents: write
-            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-              with:
-                  token: ${{ steps.get-app-token.outputs.token }}
-            - name: Download version bump patch
-              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
-              with:
-                  name: new-version-patch
-                  path: ~/patches
-            - name: Apply version bump patch
-              run: git apply ~/patches/new-version.patch
-            - name: Set git config for Extensions Repo bot
-              run: |
-                  git config --global user.email "135710658+extensions-repo-access[bot]@users.noreply.github.com"
-                  git config --global user.name "extensions-repo-access[bot]"
-            - name: Commit new version
-              id: commit-version
-              run: |
-                  git commit -a -m "chore: ${{ needs.prepare-version.outputs.version }} release"
-                  COMMIT=$(git rev-parse HEAD)
-                  echo "release_commit=$COMMIT" >> "$GITHUB_OUTPUT"
-            - name: Push changes
-              run: git push origin HEAD:${{ github.ref_name }}
-
     release:
         name: Release
         needs:
             - prepare-version
             - build
-            - push-new-version
         if: needs.prepare-version.outputs.version
         runs-on: ubuntu-latest
         permissions:
@@ -210,7 +179,7 @@ jobs:
                   files: artifacts/*/*.vsix
                   body_path: release-notes/release-notes.md
                   tag_name: v${{ needs.prepare-version.outputs.version }}
-                  target_commitish: ${{ needs.push-new-version.outputs.release_commit }}
+                  target_commitish: ${{ needs.prepare-version.outputs.release_commit }}
                   prerelease: ${{ inputs.pre-release }}
 
     publish:
@@ -223,6 +192,7 @@ jobs:
         steps:
             - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
               with:
+                  ref: ${{ needs.prepare-version.outputs.release_commit }}
                   persist-credentials: false
             - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
               with:
