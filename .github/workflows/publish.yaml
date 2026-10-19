@@ -178,6 +178,19 @@ jobs:
                       "$CDXGEN_IMAGE" \
                       --metadata-property "arm:sbom-disclaimer=$SBOM_DISCLAIMER" \
                       -r /app -o /app/vscode-topo-sbom-source.json
+            - name: Add bundled Topo CLI to SBOM
+              run: |
+                  jq --slurpfile manifest package.json '
+                      .metadata.component["bom-ref"] as $extension
+                      | .components += [{
+                          type: "application",
+                          "bom-ref": "topo-cli",
+                          name: "Topo",
+                          version: $manifest[0].topo.version
+                      }]
+                      | (.dependencies[] | select(.ref == $extension) | .dependsOn) += ["topo-cli"]
+                  ' vscode-topo-sbom-source.json > vscode-topo-sbom-source.json.tmp
+                  mv vscode-topo-sbom-source.json.tmp vscode-topo-sbom-source.json
             - name: Upload source SBOM
               uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
               with:
