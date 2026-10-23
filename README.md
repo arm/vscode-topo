@@ -92,13 +92,14 @@ Use the inline **Fix** button on a fixable health issue to run the executable fi
 
 Use the inline buttons on a service in the Projects tree to manage individual containers:
 
-| Command                  | Description                                                          |
-| ------------------------ | -------------------------------------------------------------------- |
-| **Start**                | Start a stopped container.                                           |
-| **Stop**                 | Stop a running container.                                            |
-| **Delete**               | Remove a container.                                                  |
-| **Open Container Shell** | Open a VS Code terminal connected to a running Linux Host container. |
-| **Open in Browser**      | Open a running container's web endpoint in your browser.             |
+| Command                  | Description                                                                                                     |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------- |
+| **Start**                | Start a stopped container.                                                                                      |
+| **Stop**                 | Stop a running container.                                                                                       |
+| **Delete**               | Remove a container.                                                                                             |
+| **Open Container Shell** | Open a VS Code terminal connected to a running Linux Host container.                                            |
+| **Open Container Logs**  | Show a container's Docker or Podman logs in a terminal and follow new output. Works for stopped containers too. |
+| **Open in Browser**      | Open a running container's web endpoint in your browser.                                                        |
 
 ## Configure, Deploy, and Stop
 

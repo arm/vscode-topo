@@ -7,6 +7,7 @@ import { TargetStatusBarItemView } from './views/targetStatusBarItemView';
 import { TargetTreeView } from './views/targetTreeView';
 import { ContainerLifecycle } from './actions/containerLifecycle';
 import { OpenContainerShell } from './actions/openContainerShell';
+import { OpenContainerLogs } from './actions/openContainerLogs';
 import { DockerCommands } from './services/dockerCommands';
 import { PodmanCommands } from './services/podmanCommands';
 import { ContainerEngineCommands } from './services/containerEngineCommands';
@@ -178,6 +179,10 @@ async function activateExtension(
     const deploy = new Deploy(targetModel, config, taskFactory);
     const stop = new Stop(targetModel, taskFactory);
     const openContainerShell = new OpenContainerShell(containerCommands);
+    const openContainerLogs = new OpenContainerLogs(
+        containerCommands,
+        taskFactory,
+    );
     const connectViaSSH = new ConnectViaSSH(targetModel);
     const openContainerInBrowser = new OpenContainerInBrowser();
     const containerLifecycle = new ContainerLifecycle(containerCommands);
@@ -196,6 +201,7 @@ async function activateExtension(
             deploy,
             stop,
             openContainerShell,
+            openContainerLogs,
             connectViaSSH,
             openContainerInBrowser,
             containerLifecycle,

@@ -123,6 +123,12 @@
                 "category": "Topo"
             },
             {
+                "command": "topo.openContainerLogs",
+                "title": "Open Container Logs",
+                "icon": "$(output)",
+                "category": "Topo"
+            },
+            {
                 "command": "topo.connectViaSSH",
                 "title": "Connect via SSH",
                 "icon": "$(terminal)",
@@ -381,6 +387,10 @@
                     "when": "false"
                 },
                 {
+                    "command": "topo.openContainerLogs",
+                    "when": "false"
+                },
+                {
                     "command": "topo.connectViaSSH",
                     "when": "false"
                 },
@@ -474,6 +484,11 @@
                     "command": "topo.openContainerInBrowser",
                     "when": "view === topo.projects && viewItem =~ /service/ && viewItem =~ /running/ && viewItem =~ /browser/",
                     "group": "inline@2"
+                },
+                {
+                    "command": "topo.openContainerLogs",
+                    "when": "view === topo.projects && viewItem =~ /service/",
+                    "group": "inline@3"
                 },
                 {
                     "command": "topo.startContainer",

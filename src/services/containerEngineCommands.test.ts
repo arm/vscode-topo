@@ -36,4 +36,24 @@ describe('ContainerEngineCommands', () => {
             'exec',
         ]);
     });
+
+    it('switches log commands when the engine setting changes', () => {
+        config.getContainerEngineSetting.mockReturnValue('docker');
+        docker.getLogsCommand.mockReturnValue(['docker', 'logs']);
+        podman.getLogsCommand.mockReturnValue(['podman', 'logs']);
+
+        expect(commands.getLogsCommand('cid', 'target')).toEqual([
+            'docker',
+            'logs',
+        ]);
+        expect(docker.getLogsCommand).toHaveBeenCalledWith('cid', 'target');
+
+        config.getContainerEngineSetting.mockReturnValue('podman');
+
+        expect(commands.getLogsCommand('cid', 'target')).toEqual([
+            'podman',
+            'logs',
+        ]);
+        expect(podman.getLogsCommand).toHaveBeenCalledWith('cid', 'target');
+    });
 });

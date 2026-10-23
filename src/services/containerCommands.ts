@@ -15,4 +15,5 @@ export interface ContainerCommands {
         containerId: string,
         targetSshConnection: string,
     ): string[];
+    getLogsCommand(containerId: string, targetSshConnection: string): string[];
 }

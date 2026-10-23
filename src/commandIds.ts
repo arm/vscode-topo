@@ -29,6 +29,7 @@ export const configureProject = command('configureProject');
 export const stop = command('stop.context');
 export const stopProject = command('stopProject');
 export const openContainerShell = command('openContainerShell');
+export const openContainerLogs = command('openContainerLogs');
 export const connectViaSSH = command('connectViaSSH');
 export const openContainerInBrowser = command('openContainerInBrowser');
 export const startContainer = command('startContainer');
