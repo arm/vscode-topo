@@ -33,19 +33,20 @@ describe('TopoCli', () => {
         clear: vi.fn(),
     } as unknown as vscode.EnvironmentVariableCollection;
     let topoCli: TopoCli;
-    let origPlatform: string;
-    let origEnv: NodeJS.ProcessEnv;
     const config = mock<Config>();
 
     beforeAll(() => {
-        origPlatform = process.platform;
-        origEnv = process.env;
+        const origPlatform = process.platform;
+        const origEnv = process.env;
         Object.defineProperty(process, 'platform', { value: 'linux' });
         process.env = {};
-    });
-    afterAll(() => {
-        Object.defineProperty(process, 'platform', { value: origPlatform });
-        process.env = origEnv;
+
+        return () => {
+            Object.defineProperty(process, 'platform', {
+                value: origPlatform,
+            });
+            process.env = origEnv;
+        };
     });
 
     beforeEach(() => {
@@ -507,16 +508,15 @@ describe('TopoCli', () => {
             'resources',
             manifest.TOPO_CLI_WINDOWS,
         );
-        let origPlatform: string;
-
         beforeAll(() => {
-            origPlatform = process.platform;
+            const origPlatform = process.platform;
             Object.defineProperty(process, 'platform', { value: 'win32' });
-        });
-        afterAll(() => {
-            Object.defineProperty(process, 'platform', {
-                value: origPlatform,
-            });
+
+            return () => {
+                Object.defineProperty(process, 'platform', {
+                    value: origPlatform,
+                });
+            };
         });
 
         it('always returns the .exe variant on win32', () => {
