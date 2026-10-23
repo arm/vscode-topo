@@ -76,6 +76,28 @@ describe('PodmanCommands', () => {
         });
     });
 
+    it('follows local container logs', () => {
+        expect(commands.getLogsCommand('cid', 'localhost')).toEqual([
+            'podman',
+            'logs',
+            '--follow',
+            '--',
+            'cid',
+        ]);
+    });
+
+    it('follows remote logs without allocating a TTY', () => {
+        expect(commands.getLogsCommand('cid', 'user@board:2222')).toEqual([
+            'ssh',
+            '-T',
+            '-o',
+            'BatchMode=yes',
+            '--',
+            'ssh://user@board:2222',
+            "/bin/sh -c 'exec \"${SHELL:-/bin/sh}\" -l -c \"$1\"' sh ''\\''podman'\\'' '\\''logs'\\'' '\\''--follow'\\'' '\\''--'\\'' '\\''cid'\\'''",
+        ]);
+    });
+
     it('reports a missing executable even without stderr', async () => {
         vi.mocked(execFile).mockRejectedValueOnce(
             new Error('spawn podman ENOENT'),

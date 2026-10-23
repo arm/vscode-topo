@@ -49,6 +49,16 @@ export class ContainerEngineCommands implements ContainerCommands {
         );
     }
 
+    public getLogsCommand(
+        containerId: string,
+        targetSshConnection: string,
+    ): string[] {
+        return this.getCommands().getLogsCommand(
+            containerId,
+            targetSshConnection,
+        );
+    }
+
     private getCommands(): ContainerCommands {
         const engine = resolveContainerEngine(
             this.config.getContainerEngineSetting(),
