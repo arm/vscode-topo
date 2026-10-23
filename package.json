@@ -646,7 +646,7 @@
         "vite": "^8.3.5",
         "vitest": "^5.0.3",
         "vitest-mock-extended": "^5.1.1",
-        "vscode-uri": "^3.1.0",
+        "vscode-uri": "^3.2.0",
         "yargs": "^18.2.0"
     },
     "dependencies": {
