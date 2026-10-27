@@ -241,6 +241,11 @@ const TaskRevealKind = {
     Silent: 2,
     Never: 3,
 };
+const TaskPanelKind = {
+    Shared: 1,
+    Dedicated: 2,
+    New: 3,
+};
 const ConfigurationTarget = {
     Global: 1,
     Workspace: 2,
@@ -343,6 +348,7 @@ module.exports = {
     window,
     workspace,
     TaskRevealKind,
+    TaskPanelKind,
     ConfigurationTarget,
     TreeItem,
     TreeItemCollapsibleState,

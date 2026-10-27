@@ -10,6 +10,7 @@ import { TargetController } from './controllers/targetController';
 import { Deploy } from './actions/deploy';
 import { Stop } from './actions/stop';
 import { OpenContainerShell } from './actions/openContainerShell';
+import { OpenContainerLogs } from './actions/openContainerLogs';
 import { ContainerLifecycle } from './actions/containerLifecycle';
 import { FixIssue } from './actions/fixIssue';
 import { ProjectClone } from './actions/projectClone';
@@ -34,6 +35,7 @@ describe('commands', () => {
         deploy: mock<Deploy>(),
         stop: mock<Stop>(),
         openContainerShell: mock<OpenContainerShell>(),
+        openContainerLogs: mock<OpenContainerLogs>(),
         connectViaSSH: mock<ConnectViaSSH>(),
         openContainerInBrowser: mock<OpenContainerInBrowser>(),
         containerLifecycle: mock<ContainerLifecycle>(),
@@ -129,6 +131,10 @@ describe('commands', () => {
             [
                 commandIds.openContainerShell,
                 handlers.openContainerShell.openContainerShellCommandHandler,
+            ],
+            [
+                commandIds.openContainerLogs,
+                handlers.openContainerLogs.openContainerLogsCommandHandler,
             ],
             [
                 commandIds.connectViaSSH,
