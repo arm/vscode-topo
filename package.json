@@ -129,6 +129,13 @@
                 "category": "Topo"
             },
             {
+                "command": "topo.openProjectLogs",
+                "title": "Open Project Logs",
+                "icon": "$(output)",
+                "enablement": "viewItem =~ /HasContainers/",
+                "category": "Topo"
+            },
+            {
                 "command": "topo.connectViaSSH",
                 "title": "Connect via SSH",
                 "icon": "$(terminal)",
@@ -391,6 +398,10 @@
                     "when": "false"
                 },
                 {
+                    "command": "topo.openProjectLogs",
+                    "when": "false"
+                },
+                {
                     "command": "topo.connectViaSSH",
                     "when": "false"
                 },
@@ -519,6 +530,11 @@
                     "command": "topo.stopProject",
                     "when": "view === topo.projects && viewItem =~ /Project/",
                     "group": "inline@3"
+                },
+                {
+                    "command": "topo.openProjectLogs",
+                    "when": "view === topo.projects && viewItem =~ /Project/",
+                    "group": "inline@4"
                 }
             ],
             "view/title": [

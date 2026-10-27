@@ -45,6 +45,7 @@ describe('ProjectTreeItem', () => {
         ];
         const item = new ProjectTreeItem(project, false, loaded(containers));
 
+        expect(item.contextValue).toBe('Project HasContainers');
         const domains = item.getChildren() as ProcessingDomainTreeItem[];
         expect(domains).toMatchObject([
             { label: PRIMARY_PROCESSING_DOMAIN },
@@ -70,6 +71,7 @@ describe('ProjectTreeItem', () => {
     it('returns no children when containers are unloaded', () => {
         const item = new ProjectTreeItem(project, false, unloaded());
 
+        expect(item.contextValue).toBe('Project');
         expect(item.getChildren()).toEqual([]);
     });
 });

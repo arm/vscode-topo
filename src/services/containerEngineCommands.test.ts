@@ -37,23 +37,22 @@ describe('ContainerEngineCommands', () => {
         ]);
     });
 
-    it('switches log commands when the engine setting changes', () => {
-        config.getContainerEngineSetting.mockReturnValue('docker');
-        docker.getLogsCommand.mockReturnValue(['docker', 'logs']);
-        podman.getLogsCommand.mockReturnValue(['podman', 'logs']);
-
-        expect(commands.getLogsCommand('cid', 'target')).toEqual([
-            'docker',
-            'logs',
-        ]);
-        expect(docker.getLogsCommand).toHaveBeenCalledWith('cid', 'target');
-
+    it('forwards container and project logs to the selected engine', async () => {
+        const containerIds = ['cid', 'cid2'];
+        const command = ['podman', 'logs'];
         config.getContainerEngineSetting.mockReturnValue('podman');
+        podman.getLogsCommand.mockReturnValue(command);
+        podman.getProjectLogsCommand.mockResolvedValue(command);
 
-        expect(commands.getLogsCommand('cid', 'target')).toEqual([
-            'podman',
-            'logs',
-        ]);
+        expect(commands.getLogsCommand('cid', 'target')).toEqual(command);
         expect(podman.getLogsCommand).toHaveBeenCalledWith('cid', 'target');
+
+        expect(
+            await commands.getProjectLogsCommand(containerIds, 'target'),
+        ).toEqual(command);
+        expect(podman.getProjectLogsCommand).toHaveBeenCalledWith(
+            containerIds,
+            'target',
+        );
     });
 });

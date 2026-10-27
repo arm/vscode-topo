@@ -150,6 +150,54 @@ describe('DockerCommands', () => {
             ]);
         });
     });
+
+    describe('getProjectLogsCommand', () => {
+        it.each([
+            {
+                target: 'user@host:2222',
+                hostArgs: ['--host', 'ssh://user@host:2222'],
+            },
+            { target: 'localhost', hostArgs: [] },
+        ])(
+            'uses the deployed Compose project label to follow service logs on $target',
+            async ({ target, hostArgs }) => {
+                execFileMock.mockResolvedValue({
+                    stdout: 'custom-project\n',
+                    stderr: '',
+                });
+
+                const command = await dockerCommands.getProjectLogsCommand(
+                    ['web-id', 'worker-id'],
+                    target,
+                );
+
+                expect(execFileMock).toHaveBeenCalledExactlyOnceWith('docker', [
+                    ...hostArgs,
+                    'inspect',
+                    '--type',
+                    'container',
+                    '--format',
+                    '{{ index .Config.Labels "com.docker.compose.project" }}',
+                    'web-id',
+                ]);
+                expect(command).toEqual([
+                    'docker',
+                    ...hostArgs,
+                    'compose',
+                    '--project-name',
+                    'custom-project',
+                    'logs',
+                    '--follow',
+                ]);
+            },
+        );
+
+        it('rejects containers without a Compose project label', async () => {
+            await expect(
+                dockerCommands.getProjectLogsCommand(['web-id'], 'target'),
+            ).rejects.toThrow('Container web-id has no Compose project label');
+        });
+    });
 });
 
 describe('parseDockerStderr', () => {
