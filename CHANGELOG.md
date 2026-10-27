@@ -12,6 +12,19 @@ All notable changes to the "vscode-topo" extension will be documented in this fi
 
 
 
+
+## 0.23.0
+
+<!-- Release notes generated using configuration in .github/release.yml at fbcf5ebfe6930d8ddb0801cdd152b21832e8fd1c -->
+
+## What's Changed
+### Features and Enhancements
+* feat: add button to show container logs (#486)
+
+
+**Full Changelog**: https://github.com/arm/vscode-topo/compare/v0.22.0...v0.23.0
+
+
 ## 0.22.0
 
 <!-- Release notes generated using configuration in .github/release.yml at 610c792545c896df94c3074c936869682a4eb5e4 -->
