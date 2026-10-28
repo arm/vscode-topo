@@ -29,7 +29,6 @@ jobs:
         runs-on: ubuntu-latest
         outputs:
             version: ${{ steps.calculate-version.outputs.version }}
-            release_commit: ${{ steps.commit-version.outputs.release_commit }}
         steps:
             - name: Require a branch
               if: github.ref_type != 'branch'
@@ -102,26 +101,22 @@ jobs:
                   path: ./release-notes.md
                   if-no-files-found: error
                   overwrite: true
-            - name: Commit and push release version
-              id: commit-version
+            - name: Store prepared version files
               if: steps.calculate-version.outputs.version
-              env:
-                  VERSION: ${{ steps.calculate-version.outputs.version }}
-                  GH_TOKEN: ${{ steps.get-app-token.outputs.token }}
-              run: |
-                  set -euo pipefail
-                  git config user.email "135710658+extensions-repo-access[bot]@users.noreply.github.com"
-                  git config user.name "extensions-repo-access[bot]"
-                  git add package.json package-lock.json CHANGELOG.md
-                  git commit -m "chore: $VERSION release"
-                  gh auth setup-git
-                  git push origin "HEAD:$GITHUB_REF"
-                  echo "release_commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+              with:
+                  name: prepared-version
+                  path: |
+                      package.json
+                      package-lock.json
+                      CHANGELOG.md
+                  if-no-files-found: error
+                  overwrite: true
 
     build:
         name: Build ${{ matrix.platform }}
         needs: prepare-version
-        if: needs.prepare-version.outputs.release_commit
+        if: needs.prepare-version.outputs.version
         runs-on: ubuntu-latest
         strategy:
             matrix:
@@ -133,8 +128,12 @@ jobs:
         steps:
             - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
               with:
-                  ref: ${{ needs.prepare-version.outputs.release_commit }}
+                  ref: ${{ github.sha }}
                   persist-credentials: false
+            - name: Download prepared version files
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: prepared-version
             - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
               with:
                   node-version: ${{ env.NODE_VERSION }}
@@ -158,13 +157,17 @@ jobs:
     sbom-source:
         name: Generate source SBOM
         needs: prepare-version
-        if: needs.prepare-version.outputs.release_commit
+        if: needs.prepare-version.outputs.version
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
               with:
-                  ref: ${{ needs.prepare-version.outputs.release_commit }}
+                  ref: ${{ github.sha }}
                   persist-credentials: false
+            - name: Download prepared version files
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: prepared-version
             - name: Generate CycloneDX SBOM with cdxgen
               env:
                   CDXGEN_IMAGE: ghcr.io/cdxgen/cdxgen@sha256:c1c933ce31df8b3978566b4dc8369ce3ac049a802aa90cb8f02a29be4820c798 # v13.4.0
@@ -199,12 +202,56 @@ jobs:
                   path: vscode-topo-sbom-source.json
                   if-no-files-found: error
 
-    release:
-        name: Release
+    commit-version:
+        name: Commit release version
         needs:
             - prepare-version
             - build
             - sbom-source
+        if: needs.prepare-version.outputs.version
+        runs-on: ubuntu-latest
+        outputs:
+            release_commit: ${{ steps.commit-version.outputs.release_commit }}
+        steps:
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  ref: ${{ github.sha }}
+                  persist-credentials: false
+            - name: Download prepared version files
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: prepared-version
+            - id: get-app-token
+              uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+              with:
+                  client-id: ${{ secrets.TOPO_ACCESS_APP_ID }}
+                  private-key: ${{ secrets.TOPO_ACCESS_APP_PRIVATE_KEY }}
+                  permission-contents: write
+            - name: Commit and push release version
+              id: commit-version
+              env:
+                  VERSION: ${{ needs.prepare-version.outputs.version }}
+                  GH_TOKEN: ${{ steps.get-app-token.outputs.token }}
+              run: |
+                  set -euo pipefail
+                  gh auth setup-git
+                  git fetch origin "$GITHUB_REF"
+                  if [ "$(git rev-parse FETCH_HEAD)" != "$GITHUB_SHA" ]; then
+                      echo '::error::Release branch changed. Start a new workflow run.'
+                      exit 1
+                  fi
+                  git config user.email "135710658+extensions-repo-access[bot]@users.noreply.github.com"
+                  git config user.name "extensions-repo-access[bot]"
+                  git add package.json package-lock.json CHANGELOG.md
+                  git commit -m "chore: $VERSION release"
+                  git push origin "HEAD:$GITHUB_REF"
+                  echo "release_commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+    release:
+        name: Release
+        needs:
+            - prepare-version
+            - commit-version
         if: needs.prepare-version.outputs.version
         runs-on: ubuntu-latest
         permissions:
@@ -227,20 +274,21 @@ jobs:
                   fail_on_unmatched_files: true
                   body_path: release-notes/release-notes.md
                   tag_name: v${{ needs.prepare-version.outputs.version }}
-                  target_commitish: ${{ needs.prepare-version.outputs.release_commit }}
+                  target_commitish: ${{ needs.commit-version.outputs.release_commit }}
                   prerelease: ${{ inputs.pre-release }}
 
     publish:
         name: Publish
         needs:
             - prepare-version
+            - commit-version
             - release
         if: needs.prepare-version.outputs.version
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
               with:
-                  ref: ${{ needs.prepare-version.outputs.release_commit }}
+                  ref: ${{ needs.commit-version.outputs.release_commit }}
                   persist-credentials: false
             - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
               with:
