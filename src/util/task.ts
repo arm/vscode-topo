@@ -2,10 +2,6 @@ import * as vscode from 'vscode';
 import { PACKAGE_NAME } from '../manifest';
 
 export function shellQuote(value: string): vscode.ShellQuotedString {
-    // VS Code adds the surrounding quotes but does not escape embedded quotes.
-    if (process.platform !== 'win32') {
-        value = value.replaceAll("'", "'\\''");
-    }
     return { value, quoting: vscode.ShellQuoting.Strong };
 }
 

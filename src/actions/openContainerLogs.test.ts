@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { mock } from 'vitest-mock-extended';
 import { OpenContainerLogs } from './openContainerLogs';
 import { DockerCommands } from '../services/dockerCommands';
+import type { ContainerCommands } from '../services/containerCommands';
 import { TopoCli } from '../services/topoCli';
 import { TaskFactory } from '../tasks/taskFactory';
 import { ContainerItem } from '../util/types';
@@ -59,4 +60,31 @@ describe('OpenContainerLogs', () => {
             }),
         );
     });
+
+    it.skipIf(process.platform === 'win32')(
+        'escapes embedded quotes in generated log tasks',
+        async () => {
+            const commands = mock<ContainerCommands>();
+            commands.getLogsCommand.mockReturnValue([
+                'ssh',
+                'target',
+                "podman logs 'abc123'",
+            ]);
+            const logAction = new OpenContainerLogs(
+                commands,
+                new TaskFactory(mock<TopoCli>()),
+            );
+
+            await logAction.openContainerLogsCommandHandler(
+                new ContainerTreeItem(container),
+            );
+
+            const task = vi.mocked(vscode.tasks.executeTask).mock.calls[0][0];
+            const execution = task.execution as vscode.ShellExecution;
+            expect(execution.args?.at(-1)).toEqual({
+                value: "podman logs '\\''abc123'\\''",
+                quoting: vscode.ShellQuoting.Strong,
+            });
+        },
+    );
 });
