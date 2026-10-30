@@ -14,9 +14,17 @@ export class OpenContainerLogs {
     ): Promise<void> {
         assertContainerTreeItem(treeNode);
         const item = treeNode.containerItem;
+        const command = this.containerCommands.getLogsCommand(
+            item.id,
+            item.target,
+        );
+        const shellCommand =
+            process.platform === 'win32'
+                ? command
+                : command.map((argument) => argument.replaceAll("'", "'\\''"));
         const task = this.taskFactory.createShellTask(
             `Logs: ${item.names || item.id} (${item.target})`,
-            this.containerCommands.getLogsCommand(item.id, item.target),
+            shellCommand,
         );
         // Keep completed logs visible, including those from stopped containers.
         task.presentationOptions = {
