@@ -1,10 +1,12 @@
 import path from 'node:path';
 import * as vscode from 'vscode';
 import { ProjectTreeItem } from '../../views/treeItems/projectTreeItem';
-import { unloaded } from '../loadable';
+import { unloaded, type Loadable } from '../loadable';
+import type { ContainerItem } from '../types';
 
 export function createProjectTreeItem(
     composeFileUri: vscode.Uri,
+    containers: Loadable<ContainerItem[]> = unloaded(),
 ): ProjectTreeItem {
     return new ProjectTreeItem(
         {
@@ -15,6 +17,6 @@ export function createProjectTreeItem(
             workspaceName: 'workspace',
         },
         false,
-        unloaded(),
+        containers,
     );
 }

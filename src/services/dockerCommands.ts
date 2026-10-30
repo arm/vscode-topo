@@ -1,5 +1,6 @@
 import { WrappedError, WrappedErrorLog } from '../errors/wrappedError';
 import { execFile, ExecFileResult } from '../util/exec';
+import { isPlainLocalhost } from '../util/isPlainLocalhost';
 import { logger } from '../util/logger';
 import type { ContainerCommands } from './containerCommands';
 
@@ -135,6 +136,43 @@ export class DockerCommands implements ContainerCommands {
             '--follow',
             '--',
             containerId,
+        ];
+    }
+
+    public async getProjectLogsCommand(
+        containerIds: readonly string[],
+        targetSshConnection: string,
+    ): Promise<string[]> {
+        const hostArgs = isPlainLocalhost(targetSshConnection)
+            ? []
+            : ['--host', getSshUri(targetSshConnection)];
+        // Use the deployed project name, which can differ from the directory name.
+        const projectName = await runDockerCmd(
+            [
+                ...hostArgs,
+                'inspect',
+                '--type',
+                'container',
+                '--format',
+                '{{ index .Config.Labels "com.docker.compose.project" }}',
+                containerIds[0],
+            ],
+            'Warnings emitted when reading the Compose project name',
+        );
+        if (!projectName) {
+            throw new Error(
+                `Container ${containerIds[0]} has no Compose project label`,
+            );
+        }
+
+        return [
+            'docker',
+            ...hostArgs,
+            'compose',
+            '--project-name',
+            projectName,
+            'logs',
+            '--follow',
         ];
     }
 }

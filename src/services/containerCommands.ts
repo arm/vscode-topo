@@ -16,4 +16,8 @@ export interface ContainerCommands {
         targetSshConnection: string,
     ): string[];
     getLogsCommand(containerId: string, targetSshConnection: string): string[];
+    getProjectLogsCommand(
+        containerIds: readonly string[],
+        targetSshConnection: string,
+    ): Promise<string[]>;
 }

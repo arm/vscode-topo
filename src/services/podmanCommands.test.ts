@@ -86,6 +86,23 @@ describe('PodmanCommands', () => {
         ]);
     });
 
+    it('follows multiple containers in one command with container names', async () => {
+        expect(
+            await commands.getProjectLogsCommand(
+                ['web-id', 'worker-id'],
+                'localhost',
+            ),
+        ).toEqual([
+            'podman',
+            'logs',
+            '--follow',
+            '--names',
+            '--',
+            'web-id',
+            'worker-id',
+        ]);
+    });
+
     it('follows remote logs without allocating a TTY', () => {
         expect(commands.getLogsCommand('cid', 'user@board:2222')).toEqual([
             'ssh',

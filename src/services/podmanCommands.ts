@@ -2,6 +2,7 @@ import { WrappedError } from '../errors/wrappedError';
 import { assertValidSshDestination } from '../util/assertValidSshDestination';
 import { execFile } from '../util/exec';
 import { getErrorMessage } from '../util/getErrorMessage';
+import { isPlainLocalhost } from '../util/isPlainLocalhost';
 import { logger } from '../util/logger';
 import type { ContainerCommands } from './containerCommands';
 
@@ -15,8 +16,7 @@ function getCommand(
     interactive = false,
 ): string[] {
     assertValidSshDestination(target);
-    // Match Topo's plain-localhost handling; a user or port requires SSH.
-    if (target.toLowerCase() === 'localhost' || target === '127.0.0.1') {
+    if (isPlainLocalhost(target)) {
         return ['podman', ...args];
     }
 
@@ -112,6 +112,19 @@ export class PodmanCommands implements ContainerCommands {
             '--follow',
             '--',
             containerId,
+        ]);
+    }
+
+    public async getProjectLogsCommand(
+        containerIds: readonly string[],
+        targetSshConnection: string,
+    ): Promise<string[]> {
+        return getCommand(targetSshConnection, [
+            'logs',
+            '--follow',
+            '--names',
+            '--',
+            ...containerIds,
         ]);
     }
 }

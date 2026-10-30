@@ -11,11 +11,11 @@ import { Deploy } from './actions/deploy';
 import { Stop } from './actions/stop';
 import { OpenContainerShell } from './actions/openContainerShell';
 import { OpenContainerLogs } from './actions/openContainerLogs';
+import { OpenProjectLogs } from './actions/openProjectLogs';
 import { ContainerLifecycle } from './actions/containerLifecycle';
 import { FixIssue } from './actions/fixIssue';
 import { ProjectClone } from './actions/projectClone';
-import { ProjectTreeItem } from './views/treeItems/projectTreeItem';
-import { unloaded } from './util/loadable';
+import { createProjectTreeItem } from './util/test/projectTreeItem';
 import { ProjectController } from './controllers/projectController';
 import { ConnectViaSSH } from './actions/connectViaSSH';
 import { OpenContainerInBrowser } from './actions/openContainerInBrowser';
@@ -36,6 +36,7 @@ describe('commands', () => {
         stop: mock<Stop>(),
         openContainerShell: mock<OpenContainerShell>(),
         openContainerLogs: mock<OpenContainerLogs>(),
+        openProjectLogs: mock<OpenProjectLogs>(),
         connectViaSSH: mock<ConnectViaSSH>(),
         openContainerInBrowser: mock<OpenContainerInBrowser>(),
         containerLifecycle: mock<ContainerLifecycle>(),
@@ -137,6 +138,10 @@ describe('commands', () => {
                 handlers.openContainerLogs.openContainerLogsCommandHandler,
             ],
             [
+                commandIds.openProjectLogs,
+                handlers.openProjectLogs.openProjectLogsCommandHandler,
+            ],
+            [
                 commandIds.connectViaSSH,
                 handlers.connectViaSSH.connectViaSSHCommandHandler,
             ],
@@ -212,76 +217,32 @@ describe('commands', () => {
             ).toHaveBeenCalledWith();
         });
 
-        it('configure project calls the project configure handler with the tree node', async () => {
-            const composeFileUri = vscode.Uri.file(
-                '/fake/workspace/demo/compose.yaml',
-            );
-            const projectItem = new ProjectTreeItem(
-                {
-                    name: 'demo',
-                    uri: vscode.Uri.file('/fake/workspace/demo'),
-                    composeFileUri,
-                    workspaceIndex: 0,
-                    workspaceName: 'workspace',
-                },
-                false,
-                unloaded(),
-            );
-            commands.register(handlers);
-
-            await executeCommand(commandIds.configureProject, projectItem);
-
-            expect(
+        it.each([
+            [
+                commandIds.configureProject,
                 handlers.configure.configureProjectCommandHandler,
-            ).toHaveBeenCalledWith(projectItem);
-        });
-
-        it('deploy project calls the project deploy handler with the tree node', async () => {
-            const composeFileUri = vscode.Uri.file(
-                '/fake/workspace/demo/compose.yaml',
-            );
-            const projectItem = new ProjectTreeItem(
-                {
-                    name: 'demo',
-                    uri: vscode.Uri.file('/fake/workspace/demo'),
-                    composeFileUri,
-                    workspaceIndex: 0,
-                    workspaceName: 'workspace',
-                },
-                false,
-                unloaded(),
-            );
-            commands.register(handlers);
-
-            await executeCommand(commandIds.deployProject, projectItem);
-
-            expect(
+            ],
+            [
+                commandIds.deployProject,
                 handlers.deploy.deployProjectCommandHandler,
-            ).toHaveBeenCalledWith(projectItem);
-        });
+            ],
+            [commandIds.stopProject, handlers.stop.stopProjectCommandHandler],
+            [
+                commandIds.openProjectLogs,
+                handlers.openProjectLogs.openProjectLogsCommandHandler,
+            ],
+        ])(
+            '%s passes the project tree node to its handler',
+            async (command, handler) => {
+                const projectItem = createProjectTreeItem(
+                    vscode.Uri.file('/fake/workspace/demo/compose.yaml'),
+                );
+                commands.register(handlers);
 
-        it('stop project calls the project stop handler with the tree node', async () => {
-            const composeFileUri = vscode.Uri.file(
-                '/fake/workspace/demo/compose.yaml',
-            );
-            const projectItem = new ProjectTreeItem(
-                {
-                    name: 'demo',
-                    uri: vscode.Uri.file('/fake/workspace/demo'),
-                    composeFileUri,
-                    workspaceIndex: 0,
-                    workspaceName: 'workspace',
-                },
-                false,
-                unloaded(),
-            );
-            commands.register(handlers);
+                await executeCommand(command, projectItem);
 
-            await executeCommand(commandIds.stopProject, projectItem);
-
-            expect(
-                handlers.stop.stopProjectCommandHandler,
-            ).toHaveBeenCalledWith(projectItem);
-        });
+                expect(handler).toHaveBeenCalledWith(projectItem);
+            },
+        );
     });
 });

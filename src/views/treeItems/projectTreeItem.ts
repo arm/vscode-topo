@@ -43,7 +43,7 @@ export class ProjectTreeItem extends vscode.TreeItem {
     constructor(
         project: ProjectMetadata,
         showWorkspaceName: boolean,
-        private readonly containers: Loadable<ContainerItem[]>,
+        public readonly containers: Loadable<ContainerItem[]>,
     ) {
         super(project.name, getCollapsibleState(containers));
         this.composeFileUri = project.composeFileUri;
@@ -54,7 +54,10 @@ export class ProjectTreeItem extends vscode.TreeItem {
         this.iconPath = containers.loading
             ? new vscode.ThemeIcon('loading~spin')
             : new vscode.ThemeIcon('folder');
-        this.contextValue = 'Project';
+        this.contextValue =
+            containers.status === 'loaded' && containers.data.length > 0
+                ? 'Project HasContainers'
+                : 'Project';
     }
 
     public getChildren(): vscode.TreeItem[] {
