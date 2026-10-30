@@ -127,8 +127,10 @@ jobs:
             matrix:
                 platform:
                     - win32-x64
+                    - win32-arm64
                     - linux-x64
                     - linux-arm64
+                    - darwin-x64
                     - darwin-arm64
         steps:
             - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -174,6 +176,7 @@ jobs:
                       --user "$(id -u):$(id -g)" \
                       -e FETCH_LICENSE=true \
                       -e HOME=/tmp \
+                      -e CDXGEN_TEMP_DIR=/tmp \
                       -v "$PWD:/app" \
                       "$CDXGEN_IMAGE" \
                       --metadata-property "arm:sbom-disclaimer=$SBOM_DISCLAIMER" \
