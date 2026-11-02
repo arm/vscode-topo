@@ -22,6 +22,7 @@ import { Config } from './config';
 const engineAwareCommands: readonly string[] = [
     'deploy',
     'health',
+    'logs',
     'ps',
     'stop',
 ];
@@ -97,14 +98,17 @@ export class TopoCli {
         args: readonly string[],
     ): string[] {
         const engine = this.config.getContainerEngineSetting();
+        const separatorIndex = args.indexOf('--');
+        const flagEnd = separatorIndex === -1 ? args.length : separatorIndex;
+        const flags = args.slice(0, flagEnd);
         if (
             engine !== 'auto' &&
             engineAwareCommands.includes(command) &&
-            !args.some(
+            !flags.some(
                 (arg) => arg === '--engine' || arg.startsWith('--engine='),
             )
         ) {
-            return [...args, '--engine', engine];
+            return [...flags, '--engine', engine, ...args.slice(flagEnd)];
         }
         return [...args];
     }

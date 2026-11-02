@@ -147,15 +147,15 @@ describe('TaskFactory', () => {
 
         const execution = taskFactory.createExecution({
             ...definition,
-            command: TaskCommand.Deploy,
-            args: [],
+            command: TaskCommand.Logs,
+            args: ['--', 'web'],
             options: { env: { TOPO_ENGINE: 'docker' } },
         });
 
         expect(execution).toMatchObject({
             args: [
-                'deploy',
-                ...['--engine', 'podman'].map((value) => ({
+                'logs',
+                ...['--engine', 'podman', '--', 'web'].map((value) => ({
                     value,
                     quoting: vscode.ShellQuoting.Strong,
                 })),

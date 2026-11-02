@@ -152,10 +152,10 @@ The extension runs `topo <command> <args>` using its bundled Topo CLI. Set
 `options.cwd` when the command needs to run from a particular directory;
 otherwise it runs from the task's workspace folder. Use `options.env` to add
 string-valued environment variables to the command's inherited environment.
-Supported commands are `configure`, `deploy`, `health`, `install`, `projects`,
-`ps`, `setup-keys`, and `stop`.
+Supported commands are `configure`, `deploy`, `health`, `install`, `logs`,
+`projects`, `ps`, `setup-keys`, and `stop`.
 
-Topo reads `.env` and then `.env.topo` beside the compose file for `deploy`, `ps`, and `stop`, with `.env.topo` taking precedence. To use different files, add `--env-file` arguments to a configured task; explicit files replace these defaults and are resolved relative to the task's working directory.
+Topo reads `.env` and then `.env.topo` beside the compose file for `deploy`, `logs`, `ps`, and `stop`, with `.env.topo` taking precedence. To use different files, add `--env-file` arguments to a configured task; explicit files replace these defaults and are resolved relative to the task's working directory.
 
 ## Project Management
 
