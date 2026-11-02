@@ -8,6 +8,7 @@ import { TargetTreeView } from './views/targetTreeView';
 import { ContainerLifecycle } from './actions/containerLifecycle';
 import { OpenContainerShell } from './actions/openContainerShell';
 import { OpenContainerLogs } from './actions/openContainerLogs';
+import { OpenProjectLogs } from './actions/openProjectLogs';
 import { DockerCommands } from './services/dockerCommands';
 import { PodmanCommands } from './services/podmanCommands';
 import { ContainerEngineCommands } from './services/containerEngineCommands';
@@ -180,6 +181,7 @@ async function activateExtension(
     const stop = new Stop(targetModel, taskFactory);
     const openContainerShell = new OpenContainerShell(containerCommands);
     const openContainerLogs = new OpenContainerLogs(taskFactory);
+    const openProjectLogs = new OpenProjectLogs(taskFactory);
     const connectViaSSH = new ConnectViaSSH(targetModel);
     const openContainerInBrowser = new OpenContainerInBrowser();
     const containerLifecycle = new ContainerLifecycle(containerCommands);
@@ -199,6 +201,7 @@ async function activateExtension(
             stop,
             openContainerShell,
             openContainerLogs,
+            openProjectLogs,
             connectViaSSH,
             openContainerInBrowser,
             containerLifecycle,
