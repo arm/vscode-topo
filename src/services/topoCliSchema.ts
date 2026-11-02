@@ -112,6 +112,7 @@ export type ContainerState = Infer<typeof containerStateSchema>;
 const psEntrySchema = type({
     id: trimmedStringSchema,
     names: trimmedStringSchema,
+    service: trimmedStringSchema,
     image: trimmedStringSchema,
     status: trimmedStringSchema,
     state: containerStateSchema,

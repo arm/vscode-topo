@@ -25,6 +25,7 @@ describe('assertContainerTreeItem', () => {
             processingDomain: 'TestProcessingDomain',
             address: '',
             target: 'root@test-host',
+            service: 'app',
         };
         const instanceLike = new ContainerTreeItem(containerItem);
 

@@ -56,6 +56,7 @@ const psOutput: PsOutput = {
         {
             id: 'abc123',
             names: 'demo-app-1',
+            service: 'app',
             image: 'demo-app',
             status: 'Up 1 minute',
             state: 'running',
