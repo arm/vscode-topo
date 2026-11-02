@@ -1,19 +1,19 @@
 import * as vscode from 'vscode';
 import { mock } from 'vitest-mock-extended';
 import { OpenContainerLogs } from './openContainerLogs';
-import { DockerCommands } from '../services/dockerCommands';
-import { TopoCli } from '../services/topoCli';
-import { TaskFactory } from '../tasks/taskFactory';
+import type { TaskFactory } from '../tasks/taskFactory';
 import { ContainerItem } from '../util/types';
 import { ContainerTreeItem } from '../views/treeItems/containerTreeItem';
 
 vi.mock('../util/logger');
 
 describe('OpenContainerLogs', () => {
+    const composeFileUri = vscode.Uri.file('/projects/my demo/compose.yaml');
     const container: ContainerItem = {
         id: 'abc123',
-        names: 'web-1',
+        names: 'custom-container-name',
         service: 'web',
+        composeFileUri,
         image: 'nginx',
         state: 'exited',
         status: 'Exited (0)',
@@ -21,43 +21,50 @@ describe('OpenContainerLogs', () => {
         address: '',
         target: 'user@target.local:2222',
     };
-    const action = new OpenContainerLogs(
-        new DockerCommands(),
-        new TaskFactory(mock<TopoCli>()),
-    );
+    const taskFactory = mock<TaskFactory>();
+    const action = new OpenContainerLogs(taskFactory);
+    let task: vscode.Task;
 
-    it('opens the selected container logs and keeps the terminal visible after exit', async () => {
+    beforeEach(() => {
+        task = mock<vscode.Task>();
+        taskFactory.createTask.mockReturnValue(task);
+    });
+
+    it('follows the selected container service with Topo and keeps the terminal visible after exit', async () => {
         await action.openContainerLogsCommandHandler(
             new ContainerTreeItem(container),
         );
 
-        expect(vscode.tasks.executeTask).toHaveBeenCalledExactlyOnceWith(
-            expect.objectContaining({
-                name: 'Logs: web-1 (user@target.local:2222)',
-                execution: expect.objectContaining({
-                    command: {
-                        value: 'docker',
-                        quoting: vscode.ShellQuoting.Strong,
-                    },
-                    args: [
-                        '--host',
-                        'ssh://user@target.local:2222',
-                        'logs',
-                        '--follow',
-                        '--',
-                        'abc123',
-                    ].map((value) => ({
-                        value,
-                        quoting: vscode.ShellQuoting.Strong,
-                    })),
-                }),
-                presentationOptions: expect.objectContaining({
-                    reveal: vscode.TaskRevealKind.Always,
-                    focus: true,
-                    panel: vscode.TaskPanelKind.Dedicated,
-                    close: false,
-                }),
-            }),
+        expect(taskFactory.createTask).toHaveBeenCalledExactlyOnceWith(
+            'Logs: custom-container-name (user@target.local:2222)',
+            {
+                type: 'topo',
+                command: 'logs',
+                args: [
+                    '--file',
+                    'compose.yaml',
+                    '--target',
+                    container.target,
+                    '--follow',
+                    '--',
+                    'web',
+                ],
+                options: { cwd: vscode.Uri.file('/projects/my demo').fsPath },
+            },
         );
+        expect(task.presentationOptions).toMatchObject({
+            panel: vscode.TaskPanelKind.Dedicated,
+            close: false,
+        });
+        expect(vscode.tasks.executeTask).toHaveBeenCalledExactlyOnceWith(task);
+    });
+
+    it('does not open all project logs when the service name is empty', async () => {
+        await expect(
+            action.openContainerLogsCommandHandler(
+                new ContainerTreeItem({ ...container, service: '' }),
+            ),
+        ).rejects.toThrow('Container abc123 has no Compose service name');
+        expect(vscode.tasks.executeTask).not.toHaveBeenCalled();
     });
 });

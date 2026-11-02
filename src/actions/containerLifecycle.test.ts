@@ -49,6 +49,7 @@ describe('ContainerLifecycle', () => {
         address: '1.2.3.4:5678',
         target,
         service: 'app',
+        composeFileUri: vscode.Uri.file('/projects/demo/compose.yaml'),
     };
     const treeItem = new ContainerTreeItem(container);
 

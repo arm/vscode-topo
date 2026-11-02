@@ -1,3 +1,4 @@
+import type { Uri } from 'vscode';
 import type { PsEntry } from '../services/topoCliSchema';
 
 export type DeepReadonly<T> = T extends (...args: never[]) => unknown
@@ -8,6 +9,7 @@ export type DeepReadonly<T> = T extends (...args: never[]) => unknown
 
 export type ContainerItem = PsEntry & {
     readonly target: string;
+    readonly composeFileUri: Uri;
 };
 
 export type Mutable<T> = { -readonly [P in keyof T]: T[P] };
