@@ -309,6 +309,7 @@ describe('TopoCli', () => {
                 {
                     id: '5c5f2d9b4a8f',
                     names: 'demo-linux-1',
+                    service: 'linux',
                     image: 'ghcr.io/arm/topo-demo:latest',
                     status: 'Up 2 minutes',
                     state: 'running',
@@ -318,6 +319,7 @@ describe('TopoCli', () => {
                 {
                     id: '7a56e7a56f01',
                     names: 'demo-rproc-1',
+                    service: 'rproc',
                     image: 'ghcr.io/arm/topo-rproc:latest',
                     status: 'Exited (0) 1 minute ago',
                     state: 'exited',
@@ -387,6 +389,7 @@ describe('TopoCli', () => {
                 {
                     id: '5c5f2d9b4a8f',
                     names: 'demo-linux-1',
+                    service: 'linux',
                     image: 'ghcr.io/arm/topo-demo:latest',
                     status: 'Up 2 minutes',
                     state: 'unknown',

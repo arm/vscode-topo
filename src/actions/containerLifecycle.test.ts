@@ -48,6 +48,7 @@ describe('ContainerLifecycle', () => {
         processingDomain: 'CoolProcessingDomain',
         address: '1.2.3.4:5678',
         target,
+        service: 'app',
     };
     const treeItem = new ContainerTreeItem(container);
 

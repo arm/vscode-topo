@@ -14,6 +14,7 @@ describe('ContainerTreeItem', () => {
             processingDomain: 'Remoteproc',
             address: 'topo.local:4121',
             target,
+            service: 'app',
         };
         const item = new ContainerTreeItem(container);
         expect(item.label).toBe('nginx:latest');
@@ -42,6 +43,7 @@ describe('ContainerTreeItem', () => {
             processingDomain: 'Remoteproc',
             address: 'topo.local:4121',
             target,
+            service: 'app',
         };
         const item = new ContainerTreeItem(container);
         expect(item.iconPath).toStrictEqual(
@@ -62,6 +64,7 @@ describe('ContainerTreeItem', () => {
             processingDomain: 'Linux Host',
             address: 'topo.local:8080',
             target,
+            service: 'app',
         };
 
         const item = new ContainerTreeItem(container);
@@ -79,6 +82,7 @@ describe('ContainerTreeItem', () => {
             processingDomain: 'Linux Host',
             address: 'topo.local',
             target,
+            service: 'app',
         };
 
         const item = new ContainerTreeItem(container);
@@ -96,6 +100,7 @@ describe('ContainerTreeItem', () => {
             processingDomain: 'Linux Host',
             address: 'topo.local:80',
             target,
+            service: 'app',
         };
 
         const item = new ContainerTreeItem(container);

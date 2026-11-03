@@ -26,6 +26,7 @@ const container: ContainerItem = {
     processingDomain: manifest.PRIMARY_PROCESSING_DOMAIN,
     address: 'localhost:8000',
     target: 'user@topo.local',
+    service: 'app',
 };
 
 describe('ProjectsTreeView', () => {

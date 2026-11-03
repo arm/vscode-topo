@@ -13,6 +13,7 @@ describe('OpenContainerInBrowser', () => {
         processingDomain: 'Linux Host',
         address: 'target.local:8080, target.local:80',
         target: 'user@target.local',
+        service: 'app',
     };
 
     it('opens the only published endpoint without prompting', async () => {

@@ -13,6 +13,7 @@ describe('OpenContainerLogs', () => {
     const container: ContainerItem = {
         id: 'abc123',
         names: 'web-1',
+        service: 'web',
         image: 'nginx',
         state: 'exited',
         status: 'Exited (0)',

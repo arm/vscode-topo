@@ -13,6 +13,7 @@ const containers: ContainerItem[] = [
         processingDomain: PRIMARY_PROCESSING_DOMAIN,
         address: 'localhost:8000',
         target: 'user@topo.local',
+        service: 'app',
     },
 ];
 
