@@ -80,12 +80,12 @@ describe('TopoCli', () => {
 
     it('preserves explicit engine arguments', () => {
         const separateArgs = ['--engine', 'podman'];
-        const joinedArgs = ['--engine=podman'];
+        const joinedArgs = ['--engine=podman', '--', 'web'];
 
         expect(
             topoCli.withDefaultContainerEngine('deploy', separateArgs),
         ).toEqual(separateArgs);
-        expect(topoCli.withDefaultContainerEngine('stop', joinedArgs)).toEqual(
+        expect(topoCli.withDefaultContainerEngine('logs', joinedArgs)).toEqual(
             joinedArgs,
         );
     });

@@ -52,6 +52,7 @@
                             "deploy",
                             "health",
                             "install",
+                            "logs",
                             "projects",
                             "ps",
                             "setup-keys",

@@ -11,6 +11,7 @@ export enum TaskCommand {
     Deploy = 'deploy',
     Health = 'health',
     Install = 'install',
+    Logs = 'logs',
     Projects = 'projects',
     Ps = 'ps',
     SetupKeys = 'setup-keys',
