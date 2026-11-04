@@ -28,6 +28,12 @@ const container: ContainerItem = {
 };
 
 describe('ProjectTreeItem', () => {
+    it('marks projects with containers', () => {
+        const item = new ProjectTreeItem(project, false, loaded([container]));
+
+        expect(item.contextValue).toBe('Project HasContainers');
+    });
+
     it('makes loaded empty projects non-expandable', () => {
         const item = new ProjectTreeItem(project, false, loaded([]));
 
@@ -47,7 +53,6 @@ describe('ProjectTreeItem', () => {
         ];
         const item = new ProjectTreeItem(project, false, loaded(containers));
 
-        expect(item.contextValue).toBe('Project HasContainers');
         const domains = item.getChildren() as ProcessingDomainTreeItem[];
         expect(domains).toMatchObject([
             { label: PRIMARY_PROCESSING_DOMAIN },
