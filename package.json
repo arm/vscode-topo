@@ -518,22 +518,22 @@
                     "group": "inline@5"
                 },
                 {
-                    "command": "topo.configureProject",
+                    "command": "topo.openProjectLogs",
                     "when": "view === topo.projects && viewItem =~ /Project/",
                     "group": "inline@1"
                 },
                 {
-                    "command": "topo.deployProject",
+                    "command": "topo.configureProject",
                     "when": "view === topo.projects && viewItem =~ /Project/",
                     "group": "inline@2"
                 },
                 {
-                    "command": "topo.stopProject",
+                    "command": "topo.deployProject",
                     "when": "view === topo.projects && viewItem =~ /Project/",
                     "group": "inline@3"
                 },
                 {
-                    "command": "topo.openProjectLogs",
+                    "command": "topo.stopProject",
                     "when": "view === topo.projects && viewItem =~ /Project/",
                     "group": "inline@4"
                 }
