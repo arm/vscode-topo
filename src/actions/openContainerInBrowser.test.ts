@@ -4,6 +4,7 @@ import { ContainerTreeItem } from '../views/treeItems/containerTreeItem';
 import { ContainerItem } from '../util/types';
 
 describe('OpenContainerInBrowser', () => {
+    const composeFileUri = vscode.Uri.file('/projects/demo/compose.yaml');
     const container: ContainerItem = {
         id: 'abc123',
         names: 'web',
@@ -14,6 +15,7 @@ describe('OpenContainerInBrowser', () => {
         address: 'target.local:8080, target.local:80',
         target: 'user@target.local',
         service: 'app',
+        composeFileUri,
     };
 
     it('opens the only published endpoint without prompting', async () => {

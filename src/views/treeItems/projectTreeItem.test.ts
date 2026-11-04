@@ -24,6 +24,7 @@ const container: ContainerItem = {
     address: 'localhost:8000',
     target: 'user@topo.local',
     service: 'app',
+    composeFileUri: project.composeFileUri,
 };
 
 describe('ProjectTreeItem', () => {

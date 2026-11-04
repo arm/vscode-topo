@@ -122,19 +122,4 @@ export class DockerCommands implements ContainerCommands {
             'sh',
         ];
     }
-
-    public getLogsCommand(
-        containerId: string,
-        targetSshConnection: string,
-    ): string[] {
-        return [
-            'docker',
-            '--host',
-            getSshUri(targetSshConnection),
-            'logs',
-            '--follow',
-            '--',
-            containerId,
-        ];
-    }
 }

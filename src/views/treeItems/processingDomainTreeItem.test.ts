@@ -14,6 +14,7 @@ const containers: ContainerItem[] = [
         address: 'localhost:8000',
         target: 'user@topo.local',
         service: 'app',
+        composeFileUri: vscode.Uri.file('/projects/demo/compose.yaml'),
     },
 ];
 

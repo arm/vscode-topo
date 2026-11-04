@@ -33,6 +33,7 @@ const container: ContainerItem = {
     address: 'localhost:8000',
     target: 'user@topo.local',
     service: 'app',
+    composeFileUri: projects[0].composeFileUri,
 };
 
 describe('ProjectModel', () => {

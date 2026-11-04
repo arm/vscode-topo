@@ -191,10 +191,22 @@ describe('ProjectController', () => {
             otherProject.composeFileUri.fsPath,
         );
         expect(model.getProjectContainers(projects[0])).toEqual(
-            loaded([{ ...psOutput.containers[0], target }]),
+            loaded([
+                {
+                    ...psOutput.containers[0],
+                    target,
+                    composeFileUri: projects[0].composeFileUri,
+                },
+            ]),
         );
         expect(model.getProjectContainers(otherProject)).toEqual(
-            loaded([{ ...psOutput.containers[0], target }]),
+            loaded([
+                {
+                    ...psOutput.containers[0],
+                    target,
+                    composeFileUri: otherProject.composeFileUri,
+                },
+            ]),
         );
     });
 
@@ -275,7 +287,13 @@ describe('ProjectController', () => {
         await controller.refreshProjectContainersCommandHandler();
 
         expect(model.getProjectContainers(projects[0])).toEqual(
-            loaded([{ ...psOutput.containers[0], target }]),
+            loaded([
+                {
+                    ...psOutput.containers[0],
+                    target,
+                    composeFileUri: projects[0].composeFileUri,
+                },
+            ]),
         );
         expect(model.getProjectContainers(otherProject)).toEqual(
             errored(error),

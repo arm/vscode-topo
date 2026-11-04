@@ -102,16 +102,4 @@ export class PodmanCommands implements ContainerCommands {
             true,
         );
     }
-
-    public getLogsCommand(
-        containerId: string,
-        targetSshConnection: string,
-    ): string[] {
-        return getCommand(targetSshConnection, [
-            'logs',
-            '--follow',
-            '--',
-            containerId,
-        ]);
-    }
 }

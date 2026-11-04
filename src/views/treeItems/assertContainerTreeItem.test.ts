@@ -1,3 +1,4 @@
+import * as vscode from 'vscode';
 import { assertContainerTreeItem } from './assertContainerTreeItem';
 import { ContainerTreeItem } from './containerTreeItem';
 import { logger } from '../../util/logger';
@@ -26,6 +27,7 @@ describe('assertContainerTreeItem', () => {
             address: '',
             target: 'root@test-host',
             service: 'app',
+            composeFileUri: vscode.Uri.file('/projects/demo/compose.yaml'),
         };
         const instanceLike = new ContainerTreeItem(containerItem);
 

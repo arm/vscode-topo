@@ -179,10 +179,7 @@ async function activateExtension(
     const deploy = new Deploy(targetModel, config, taskFactory);
     const stop = new Stop(targetModel, taskFactory);
     const openContainerShell = new OpenContainerShell(containerCommands);
-    const openContainerLogs = new OpenContainerLogs(
-        containerCommands,
-        taskFactory,
-    );
+    const openContainerLogs = new OpenContainerLogs(taskFactory);
     const connectViaSSH = new ConnectViaSSH(targetModel);
     const openContainerInBrowser = new OpenContainerInBrowser();
     const containerLifecycle = new ContainerLifecycle(containerCommands);

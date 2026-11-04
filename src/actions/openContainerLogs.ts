@@ -1,22 +1,37 @@
+import path from 'node:path';
 import * as vscode from 'vscode';
-import type { ContainerCommands } from '../services/containerCommands';
-import type { TaskFactory } from '../tasks/taskFactory';
+import { TOPO_TASK_TYPE } from '../manifest';
+import { TaskCommand, type TaskFactory } from '../tasks/taskFactory';
 import { assertContainerTreeItem } from '../views/treeItems/assertContainerTreeItem';
 
 export class OpenContainerLogs {
-    constructor(
-        private readonly containerCommands: ContainerCommands,
-        private readonly taskFactory: TaskFactory,
-    ) {}
+    constructor(private readonly taskFactory: TaskFactory) {}
 
     public async openContainerLogsCommandHandler(
         treeNode: unknown,
     ): Promise<void> {
         assertContainerTreeItem(treeNode);
         const item = treeNode.containerItem;
-        const task = this.taskFactory.createShellTask(
+        if (!item.service) {
+            throw new Error(`Container ${item.id} has no Compose service name`);
+        }
+
+        const task = this.taskFactory.createTask(
             `Logs: ${item.names || item.id} (${item.target})`,
-            this.containerCommands.getLogsCommand(item.id, item.target),
+            {
+                type: TOPO_TASK_TYPE,
+                command: TaskCommand.Logs,
+                args: [
+                    '--file',
+                    path.basename(item.composeFileUri.fsPath),
+                    '--target',
+                    item.target,
+                    '--follow',
+                    '--',
+                    item.service,
+                ],
+                options: { cwd: path.dirname(item.composeFileUri.fsPath) },
+            },
         );
         // Keep completed logs visible, including those from stopped containers.
         task.presentationOptions = {

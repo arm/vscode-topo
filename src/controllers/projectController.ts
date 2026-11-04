@@ -6,7 +6,7 @@ import { DisposableCollector } from '../util/disposableCollector';
 import { COMPOSE_FILE_GLOB } from '../util/composeFile';
 import { LatestAbortableWork } from '../util/latestAbortableWork';
 import { TopoCli } from '../services/topoCli';
-import { PsEntry, PsOutput } from '../services/topoCliSchema';
+import { PsOutput } from '../services/topoCliSchema';
 import { ContainerItem } from '../util/types';
 import { TargetModel } from '../models/targetModel';
 import { showAndLogError } from '../util/showAndLog';
@@ -14,13 +14,6 @@ import { isProjectComposePathDeleted } from '../util/isProjectComposePathDeleted
 import { TOPO_TASK_TYPE } from '../manifest';
 import { TaskCommand } from '../tasks/taskFactory';
 import { isTargetConnected } from '../util/assertTargetReady';
-
-function createContainerItem(item: PsEntry, target: string): ContainerItem {
-    return {
-        ...item,
-        target,
-    };
-}
 
 async function loadContainers(
     topoCli: TopoCli,
@@ -34,9 +27,11 @@ async function loadContainers(
         return errored(error);
     }
 
-    const containers = psResult.containers.map((container) =>
-        createContainerItem(container, target),
-    );
+    const containers = psResult.containers.map((container) => ({
+        ...container,
+        target,
+        composeFileUri: project.composeFileUri,
+    }));
     return loaded(containers);
 }
 

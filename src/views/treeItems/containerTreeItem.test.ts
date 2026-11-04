@@ -15,6 +15,7 @@ describe('ContainerTreeItem', () => {
             address: 'topo.local:4121',
             target,
             service: 'app',
+            composeFileUri: vscode.Uri.file('/projects/demo/compose.yaml'),
         };
         const item = new ContainerTreeItem(container);
         expect(item.label).toBe('nginx:latest');
@@ -44,6 +45,7 @@ describe('ContainerTreeItem', () => {
             address: 'topo.local:4121',
             target,
             service: 'app',
+            composeFileUri: vscode.Uri.file('/projects/demo/compose.yaml'),
         };
         const item = new ContainerTreeItem(container);
         expect(item.iconPath).toStrictEqual(
@@ -65,6 +67,7 @@ describe('ContainerTreeItem', () => {
             address: 'topo.local:8080',
             target,
             service: 'app',
+            composeFileUri: vscode.Uri.file('/projects/demo/compose.yaml'),
         };
 
         const item = new ContainerTreeItem(container);
@@ -83,6 +86,7 @@ describe('ContainerTreeItem', () => {
             address: 'topo.local',
             target,
             service: 'app',
+            composeFileUri: vscode.Uri.file('/projects/demo/compose.yaml'),
         };
 
         const item = new ContainerTreeItem(container);
@@ -101,6 +105,7 @@ describe('ContainerTreeItem', () => {
             address: 'topo.local:80',
             target,
             service: 'app',
+            composeFileUri: vscode.Uri.file('/projects/demo/compose.yaml'),
         };
 
         const item = new ContainerTreeItem(container);
