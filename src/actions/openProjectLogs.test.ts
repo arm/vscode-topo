@@ -55,6 +55,15 @@ describe('OpenProjectLogs', () => {
         expect(vscode.tasks.executeTask).toHaveBeenCalledExactlyOnceWith(task);
     });
 
+    it('propagates errors when the logs task cannot start', async () => {
+        const error = new Error('Failed to start logs task');
+        vi.mocked(vscode.tasks.executeTask).mockRejectedValueOnce(error);
+
+        await expect(
+            action.openProjectLogsCommandHandler(project),
+        ).rejects.toBe(error);
+    });
+
     it.each([loaded([]), unloaded()])(
         'does nothing without loaded containers (%j)',
         async (containers) => {
