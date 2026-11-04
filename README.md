@@ -165,6 +165,8 @@ When a target is selected, each project can expand to show deployed containers f
 
 Use the inline buttons on a project row to configure, deploy, or stop that project's compose file. These actions behave the same as running **Topo Configure**, **Topo Deploy**, or **Topo Stop** from the context menu of the project's compose file.
 
+Use **Open Project Logs** on a project row to show logs from all of its services on the selected target in one terminal, including stopped containers. The terminal shows the last 100 lines per container and follows new output. Press **Ctrl+C** to stop following and keep the output visible.
+
 ### Clone a Project
 
 Two clone commands are available from the Command Palette:

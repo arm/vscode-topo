@@ -28,6 +28,12 @@ const container: ContainerItem = {
 };
 
 describe('ProjectTreeItem', () => {
+    it('marks projects with containers', () => {
+        const item = new ProjectTreeItem(project, false, loaded([container]));
+
+        expect(item.contextValue).toBe('Project HasContainers');
+    });
+
     it('makes loaded empty projects non-expandable', () => {
         const item = new ProjectTreeItem(project, false, loaded([]));
 
@@ -72,6 +78,7 @@ describe('ProjectTreeItem', () => {
     it('returns no children when containers are unloaded', () => {
         const item = new ProjectTreeItem(project, false, unloaded());
 
+        expect(item.contextValue).toBe('Project');
         expect(item.getChildren()).toEqual([]);
     });
 });
