@@ -30,7 +30,7 @@ describe('OpenContainerLogs', () => {
         taskFactory.createTask.mockReturnValue(task);
     });
 
-    it('follows the selected container service with Topo and keeps the terminal visible after exit', async () => {
+    it('follows the selected container service with Topo', async () => {
         await action.openContainerLogsCommandHandler(
             new ContainerTreeItem(container),
         );
@@ -52,11 +52,18 @@ describe('OpenContainerLogs', () => {
                 options: { cwd: vscode.Uri.file('/projects/my demo').fsPath },
             },
         );
+        expect(vscode.tasks.executeTask).toHaveBeenCalledExactlyOnceWith(task);
+    });
+
+    it('keeps the dedicated logs terminal visible after exit', async () => {
+        await action.openContainerLogsCommandHandler(
+            new ContainerTreeItem(container),
+        );
+
         expect(task.presentationOptions).toMatchObject({
             panel: vscode.TaskPanelKind.Dedicated,
             close: false,
         });
-        expect(vscode.tasks.executeTask).toHaveBeenCalledExactlyOnceWith(task);
     });
 
     it('does not open all project logs when the service name is empty', async () => {
