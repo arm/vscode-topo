@@ -12,6 +12,23 @@ All notable changes to the "vscode-topo" extension will be documented in this fi
 
 
 
+
+## 0.24.0
+
+<!-- Release notes generated using configuration in .github/release.yml at 92b1582a3ce37056e58c83a4355df545998e01cd -->
+
+## What's Changed
+### Features and Enhancements
+* feat: add button to show container logs (#486)
+* feat: support `topo logs` in configured tasks (#497)
+* feat: add button to show project logs (#500)
+### Fixes
+* fix: use writable temporary directory for SBOM generation (#490)
+
+
+**Full Changelog**: https://github.com/arm/vscode-topo/compare/v0.22.0...v0.24.0
+
+
 ## 0.22.0
 
 <!-- Release notes generated using configuration in .github/release.yml at 610c792545c896df94c3074c936869682a4eb5e4 -->
