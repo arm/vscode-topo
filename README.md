@@ -44,7 +44,7 @@ The host and target can be the same system.
 1. Review target health and apply suggested fixes.
 1. Clone a [Topo Project](https://github.com/arm/topo-project-specification) from our catalog.
 1. Deploy the configured project to your target.
-1. Expand the project in the **Projects** view to see deployed containers grouped by processing domain.
+1. Expand the project in the **Projects** view to see deployed services grouped by processing domain.
 
 ---
 
@@ -161,7 +161,7 @@ Topo reads `.env` and then `.env.topo` beside the compose file for `deploy`, `lo
 
 The **Projects** view appears in the **Topo** activity bar container and lists workspace projects discovered from top-level `compose.yaml` files.
 
-When a target is selected, each project can expand to show deployed containers for that project, grouped by processing domain.
+When a target is selected, each project can expand to show deployed services grouped by processing domain.
 
 Use the inline buttons on a project row to configure, deploy, or stop that project's compose file. These actions behave the same as running **Topo Configure**, **Topo Deploy**, or **Topo Stop** from the context menu of the project's compose file.
 

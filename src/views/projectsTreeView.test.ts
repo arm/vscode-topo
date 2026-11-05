@@ -64,23 +64,31 @@ describe('ProjectsTreeView', () => {
         );
     });
 
-    it('shows containers under their project and processing domain', () => {
+    it('shows replicas under their service', () => {
         const model = new ProjectModel();
-        const containers = loaded([container]);
         model.setProjects(loaded([project]));
-        model.setProjectContainers(project, containers);
+        model.setProjectContainers(
+            project,
+            loaded([
+                { ...container, names: 'app-1' },
+                { ...container, id: 'second', names: 'app-2' },
+            ]),
+        );
         const provider = new ProjectsTreeView(model);
 
-        const projects = provider.getChildren();
-        expect(projects).toMatchObject([{ label: 'demo' }]);
+        const [projectItem] = provider.getChildren();
+        const [domain] = provider.getChildren(projectItem);
+        const [service] = provider.getChildren(domain);
 
-        const domains = provider.getChildren(projects[0]);
-        expect(domains).toMatchObject([
-            { label: manifest.PRIMARY_PROCESSING_DOMAIN },
+        expect(projectItem.label).toBe('demo');
+        expect(domain.label).toBe(manifest.PRIMARY_PROCESSING_DOMAIN);
+        expect(service.label).toBe('app');
+        const replicas = provider.getChildren(service);
+        expect(replicas).toMatchObject([
+            { label: 'app-1' },
+            { label: 'app-2' },
         ]);
-        expect(provider.getChildren(domains[0])).toMatchObject([
-            { label: 'demo-app' },
-        ]);
+        expect(provider.getChildren(replicas[0])).toEqual([]);
     });
 
     it('shows an error item when project loading fails', () => {
