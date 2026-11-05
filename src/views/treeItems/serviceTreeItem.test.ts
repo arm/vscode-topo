@@ -64,4 +64,38 @@ describe('ServiceTreeItem', () => {
             ),
         );
     });
+
+    it('keeps a single-container service compact with both service logs and container controls', () => {
+        const item = new ServiceTreeItem({
+            name: 'worker',
+            containers: [{ ...container, names: 'custom-container-name' }],
+        });
+
+        expect(item.label).toBe('worker');
+        expect(item.description).toBe('Up 1 minute');
+        expect(item.collapsibleState).toBe(
+            vscode.TreeItemCollapsibleState.None,
+        );
+        expect(item.contextValue?.split(' ')).toEqual(
+            expect.arrayContaining(['service', 'container', 'browser']),
+        );
+        expect(item.tooltip).toContain('custom-container-name');
+        expect(item.getChildren()).toEqual([]);
+    });
+
+    it('warns for a stopped single-container service', () => {
+        const item = new ServiceTreeItem({
+            name: 'worker',
+            containers: [
+                { ...container, state: 'exited', status: 'Exited (0)' },
+            ],
+        });
+
+        expect(item.iconPath).toStrictEqual(
+            new vscode.ThemeIcon(
+                'warning',
+                new vscode.ThemeColor('terminal.ansiYellow'),
+            ),
+        );
+    });
 });

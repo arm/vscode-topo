@@ -57,9 +57,26 @@ function getServiceItemIcon(serviceItem: ServiceItem): vscode.ThemeIcon {
 }
 
 export class ServiceTreeItem extends vscode.TreeItem {
+    public readonly containerTreeItem?: ContainerTreeItem;
+
     constructor(public readonly serviceItem: ServiceItem) {
-        super(serviceItem.name, vscode.TreeItemCollapsibleState.Collapsed);
+        const { name, containers } = serviceItem;
+        super(
+            name,
+            containers.length === 1
+                ? vscode.TreeItemCollapsibleState.None
+                : vscode.TreeItemCollapsibleState.Collapsed,
+        );
         this.iconPath = getServiceItemIcon(serviceItem);
+
+        if (containers.length === 1) {
+            const container = containers[0];
+            this.containerTreeItem = new ContainerTreeItem(container);
+            this.description = this.containerTreeItem.description;
+            this.tooltip = this.containerTreeItem.tooltip;
+            this.contextValue = `${this.containerTreeItem.contextValue} service`;
+            return;
+        }
 
         this.description = getServiceItemDescription(serviceItem);
         this.tooltip = getServiceItemTooltip(serviceItem, this.description);
@@ -67,6 +84,10 @@ export class ServiceTreeItem extends vscode.TreeItem {
     }
 
     public getChildren(): ContainerTreeItem[] {
+        if (this.containerTreeItem) {
+            return [];
+        }
+
         return this.serviceItem.containers
             .toSorted(compareContainers)
             .map((container) => new ContainerTreeItem(container));
