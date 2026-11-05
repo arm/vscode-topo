@@ -8,6 +8,7 @@ import { LoadingTreeItem } from './treeItems/loadingTreeItem';
 import { Loadable } from '../util/loadable';
 import { ProjectMetadata } from '../util/project';
 import { ProcessingDomainTreeItem } from './treeItems/processingDomainTreeItem';
+import { ServiceTreeItem } from './treeItems/serviceTreeItem';
 
 function syncProjectCountContext(projects: Loadable<ProjectMetadata[]>): void {
     const count =
@@ -56,7 +57,8 @@ export class ProjectsTreeView
 
         if (
             element instanceof ProjectTreeItem ||
-            element instanceof ProcessingDomainTreeItem
+            element instanceof ProcessingDomainTreeItem ||
+            element instanceof ServiceTreeItem
         ) {
             return element.getChildren();
         }
