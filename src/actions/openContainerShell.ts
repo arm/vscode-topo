@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { ContainerItem } from '../util/types';
 import { ContainerCommands } from '../services/containerCommands';
-import { assertContainerTreeItem } from '../views/treeItems/assertContainerTreeItem';
+import { getContainerTreeItem } from '../views/treeItems/getContainerTreeItem';
 
 export class OpenContainerShell {
     constructor(private readonly containerCommands: ContainerCommands) {}
@@ -9,8 +9,8 @@ export class OpenContainerShell {
     public async openContainerShellCommandHandler(
         treeNode: unknown,
     ): Promise<void> {
-        assertContainerTreeItem(treeNode);
-        openContainerShell(treeNode.containerItem, this.containerCommands);
+        const item = getContainerTreeItem(treeNode);
+        openContainerShell(item.containerItem, this.containerCommands);
     }
 }
 

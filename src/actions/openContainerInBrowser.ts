@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { getContainerWebEndpoints } from '../util/getContainerWebEndpoints';
 import type { ContainerWebEndpoint } from '../util/getContainerWebEndpoints';
-import { assertContainerTreeItem } from '../views/treeItems/assertContainerTreeItem';
+import { getContainerTreeItem } from '../views/treeItems/getContainerTreeItem';
 
 type EndpointQuickPickItem = vscode.QuickPickItem & {
     endpoint: ContainerWebEndpoint;
@@ -11,20 +11,14 @@ export class OpenContainerInBrowser {
     public async openContainerInBrowserCommandHandler(
         treeNode: unknown,
     ): Promise<void> {
-        assertContainerTreeItem(treeNode);
-        if (treeNode.containerItem.state !== 'running') {
-            throw new Error(
-                `Container ${treeNode.containerItem.id} is not running`,
-            );
+        const item = getContainerTreeItem(treeNode).containerItem;
+        if (item.state !== 'running') {
+            throw new Error(`Container ${item.id} is not running`);
         }
 
-        const endpoints = getContainerWebEndpoints(
-            treeNode.containerItem.address,
-        );
+        const endpoints = getContainerWebEndpoints(item.address);
         if (endpoints.length === 0) {
-            throw new Error(
-                `Container ${treeNode.containerItem.id} has no published ports`,
-            );
+            throw new Error(`Container ${item.id} has no published ports`);
         }
 
         let [endpoint] = endpoints;

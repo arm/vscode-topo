@@ -49,7 +49,7 @@ describe('ProjectTreeItem', () => {
             { ...container, id: 'ghi789', processingDomain: 'other-rproc' },
             container,
             { ...container, id: 'jkl012', processingDomain: 'imx-rproc' },
-            { ...container, id: 'def456', names: 'worker' },
+            { ...container, id: 'def456', names: 'worker', service: 'worker' },
         ];
         const item = new ProjectTreeItem(project, false, loaded(containers));
 
@@ -61,17 +61,17 @@ describe('ProjectTreeItem', () => {
             { label: 'Unknown' },
         ]);
         expect(domains[0].getChildren()).toMatchObject([
-            { containerItem: { id: 'abc123' } },
-            { containerItem: { id: 'def456' } },
+            { serviceItem: { name: 'app', containers: [{ id: 'abc123' }] } },
+            { serviceItem: { name: 'worker', containers: [{ id: 'def456' }] } },
         ]);
         expect(domains[1].getChildren()).toMatchObject([
-            { containerItem: { id: 'jkl012' } },
+            { serviceItem: { containers: [{ id: 'jkl012' }] } },
         ]);
         expect(domains[2].getChildren()).toMatchObject([
-            { containerItem: { id: 'ghi789' } },
+            { serviceItem: { containers: [{ id: 'ghi789' }] } },
         ]);
         expect(domains[3].getChildren()).toMatchObject([
-            { containerItem: { id: 'mno345' } },
+            { serviceItem: { containers: [{ id: 'mno345' }] } },
         ]);
     });
 

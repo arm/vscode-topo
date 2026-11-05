@@ -1,5 +1,5 @@
 import type { TaskFactory } from '../tasks/taskFactory';
-import { assertContainerTreeItem } from '../views/treeItems/assertContainerTreeItem';
+import { assertServiceTreeItem } from '../views/treeItems/assertServiceTreeItem';
 import { openLogs } from './openLogs';
 
 export class OpenServiceLogs {
@@ -8,12 +8,8 @@ export class OpenServiceLogs {
     public async openServiceLogsCommandHandler(
         treeNode: unknown,
     ): Promise<void> {
-        assertContainerTreeItem(treeNode);
-        const item = treeNode.containerItem;
-        if (!item.service) {
-            throw new Error(`Container ${item.id} has no Compose service name`);
-        }
-
+        assertServiceTreeItem(treeNode);
+        const item = treeNode.serviceItem.containers[0];
         await openLogs(
             this.taskFactory,
             `Logs: ${item.service} (${item.target})`,

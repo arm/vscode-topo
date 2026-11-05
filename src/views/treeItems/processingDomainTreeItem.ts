@@ -1,21 +1,43 @@
 import * as vscode from 'vscode';
-import { ContainerItem } from '../../util/types';
-import { ContainerTreeItem } from './containerTreeItem';
+import { ContainerItem, ServiceItem } from '../../util/types';
+import { ServiceTreeItem } from './serviceTreeItem';
 
-function compareContainers(a: ContainerItem, b: ContainerItem): number {
-    if (a.state === 'running' && b.state !== 'running') {
+function groupContainersByService(
+    containers: readonly ContainerItem[],
+): ServiceItem[] {
+    const containersByService = Map.groupBy(
+        containers,
+        (container) => container.service,
+    );
+
+    return [...containersByService.entries()].map(([name, containers]) => ({
+        name,
+        containers,
+    }));
+}
+
+function compareServices(a: ServiceItem, b: ServiceItem): number {
+    const aRunning = a.containers.some(
+        (container) => container.state === 'running',
+    );
+    const bRunning = b.containers.some(
+        (container) => container.state === 'running',
+    );
+    if (aRunning && !bRunning) {
         return -1;
     }
-    if (a.state !== 'running' && b.state === 'running') {
+    if (!aRunning && bRunning) {
         return 1;
     }
-    return a.names.localeCompare(b.names, undefined, { sensitivity: 'base' });
+    return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
 }
 
 export class ProcessingDomainTreeItem extends vscode.TreeItem {
+    private readonly services: readonly ServiceItem[];
+
     constructor(
         processingDomain: string,
-        private readonly containers?: readonly ContainerItem[],
+        containers?: readonly ContainerItem[],
     ) {
         super(
             processingDomain,
@@ -23,16 +45,17 @@ export class ProcessingDomainTreeItem extends vscode.TreeItem {
                 ? vscode.TreeItemCollapsibleState.None
                 : vscode.TreeItemCollapsibleState.Expanded,
         );
+        this.services = groupContainersByService(containers ?? []);
         if (containers !== undefined) {
-            this.description = `${containers.length} container${containers.length === 1 ? '' : 's'}`;
+            this.description = `${this.services.length} service${this.services.length === 1 ? '' : 's'}`;
         }
         this.iconPath = new vscode.ThemeIcon('multiple-windows');
         this.contextValue = `ProcessingDomain ${processingDomain}`;
     }
 
-    public getChildren(): ContainerTreeItem[] {
-        return (this.containers ?? [])
-            .toSorted(compareContainers)
-            .map((container) => new ContainerTreeItem(container));
+    public getChildren(): ServiceTreeItem[] {
+        return this.services
+            .toSorted(compareServices)
+            .map((service) => new ServiceTreeItem(service));
     }
 }
