@@ -6,7 +6,7 @@ import { DisposableCollector } from './util/disposableCollector';
 import type { Deploy } from './actions/deploy';
 import type { Stop } from './actions/stop';
 import type { OpenContainerShell } from './actions/openContainerShell';
-import type { OpenContainerLogs } from './actions/openContainerLogs';
+import type { OpenServiceLogs } from './actions/openServiceLogs';
 import type { OpenProjectLogs } from './actions/openProjectLogs';
 import type { ContainerLifecycle } from './actions/containerLifecycle';
 import type { FixIssue } from './actions/fixIssue';
@@ -28,7 +28,7 @@ export interface CommandHandlers {
     deploy: Deploy;
     stop: Stop;
     openContainerShell: OpenContainerShell;
-    openContainerLogs: OpenContainerLogs;
+    openServiceLogs: OpenServiceLogs;
     openProjectLogs: OpenProjectLogs;
     connectViaSSH: ConnectViaSSH;
     openContainerInBrowser: OpenContainerInBrowser;
@@ -126,9 +126,9 @@ export function register(handlers: CommandHandlers): vscode.Disposable {
             handlers.connectViaSSH.connectViaSSHCommandHandler(),
         ),
         vscode.commands.registerCommand(
-            commandIds.openContainerLogs,
+            commandIds.openServiceLogs,
             (treeNode) =>
-                handlers.openContainerLogs.openContainerLogsCommandHandler(
+                handlers.openServiceLogs.openServiceLogsCommandHandler(
                     treeNode,
                 ),
         ),
