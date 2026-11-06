@@ -1,13 +1,24 @@
 const { spawnSync } = require('node:child_process');
+const { homedir } = require('node:os');
+const { join } = require('node:path');
 
 const SKILL_NAME = 'topo-cli-location';
 
-function uninstallSkill(run = spawnSync, platform = process.platform) {
-    const npx = platform === 'win32' ? 'npx.cmd' : 'npx';
+function uninstallSkill(run = spawnSync) {
     const result = run(
-        npx,
-        ['--yes', 'skills', 'remove', SKILL_NAME, '--global', '--yes'],
-        { stdio: 'ignore' },
+        process.execPath,
+        [
+            join(__dirname, '../node_modules/skills/bin/cli.mjs'),
+            'remove',
+            SKILL_NAME,
+            '--global',
+            '--yes',
+        ],
+        {
+            cwd: homedir(),
+            env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' },
+            stdio: 'ignore',
+        },
     );
 
     if (result.error) {
