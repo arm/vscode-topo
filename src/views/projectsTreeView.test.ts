@@ -79,7 +79,7 @@ describe('ProjectsTreeView', () => {
             { label: manifest.PRIMARY_PROCESSING_DOMAIN },
         ]);
         expect(provider.getChildren(domains[0])).toMatchObject([
-            { label: 'demo-app' },
+            { label: 'app' },
         ]);
     });
 

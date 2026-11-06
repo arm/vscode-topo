@@ -4,7 +4,7 @@ import { ContainerItem } from '../../util/types';
 
 describe('ContainerTreeItem', () => {
     const target = 'user@topo.local';
-    it('should set label (image), description (name - status), tooltip, contextValue, command, and iconPath', () => {
+    it('shows the container name and status with image and ID in the tooltip', () => {
         const container: ContainerItem = {
             id: 'id123',
             names: 'my-container',
@@ -18,13 +18,14 @@ describe('ContainerTreeItem', () => {
             composeFileUri: vscode.Uri.file('/projects/demo/compose.yaml'),
         };
         const item = new ContainerTreeItem(container);
-        expect(item.label).toBe('nginx:latest');
-        expect(item.description).toBe('my-container - Up 10 minutes');
+        expect(item.label).toBe('my-container');
+        expect(item.description).toBe('Up 10 minutes');
         expect(item.tooltip).toContain('id123');
         expect(item.tooltip).toContain('nginx:latest');
         expect(item.tooltip).toContain('my-container');
         expect(item.tooltip).toContain('Remoteproc');
         expect(item.tooltip).toContain('topo.local:4121');
+        expect(item.tooltip).toContain('Service: app');
         expect(item.contextValue).toBe('container running Remoteproc browser');
         expect(item.iconPath).toStrictEqual(
             new vscode.ThemeIcon(
@@ -111,5 +112,23 @@ describe('ContainerTreeItem', () => {
         const item = new ContainerTreeItem(container);
 
         expect(item.contextValue).toBe('container exited Linux Host');
+    });
+
+    it('uses the ID and state when a container has no name or status', () => {
+        const item = new ContainerTreeItem({
+            id: 'id123',
+            names: '',
+            image: 'nginx',
+            state: 'running',
+            status: '',
+            processingDomain: 'Linux Host',
+            address: '',
+            target,
+            service: 'app',
+            composeFileUri: vscode.Uri.file('/projects/demo/compose.yaml'),
+        });
+
+        expect(item.label).toBe('id123');
+        expect(item.description).toBe('running');
     });
 });
