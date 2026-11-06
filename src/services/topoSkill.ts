@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { ListedSkill, NpxSkills } from './npxSkills';
+import { ListedSkill, SkillsCli } from './skillsCli';
 
 export const TOPO_SKILL_NAME = 'topo-cli-location';
 
@@ -26,7 +26,7 @@ export class TopoSkill {
 
     constructor(
         extensionUri: vscode.Uri,
-        private readonly npxSkills: NpxSkills,
+        private readonly skillsCli: SkillsCli,
     ) {
         this.bundledDirectoryUri = vscode.Uri.joinPath(
             extensionUri,
@@ -36,7 +36,7 @@ export class TopoSkill {
     }
 
     public async getReport(): Promise<TopoSkillReport> {
-        const listedSkills = (await this.npxSkills.listGlobal()).filter(
+        const listedSkills = (await this.skillsCli.listGlobal()).filter(
             (skill) =>
                 skill.name === TOPO_SKILL_NAME && skill.agents.length > 0,
         );
@@ -96,10 +96,10 @@ export class TopoSkill {
     }
 
     public createInstallCommand(): vscode.ShellExecution {
-        return this.npxSkills.createAddCommand(this.bundledDirectoryUri.fsPath);
+        return this.skillsCli.createAddCommand(this.bundledDirectoryUri.fsPath);
     }
 
     public createUninstallCommand(): vscode.ShellExecution {
-        return this.npxSkills.createRemoveCommand(TOPO_SKILL_NAME);
+        return this.skillsCli.createRemoveCommand(TOPO_SKILL_NAME);
     }
 }
