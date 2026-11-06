@@ -12,4 +12,9 @@ export type ContainerItem = PsEntry & {
     readonly composeFileUri: Uri;
 };
 
+export type ServiceItem = {
+    readonly name: string;
+    readonly containers: readonly ContainerItem[];
+};
+
 export type Mutable<T> = { -readonly [P in keyof T]: T[P] };
