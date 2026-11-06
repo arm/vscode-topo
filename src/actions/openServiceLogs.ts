@@ -2,10 +2,10 @@ import type { TaskFactory } from '../tasks/taskFactory';
 import { assertContainerTreeItem } from '../views/treeItems/assertContainerTreeItem';
 import { openLogs } from './openLogs';
 
-export class OpenContainerLogs {
+export class OpenServiceLogs {
     constructor(private readonly taskFactory: TaskFactory) {}
 
-    public async openContainerLogsCommandHandler(
+    public async openServiceLogsCommandHandler(
         treeNode: unknown,
     ): Promise<void> {
         assertContainerTreeItem(treeNode);
@@ -16,7 +16,7 @@ export class OpenContainerLogs {
 
         await openLogs(
             this.taskFactory,
-            `Logs: ${item.names || item.id} (${item.target})`,
+            `Logs: ${item.service} (${item.target})`,
             item.composeFileUri.fsPath,
             item.target,
             [item.service],

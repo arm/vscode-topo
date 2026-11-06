@@ -18,7 +18,7 @@ export class ContainerTreeItem extends vscode.TreeItem {
         this.description = `${containerItem.names} - ${containerItem.status}`;
         this.tooltip = getContainerItemTooltip(containerItem);
         const contextValues = [
-            'service',
+            'container',
             containerItem.state,
             containerItem.processingDomain,
         ];
