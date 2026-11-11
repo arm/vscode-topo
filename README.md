@@ -90,16 +90,16 @@ Use the inline **Fix** button on a fixable health issue to run the executable fi
 
 ## Container Actions
 
-Use the inline buttons on a service in the Projects tree to manage individual containers:
+Use the inline buttons in the Projects tree to manage containers and view service logs:
 
-| Command                  | Description                                                                                  |
-| ------------------------ | -------------------------------------------------------------------------------------------- |
-| **Start**                | Start a stopped container.                                                                   |
-| **Stop**                 | Stop a running container.                                                                    |
-| **Delete**               | Remove a container.                                                                          |
-| **Open Container Shell** | Open a VS Code terminal connected to a running Linux Host container.                         |
-| **Open Container Logs**  | Show and follow logs for the container's service, including stopped containers and replicas. |
-| **Open in Browser**      | Open a running container's web endpoint in your browser.                                     |
+| Command                  | Description                                                          |
+| ------------------------ | -------------------------------------------------------------------- |
+| **Start**                | Start a stopped container.                                           |
+| **Stop**                 | Stop a running container.                                            |
+| **Delete**               | Remove a container.                                                  |
+| **Open Container Shell** | Open a VS Code terminal connected to a running Linux Host container. |
+| **Open Service Logs**    | Show and follow logs for the service, including stopped containers.  |
+| **Open in Browser**      | Open a running container's web endpoint in your browser.             |
 
 ## Configure, Deploy, and Stop
 
