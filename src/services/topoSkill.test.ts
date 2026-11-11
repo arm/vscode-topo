@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { mock, MockProxy } from 'vitest-mock-extended';
-import { ListedSkill, NpxSkills } from './npxSkills';
+import { ListedSkill, SkillsCli } from './skillsCli';
 import { TopoSkill } from './topoSkill';
 
 describe('TopoSkill', () => {
@@ -16,7 +16,7 @@ describe('TopoSkill', () => {
     ).fsPath;
     const installedDirectory = '/fake/home/.agents/skills/topo-cli-location';
     const bundledSkill = Uint8Array.from([1, 2, 3]);
-    let npxSkills: MockProxy<NpxSkills>;
+    let skillsCli: MockProxy<SkillsCli>;
 
     function listedSkill(
         path = installedDirectory,
@@ -45,13 +45,13 @@ describe('TopoSkill', () => {
 
     beforeEach(() => {
         vi.resetAllMocks();
-        npxSkills = mock<NpxSkills>();
+        skillsCli = mock<SkillsCli>();
     });
 
     it('reports a listed current skill as installed', async () => {
-        npxSkills.listGlobal.mockResolvedValue([listedSkill()]);
+        skillsCli.listGlobal.mockResolvedValue([listedSkill()]);
         mockSkillFiles({ [skillFile(installedDirectory)]: bundledSkill });
-        const topoSkill = new TopoSkill(extensionUri, npxSkills);
+        const topoSkill = new TopoSkill(extensionUri, skillsCli);
 
         await expect(topoSkill.getReport()).resolves.toEqual({
             status: 'installed',
@@ -63,16 +63,16 @@ describe('TopoSkill', () => {
                 },
             ],
         });
-        expect(npxSkills.listGlobal).toHaveBeenCalledExactlyOnceWith();
+        expect(skillsCli.listGlobal).toHaveBeenCalledExactlyOnceWith();
     });
 
     it('uses the installation path returned by the CLI', async () => {
         const claudeDirectory = '/fake/home/.claude/skills/topo-cli-location';
-        npxSkills.listGlobal.mockResolvedValue([
+        skillsCli.listGlobal.mockResolvedValue([
             listedSkill(claudeDirectory, ['Claude Code']),
         ]);
         mockSkillFiles({ [skillFile(claudeDirectory)]: bundledSkill });
-        const topoSkill = new TopoSkill(extensionUri, npxSkills);
+        const topoSkill = new TopoSkill(extensionUri, skillsCli);
 
         await expect(topoSkill.getReport()).resolves.toMatchObject({
             agents: [{ name: 'Claude Code', paths: [claudeDirectory] }],
@@ -83,10 +83,10 @@ describe('TopoSkill', () => {
     });
 
     it('reports a missing skill when it is not listed', async () => {
-        npxSkills.listGlobal.mockResolvedValue([
+        skillsCli.listGlobal.mockResolvedValue([
             listedSkill('/fake/other', ['Codex'], 'other'),
         ]);
-        const topoSkill = new TopoSkill(extensionUri, npxSkills);
+        const topoSkill = new TopoSkill(extensionUri, skillsCli);
 
         await expect(topoSkill.getReport()).resolves.toEqual({
             status: 'missing',
@@ -96,10 +96,10 @@ describe('TopoSkill', () => {
     });
 
     it('ignores an installation that is not linked to any agent', async () => {
-        npxSkills.listGlobal.mockResolvedValue([
+        skillsCli.listGlobal.mockResolvedValue([
             listedSkill(installedDirectory, []),
         ]);
-        const topoSkill = new TopoSkill(extensionUri, npxSkills);
+        const topoSkill = new TopoSkill(extensionUri, skillsCli);
 
         await expect(topoSkill.getReport()).resolves.toEqual({
             status: 'missing',
@@ -109,11 +109,11 @@ describe('TopoSkill', () => {
     });
 
     it('reports a listed skill with different contents as outdated', async () => {
-        npxSkills.listGlobal.mockResolvedValue([listedSkill()]);
+        skillsCli.listGlobal.mockResolvedValue([listedSkill()]);
         mockSkillFiles({
             [skillFile(installedDirectory)]: Uint8Array.from([1, 2, 4]),
         });
-        const topoSkill = new TopoSkill(extensionUri, npxSkills);
+        const topoSkill = new TopoSkill(extensionUri, skillsCli);
 
         await expect(topoSkill.getReport()).resolves.toEqual({
             status: 'outdated',
@@ -129,7 +129,7 @@ describe('TopoSkill', () => {
 
     it('reports each agent and does not hide an outdated installation', async () => {
         const secondDirectory = '/fake/home/.another/skills/topo-cli-location';
-        npxSkills.listGlobal.mockResolvedValue([
+        skillsCli.listGlobal.mockResolvedValue([
             listedSkill(),
             listedSkill(secondDirectory, ['Claude Code']),
         ]);
@@ -137,7 +137,7 @@ describe('TopoSkill', () => {
             [skillFile(installedDirectory)]: Uint8Array.from([1, 2, 4]),
             [skillFile(secondDirectory)]: bundledSkill,
         });
-        const topoSkill = new TopoSkill(extensionUri, npxSkills);
+        const topoSkill = new TopoSkill(extensionUri, skillsCli);
 
         await expect(topoSkill.getReport()).resolves.toEqual({
             status: 'outdated',
@@ -158,7 +158,7 @@ describe('TopoSkill', () => {
 
     it('groups multiple paths reported for the same agent', async () => {
         const secondDirectory = '/fake/home/.codex/skills/topo-cli-location';
-        npxSkills.listGlobal.mockResolvedValue([
+        skillsCli.listGlobal.mockResolvedValue([
             listedSkill(),
             listedSkill(secondDirectory),
         ]);
@@ -166,7 +166,7 @@ describe('TopoSkill', () => {
             [skillFile(installedDirectory)]: bundledSkill,
             [skillFile(secondDirectory)]: Uint8Array.from([1, 2, 4]),
         });
-        const topoSkill = new TopoSkill(extensionUri, npxSkills);
+        const topoSkill = new TopoSkill(extensionUri, skillsCli);
 
         await expect(topoSkill.getReport()).resolves.toEqual({
             status: 'outdated',
@@ -182,22 +182,22 @@ describe('TopoSkill', () => {
 
     it('creates a command to install the bundled skill globally', () => {
         const command = mock<vscode.ShellExecution>();
-        npxSkills.createAddCommand.mockReturnValue(command);
-        const topoSkill = new TopoSkill(extensionUri, npxSkills);
+        skillsCli.createAddCommand.mockReturnValue(command);
+        const topoSkill = new TopoSkill(extensionUri, skillsCli);
 
         expect(topoSkill.createInstallCommand()).toBe(command);
-        expect(npxSkills.createAddCommand).toHaveBeenCalledExactlyOnceWith(
+        expect(skillsCli.createAddCommand).toHaveBeenCalledExactlyOnceWith(
             bundledDirectory.fsPath,
         );
     });
 
     it('creates a command to uninstall the skill globally', () => {
         const command = mock<vscode.ShellExecution>();
-        npxSkills.createRemoveCommand.mockReturnValue(command);
-        const topoSkill = new TopoSkill(extensionUri, npxSkills);
+        skillsCli.createRemoveCommand.mockReturnValue(command);
+        const topoSkill = new TopoSkill(extensionUri, skillsCli);
 
         expect(topoSkill.createUninstallCommand()).toBe(command);
-        expect(npxSkills.createRemoveCommand).toHaveBeenCalledExactlyOnceWith(
+        expect(skillsCli.createRemoveCommand).toHaveBeenCalledExactlyOnceWith(
             'topo-cli-location',
         );
     });

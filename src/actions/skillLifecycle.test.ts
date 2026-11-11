@@ -1,4 +1,6 @@
 import { createRequire } from 'node:module';
+import { homedir } from 'node:os';
+import { resolve } from 'node:path';
 import * as vscode from 'vscode';
 import { mock, MockProxy } from 'vitest-mock-extended';
 import { refreshSkillStatus } from '../commandIds';
@@ -25,7 +27,7 @@ type UninstallRunner = (
 
 const loadModule = createRequire(__filename);
 const { uninstallSkill } = loadModule('../../scripts/uninstall.cjs') as {
-    uninstallSkill(run: UninstallRunner, platform?: NodeJS.Platform): void;
+    uninstallSkill(run: UninstallRunner): void;
 };
 
 describe('SkillLifecycle', () => {
@@ -87,32 +89,32 @@ describe('SkillLifecycle', () => {
 });
 
 describe('extension uninstall hook', () => {
-    it.each<[NodeJS.Platform, string]>([
-        ['linux', 'npx'],
-        ['win32', 'npx.cmd'],
-    ])('removes the skill from all agents on %s', (platform, npx) => {
+    it('removes the skill from all agents', () => {
         const run = vi.fn<UninstallRunner>().mockReturnValue({ status: 0 });
 
-        uninstallSkill(run, platform);
+        uninstallSkill(run);
 
         expect(run).toHaveBeenCalledExactlyOnceWith(
-            npx,
+            process.execPath,
             [
-                '--yes',
-                'skills',
+                resolve(__dirname, '../../node_modules/skills/bin/cli.mjs'),
                 'remove',
                 'topo-cli-location',
                 '--global',
                 '--yes',
             ],
-            { stdio: 'ignore' },
+            {
+                cwd: homedir(),
+                env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' },
+                stdio: 'ignore',
+            },
         );
     });
 
     it('reports skill uninstallation failure', () => {
         const run = vi.fn<UninstallRunner>().mockReturnValue({ status: 1 });
 
-        expect(() => uninstallSkill(run, 'linux')).toThrow(
+        expect(() => uninstallSkill(run)).toThrow(
             'Skill uninstallation failed with exit code 1',
         );
     });

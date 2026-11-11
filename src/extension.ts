@@ -45,7 +45,7 @@ import { SkillLifecycle } from './actions/skillLifecycle';
 import { TaskProvider } from './tasks/taskProvider';
 import { TaskFactory } from './tasks/taskFactory';
 import { TopoSkill } from './services/topoSkill';
-import { NpxSkills } from './services/npxSkills';
+import { SkillsCli } from './services/skillsCli';
 
 const SELECTED_TARGET_REFRESH_INTERVAL_MS = 60_000;
 
@@ -107,8 +107,8 @@ async function activateExtension(
     const targetModel = new TargetModel();
     const hostModel = new HostModel();
     const projectModel = new ProjectModel();
-    const npxSkills = new NpxSkills();
-    const topoSkill = new TopoSkill(context.extensionUri, npxSkills);
+    const skillsCli = new SkillsCli(context.extensionUri);
+    const topoSkill = new TopoSkill(context.extensionUri, skillsCli);
     context.subscriptions.push(targetModel, hostModel, projectModel);
 
     const hostTreeView = new HostTreeView(hostModel);
