@@ -35,7 +35,7 @@ describe('ProcessingDomainTreeItem', () => {
         );
     });
 
-    it('orders services with running replicas first, then service names case-insensitively', () => {
+    it('orders services with at least one running container first, then service names case-insensitively', () => {
         const input: ContainerItem[] = [
             { ...container, service: 'Charlie', state: 'exited' },
             { ...container, service: 'Zulu' },
