@@ -383,18 +383,21 @@ describe('TopoCli', () => {
         ).rejects.toThrow('Failed to parse container status JSON:');
     });
 
-    it('ps rejects when JSON output fails schema validation', async () => {
+    it.each([
+        { state: 'unknown', service: 'linux' },
+        { state: 'running', service: '' },
+        { state: 'running', service: '   ' },
+    ])('ps rejects invalid container fields: %j', async (fields) => {
         const output = {
             containers: [
                 {
                     id: '5c5f2d9b4a8f',
                     names: 'demo-linux-1',
-                    service: 'linux',
                     image: 'ghcr.io/arm/topo-demo:latest',
                     status: 'Up 2 minutes',
-                    state: 'unknown',
                     processingDomain: manifest.PRIMARY_PROCESSING_DOMAIN,
                     address: '192.0.2.10',
+                    ...fields,
                 },
             ],
         };

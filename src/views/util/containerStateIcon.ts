@@ -9,3 +9,8 @@ export const notRunningIcon = new vscode.ThemeIcon(
     'debug-breakpoint-log-unverified',
     new vscode.ThemeColor('terminal.ansiWhite'),
 );
+
+export const warningIcon = new vscode.ThemeIcon(
+    'warning',
+    new vscode.ThemeColor('terminal.ansiYellow'),
+);

@@ -3,7 +3,7 @@ import { refreshProjectContainers } from '../commandIds';
 import { isWrappedError } from '../errors/wrappedError';
 import { ContainerCommands } from '../services/containerCommands';
 import { showAndLogError } from '../util/showAndLog';
-import { assertContainerTreeItem } from '../views/treeItems/assertContainerTreeItem';
+import { getContainerTreeItem } from '../views/treeItems/getContainerTreeItem';
 
 const containerOperationMethods = {
     start: 'startContainer',
@@ -36,14 +36,14 @@ export class ContainerLifecycle {
         operation: ContainerOperation,
         treeNode: unknown,
     ): Promise<void> {
-        assertContainerTreeItem(treeNode);
-        const containerId = treeNode.containerItem.id;
+        const item = getContainerTreeItem(treeNode);
+        const containerId = item.containerItem.id;
         const commandMethod = containerOperationMethods[operation];
 
         try {
             await this.containerCommands[commandMethod](
                 containerId,
-                treeNode.containerItem.target,
+                item.containerItem.target,
             );
         } catch (error: unknown) {
             if (isWrappedError(error, ['CONTAINER_ENGINE'])) {

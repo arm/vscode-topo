@@ -499,7 +499,7 @@
                 },
                 {
                     "command": "topo.openServiceLogs",
-                    "when": "view === topo.projects && viewItem =~ /container/",
+                    "when": "view === topo.projects && viewItem =~ /service/",
                     "group": "inline@3"
                 },
                 {

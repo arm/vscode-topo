@@ -2,6 +2,7 @@ import {
     array,
     enums,
     Infer,
+    nonempty,
     number,
     nullable,
     optional,
@@ -112,7 +113,7 @@ export type ContainerState = Infer<typeof containerStateSchema>;
 const psEntrySchema = type({
     id: trimmedStringSchema,
     names: trimmedStringSchema,
-    service: trimmedStringSchema,
+    service: nonempty(trimmedStringSchema),
     image: trimmedStringSchema,
     status: trimmedStringSchema,
     state: containerStateSchema,
