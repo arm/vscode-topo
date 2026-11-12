@@ -13,6 +13,25 @@ All notable changes to the "vscode-topo" extension will be documented in this fi
 
 
 
+
+## 0.26.0
+
+<!-- Release notes generated using configuration in .github/release.yml at 7adcd11f164e1dbe517b62192d98ffae5f2e0d2b -->
+
+## What's Changed
+### Breaking Changes
+* feat!: rename service logs command (#501)
+### Features and Enhancements
+* feat: improve container row labels and details (#504)
+* feat: group service replicas under their service in the project view (#506)
+* feat: bump Topo to version 14.4.1 (#512)
+### Fixes
+* fix: remove system npx requirement for skill management (#511)
+
+
+**Full Changelog**: https://github.com/arm/vscode-topo/compare/v0.24.0...v0.26.0
+
+
 ## 0.24.0
 
 <!-- Release notes generated using configuration in .github/release.yml at 92b1582a3ce37056e58c83a4355df545998e01cd -->
